@@ -642,7 +642,7 @@
 
     move-result-object v0
 
-    check-cast v0, Landroid/widget/TextView;
+    check-cast v0, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/widget/AutoSizeTextView;
 
     if-eqz v0, :decorate_done
 
@@ -657,6 +657,10 @@
     invoke-virtual {v0, v1}, Landroid/widget/TextView;->setMinHeight(I)V
 
     invoke-virtual {v0, v1}, Landroid/widget/TextView;->setEllipsize(Landroid/text/TextUtils$TruncateAt;)V
+
+    const v2, 0x7fffffff
+
+    invoke-virtual {v0, v2}, Landroid/widget/TextView;->setMaxWidth(I)V
 
     const/4 v2, 0x0
 
@@ -702,9 +706,22 @@
 
     move-result-object v2
 
-    if-eqz v2, :inspect_candidate
+    if-eqz v2, :find_clipboard_left_separator
 
     invoke-virtual {v2, v1}, Landroid/view/View;->setVisibility(I)V
+
+    :find_clipboard_left_separator
+    const-string v5, "compat_clipboard_left_separator"
+
+    invoke-virtual {p0, v5}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyView;->findViewWithTag(Ljava/lang/Object;)Landroid/view/View;
+
+    move-result-object v5
+
+    if-eqz v5, :inspect_candidate
+
+    const/16 v6, 0x8
+
+    invoke-virtual {v5, v6}, Landroid/view/View;->setVisibility(I)V
 
     :inspect_candidate
     if-eqz p1, :decorate_done
@@ -733,13 +750,35 @@
 
     invoke-virtual {v0, v3}, Landroid/widget/TextView;->setEllipsize(Landroid/text/TextUtils$TruncateAt;)V
 
-    # The left reserve and dismiss control own the two boundary dividers. Hide
-    # the candidate's embedded divider so neither side is drawn twice.
-    if-eqz v2, :sync_dismiss_color
+    # Keep native 21sp typography: cap the visible label at 200dp and disable
+    # AutoSizeTextView's horizontal shrinking so overflow is ellipsized instead.
+    invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyView;->getResources()Landroid/content/res/Resources;
 
-    const/16 v3, 0x8
+    move-result-object v3
 
-    invoke-virtual {v2, v3}, Landroid/view/View;->setVisibility(I)V
+    invoke-virtual {v3}, Landroid/content/res/Resources;->getDisplayMetrics()Landroid/util/DisplayMetrics;
+
+    move-result-object v3
+
+    iget v3, v3, Landroid/util/DisplayMetrics;->density:F
+
+    const/high16 v4, 0x43480000    # 200.0f
+
+    mul-float/2addr v3, v4
+
+    float-to-int v3, v3
+
+    invoke-virtual {v0, v3}, Landroid/widget/TextView;->setMaxWidth(I)V
+
+    const/high16 v3, 0x3f800000    # 1.0f
+
+    invoke-virtual {v0, v3}, Lavk;->a(F)V
+
+    # Both native dividers live in the wrap-sized candidate view, so a short
+    # value such as an OTP keeps the dividers immediately beside its text.
+    if-eqz v5, :sync_dismiss_color
+
+    invoke-virtual {v5, v1}, Landroid/view/View;->setVisibility(I)V
 
     :sync_dismiss_color
     invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyView;->getRootView()Landroid/view/View;
@@ -987,7 +1026,7 @@
 
 # virtual methods
 .method public onClick(Landroid/view/View;)V
-    .locals 4
+    .locals 5
 
     if-eqz p1, :click_done
 
@@ -1002,6 +1041,22 @@
     move-result v0
 
     if-eqz v0, :click_done
+
+    # Reuse Google Pinyin's own feedback controller so the close action obeys
+    # keyboard sound, vibration, duration and volume preferences exactly.
+    new-instance v4, Laue;
+
+    invoke-virtual {p1}, Landroid/view/View;->getContext()Landroid/content/Context;
+
+    move-result-object v3
+
+    invoke-direct {v4, v3}, Laue;-><init>(Landroid/content/Context;)V
+
+    const/4 v3, 0x0
+
+    invoke-virtual {v4, p1, v3}, Laue;->a(Landroid/view/View;Lcom/google/android/apps/inputmethod/libs/framework/core/KeyData;)V
+
+    invoke-virtual {v4}, Laue;->a()V
 
     sget-object v0, Lcom/google/android/apps/inputmethod/libs/framework/core/ClipboardCandidateCompat;->candidateKey:Ljava/lang/String;
 
