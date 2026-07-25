@@ -833,6 +833,75 @@
     return-void
 .end method
 
+.method private static syncSeparatorAppearance(Landroid/view/View;Landroid/view/View;)V
+    .locals 4
+
+    instance-of v0, p0, Landroid/widget/ImageView;
+
+    if-eqz v0, :sync_separator_done
+
+    instance-of v0, p1, Landroid/widget/ImageView;
+
+    if-eqz v0, :sync_separator_done
+
+    check-cast p0, Landroid/widget/ImageView;
+
+    check-cast p1, Landroid/widget/ImageView;
+
+    invoke-virtual {p0}, Landroid/widget/ImageView;->getDrawable()Landroid/graphics/drawable/Drawable;
+
+    move-result-object v0
+
+    if-eqz v0, :copy_separator_state
+
+    invoke-virtual {v0}, Landroid/graphics/drawable/Drawable;->getConstantState()Landroid/graphics/drawable/Drawable$ConstantState;
+
+    move-result-object v1
+
+    if-eqz v1, :use_source_drawable
+
+    invoke-virtual {v1}, Landroid/graphics/drawable/Drawable$ConstantState;->newDrawable()Landroid/graphics/drawable/Drawable;
+
+    move-result-object v0
+
+    invoke-virtual {v0}, Landroid/graphics/drawable/Drawable;->mutate()Landroid/graphics/drawable/Drawable;
+
+    move-result-object v0
+
+    :use_source_drawable
+    invoke-virtual {p1, v0}, Landroid/widget/ImageView;->setImageDrawable(Landroid/graphics/drawable/Drawable;)V
+
+    :copy_separator_state
+    invoke-virtual {p0}, Landroid/widget/ImageView;->getImageTintList()Landroid/content/res/ColorStateList;
+
+    move-result-object v0
+
+    invoke-virtual {p1, v0}, Landroid/widget/ImageView;->setImageTintList(Landroid/content/res/ColorStateList;)V
+
+    invoke-virtual {p0}, Landroid/widget/ImageView;->getImageAlpha()I
+
+    move-result v0
+
+    invoke-virtual {p1, v0}, Landroid/widget/ImageView;->setImageAlpha(I)V
+
+    invoke-virtual {p0}, Landroid/widget/ImageView;->getAlpha()F
+
+    move-result v0
+
+    invoke-virtual {p1, v0}, Landroid/widget/ImageView;->setAlpha(F)V
+
+    invoke-virtual {p0}, Landroid/widget/ImageView;->getDrawableState()[I
+
+    move-result-object v0
+
+    const/4 v1, 0x0
+
+    invoke-virtual {p1, v0, v1}, Landroid/widget/ImageView;->setImageState([IZ)V
+
+    :sync_separator_done
+    return-void
+.end method
+
 .method public static centerSingleClipboardCandidate(Lcom/google/android/apps/inputmethod/libs/framework/keyboard/widget/FixedSizeCandidatesHolderView;)V
     .locals 8
 
@@ -908,6 +977,8 @@
 
     move-result-object v4
 
+    move-object v7, v4
+
     if-eqz v4, :force_left_separator
 
     const/16 v5, 0x8
@@ -923,6 +994,8 @@
 
     if-eqz v4, :force_right_separator
 
+    invoke-static {v7, v4}, Lcom/google/android/apps/inputmethod/libs/framework/core/ClipboardCandidateCompat;->syncSeparatorAppearance(Landroid/view/View;Landroid/view/View;)V
+
     const/4 v5, 0x0
 
     invoke-virtual {v4, v5}, Landroid/view/View;->setVisibility(I)V
@@ -935,6 +1008,8 @@
     move-result-object v4
 
     if-eqz v4, :select_gravity
+
+    invoke-static {v7, v4}, Lcom/google/android/apps/inputmethod/libs/framework/core/ClipboardCandidateCompat;->syncSeparatorAppearance(Landroid/view/View;Landroid/view/View;)V
 
     const/4 v5, 0x0
 
@@ -1043,6 +1118,30 @@
 
     if-eqz v4, :attach_dismiss
 
+    # Copy the native show-more key's measured outer width. It includes the
+    # divider column plus the 45dp key host, matching the voice/right key axis.
+    invoke-virtual {v4}, Landroid/view/View;->getMeasuredWidth()I
+
+    move-result v5
+
+    if-gtz v5, :apply_native_show_more_width
+
+    invoke-virtual {v4}, Landroid/view/View;->getWidth()I
+
+    move-result v5
+
+    :apply_native_show_more_width
+    if-lez v5, :hide_native_show_more
+
+    invoke-virtual {v2}, Landroid/view/View;->getLayoutParams()Landroid/view/ViewGroup$LayoutParams;
+
+    move-result-object v0
+
+    iput v5, v0, Landroid/view/ViewGroup$LayoutParams;->width:I
+
+    invoke-virtual {v2, v0}, Landroid/view/View;->setLayoutParams(Landroid/view/ViewGroup$LayoutParams;)V
+
+    :hide_native_show_more
     const/4 v5, 0x4
 
     invoke-virtual {v4, v5}, Landroid/view/View;->setVisibility(I)V

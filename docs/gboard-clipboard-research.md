@@ -140,4 +140,8 @@ Gboard 不读取系统 `Configuration.uiMode`，也不在 Java/smali 中根据�
 
 关闭按钮不再使用独立的通用 View 反馈。点击时临时接入原生 `aue` 按键反馈控制器，以同一份键盘偏好执行按键音、音量、振动开关和振动时长；反馈完成后立即注销其偏好监听器，避免额外生命周期泄漏。
 
-V5 真机暴露了两个布局细节：复用 `SoftKeyCandidateSeparator` 的左分隔符看起来比此前 header 分隔符更深，而原生 holder 会在 `decorateView()` 返回后再次按“末列候选”规则隐藏右分隔符；仅依赖候选装饰时序并不可靠。修订版因此在候选布局内增加左右两个独立、同样采用 `SoftKeyCandidateBarShowMoreCandidateSeparator` 的兼容分隔符，并在 holder 完成全部末列装饰后的 `centerSingleClipboardCandidate()` 中再次强制它们可见、强制原生 `candidate_separator` 隐藏。这样既不叠色，也不会再丢失右线。关闭容器则不再依赖 `wrap_content` 的测量结果，而是显式固定为原生右侧按钮列的 45dp 宽度并保持 `layout_gravity=right`，与默认语音输入等右列按钮对齐。
+V5 真机暴露了两个布局细节：复用 `SoftKeyCandidateSeparator` 的左分隔符看起来比此前 header 分隔符更深，而原生 holder 会在 `decorateView()` 返回后再次按“末列候选”规则隐藏右分隔符；仅依赖候选装饰时序并不可靠。修订版因此在候选布局内增加左右两个独立兼容分隔符，并在 holder 完成全部末列装饰后的 `centerSingleClipboardCandidate()` 中再次强制它们可见、强制原生 `candidate_separator` 隐藏，避免叠色或丢线。
+
+后续真机又证明，仅给新增 ImageView 套用原生 style 仍不足以进入旧版键盘的所有动态主题路径。最终方案不再猜测主题 attr：每轮候选完成原生装饰后，以隐藏前的真实 `candidate_separator` 为源，克隆其已解析的 Drawable，并同步 `imageTintList`、image alpha、View alpha 和 drawable state 到左右兼容分隔符。因此颜色来自当前实际渲染的键盘主题，而非系统深浅模式或静态 XML 默认值。
+
+关闭容器的位置同样改为以真实原生 View 为准。显示 `×` 前读取同一位置的 `key_pos_show_more_candidates` 实际 measured width，并写入关闭 overlay 的 LayoutParams；该外宽包含原生分隔列和 45dp host，比仅固定 45dp 更准确，其右边界、中心轴及 KeyboardInnerPadding 坐标应与语音输入和其他右侧按键列一致。
