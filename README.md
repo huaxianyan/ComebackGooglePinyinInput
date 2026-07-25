@@ -1,12 +1,12 @@
-# Google 拼音输入法 创造性AI版
+# Google 拼音输入法 创造性 AI 版
 
-**English project name: Google Pinyin Input Creative AI Edition**
+**English project name: Comeback Google Pinyin Input**
 
 这是基于 Google 拼音输入法 4.5.2 的非商业兼容维护与创造性 AI 协作项目。目标是在尽量保持原始输入体验、候选逻辑、词库格式和主题行为的前提下，让这款已经停止更新的输入法继续用于 Android 16/17，并以可复现、可审计的方式维护兼容补丁。
 
 ## 下载
 
-“Google 拼音输入法 创造性AI版”正式构建请从项目的 [Releases](https://github.com/huaxianyan/comeback-google-pinyin-input/releases) 页面下载。Android 应用内、输入法选择器、设置页和 Launcher 中的显示名称仍保持为“Google 拼音输入法”。
+“Google 拼音输入法 创造性 AI 版”正式构建请从项目的 [Releases](https://github.com/huaxianyan/comeback-google-pinyin-input/releases) 页面下载。Android 应用内、输入法选择器、设置页和 Launcher 中的显示名称仍保持为“Google 拼音输入法”。
 
 仓库同时保存用于复现构建的原始官方 APK：
 
@@ -33,20 +33,20 @@ Google 拼音输入法最初由 Google 发布并通过 Google Play 等官方 And
 
 | 项目 | 内容 |
 | --- | --- |
-| 项目中文名称 | Google 拼音输入法 创造性AI版 |
-| English project name | Google Pinyin Input Creative AI Edition |
+| 项目中文名称 | Google 拼音输入法 创造性 AI 版 |
+| English project name | Comeback Google Pinyin Input |
 | 项目版本 | `1.0.0` |
 | Android versionName | `1.0.0` |
 | Android versionCode | `4520381` |
 | 正式包名 | `com.google.android.inputmethod.pinyin.compat` |
 | 架构 | `arm64-v8a` |
-| 正式 APK | `Google-Pinyin-Input-Creative-AI-Edition-arm64-v8a-v1.0.0.apk` |
+| 正式 APK | `ComebackGooglePinyinInput-arm64-v8a-1.0.0.apk` |
 | target SDK | 28 |
 | 主要测试设备 | Pixel 10 Pro / Android 16 |
 
 上表对应重新整理后的正式 Release `v1.0.0`，作为提升 target API 之前当前兼容阶段的最终正式版本。后续 `master` 仍可能包含尚未发布的研究或兼容修复；是否发布以 GitHub Release 和 `CHANGELOG.md` 为准。
 
-创造性AI版使用独立包名和项目签名证书，可以与 Google 原始版本同时安装。以后升级时必须继续使用同一签名证书；它不能覆盖由 Google 官方证书签名的原始应用。
+创造性 AI 版使用独立包名和项目签名证书，可以与 Google 原始版本同时安装。以后升级时必须继续使用同一签名证书；它不能覆盖由 Google 官方证书签名的原始应用。
 
 ## 主要兼容改进
 
@@ -75,11 +75,11 @@ Google 拼音输入法最初由 Google 发布并通过 Google Play 等官方 And
 
 ## 本地词典灾难恢复
 
-启用“自动备份用户字典”后，备份会发布到公共 Documents 目录，因此清除应用数据或卸载创造性AI版不会删除这些文本文件。
+启用“自动备份用户字典”后，备份会发布到公共 Documents 目录，因此清除应用数据或卸载创造性 AI 版不会删除这些文本文件。
 
 恢复步骤：
 
-1. 安装创造性AI版并启用输入法。
+1. 安装创造性 AI 版并启用输入法。
 2. 打开“设置 → 字典”。
 3. 点击“导入本地备份”。
 4. 首次恢复时按系统提示授予文件权限。
@@ -138,7 +138,7 @@ PowerShell 示例：
 
 ### 签名一致性
 
-Android 是否允许覆盖升级取决于**签名证书身份**，而不是 APK 文件名。自动构建必须使用与现有正式创造性AI版完全相同的 PKCS#12/JKS 私钥。私钥和密码不能写进仓库或普通 Actions Variables，应存入 GitHub Actions **Secrets**：
+Android 是否允许覆盖升级取决于**签名证书身份**，而不是 APK 文件名。自动构建必须使用与现有正式创造性 AI 版完全相同的 PKCS#12/JKS 私钥。私钥和密码不能写进仓库或普通 Actions Variables，应存入 GitHub Actions **Secrets**：
 
 | GitHub Secret | 内容 |
 | --- | --- |
@@ -187,7 +187,7 @@ gh variable set ANDROID_SIGNING_CERT_SHA256 --body "985CBF843A362169B129AEAC5E15
 gh variable set ANDROID_APPLICATION_ID --body "com.google.android.inputmethod.pinyin.compat"
 ```
 
-配置后可在 GitHub 的 **Actions → Build and release APK → Run workflow** 手动验证一次。确认 artifact 能安装并覆盖正式创造性AI版后，以新版本提交创建标签：
+配置后可在 GitHub 的 **Actions → Build and release APK → Run workflow** 手动验证一次。确认 artifact 能安装并覆盖正式创造性 AI 版后，以新版本提交创建标签：
 
 ```powershell
 git tag -a v1.0.1 -m "Google Pinyin compatibility 1.0.1"

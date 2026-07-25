@@ -2,12 +2,12 @@
 
 ## [1.0.0] - 2026-07-25
 
-“Google 拼音输入法 创造性AI版”首个完整正式版本，也是提升 target API 之前当前 API 阶段的最终正式版本。Android `versionName` 为 `1.0.0`，`versionCode` 为 `4520381`，架构为 `arm64-v8a`；应用内显示名称仍保持“Google 拼音输入法”。
+“Google 拼音输入法 创造性 AI 版”首个完整正式版本，也是提升 target API 之前当前 API 阶段的最终正式版本。Android `versionName` 为 `1.0.0`，`versionCode` 为 `4520381`，架构为 `arm64-v8a`；应用内显示名称仍保持“Google 拼音输入法”。
 
 ### Changed
 
-- 项目中文名称定为“Google 拼音输入法 创造性AI版”，英文名称为 “Google Pinyin Input Creative AI Edition”；Android 应用、输入法选择器、设置页和 Launcher 的显示名称仍保持“Google 拼音输入法”。
-- 正式 APK 文件名定为 `Google-Pinyin-Input-Creative-AI-Edition-arm64-v8a-v1.0.0.apk`，正式包名和签名身份保持不变，可覆盖此前兼容安装。
+- 项目中文名称定为“Google 拼音输入法 创造性 AI 版”，英文名称为 “Comeback Google Pinyin Input”；Android 应用、输入法选择器、设置页和 Launcher 的显示名称仍保持“Google 拼音输入法”。
+- 正式 APK 文件名定为 `ComebackGooglePinyinInput-arm64-v8a-1.0.0.apk`，正式包名和签名身份保持不变，可覆盖此前兼容安装。
 - 首次引导“完成”恢复为进入 Google 拼音设置页并结束引导，不再直接发送 HOME；返回键仍在非第一页后退一页、第一页退出软件。
 - 剪贴板建议改用 Google 拼音原生候选文字样式和左右候选分隔线，移除为 Gboard 较高建议栏设计的圆角框、描边、阴影、额外高度及前置图标。
 - 剪贴板建议右侧在原展开箭头位置提供关闭按钮；关闭仅屏蔽当前剪贴板项目，不清空系统剪贴板，新复制内容仍可再次建议。
