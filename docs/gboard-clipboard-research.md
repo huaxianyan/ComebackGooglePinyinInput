@@ -160,4 +160,6 @@ V7 真机仍显示两个间接推断不足：注入候选中的原生 ID 分隔�
 
 首版尝试使用 TextView start compound drawable，构建与 ART 均无异常但真机完全不显示。根因是旧 `avk`/`AutoSizeTextView.onDraw()` 不调用 `TextView.onDraw()`，而是自行缩放 Canvas 并直接 `drawText()`；系统 compound drawable 绘制路径因此不可达。修订版改为 `softkey_candidate.xml` 内真实的 18dp sibling `ImageView`，放在 start candidate padding 处；剪贴板标签额外增加 24dp start padding（18dp 图标 + 6dp 间距），使图标与文字作为一个视觉组合居中并共同受 200dp 最大宽度约束。候选回收时先隐藏 ImageView、恢复原生标签 padding，避免普通候选残留。
 
-V12 的 sibling View 方案在 smali、D8、签名阶段通过，但 Android 16 ART 拒绝 `decorateView()`：`[0xB4] instance-of on non-reference in v7`。根因是右兼容分隔符存在时 `v7` 被写成 visibility 整数，而该 View 不存在的跳转路径越过了后续图标引用赋值，直接在合流标签把 `v7` 当 ImageView 检查。修订版增加 `.locals 9`，把 `v8` 专用于图标 View 引用，并把两条分支统一导向 `find_clipboard_icon` 后才进入候选检查；颜色、尺寸等整数仍只使用 `v3/v4/v7`，不再让引用寄存器跨类型复用。
+V12 的 sibling View 方案在 smali、D8、签名阶段通过，但 Android 16 ART 拒绝 `decorateView()`：`[0xB4] instance-of on non-reference in v7`。根因是右兼容分隔符存在时 `v7` 被写成 visibility 整数，而该 View 不存在的跳转路径越过了后续图标引用赋值，直接在合流标签把 `v7` 当 ImageView 检查。修订版增加 `.locals 9`，把 `v8` 专用于图标 View 引用，并把两条分支统一导向 `find_clipboard_icon` 后才进入候选检查；颜色、尺寸等整数仍只使用 `v3/v4/v7`，不再让引用寄存器跨类型复用。V13 真机确认 ART、图标和全部剪贴板功能正常。
+
+最后的光学调整把图标距左分隔符从原生 6dp candidate padding 增加到 10dp；相应地，标签 start reserve 从 24dp 增至 28dp（4dp 呼吸空间 + 18dp 图标 + 6dp 文字间距）。这样只增加分隔符与图标之间的留白，不改变图标—文字间距；额外宽度继续计入 200dp 上限，因此组合仍居中且不会向关闭键溢出。

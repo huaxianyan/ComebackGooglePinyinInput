@@ -807,7 +807,8 @@
 
     # AutoSizeTextView draws text directly and never calls TextView.onDraw(),
     # so compound drawables are not rendered. Use a real sibling ImageView and
-    # reserve 18dp + 6dp in the label's start padding; both remain inside 200dp.
+    # reserve 18dp + 6dp text gap + 4dp divider breathing room in the label's
+    # start padding; the whole visual group remains inside the 200dp cap.
     instance-of v3, v8, Landroid/widget/ImageView;
 
     if-eqz v3, :clipboard_icon_done
@@ -857,7 +858,7 @@
 
     iget v3, v3, Landroid/util/DisplayMetrics;->density:F
 
-    const/high16 v4, 0x41c00000    # 24.0f (18dp icon + 6dp gap)
+    const/high16 v4, 0x41e00000    # 28.0f (4dp inset + 18dp icon + 6dp gap)
 
     mul-float/2addr v3, v4
 
