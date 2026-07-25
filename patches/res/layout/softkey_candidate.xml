@@ -4,6 +4,7 @@
     <ImageView android:tag="compat_clipboard_left_separator" android:visibility="gone" android:layout_gravity="start|center" style="@style/SoftKeyCandidateSeparator" />
     <ImageView android:id="@id/candidate_separator" style="@style/SoftKeyCandidateSeparator" />
     <ImageView android:tag="compat_clipboard_right_separator" android:visibility="gone" android:layout_gravity="end|center" style="@style/SoftKeyCandidateBarShowMoreCandidateSeparator" />
+    <ImageView android:tag="compat_clipboard_icon" android:visibility="gone" android:layout_gravity="start|center" android:layout_marginStart="@dimen/softkey_candidate_padding_left" android:layout_width="18.0dip" android:layout_height="18.0dip" android:scaleType="fitCenter" android:src="@drawable/abc_ic_menu_paste_mtrl_am_alpha" />
     <com.google.android.apps.inputmethod.libs.framework.keyboard.widget.AutoSizeTextView android:id="@id/label" style="@style/Label.Candidate" minimum_text_size="@dimen/minimum_candidate_text_size" />
     <TextView android:id="@id/label_candidate_ordinal" style="@style/LabelSecondary.Sup.Dark" />
     <TextView android:id="@id/label_candidate_deletable" style="@style/LabelSecondary.Sub.Candidate" />

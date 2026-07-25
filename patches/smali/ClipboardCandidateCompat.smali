@@ -738,6 +738,18 @@
 
     invoke-virtual {v6, v7}, Landroid/view/View;->setVisibility(I)V
 
+    const-string v7, "compat_clipboard_icon"
+
+    invoke-virtual {p0, v7}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyView;->findViewWithTag(Ljava/lang/Object;)Landroid/view/View;
+
+    move-result-object v7
+
+    if-eqz v7, :inspect_candidate
+
+    const/16 v3, 0x8
+
+    invoke-virtual {v7, v3}, Landroid/view/View;->setVisibility(I)V
+
     :inspect_candidate
     if-eqz p1, :decorate_done
 
@@ -789,20 +801,22 @@
 
     invoke-virtual {v0, v3}, Lavk;->a(F)V
 
-    # Reuse the original APK's 24dp AppCompat material paste glyph rather than
-    # importing Gboard artwork. Tint it from the rendered candidate text, size
-    # it to 18dp, and include it in TextView measurement/END ellipsis.
-    invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyView;->getResources()Landroid/content/res/Resources;
+    # AutoSizeTextView draws text directly and never calls TextView.onDraw(),
+    # so compound drawables are not rendered. Use a real sibling ImageView and
+    # reserve 18dp + 6dp in the label's start padding; both remain inside 200dp.
+    instance-of v3, v7, Landroid/widget/ImageView;
 
-    move-result-object v3
+    if-eqz v3, :clipboard_icon_done
 
-    const v4, 0x7f02001b
+    move-object v3, v7
 
-    invoke-virtual {v3, v4}, Landroid/content/res/Resources;->getDrawable(I)Landroid/graphics/drawable/Drawable;
+    check-cast v3, Landroid/widget/ImageView;
+
+    invoke-virtual {v3}, Landroid/widget/ImageView;->getDrawable()Landroid/graphics/drawable/Drawable;
 
     move-result-object v4
 
-    if-eqz v4, :clipboard_icon_done
+    if-eqz v4, :show_clipboard_icon
 
     invoke-virtual {v4}, Landroid/graphics/drawable/Drawable;->mutate()Landroid/graphics/drawable/Drawable;
 
@@ -816,6 +830,29 @@
 
     invoke-virtual {v4, v7, v3}, Landroid/graphics/drawable/Drawable;->setColorFilter(ILandroid/graphics/PorterDuff$Mode;)V
 
+    const-string v3, "compat_clipboard_icon"
+
+    invoke-virtual {p0, v3}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyView;->findViewWithTag(Ljava/lang/Object;)Landroid/view/View;
+
+    move-result-object v3
+
+    check-cast v3, Landroid/widget/ImageView;
+
+    invoke-virtual {v3, v4}, Landroid/widget/ImageView;->setImageDrawable(Landroid/graphics/drawable/Drawable;)V
+
+    :show_clipboard_icon
+    const-string v3, "compat_clipboard_icon"
+
+    invoke-virtual {p0, v3}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyView;->findViewWithTag(Ljava/lang/Object;)Landroid/view/View;
+
+    move-result-object v7
+
+    const/4 v3, 0x0
+
+    invoke-virtual {v7, v3}, Landroid/view/View;->setVisibility(I)V
+
+    invoke-virtual {v7}, Landroid/view/View;->bringToFront()V
+
     invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyView;->getResources()Landroid/content/res/Resources;
 
     move-result-object v3
@@ -826,21 +863,29 @@
 
     iget v3, v3, Landroid/util/DisplayMetrics;->density:F
 
-    const/high16 v7, 0x41900000    # 18.0f
+    const/high16 v4, 0x41c00000    # 24.0f (18dp icon + 6dp gap)
 
-    mul-float/2addr v3, v7
+    mul-float/2addr v3, v4
 
     float-to-int v3, v3
 
-    const/4 v7, 0x0
+    invoke-virtual {v0}, Landroid/widget/TextView;->getPaddingLeft()I
 
-    invoke-virtual {v4, v7, v7, v3, v3}, Landroid/graphics/drawable/Drawable;->setBounds(IIII)V
+    move-result v4
 
-    invoke-virtual {v0, v4, v1, v1, v1}, Landroid/widget/TextView;->setCompoundDrawablesRelative(Landroid/graphics/drawable/Drawable;Landroid/graphics/drawable/Drawable;Landroid/graphics/drawable/Drawable;Landroid/graphics/drawable/Drawable;)V
+    add-int/2addr v4, v3
 
-    div-int/lit8 v3, v3, 0x3
+    invoke-virtual {v0}, Landroid/widget/TextView;->getPaddingTop()I
 
-    invoke-virtual {v0, v3}, Landroid/widget/TextView;->setCompoundDrawablePadding(I)V
+    move-result v3
+
+    invoke-virtual {v0}, Landroid/widget/TextView;->getPaddingRight()I
+
+    move-result v7
+
+    const/4 v1, 0x0
+
+    invoke-virtual {v0, v4, v3, v7, v1}, Landroid/widget/TextView;->setPadding(IIII)V
 
     :clipboard_icon_done
     # The native candidate divider is the authoritative themed right edge.

@@ -23,6 +23,7 @@
 - 移除候选 holder 左侧人为 45dp 预留及对应 overlay；200dp 文本上限已经保证与右侧关闭键互不覆盖，全宽居中会自然留下左右空间。
 - 左分隔符不再克隆再叠加 tint/alpha 状态，而是清除自身静态 tint/filter 后直接共享同一 Candidate 内右侧原生分隔符已经完成主题处理的 Drawable，消除仅左线持续过淡的问题。
 - 在剪贴板候选文字前加入 18dp 剪贴板图标：复用原 Google 拼音 APK 已包含的 AppCompat Material paste glyph，不复制 Gboard 素材；按当前候选文字的实际主题色动态着色，并纳入 200dp 测量和 END ellipsis，完整提交 payload 不变。
+- 修复首版图标不可见：旧 `AutoSizeTextView` 的 `onDraw()` 直接调用 `Canvas.drawText()` 而不调用 `TextView.onDraw()`，因此 compound drawable 永远不会绘制。改为真实 sibling `ImageView`，并在标签 start padding 中预留 18dp 图标加 6dp 间距；普通候选回收时隐藏图标并恢复原生 padding。
 
 ### Fixed
 
