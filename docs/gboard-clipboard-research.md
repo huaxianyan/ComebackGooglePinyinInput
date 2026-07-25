@@ -154,4 +154,6 @@ V7 真机仍显示两个间接推断不足：注入候选中的原生 ID 分隔�
 
 右侧真实原生 divider 正常后，左侧克隆线仍偏淡，说明把源 Drawable 的 ConstantState、tint、filter、image alpha 和 View alpha 分项重建会重复旧 ImageView 的部分透明度语义。最终左线先清除自身静态 tint/filter，再直接共享右侧原生 divider 已完成主题处理的同一个 Drawable，只同步 View alpha，不再二次解释 Drawable 内部状态。该 Drawable 是静态 1dp 分隔线；主题/候选重建时会重新绑定，因此共享 callback 不影响其实际绘制。
 
-同时移除此前为了视觉对称添加的左侧 45dp reserve 和 holder 双侧 margin。剪贴板标签已经限制在 200dp，关闭键又按真实右列中心独立定位，在支持的手机宽度上不会重叠；holder 保持全宽居中本身就会在短文本两侧产生自然、相等的空白，不需要额外占位 View。
+同时移除此前为了视觉对称添加的左侧 45dp reserve 和 holder 双侧 margin。剪贴板标签已经限制在 200dp，关闭键又按真实右列中心独立定位，在支持的手机宽度上不会重叠；holder 保持全宽居中本身就会在短文本两侧产生自然、相等的空白，不需要额外占位 View。真机确认 V10 的布局、主题分隔线、关闭键和中英文功能符合预期。
+
+最终识别细节参考 Gboard 的“图标 + 剪贴板内容”语义，但不提取或复制 Gboard 私有素材。原 Google 拼音 APK 已自带公开 AppCompat 风格的 `abc_ic_menu_paste_mtrl_am_alpha` 24dp alpha glyph，兼容层把它作为 TextView start compound drawable：显示尺寸 18dp、间距 6dp，并以候选标签 `getCurrentTextColor()` 和 `SRC_IN` 着色，因此随当前键盘候选文字主题变化。图标参与 TextView 的 200dp 最大宽度和 END ellipsis 测量；Candidate 文本和独立完整 payload 均不添加符号，点击仍只提交原剪贴板内容。回收普通候选时会清除 compound drawable 和 padding。

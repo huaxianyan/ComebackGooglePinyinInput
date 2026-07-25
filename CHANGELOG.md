@@ -22,6 +22,7 @@
 - 剪贴板变化时统一以 `textCandidatesUpdated(false)` 清空旧空闲候选周期后再追加唯一新项目，修复英文输入模式保留旧行并显示两个粘贴候选、从而无法居中的问题。
 - 移除候选 holder 左侧人为 45dp 预留及对应 overlay；200dp 文本上限已经保证与右侧关闭键互不覆盖，全宽居中会自然留下左右空间。
 - 左分隔符不再克隆再叠加 tint/alpha 状态，而是清除自身静态 tint/filter 后直接共享同一 Candidate 内右侧原生分隔符已经完成主题处理的 Drawable，消除仅左线持续过淡的问题。
+- 在剪贴板候选文字前加入 18dp 剪贴板图标：复用原 Google 拼音 APK 已包含的 AppCompat Material paste glyph，不复制 Gboard 素材；按当前候选文字的实际主题色动态着色，并纳入 200dp 测量和 END ellipsis，完整提交 payload 不变。
 
 ### Fixed
 

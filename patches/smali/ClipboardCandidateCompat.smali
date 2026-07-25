@@ -652,6 +652,8 @@
 
     invoke-virtual {v0, v1, v1, v1, v1}, Landroid/widget/TextView;->setCompoundDrawables(Landroid/graphics/drawable/Drawable;Landroid/graphics/drawable/Drawable;Landroid/graphics/drawable/Drawable;Landroid/graphics/drawable/Drawable;)V
 
+    invoke-virtual {v0, v1}, Landroid/widget/TextView;->setCompoundDrawablePadding(I)V
+
     invoke-virtual {v0, v1}, Landroid/widget/TextView;->setBackgroundDrawable(Landroid/graphics/drawable/Drawable;)V
 
     invoke-virtual {v0, v1}, Landroid/widget/TextView;->setMinHeight(I)V
@@ -787,6 +789,60 @@
 
     invoke-virtual {v0, v3}, Lavk;->a(F)V
 
+    # Reuse the original APK's 24dp AppCompat material paste glyph rather than
+    # importing Gboard artwork. Tint it from the rendered candidate text, size
+    # it to 18dp, and include it in TextView measurement/END ellipsis.
+    invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyView;->getResources()Landroid/content/res/Resources;
+
+    move-result-object v3
+
+    const v4, 0x7f02001b
+
+    invoke-virtual {v3, v4}, Landroid/content/res/Resources;->getDrawable(I)Landroid/graphics/drawable/Drawable;
+
+    move-result-object v4
+
+    if-eqz v4, :clipboard_icon_done
+
+    invoke-virtual {v4}, Landroid/graphics/drawable/Drawable;->mutate()Landroid/graphics/drawable/Drawable;
+
+    move-result-object v4
+
+    invoke-virtual {v0}, Landroid/widget/TextView;->getCurrentTextColor()I
+
+    move-result v7
+
+    sget-object v3, Landroid/graphics/PorterDuff$Mode;->SRC_IN:Landroid/graphics/PorterDuff$Mode;
+
+    invoke-virtual {v4, v7, v3}, Landroid/graphics/drawable/Drawable;->setColorFilter(ILandroid/graphics/PorterDuff$Mode;)V
+
+    invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyView;->getResources()Landroid/content/res/Resources;
+
+    move-result-object v3
+
+    invoke-virtual {v3}, Landroid/content/res/Resources;->getDisplayMetrics()Landroid/util/DisplayMetrics;
+
+    move-result-object v3
+
+    iget v3, v3, Landroid/util/DisplayMetrics;->density:F
+
+    const/high16 v7, 0x41900000    # 18.0f
+
+    mul-float/2addr v3, v7
+
+    float-to-int v3, v3
+
+    const/4 v7, 0x0
+
+    invoke-virtual {v4, v7, v7, v3, v3}, Landroid/graphics/drawable/Drawable;->setBounds(IIII)V
+
+    invoke-virtual {v0, v4, v1, v1, v1}, Landroid/widget/TextView;->setCompoundDrawablesRelative(Landroid/graphics/drawable/Drawable;Landroid/graphics/drawable/Drawable;Landroid/graphics/drawable/Drawable;Landroid/graphics/drawable/Drawable;)V
+
+    div-int/lit8 v3, v3, 0x3
+
+    invoke-virtual {v0, v3}, Landroid/widget/TextView;->setCompoundDrawablePadding(I)V
+
+    :clipboard_icon_done
     # The native candidate divider is the authoritative themed right edge.
     # The holder may hide it as a last-column divider, so centerSingle... will
     # reassert it after holder decoration and clone it only to the left edge.
