@@ -269,7 +269,7 @@ def apply(decoded: Path, application_id: str) -> None:
         "    sget-boolean v0, Laik;->h:Z",
         ".method public static b(Landroid/content/Context;)Z\n"
         "    .locals 1\n\n"
-        "    invoke-static {p0}, Lcom/google/android/apps/inputmethod/pinyin/firstrun/"
+        "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/firstrun/"
         "FirstRunStateCompat;->isComplete(Landroid/content/Context;)Z\n\n"
         "    move-result v0\n\n"
         "    if-eqz v0, :check_legacy_first_run\n\n"
