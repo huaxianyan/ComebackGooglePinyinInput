@@ -87,6 +87,8 @@ first_run_local_state
 
 修正版增加进程内、同步的 `sGuideLaunchClaimed`：第一次调用者在返回“需要启动”时原子占有启动权；Activity 存活期间 Settings 和 IME 的后续检查均返回 false。未完成就销毁 Activity 时释放占有，允许重新进入；完成后则由持久化 `guide_complete` 继续阻止启动。Activity 创建时也复核完成标记，使已经排队的旧 Intent 即使到达也立即退出，而不会停留在完成页。
 
+第二次隔离验证确认完成页不再停留，但复核分支错误地复用了正常完成路径 `exitGuide()`。该路径会发送 `ACTION_MAIN + CATEGORY_HOME`；迟到 Intent 到达时用户已在桌面，第二个 HOME 语义会触发部分第三方 Launcher 的“再次按 Home 打开应用抽屉”。最终处理改为：正常点击完成仍保留已经验证过的 Home/任务清理行为；仅对完成后迟到的 Activity 直接 `finishAndRemoveTask()`，静默丢弃任务，不再发送第二个 HOME Intent。
+
 ### 2. 不恢复一次性安装状态
 
 `BackupAgent.onRestore()` 在原生恢复后只移除：

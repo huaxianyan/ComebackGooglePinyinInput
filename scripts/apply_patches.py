@@ -46,7 +46,7 @@ def apply(decoded: Path, application_id: str) -> None:
     replace_once(
         decoded / "apktool.yml",
         "versionInfo:\n  versionCode: 4520313\n  versionName: 4.5.2.193126728-arm64-v8a",
-        "versionInfo:\n  versionCode: 4520363\n"
+        "versionInfo:\n  versionCode: 4520364\n"
         "  versionName: 4.5.2",
     )
 
@@ -305,8 +305,11 @@ def apply(decoded: Path, application_id: str) -> None:
         "FirstRunStateCompat;->isComplete(Landroid/content/Context;)Z\n\n"
         "    move-result v0\n\n"
         "    if-eqz v0, :created\n\n"
+        "    # A late singleTask intent must be discarded silently. Sending the\n"
+        "    # normal HOME intent here behaves like a second Home press and can\n"
+        "    # open a third-party launcher's app drawer.\n"
         "    invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/pinyin/firstrun/"
-        "PinyinFirstRunActivity;->exitGuide()V\n\n"
+        "PinyinFirstRunActivity;->finishAndRemoveTask()V\n\n"
         "    :created\n"
         "    return-void\n"
         ".end method\n\n"
