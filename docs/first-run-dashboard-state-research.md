@@ -141,3 +141,15 @@ com.google.android.inputmethod.pinyin.guideaudit
 - 本地备份设置自己的显式权限请求不受影响。
 
 该路径需要在修正版干净安装包中确认：首次输入只进入首次引导，不再同时创建 `PermissionsActivity` 任务。
+
+## 最终完成目的地调整（2026-07-25）
+
+后续真机测试发现，即使移除后台透明权限 Activity，完成时直接发送 HOME 仍会让当前文本窗口、IME 重启和 `dashboard_pending` 的消费顺序互相竞争：首次重新弹出键盘可能先显示无提示的默认 26 键，第二次才出现带引导文字的四布局 Dashboard。
+
+因此放弃“点击完成直接回桌面”的设计，恢复原版使用习惯：完成事务同步写入后，显式打开 Google 拼音 `SettingsActivity`，再以普通 `finish()` 结束引导，不发送 HOME，也不立即移除包含设置页的任务。这样当前文本应用先明确失去焦点，用户离开设置后进入下一个普通文本字段时，Dashboard 才有单一、稳定的触发机会。
+
+返回键行为保持不变且与完成动作分离：
+
+- 不在第一页：只回到上一页；
+- 在第一页：调用退出路径回到 Home 并移除引导任务；
+- 已完成后迟到的 singleTask Intent：继续静默 `finishAndRemoveTask()`，不发送 HOME。

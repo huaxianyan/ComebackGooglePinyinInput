@@ -162,7 +162,7 @@ V38 对应调整：
 
 - 删除 check 自身的圆形 background，保留 24dp 勾号并按 `onPrimaryContainer` 着色，直接放在外层完成容器上；
 - 返回键读取当前 `BidiViewPager` 页码：大于 0 时调用原生 pager 返回前一页，第一页才退出；
-- 新增统一 `exitGuide()`：先启动 `ACTION_MAIN + CATEGORY_HOME`，再 `finishAndRemoveTask()`，确保完成或退出后显示桌面而不是应用设置；
+- 新增统一 `exitGuide()`：先启动 `ACTION_MAIN + CATEGORY_HOME`，再 `finishAndRemoveTask()`；该路径后续仅保留给第一页返回退出，完成按钮已因 Dashboard/IME 焦点竞争恢复为进入 Google 拼音设置页；
 - 指示器不再复用 primary/outline，改用独立 day/night 色。暗色 selected 为 `#E8F0FE`，unselected 为 `#5F6368`。
 
 ## V39 显式按钮导航

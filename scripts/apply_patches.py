@@ -46,7 +46,7 @@ def apply(decoded: Path, application_id: str) -> None:
     replace_once(
         decoded / "apktool.yml",
         "versionInfo:\n  versionCode: 4520313\n  versionName: 4.5.2.193126728-arm64-v8a",
-        "versionInfo:\n  versionCode: 4520366\n"
+        "versionInfo:\n  versionCode: 4520367\n"
         "  versionName: 4.5.2",
     )
 
@@ -369,6 +369,21 @@ def apply(decoded: Path, application_id: str) -> None:
         "    invoke-super {p0}, Lapy;->onDestroy()V\n\n"
         "    return-void\n"
         ".end method\n\n"
+        ".method public final completeGuide()V\n"
+        "    .locals 2\n\n"
+        "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/firstrun/"
+        "FirstRunStateCompat;->complete(Landroid/content/Context;)V\n\n"
+        "    new-instance v0, Landroid/content/Intent;\n\n"
+        "    const-class v1, Lcom/google/android/apps/inputmethod/pinyin/preference/"
+        "SettingsActivity;\n\n"
+        "    invoke-direct {v0, p0, v1}, Landroid/content/Intent;-><init>(Landroid/"
+        "content/Context;Ljava/lang/Class;)V\n\n"
+        "    invoke-virtual {p0, v0}, Lcom/google/android/apps/inputmethod/pinyin/"
+        "firstrun/PinyinFirstRunActivity;->startActivity(Landroid/content/Intent;)V\n\n"
+        "    invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/pinyin/firstrun/"
+        "PinyinFirstRunActivity;->finish()V\n\n"
+        "    return-void\n"
+        ".end method\n\n"
         ".method public final exitGuide()V\n"
         "    .locals 2\n\n"
         "    new-instance v0, Landroid/content/Intent;\n\n"
@@ -444,8 +459,9 @@ def apply(decoded: Path, application_id: str) -> None:
         ".end method",
     )
 
-    # On the last first-run page the right-side Next slot becomes Finish and
-    # exits through the already validated Home/task cleanup path.
+    # On the last first-run page the right-side Next slot becomes Finish,
+    # records setup atomically, opens Google Pinyin settings, and finishes the
+    # guide without issuing a HOME action.
     next_listener = decoded / "smali/aqa.smali"
     replace_once(
         next_listener,
@@ -467,10 +483,8 @@ def apply(decoded: Path, application_id: str) -> None:
         "    if-ne v1, v2, :continue_next\n\n"
         "    check-cast v0, Lcom/google/android/apps/inputmethod/pinyin/firstrun/"
         "PinyinFirstRunActivity;\n\n"
-        "    invoke-static {v0}, Lcom/google/android/inputmethod/pinyin/firstrun/"
-        "FirstRunStateCompat;->complete(Landroid/content/Context;)V\n\n"
         "    invoke-virtual {v0}, Lcom/google/android/apps/inputmethod/pinyin/firstrun/"
-        "PinyinFirstRunActivity;->exitGuide()V\n\n"
+        "PinyinFirstRunActivity;->completeGuide()V\n\n"
         "    return-void\n\n"
         "    :continue_next\n"
         "    .line 5\n"
@@ -513,17 +527,18 @@ def apply(decoded: Path, application_id: str) -> None:
         "    iget-object v1, p0, Lapt;->a:Lapr;",
     )
 
-    # Completion/close must explicitly bring Home forward before removing the
-    # setup task; finishAndRemoveTask alone can reveal its launcher settings.
-    for listener in ("smali/aqb.smali", "smali/aqe.smali"):
-        replace_once(
-            decoded / listener,
-            "    invoke-virtual {v0}, Lapy;->finish()V",
-            "    check-cast v0, Lcom/google/android/apps/inputmethod/pinyin/firstrun/"
-            "PinyinFirstRunActivity;\n\n"
-            "    invoke-virtual {v0}, Lcom/google/android/apps/inputmethod/pinyin/"
-            "firstrun/PinyinFirstRunActivity;->exitGuide()V",
-        )
+    # Keep the original welcome/close control as a plain finish. The actual
+    # Setup Done action records completion and opens Google Pinyin settings,
+    # matching the original post-setup destination without sending HOME.
+    setup_done_listener = decoded / "smali/aqe.smali"
+    replace_once(
+        setup_done_listener,
+        "    invoke-virtual {v0}, Lapy;->finish()V",
+        "    check-cast v0, Lcom/google/android/apps/inputmethod/pinyin/firstrun/"
+        "PinyinFirstRunActivity;\n\n"
+        "    invoke-virtual {v0}, Lcom/google/android/apps/inputmethod/pinyin/"
+        "firstrun/PinyinFirstRunActivity;->completeGuide()V",
+    )
 
     # The left list scrolls correctly, but its original starting SoftKey is
     # selected on release. Detect actual pointer displacement directly in the
