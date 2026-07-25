@@ -144,4 +144,6 @@ V5 真机暴露了两个布局细节：复用 `SoftKeyCandidateSeparator` 的左
 
 后续真机又证明，仅给新增 ImageView 套用原生 style 仍不足以进入旧版键盘的所有动态主题路径。最终方案不再猜测主题 attr：每轮候选完成原生装饰后，以隐藏前的真实 `candidate_separator` 为源，克隆其已解析的 Drawable，并同步 `imageTintList`、image alpha、View alpha 和 drawable state 到左右兼容分隔符。因此颜色来自当前实际渲染的键盘主题，而非系统深浅模式或静态 XML 默认值。
 
-关闭容器的位置同样改为以真实原生 View 为准。显示 `×` 前读取同一位置的 `key_pos_show_more_candidates` 实际 measured width，并写入关闭 overlay 的 LayoutParams；该外宽包含原生分隔列和 45dp host，比仅固定 45dp 更准确，其右边界、中心轴及 KeyboardInnerPadding 坐标应与语音输入和其他右侧按键列一致。
+关闭容器的位置同样改为以真实原生 View 为准。显示 `×` 前读取同一位置的 `key_pos_show_more_candidates` 实际 measured width，并写入关闭 overlay 的 LayoutParams；该外宽包含原生分隔列和 45dp host，比仅固定 45dp 更准确。
+
+V7 真机仍显示两个间接推断不足：注入候选中的原生 ID 分隔符本身未必经过完整实时主题路径，而候选栏右边缘也不等于下方 1.5 权重退格键的中心。后续修订把主题样本改为原生 `key_pos_show_more_candidates` 内真实、可见布局链上的 `.divider.vertical.for-candidate-key`，除 Drawable/tint/alpha 外额外复制 Drawable color filter。几何对齐则改用窗口坐标：优先读取当前可见 `key_pos_del` 的中心；九键布局回退到 `key_pos_move_cursor`；再回退到 `key_pos_header_voice`。将全局中心换算成候选 header 父容器的局部 leftMargin 后定位关闭 overlay，从而不再假定右侧列宽或边缘 inset。

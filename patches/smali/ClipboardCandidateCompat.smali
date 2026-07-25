@@ -878,6 +878,25 @@
 
     invoke-virtual {p1, v0}, Landroid/widget/ImageView;->setImageTintList(Landroid/content/res/ColorStateList;)V
 
+    invoke-virtual {p0}, Landroid/widget/ImageView;->getDrawable()Landroid/graphics/drawable/Drawable;
+
+    move-result-object v0
+
+    invoke-virtual {p1}, Landroid/widget/ImageView;->getDrawable()Landroid/graphics/drawable/Drawable;
+
+    move-result-object v1
+
+    if-eqz v0, :copy_separator_alpha
+
+    if-eqz v1, :copy_separator_alpha
+
+    invoke-virtual {v0}, Landroid/graphics/drawable/Drawable;->getColorFilter()Landroid/graphics/ColorFilter;
+
+    move-result-object v0
+
+    invoke-virtual {v1, v0}, Landroid/graphics/drawable/Drawable;->setColorFilter(Landroid/graphics/ColorFilter;)V
+
+    :copy_separator_alpha
     invoke-virtual {p0}, Landroid/widget/ImageView;->getImageAlpha()I
 
     move-result v0
@@ -899,6 +918,165 @@
     invoke-virtual {p1, v0, v1}, Landroid/widget/ImageView;->setImageState([IZ)V
 
     :sync_separator_done
+    return-void
+.end method
+
+.method private static alignDismissToRightColumn(Landroid/view/View;Landroid/view/View;)V
+    .locals 8
+
+    invoke-virtual {p0}, Landroid/view/View;->getRootView()Landroid/view/View;
+
+    move-result-object v0
+
+    # QWERTY delete is the preferred geometric reference. Nine-key layouts use
+    # their right-panel cursor key; the prime-header voice key is a final fallback.
+    const v1, 0x7f0f00b4
+
+    invoke-virtual {v0, v1}, Landroid/view/View;->findViewById(I)Landroid/view/View;
+
+    move-result-object v1
+
+    if-eqz v1, :find_cursor_reference
+
+    invoke-virtual {v1}, Landroid/view/View;->isShown()Z
+
+    move-result v2
+
+    if-eqz v2, :find_cursor_reference
+
+    invoke-virtual {v1}, Landroid/view/View;->getWidth()I
+
+    move-result v2
+
+    if-lez v2, :find_cursor_reference
+
+    goto :have_reference
+
+    :find_cursor_reference
+    const v1, 0x7f0f00e5
+
+    invoke-virtual {v0, v1}, Landroid/view/View;->findViewById(I)Landroid/view/View;
+
+    move-result-object v1
+
+    if-eqz v1, :find_voice_reference
+
+    invoke-virtual {v1}, Landroid/view/View;->isShown()Z
+
+    move-result v2
+
+    if-eqz v2, :find_voice_reference
+
+    invoke-virtual {v1}, Landroid/view/View;->getWidth()I
+
+    move-result v2
+
+    if-lez v2, :find_voice_reference
+
+    goto :have_reference
+
+    :find_voice_reference
+    const v1, 0x7f0f00e1
+
+    invoke-virtual {v0, v1}, Landroid/view/View;->findViewById(I)Landroid/view/View;
+
+    move-result-object v1
+
+    if-eqz v1, :align_done
+
+    invoke-virtual {v1}, Landroid/view/View;->isShown()Z
+
+    move-result v2
+
+    if-eqz v2, :align_done
+
+    invoke-virtual {v1}, Landroid/view/View;->getWidth()I
+
+    move-result v2
+
+    if-lez v2, :align_done
+
+    :have_reference
+    invoke-virtual {p1}, Landroid/view/View;->getLayoutParams()Landroid/view/ViewGroup$LayoutParams;
+
+    move-result-object v3
+
+    iget v3, v3, Landroid/view/ViewGroup$LayoutParams;->width:I
+
+    if-lez v3, :use_measured_dismiss_width
+
+    goto :have_dismiss_width
+
+    :use_measured_dismiss_width
+    invoke-virtual {p1}, Landroid/view/View;->getMeasuredWidth()I
+
+    move-result v3
+
+    if-lez v3, :use_laid_out_dismiss_width
+
+    goto :have_dismiss_width
+
+    :use_laid_out_dismiss_width
+    invoke-virtual {p1}, Landroid/view/View;->getWidth()I
+
+    move-result v3
+
+    if-lez v3, :align_done
+
+    :have_dismiss_width
+    const/4 v4, 0x2
+
+    new-array v5, v4, [I
+
+    new-array v6, v4, [I
+
+    invoke-virtual {v1, v5}, Landroid/view/View;->getLocationInWindow([I)V
+
+    invoke-virtual {p0, v6}, Landroid/view/View;->getLocationInWindow([I)V
+
+    const/4 v4, 0x0
+
+    aget v5, v5, v4
+
+    div-int/lit8 v2, v2, 0x2
+
+    add-int/2addr v5, v2
+
+    aget v6, v6, v4
+
+    sub-int/2addr v5, v6
+
+    div-int/lit8 v3, v3, 0x2
+
+    sub-int/2addr v5, v3
+
+    invoke-virtual {p0}, Landroid/view/View;->getPaddingLeft()I
+
+    move-result v2
+
+    sub-int/2addr v5, v2
+
+    invoke-virtual {p1}, Landroid/view/View;->getLayoutParams()Landroid/view/ViewGroup$LayoutParams;
+
+    move-result-object v2
+
+    instance-of v3, v2, Landroid/widget/FrameLayout$LayoutParams;
+
+    if-eqz v3, :align_done
+
+    check-cast v2, Landroid/widget/FrameLayout$LayoutParams;
+
+    const/4 v3, 0x3
+
+    iput v3, v2, Landroid/widget/FrameLayout$LayoutParams;->gravity:I
+
+    iput v5, v2, Landroid/widget/FrameLayout$LayoutParams;->leftMargin:I
+
+    iput v4, v2, Landroid/widget/FrameLayout$LayoutParams;->rightMargin:I
+
+    invoke-virtual {p1, v2}, Landroid/view/View;->setLayoutParams(Landroid/view/ViewGroup$LayoutParams;)V
+
+    :align_done
     return-void
 .end method
 
@@ -979,11 +1157,36 @@
 
     move-object v7, v4
 
-    if-eqz v4, :force_left_separator
+    if-eqz v4, :find_rendered_separator_source
 
     const/16 v5, 0x8
 
     invoke-virtual {v4, v5}, Landroid/view/View;->setVisibility(I)V
+
+    :find_rendered_separator_source
+    # Prefer the original show-more key's divider: unlike injected candidate
+    # children, it is guaranteed to have passed through the live theme engine.
+    invoke-virtual {p0}, Landroid/view/View;->getRootView()Landroid/view/View;
+
+    move-result-object v4
+
+    const v5, 0x7f0f0149
+
+    invoke-virtual {v4, v5}, Landroid/view/View;->findViewById(I)Landroid/view/View;
+
+    move-result-object v4
+
+    if-eqz v4, :force_left_separator
+
+    const-string v5, ".divider.vertical.for-candidate-key"
+
+    invoke-virtual {v4, v5}, Landroid/view/View;->findViewWithTag(Ljava/lang/Object;)Landroid/view/View;
+
+    move-result-object v4
+
+    if-eqz v4, :force_left_separator
+
+    move-object v7, v4
 
     :force_left_separator
     const-string v4, "compat_clipboard_left_separator"
@@ -1142,6 +1345,8 @@
     invoke-virtual {v2, v0}, Landroid/view/View;->setLayoutParams(Landroid/view/ViewGroup$LayoutParams;)V
 
     :hide_native_show_more
+    invoke-static {v7, v2}, Lcom/google/android/apps/inputmethod/libs/framework/core/ClipboardCandidateCompat;->alignDismissToRightColumn(Landroid/view/View;Landroid/view/View;)V
+
     const/4 v5, 0x4
 
     invoke-virtual {v4, v5}, Landroid/view/View;->setVisibility(I)V
