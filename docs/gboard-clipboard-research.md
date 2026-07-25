@@ -150,4 +150,8 @@ V7 真机仍显示两个间接推断不足：注入候选中的原生 ID 分隔�
 
 跨层级复制 show-more divider 的 Drawable/tint/filter 仍会叠加源 View 与 Candidate 父层不同的透明度语义，结果在浅色主题很淡、深色和彩色主题几乎不可见。最终不再自绘右线：在 holder 完成“末列隐藏”后重新显示剪贴板 Candidate 自己的真实 `candidate_separator`，它天然与普通候选处于同一布局、主题和父级 alpha 层。左线只在同一 Candidate 内从这条右线克隆最终外观，因此两边既一致，也不会受到跨层级 alpha 乘算。
 
-英文模式还暴露了 `textCandidatesUpdated(true)` 的 preserve 语义差异：刷新剪贴板时旧兼容行可能保留，随后 singleton append 形成两个相同粘贴项，holder 因可见 child 数大于一而恢复左对齐。刷新路径现统一调用 `textCandidatesUpdated(false)` 明确清空旧空闲周期，再只追加一个新剪贴板 Candidate；正常输入活动时仍由 `normalCandidatesActive` 门控，不会被该清理打断。
+英文模式还暴露了 `textCandidatesUpdated(true)` 的 preserve 语义差异：刷新剪贴板时旧兼容行可能保留，随后 singleton append 形成两个相同粘贴项，holder 因可见 child 数大于一而恢复左对齐。刷新路径现统一调用 `textCandidatesUpdated(false)` 明确清空旧空闲周期，再只追加一个新剪贴板 Candidate；正常输入活动时仍由 `normalCandidatesActive` 门控，不会被该清理打断。真机确认英文模式恢复单项和居中。
+
+右侧真实原生 divider 正常后，左侧克隆线仍偏淡，说明把源 Drawable 的 ConstantState、tint、filter、image alpha 和 View alpha 分项重建会重复旧 ImageView 的部分透明度语义。最终左线先清除自身静态 tint/filter，再直接共享右侧原生 divider 已完成主题处理的同一个 Drawable，只同步 View alpha，不再二次解释 Drawable 内部状态。该 Drawable 是静态 1dp 分隔线；主题/候选重建时会重新绑定，因此共享 callback 不影响其实际绘制。
+
+同时移除此前为了视觉对称添加的左侧 45dp reserve 和 holder 双侧 margin。剪贴板标签已经限制在 200dp，关闭键又按真实右列中心独立定位，在支持的手机宽度上不会重叠；holder 保持全宽居中本身就会在短文本两侧产生自然、相等的空白，不需要额外占位 View。

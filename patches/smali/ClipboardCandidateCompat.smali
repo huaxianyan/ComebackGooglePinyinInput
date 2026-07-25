@@ -834,7 +834,7 @@
 .end method
 
 .method private static syncSeparatorAppearance(Landroid/view/View;Landroid/view/View;)V
-    .locals 4
+    .locals 2
 
     instance-of v0, p0, Landroid/widget/ImageView;
 
@@ -852,70 +852,24 @@
 
     move-result-object v0
 
-    if-eqz v0, :copy_separator_state
+    if-eqz v0, :sync_separator_done
 
-    invoke-virtual {v0}, Landroid/graphics/drawable/Drawable;->getConstantState()Landroid/graphics/drawable/Drawable$ConstantState;
+    # Clear the target's independently resolved tint/filter before sharing the
+    # exact already-themed native Drawable. Cloning/reapplying its state made
+    # the left edge multiply alpha in several legacy keyboard themes.
+    const/4 v1, 0x0
 
-    move-result-object v1
+    invoke-virtual {p1, v1}, Landroid/widget/ImageView;->setImageTintList(Landroid/content/res/ColorStateList;)V
 
-    if-eqz v1, :use_source_drawable
+    invoke-virtual {p1}, Landroid/widget/ImageView;->clearColorFilter()V
 
-    invoke-virtual {v1}, Landroid/graphics/drawable/Drawable$ConstantState;->newDrawable()Landroid/graphics/drawable/Drawable;
-
-    move-result-object v0
-
-    invoke-virtual {v0}, Landroid/graphics/drawable/Drawable;->mutate()Landroid/graphics/drawable/Drawable;
-
-    move-result-object v0
-
-    :use_source_drawable
     invoke-virtual {p1, v0}, Landroid/widget/ImageView;->setImageDrawable(Landroid/graphics/drawable/Drawable;)V
-
-    :copy_separator_state
-    invoke-virtual {p0}, Landroid/widget/ImageView;->getImageTintList()Landroid/content/res/ColorStateList;
-
-    move-result-object v0
-
-    invoke-virtual {p1, v0}, Landroid/widget/ImageView;->setImageTintList(Landroid/content/res/ColorStateList;)V
-
-    invoke-virtual {p0}, Landroid/widget/ImageView;->getDrawable()Landroid/graphics/drawable/Drawable;
-
-    move-result-object v0
-
-    invoke-virtual {p1}, Landroid/widget/ImageView;->getDrawable()Landroid/graphics/drawable/Drawable;
-
-    move-result-object v1
-
-    if-eqz v0, :copy_separator_alpha
-
-    if-eqz v1, :copy_separator_alpha
-
-    invoke-virtual {v0}, Landroid/graphics/drawable/Drawable;->getColorFilter()Landroid/graphics/ColorFilter;
-
-    move-result-object v0
-
-    invoke-virtual {v1, v0}, Landroid/graphics/drawable/Drawable;->setColorFilter(Landroid/graphics/ColorFilter;)V
-
-    :copy_separator_alpha
-    invoke-virtual {p0}, Landroid/widget/ImageView;->getImageAlpha()I
-
-    move-result v0
-
-    invoke-virtual {p1, v0}, Landroid/widget/ImageView;->setImageAlpha(I)V
 
     invoke-virtual {p0}, Landroid/widget/ImageView;->getAlpha()F
 
     move-result v0
 
     invoke-virtual {p1, v0}, Landroid/widget/ImageView;->setAlpha(F)V
-
-    invoke-virtual {p0}, Landroid/widget/ImageView;->getDrawableState()[I
-
-    move-result-object v0
-
-    const/4 v1, 0x0
-
-    invoke-virtual {p1, v0, v1}, Landroid/widget/ImageView;->setImageState([IZ)V
 
     :sync_separator_done
     return-void
@@ -1204,9 +1158,9 @@
     :apply_gravity
     invoke-virtual {p0, v0}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/widget/FixedSizeCandidatesHolderView;->setGravity(I)V
 
-    # Constrain the clipboard holder between two equal 45dp side slots. This
-    # makes TextView's END ellipsis stop before the right divider and keeps the
-    # visible paste area geometrically centered despite the dismiss control.
+    # The label itself is capped at 200dp, so it cannot reach the independently
+    # aligned close key on supported phone widths. Keep the holder full-width;
+    # centering naturally leaves balanced space without a synthetic left slot.
     invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/widget/FixedSizeCandidatesHolderView;->getLayoutParams()Landroid/view/ViewGroup$LayoutParams;
 
     move-result-object v0
@@ -1219,19 +1173,6 @@
 
     const/4 v1, 0x0
 
-    if-eqz v6, :apply_side_margins
-
-    invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/widget/FixedSizeCandidatesHolderView;->getResources()Landroid/content/res/Resources;
-
-    move-result-object v1
-
-    const v2, 0x7f0d0206
-
-    invoke-virtual {v1, v2}, Landroid/content/res/Resources;->getDimensionPixelSize(I)I
-
-    move-result v1
-
-    :apply_side_margins
     iget v2, v0, Landroid/widget/FrameLayout$LayoutParams;->topMargin:I
 
     iget v3, v0, Landroid/widget/FrameLayout$LayoutParams;->bottomMargin:I
@@ -1270,21 +1211,6 @@
 
     invoke-virtual {v2, v4}, Landroid/view/View;->setVisibility(I)V
 
-    const-string v4, "compat_clipboard_left_reserve"
-
-    invoke-virtual {v7, v4}, Landroid/view/View;->findViewWithTag(Ljava/lang/Object;)Landroid/view/View;
-
-    move-result-object v4
-
-    if-eqz v4, :find_show_more
-
-    const/4 v5, 0x0
-
-    invoke-virtual {v4, v5}, Landroid/view/View;->setVisibility(I)V
-
-    invoke-virtual {v4}, Landroid/view/View;->bringToFront()V
-
-    :find_show_more
     const v4, 0x7f0f0149
 
     invoke-virtual {v7, v4}, Landroid/view/View;->findViewById(I)Landroid/view/View;
@@ -1341,19 +1267,6 @@
 
     invoke-virtual {v2, v4}, Landroid/view/View;->setOnClickListener(Landroid/view/View$OnClickListener;)V
 
-    const-string v4, "compat_clipboard_left_reserve"
-
-    invoke-virtual {v7, v4}, Landroid/view/View;->findViewWithTag(Ljava/lang/Object;)Landroid/view/View;
-
-    move-result-object v4
-
-    if-eqz v4, :restore_show_more
-
-    const/16 v5, 0x8
-
-    invoke-virtual {v4, v5}, Landroid/view/View;->setVisibility(I)V
-
-    :restore_show_more
     const v4, 0x7f0f0149
 
     invoke-virtual {v7, v4}, Landroid/view/View;->findViewById(I)Landroid/view/View;
@@ -1435,19 +1348,6 @@
 
     check-cast v2, Landroid/view/View;
 
-    const-string v3, "compat_clipboard_left_reserve"
-
-    invoke-virtual {v2, v3}, Landroid/view/View;->findViewWithTag(Ljava/lang/Object;)Landroid/view/View;
-
-    move-result-object v3
-
-    if-eqz v3, :restore_arrow_after_click
-
-    const/16 v0, 0x8
-
-    invoke-virtual {v3, v0}, Landroid/view/View;->setVisibility(I)V
-
-    :restore_arrow_after_click
     const v3, 0x7f0f0149
 
     invoke-virtual {v2, v3}, Landroid/view/View;->findViewById(I)Landroid/view/View;

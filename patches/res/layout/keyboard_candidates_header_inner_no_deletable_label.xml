@@ -3,7 +3,6 @@
   xmlns:android="http://schemas.android.com/apk/res/android">
     <FrameLayout android:paddingLeft="?KeyboardInnerPadding" android:paddingRight="?KeyboardInnerPadding" android:layout_width="fill_parent" android:layout_height="fill_parent">
         <com.google.android.apps.inputmethod.libs.framework.keyboard.widget.FixedSizeCandidatesHolderView android:id="@id/softkey_holder_fixed_candidates" style="@style/CandidateBar" max_candidates_count="@integer/max_candidates_per_row" candidate_background="@attr/BgCandidate" last_column_candidate_background="@attr/BgCandidateLastColumn" candidate_layout="@layout/softkey_candidate" />
-        <FrameLayout android:tag="compat_clipboard_left_reserve" android:visibility="gone" android:layout_gravity="left" android:layout_width="@dimen/softkey_show_more_candidates_min_width" android:layout_height="fill_parent" />
         <com.google.android.apps.inputmethod.libs.framework.keyboard.SoftKeyView android:layout_gravity="right" android:id="@id/key_pos_show_more_candidates" android:layout_width="wrap_content" android:layout_height="fill_parent">
             <ImageView style="@style/SoftKeyCandidateBarShowMoreCandidateSeparator" />
             <FrameLayout android:id="@id/host" style="@style/SoftKeyCandidateBarShowMoreCandidate" />
