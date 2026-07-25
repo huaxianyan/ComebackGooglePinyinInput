@@ -159,3 +159,5 @@ V7 真机仍显示两个间接推断不足：注入候选中的原生 ID 分隔�
 最终识别细节参考 Gboard 的“图标 + 剪贴板内容”语义，但不提取或复制 Gboard 私有素材。原 Google 拼音 APK 已自带公开 AppCompat 风格的 `abc_ic_menu_paste_mtrl_am_alpha` 24dp alpha glyph，以候选标签 `getCurrentTextColor()` 和 `SRC_IN` 着色，因此随当前键盘候选文字主题变化。Candidate 文本和独立完整 payload 均不添加符号，点击仍只提交原剪贴板内容。
 
 首版尝试使用 TextView start compound drawable，构建与 ART 均无异常但真机完全不显示。根因是旧 `avk`/`AutoSizeTextView.onDraw()` 不调用 `TextView.onDraw()`，而是自行缩放 Canvas 并直接 `drawText()`；系统 compound drawable 绘制路径因此不可达。修订版改为 `softkey_candidate.xml` 内真实的 18dp sibling `ImageView`，放在 start candidate padding 处；剪贴板标签额外增加 24dp start padding（18dp 图标 + 6dp 间距），使图标与文字作为一个视觉组合居中并共同受 200dp 最大宽度约束。候选回收时先隐藏 ImageView、恢复原生标签 padding，避免普通候选残留。
+
+V12 的 sibling View 方案在 smali、D8、签名阶段通过，但 Android 16 ART 拒绝 `decorateView()`：`[0xB4] instance-of on non-reference in v7`。根因是右兼容分隔符存在时 `v7` 被写成 visibility 整数，而该 View 不存在的跳转路径越过了后续图标引用赋值，直接在合流标签把 `v7` 当 ImageView 检查。修订版增加 `.locals 9`，把 `v8` 专用于图标 View 引用，并把两条分支统一导向 `find_clipboard_icon` 后才进入候选检查；颜色、尺寸等整数仍只使用 `v3/v4/v7`，不再让引用寄存器跨类型复用。

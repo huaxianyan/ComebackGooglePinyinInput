@@ -634,7 +634,7 @@
 .end method
 
 .method public static decorateView(Lcom/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyView;Lcom/google/android/apps/inputmethod/libs/framework/core/Candidate;)V
-    .locals 8
+    .locals 9
 
     const v0, 0x7f0f0183
 
@@ -732,23 +732,27 @@
 
     move-result-object v6
 
-    if-eqz v6, :inspect_candidate
+    if-eqz v6, :find_clipboard_icon
 
     const/16 v7, 0x8
 
     invoke-virtual {v6, v7}, Landroid/view/View;->setVisibility(I)V
 
+    :find_clipboard_icon
+    # v8 is reserved as a reference for the icon throughout this method. ART
+    # rejects branch merges where a register is an int on one path and a View
+    # on another, even if smali/D8 assembly accepts the method.
     const-string v7, "compat_clipboard_icon"
 
     invoke-virtual {p0, v7}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyView;->findViewWithTag(Ljava/lang/Object;)Landroid/view/View;
 
-    move-result-object v7
+    move-result-object v8
 
-    if-eqz v7, :inspect_candidate
+    if-eqz v8, :inspect_candidate
 
     const/16 v3, 0x8
 
-    invoke-virtual {v7, v3}, Landroid/view/View;->setVisibility(I)V
+    invoke-virtual {v8, v3}, Landroid/view/View;->setVisibility(I)V
 
     :inspect_candidate
     if-eqz p1, :decorate_done
@@ -804,11 +808,11 @@
     # AutoSizeTextView draws text directly and never calls TextView.onDraw(),
     # so compound drawables are not rendered. Use a real sibling ImageView and
     # reserve 18dp + 6dp in the label's start padding; both remain inside 200dp.
-    instance-of v3, v7, Landroid/widget/ImageView;
+    instance-of v3, v8, Landroid/widget/ImageView;
 
     if-eqz v3, :clipboard_icon_done
 
-    move-object v3, v7
+    move-object v3, v8
 
     check-cast v3, Landroid/widget/ImageView;
 
@@ -830,28 +834,18 @@
 
     invoke-virtual {v4, v7, v3}, Landroid/graphics/drawable/Drawable;->setColorFilter(ILandroid/graphics/PorterDuff$Mode;)V
 
-    const-string v3, "compat_clipboard_icon"
-
-    invoke-virtual {p0, v3}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyView;->findViewWithTag(Ljava/lang/Object;)Landroid/view/View;
-
-    move-result-object v3
+    move-object v3, v8
 
     check-cast v3, Landroid/widget/ImageView;
 
     invoke-virtual {v3, v4}, Landroid/widget/ImageView;->setImageDrawable(Landroid/graphics/drawable/Drawable;)V
 
     :show_clipboard_icon
-    const-string v3, "compat_clipboard_icon"
-
-    invoke-virtual {p0, v3}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyView;->findViewWithTag(Ljava/lang/Object;)Landroid/view/View;
-
-    move-result-object v7
-
     const/4 v3, 0x0
 
-    invoke-virtual {v7, v3}, Landroid/view/View;->setVisibility(I)V
+    invoke-virtual {v8, v3}, Landroid/view/View;->setVisibility(I)V
 
-    invoke-virtual {v7}, Landroid/view/View;->bringToFront()V
+    invoke-virtual {v8}, Landroid/view/View;->bringToFront()V
 
     invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyView;->getResources()Landroid/content/res/Resources;
 
