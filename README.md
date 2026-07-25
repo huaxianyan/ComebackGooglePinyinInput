@@ -1,10 +1,12 @@
-# Google 拼音输入法 Android 16/17 兼容版
+# Google 拼音输入法 创造性AI版
 
-这是 Google 拼音输入法 4.5.2 的非商业兼容维护项目，目标是在尽量保持原始输入体验、候选逻辑、词库格式和主题行为的前提下，使这款已经停止更新的输入法能够继续用于 Android 16/17。
+**English project name: Google Pinyin Input Creative AI Edition**
+
+这是基于 Google 拼音输入法 4.5.2 的非商业兼容维护与创造性 AI 协作项目。目标是在尽量保持原始输入体验、候选逻辑、词库格式和主题行为的前提下，让这款已经停止更新的输入法继续用于 Android 16/17，并以可复现、可审计的方式维护兼容补丁。
 
 ## 下载
 
-正式兼容版请从项目的 [Releases](https://github.com/huaxianyan/comeback-google-pinyin-input/releases) 页面下载。
+“Google 拼音输入法 创造性AI版”正式构建请从项目的 [Releases](https://github.com/huaxianyan/comeback-google-pinyin-input/releases) 页面下载。Android 应用内、输入法选择器、设置页和 Launcher 中的显示名称仍保持为“Google 拼音输入法”。
 
 仓库同时保存用于复现构建的原始官方 APK：
 
@@ -27,20 +29,24 @@
 
 Google 拼音输入法最初由 Google 发布并通过 Google Play 等官方 Android 分发渠道提供。本仓库中的原始 APK 用于软件保存、兼容性研究和可复现构建，其文件哈希与签名信息列于上表，便于独立校验来源和完整性。
 
-### 最新正式兼容版本
+### 最新正式版本
 
 | 项目 | 内容 |
 | --- | --- |
+| 项目中文名称 | Google 拼音输入法 创造性AI版 |
+| English project name | Google Pinyin Input Creative AI Edition |
 | 项目版本 | `1.0.0` |
-| 应用版本名 | `4.5.2` |
-| versionCode | `4520360` |
-| 兼容版包名 | `com.google.android.inputmethod.pinyin.compat` |
+| Android versionName | `1.0.0` |
+| Android versionCode | `4520381` |
+| 正式包名 | `com.google.android.inputmethod.pinyin.compat` |
+| 架构 | `arm64-v8a` |
+| 正式 APK | `Google-Pinyin-Input-Creative-AI-Edition-arm64-v8a-v1.0.0.apk` |
 | target SDK | 28 |
 | 主要测试设备 | Pixel 10 Pro / Android 16 |
 
-上表对应当前 Latest Release `v1.0.0`。`master` 可能包含尚未发布、versionCode 更高的已验证兼容修复；是否发布以 GitHub Release 和 `CHANGELOG.md` 为准。
+上表对应重新整理后的正式 Release `v1.0.0`，作为提升 target API 之前当前兼容阶段的最终正式版本。后续 `master` 仍可能包含尚未发布的研究或兼容修复；是否发布以 GitHub Release 和 `CHANGELOG.md` 为准。
 
-兼容版使用独立包名和项目测试证书签名，可以与 Google 原始版本同时安装。以后升级兼容版时必须继续使用同一签名证书；它不能覆盖由 Google 官方证书签名的原始应用。
+创造性AI版使用独立包名和项目签名证书，可以与 Google 原始版本同时安装。以后升级时必须继续使用同一签名证书；它不能覆盖由 Google 官方证书签名的原始应用。
 
 ## 主要兼容改进
 
@@ -48,7 +54,7 @@ Google 拼音输入法最初由 Google 发布并通过 Google Play 等官方 And
 - 保持原有 `ALPHA_8` 离屏手写画布、压感宽度、路径平滑和原生识别流程。
 - 修复候选、标点、符号和表情列表滚动后外层键盘错误触发点击的问题。
 - 修复全键盘符号/表情分页中失效的滑动距离门槛，同时保留原有翻页、吸附和动画参数。
-- 增加与原生候选管线融合的剪贴板候选，点击后提交完整剪贴板文本。
+- 增加与原生候选管线融合的剪贴板候选、主题化剪贴板图标和原生关闭控制，点击后提交完整剪贴板文本。
 - 根据实际键盘主题表面调整 Android 导航栏颜色和明暗图标。
 - 移除持续固定 120 Hz 的旧兼容请求，由 Android 的 LTPO/ARR 调度刷新率。
 - 将首次使用引导整理为“启用 → 选择输入法 → 完成”，使用明确的上一步/下一步导航。
@@ -60,6 +66,7 @@ Google 拼音输入法最初由 Google 发布并通过 Google Play 等官方 And
   ```
 
 - 支持 1/3/7/14/30 天备份间隔、3/5/10/20/30 个保留版本、立即备份和手动导入。
+- 在进入词典设置页后按需显示中英文词条数、主文件、滚动副本、恢复旁路和最近落盘时间；应用及键盘启动时不扫描。
 - 备份使用 Google 拼音原生 UTF-16LE 用户词典导出/导入格式；不使用云端、不自动恢复、不依赖网络。
 - 清理失效的 Clearcut/Primes、Firebase、反馈上传和在线词典更新组件。
 - 补全现代 Android 要求的关键 `android:exported` 声明。
@@ -68,11 +75,11 @@ Google 拼音输入法最初由 Google 发布并通过 Google Play 等官方 And
 
 ## 本地词典灾难恢复
 
-启用“自动备份用户字典”后，备份会发布到公共 Documents 目录，因此清除应用数据或卸载兼容版不会删除这些文本文件。
+启用“自动备份用户字典”后，备份会发布到公共 Documents 目录，因此清除应用数据或卸载创造性AI版不会删除这些文本文件。
 
 恢复步骤：
 
-1. 安装兼容版并启用输入法。
+1. 安装创造性AI版并启用输入法。
 2. 打开“设置 → 字典”。
 3. 点击“导入本地备份”。
 4. 首次恢复时按系统提示授予文件权限。
@@ -131,7 +138,7 @@ PowerShell 示例：
 
 ### 签名一致性
 
-Android 是否允许覆盖升级取决于**签名证书身份**，而不是 APK 文件名。自动构建必须使用与现有正式兼容版完全相同的 PKCS#12/JKS 私钥。私钥和密码不能写进仓库或普通 Actions Variables，应存入 GitHub Actions **Secrets**：
+Android 是否允许覆盖升级取决于**签名证书身份**，而不是 APK 文件名。自动构建必须使用与现有正式创造性AI版完全相同的 PKCS#12/JKS 私钥。私钥和密码不能写进仓库或普通 Actions Variables，应存入 GitHub Actions **Secrets**：
 
 | GitHub Secret | 内容 |
 | --- | --- |
@@ -180,7 +187,7 @@ gh variable set ANDROID_SIGNING_CERT_SHA256 --body "985CBF843A362169B129AEAC5E15
 gh variable set ANDROID_APPLICATION_ID --body "com.google.android.inputmethod.pinyin.compat"
 ```
 
-配置后可在 GitHub 的 **Actions → Build and release APK → Run workflow** 手动验证一次。确认 artifact 能安装并覆盖正式兼容版后，以新版本提交创建标签：
+配置后可在 GitHub 的 **Actions → Build and release APK → Run workflow** 手动验证一次。确认 artifact 能安装并覆盖正式创造性AI版后，以新版本提交创建标签：
 
 ```powershell
 git tag -a v1.0.1 -m "Google Pinyin compatibility 1.0.1"
