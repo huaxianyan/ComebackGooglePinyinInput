@@ -27,7 +27,7 @@
 
 Google 拼音输入法最初由 Google 发布并通过 Google Play 等官方 Android 分发渠道提供。本仓库中的原始 APK 用于软件保存、兼容性研究和可复现构建，其文件哈希与签名信息列于上表，便于独立校验来源和完整性。
 
-### 兼容版本
+### 最新正式兼容版本
 
 | 项目 | 内容 |
 | --- | --- |
@@ -37,6 +37,8 @@ Google 拼音输入法最初由 Google 发布并通过 Google Play 等官方 And
 | 兼容版包名 | `com.google.android.inputmethod.pinyin.compat` |
 | target SDK | 28 |
 | 主要测试设备 | Pixel 10 Pro / Android 16 |
+
+上表对应当前 Latest Release `v1.0.0`。`master` 可能包含尚未发布、versionCode 更高的已验证兼容修复；是否发布以 GitHub Release 和 `CHANGELOG.md` 为准。
 
 兼容版使用独立包名和项目测试证书签名，可以与 Google 原始版本同时安装。以后升级兼容版时必须继续使用同一签名证书；它不能覆盖由 Google 官方证书签名的原始应用。
 

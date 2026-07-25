@@ -1,5 +1,21 @@
 # Changelog
 
+## [Unreleased]
+
+当前 `master` 开发构建的 versionCode 为 `4520364`；尚未创建新标签或 GitHub Release。
+
+### Fixed
+
+- 将首次引导最终完成状态同步写入独立、非云恢复的本地偏好文件，避免 IME 启动与引导任务退出之间读到旧状态。
+- Android 自动恢复默认偏好后清理安装本地的 `HAD_FIRST_RUN` 和 `USER_SELECTED_KEYBOARD`，不再让旧安装状态跳过首次引导或四布局选择。
+- 完成引导后的第一个合适普通文本字段稳定进入原生四布局 Dashboard，并保留密码、数字、硬键盘和其他原生排除条件。
+- 对 Settings 与 IME 的并发首次引导检查增加进程内启动占有，避免完成前已经排队的第二个 `singleTask` Intent 再次显示完成页。
+- 完成后迟到的引导 Intent 仅静默移除任务，不再发送第二个 HOME Intent，避免触发第三方 Launcher 的应用抽屉行为。
+
+### Build
+
+- GitHub Actions 手动构建支持独立 application ID 和 artifact 名称，便于不覆盖正式包的审计测试。
+
 ## [1.0.0] - 2026-07-25
 
 首个正式 Android 16/17 兼容版。应用版本名恢复为简洁的 `4.5.2`，versionCode 为 `4520360`。

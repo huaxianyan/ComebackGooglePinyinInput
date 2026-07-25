@@ -8,7 +8,8 @@
 - [x] 过滤密码输入框、`disableAutoPaste`、敏感标记和非文本剪贴板
 - [x] 将剪贴板项合并进每轮原生候选首批数据，避免分页重复注入
 - [x] 完成长文本摘要、居中布局、圆角边框、前置剪贴板图标和 Material 凸起阴影的 Gboard 风格交互迭代
-- [ ] 由项目维护者在真机验证 V25 动态剪贴板候选及视觉效果
+- [x] 真机验证动态剪贴板候选、完整文本上屏、点击去重及常用浅色/深色主题视觉
+- [ ] 可选：补充验证额外彩色主题下的剪贴板候选表面与对比度
 
 ## 当前任务：首次使用引导
 
@@ -21,8 +22,10 @@
 - [x] V38 完成/第一页返回时显式回桌面；其他页面返回上一页，不再露出应用设置
 - [x] V38 移除完成勾号的多余圆底；逐页返回和完成退出已通过真机验证
 - [x] V39 移除 PageIndicator、禁止触摸滑页，改用上一步/下一步显式导航和完成状态门控
-- [x] V40 将完成按钮统一移动到 footer 右下角的下一步位置
-- [ ] 复测已安装的 V40：最后一页上一步/完成布局、按钮文字恢复、完成退出及完整三页流程
+- [x] V40 将完成按钮统一移动到 footer 右下角的下一步位置，并通过完整三页流程真机验证
+- [x] 将 `HAD_FIRST_RUN` / `USER_SELECTED_KEYBOARD` 从跨安装恢复状态中规范化，最终完成值在退出前同步持久化
+- [x] 首个普通文本字段稳定显示原生四布局 Dashboard 及首次布局提示
+- [x] 串行化 Settings/IME 的并发引导启动请求；静默丢弃完成后迟到的 singleTask Intent，避免重复完成页和第三方 Launcher 二次 Home 行为
 
 ## 当前任务：输入面板触摸
 
@@ -40,9 +43,9 @@
 - [x] 对照当前 Gboard 复核 `DictionaryAccessor`、启动 enrollment、保存调度及 `_bak`/`_tmp` 轮换
 - [x] 确认 V20 在备份加载失败后遗漏有效 `_tmp`、强制保存可与异步保存重叠、显式清除可能遗留旧备份
 - [x] V41 增加 backup → tmp 的有界加载回退，串行化保存，并在明确删除/清空后清除恢复旁路文件
-- [ ] 隔离验证首次引导最终完成事务、BackupAgent 安装状态清理及首个普通文本字段四布局 Dashboard（见 `docs/first-run-dashboard-state-research.md`）
 - [x] 完成用户词典本地自动备份和手动恢复：复用原生 exporter/importer，固定写入 `Documents/GooglePinyinBackup`，通过 MediaStore `IS_PENDING` 校验后发布并轮换版本（见 `docs/dictionary-auto-backup-design.md`）
-- [ ] 分阶段实现本地自动备份：先验证“本地目录 → 立即备份 → 清除数据/卸载后文件仍在 → 新装手动导入”，再接入时间间隔和保留版本
+- [x] 真机验证“固定本地目录 → 立即备份 → 卸载重装后文件仍在 → 新装授权并手动导入”，恢复后的自定义词候选正常
+- [ ] 按自然使用时间继续观察 1/3/7/14/30 天自动备份调度及保留版本轮换
 - [ ] 使用独立 dictionaryaudit 包验证中断轮换、损坏备份、有效临时文件及显式清空场景
 
 ## 当前任务：既有功能基础复核
@@ -50,14 +53,15 @@
 - [x] 对照 Gboard 调查系统虚拟导航键、导航栏颜色、图标明暗、divider、contrast 和 WindowInsets 处理
 - [x] V27 确认标准 Drawable 读取被 Google 拼音自定义 `bam` stylesheet wrapper 阻断，所有主题实际进入 fallback
 - [x] V28 读取 `bam` 当前 state 的最终 `ColorStateList`，主题名称与硬编码颜色仅保留为早期生命周期 fallback
-- [ ] 由项目维护者重新验证内置浅/深及额外彩色主题的导航栏颜色和虚拟键明暗
+- [x] 真机验证常用内置浅色/深色主题的导航栏颜色和虚拟键明暗
+- [ ] 可选：补充验证额外彩色主题的导航栏表面和图标对比度
 - [ ] 分别设计三键导航、手势导航、浮动键盘和 bottom frame 的兼容策略
 - [x] 对照 Gboard 复核固定 120Hz 请求、触摸 boost、内容速度提示和设备 ARR 能力
 - [x] V29 移除固定 120Hz Window/View vote，API 35+ 改用触摸动态 boost，并在 `onFinishInputView()` 对称释放
 - [x] V30 交互期 Surface vote 真机无可感知改善；V31 已回滚所有帧率干预，恢复系统默认调度
 - [ ] target API 与渲染路径现代化后重新实现高刷新率支持
 - [x] 对照 Gboard 复核手写离屏 Bitmap/Canvas、down/move/up clip、save/restore、pressure 与 dirty-rect 路径
-- [ ] 真机验证 V36 手写 Canvas 整理：首笔、连续多笔、多字识别、笔迹清除/淡出及候选上屏
+- [x] 真机验证 V36 手写 Canvas 整理：首笔、连续多笔、识别、笔迹显示及候选上屏
 - [ ] 继续复核其他已修改功能
 
 ## 后续兼容性工作
