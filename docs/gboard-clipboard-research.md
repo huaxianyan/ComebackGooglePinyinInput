@@ -123,4 +123,6 @@ Gboard 不读取系统 `Configuration.uiMode`，也不在 Java/smali 中根据�
 7. 关闭按钮作为原展开 SoftKeyView 上方的普通可点击 sibling，避免篡改 `TOGGLE_SHOW_MORE_CANDIDATES` 的原生 SoftKeyDef；建议消失后恢复原展开箭头及其触摸语义；
 8. 无障碍描述独立设为“关闭剪贴板建议”。
 
-该修订仍需通过独立 `clipboardaudit` 包验证视觉密度、关闭触摸、展开箭头恢复、普通候选和多候选场景。
+第一份 `clipboardaudit` APK 在 ART 类验证阶段暴露了 smali 寄存器类型合流错误：旧 chip 不可达指令与新分隔线路径复用 `v4`，使 Android 报出 `VerifyError: tried to get class from non-reference register v4 (type=Boolean)`。修正版完全删除旧 chip 指令，并在简化后的 `decorateView()` 中为资源、View、payload 和布尔结果使用不产生冲突的寄存器生命周期。apktool/D8 构建成功不能替代真机 ART 验证。
+
+该修订仍需通过修正版独立 `clipboardaudit` 包验证 ART 加载、视觉密度、关闭触摸、展开箭头恢复、普通候选和多候选场景。

@@ -46,7 +46,7 @@ def apply(decoded: Path, application_id: str) -> None:
     replace_once(
         decoded / "apktool.yml",
         "versionInfo:\n  versionCode: 4520313\n  versionName: 4.5.2.193126728-arm64-v8a",
-        "versionInfo:\n  versionCode: 4520365\n"
+        "versionInfo:\n  versionCode: 4520366\n"
         "  versionName: 4.5.2",
     )
 
@@ -86,6 +86,52 @@ def apply(decoded: Path, application_id: str) -> None:
         if destination.exists() and source.name not in overwritten_layouts:
             raise RuntimeError(f"Refusing to overwrite resource: {destination}")
         shutil.copyfile(source, destination)
+
+    # Do not launch a transparent permission Activity from the IME service.
+    # Runtime permission requests made from a real settings Activity continue
+    # through FeaturePermissionsManager's direct Activity.requestPermissions
+    # path, while optional background features remain disabled until granted.
+    permissions_activity = decoded / (
+        "smali/com/google/android/apps/inputmethod/libs/framework/core/"
+        "PermissionsActivity.smali"
+    )
+    replace_once(
+        permissions_activity,
+        ".method public static varargs a(Landroid/content/Context;I[Ljava/lang/String;)V\n"
+        "    .locals 3\n\n"
+        "    .prologue\n"
+        "    .line 3\n"
+        "    new-instance v0, Landroid/content/Intent;\n\n"
+        "    invoke-virtual {p0}, Landroid/content/Context;->getApplicationContext()"
+        "Landroid/content/Context;\n\n"
+        "    move-result-object v1\n\n"
+        "    const-class v2, Lcom/google/android/apps/inputmethod/libs/framework/core/"
+        "PermissionsActivity;\n\n"
+        "    invoke-direct {v0, v1, v2}, Landroid/content/Intent;-><init>(Landroid/"
+        "content/Context;Ljava/lang/Class;)V\n\n"
+        "    .line 4\n"
+        "    const-string v1, \"requested_permissions\"\n\n"
+        "    invoke-virtual {v0, v1, p2}, Landroid/content/Intent;->putExtra(Ljava/"
+        "lang/String;[Ljava/lang/String;)Landroid/content/Intent;\n\n"
+        "    .line 5\n"
+        "    const-string v1, \"request_code\"\n\n"
+        "    invoke-virtual {v0, v1, p1}, Landroid/content/Intent;->putExtra(Ljava/"
+        "lang/String;I)Landroid/content/Intent;\n\n"
+        "    .line 6\n"
+        "    const/high16 v1, 0x10800000\n\n"
+        "    invoke-virtual {v0, v1}, Landroid/content/Intent;->addFlags(I)Landroid/"
+        "content/Intent;\n\n"
+        "    .line 7\n"
+        "    invoke-virtual {p0, v0}, Landroid/content/Context;->startActivity(Landroid/"
+        "content/Intent;)V\n\n"
+        "    .line 8\n"
+        "    return-void\n"
+        ".end method",
+        ".method public static varargs a(Landroid/content/Context;I[Ljava/lang/String;)V\n"
+        "    .locals 0\n\n"
+        "    return-void\n"
+        ".end method",
+    )
 
     # Android rejects the legacy Region.Op.REPLACE clip used by the old
     # handwriting renderer. Match current Gboard: isolate every dirty-rect draw

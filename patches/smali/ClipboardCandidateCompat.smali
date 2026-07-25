@@ -599,7 +599,7 @@
 .end method
 
 .method public static decorateView(Lcom/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyView;Lcom/google/android/apps/inputmethod/libs/framework/core/Candidate;)V
-    .locals 10
+    .locals 8
 
     const v0, 0x7f0f0183
 
@@ -609,10 +609,10 @@
 
     check-cast v0, Landroid/widget/TextView;
 
-    if-eqz v0, :done
+    if-eqz v0, :decorate_done
 
-    # Fixed candidate views are recycled. Restore the native label before
-    # applying clipboard-only chip styling so ordinary candidates stay intact.
+    # Fixed candidate views are recycled. Restore only the native candidate
+    # label state that the former chip renderer changed.
     const/4 v1, 0x0
 
     invoke-virtual {v0, v1, v1, v1, v1}, Landroid/widget/TextView;->setCompoundDrawables(Landroid/graphics/drawable/Drawable;Landroid/graphics/drawable/Drawable;Landroid/graphics/drawable/Drawable;Landroid/graphics/drawable/Drawable;)V
@@ -653,45 +653,45 @@
 
     invoke-virtual {v2, v3}, Landroid/content/res/Resources;->getDimension(I)F
 
-    move-result v3
+    move-result v2
 
-    invoke-virtual {v0, v1, v3}, Landroid/widget/TextView;->setTextSize(IF)V
+    invoke-virtual {v0, v1, v2}, Landroid/widget/TextView;->setTextSize(IF)V
 
-    const v3, 0x7f0f0013
+    invoke-virtual {v0, v1}, Landroid/widget/TextView;->setTag(Ljava/lang/Object;)V
 
-    invoke-virtual {p0, v3}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyView;->findViewById(I)Landroid/view/View;
+    # Restore the standard right separator and hide the clipboard-only left
+    # separator before inspecting the recycled view's new Candidate.
+    const v2, 0x7f0f0013
+
+    invoke-virtual {p0, v2}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyView;->findViewById(I)Landroid/view/View;
+
+    move-result-object v2
+
+    if-eqz v2, :find_left_separator
+
+    invoke-virtual {v2, v1}, Landroid/view/View;->setVisibility(I)V
+
+    :find_left_separator
+    const-string v3, "compat_clipboard_left_separator"
+
+    invoke-virtual {p0, v3}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyView;->findViewWithTag(Ljava/lang/Object;)Landroid/view/View;
 
     move-result-object v3
 
-    if-eqz v3, :check_candidate
+    if-eqz v3, :inspect_candidate
 
-    invoke-virtual {v3, v1}, Landroid/view/View;->setVisibility(I)V
+    const/16 v4, 0x8
 
-    # The native candidate layout has a right separator. A clipboard-only
-    # left separator is present but hidden so ordinary candidates are unchanged.
-    const-string v4, "compat_clipboard_left_separator"
+    invoke-virtual {v3, v4}, Landroid/view/View;->setVisibility(I)V
 
-    invoke-virtual {p0, v4}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyView;->findViewWithTag(Ljava/lang/Object;)Landroid/view/View;
-
-    move-result-object v4
-
-    if-eqz v4, :reset_marker
-
-    const/16 v5, 0x8
-
-    invoke-virtual {v4, v5}, Landroid/view/View;->setVisibility(I)V
-
-    :reset_marker
-    invoke-virtual {v0, v1}, Landroid/widget/TextView;->setTag(Ljava/lang/Object;)V
-
-    :check_candidate
-    if-eqz p1, :done
+    :inspect_candidate
+    if-eqz p1, :decorate_done
 
     iget-object v4, p1, Lcom/google/android/apps/inputmethod/libs/framework/core/Candidate;->a:Ljava/lang/Object;
 
     instance-of v5, v4, Ljava/lang/String;
 
-    if-eqz v5, :done
+    if-eqz v5, :decorate_done
 
     check-cast v4, Ljava/lang/String;
 
@@ -701,186 +701,24 @@
 
     move-result v4
 
-    if-eqz v4, :done
+    if-eqz v4, :decorate_done
 
-    # Use Google Pinyin's native candidate typography and transparent key
-    # surface. Delimit the centered clipboard text with native separators.
-    const-string v5, "compat_clipboard_candidate"
+    # Clipboard text now uses the untouched native candidate typography and
+    # transparent key surface. Tags drive centering without visual heuristics.
+    const-string v4, "compat_clipboard_candidate"
 
-    invoke-virtual {v0, v5}, Landroid/widget/TextView;->setTag(Ljava/lang/Object;)V
+    invoke-virtual {v0, v4}, Landroid/widget/TextView;->setTag(Ljava/lang/Object;)V
 
-    if-eqz v4, :keep_right_separator
+    if-eqz v3, :keep_native_right_separator
 
-    const/4 v5, 0x0
+    invoke-virtual {v3, v1}, Landroid/view/View;->setVisibility(I)V
 
-    invoke-virtual {v4, v5}, Landroid/view/View;->setVisibility(I)V
+    :keep_native_right_separator
+    if-eqz v2, :decorate_done
 
-    :keep_right_separator
-    if-eqz v3, :native_style_done
+    invoke-virtual {v2, v1}, Landroid/view/View;->setVisibility(I)V
 
-    const/4 v5, 0x0
-
-    invoke-virtual {v3, v5}, Landroid/view/View;->setVisibility(I)V
-
-    :native_style_done
-    goto :done
-
-    # Retained unreachable instructions keep old resource references stable in
-    # the decoded base; clipboard candidates no longer execute chip styling.
-    invoke-virtual {v2}, Landroid/content/res/Resources;->getDisplayMetrics()Landroid/util/DisplayMetrics;
-
-    move-result-object v3
-
-    iget v9, v3, Landroid/util/DisplayMetrics;->scaledDensity:F
-
-    iget v3, v3, Landroid/util/DisplayMetrics;->density:F
-
-    # AutoSizeTextView computes its minimum-size ratio from the raw argument,
-    # so pass an actual px value instead of 16 with the SP unit.
-    const/high16 v4, 0x41600000    # 14.0f
-
-    mul-float/2addr v9, v4
-
-    const/4 v4, 0x0
-
-    invoke-virtual {v0, v4, v9}, Landroid/widget/TextView;->setTextSize(IF)V
-
-    const/high16 v4, 0x41400000    # 12.0f
-
-    mul-float/2addr v4, v3
-
-    float-to-int v4, v4
-
-    const/high16 v5, 0x40c00000    # 6.0f
-
-    mul-float/2addr v5, v3
-
-    float-to-int v5, v5
-
-    invoke-virtual {v0, v4, v5, v4, v5}, Landroid/widget/TextView;->setPadding(IIII)V
-
-    const/high16 v4, 0x42080000    # 34.0f
-
-    mul-float/2addr v4, v3
-
-    float-to-int v4, v4
-
-    invoke-virtual {v0, v4}, Landroid/widget/TextView;->setMinHeight(I)V
-
-    new-instance v4, Landroid/graphics/drawable/GradientDrawable;
-
-    invoke-direct {v4}, Landroid/graphics/drawable/GradientDrawable;-><init>()V
-
-    const/4 v5, 0x0
-
-    invoke-virtual {v4, v5}, Landroid/graphics/drawable/GradientDrawable;->setShape(I)V
-
-    const v5, 0x447a0000    # 1000.0f, Gboard pill radius
-
-    mul-float/2addr v5, v3
-
-    invoke-virtual {v4, v5}, Landroid/graphics/drawable/GradientDrawable;->setCornerRadius(F)V
-
-    invoke-virtual {v0}, Landroid/widget/TextView;->getCurrentTextColor()I
-
-    move-result v5
-
-    # Gboard does not tint the chip with its (dark) label in light themes.
-    # Its default-light stylesheet maps the chip to the bordered-key surface:
-    # 30% white over the keyboard. Dark themes use about 10% white instead.
-    invoke-static {v5}, Landroid/graphics/Color;->red(I)I
-
-    move-result v6
-
-    invoke-static {v5}, Landroid/graphics/Color;->green(I)I
-
-    move-result v7
-
-    add-int/2addr v6, v7
-
-    invoke-static {v5}, Landroid/graphics/Color;->blue(I)I
-
-    move-result v7
-
-    add-int/2addr v6, v7
-
-    const/16 v7, 0x180
-
-    if-le v6, v7, :light_keyboard_chip
-
-    const v6, 0x1affffff
-
-    const v8, 0x26ffffff
-
-    goto :apply_chip_colors
-
-    :light_keyboard_chip
-    const v6, 0x4cffffff
-
-    const/high16 v8, 0x18000000
-
-    :apply_chip_colors
-    invoke-virtual {v4, v6}, Landroid/graphics/drawable/GradientDrawable;->setColor(I)V
-
-    const/high16 v7, 0x3f800000    # 1.0f
-
-    mul-float/2addr v7, v3
-
-    float-to-int v7, v7
-
-    invoke-virtual {v4, v7, v8}, Landroid/graphics/drawable/GradientDrawable;->setStroke(II)V
-
-    invoke-virtual {v0, v4}, Landroid/widget/TextView;->setBackgroundDrawable(Landroid/graphics/drawable/Drawable;)V
-
-    # Material-style raised surface. GradientDrawable supplies the rounded
-    # outline used by the platform elevation renderer.
-    const/high16 v4, 0x40000000    # 2.0f
-
-    mul-float/2addr v4, v3
-
-    invoke-virtual {v0, v4}, Landroid/widget/TextView;->setElevation(F)V
-
-    const/4 v4, 0x0
-
-    invoke-virtual {v0, v4}, Landroid/widget/TextView;->setTranslationZ(F)V
-
-    invoke-virtual {v0}, Landroid/widget/TextView;->bringToFront()V
-
-    const v4, 0x7f02001b
-
-    invoke-virtual {v2, v4}, Landroid/content/res/Resources;->getDrawable(I)Landroid/graphics/drawable/Drawable;
-
-    move-result-object v2
-
-    invoke-virtual {v2}, Landroid/graphics/drawable/Drawable;->mutate()Landroid/graphics/drawable/Drawable;
-
-    move-result-object v2
-
-    sget-object v4, Landroid/graphics/PorterDuff$Mode;->SRC_IN:Landroid/graphics/PorterDuff$Mode;
-
-    invoke-virtual {v2, v5, v4}, Landroid/graphics/drawable/Drawable;->setColorFilter(ILandroid/graphics/PorterDuff$Mode;)V
-
-    const/high16 v4, 0x41a00000    # 20.0f
-
-    mul-float/2addr v4, v3
-
-    float-to-int v4, v4
-
-    const/4 v5, 0x0
-
-    invoke-virtual {v2, v5, v5, v4, v4}, Landroid/graphics/drawable/Drawable;->setBounds(IIII)V
-
-    invoke-virtual {v0, v2, v1, v1, v1}, Landroid/widget/TextView;->setCompoundDrawables(Landroid/graphics/drawable/Drawable;Landroid/graphics/drawable/Drawable;Landroid/graphics/drawable/Drawable;Landroid/graphics/drawable/Drawable;)V
-
-    const/high16 v2, 0x41000000    # 8.0f
-
-    mul-float/2addr v3, v2
-
-    float-to-int v2, v3
-
-    invoke-virtual {v0, v2}, Landroid/widget/TextView;->setCompoundDrawablePadding(I)V
-
-    :done
+    :decorate_done
     return-void
 .end method
 

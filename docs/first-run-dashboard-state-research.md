@@ -128,3 +128,16 @@ com.google.android.inputmethod.pinyin.guideaudit
 5. 第一个字段若是密码/数字，不强制 Dashboard；随后第一个普通文本字段仍显示；
 6. 卸载重装并发生系统偏好恢复后仍重复 1–5；
 7. 正式包 `com.google.android.inputmethod.pinyin.compat` 的数据和默认输入法不受隔离包安装影响。
+
+## 后台权限 Activity 并发（2026-07-25）
+
+一次干净安装的剪贴板隔离测试捕获了不同于重复完成页的旧路径：IME 服务在首个输入字段启动 `com.google.android.apps.inputmethod.libs.framework.core.PermissionsActivity`，约 150 ms 后首次引导又启动 `PinyinFirstRunActivity`。透明权限宿主、系统权限页和首次引导因此成为两个并发任务；这不是 `guide_complete` 竞争，也不是迟到 Intent 的第二次 HOME。
+
+`FeaturePermissionsManager` 已经有两条权限路径：有前台设置 Activity 时直接调用 `Activity.requestPermissions()`；没有 Activity、仅持有应用 Context 时则通过静态 helper 以 `FLAG_ACTIVITY_NEW_TASK` 启动 `PermissionsActivity`。现代化策略只禁止后一条后台拉起路径：
+
+- IME 启动不再抢占当前文本应用或首次引导；
+- 未获授权的可选功能保持禁用；
+- 用户从真实设置 Activity 触发的权限请求继续使用原生回调；
+- 本地备份设置自己的显式权限请求不受影响。
+
+该路径需要在修正版干净安装包中确认：首次输入只进入首次引导，不再同时创建 `PermissionsActivity` 任务。
