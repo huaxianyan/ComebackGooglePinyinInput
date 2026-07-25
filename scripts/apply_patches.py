@@ -46,7 +46,7 @@ def apply(decoded: Path, application_id: str) -> None:
     replace_once(
         decoded / "apktool.yml",
         "versionInfo:\n  versionCode: 4520313\n  versionName: 4.5.2.193126728-arm64-v8a",
-        "versionInfo:\n  versionCode: 4520362\n"
+        "versionInfo:\n  versionCode: 4520363\n"
         "  versionName: 4.5.2",
     )
 
@@ -282,8 +282,42 @@ def apply(decoded: Path, application_id: str) -> None:
     )
     replace_once(
         first_run_activity,
+        "    const/4 v0, 0x1\n\n"
+        "    .line 4\n"
+        "    :goto_0\n"
+        "    return v0",
+        "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/firstrun/"
+        "FirstRunStateCompat;->claimGuideLaunch(Landroid/content/Context;)Z\n\n"
+        "    move-result v0\n\n"
+        "    .line 4\n"
+        "    :goto_0\n"
+        "    return v0",
+    )
+    replace_once(
+        first_run_activity,
         "\n\n# virtual methods\n.method protected final a()I",
-        "\n\n# virtual methods\n.method public final exitGuide()V\n"
+        "\n\n# virtual methods\n.method public onCreate(Landroid/os/Bundle;)V\n"
+        "    .locals 1\n\n"
+        "    invoke-static {}, Lcom/google/android/inputmethod/pinyin/firstrun/"
+        "FirstRunStateCompat;->activityCreated()V\n\n"
+        "    invoke-super {p0, p1}, Lapy;->onCreate(Landroid/os/Bundle;)V\n\n"
+        "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/firstrun/"
+        "FirstRunStateCompat;->isComplete(Landroid/content/Context;)Z\n\n"
+        "    move-result v0\n\n"
+        "    if-eqz v0, :created\n\n"
+        "    invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/pinyin/firstrun/"
+        "PinyinFirstRunActivity;->exitGuide()V\n\n"
+        "    :created\n"
+        "    return-void\n"
+        ".end method\n\n"
+        ".method protected onDestroy()V\n"
+        "    .locals 0\n\n"
+        "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/firstrun/"
+        "FirstRunStateCompat;->activityDestroyed(Landroid/content/Context;)V\n\n"
+        "    invoke-super {p0}, Lapy;->onDestroy()V\n\n"
+        "    return-void\n"
+        ".end method\n\n"
+        ".method public final exitGuide()V\n"
         "    .locals 2\n\n"
         "    new-instance v0, Landroid/content/Intent;\n\n"
         "    const-string v1, \"android.intent.action.MAIN\"\n\n"

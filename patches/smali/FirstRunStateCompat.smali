@@ -7,6 +7,7 @@
 .field private static final PREFS:Ljava/lang/String; = "first_run_local_state"
 .field private static final KEY_COMPLETE:Ljava/lang/String; = "guide_complete"
 .field private static final KEY_DASHBOARD_PENDING:Ljava/lang/String; = "dashboard_pending"
+.field private static volatile sGuideLaunchClaimed:Z
 
 
 # direct methods
@@ -52,6 +53,58 @@
     move-result v0
 
     return v0
+.end method
+
+.method public static declared-synchronized claimGuideLaunch(Landroid/content/Context;)Z
+    .locals 1
+
+    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/firstrun/FirstRunStateCompat;->isComplete(Landroid/content/Context;)Z
+
+    move-result v0
+
+    if-nez v0, :blocked
+
+    sget-boolean v0, Lcom/google/android/inputmethod/pinyin/firstrun/FirstRunStateCompat;->sGuideLaunchClaimed:Z
+
+    if-nez v0, :blocked
+
+    const/4 v0, 0x1
+
+    sput-boolean v0, Lcom/google/android/inputmethod/pinyin/firstrun/FirstRunStateCompat;->sGuideLaunchClaimed:Z
+
+    return v0
+
+    :blocked
+    const/4 v0, 0x0
+
+    return v0
+.end method
+
+.method public static activityCreated()V
+    .locals 1
+
+    const/4 v0, 0x1
+
+    sput-boolean v0, Lcom/google/android/inputmethod/pinyin/firstrun/FirstRunStateCompat;->sGuideLaunchClaimed:Z
+
+    return-void
+.end method
+
+.method public static activityDestroyed(Landroid/content/Context;)V
+    .locals 1
+
+    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/firstrun/FirstRunStateCompat;->isComplete(Landroid/content/Context;)Z
+
+    move-result v0
+
+    if-nez v0, :done
+
+    const/4 v0, 0x0
+
+    sput-boolean v0, Lcom/google/android/inputmethod/pinyin/firstrun/FirstRunStateCompat;->sGuideLaunchClaimed:Z
+
+    :done
+    return-void
 .end method
 
 .method public static complete(Landroid/content/Context;)V

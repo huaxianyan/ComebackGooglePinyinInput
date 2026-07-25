@@ -81,7 +81,11 @@ first_run_local_state
 3. 同步重置 `USER_SELECTED_KEYBOARD=false`；
 4. 然后才执行 Home + `finishAndRemoveTask()`。
 
-`PinyinFirstRunActivity.b(Context)` 优先检查安装本地 `guide_complete`，避免任务移除和 IME 启动之间再次排队引导 Intent。旧 `HAD_FIRST_RUN` 检查保留，兼容已经完成引导但尚无新标记的升级用户。
+`PinyinFirstRunActivity.b(Context)` 优先检查安装本地 `guide_complete`，避免任务移除后的新检查再次启动引导。旧 `HAD_FIRST_RUN` 检查保留，兼容已经完成引导但尚无新标记的升级用户。
+
+首次隔离验证证明，仅增加最终完成标记仍不足：`SettingsActivity` 首次决定启动引导后，在用户进行系统“启用/选择输入法”步骤期间，`PinyinIME.d()` 还可以在最终完成值写入前再次通过同一个检查。后写入的完成值只能阻止未来检查，不能撤销此前已经被 Android ActivityTaskManager 接受的 `NEW_TASK`/`singleTask` 启动请求，于是该请求会在完成退出后把任务再次带到前台。
+
+修正版增加进程内、同步的 `sGuideLaunchClaimed`：第一次调用者在返回“需要启动”时原子占有启动权；Activity 存活期间 Settings 和 IME 的后续检查均返回 false。未完成就销毁 Activity 时释放占有，允许重新进入；完成后则由持久化 `guide_complete` 继续阻止启动。Activity 创建时也复核完成标记，使已经排队的旧 Intent 即使到达也立即退出，而不会停留在完成页。
 
 ### 2. 不恢复一次性安装状态
 
