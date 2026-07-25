@@ -717,11 +717,24 @@
 
     move-result-object v5
 
-    if-eqz v5, :inspect_candidate
+    if-eqz v5, :find_clipboard_right_separator
 
     const/16 v6, 0x8
 
     invoke-virtual {v5, v6}, Landroid/view/View;->setVisibility(I)V
+
+    :find_clipboard_right_separator
+    const-string v6, "compat_clipboard_right_separator"
+
+    invoke-virtual {p0, v6}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyView;->findViewWithTag(Ljava/lang/Object;)Landroid/view/View;
+
+    move-result-object v6
+
+    if-eqz v6, :inspect_candidate
+
+    const/16 v7, 0x8
+
+    invoke-virtual {v6, v7}, Landroid/view/View;->setVisibility(I)V
 
     :inspect_candidate
     if-eqz p1, :decorate_done
@@ -774,11 +787,24 @@
 
     invoke-virtual {v0, v3}, Lavk;->a(F)V
 
-    # Both native dividers live in the wrap-sized candidate view, so a short
-    # value such as an OTP keeps the dividers immediately beside its text.
-    if-eqz v5, :sync_dismiss_color
+    # Two dedicated, identical header-style dividers live in the wrap-sized
+    # candidate. Do not overlap the native last-candidate divider: the native
+    # holder may hide it later, while these tagged views remain deterministic.
+    if-eqz v2, :show_clipboard_left_separator
+
+    const/16 v3, 0x8
+
+    invoke-virtual {v2, v3}, Landroid/view/View;->setVisibility(I)V
+
+    :show_clipboard_left_separator
+    if-eqz v5, :show_clipboard_right_separator
 
     invoke-virtual {v5, v1}, Landroid/view/View;->setVisibility(I)V
+
+    :show_clipboard_right_separator
+    if-eqz v6, :sync_dismiss_color
+
+    invoke-virtual {v6, v1}, Landroid/view/View;->setVisibility(I)V
 
     :sync_dismiss_color
     invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyView;->getRootView()Landroid/view/View;
@@ -870,6 +896,51 @@
     goto :scan_children
 
     :choose_gravity
+    # This runs after the holder's last-column decoration. Reassert the two
+    # clipboard dividers and suppress the native divider deterministically.
+    if-eqz v6, :select_gravity
+
+    if-eqz v3, :select_gravity
+
+    const v4, 0x7f0f0013
+
+    invoke-virtual {v3, v4}, Landroid/view/View;->findViewById(I)Landroid/view/View;
+
+    move-result-object v4
+
+    if-eqz v4, :force_left_separator
+
+    const/16 v5, 0x8
+
+    invoke-virtual {v4, v5}, Landroid/view/View;->setVisibility(I)V
+
+    :force_left_separator
+    const-string v4, "compat_clipboard_left_separator"
+
+    invoke-virtual {v3, v4}, Landroid/view/View;->findViewWithTag(Ljava/lang/Object;)Landroid/view/View;
+
+    move-result-object v4
+
+    if-eqz v4, :force_right_separator
+
+    const/4 v5, 0x0
+
+    invoke-virtual {v4, v5}, Landroid/view/View;->setVisibility(I)V
+
+    :force_right_separator
+    const-string v4, "compat_clipboard_right_separator"
+
+    invoke-virtual {v3, v4}, Landroid/view/View;->findViewWithTag(Ljava/lang/Object;)Landroid/view/View;
+
+    move-result-object v4
+
+    if-eqz v4, :select_gravity
+
+    const/4 v5, 0x0
+
+    invoke-virtual {v4, v5}, Landroid/view/View;->setVisibility(I)V
+
+    :select_gravity
     const v0, 0x800003
 
     const/4 v1, 0x1

@@ -139,3 +139,5 @@ Gboard 不读取系统 `Configuration.uiMode`，也不在 Java/smali 中根据�
 视觉边界保留候选 holder 左右各一个原生展开按钮宽度（45dp）的对称布局预算：右侧是关闭按钮，左侧是不可点击的空白预留位。但分隔线不再固定在这两个外侧边界，而是放回 wrap-sized 候选 View 的左右两边，因此短验证码的分隔线会紧跟文字，且不会与外侧分隔线重叠而加深颜色。可见标签上限收窄为 200dp，并把 `AutoSizeTextView` 的最小横向 scale 固定为 1.0，保持原生 21sp 字号；完整规范化文本交给 View 在该宽度内执行 `END` 省略，不再按固定字符数手工拼接 `...`。关闭符号的 `ColorStateList` 直接复制当前已渲染的原生候选文字，因此跟随键盘主题而不是系统深浅模式或静态 XML 解析结果。
 
 关闭按钮不再使用独立的通用 View 反馈。点击时临时接入原生 `aue` 按键反馈控制器，以同一份键盘偏好执行按键音、音量、振动开关和振动时长；反馈完成后立即注销其偏好监听器，避免额外生命周期泄漏。
+
+V5 真机暴露了两个布局细节：复用 `SoftKeyCandidateSeparator` 的左分隔符看起来比此前 header 分隔符更深，而原生 holder 会在 `decorateView()` 返回后再次按“末列候选”规则隐藏右分隔符；仅依赖候选装饰时序并不可靠。修订版因此在候选布局内增加左右两个独立、同样采用 `SoftKeyCandidateBarShowMoreCandidateSeparator` 的兼容分隔符，并在 holder 完成全部末列装饰后的 `centerSingleClipboardCandidate()` 中再次强制它们可见、强制原生 `candidate_separator` 隐藏。这样既不叠色，也不会再丢失右线。关闭容器则不再依赖 `wrap_content` 的测量结果，而是显式固定为原生右侧按钮列的 45dp 宽度并保持 `layout_gravity=right`，与默认语音输入等右列按钮对齐。
