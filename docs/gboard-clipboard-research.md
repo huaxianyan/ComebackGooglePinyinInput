@@ -107,3 +107,20 @@ Gboard 不读取系统 `Configuration.uiMode`，也不在 Java/smali 中根据�
 5. 如果旧框架没有 model API，优先在候选栏 XML 内预留受框架管理的容器，而不是挂到 `InputView` 或 `keyboard_area` 顶层。
 
 在完成上述宿主定位和真机坐标/触摸验证前，不再实现新的剪贴板浮层。
+
+## Google 拼音原生候选视觉修订（2026-07-25）
+
+后续真机使用表明，Gboard chip 依赖更高的建议栏；把相同的圆角框、描边、阴影和图标压入 Google 拼音较矮的候选栏会显得局促。因此兼容版不再照搬 Gboard 的视觉表面，但继续保留已经验证的 model/候选管线、隐私过滤、时效、完整 payload 提交和回收清理。
+
+修订后的呈现原则：
+
+1. 剪贴板文本继续作为原生 `Candidate`，保持候选栏中央对齐；
+2. 移除圆角背景、描边、elevation、额外高度、缩小字号和剪贴板前置图标；
+3. 恢复 Google 拼音原生候选字号、文字颜色、透明 key surface 和 padding；
+4. 在该候选左右显示 `SoftKeyCandidateSeparator` 同源分隔线，普通候选布局不变；
+5. 在候选栏原展开箭头的固定右侧位置显示关闭按钮，使用相同主题文字色和候选栏分隔线；
+6. 关闭只屏蔽当前 `text + timestamp` 对应的建议，不清空系统剪贴板；同一个剪贴板不会在当前进程中反复出现，新复制内容仍可正常生成建议；
+7. 关闭按钮作为原展开 SoftKeyView 上方的普通可点击 sibling，避免篡改 `TOGGLE_SHOW_MORE_CANDIDATES` 的原生 SoftKeyDef；建议消失后恢复原展开箭头及其触摸语义；
+8. 无障碍描述独立设为“关闭剪贴板建议”。
+
+该修订仍需通过独立 `clipboardaudit` 包验证视觉密度、关闭触摸、展开箭头恢复、普通候选和多候选场景。

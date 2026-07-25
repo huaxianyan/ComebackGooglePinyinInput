@@ -46,7 +46,7 @@ def apply(decoded: Path, application_id: str) -> None:
     replace_once(
         decoded / "apktool.yml",
         "versionInfo:\n  versionCode: 4520313\n  versionName: 4.5.2.193126728-arm64-v8a",
-        "versionInfo:\n  versionCode: 4520364\n"
+        "versionInfo:\n  versionCode: 4520365\n"
         "  versionName: 4.5.2",
     )
 
@@ -79,6 +79,9 @@ def apply(decoded: Path, application_id: str) -> None:
             "first_run.xml",
             "first_run_page_done.xml",
             "first_run_page_footer.xml",
+            "keyboard_candidates_header_inner.xml",
+            "keyboard_candidates_header_inner_no_deletable_label.xml",
+            "softkey_candidate.xml",
         }
         if destination.exists() and source.name not in overwritten_layouts:
             raise RuntimeError(f"Refusing to overwrite resource: {destination}")

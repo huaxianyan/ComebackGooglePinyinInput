@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="clipboard_candidate_dismiss_content_description">关闭剪贴板建议</string>
+    <string name="clipboard_candidate_dismiss_symbol">×</string>
+</resources>

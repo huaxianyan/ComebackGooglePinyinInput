@@ -5,6 +5,7 @@
 # interfaces
 .implements Ljava/lang/Runnable;
 .implements Landroid/content/ClipboardManager$OnPrimaryClipChangedListener;
+.implements Landroid/view/View$OnClickListener;
 
 
 # static fields
@@ -666,6 +667,23 @@
 
     invoke-virtual {v3, v1}, Landroid/view/View;->setVisibility(I)V
 
+    # The native candidate layout has a right separator. A clipboard-only
+    # left separator is present but hidden so ordinary candidates are unchanged.
+    const-string v4, "compat_clipboard_left_separator"
+
+    invoke-virtual {p0, v4}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyView;->findViewWithTag(Ljava/lang/Object;)Landroid/view/View;
+
+    move-result-object v4
+
+    if-eqz v4, :reset_marker
+
+    const/16 v5, 0x8
+
+    invoke-virtual {v4, v5}, Landroid/view/View;->setVisibility(I)V
+
+    :reset_marker
+    invoke-virtual {v0, v1}, Landroid/widget/TextView;->setTag(Ljava/lang/Object;)V
+
     :check_candidate
     if-eqz p1, :done
 
@@ -685,13 +703,30 @@
 
     if-eqz v4, :done
 
-    if-eqz v3, :chip_style
+    # Use Google Pinyin's native candidate typography and transparent key
+    # surface. Delimit the centered clipboard text with native separators.
+    const-string v5, "compat_clipboard_candidate"
 
-    const/16 v4, 0x8
+    invoke-virtual {v0, v5}, Landroid/widget/TextView;->setTag(Ljava/lang/Object;)V
 
-    invoke-virtual {v3, v4}, Landroid/view/View;->setVisibility(I)V
+    if-eqz v4, :keep_right_separator
 
-    :chip_style
+    const/4 v5, 0x0
+
+    invoke-virtual {v4, v5}, Landroid/view/View;->setVisibility(I)V
+
+    :keep_right_separator
+    if-eqz v3, :native_style_done
+
+    const/4 v5, 0x0
+
+    invoke-virtual {v3, v5}, Landroid/view/View;->setVisibility(I)V
+
+    :native_style_done
+    goto :done
+
+    # Retained unreachable instructions keep old resource references stable in
+    # the decoded base; clipboard candidates no longer execute chip styling.
     invoke-virtual {v2}, Landroid/content/res/Resources;->getDisplayMetrics()Landroid/util/DisplayMetrics;
 
     move-result-object v3
@@ -862,6 +897,8 @@
 
     const/4 v3, 0x0
 
+    const/4 v6, 0x0
+
     :scan_children
     if-ge v1, v0, :choose_gravity
 
@@ -882,6 +919,28 @@
 
     move-object v3, v4
 
+    const v5, 0x7f0f0183
+
+    invoke-virtual {v4, v5}, Landroid/view/View;->findViewById(I)Landroid/view/View;
+
+    move-result-object v5
+
+    if-eqz v5, :next_child
+
+    invoke-virtual {v5}, Landroid/view/View;->getTag()Ljava/lang/Object;
+
+    move-result-object v5
+
+    const-string v4, "compat_clipboard_candidate"
+
+    invoke-virtual {v4, v5}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+
+    move-result v5
+
+    if-eqz v5, :next_child
+
+    const/4 v6, 0x1
+
     :next_child
     add-int/lit8 v1, v1, 0x1
 
@@ -894,32 +953,162 @@
 
     if-ne v2, v1, :apply_gravity
 
-    const v2, 0x7f0f0183
-
-    invoke-virtual {v3, v2}, Landroid/view/View;->findViewById(I)Landroid/view/View;
-
-    move-result-object v2
-
-    if-eqz v2, :apply_gravity
-
-    invoke-virtual {v2}, Landroid/view/View;->getBackground()Landroid/graphics/drawable/Drawable;
-
-    move-result-object v2
-
-    instance-of v2, v2, Landroid/graphics/drawable/GradientDrawable;
-
-    if-eqz v2, :apply_gravity
+    if-eqz v6, :apply_gravity
 
     move v0, v1
 
     :apply_gravity
     invoke-virtual {p0, v0}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/widget/FixedSizeCandidatesHolderView;->setGravity(I)V
 
+    # Overlay the dismiss control at the native expand-arrow position. It is a
+    # sibling above SoftKeyView, so it receives a normal click without changing
+    # the keyboard's existing TOGGLE_SHOW_MORE_CANDIDATES key definition.
+    invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/widget/FixedSizeCandidatesHolderView;->getParent()Landroid/view/ViewParent;
+
+    move-result-object v2
+
+    instance-of v4, v2, Landroid/view/View;
+
+    if-eqz v4, :center_done
+
+    check-cast v2, Landroid/view/View;
+
+    move-object v5, v2
+
+    const-string v4, "compat_clipboard_dismiss"
+
+    invoke-virtual {v2, v4}, Landroid/view/View;->findViewWithTag(Ljava/lang/Object;)Landroid/view/View;
+
+    move-result-object v2
+
+    if-eqz v2, :center_done
+
+    if-eqz v6, :hide_dismiss
+
+    const/4 v4, 0x0
+
+    invoke-virtual {v2, v4}, Landroid/view/View;->setVisibility(I)V
+
+    const v4, 0x7f0f0149
+
+    invoke-virtual {v5, v4}, Landroid/view/View;->findViewById(I)Landroid/view/View;
+
+    move-result-object v4
+
+    if-eqz v4, :attach_dismiss
+
+    const/4 v5, 0x4
+
+    invoke-virtual {v4, v5}, Landroid/view/View;->setVisibility(I)V
+
+    :attach_dismiss
+    sget-object v4, Lcom/google/android/apps/inputmethod/libs/framework/core/ClipboardCandidateCompat;->current:Lcom/google/android/apps/inputmethod/libs/framework/core/ClipboardCandidateCompat;
+
+    invoke-virtual {v2, v4}, Landroid/view/View;->setOnClickListener(Landroid/view/View$OnClickListener;)V
+
+    invoke-virtual {v2}, Landroid/view/View;->bringToFront()V
+
+    goto :center_done
+
+    :hide_dismiss
+    const/16 v4, 0x8
+
+    invoke-virtual {v2, v4}, Landroid/view/View;->setVisibility(I)V
+
+    const/4 v4, 0x0
+
+    invoke-virtual {v2, v4}, Landroid/view/View;->setOnClickListener(Landroid/view/View$OnClickListener;)V
+
+    const v4, 0x7f0f0149
+
+    invoke-virtual {v5, v4}, Landroid/view/View;->findViewById(I)Landroid/view/View;
+
+    move-result-object v4
+
+    if-eqz v4, :center_done
+
+    const/4 v5, 0x0
+
+    invoke-virtual {v4, v5}, Landroid/view/View;->setVisibility(I)V
+
+    :center_done
     return-void
 .end method
 
 
 # virtual methods
+.method public onClick(Landroid/view/View;)V
+    .locals 4
+
+    if-eqz p1, :click_done
+
+    invoke-virtual {p1}, Landroid/view/View;->getTag()Ljava/lang/Object;
+
+    move-result-object v0
+
+    const-string v1, "compat_clipboard_dismiss"
+
+    invoke-virtual {v1, v0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+
+    move-result v0
+
+    if-eqz v0, :click_done
+
+    sget-object v0, Lcom/google/android/apps/inputmethod/libs/framework/core/ClipboardCandidateCompat;->candidateKey:Ljava/lang/String;
+
+    sput-object v0, Lcom/google/android/apps/inputmethod/libs/framework/core/ClipboardCandidateCompat;->dismissedKey:Ljava/lang/String;
+
+    const/4 v0, 0x0
+
+    sput-object v0, Lcom/google/android/apps/inputmethod/libs/framework/core/ClipboardCandidateCompat;->candidate:Lcom/google/android/apps/inputmethod/libs/framework/core/Candidate;
+
+    sput-object v0, Lcom/google/android/apps/inputmethod/libs/framework/core/ClipboardCandidateCompat;->candidateKey:Ljava/lang/String;
+
+    const/4 v1, 0x0
+
+    sput-boolean v1, Lcom/google/android/apps/inputmethod/libs/framework/core/ClipboardCandidateCompat;->injected:Z
+
+    const/16 v2, 0x8
+
+    invoke-virtual {p1, v2}, Landroid/view/View;->setVisibility(I)V
+
+    invoke-virtual {p1, v0}, Landroid/view/View;->setOnClickListener(Landroid/view/View$OnClickListener;)V
+
+    invoke-virtual {p1}, Landroid/view/View;->getParent()Landroid/view/ViewParent;
+
+    move-result-object v2
+
+    instance-of v3, v2, Landroid/view/View;
+
+    if-eqz v3, :notify_dismiss
+
+    check-cast v2, Landroid/view/View;
+
+    const v3, 0x7f0f0149
+
+    invoke-virtual {v2, v3}, Landroid/view/View;->findViewById(I)Landroid/view/View;
+
+    move-result-object v2
+
+    if-eqz v2, :notify_dismiss
+
+    invoke-virtual {v2, v1}, Landroid/view/View;->setVisibility(I)V
+
+    :notify_dismiss
+    iget-object v2, p0, Lcom/google/android/apps/inputmethod/libs/framework/core/ClipboardCandidateCompat;->service:Lcom/google/android/apps/inputmethod/libs/framework/core/GoogleInputMethodService;
+
+    invoke-virtual {v2}, Lcom/google/android/apps/inputmethod/libs/framework/core/GoogleInputMethodService;->a()Lcom/google/android/apps/inputmethod/libs/framework/core/InputBundle;
+
+    move-result-object v2
+
+    if-eqz v2, :click_done
+
+    invoke-virtual {v2, v1}, Lcom/google/android/apps/inputmethod/libs/framework/core/InputBundle;->textCandidatesUpdated(Z)V
+
+    :click_done
+    return-void
+.end method
+
 .method public onPrimaryClipChanged()V
     .locals 4
 
