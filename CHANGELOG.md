@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-当前 `master` 开发构建的 versionCode 为 `4520364`；尚未创建新标签或 GitHub Release。
+当前开发构建的 versionCode 为 `4520380`；尚未创建新标签或 GitHub Release。
 
 ### Changed
 
@@ -27,6 +27,7 @@
 - 修复 V12 真机 ART `VerifyError`：`decorateView()` 的 `v7` 在“无右兼容分隔符”分支保留为整数，却在合流后用于 `instance-of ImageView`。新增独占引用寄存器 `v8`，并让所有分支先经过图标查找后再检查，避免任何 int/View 类型合流。
 - 在已通过真机验证的图标布局上增加 4dp 左侧呼吸空间：图标距左分隔符由 6dp 调整为 10dp，同时标签 start reserve 从 24dp 调整为 28dp，保持图标与文字 6dp 间距、组合居中和当时的 200dp 总上限。
 - 将剪贴板候选最大可见宽度在 200dp 基线之上增加两个当前候选文字 em（`2 × TextView.getTextSize()`）；默认 21sp/字体缩放 1.0 时约为 242dp，可多显示约两个中文字符，同时随系统字体缩放保持“两字”语义。
+- 在词典设置的本地备份区域增加“当前用户词库状态”：仅进入页面或点击该行时异步读取中文/英文词条数、主文件与 `_bak` 大小、`_tmp`/`_unreadable` 旁路和最近落盘时间；不在应用或键盘启动时扫描，不显示词条内容，也不触发备份、恢复或持久化。
 
 ### Fixed
 

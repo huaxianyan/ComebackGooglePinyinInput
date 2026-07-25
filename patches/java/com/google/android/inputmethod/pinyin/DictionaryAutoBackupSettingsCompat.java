@@ -59,29 +59,36 @@ public final class DictionaryAutoBackupSettingsCompat {
             Preference.OnPreferenceChangeListener {
         PreferenceFragment fragment; TwoStatePreference enabled; Preference location;
         ListPreference interval; ListPreference retention; Preference now; Preference importBackup;
+        Preference dictionaryStatus; int statusGeneration; boolean statusLoading;
         Controller(PreferenceFragment f) { fragment = f; }
         void bind() {
+            dictionaryStatus = fragment.findPreference("dictionary_current_status");
             enabled = (TwoStatePreference) fragment.findPreference(DictionaryAutoBackupCompat.KEY_ENABLED);
             location = fragment.findPreference(KEY_LOCATION);
             interval = (ListPreference) fragment.findPreference(DictionaryAutoBackupCompat.KEY_INTERVAL);
             retention = (ListPreference) fragment.findPreference(DictionaryAutoBackupCompat.KEY_RETENTION);
             now = fragment.findPreference(DictionaryAutoBackupCompat.KEY_BACKUP_NOW);
             importBackup = fragment.findPreference(DictionaryAutoBackupCompat.KEY_IMPORT_BACKUP);
+            if (dictionaryStatus != null) dictionaryStatus.setOnPreferenceClickListener(this);
             if (enabled != null) enabled.setOnPreferenceChangeListener(this);
             if (interval != null) interval.setOnPreferenceChangeListener(this);
             if (retention != null) retention.setOnPreferenceChangeListener(this);
             if (now != null) now.setOnPreferenceClickListener(this);
             if (importBackup != null) importBackup.setOnPreferenceClickListener(this);
             refresh();
+            loadDictionaryStatus();
         }
-        void destroy() { fragment = null; enabled = null; location = null; interval = null;
+        void destroy() { statusGeneration++; statusLoading = false;
+            fragment = null; dictionaryStatus = null;
+            enabled = null; location = null; interval = null;
             retention = null; now = null; importBackup = null; }
         Context context() { return fragment == null || fragment.getActivity() == null ? null
                 : fragment.getActivity().getApplicationContext(); }
 
         @Override public boolean onPreferenceClick(Preference p) {
             Context c = context(); if (c == null) return true;
-            if (p == now) DictionaryAutoBackupCompat.request(c, true);
+            if (p == dictionaryStatus) loadDictionaryStatus();
+            else if (p == now) DictionaryAutoBackupCompat.request(c, true);
             else if (p == importBackup) openImportList(false);
             return true;
         }
@@ -167,6 +174,21 @@ public final class DictionaryAutoBackupSettingsCompat {
             if (retention != null) { retention.setValue(Integer.toString(sp.getInt(DictionaryAutoBackupCompat.KEY_RETENTION, 10))); retention.setEnabled(on && supported); }
             if (now != null) { now.setEnabled(supported && !DictionaryAutoBackupCompat.isInProgress()); now.setSummary("立即导出到固定本地目录"); }
             if (importBackup != null) importBackup.setSummary("列出固定目录中的本地备份；也可从文件管理器打开备份");
+        }
+        void loadDictionaryStatus() {
+            final Context c = context();
+            if (c == null || dictionaryStatus == null || statusLoading) return;
+            statusLoading = true;
+            final int generation = ++statusGeneration;
+            dictionaryStatus.setSummary("正在读取当前用户词库…");
+            DictionaryHealthStatusCompat.load(c, new DictionaryHealthStatusCompat.Callback() {
+                @Override public void onLoaded(String summary) {
+                    if (generation != statusGeneration || fragment == null || dictionaryStatus == null)
+                        return;
+                    statusLoading = false;
+                    dictionaryStatus.setSummary(summary + "\n点击重新检查");
+                }
+            });
         }
         void refreshSoon() { if (fragment != null && fragment.getActivity() != null)
             fragment.getActivity().getWindow().getDecorView().post(new Runnable() {

@@ -46,7 +46,7 @@ def apply(decoded: Path, application_id: str) -> None:
     replace_once(
         decoded / "apktool.yml",
         "versionInfo:\n  versionCode: 4520313\n  versionName: 4.5.2.193126728-arm64-v8a",
-        "versionInfo:\n  versionCode: 4520379\n"
+        "versionInfo:\n  versionCode: 4520380\n"
         "  versionName: 4.5.2",
     )
 
@@ -783,6 +783,10 @@ def apply(decoded: Path, application_id: str) -> None:
         '        <Preference android:persistent="false" '
         'android:title="@string/setting_export_user_dictionary_title" '
         'android:key="@string/setting_export_user_dictionary_key" />',
+        '        <Preference android:persistent="false" '
+        'android:title="@string/dictionary_current_status_title" '
+        'android:key="dictionary_current_status" '
+        'android:summary="@string/dictionary_current_status_summary" />\n'
         '        <CheckBoxPreference android:persistent="false" '
         'android:title="@string/dictionary_auto_backup_title" '
         'android:key="dictionary_auto_backup_enabled" '
@@ -1569,6 +1573,7 @@ def apply(decoded: Path, application_id: str) -> None:
 
     auto_backup_helpers = sorted(
         list((ROOT / "patches/smali").glob("DictionaryAutoBackup*.smali"))
+        + list((ROOT / "patches/smali").glob("DictionaryHealthStatusCompat*.smali"))
         + list((ROOT / "patches/smali").glob("LocalBackupImportActivity*.smali"))
     )
     if not auto_backup_helpers:
