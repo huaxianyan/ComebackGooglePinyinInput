@@ -46,7 +46,7 @@ def apply(decoded: Path, application_id: str) -> None:
     replace_once(
         decoded / "apktool.yml",
         "versionInfo:\n  versionCode: 4520313\n  versionName: 4.5.2.193126728-arm64-v8a",
-        "versionInfo:\n  versionCode: 4520367\n"
+        "versionInfo:\n  versionCode: 4520368\n"
         "  versionName: 4.5.2",
     )
 
@@ -1453,10 +1453,9 @@ def apply(decoded: Path, application_id: str) -> None:
         "    :compat_not_clipboard_event\n"
         "    .line 256",
     )
-    # Decorate the first batch of every native candidate cycle. This keeps the
-    # clipboard item present when Chinese, English or handwriting candidates
-    # replace the initially displayed idle candidate, without duplicating it in
-    # later pagination batches.
+    # Inspect each candidate batch at the InputBundle boundary. Real Chinese,
+    # English or handwriting candidates suppress the clipboard item for the
+    # whole composition; an empty/idle cycle may restore it afterward.
     replace_once(
         input_bundle,
         "    .prologue\n"

@@ -3,13 +3,16 @@
   xmlns:android="http://schemas.android.com/apk/res/android">
     <FrameLayout android:paddingLeft="?KeyboardInnerPadding" android:paddingRight="?KeyboardInnerPadding" android:layout_width="fill_parent" android:layout_height="fill_parent">
         <com.google.android.apps.inputmethod.libs.framework.keyboard.widget.FixedSizeCandidatesHolderView android:id="@id/softkey_holder_fixed_candidates" style="@style/CandidateBar" max_candidates_count="@integer/max_candidates_per_row" candidate_background="@attr/BgCandidate" last_column_candidate_background="@attr/BgCandidateLastColumn" candidate_layout="@layout/softkey_candidate" deletable_label="…" />
+        <FrameLayout android:tag="compat_clipboard_left_reserve" android:visibility="gone" android:layout_gravity="left" android:layout_width="@dimen/softkey_show_more_candidates_min_width" android:layout_height="fill_parent">
+            <ImageView android:layout_gravity="right" style="@style/SoftKeyCandidateBarShowMoreCandidateSeparator" />
+        </FrameLayout>
         <com.google.android.apps.inputmethod.libs.framework.keyboard.SoftKeyView android:layout_gravity="right" android:id="@id/key_pos_show_more_candidates" android:layout_width="wrap_content" android:layout_height="fill_parent">
             <ImageView style="@style/SoftKeyCandidateBarShowMoreCandidateSeparator" />
             <FrameLayout android:id="@id/host" style="@style/SoftKeyCandidateBarShowMoreCandidate" />
         </com.google.android.apps.inputmethod.libs.framework.keyboard.SoftKeyView>
         <FrameLayout android:tag="compat_clipboard_dismiss" android:visibility="gone" android:clickable="true" android:focusable="true" android:contentDescription="@string/clipboard_candidate_dismiss_content_description" android:layout_gravity="right" style="@style/SoftKeyCandidateBarShowMoreCandidate">
             <ImageView style="@style/SoftKeyCandidateBarShowMoreCandidateSeparator" />
-            <TextView android:text="@string/clipboard_candidate_dismiss_symbol" android:textColor="?ColorLabelCandidate" android:textSize="24.0sp" android:gravity="center" android:layout_width="fill_parent" android:layout_height="fill_parent" />
+            <TextView android:tag="compat_clipboard_dismiss_symbol" android:text="@string/clipboard_candidate_dismiss_symbol" android:textColor="?ColorLabelCandidate" android:textSize="24.0sp" android:gravity="center" android:layout_width="fill_parent" android:layout_height="fill_parent" />
         </FrameLayout>
     </FrameLayout>
 </FrameLayout>

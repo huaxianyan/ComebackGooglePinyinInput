@@ -33,6 +33,10 @@
 
 .field private pendingCandidateReset:Z
 
+.field private pendingIdleRestore:Z
+
+.field private normalCandidatesActive:Z
+
 
 # direct methods
 .method private constructor <init>(Lcom/google/android/apps/inputmethod/libs/framework/core/GoogleInputMethodService;Landroid/content/ClipboardManager;)V
@@ -165,46 +169,15 @@
 .method private static makeCandidate(Ljava/lang/String;)Lcom/google/android/apps/inputmethod/libs/framework/core/Candidate;
     .locals 6
 
-    # The clipboard candidate is a faithful paste operation. Only its visible
-    # label is shortened below; the payload always remains the complete text.
+    # The clipboard candidate is a faithful paste operation. Its normalized
+    # visible label is ellipsized by the measured View; payload stays complete.
     move-object v0, p0
 
     move-object v1, p0
 
-    invoke-virtual {v1}, Ljava/lang/String;->length()I
-
-    move-result v2
-
-    const/16 v3, 0x12
-
-    if-gt v2, v3, :truncate
-
-    goto :normalize
-
-    :truncate
-    const/4 v2, 0x0
-
-    const/16 v3, 0x12
-
-    invoke-virtual {v1, v2, v3}, Ljava/lang/String;->substring(II)Ljava/lang/String;
-
-    move-result-object v1
-
-    new-instance v2, Ljava/lang/StringBuilder;
-
-    invoke-direct {v2}, Ljava/lang/StringBuilder;-><init>()V
-
-    invoke-virtual {v2, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
-
-    const-string v1, "..."
-
-    invoke-virtual {v2, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
-
-    invoke-virtual {v2}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
-
-    move-result-object v1
-
-    :normalize
+    # Keep the complete normalized label and let TextView ellipsize against its
+    # measured clipboard slot. Character-count truncation can cross the actual
+    # right divider on narrow screens and with wide glyphs.
     const-string v2, "[\\r\\n\\t]+"
 
     const-string v3, " "
@@ -288,6 +261,10 @@
     invoke-virtual {v0, v1}, Landroid/content/ClipboardManager;->addPrimaryClipChangedListener(Landroid/content/ClipboardManager$OnPrimaryClipChangedListener;)V
 
     invoke-direct {v1}, Lcom/google/android/apps/inputmethod/libs/framework/core/ClipboardCandidateCompat;->refresh()V
+
+    const/4 v0, 0x1
+
+    iput-boolean v0, v1, Lcom/google/android/apps/inputmethod/libs/framework/core/ClipboardCandidateCompat;->pendingIdleRestore:Z
 
     iget-object v0, v1, Lcom/google/android/apps/inputmethod/libs/framework/core/ClipboardCandidateCompat;->handler:Landroid/os/Handler;
 
@@ -461,12 +438,16 @@
 
     if-eqz v0, :unchanged
 
-    sget-boolean v1, Lcom/google/android/apps/inputmethod/libs/framework/core/ClipboardCandidateCompat;->injected:Z
-
-    if-nez v1, :unchanged
-
     if-eqz p0, :copy
 
+    invoke-interface {p0}, Ljava/util/List;->isEmpty()Z
+
+    move-result v1
+
+    if-nez v1, :copy
+
+    # A real engine candidate cycle always wins. Clipboard is an idle-state
+    # affordance, never candidate zero while composing text.
     invoke-interface {p0}, Ljava/util/List;->iterator()Ljava/util/Iterator;
 
     move-result-object v1
@@ -476,7 +457,7 @@
 
     move-result v2
 
-    if-eqz v2, :copy
+    if-eqz v2, :ordinary_candidates
 
     invoke-interface {v1}, Ljava/util/Iterator;->next()Ljava/lang/Object;
 
@@ -504,6 +485,34 @@
 
     sput-boolean v0, Lcom/google/android/apps/inputmethod/libs/framework/core/ClipboardCandidateCompat;->injected:Z
 
+    sget-object v1, Lcom/google/android/apps/inputmethod/libs/framework/core/ClipboardCandidateCompat;->current:Lcom/google/android/apps/inputmethod/libs/framework/core/ClipboardCandidateCompat;
+
+    if-eqz v1, :return_existing
+
+    const/4 v2, 0x0
+
+    iput-boolean v2, v1, Lcom/google/android/apps/inputmethod/libs/framework/core/ClipboardCandidateCompat;->pendingIdleRestore:Z
+
+    iput-boolean v2, v1, Lcom/google/android/apps/inputmethod/libs/framework/core/ClipboardCandidateCompat;->normalCandidatesActive:Z
+
+    :return_existing
+    return-object p0
+
+    :ordinary_candidates
+    const/4 v0, 0x0
+
+    sput-boolean v0, Lcom/google/android/apps/inputmethod/libs/framework/core/ClipboardCandidateCompat;->injected:Z
+
+    sget-object v1, Lcom/google/android/apps/inputmethod/libs/framework/core/ClipboardCandidateCompat;->current:Lcom/google/android/apps/inputmethod/libs/framework/core/ClipboardCandidateCompat;
+
+    if-eqz v1, :unchanged
+
+    iput-boolean v0, v1, Lcom/google/android/apps/inputmethod/libs/framework/core/ClipboardCandidateCompat;->pendingIdleRestore:Z
+
+    const/4 v0, 0x1
+
+    iput-boolean v0, v1, Lcom/google/android/apps/inputmethod/libs/framework/core/ClipboardCandidateCompat;->normalCandidatesActive:Z
+
     return-object p0
 
     :copy
@@ -527,6 +536,15 @@
 
     sput-boolean v0, Lcom/google/android/apps/inputmethod/libs/framework/core/ClipboardCandidateCompat;->injected:Z
 
+    sget-object v3, Lcom/google/android/apps/inputmethod/libs/framework/core/ClipboardCandidateCompat;->current:Lcom/google/android/apps/inputmethod/libs/framework/core/ClipboardCandidateCompat;
+
+    if-eqz v3, :return_copy
+
+    iput-boolean v2, v3, Lcom/google/android/apps/inputmethod/libs/framework/core/ClipboardCandidateCompat;->pendingIdleRestore:Z
+
+    iput-boolean v2, v3, Lcom/google/android/apps/inputmethod/libs/framework/core/ClipboardCandidateCompat;->normalCandidatesActive:Z
+
+    :return_copy
     return-object v1
 
     :unchanged
@@ -534,12 +552,29 @@
 .end method
 
 .method public static candidatesUpdated()V
-    .locals 1
+    .locals 4
 
     const/4 v0, 0x0
 
     sput-boolean v0, Lcom/google/android/apps/inputmethod/libs/framework/core/ClipboardCandidateCompat;->injected:Z
 
+    sget-object v1, Lcom/google/android/apps/inputmethod/libs/framework/core/ClipboardCandidateCompat;->current:Lcom/google/android/apps/inputmethod/libs/framework/core/ClipboardCandidateCompat;
+
+    if-eqz v1, :done
+
+    const/4 v0, 0x1
+
+    iput-boolean v0, v1, Lcom/google/android/apps/inputmethod/libs/framework/core/ClipboardCandidateCompat;->pendingIdleRestore:Z
+
+    iget-object v0, v1, Lcom/google/android/apps/inputmethod/libs/framework/core/ClipboardCandidateCompat;->handler:Landroid/os/Handler;
+
+    invoke-virtual {v0, v1}, Landroid/os/Handler;->removeCallbacks(Ljava/lang/Runnable;)V
+
+    const-wide/16 v2, 0x64
+
+    invoke-virtual {v0, v1, v2, v3}, Landroid/os/Handler;->postDelayed(Ljava/lang/Runnable;J)Z
+
+    :done
     return-void
 .end method
 
@@ -611,8 +646,8 @@
 
     if-eqz v0, :decorate_done
 
-    # Fixed candidate views are recycled. Restore only the native candidate
-    # label state that the former chip renderer changed.
+    # Fixed candidate views are recycled. Restore native label state before
+    # checking whether this slot is the idle clipboard candidate.
     const/4 v1, 0x0
 
     invoke-virtual {v0, v1, v1, v1, v1}, Landroid/widget/TextView;->setCompoundDrawables(Landroid/graphics/drawable/Drawable;Landroid/graphics/drawable/Drawable;Landroid/graphics/drawable/Drawable;Landroid/graphics/drawable/Drawable;)V
@@ -620,6 +655,8 @@
     invoke-virtual {v0, v1}, Landroid/widget/TextView;->setBackgroundDrawable(Landroid/graphics/drawable/Drawable;)V
 
     invoke-virtual {v0, v1}, Landroid/widget/TextView;->setMinHeight(I)V
+
+    invoke-virtual {v0, v1}, Landroid/widget/TextView;->setEllipsize(Landroid/text/TextUtils$TruncateAt;)V
 
     const/4 v2, 0x0
 
@@ -659,71 +696,80 @@
 
     invoke-virtual {v0, v1}, Landroid/widget/TextView;->setTag(Ljava/lang/Object;)V
 
-    # Restore the standard right separator and hide the clipboard-only left
-    # separator before inspecting the recycled view's new Candidate.
     const v2, 0x7f0f0013
 
     invoke-virtual {p0, v2}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyView;->findViewById(I)Landroid/view/View;
 
     move-result-object v2
 
-    if-eqz v2, :find_left_separator
+    if-eqz v2, :inspect_candidate
 
     invoke-virtual {v2, v1}, Landroid/view/View;->setVisibility(I)V
-
-    :find_left_separator
-    const-string v3, "compat_clipboard_left_separator"
-
-    invoke-virtual {p0, v3}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyView;->findViewWithTag(Ljava/lang/Object;)Landroid/view/View;
-
-    move-result-object v3
-
-    if-eqz v3, :inspect_candidate
-
-    const/16 v4, 0x8
-
-    invoke-virtual {v3, v4}, Landroid/view/View;->setVisibility(I)V
 
     :inspect_candidate
     if-eqz p1, :decorate_done
 
-    iget-object v4, p1, Lcom/google/android/apps/inputmethod/libs/framework/core/Candidate;->a:Ljava/lang/Object;
+    iget-object v3, p1, Lcom/google/android/apps/inputmethod/libs/framework/core/Candidate;->a:Ljava/lang/Object;
 
-    instance-of v5, v4, Ljava/lang/String;
-
-    if-eqz v5, :decorate_done
-
-    check-cast v4, Ljava/lang/String;
-
-    const-string v5, "compat_clipboard:"
-
-    invoke-virtual {v4, v5}, Ljava/lang/String;->startsWith(Ljava/lang/String;)Z
-
-    move-result v4
+    instance-of v4, v3, Ljava/lang/String;
 
     if-eqz v4, :decorate_done
 
-    # Clipboard text now uses the untouched native candidate typography and
-    # transparent key surface. Tags drive centering without visual heuristics.
-    const-string v4, "compat_clipboard_candidate"
+    check-cast v3, Ljava/lang/String;
 
-    invoke-virtual {v0, v4}, Landroid/widget/TextView;->setTag(Ljava/lang/Object;)V
+    const-string v4, "compat_clipboard:"
 
-    if-eqz v3, :keep_native_right_separator
+    invoke-virtual {v3, v4}, Ljava/lang/String;->startsWith(Ljava/lang/String;)Z
 
-    invoke-virtual {v3, v1}, Landroid/view/View;->setVisibility(I)V
+    move-result v3
 
-    :keep_native_right_separator
-    if-eqz v2, :decorate_done
+    if-eqz v3, :decorate_done
 
-    invoke-virtual {v2, v1}, Landroid/view/View;->setVisibility(I)V
+    const-string v3, "compat_clipboard_candidate"
+
+    invoke-virtual {v0, v3}, Landroid/widget/TextView;->setTag(Ljava/lang/Object;)V
+
+    sget-object v3, Landroid/text/TextUtils$TruncateAt;->END:Landroid/text/TextUtils$TruncateAt;
+
+    invoke-virtual {v0, v3}, Landroid/widget/TextView;->setEllipsize(Landroid/text/TextUtils$TruncateAt;)V
+
+    # The left reserve and dismiss control own the two boundary dividers. Hide
+    # the candidate's embedded divider so neither side is drawn twice.
+    if-eqz v2, :sync_dismiss_color
+
+    const/16 v3, 0x8
+
+    invoke-virtual {v2, v3}, Landroid/view/View;->setVisibility(I)V
+
+    :sync_dismiss_color
+    invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyView;->getRootView()Landroid/view/View;
+
+    move-result-object v3
+
+    const-string v4, "compat_clipboard_dismiss_symbol"
+
+    invoke-virtual {v3, v4}, Landroid/view/View;->findViewWithTag(Ljava/lang/Object;)Landroid/view/View;
+
+    move-result-object v3
+
+    instance-of v4, v3, Landroid/widget/TextView;
+
+    if-eqz v4, :decorate_done
+
+    check-cast v3, Landroid/widget/TextView;
+
+    invoke-virtual {v0}, Landroid/widget/TextView;->getTextColors()Landroid/content/res/ColorStateList;
+
+    move-result-object v4
+
+    invoke-virtual {v3, v4}, Landroid/widget/TextView;->setTextColor(Landroid/content/res/ColorStateList;)V
 
     :decorate_done
     return-void
 .end method
 
 .method public static centerSingleClipboardCandidate(Lcom/google/android/apps/inputmethod/libs/framework/keyboard/widget/FixedSizeCandidatesHolderView;)V
-    .locals 7
+    .locals 8
 
     invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/widget/FixedSizeCandidatesHolderView;->getChildCount()I
 
@@ -798,6 +844,43 @@
     :apply_gravity
     invoke-virtual {p0, v0}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/widget/FixedSizeCandidatesHolderView;->setGravity(I)V
 
+    # Constrain the clipboard holder between two equal 45dp side slots. This
+    # makes TextView's END ellipsis stop before the right divider and keeps the
+    # visible paste area geometrically centered despite the dismiss control.
+    invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/widget/FixedSizeCandidatesHolderView;->getLayoutParams()Landroid/view/ViewGroup$LayoutParams;
+
+    move-result-object v0
+
+    instance-of v1, v0, Landroid/widget/FrameLayout$LayoutParams;
+
+    if-eqz v1, :find_dismiss_parent
+
+    check-cast v0, Landroid/widget/FrameLayout$LayoutParams;
+
+    const/4 v1, 0x0
+
+    if-eqz v6, :apply_side_margins
+
+    invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/widget/FixedSizeCandidatesHolderView;->getResources()Landroid/content/res/Resources;
+
+    move-result-object v1
+
+    const v2, 0x7f0d0206
+
+    invoke-virtual {v1, v2}, Landroid/content/res/Resources;->getDimensionPixelSize(I)I
+
+    move-result v1
+
+    :apply_side_margins
+    iget v2, v0, Landroid/widget/FrameLayout$LayoutParams;->topMargin:I
+
+    iget v3, v0, Landroid/widget/FrameLayout$LayoutParams;->bottomMargin:I
+
+    invoke-virtual {v0, v1, v2, v1, v3}, Landroid/widget/FrameLayout$LayoutParams;->setMargins(IIII)V
+
+    invoke-virtual {p0, v0}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/widget/FixedSizeCandidatesHolderView;->setLayoutParams(Landroid/view/ViewGroup$LayoutParams;)V
+
+    :find_dismiss_parent
     # Overlay the dismiss control at the native expand-arrow position. It is a
     # sibling above SoftKeyView, so it receives a normal click without changing
     # the keyboard's existing TOGGLE_SHOW_MORE_CANDIDATES key definition.
@@ -811,7 +894,7 @@
 
     check-cast v2, Landroid/view/View;
 
-    move-object v5, v2
+    move-object v7, v2
 
     const-string v4, "compat_clipboard_dismiss"
 
@@ -827,9 +910,24 @@
 
     invoke-virtual {v2, v4}, Landroid/view/View;->setVisibility(I)V
 
+    const-string v4, "compat_clipboard_left_reserve"
+
+    invoke-virtual {v7, v4}, Landroid/view/View;->findViewWithTag(Ljava/lang/Object;)Landroid/view/View;
+
+    move-result-object v4
+
+    if-eqz v4, :find_show_more
+
+    const/4 v5, 0x0
+
+    invoke-virtual {v4, v5}, Landroid/view/View;->setVisibility(I)V
+
+    invoke-virtual {v4}, Landroid/view/View;->bringToFront()V
+
+    :find_show_more
     const v4, 0x7f0f0149
 
-    invoke-virtual {v5, v4}, Landroid/view/View;->findViewById(I)Landroid/view/View;
+    invoke-virtual {v7, v4}, Landroid/view/View;->findViewById(I)Landroid/view/View;
 
     move-result-object v4
 
@@ -857,9 +955,22 @@
 
     invoke-virtual {v2, v4}, Landroid/view/View;->setOnClickListener(Landroid/view/View$OnClickListener;)V
 
+    const-string v4, "compat_clipboard_left_reserve"
+
+    invoke-virtual {v7, v4}, Landroid/view/View;->findViewWithTag(Ljava/lang/Object;)Landroid/view/View;
+
+    move-result-object v4
+
+    if-eqz v4, :restore_show_more
+
+    const/16 v5, 0x8
+
+    invoke-virtual {v4, v5}, Landroid/view/View;->setVisibility(I)V
+
+    :restore_show_more
     const v4, 0x7f0f0149
 
-    invoke-virtual {v5, v4}, Landroid/view/View;->findViewById(I)Landroid/view/View;
+    invoke-virtual {v7, v4}, Landroid/view/View;->findViewById(I)Landroid/view/View;
 
     move-result-object v4
 
@@ -922,6 +1033,19 @@
 
     check-cast v2, Landroid/view/View;
 
+    const-string v3, "compat_clipboard_left_reserve"
+
+    invoke-virtual {v2, v3}, Landroid/view/View;->findViewWithTag(Ljava/lang/Object;)Landroid/view/View;
+
+    move-result-object v3
+
+    if-eqz v3, :restore_arrow_after_click
+
+    const/16 v0, 0x8
+
+    invoke-virtual {v3, v0}, Landroid/view/View;->setVisibility(I)V
+
+    :restore_arrow_after_click
     const v3, 0x7f0f0149
 
     invoke-virtual {v2, v3}, Landroid/view/View;->findViewById(I)Landroid/view/View;
@@ -986,11 +1110,17 @@
 
     iget-boolean v2, p0, Lcom/google/android/apps/inputmethod/libs/framework/core/ClipboardCandidateCompat;->pendingCandidateReset:Z
 
-    if-eqz v2, :append
+    if-eqz v2, :idle_restore
 
     const/4 v2, 0x0
 
     iput-boolean v2, p0, Lcom/google/android/apps/inputmethod/libs/framework/core/ClipboardCandidateCompat;->pendingCandidateReset:Z
+
+    # A clipboard change while composing updates the retained idle candidate but
+    # must not clear or replace the engine's active candidate cycle.
+    iget-boolean v3, p0, Lcom/google/android/apps/inputmethod/libs/framework/core/ClipboardCandidateCompat;->normalCandidatesActive:Z
+
+    if-nez v3, :done
 
     if-eqz v0, :clear_candidates
 
@@ -998,12 +1128,27 @@
 
     invoke-virtual {v1, v3}, Lcom/google/android/apps/inputmethod/libs/framework/core/InputBundle;->textCandidatesUpdated(Z)V
 
+    const/4 v2, 0x0
+
+    iput-boolean v2, p0, Lcom/google/android/apps/inputmethod/libs/framework/core/ClipboardCandidateCompat;->pendingIdleRestore:Z
+
     goto :append
 
     :clear_candidates
     invoke-virtual {v1, v2}, Lcom/google/android/apps/inputmethod/libs/framework/core/InputBundle;->textCandidatesUpdated(Z)V
 
     goto :done
+
+    :idle_restore
+    iget-boolean v2, p0, Lcom/google/android/apps/inputmethod/libs/framework/core/ClipboardCandidateCompat;->pendingIdleRestore:Z
+
+    if-eqz v2, :done
+
+    const/4 v2, 0x0
+
+    iput-boolean v2, p0, Lcom/google/android/apps/inputmethod/libs/framework/core/ClipboardCandidateCompat;->pendingIdleRestore:Z
+
+    iput-boolean v2, p0, Lcom/google/android/apps/inputmethod/libs/framework/core/ClipboardCandidateCompat;->normalCandidatesActive:Z
 
     :append
     if-eqz v0, :done

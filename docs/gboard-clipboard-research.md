@@ -126,3 +126,14 @@ Gboard 不读取系统 `Configuration.uiMode`，也不在 Java/smali 中根据�
 第一份 `clipboardaudit` APK 在 ART 类验证阶段暴露了 smali 寄存器类型合流错误：旧 chip 不可达指令与新分隔线路径复用 `v4`，使 Android 报出 `VerifyError: tried to get class from non-reference register v4 (type=Boolean)`。修正版完全删除旧 chip 指令，并在简化后的 `decorateView()` 中为资源、View、payload 和布尔结果使用不产生冲突的寄存器生命周期。apktool/D8 构建成功不能替代真机 ART 验证。
 
 该修订仍需通过修正版独立 `clipboardaudit` 包验证 ART 加载、视觉密度、关闭触摸、展开箭头恢复、普通候选和多候选场景。
+
+## 空闲候选状态与对称边界修订（2026-07-25）
+
+真机验证进一步确认，剪贴板不应作为正常拼音候选的第一项持续混排。最终状态机改为：
+
+- 无输入候选时显示剪贴板；
+- 任意非剪贴板候选批次到达后，立即让位并标记正常候选活动；
+- 候选更新后延迟 100 ms 检查，若没有新的正常候选批次，才认定输入已完成或取消并恢复剪贴板；
+- 输入过程中发生剪贴板变化只更新保留的数据，不清空或替换当前引擎候选。
+
+视觉边界也改为候选 holder 左右各预留一个原生展开按钮宽度（45dp）。右侧是关闭按钮，左侧是不可点击的对称预留位；两侧各只绘制一次同源 `SoftKeyCandidateBarShowMoreCandidateSeparator`，剪贴板候选自身的内置分隔线隐藏，避免重叠导致左侧颜色过重。完整规范化文本交给 `TextView` 按实际测量宽度执行 `END` 省略，不再按固定字符数手工拼接 `...`。关闭符号的 `ColorStateList` 直接复制当前已渲染的原生候选文字，因此跟随键盘主题而不是系统深浅模式或静态 XML 解析结果。
