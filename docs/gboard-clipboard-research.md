@@ -146,4 +146,8 @@ V5 真机暴露了两个布局细节：复用 `SoftKeyCandidateSeparator` 的左
 
 关闭容器的位置同样改为以真实原生 View 为准。显示 `×` 前读取同一位置的 `key_pos_show_more_candidates` 实际 measured width，并写入关闭 overlay 的 LayoutParams；该外宽包含原生分隔列和 45dp host，比仅固定 45dp 更准确。
 
-V7 真机仍显示两个间接推断不足：注入候选中的原生 ID 分隔符本身未必经过完整实时主题路径，而候选栏右边缘也不等于下方 1.5 权重退格键的中心。后续修订把主题样本改为原生 `key_pos_show_more_candidates` 内真实、可见布局链上的 `.divider.vertical.for-candidate-key`，除 Drawable/tint/alpha 外额外复制 Drawable color filter。几何对齐则改用窗口坐标：优先读取当前可见 `key_pos_del` 的中心；九键布局回退到 `key_pos_move_cursor`；再回退到 `key_pos_header_voice`。将全局中心换算成候选 header 父容器的局部 leftMargin 后定位关闭 overlay，从而不再假定右侧列宽或边缘 inset。
+V7 真机仍显示两个间接推断不足：注入候选中的原生 ID 分隔符本身未必经过完整实时主题路径，而候选栏右边缘也不等于下方 1.5 权重退格键的中心。后续几何对齐改用窗口坐标：优先读取当前可见 `key_pos_del` 的中心；九键布局回退到 `key_pos_move_cursor`；再回退到 `key_pos_header_voice`。将全局中心换算成候选 header 父容器的局部 leftMargin 后定位关闭 overlay，从而不再假定右侧列宽或边缘 inset；真机确认该位置符合预期。
+
+跨层级复制 show-more divider 的 Drawable/tint/filter 仍会叠加源 View 与 Candidate 父层不同的透明度语义，结果在浅色主题很淡、深色和彩色主题几乎不可见。最终不再自绘右线：在 holder 完成“末列隐藏”后重新显示剪贴板 Candidate 自己的真实 `candidate_separator`，它天然与普通候选处于同一布局、主题和父级 alpha 层。左线只在同一 Candidate 内从这条右线克隆最终外观，因此两边既一致，也不会受到跨层级 alpha 乘算。
+
+英文模式还暴露了 `textCandidatesUpdated(true)` 的 preserve 语义差异：刷新剪贴板时旧兼容行可能保留，随后 singleton append 形成两个相同粘贴项，holder 因可见 child 数大于一而恢复左对齐。刷新路径现统一调用 `textCandidatesUpdated(false)` 明确清空旧空闲周期，再只追加一个新剪贴板 Candidate；正常输入活动时仍由 `normalCandidatesActive` 门控，不会被该清理打断。

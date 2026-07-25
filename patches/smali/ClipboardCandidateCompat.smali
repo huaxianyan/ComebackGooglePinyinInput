@@ -787,24 +787,24 @@
 
     invoke-virtual {v0, v3}, Lavk;->a(F)V
 
-    # Two dedicated, identical header-style dividers live in the wrap-sized
-    # candidate. Do not overlap the native last-candidate divider: the native
-    # holder may hide it later, while these tagged views remain deterministic.
+    # The native candidate divider is the authoritative themed right edge.
+    # The holder may hide it as a last-column divider, so centerSingle... will
+    # reassert it after holder decoration and clone it only to the left edge.
     if-eqz v2, :show_clipboard_left_separator
 
-    const/16 v3, 0x8
-
-    invoke-virtual {v2, v3}, Landroid/view/View;->setVisibility(I)V
+    invoke-virtual {v2, v1}, Landroid/view/View;->setVisibility(I)V
 
     :show_clipboard_left_separator
-    if-eqz v5, :show_clipboard_right_separator
+    if-eqz v5, :hide_compat_right_separator
 
     invoke-virtual {v5, v1}, Landroid/view/View;->setVisibility(I)V
 
-    :show_clipboard_right_separator
+    :hide_compat_right_separator
     if-eqz v6, :sync_dismiss_color
 
-    invoke-virtual {v6, v1}, Landroid/view/View;->setVisibility(I)V
+    const/16 v3, 0x8
+
+    invoke-virtual {v6, v3}, Landroid/view/View;->setVisibility(I)V
 
     :sync_dismiss_color
     invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyView;->getRootView()Landroid/view/View;
@@ -1143,8 +1143,9 @@
     goto :scan_children
 
     :choose_gravity
-    # This runs after the holder's last-column decoration. Reassert the two
-    # clipboard dividers and suppress the native divider deterministically.
+    # This runs after the holder's last-column decoration. Keep the actual
+    # native candidate divider as the right edge, then clone that exact themed
+    # appearance to the left divider inside the same parent/alpha hierarchy.
     if-eqz v6, :select_gravity
 
     if-eqz v3, :select_gravity
@@ -1153,40 +1154,13 @@
 
     invoke-virtual {v3, v4}, Landroid/view/View;->findViewById(I)Landroid/view/View;
 
-    move-result-object v4
+    move-result-object v7
 
-    move-object v7, v4
+    if-eqz v7, :force_left_separator
 
-    if-eqz v4, :find_rendered_separator_source
+    const/4 v5, 0x0
 
-    const/16 v5, 0x8
-
-    invoke-virtual {v4, v5}, Landroid/view/View;->setVisibility(I)V
-
-    :find_rendered_separator_source
-    # Prefer the original show-more key's divider: unlike injected candidate
-    # children, it is guaranteed to have passed through the live theme engine.
-    invoke-virtual {p0}, Landroid/view/View;->getRootView()Landroid/view/View;
-
-    move-result-object v4
-
-    const v5, 0x7f0f0149
-
-    invoke-virtual {v4, v5}, Landroid/view/View;->findViewById(I)Landroid/view/View;
-
-    move-result-object v4
-
-    if-eqz v4, :force_left_separator
-
-    const-string v5, ".divider.vertical.for-candidate-key"
-
-    invoke-virtual {v4, v5}, Landroid/view/View;->findViewWithTag(Ljava/lang/Object;)Landroid/view/View;
-
-    move-result-object v4
-
-    if-eqz v4, :force_left_separator
-
-    move-object v7, v4
+    invoke-virtual {v7, v5}, Landroid/view/View;->setVisibility(I)V
 
     :force_left_separator
     const-string v4, "compat_clipboard_left_separator"
@@ -1195,7 +1169,7 @@
 
     move-result-object v4
 
-    if-eqz v4, :force_right_separator
+    if-eqz v4, :hide_legacy_right_separator
 
     invoke-static {v7, v4}, Lcom/google/android/apps/inputmethod/libs/framework/core/ClipboardCandidateCompat;->syncSeparatorAppearance(Landroid/view/View;Landroid/view/View;)V
 
@@ -1203,7 +1177,7 @@
 
     invoke-virtual {v4, v5}, Landroid/view/View;->setVisibility(I)V
 
-    :force_right_separator
+    :hide_legacy_right_separator
     const-string v4, "compat_clipboard_right_separator"
 
     invoke-virtual {v3, v4}, Landroid/view/View;->findViewWithTag(Ljava/lang/Object;)Landroid/view/View;
@@ -1212,9 +1186,7 @@
 
     if-eqz v4, :select_gravity
 
-    invoke-static {v7, v4}, Lcom/google/android/apps/inputmethod/libs/framework/core/ClipboardCandidateCompat;->syncSeparatorAppearance(Landroid/view/View;Landroid/view/View;)V
-
-    const/4 v5, 0x0
+    const/16 v5, 0x8
 
     invoke-virtual {v4, v5}, Landroid/view/View;->setVisibility(I)V
 
@@ -1554,7 +1526,10 @@
 
     if-eqz v0, :clear_candidates
 
-    const/4 v3, 0x1
+    # English idle candidates may retain the previous compatibility row when
+    # notified with preserve=true. Clear the rendered cycle before appending the
+    # single refreshed clipboard candidate, just as dismissal already does.
+    const/4 v3, 0x0
 
     invoke-virtual {v1, v3}, Lcom/google/android/apps/inputmethod/libs/framework/core/InputBundle;->textCandidatesUpdated(Z)V
 
