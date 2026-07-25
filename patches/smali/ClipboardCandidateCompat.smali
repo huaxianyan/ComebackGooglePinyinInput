@@ -781,8 +781,8 @@
 
     invoke-virtual {v0, v3}, Landroid/widget/TextView;->setEllipsize(Landroid/text/TextUtils$TruncateAt;)V
 
-    # Keep native 21sp typography: cap the visible label at 200dp and disable
-    # AutoSizeTextView's horizontal shrinking so overflow is ellipsized instead.
+    # Keep native 21sp typography: start from the validated 200dp cap, add two
+    # rendered Chinese ems below, and disable horizontal font shrinking.
     invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyView;->getResources()Landroid/content/res/Resources;
 
     move-result-object v3
@@ -799,6 +799,21 @@
 
     float-to-int v3, v3
 
+    # Extend the established 200dp visual cap by exactly two rendered candidate
+    # ems. Using getTextSize() keeps the extra room equal to two 21sp Chinese
+    # glyphs and follows the user's configured font scale.
+    invoke-virtual {v0}, Landroid/widget/TextView;->getTextSize()F
+
+    move-result v4
+
+    const/high16 v7, 0x40000000    # 2.0f
+
+    mul-float/2addr v4, v7
+
+    float-to-int v4, v4
+
+    add-int/2addr v3, v4
+
     invoke-virtual {v0, v3}, Landroid/widget/TextView;->setMaxWidth(I)V
 
     const/high16 v3, 0x3f800000    # 1.0f
@@ -808,7 +823,7 @@
     # AutoSizeTextView draws text directly and never calls TextView.onDraw(),
     # so compound drawables are not rendered. Use a real sibling ImageView and
     # reserve 18dp + 6dp text gap + 4dp divider breathing room in the label's
-    # start padding; the whole visual group remains inside the 200dp cap.
+    # start padding; the whole visual group remains inside the expanded cap.
     instance-of v3, v8, Landroid/widget/ImageView;
 
     if-eqz v3, :clipboard_icon_done
@@ -1254,8 +1269,8 @@
     :apply_gravity
     invoke-virtual {p0, v0}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/widget/FixedSizeCandidatesHolderView;->setGravity(I)V
 
-    # The label itself is capped at 200dp, so it cannot reach the independently
-    # aligned close key on supported phone widths. Keep the holder full-width;
+    # The label is bounded by the 200dp base plus two 21sp ems, so it remains
+    # clear of the independently aligned close key on supported phone widths.
     # centering naturally leaves balanced space without a synthetic left slot.
     invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/widget/FixedSizeCandidatesHolderView;->getLayoutParams()Landroid/view/ViewGroup$LayoutParams;
 

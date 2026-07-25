@@ -162,4 +162,6 @@ V7 真机仍显示两个间接推断不足：注入候选中的原生 ID 分隔�
 
 V12 的 sibling View 方案在 smali、D8、签名阶段通过，但 Android 16 ART 拒绝 `decorateView()`：`[0xB4] instance-of on non-reference in v7`。根因是右兼容分隔符存在时 `v7` 被写成 visibility 整数，而该 View 不存在的跳转路径越过了后续图标引用赋值，直接在合流标签把 `v7` 当 ImageView 检查。修订版增加 `.locals 9`，把 `v8` 专用于图标 View 引用，并把两条分支统一导向 `find_clipboard_icon` 后才进入候选检查；颜色、尺寸等整数仍只使用 `v3/v4/v7`，不再让引用寄存器跨类型复用。V13 真机确认 ART、图标和全部剪贴板功能正常。
 
-最后的光学调整把图标距左分隔符从原生 6dp candidate padding 增加到 10dp；相应地，标签 start reserve 从 24dp 增至 28dp（4dp 呼吸空间 + 18dp 图标 + 6dp 文字间距）。这样只增加分隔符与图标之间的留白，不改变图标—文字间距；额外宽度继续计入 200dp 上限，因此组合仍居中且不会向关闭键溢出。
+最后的光学调整把图标距左分隔符从原生 6dp candidate padding 增加到 10dp；相应地，标签 start reserve 从 24dp 增至 28dp（4dp 呼吸空间 + 18dp 图标 + 6dp 文字间距）。这样只增加分隔符与图标之间的留白，不改变图标—文字间距；额外宽度计入当时的 200dp 上限，因此组合仍居中且不会向关闭键溢出。V14 真机确认视觉效果非常理想。
+
+下一轮纯视觉试验把最大宽度从固定 200dp 改为 `200dp + 2 × label.getTextSize()`。默认原生 21sp、字体缩放 1.0 时约为 242dp，即多容纳约两个全角中文字符；使用运行时像素字号而非固定增加 42dp，可以在用户修改系统字体缩放后仍保持“多两个中文 em”的相对语义。图标、28dp start reserve、文字和 ellipsis 仍共同参与该总宽度，完整提交 payload 不变。
