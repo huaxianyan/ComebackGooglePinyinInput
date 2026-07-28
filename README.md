@@ -35,16 +35,16 @@ Google 拼音输入法最初由 Google 发布并通过 Google Play 等官方 And
 | --- | --- |
 | 项目中文名称 | Google 拼音输入法 创造性 AI 版 |
 | English project name | Comeback Google Pinyin Input |
-| 项目版本 | `1.0.0` |
-| Android versionName | `1.0.0` |
-| Android versionCode | `4520381` |
+| 项目版本 | `1.0.1` |
+| Android versionName | `1.0.1` |
+| Android versionCode | `4520382` |
 | 正式包名 | `com.google.android.inputmethod.pinyin.compat` |
 | 架构 | `arm64-v8a` |
-| 正式 APK | `ComebackGooglePinyinInput-arm64-v8a-1.0.0.apk` |
+| 正式 APK | `ComebackGooglePinyinInput-arm64-v8a-1.0.1.apk` |
 | target SDK | 28 |
 | 主要测试设备 | Pixel 10 Pro / Android 16 |
 
-上表对应重新整理后的正式 Release `v1.0.0`，作为提升 target API 之前当前兼容阶段的最终正式版本。后续 `master` 仍可能包含尚未发布的研究或兼容修复；是否发布以 GitHub Release 和 `CHANGELOG.md` 为准。
+上表对应正式 Release `v1.0.1`，在 `v1.0.0` 基线上增加可自定义的用户词典备份路径。后续 `master` 仍可能包含尚未发布的研究或兼容修复；是否发布以 GitHub Release 和 `CHANGELOG.md` 为准。
 
 创造性 AI 版使用独立包名和项目签名证书，可以与 Google 原始版本同时安装。以后升级时必须继续使用同一签名证书；它不能覆盖由 Google 官方证书签名的原始应用。
 

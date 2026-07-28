@@ -1,14 +1,10 @@
 # Changelog
 
-## [Unreleased]
+## [1.0.1] - 2026-07-28
 
 ### Changed
 
-- 纠正因系统 `DocumentsUI` 临时异常而作出的固定路径判断：恢复仅本地 `ACTION_OPEN_DOCUMENT_TREE`，允许用户选择内部存储或本机 SD 卡目录。
-- “备份和导入位置（仅本地）”现在同时控制自动备份、立即备份、版本轮换和内置“导入本地备份”列表；不再固定到 `Documents/GooglePinyinBackup`。
-- 新安装或清除数据后不会恢复旧目录授权，也不会自动扫描公共存储；点击“导入本地备份”可重新选择原目录，并在验证读、写、创建、重命名和删除能力后列出备份。
-- 备份恢复为 `.txt.partial → BOM/header/SHA-256 校验 → DocumentsContract.renameDocument()` 两阶段发布；导入继续复用原生合并式 `UserDictImportTask`。
-- 继续只接受 `com.android.externalstorage.documents` 提供的设备本地目录，拒绝云端 provider；保留文件管理器 `ACTION_VIEW` / `ACTION_SEND` 后备导入入口。
+- 支持自定义用户词典备份路径；自动备份、立即备份、版本轮换和内置导入共用用户选择的设备本地目录。
 
 ## [1.0.0] - 2026-07-25
 
