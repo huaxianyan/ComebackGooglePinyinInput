@@ -1,6 +1,6 @@
 # 用户词典自动备份：调研与方案设计
 
-> **当前实现说明**：1.0.0 曾因 Pixel 10 Pro 上多个应用共同出现空目录而误判 `DocumentsUI` 的 SAF 目录选择不可用，临时固定使用 `MediaStore.Files` 的 `Documents/GooglePinyinBackup`。后续排查确认这是设备端临时状态，1.0.1 恢复 `ACTION_OPEN_DOCUMENT_TREE` 和用户自选目录。当前开发版本进一步取消 `com.android.externalstorage.documents` authority 限制：内部存储、SD 卡和 Google Drive 等云端 DocumentsProvider 均可选择，但必须实际通过持久读写授权以及 create/write/read/rename/delete 能力测试。自动备份、立即备份、版本轮换和内置导入共用同一个 persisted tree URI。
+> **当前实现说明**：1.0.0 曾因 Pixel 10 Pro 上多个应用共同出现空目录而误判 `DocumentsUI` 的 SAF 目录选择不可用，临时固定使用 `MediaStore.Files` 的 `Documents/GooglePinyinBackup`。后续排查确认这是设备端临时状态，1.0.1 恢复 `ACTION_OPEN_DOCUMENT_TREE` 和用户自选目录。1.0.2 进一步取消 `com.android.externalstorage.documents` authority 限制：内部存储、SD 卡和 Google Drive 等云端 DocumentsProvider 均可选择，但必须实际通过持久读写授权以及 create/write/read/rename/delete 能力测试。自动备份、立即备份、版本轮换和内置导入共用同一个 persisted tree URI。
 
 ## 1. 使用场景
 

@@ -1,10 +1,12 @@
 # Changelog
 
-## [Unreleased]
+## [1.0.2] - 2026-07-28
 
 ### Changed
 
 - 自定义词典备份目录不再限制为设备本地 ExternalStorageProvider；Google Drive 等能通过创建、读写、重命名和删除能力验证的云端 DocumentsProvider 也可供备份与内置导入共用。
+- Google Drive 目录选择、立即备份和内置导入已在 Pixel 10 Pro / Android 16 上通过真机验证。
+- GitHub Release 标题改为以版本号开头，APK 及其校验文件统一采用 `ComebackGooglePinyinInput-...` 无空格连字符命名。
 
 ## [1.0.1] - 2026-07-28
 

@@ -35,16 +35,16 @@ Google 拼音输入法最初由 Google 发布并通过 Google Play 等官方 And
 | --- | --- |
 | 项目中文名称 | Google 拼音输入法 创造性 AI 版 |
 | English project name | Comeback Google Pinyin Input |
-| 项目版本 | `1.0.1` |
-| Android versionName | `1.0.1` |
-| Android versionCode | `4520382` |
+| 项目版本 | `1.0.2` |
+| Android versionName | `1.0.2` |
+| Android versionCode | `4520383` |
 | 正式包名 | `com.google.android.inputmethod.pinyin.compat` |
 | 架构 | `arm64-v8a` |
-| 正式 APK | `ComebackGooglePinyinInput-arm64-v8a-1.0.1.apk` |
+| 正式 APK | `ComebackGooglePinyinInput-arm64-v8a-1.0.2.apk` |
 | target SDK | 28 |
 | 主要测试设备 | Pixel 10 Pro / Android 16 |
 
-上表对应正式 Release `v1.0.1`，在 `v1.0.0` 基线上增加可自定义的用户词典备份路径。后续 `master` 仍可能包含尚未发布的研究或兼容修复；是否发布以 GitHub Release 和 `CHANGELOG.md` 为准。
+上表对应正式 Release `v1.0.2`，备份和导入位置可选择内部存储、SD 卡或通过能力验证的 Google Drive 等 DocumentsProvider 目录。后续 `master` 仍可能包含尚未发布的研究或兼容修复；是否发布以 GitHub Release 和 `CHANGELOG.md` 为准。
 
 创造性 AI 版使用独立包名和项目签名证书，可以与 Google 原始版本同时安装。以后升级时必须继续使用同一签名证书；它不能覆盖由 Google 官方证书签名的原始应用。
 
@@ -62,7 +62,7 @@ Google 拼音输入法最初由 Google 发布并通过 Google Play 等官方 And
 - 增加用户词典自动备份，可选择内部存储、SD 卡或支持读写的云端文档目录；备份与手动导入共用该位置。
 - 支持 1/3/7/14/30 天备份间隔、3/5/10/20/30 个保留版本、立即备份和手动导入。
 - 在进入词典设置页后按需显示中英文词条数、主文件、滚动副本、恢复旁路和最近落盘时间；应用及键盘启动时不扫描。
-- 备份使用 Google 拼音原生 UTF-16LE 用户词典导出/导入格式；不使用云端、不自动恢复、不依赖网络。
+- 备份使用 Google 拼音原生 UTF-16LE 用户词典导出/导入格式；应用自身不实现云同步或自动恢复，云端 I/O 由用户选择的 DocumentsProvider 管理。
 - 清理失效的 Clearcut/Primes、Firebase、反馈上传和在线词典更新组件。
 - 补全现代 Android 要求的关键 `android:exported` 声明。
 
@@ -76,7 +76,7 @@ Google 拼音输入法最初由 Google 发布并通过 Google Play 等官方 And
 
 1. 安装创造性 AI 版并启用输入法。
 2. 打开“设置 → 字典”。
-3. 点击“导入本地备份”；新安装尚无目录授权时，重新选择原来的备份目录。
+3. 点击“导入用户词典备份”；新安装尚无目录授权时，重新选择原来的备份目录。
 4. 从内置列表选择所需备份并确认导入。
 
 导入采用原生合并/更新语义，不会自动覆盖或回滚当前词典。也可以在文件管理器中打开或分享备份 `.txt` 到 Google 拼音。
@@ -184,8 +184,8 @@ gh variable set ANDROID_APPLICATION_ID --body "com.google.android.inputmethod.pi
 配置后可在 GitHub 的 **Actions → Build and release APK → Run workflow** 手动验证一次。确认 artifact 能安装并覆盖正式创造性 AI 版后，以新版本提交创建标签：
 
 ```powershell
-git tag -a v1.0.1 -m "Google Pinyin compatibility 1.0.1"
-git push origin v1.0.1
+git tag -a v1.0.2 -m "ComebackGooglePinyinInput 1.0.2"
+git push origin v1.0.2
 ```
 
 标签推送后无需在本地构建或上传 APK。`GITHUB_TOKEN` 由 Actions 自动提供，只授予工作流创建 Release 所需的 `contents: write` 权限。
