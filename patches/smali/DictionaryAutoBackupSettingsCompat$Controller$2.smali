@@ -27,7 +27,7 @@
 .method constructor <init>(Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupSettingsCompat$Controller;Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$BackupEntry;)V
     .registers 3
 
-    .line 144
+    .line 345
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupSettingsCompat$Controller$2;->this$0:Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupSettingsCompat$Controller;
 
     iput-object p2, p0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupSettingsCompat$Controller$2;->val$entry:Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$BackupEntry;
@@ -42,10 +42,13 @@
 .method public onClick(Landroid/content/DialogInterface;I)V
     .registers 3
 
-    .line 146
+    .line 347
     iget-object p1, p0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupSettingsCompat$Controller$2;->this$0:Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupSettingsCompat$Controller;
 
-    iget-object p1, p1, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupSettingsCompat$Controller;->fragment:Landroid/preference/PreferenceFragment;
+    # getter for: Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupSettingsCompat$Controller;->fragment:Landroid/preference/PreferenceFragment;
+    invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupSettingsCompat$Controller;->access$100(Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupSettingsCompat$Controller;)Landroid/preference/PreferenceFragment;
+
+    move-result-object p1
 
     invoke-virtual {p1}, Landroid/preference/PreferenceFragment;->getActivity()Landroid/app/Activity;
 
@@ -57,6 +60,6 @@
 
     invoke-static {p1, p2}, Lcom/google/android/inputmethod/pinyin/LocalBackupImportActivity;->startNativeImport(Landroid/content/Context;Landroid/net/Uri;)Z
 
-    .line 147
+    .line 348
     return-void
 .end method

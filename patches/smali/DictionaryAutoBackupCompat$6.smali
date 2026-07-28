@@ -8,7 +8,7 @@
 
 # annotations
 .annotation system Ldalvik/annotation/EnclosingMethod;
-    value = Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->toast(Landroid/content/Context;Ljava/lang/String;)V
+    value = Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->finishFailure(Landroid/content/Context;ZLjava/lang/String;Ljava/lang/Throwable;)V
 .end annotation
 
 .annotation system Ldalvik/annotation/InnerClass;
@@ -18,19 +18,23 @@
 
 
 # instance fields
-.field final synthetic val$c:Landroid/content/Context;
+.field final synthetic val$context:Landroid/content/Context;
 
-.field final synthetic val$text:Ljava/lang/String;
+.field final synthetic val$force:Z
+
+.field final synthetic val$message:Ljava/lang/String;
 
 
 # direct methods
-.method constructor <init>(Landroid/content/Context;Ljava/lang/String;)V
-    .registers 3
+.method constructor <init>(ZLandroid/content/Context;Ljava/lang/String;)V
+    .registers 4
 
-    .line 278
-    iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$6;->val$c:Landroid/content/Context;
+    .line 474
+    iput-boolean p1, p0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$6;->val$force:Z
 
-    iput-object p2, p0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$6;->val$text:Ljava/lang/String;
+    iput-object p2, p0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$6;->val$context:Landroid/content/Context;
+
+    iput-object p3, p0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$6;->val$message:Ljava/lang/String;
 
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
@@ -40,21 +44,24 @@
 
 # virtual methods
 .method public run()V
-    .registers 4
+    .registers 3
 
-    .line 279
-    iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$6;->val$c:Landroid/content/Context;
+    .line 476
+    invoke-static {}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupSettingsCompat;->refreshAll()V
 
-    iget-object v1, p0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$6;->val$text:Ljava/lang/String;
+    .line 477
+    iget-boolean v0, p0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$6;->val$force:Z
 
-    const/4 v2, 0x0
+    if-eqz v0, :cond_e
 
-    invoke-static {v0, v1, v2}, Landroid/widget/Toast;->makeText(Landroid/content/Context;Ljava/lang/CharSequence;I)Landroid/widget/Toast;
+    iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$6;->val$context:Landroid/content/Context;
 
-    move-result-object v0
+    iget-object v1, p0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$6;->val$message:Ljava/lang/String;
 
-    invoke-virtual {v0}, Landroid/widget/Toast;->show()V
+    # invokes: Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->showToast(Landroid/content/Context;Ljava/lang/String;)V
+    invoke-static {v0, v1}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->access$1400(Landroid/content/Context;Ljava/lang/String;)V
 
-    .line 280
+    .line 478
+    :cond_e
     return-void
 .end method

@@ -15,7 +15,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.List;
 
-/** Explicit manual import entry for fixed-path backups and file-manager VIEW/SEND. */
+/** Explicit manual import entry for the selected backup directory and file-manager VIEW/SEND. */
 public final class LocalBackupImportActivity extends Activity {
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
@@ -39,7 +39,7 @@ public final class LocalBackupImportActivity extends Activity {
                 DictionaryAutoBackupCompat.listBackups(this);
         if (entries.isEmpty()) {
             new AlertDialog.Builder(this).setTitle("没有可访问的本地备份")
-                    .setMessage("固定目录中没有当前安装可列出的备份。卸载重装后，可在文件管理器中打开 Documents/GooglePinyinBackup 下的 .txt，并选择 Google 拼音导入。")
+                    .setMessage("尚未设置备份和导入目录，或所选目录中没有 Google 拼音用户词典备份。请在字典设置中选择已有备份目录；也可以从文件管理器打开或分享备份 .txt。")
                     .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                         @Override public void onClick(DialogInterface d, int w) { finish(); }
                     }).setOnCancelListener(new DialogInterface.OnCancelListener() {

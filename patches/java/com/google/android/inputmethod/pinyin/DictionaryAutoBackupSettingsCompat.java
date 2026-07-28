@@ -1,17 +1,21 @@
 package com.google.android.inputmethod.pinyin;
 
-import android.Manifest;
+import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Build;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.preference.TwoStatePreference;
+import android.provider.DocumentsContract;
+import android.provider.OpenableColumns;
 import android.text.format.DateFormat;
 import android.widget.Toast;
 
@@ -20,111 +24,307 @@ import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
 
-/** Binds fixed-path local backup controls. */
+/** Binds a shared user-selected local directory to dictionary backup and import. */
 public final class DictionaryAutoBackupSettingsCompat {
+    private static final int REQUEST_TREE = 0x6b01;
     private static final String KEY_LOCATION = "dictionary_auto_backup_location";
-    private static final int REQUEST_STORAGE = 0x6b02;
+    private static final int PICK_LOCATION = 0;
+    private static final int PICK_ENABLE = 1;
+    private static final int PICK_IMPORT = 2;
     private static final Map<PreferenceFragment, Controller> CONTROLLERS =
             new WeakHashMap<PreferenceFragment, Controller>();
+
     private DictionaryAutoBackupSettingsCompat() {}
 
-    public static void bind(PreferenceFragment f) {
-        if (f == null || f.getActivity() == null) return;
+    public static void bind(PreferenceFragment fragment) {
+        if (fragment == null || fragment.getActivity() == null) return;
         synchronized (CONTROLLERS) {
-            Controller old = CONTROLLERS.remove(f); if (old != null) old.destroy();
-            Controller c = new Controller(f); CONTROLLERS.put(f, c); c.bind();
+            Controller old = CONTROLLERS.remove(fragment);
+            if (old != null) old.destroy();
+            Controller controller = new Controller(fragment);
+            CONTROLLERS.put(fragment, controller);
+            controller.bind();
         }
     }
-    public static boolean handleActivityResult(PreferenceFragment f, int r, int c, Intent d) { return false; }
-    public static boolean handleRequestPermissionsResult(PreferenceFragment f, int requestCode,
-            String[] permissions, int[] results) {
-        if (requestCode != REQUEST_STORAGE) return false;
-        Controller c; synchronized (CONTROLLERS) { c = CONTROLLERS.get(f); }
-        if (c != null) c.onStoragePermissionResult(results);
+
+    public static boolean handleActivityResult(PreferenceFragment fragment, int requestCode,
+            int resultCode, Intent data) {
+        if (requestCode != REQUEST_TREE) return false;
+        Controller controller;
+        synchronized (CONTROLLERS) { controller = CONTROLLERS.get(fragment); }
+        if (controller != null) controller.onTreeResult(resultCode, data);
         return true;
     }
-    public static void refresh(PreferenceFragment f) {
-        Controller c; synchronized (CONTROLLERS) { c = CONTROLLERS.get(f); }
-        if (c != null) c.refresh();
+
+    public static boolean handleRequestPermissionsResult(PreferenceFragment fragment,
+            int requestCode, String[] permissions, int[] results) {
+        return false;
     }
-    public static void unbind(PreferenceFragment f) {
-        synchronized (CONTROLLERS) { Controller c = CONTROLLERS.remove(f); if (c != null) c.destroy(); }
+
+    public static void refresh(PreferenceFragment fragment) {
+        Controller controller;
+        synchronized (CONTROLLERS) { controller = CONTROLLERS.get(fragment); }
+        if (controller != null) controller.refresh();
     }
+
+    public static void unbind(PreferenceFragment fragment) {
+        synchronized (CONTROLLERS) {
+            Controller controller = CONTROLLERS.remove(fragment);
+            if (controller != null) controller.destroy();
+        }
+    }
+
     static void refreshAll() {
-        List<Controller> list; synchronized (CONTROLLERS) { list = new ArrayList<Controller>(CONTROLLERS.values()); }
-        for (Controller c : list) c.refresh();
+        final List<Controller> snapshot;
+        synchronized (CONTROLLERS) {
+            snapshot = new ArrayList<Controller>(CONTROLLERS.values());
+        }
+        for (Controller controller : snapshot) controller.refresh();
     }
 
     private static final class Controller implements Preference.OnPreferenceClickListener,
-            Preference.OnPreferenceChangeListener {
-        PreferenceFragment fragment; TwoStatePreference enabled; Preference location;
-        ListPreference interval; ListPreference retention; Preference now; Preference importBackup;
-        Preference dictionaryStatus; int statusGeneration; boolean statusLoading;
-        Controller(PreferenceFragment f) { fragment = f; }
+            Preference.OnPreferenceChangeListener,
+            DictionaryAutoBackupCompat.ValidationCallback {
+        private PreferenceFragment fragment;
+        private Preference dictionaryStatus;
+        private TwoStatePreference enabledPreference;
+        private Preference locationPreference;
+        private ListPreference intervalPreference;
+        private ListPreference retentionPreference;
+        private Preference backupNowPreference;
+        private Preference importPreference;
+        private int pickPurpose = PICK_LOCATION;
+        private boolean validating;
+        private Uri pendingTree;
+        private int statusGeneration;
+        private boolean statusLoading;
+
+        Controller(PreferenceFragment fragment) { this.fragment = fragment; }
+
         void bind() {
             dictionaryStatus = fragment.findPreference("dictionary_current_status");
-            enabled = (TwoStatePreference) fragment.findPreference(DictionaryAutoBackupCompat.KEY_ENABLED);
-            location = fragment.findPreference(KEY_LOCATION);
-            interval = (ListPreference) fragment.findPreference(DictionaryAutoBackupCompat.KEY_INTERVAL);
-            retention = (ListPreference) fragment.findPreference(DictionaryAutoBackupCompat.KEY_RETENTION);
-            now = fragment.findPreference(DictionaryAutoBackupCompat.KEY_BACKUP_NOW);
-            importBackup = fragment.findPreference(DictionaryAutoBackupCompat.KEY_IMPORT_BACKUP);
+            enabledPreference = (TwoStatePreference) fragment.findPreference(
+                    DictionaryAutoBackupCompat.KEY_ENABLED);
+            locationPreference = fragment.findPreference(KEY_LOCATION);
+            intervalPreference = (ListPreference) fragment.findPreference(
+                    DictionaryAutoBackupCompat.KEY_INTERVAL);
+            retentionPreference = (ListPreference) fragment.findPreference(
+                    DictionaryAutoBackupCompat.KEY_RETENTION);
+            backupNowPreference = fragment.findPreference(DictionaryAutoBackupCompat.KEY_BACKUP_NOW);
+            importPreference = fragment.findPreference(DictionaryAutoBackupCompat.KEY_IMPORT_BACKUP);
+
             if (dictionaryStatus != null) dictionaryStatus.setOnPreferenceClickListener(this);
-            if (enabled != null) enabled.setOnPreferenceChangeListener(this);
-            if (interval != null) interval.setOnPreferenceChangeListener(this);
-            if (retention != null) retention.setOnPreferenceChangeListener(this);
-            if (now != null) now.setOnPreferenceClickListener(this);
-            if (importBackup != null) importBackup.setOnPreferenceClickListener(this);
+            if (enabledPreference != null) enabledPreference.setOnPreferenceChangeListener(this);
+            if (locationPreference != null) locationPreference.setOnPreferenceClickListener(this);
+            if (intervalPreference != null) intervalPreference.setOnPreferenceChangeListener(this);
+            if (retentionPreference != null) retentionPreference.setOnPreferenceChangeListener(this);
+            if (backupNowPreference != null) backupNowPreference.setOnPreferenceClickListener(this);
+            if (importPreference != null) importPreference.setOnPreferenceClickListener(this);
             refresh();
             loadDictionaryStatus();
         }
-        void destroy() { statusGeneration++; statusLoading = false;
-            fragment = null; dictionaryStatus = null;
-            enabled = null; location = null; interval = null;
-            retention = null; now = null; importBackup = null; }
-        Context context() { return fragment == null || fragment.getActivity() == null ? null
-                : fragment.getActivity().getApplicationContext(); }
 
-        @Override public boolean onPreferenceClick(Preference p) {
-            Context c = context(); if (c == null) return true;
-            if (p == dictionaryStatus) loadDictionaryStatus();
-            else if (p == now) DictionaryAutoBackupCompat.request(c, true);
-            else if (p == importBackup) openImportList(false);
+        void destroy() {
+            statusGeneration++;
+            statusLoading = false;
+            fragment = null;
+            dictionaryStatus = null;
+            enabledPreference = null;
+            locationPreference = null;
+            intervalPreference = null;
+            retentionPreference = null;
+            backupNowPreference = null;
+            importPreference = null;
+            pendingTree = null;
+        }
+
+        private Context context() {
+            return fragment == null || fragment.getActivity() == null ? null
+                    : fragment.getActivity().getApplicationContext();
+        }
+
+        @Override public boolean onPreferenceClick(Preference preference) {
+            Context context = context();
+            if (context == null) return true;
+            if (preference == dictionaryStatus) {
+                loadDictionaryStatus();
+            } else if (preference == locationPreference) {
+                openTreePicker(PICK_LOCATION);
+            } else if (preference == backupNowPreference) {
+                DictionaryAutoBackupCompat.request(context, true);
+            } else if (preference == importPreference) {
+                SharedPreferences p = DictionaryAutoBackupCompat.prefs(context);
+                Uri tree = configuredTree(p);
+                if (tree == null || !DictionaryAutoBackupCompat.hasPersistedAccess(context, tree)) {
+                    openTreePicker(PICK_IMPORT);
+                } else {
+                    openImportList();
+                }
+            }
             return true;
         }
-        @Override public boolean onPreferenceChange(Preference p, Object value) {
-            Context c = context(); if (c == null) return false;
-            SharedPreferences sp = DictionaryAutoBackupCompat.prefs(c);
-            if (p == enabled) {
-                boolean on = Boolean.TRUE.equals(value);
-                sp.edit().putBoolean(DictionaryAutoBackupCompat.KEY_ENABLED, on).apply();
-                if (on) DictionaryAutoBackupCompat.request(c, true);
-                refreshSoon(); return true;
+
+        @Override public boolean onPreferenceChange(Preference preference, Object newValue) {
+            Context context = context();
+            if (context == null) return false;
+            SharedPreferences p = DictionaryAutoBackupCompat.prefs(context);
+            if (preference == enabledPreference) {
+                boolean enabled = Boolean.TRUE.equals(newValue);
+                if (!enabled) {
+                    p.edit().putBoolean(DictionaryAutoBackupCompat.KEY_ENABLED, false).apply();
+                    refreshSoon();
+                    return true;
+                }
+                Uri tree = configuredTree(p);
+                if (tree == null || !DictionaryAutoBackupCompat.hasPersistedAccess(context, tree)) {
+                    openTreePicker(PICK_ENABLE);
+                    return false;
+                }
+                p.edit().putBoolean(DictionaryAutoBackupCompat.KEY_ENABLED, true).apply();
+                DictionaryAutoBackupCompat.request(context, true);
+                refreshSoon();
+                return true;
             }
-            if (p == interval) {
-                sp.edit().putInt(DictionaryAutoBackupCompat.KEY_INTERVAL, parse(value, 7)).apply();
-                refreshSoon(); return true;
+            if (preference == intervalPreference) {
+                p.edit().putInt(DictionaryAutoBackupCompat.KEY_INTERVAL,
+                        boundedInt(newValue, 1, 365, 7)).apply();
+                refreshSoon();
+                return true;
             }
-            if (p == retention) {
-                sp.edit().putInt(DictionaryAutoBackupCompat.KEY_RETENTION, parse(value, 10)).apply();
-                refreshSoon(); return true;
+            if (preference == retentionPreference) {
+                p.edit().putInt(DictionaryAutoBackupCompat.KEY_RETENTION,
+                        boundedInt(newValue, 1, 100, 10)).apply();
+                refreshSoon();
+                return true;
             }
             return false;
         }
-        void openImportList(boolean permissionRetried) {
-            final Context c = context(); if (c == null || fragment == null) return;
-            final List<DictionaryAutoBackupCompat.BackupEntry> entries =
-                    DictionaryAutoBackupCompat.listBackups(c);
-            if (entries.isEmpty() && !permissionRetried && Build.VERSION.SDK_INT >= 23
-                    && fragment.getActivity().checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                    != PackageManager.PERMISSION_GRANTED) {
-                fragment.requestPermissions(new String[] { Manifest.permission.WRITE_EXTERNAL_STORAGE },
-                        REQUEST_STORAGE);
+
+        private void openTreePicker(int purpose) {
+            if (fragment == null || validating) return;
+            if (Build.VERSION.SDK_INT < 21) {
+                Toast.makeText(fragment.getActivity(), "自定义备份目录需要 Android 5.0 或更高版本",
+                        Toast.LENGTH_SHORT).show();
                 return;
             }
+            pickPurpose = purpose;
+            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+            if (Build.VERSION.SDK_INT >= 26) {
+                Uri initial = configuredTree(DictionaryAutoBackupCompat.prefs(
+                        fragment.getActivity().getApplicationContext()));
+                if (initial != null) {
+                    try {
+                        initial = DocumentsContract.buildDocumentUriUsingTree(initial,
+                                DocumentsContract.getTreeDocumentId(initial));
+                    } catch (RuntimeException ignored) {
+                        initial = null;
+                    }
+                }
+                if (initial == null) initial = DocumentsContract.buildDocumentUri(
+                        DictionaryAutoBackupCompat.EXTERNAL_STORAGE_AUTHORITY,
+                        "primary:Documents");
+                intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, initial);
+            }
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    | Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                    | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION
+                    | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);
+            try {
+                fragment.startActivityForResult(intent, REQUEST_TREE);
+            } catch (RuntimeException e) {
+                Toast.makeText(fragment.getActivity(), "无法打开本地目录选择器",
+                        Toast.LENGTH_SHORT).show();
+            }
+        }
+
+        void onTreeResult(int resultCode, Intent data) {
+            if (fragment == null) return;
+            if (resultCode != Activity.RESULT_OK || data == null || data.getData() == null) {
+                pickPurpose = PICK_LOCATION;
+                refresh();
+                return;
+            }
+            final Context context = context();
+            if (context == null) return;
+            Uri tree = data.getData();
+            if (!DictionaryAutoBackupCompat.isLocalTree(tree)) {
+                Toast.makeText(context, "请选择设备内部存储或本机 SD 卡目录，不支持云端位置",
+                        Toast.LENGTH_LONG).show();
+                pickPurpose = PICK_LOCATION;
+                refresh();
+                return;
+            }
+            int flags = data.getFlags()
+                    & (Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+            if (flags != (Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    | Intent.FLAG_GRANT_WRITE_URI_PERMISSION)) {
+                Toast.makeText(context, "所选目录没有授予完整读写权限", Toast.LENGTH_LONG).show();
+                pickPurpose = PICK_LOCATION;
+                refresh();
+                return;
+            }
+            try {
+                context.getContentResolver().takePersistableUriPermission(tree, flags);
+            } catch (RuntimeException e) {
+                Toast.makeText(context, "无法保存本地目录访问权限", Toast.LENGTH_LONG).show();
+                pickPurpose = PICK_LOCATION;
+                refresh();
+                return;
+            }
+            pendingTree = tree;
+            validating = true;
+            setControlsEnabled(false);
+            Toast.makeText(context, "正在验证本地备份目录…", Toast.LENGTH_SHORT).show();
+            DictionaryAutoBackupCompat.validateTreeAsync(context, tree, this);
+        }
+
+        @Override public void onValidationFinished(Uri tree, String error) {
+            Context context = context();
+            if (context == null) return;
+            validating = false;
+            if (pendingTree == null || !pendingTree.equals(tree)) {
+                refresh();
+                return;
+            }
+            pendingTree = null;
+            final int completedPurpose = pickPurpose;
+            pickPurpose = PICK_LOCATION;
+            if (error != null) {
+                releaseGrant(context, tree);
+                Toast.makeText(context, error, Toast.LENGTH_LONG).show();
+                refresh();
+                return;
+            }
+
+            SharedPreferences p = DictionaryAutoBackupCompat.prefs(context);
+            String oldValue = p.getString(DictionaryAutoBackupCompat.KEY_TREE_URI, null);
+            boolean shouldEnable = completedPurpose == PICK_ENABLE
+                    || p.getBoolean(DictionaryAutoBackupCompat.KEY_ENABLED, false);
+            String label = describeTree(context.getContentResolver(), tree);
+            p.edit().putString(DictionaryAutoBackupCompat.KEY_TREE_URI, tree.toString())
+                    .putString(DictionaryAutoBackupCompat.KEY_TREE_LABEL, label)
+                    .putBoolean(DictionaryAutoBackupCompat.KEY_ENABLED, shouldEnable)
+                    .putString(DictionaryAutoBackupCompat.KEY_LAST_STATUS, "本地目录验证成功")
+                    .apply();
+
+            if (oldValue != null && !oldValue.equals(tree.toString())) {
+                try { releaseGrant(context, Uri.parse(oldValue)); }
+                catch (RuntimeException ignored) {}
+            }
+            Toast.makeText(context, "备份和导入目录已设置", Toast.LENGTH_SHORT).show();
+            refresh();
+            if (completedPurpose == PICK_IMPORT) openImportList();
+            if (shouldEnable) DictionaryAutoBackupCompat.request(context, true);
+        }
+
+        private void openImportList() {
+            if (fragment == null || fragment.getActivity() == null) return;
+            final List<DictionaryAutoBackupCompat.BackupEntry> entries =
+                    DictionaryAutoBackupCompat.listBackups(fragment.getActivity());
             if (entries.isEmpty()) {
-                new AlertDialog.Builder(fragment.getActivity()).setTitle("没有可访问的本地备份")
-                        .setMessage("Documents/GooglePinyinBackup 中没有可列出的备份。卸载重装后也可以在 File Geek 中打开或分享 .txt 到 Google 拼音。")
+                new AlertDialog.Builder(fragment.getActivity()).setTitle("没有本地备份")
+                        .setMessage("所选备份和导入目录中没有 Google 拼音用户词典备份。")
                         .setPositiveButton(android.R.string.ok, null).show();
                 return;
             }
@@ -137,7 +337,8 @@ public final class DictionaryAutoBackupSettingsCompat {
                         }
                     }).setNegativeButton(android.R.string.cancel, null).show();
         }
-        void confirmImport(final DictionaryAutoBackupCompat.BackupEntry entry) {
+
+        private void confirmImport(final DictionaryAutoBackupCompat.BackupEntry entry) {
             if (fragment == null || fragment.getActivity() == null) return;
             new AlertDialog.Builder(fragment.getActivity()).setTitle("导入用户词典备份")
                     .setMessage("将“" + entry.name + "”合并到当前用户词典？")
@@ -147,41 +348,72 @@ public final class DictionaryAutoBackupSettingsCompat {
                         }
                     }).setNegativeButton(android.R.string.cancel, null).show();
         }
-        void onStoragePermissionResult(int[] results) {
-            if (results != null && results.length > 0
-                    && results[0] == PackageManager.PERMISSION_GRANTED) openImportList(true);
-            else { Context c = context(); if (c != null) Toast.makeText(c,
-                    "需要文件权限读取卸载前保留的本地备份", Toast.LENGTH_LONG).show(); }
-        }
+
         void refresh() {
-            Context c = context(); if (c == null) return;
-            SharedPreferences sp = DictionaryAutoBackupCompat.prefs(c);
-            boolean supported = Build.VERSION.SDK_INT >= 29;
-            boolean on = sp.getBoolean(DictionaryAutoBackupCompat.KEY_ENABLED, false);
-            if (enabled != null) {
-                enabled.setChecked(on); enabled.setEnabled(supported);
-                String status = sp.getString(DictionaryAutoBackupCompat.KEY_LAST_STATUS, null);
-                long last = sp.getLong(DictionaryAutoBackupCompat.KEY_LAST_SUCCESS, 0L);
-                if (DictionaryAutoBackupCompat.isInProgress()) enabled.setSummary("正在生成本地备份…");
-                else if (status != null && !"备份成功".equals(status)) enabled.setSummary(status);
-                else if (last > 0L) enabled.setSummary("上次备份："
-                        + DateFormat.getDateFormat(c).format(last) + " "
-                        + DateFormat.getTimeFormat(c).format(last));
-                else enabled.setSummary("备份文件在清除数据或卸载后仍会保留");
+            Context context = context();
+            if (context == null) return;
+            SharedPreferences p = DictionaryAutoBackupCompat.prefs(context);
+            boolean supported = Build.VERSION.SDK_INT >= 21;
+            boolean enabled = p.getBoolean(DictionaryAutoBackupCompat.KEY_ENABLED, false);
+            Uri tree = configuredTree(p);
+            boolean accessible = tree != null
+                    && DictionaryAutoBackupCompat.hasPersistedAccess(context, tree);
+
+            if (enabledPreference != null) {
+                enabledPreference.setChecked(enabled);
+                String status = p.getString(DictionaryAutoBackupCompat.KEY_LAST_STATUS, null);
+                long last = p.getLong(DictionaryAutoBackupCompat.KEY_LAST_SUCCESS, 0L);
+                if (DictionaryAutoBackupCompat.isInProgress()) {
+                    enabledPreference.setSummary("正在生成本地备份…");
+                } else if (status != null && status.length() > 0 && !"备份成功".equals(status)) {
+                    enabledPreference.setSummary(status);
+                } else if (last > 0L) {
+                    enabledPreference.setSummary("上次备份："
+                            + DateFormat.getDateFormat(context).format(last) + " "
+                            + DateFormat.getTimeFormat(context).format(last));
+                } else {
+                    enabledPreference.setSummary("备份文件在清除数据或卸载后仍会保留");
+                }
+                enabledPreference.setEnabled(supported && !validating);
             }
-            if (location != null) { location.setSummary(DictionaryAutoBackupCompat.DISPLAY_PATH); location.setEnabled(false); }
-            if (interval != null) { interval.setValue(Integer.toString(sp.getInt(DictionaryAutoBackupCompat.KEY_INTERVAL, 7))); interval.setEnabled(on && supported); }
-            if (retention != null) { retention.setValue(Integer.toString(sp.getInt(DictionaryAutoBackupCompat.KEY_RETENTION, 10))); retention.setEnabled(on && supported); }
-            if (now != null) { now.setEnabled(supported && !DictionaryAutoBackupCompat.isInProgress()); now.setSummary("立即导出到固定本地目录"); }
-            if (importBackup != null) importBackup.setSummary("列出固定目录中的本地备份；也可从文件管理器打开备份");
+            if (locationPreference != null) {
+                String label = p.getString(DictionaryAutoBackupCompat.KEY_TREE_LABEL, null);
+                if (tree == null) locationPreference.setSummary("未选择（备份和导入共用）");
+                else if (!accessible) locationPreference.setSummary("位置不可访问，请重新选择");
+                else locationPreference.setSummary(label == null || label.length() == 0
+                        ? "已选择设备本地目录" : label);
+                locationPreference.setEnabled(supported && !validating);
+            }
+            if (intervalPreference != null) {
+                intervalPreference.setValue(Integer.toString(p.getInt(
+                        DictionaryAutoBackupCompat.KEY_INTERVAL, 7)));
+                intervalPreference.setEnabled(enabled && accessible && !validating);
+            }
+            if (retentionPreference != null) {
+                retentionPreference.setValue(Integer.toString(p.getInt(
+                        DictionaryAutoBackupCompat.KEY_RETENTION, 10)));
+                retentionPreference.setEnabled(enabled && accessible && !validating);
+            }
+            if (backupNowPreference != null) {
+                backupNowPreference.setEnabled(accessible && !validating
+                        && !DictionaryAutoBackupCompat.isInProgress());
+                backupNowPreference.setSummary(accessible
+                        ? "立即导出到所选本地目录" : "请先选择备份和导入目录");
+            }
+            if (importPreference != null) {
+                importPreference.setEnabled(supported && !validating);
+                importPreference.setSummary(accessible
+                        ? "列出所选目录中的本地备份" : "选择已有备份目录并导入");
+            }
         }
-        void loadDictionaryStatus() {
-            final Context c = context();
-            if (c == null || dictionaryStatus == null || statusLoading) return;
+
+        private void loadDictionaryStatus() {
+            final Context context = context();
+            if (context == null || dictionaryStatus == null || statusLoading) return;
             statusLoading = true;
             final int generation = ++statusGeneration;
             dictionaryStatus.setSummary("正在读取当前用户词库…");
-            DictionaryHealthStatusCompat.load(c, new DictionaryHealthStatusCompat.Callback() {
+            DictionaryHealthStatusCompat.load(context, new DictionaryHealthStatusCompat.Callback() {
                 @Override public void onLoaded(String summary) {
                     if (generation != statusGeneration || fragment == null || dictionaryStatus == null)
                         return;
@@ -190,11 +422,71 @@ public final class DictionaryAutoBackupSettingsCompat {
                 }
             });
         }
-        void refreshSoon() { if (fragment != null && fragment.getActivity() != null)
-            fragment.getActivity().getWindow().getDecorView().post(new Runnable() {
-                @Override public void run() { refresh(); }
-            }); }
-        static int parse(Object value, int fallback) { try { return Integer.parseInt(String.valueOf(value)); }
-            catch (RuntimeException e) { return fallback; } }
+
+        private void setControlsEnabled(boolean enabled) {
+            if (enabledPreference != null) enabledPreference.setEnabled(enabled);
+            if (locationPreference != null) locationPreference.setEnabled(enabled);
+            if (intervalPreference != null) intervalPreference.setEnabled(enabled);
+            if (retentionPreference != null) retentionPreference.setEnabled(enabled);
+            if (backupNowPreference != null) backupNowPreference.setEnabled(enabled);
+            if (importPreference != null) importPreference.setEnabled(enabled);
+        }
+
+        private void refreshSoon() {
+            if (fragment != null && fragment.getActivity() != null) {
+                fragment.getActivity().getWindow().getDecorView().post(new Runnable() {
+                    @Override public void run() { refresh(); }
+                });
+            }
+        }
+
+        private static Uri configuredTree(SharedPreferences p) {
+            String value = p.getString(DictionaryAutoBackupCompat.KEY_TREE_URI, null);
+            if (value == null || value.length() == 0) return null;
+            try { return Uri.parse(value); }
+            catch (RuntimeException e) { return null; }
+        }
+
+        private static int boundedInt(Object value, int min, int max, int fallback) {
+            try {
+                int parsed = Integer.parseInt(String.valueOf(value));
+                return parsed < min || parsed > max ? fallback : parsed;
+            } catch (RuntimeException e) {
+                return fallback;
+            }
+        }
+
+        private static void releaseGrant(Context context, Uri tree) {
+            try {
+                context.getContentResolver().releasePersistableUriPermission(tree,
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION
+                                | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+            } catch (RuntimeException ignored) {}
+        }
+
+        private static String describeTree(ContentResolver resolver, Uri tree) {
+            try {
+                String id = DocumentsContract.getTreeDocumentId(tree);
+                int split = id.indexOf(':');
+                String volume = split < 0 ? id : id.substring(0, split);
+                String path = split < 0 || split + 1 >= id.length() ? "" : id.substring(split + 1);
+                String root = "primary".equalsIgnoreCase(volume)
+                        ? "内部存储" : "SD 卡（" + volume + "）";
+                return path.length() == 0 ? root : root + "/" + path;
+            } catch (RuntimeException ignored) {}
+            Cursor cursor = null;
+            try {
+                cursor = resolver.query(tree, new String[] {OpenableColumns.DISPLAY_NAME},
+                        null, null, null);
+                if (cursor != null && cursor.moveToFirst()) {
+                    String name = cursor.getString(0);
+                    if (name != null && name.length() > 0) return name;
+                }
+            } catch (RuntimeException ignored) {
+            } finally {
+                if (cursor != null) cursor.close();
+            }
+            return "设备本地备份目录";
+        }
     }
 }

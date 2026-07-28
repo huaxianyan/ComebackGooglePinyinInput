@@ -772,9 +772,9 @@ def apply(decoded: Path, application_id: str) -> None:
         "",
     )
 
-    # Fixed-path rotating exports survive clear-data/uninstall. The validated
-    # local backup actions replace the obsolete picker-based import/export rows;
-    # their state lives outside the preferences registered with BackupAgent.
+    # User-selected local SAF exports survive clear-data/uninstall. Backup and
+    # the integrated import list share one persisted tree URI; configuration
+    # remains outside the preferences registered with BackupAgent.
     replace_once(
         dictionary_settings_xml,
         '        <Preference android:persistent="false" '

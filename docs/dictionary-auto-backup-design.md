@@ -1,6 +1,6 @@
 # 用户词典本地自动备份：调研与方案设计
 
-> **最终实现说明（1.0.0）**：本文保留 V42–V44 SAF 方案及其失败过程作为研究记录。Pixel 10 Pro / Android 16 的 `DocumentsUI` 对 `ACTION_OPEN_DOCUMENT_TREE` 和旧 `ACTION_GET_CONTENT` 都显示空存储，因此正式实现已放弃可选 tree URI，固定使用 `MediaStore.Files` 的 `Documents/GooglePinyinBackup`。写入采用 `IS_PENDING=1 → 原生 exporter → BOM/header 校验 → IS_PENDING=0`；设置页中的整合式列表负责手动导入，卸载重装后按需申请旧框架相同的文件权限，并保留文件管理器 `ACTION_VIEW`/`ACTION_SEND` 后备入口。以下 SAF 内容仅表示设计演进，不再是当前规范。
+> **当前实现说明**：1.0.0 曾因 Pixel 10 Pro 上多个应用共同出现空目录而误判 `DocumentsUI` 的 SAF 目录选择不可用，临时固定使用 `MediaStore.Files` 的 `Documents/GooglePinyinBackup`。后续排查发现，强制停止并重启 `com.google.android.documentsui` 后，未修改 Mountify、存储隔离、权限或挂载，多个应用的目录内容即恢复；因此固定路径不再作为最终约束。当前实现恢复经过 V42–V44 验证过的本地 `ACTION_OPEN_DOCUMENT_TREE`，由用户选择内部存储或本机 SD 卡目录，并让自动备份、立即备份、版本轮换和内置导入列表共用同一个 persisted tree URI。新装后的授权不会自动恢复；用户点击“导入本地备份”时重新选择原目录即可。
 
 ## 1. 使用场景
 
@@ -18,7 +18,7 @@
 - 不在新安装后自动搜索备份；
 - 不自动导入、自动恢复或自动合并；
 - 不把备份位置、配置或历史版本同步到账号；
-- 新安装后由用户打开现有“导入用户字典”，手动选择本地备份文件；
+- 新安装后由用户打开“导入本地备份”，重新授权原备份目录并从内置列表手动选择文件；
 - 自动备份本身不需要新增网络权限、Service、Receiver 或账号依赖。
 
 本功能与 V41 内部恢复机制互补：
@@ -65,7 +65,7 @@
 
 这不影响本功能的主要使用场景：新装应用的用户词典为空，手动导入本地备份后，结果等同于从该备份恢复其中的词条。若在已有词条的安装中导入，则仍按原生行为合并，而不是精确回滚。
 
-第一版不新增“恢复备份”按钮，也不修改 importer；恢复入口继续使用设置页已有的**导入用户字典**。
+不修改 importer 的合并语义；设置页使用项目自有的“导入本地备份”入口列出所选 tree URI 中的受控备份文件，并继续把选中的 URI 交给原生 `UserDictImportTask`。
 
 ## 4. 本地存储位置
 
@@ -136,6 +136,7 @@ Android 11+ 不允许选择内部存储根目录、Download 根目录、`Android
 - persisted URI permission 会在清除数据/卸载后失效；
 - 这不影响用户在新安装中通过系统文件选择器读取备份；
 - 若希望新安装继续自动备份，用户需要重新选择本地备份目录并重新打开开关；
+- 点击“导入本地备份”时若尚无目录授权，会先要求用户重新选择原目录，再列出其中的备份；
 - 应用不会自动发现旧目录，也不会自动恢复配置。
 
 ## 5. 设置界面
@@ -390,7 +391,7 @@ XML 中相关 Preference 全部设为 `android:persistent="false"`，由 `Dictio
 - 验证本地 provider 和 create/write/read/rename/delete；
 - 更新目录、时间、版本数和错误摘要；
 - 触发“立即备份”；
-- 不执行恢复或导入。
+- 从同一 tree URI 列出受控命名的备份，并在用户确认后调用原生 importer。
 
 `DictionarySettingsFragment` 只需转发生命周期：
 
@@ -452,9 +453,10 @@ PinyinIME 进入保存检查
 应用私有数据和 URI grant 消失
   → 公共本地 .txt 继续存在
   → 用户重新安装应用
-  → 打开现有“导入用户字典”
-  → 系统文件选择器定位本地备份目录
-  → 用户手动选择某一 .txt
+  → 打开“导入本地备份”
+  → 重新选择原本的本地备份目录并取得 persisted tree grant
+  → 内置列表显示该目录中的受控 .txt
+  → 用户手动选择某一版本
   → 原生 importer 导入到新装空词库
 ```
 
@@ -610,7 +612,7 @@ PinyinIME 进入保存检查
 
 采用：
 
-**原生用户词典 exporter + 仅本地 SAF 目录 + `.partial` 完整写入后 rename + 保存周期到期检查 + 本地版本轮换 + 新装后用户手动使用现有 importer。**
+**原生用户词典 exporter + 用户选择的仅本地 SAF 目录 + `.partial` 完整写入后 rename + 保存周期到期检查 + 本地版本轮换 + 备份/内置导入共用 tree URI + 新装后用户重新授权原目录并手动调用现有 importer。**
 
 不采用云端 provider，不实现自动恢复，不实现账号同步，不在新装后扫描备份目录。
 

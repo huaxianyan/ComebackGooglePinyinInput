@@ -24,7 +24,7 @@
 .method constructor <init>(Ljava/lang/String;Landroid/net/Uri;)V
     .registers 3
 
-    .line 217
+    .line 342
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$BackupEntry;->name:Ljava/lang/String;
