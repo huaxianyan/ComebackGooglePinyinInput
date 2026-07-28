@@ -16,11 +16,12 @@ import java.lang.reflect.Method;
 import java.util.List;
 
 /** Explicit manual import entry for the selected backup directory and file-manager VIEW/SEND. */
-public final class LocalBackupImportActivity extends Activity {
+public final class LocalBackupImportActivity extends Activity
+        implements DictionaryAutoBackupCompat.BackupListCallback {
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
         Uri incoming = incomingUri(getIntent());
-        if (incoming != null) confirm(incoming, "所选本地备份");
+        if (incoming != null) confirm(incoming, "所选用户词典备份");
         else showBackups();
     }
 
@@ -35,10 +36,15 @@ public final class LocalBackupImportActivity extends Activity {
     }
 
     private void showBackups() {
-        final List<DictionaryAutoBackupCompat.BackupEntry> entries =
-                DictionaryAutoBackupCompat.listBackups(this);
+        Toast.makeText(this, "正在读取备份目录…", Toast.LENGTH_SHORT).show();
+        DictionaryAutoBackupCompat.listBackupsAsync(this, this);
+    }
+
+    @Override public void onBackupListLoaded(
+            final List<DictionaryAutoBackupCompat.BackupEntry> entries) {
+        if (isFinishing()) return;
         if (entries.isEmpty()) {
-            new AlertDialog.Builder(this).setTitle("没有可访问的本地备份")
+            new AlertDialog.Builder(this).setTitle("没有可访问的用户词典备份")
                     .setMessage("尚未设置备份和导入目录，或所选目录中没有 Google 拼音用户词典备份。请在字典设置中选择已有备份目录；也可以从文件管理器打开或分享备份 .txt。")
                     .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                         @Override public void onClick(DialogInterface d, int w) { finish(); }
@@ -49,7 +55,7 @@ public final class LocalBackupImportActivity extends Activity {
         }
         String[] names = new String[entries.size()];
         for (int i = 0; i < names.length; i++) names[i] = entries.get(i).name;
-        new AlertDialog.Builder(this).setTitle("导入本地备份")
+        new AlertDialog.Builder(this).setTitle("导入用户词典备份")
                 .setItems(names, new DialogInterface.OnClickListener() {
                     @Override public void onClick(DialogInterface d, int which) {
                         confirm(entries.get(which).uri, entries.get(which).name);
@@ -87,7 +93,7 @@ public final class LocalBackupImportActivity extends Activity {
             Object factory = ctor.newInstance(app, new ImportListener(app), uri);
             Method schedule = managerClass.getMethod("a", String.class, factoryType, Long.TYPE);
             schedule.invoke(manager, "user_dict_import", factory, 0L);
-            Toast.makeText(app, "正在导入本地用户词典备份", Toast.LENGTH_SHORT).show();
+            Toast.makeText(app, "正在导入用户词典备份", Toast.LENGTH_SHORT).show();
             return true;
         } catch (Throwable t) {
             Toast.makeText(app, "无法启动原生用户词典导入", Toast.LENGTH_LONG).show();
@@ -102,7 +108,7 @@ public final class LocalBackupImportActivity extends Activity {
         @Override public void onTaskProgress(int p) {}
         @Override public void onTaskError(int e) {}
         @Override public void onTaskFinished(boolean success, Object result) {
-            Toast.makeText(context, success ? "本地用户词典备份导入成功" : "本地用户词典备份导入失败",
+            Toast.makeText(context, success ? "用户词典备份导入成功" : "用户词典备份导入失败",
                     Toast.LENGTH_LONG).show();
         }
     }

@@ -31,7 +31,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-/** Local-only rotating exports for manual recovery after clear-data/uninstall. */
+/** Provider-backed rotating exports for manual recovery after clear-data/uninstall. */
 public final class DictionaryAutoBackupCompat {
     static final String PREFS = "dictionary_local_backup_preferences";
     static final String KEY_ENABLED = "dictionary_auto_backup_enabled";
@@ -72,12 +72,21 @@ public final class DictionaryAutoBackupCompat {
         }
     }
 
-    static boolean isLocalTree(Uri uri) {
-        return uri != null && EXTERNAL_STORAGE_AUTHORITY.equals(uri.getAuthority());
+    static boolean isSupportedTree(Uri uri) {
+        if (Build.VERSION.SDK_INT < 21 || uri == null
+                || !ContentResolver.SCHEME_CONTENT.equals(uri.getScheme())
+                || uri.getAuthority() == null || uri.getAuthority().length() == 0) {
+            return false;
+        }
+        try {
+            return DocumentsContract.isTreeUri(uri);
+        } catch (RuntimeException ignored) {
+            return false;
+        }
     }
 
     static boolean hasPersistedAccess(Context context, Uri uri) {
-        if (Build.VERSION.SDK_INT < 21 || !isLocalTree(uri)) return false;
+        if (!isSupportedTree(uri)) return false;
         try {
             List<UriPermission> permissions = context.getContentResolver().getPersistedUriPermissions();
             for (UriPermission permission : permissions) {
@@ -100,11 +109,11 @@ public final class DictionaryAutoBackupCompat {
 
         synchronized (DictionaryAutoBackupCompat.class) {
             if (sInProgress) {
-                if (force) showToast(context, "本地词典备份正在进行");
+                if (force) showToast(context, "用户词典备份正在进行");
                 return;
             }
             if (Build.VERSION.SDK_INT < 21) {
-                if (force) showToast(context, "本地自动备份需要 Android 5.0 或更高版本");
+                if (force) showToast(context, "自定义目录备份需要 Android 5.0 或更高版本");
                 return;
             }
             if (!force && !preferences.getBoolean(KEY_ENABLED, false)) return;
@@ -179,7 +188,7 @@ public final class DictionaryAutoBackupCompat {
             });
         } catch (Throwable t) {
             if (partial != null) deleteQuietly(context, partial);
-            finishFailure(context, force, "无法在本地备份目录创建文件", t);
+            finishFailure(context, force, "无法在所选备份目录创建文件", t);
         }
     }
 
@@ -262,7 +271,7 @@ public final class DictionaryAutoBackupCompat {
             finishSuccess(context, force);
         } catch (Throwable t) {
             deleteQuietly(context, partial);
-            finishFailure(context, force, "本地备份校验或发布失败", t);
+            finishFailure(context, force, "备份校验或发布失败", t);
         }
     }
 
@@ -292,7 +301,23 @@ public final class DictionaryAutoBackupCompat {
         return out.toString();
     }
 
-    static List<BackupEntry> listBackups(Context context) {
+    interface BackupListCallback {
+        void onBackupListLoaded(List<BackupEntry> entries);
+    }
+
+    static void listBackupsAsync(final Context source, final BackupListCallback callback) {
+        final Context context = source.getApplicationContext();
+        IO.execute(new Runnable() {
+            @Override public void run() {
+                final List<BackupEntry> entries = listConfiguredBackups(context);
+                MAIN.post(new Runnable() {
+                    @Override public void run() { callback.onBackupListLoaded(entries); }
+                });
+            }
+        });
+    }
+
+    private static List<BackupEntry> listConfiguredBackups(Context context) {
         SharedPreferences p = prefs(context);
         String value = p.getString(KEY_TREE_URI, null);
         if (value == null || value.length() == 0) return new ArrayList<BackupEntry>();
@@ -412,8 +437,8 @@ public final class DictionaryAutoBackupCompat {
     }
 
     private static String validateTree(Context context, Uri tree) {
-        if (!isLocalTree(tree)) return "请选择设备内部存储或本机 SD 卡目录";
-        if (!hasPersistedAccess(context, tree)) return "未获得本地目录的读写权限";
+        if (!isSupportedTree(tree)) return "请选择系统目录选择器提供的文件夹";
+        if (!hasPersistedAccess(context, tree)) return "未获得所选目录的持久读写权限";
         Uri created = null;
         Uri renamed = null;
         try {
@@ -443,7 +468,7 @@ public final class DictionaryAutoBackupCompat {
             renamed = null;
             return null;
         } catch (Throwable t) {
-            return "该本地目录不支持安全自动备份";
+            return "所选存储位置不支持安全自动备份";
         } finally {
             if (created != null) deleteQuietly(context, created);
             if (renamed != null) deleteQuietly(context, renamed);
@@ -460,7 +485,7 @@ public final class DictionaryAutoBackupCompat {
         MAIN.post(new Runnable() {
             @Override public void run() {
                 DictionaryAutoBackupSettingsCompat.refreshAll();
-                if (force) showToast(context, "本地用户词典备份成功");
+                if (force) showToast(context, "用户词典备份成功");
             }
         });
     }

@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- 自定义词典备份目录不再限制为设备本地 ExternalStorageProvider；Google Drive 等能通过创建、读写、重命名和删除能力验证的云端 DocumentsProvider 也可供备份与内置导入共用。
+
 ## [1.0.1] - 2026-07-28
 
 ### Changed

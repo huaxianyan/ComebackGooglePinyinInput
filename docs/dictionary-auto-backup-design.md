@@ -1,25 +1,24 @@
-# 用户词典本地自动备份：调研与方案设计
+# 用户词典自动备份：调研与方案设计
 
-> **当前实现说明**：1.0.0 曾因 Pixel 10 Pro 上多个应用共同出现空目录而误判 `DocumentsUI` 的 SAF 目录选择不可用，临时固定使用 `MediaStore.Files` 的 `Documents/GooglePinyinBackup`。后续排查发现，强制停止并重启 `com.google.android.documentsui` 后，未修改 Mountify、存储隔离、权限或挂载，多个应用的目录内容即恢复；因此固定路径不再作为最终约束。当前实现恢复经过 V42–V44 验证过的本地 `ACTION_OPEN_DOCUMENT_TREE`，由用户选择内部存储或本机 SD 卡目录，并让自动备份、立即备份、版本轮换和内置导入列表共用同一个 persisted tree URI。新装后的授权不会自动恢复；用户点击“导入本地备份”时重新选择原目录即可。
+> **当前实现说明**：1.0.0 曾因 Pixel 10 Pro 上多个应用共同出现空目录而误判 `DocumentsUI` 的 SAF 目录选择不可用，临时固定使用 `MediaStore.Files` 的 `Documents/GooglePinyinBackup`。后续排查确认这是设备端临时状态，1.0.1 恢复 `ACTION_OPEN_DOCUMENT_TREE` 和用户自选目录。当前开发版本进一步取消 `com.android.externalstorage.documents` authority 限制：内部存储、SD 卡和 Google Drive 等云端 DocumentsProvider 均可选择，但必须实际通过持久读写授权以及 create/write/read/rename/delete 能力测试。自动备份、立即备份、版本轮换和内置导入共用同一个 persisted tree URI。
 
 ## 1. 使用场景
 
 本功能只解决一个问题：
 
-> 用户不小心“清除应用数据”或卸载 Google 拼音后，仍能从设备公共存储中找到此前自动导出的用户词典，并在新安装的应用中使用现有“导入用户字典”功能手动导入。
+> 用户不小心“清除应用数据”或卸载 Google 拼音后，仍能从用户选择的存储位置找到此前导出的用户词典，并在新安装的应用中手动导入。
 
-因此它是**本地自动导出备份**，不是同步系统，也不是自动恢复系统。
+它是**用户明确授权目录中的自动导出备份**，不是自动恢复系统。选择云端 provider 时，文件上传、同步、缓存、离线可用性和账号保留规则由对应存储应用负责。
 
 明确边界：
 
-- 备份只写入设备本地公共存储或本机可移除存储；
-- 不写入 Google Drive、其他云盘或网络服务；
-- 不上传任何用户词条；
+- 可写入内部存储、SD 卡或系统目录选择器提供的云端文档目录；
+- 应用自身不实现账号登录、云同步协议或网络上传；
 - 不在新安装后自动搜索备份；
 - 不自动导入、自动恢复或自动合并；
-- 不把备份位置、配置或历史版本同步到账号；
-- 新安装后由用户打开“导入本地备份”，重新授权原备份目录并从内置列表手动选择文件；
-- 自动备份本身不需要新增网络权限、Service、Receiver 或账号依赖。
+- 不通过 Android `BackupAgent` 同步备份配置和 tree URI；
+- 新安装后由用户打开“导入用户词典备份”，重新授权原目录并从内置列表手动选择文件；
+- 不新增网络权限、Service、Receiver 或账号依赖，但云端 DocumentsProvider 可以代表用户进行网络 I/O。
 
 本功能与 V41 内部恢复机制互补：
 
@@ -67,7 +66,7 @@
 
 不修改 importer 的合并语义；设置页使用项目自有的“导入本地备份”入口列出所选 tree URI 中的受控备份文件，并继续把选中的 URI 交给原生 `UserDictImportTask`。
 
-## 4. 本地存储位置
+## 4. 存储位置
 
 ### 4.1 不使用应用私有目录
 
@@ -84,12 +83,13 @@
 
 这种做法不利于后续 scoped storage 和 target SDK 现代化，也不适合 SD 卡卷标变化。
 
-### 4.3 推荐：SAF 选择设备本地目录
+### 4.3 推荐：SAF 选择目录
 
-使用 `ACTION_OPEN_DOCUMENT_TREE` 让用户选择一个**设备本地目录**，例如：
+使用 `ACTION_OPEN_DOCUMENT_TREE` 让用户选择目录，例如：
 
 - 内部存储 `/Documents/GooglePinyinBackup`；
-- SD 卡上的 `GooglePinyinBackup`。
+- SD 卡上的 `GooglePinyinBackup`；
+- Google Drive 等 DocumentsProvider 中的文件夹。
 
 Android 官方 SAF 文档：
 
@@ -99,7 +99,7 @@ Android 官方 SAF 文档：
 选择 Intent：
 
 - `Intent.ACTION_OPEN_DOCUMENT_TREE`；
-- 不使用 `Intent.EXTRA_LOCAL_ONLY`：Android 16 DocumentsUI 在 tree 模式下可能因此隐藏或禁用 primary storage 入口；纯本地策略改由返回 URI 的 provider authority 强制校验；
+- 不使用 `Intent.EXTRA_LOCAL_ONLY`，保留 DocumentsUI 左侧的设备存储与云端 provider；
 - API 26+ 通过 `DocumentsContract.EXTRA_INITIAL_URI` 默认打开内部存储的 `Documents` 目录，使体验接近现有导入文件选择器；
 - `FLAG_GRANT_READ_URI_PERMISSION`；
 - `FLAG_GRANT_WRITE_URI_PERMISSION`；
@@ -110,12 +110,10 @@ Android 官方 SAF 文档：
 
 1. 从 result Intent flags 中截取实际授予的 read/write flags；
 2. 调用 `ContentResolver.takePersistableUriPermission()`；
-3. 验证 URI 属于本地 DocumentsProvider；Pixel/AOSP 本地共享存储为 `com.android.externalstorage.documents`；
-4. 第一版建议只允许经过本项目实测的 `com.android.externalstorage.documents`，它同时覆盖 primary shared storage 和该 provider 暴露的可移除 SD 卡；
-5. 若以后支持 OEM 的其他本地 provider，必须按设备实测加入明确 allowlist，不能仅凭显示名称接受任意 authority；
-6. 拒绝 Drive、Dropbox 等云端 provider URI；
-7. 在所选目录完成一次“创建测试文档 → 写入 → rename → 删除”；
-8. 只有全部成功才保存目录并允许启用自动备份。
+3. 验证结果是具有 authority 的 `content://` tree URI；
+4. 不按 provider authority 区分设备存储或云端位置；
+5. 在所选目录完成一次“创建测试文档 → 写入 → 读取 → rename → 删除”；
+6. 只有持久读写授权和全部能力测试成功，才保存目录并允许启用自动备份。
 
 目录能力要求：
 
@@ -135,8 +133,8 @@ Android 11+ 不允许选择内部存储根目录、Download 根目录、`Android
 - SharedPreferences 中的开关、目录 URI 和时间记录会在清除数据后消失；
 - persisted URI permission 会在清除数据/卸载后失效；
 - 这不影响用户在新安装中通过系统文件选择器读取备份；
-- 若希望新安装继续自动备份，用户需要重新选择本地备份目录并重新打开开关；
-- 点击“导入本地备份”时若尚无目录授权，会先要求用户重新选择原目录，再列出其中的备份；
+- 若希望新安装继续自动备份，用户需要重新选择原备份目录并重新打开开关；
+- 点击“导入用户词典备份”时若尚无目录授权，会先要求用户重新选择原目录，再列出其中的备份；
 - 应用不会自动发现旧目录，也不会自动恢复配置。
 
 ## 5. 设置界面
@@ -153,23 +151,23 @@ Android 11+ 不允许选择内部存储根目录、Download 根目录、`Android
 
 - `android:persistent="false"`，由 helper 写入独立的本地备份配置文件；
 - 默认关闭；
-- 未配置目录时打开，先启动本地目录选择器；
+- 未配置目录时打开，先启动系统目录选择器；
 - 授权和能力测试成功后才真正保存为开启；
 - 摘要显示上次成功时间、尚未备份或最近错误；
 - 关闭开关不会删除已有备份文件。
 
-### 5.2 备份位置（仅本地）
+### 5.2 备份和导入位置
 
 普通 `Preference`：
 
 - 始终可点击；
-- 摘要显示本地目录友好名称；
+- 摘要对 ExternalStorageProvider 显示本地路径，对其他 provider 显示 provider 与目录名称；
 - 更换目录不会移动或删除旧目录中的文件；
-- 不接受云端 provider。
+- 云端 provider 必须和本地 provider 一样通过实际能力验证。
 
 建议说明：
 
-> 备份保存在设备本地，清除应用数据或卸载后仍会保留。重新安装后请使用“导入用户字典”手动选择备份文件。
+> 备份和导入共用所选目录；可选择设备存储或支持读写的云端文档位置。云端文件的同步与保留由对应存储服务管理。
 
 ### 5.3 备份频率
 
@@ -256,7 +254,7 @@ V41 的 `SaveDictionaryTask.sSaveLock` 只覆盖保存任务。生命周期中�
 ```text
 shared lock
   → open 中文/英文 DictionaryAccessor
-  → dump 到本地 SAF partial 文档
+  → dump 到 SAF partial 文档
   → close writer
   → close accessor
   → release lock
@@ -264,7 +262,7 @@ shared lock
 
 最终校验、rename 和版本轮换在释放 dictionary lock 后执行。
 
-因为只允许设备本地目录，而且当前导出文件很小，锁不会等待网络或云端上传。
+云端 DocumentsProvider 可能在输出流关闭前后执行网络 I/O，因此实现不得在 UI 线程调用 provider；当前创建、校验、发布和轮换均进入单线程 I/O executor。原生 exporter 自身仍由旧任务队列执行，后续应继续观察慢速或离线 provider 的行为。
 
 实现方式可以是：
 
@@ -287,7 +285,7 @@ shared lock
 
 时间包含毫秒，避免连续“立即备份”重名。
 
-### 8.2 两阶段本地发布
+### 8.2 两阶段发布
 
 1. 在 tree URI 下以 MIME `text/plain` 创建 `.partial` 文档，确保 rename 后仍能被现有 `ACTION_GET_CONTENT` 的 `text/plain` 过滤器看到；
 2. 把 partial URI 直接交给原生 `beg` / `UserDictExportTask`；
@@ -308,7 +306,7 @@ shared lock
 - 下次配置/备份时清理超过安全年龄（例如 24 小时）的本应用 partial；
 - `.partial` 永远不计入有效版本。
 
-仅支持本地且要求 rename 的原因，是保证新装后用户看到的每个正式 `.txt` 都已经完成写入。第一版不提供非原子 fallback。
+要求 provider 支持 rename，是为了保证用户看到的每个正式 `.txt` 都已经完成写入；不提供绕过能力验证的非原子 fallback。
 
 ## 9. 版本轮换
 
@@ -350,7 +348,7 @@ shared lock
 - 清除数据或卸载后配置消失；
 - 重装后开关保持默认关闭；
 - 不会恢复一个已经失去 URI grant 的旧 tree URI；
-- 公共本地 `.txt` 文件仍然保留，用户可手动导入。
+- 已导出的 `.txt` 是否保留由所选存储位置管理，用户可重新授权后手动导入。
 
 XML 中相关 Preference 全部设为 `android:persistent="false"`，由 `DictionaryAutoBackupSettingsCompat` 显式读写独立配置文件。
 
@@ -386,9 +384,9 @@ XML 中相关 Preference 全部设为 `android:persistent="false"`，由 `Dictio
 
 - 绑定 5 个 `persistent=false` Preference；
 - 只读写未注册到 `BackupAgent` 的独立本地配置文件；
-- 发起仅本地 `ACTION_OPEN_DOCUMENT_TREE`；
+- 发起 `ACTION_OPEN_DOCUMENT_TREE`，不限制本地或云端 provider；
 - 处理 persisted URI permission；
-- 验证本地 provider 和 create/write/read/rename/delete；
+- 验证 tree URI 和 create/write/read/rename/delete；
 - 更新目录、时间、版本数和错误摘要；
 - 触发“立即备份”；
 - 从同一 tree URI 列出受控命名的备份，并在用户确认后调用原生 importer。
@@ -406,11 +404,11 @@ XML 中相关 Preference 全部设为 `android:persistent="false"`，由 `Dictio
 
 - 读取配置；
 - 检查 enabled、到期、退避和 `inProgress`；
-- 创建本地 SAF partial URI；
+- 创建 SAF partial URI；
 - 使用任务 key `user_dict_auto_backup` 向 `aib` 提交 `beg`；
 - 在 listener 中处理校验、rename、状态和轮换；
 - 清理失败或过期 partial；
-- 不访问网络；
+- 不直接访问网络；选择云端位置时 DocumentsProvider 可执行网络 I/O；
 - 不扫描词库并自动恢复；
 - 不调用 importer。
 
@@ -421,11 +419,11 @@ XML 中相关 Preference 全部设为 `android:persistent="false"`，由 `Dictio
 ```text
 PinyinIME 进入保存检查
   → 自动备份 enabled?
-  → 本地 tree URI 存在且仍有 write grant?
+  → tree URI 存在且仍有持久 read/write grant?
   → 已到最小间隔?
   → 非 inProgress?
   → 失败退避已结束?
-  → 创建本地 .partial
+  → 创建 .partial
   → aib 提交 beg 原生 exporter
   → 校验 BOM/header/长度
   → rename 为正式 .txt
@@ -439,9 +437,9 @@ PinyinIME 进入保存检查
 ```text
 用户打开开关
   → 没有目录
-  → 启动仅本地目录选择器
+  → 启动系统目录选择器
   → persist read/write grant
-  → 本地 provider 验证
+  → DocumentsProvider tree URI 验证
   → create/write/read/rename/delete 测试
   → 保存 URI 和 enabled=true
   → 立即生成第一份备份
@@ -453,8 +451,8 @@ PinyinIME 进入保存检查
 应用私有数据和 URI grant 消失
   → 公共本地 .txt 继续存在
   → 用户重新安装应用
-  → 打开“导入本地备份”
-  → 重新选择原本的本地备份目录并取得 persisted tree grant
+  → 打开“导入用户词典备份”
+  → 重新选择原备份目录并取得 persisted tree grant
   → 内置列表显示该目录中的受控 .txt
   → 用户手动选择某一版本
   → 原生 importer 导入到新装空词库
@@ -467,9 +465,9 @@ PinyinIME 进入保存检查
 错误分类：
 
 - 未配置目录；
-- 选择了云端 provider；
+- 结果不是有效的 DocumentsProvider tree URI；
 - persisted URI permission 丢失；
-- 本地存储被移除或不可用；
+- 本地存储被移除、云端账号退出或 provider 不可用；
 - provider 不支持 create/write/read/rename/delete；
 - 输出流打开失败；
 - exporter 返回 false；
@@ -484,7 +482,7 @@ PinyinIME 进入保存检查
 - 清空、回滚或修改当前用户词典；
 - 弹出打断输入的 Dialog/Toast；
 - 持续高频重试；
-- 触发任何网络请求。
+- 由应用自身发起网络请求；云端 provider 的网络行为由对应存储应用负责。
 
 错误写入偏好和日志，在设置页显示。只有用户点击“立即备份”时可以显示一次明确结果。
 
@@ -514,9 +512,9 @@ PinyinIME 进入保存检查
 
 设置页应说明：
 
-- 文件只保存在用户选择的设备本地目录；
-- 本功能不会上传或同步；
-- 有权访问该本地目录的人或应用可能读取文件；
+- 文件保存在用户明确选择的设备或云端文档目录；
+- 应用自身不实现上传或同步，选择云端 provider 时由该存储服务处理网络和账号同步；
+- 有权访问所选目录或云端账号的人与应用可能读取文件；
 - 关闭自动备份、清除当前词典或卸载不会删除已有备份；
 - 用户可以使用系统文件管理器删除备份。
 
@@ -524,11 +522,11 @@ PinyinIME 进入保存检查
 
 ## 16. 实施阶段
 
-### Phase A：仅本地目录与立即备份
+### Phase A：目录授权与立即备份
 
 - 添加设置项和字符串/数组；
-- 实现默认打开内部存储 Documents、但以 authority 强制限制本地 provider 的 tree picker；
-- 验证本地 provider；
+- 实现默认打开内部存储 Documents，同时保留 DocumentsUI 中其他 provider；
+- 验证 tree URI 和持久授权；
 - 验证 create/write/read/rename/delete；
 - 完成“立即备份”；
 - 暂不接自动时间触发。
@@ -564,18 +562,19 @@ PinyinIME 进入保存检查
 
 ## 17. 验证矩阵
 
-### 本地存储
+### 存储 provider
 
 - 内部存储 Documents 子目录；
 - 本机 SD 卡目录（若设备存在）；
-- Drive/云盘被隐藏或明确拒绝；
+- Google Drive 等云端目录通过能力测试后可用；
+- 云端离线、账号退出、授权撤销和网络恢复后的错误与重试行为；
 - 覆盖升级后 URI grant 保留；
 - 清除数据后 `.txt` 保留，同时开关、URI 和时间记录被清除；
 - 卸载后 `.txt` 保留；
 - Android 系统执行应用数据 restore 时，不会重建独立的本地备份配置文件；
 - 新装后的自动备份开关保持关闭，也不会扫描旧目录；
 - 新装无需旧 URI grant，也能通过现有 import picker 读取文件；
-- 备份过程不产生网络连接或云端 provider I/O。
+- 设备本地目录不产生云端 I/O；选择云端 provider 时网络行为仅发生在对应存储应用中。
 
 ### 导出内容
 
@@ -603,6 +602,7 @@ PinyinIME 进入保存检查
 - exporter 返回 false；
 - 存储空间不足；
 - SD 卡移除；
+- 云端 provider 离线、账号退出或长时间无响应；
 - URI permission 失效；
 - rename 失败；
 - 保存与导出接近同时发生；
@@ -612,8 +612,8 @@ PinyinIME 进入保存检查
 
 采用：
 
-**原生用户词典 exporter + 用户选择的仅本地 SAF 目录 + `.partial` 完整写入后 rename + 保存周期到期检查 + 本地版本轮换 + 备份/内置导入共用 tree URI + 新装后用户重新授权原目录并手动调用现有 importer。**
+**原生用户词典 exporter + 用户选择的 SAF DocumentsProvider 目录 + 实际 create/write/read/rename/delete 能力验证 + `.partial` 完整写入后 rename + 保存周期到期检查 + 版本轮换 + 备份/内置导入共用 tree URI + 新装后用户重新授权原目录并手动调用现有 importer。**
 
-不采用云端 provider，不实现自动恢复，不实现账号同步，不在新装后扫描备份目录。
+允许云端 provider，但不在输入法内实现云账号或同步协议；不实现自动恢复，不在新装后扫描备份目录。
 
 这直接覆盖“误清除应用数据”和“误卸载后未手动导出”两个目标，同时保持恢复操作由用户明确发起，并最大限度复用 Google 拼音现有导入/导出格式。

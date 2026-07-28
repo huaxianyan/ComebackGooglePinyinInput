@@ -25,7 +25,7 @@
 .method constructor <init>(Landroid/content/Context;)V
     .registers 2
 
-    .line 100
+    .line 106
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/LocalBackupImportActivity$ImportListener;->context:Landroid/content/Context;
@@ -38,24 +38,24 @@
 .method public onTaskError(I)V
     .registers 2
 
-    .line 103
+    .line 109
     return-void
 .end method
 
 .method public onTaskFinished(ZLjava/lang/Object;)V
     .registers 4
 
-    .line 105
+    .line 111
     iget-object p2, p0, Lcom/google/android/inputmethod/pinyin/LocalBackupImportActivity$ImportListener;->context:Landroid/content/Context;
 
     if-eqz p1, :cond_7
 
-    const-string p1, "\u672c\u5730\u7528\u6237\u8bcd\u5178\u5907\u4efd\u5bfc\u5165\u6210\u529f"
+    const-string p1, "\u7528\u6237\u8bcd\u5178\u5907\u4efd\u5bfc\u5165\u6210\u529f"
 
     goto :goto_9
 
     :cond_7
-    const-string p1, "\u672c\u5730\u7528\u6237\u8bcd\u5178\u5907\u4efd\u5bfc\u5165\u5931\u8d25"
+    const-string p1, "\u7528\u6237\u8bcd\u5178\u5907\u4efd\u5bfc\u5165\u5931\u8d25"
 
     :goto_9
     const/4 v0, 0x1
@@ -64,23 +64,23 @@
 
     move-result-object p1
 
-    .line 106
+    .line 112
     invoke-virtual {p1}, Landroid/widget/Toast;->show()V
 
-    .line 107
+    .line 113
     return-void
 .end method
 
 .method public onTaskProgress(I)V
     .registers 2
 
-    .line 102
+    .line 108
     return-void
 .end method
 
 .method public onTaskStart()V
     .registers 1
 
-    .line 101
+    .line 107
     return-void
 .end method

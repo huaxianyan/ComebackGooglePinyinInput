@@ -8,7 +8,7 @@
 
 # annotations
 .annotation system Ldalvik/annotation/EnclosingMethod;
-    value = Lcom/google/android/inputmethod/pinyin/LocalBackupImportActivity;->showBackups()V
+    value = Lcom/google/android/inputmethod/pinyin/LocalBackupImportActivity;->onBackupListLoaded(Ljava/util/List;)V
 .end annotation
 
 .annotation system Ldalvik/annotation/InnerClass;
@@ -27,7 +27,7 @@
 .method constructor <init>(Lcom/google/android/inputmethod/pinyin/LocalBackupImportActivity;Ljava/util/List;)V
     .registers 3
 
-    .line 53
+    .line 59
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/LocalBackupImportActivity$5;->this$0:Lcom/google/android/inputmethod/pinyin/LocalBackupImportActivity;
 
     iput-object p2, p0, Lcom/google/android/inputmethod/pinyin/LocalBackupImportActivity$5;->val$entries:Ljava/util/List;
@@ -42,7 +42,7 @@
 .method public onClick(Landroid/content/DialogInterface;I)V
     .registers 5
 
-    .line 55
+    .line 61
     iget-object p1, p0, Lcom/google/android/inputmethod/pinyin/LocalBackupImportActivity$5;->this$0:Lcom/google/android/inputmethod/pinyin/LocalBackupImportActivity;
 
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/LocalBackupImportActivity$5;->val$entries:Ljava/util/List;
@@ -68,6 +68,6 @@
     # invokes: Lcom/google/android/inputmethod/pinyin/LocalBackupImportActivity;->confirm(Landroid/net/Uri;Ljava/lang/String;)V
     invoke-static {p1, v0, p2}, Lcom/google/android/inputmethod/pinyin/LocalBackupImportActivity;->access$000(Lcom/google/android/inputmethod/pinyin/LocalBackupImportActivity;Landroid/net/Uri;Ljava/lang/String;)V
 
-    .line 56
+    .line 62
     return-void
 .end method

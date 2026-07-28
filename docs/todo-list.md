@@ -49,7 +49,8 @@
 - [x] 对照当前 Gboard 复核 `DictionaryAccessor`、启动 enrollment、保存调度及 `_bak`/`_tmp` 轮换
 - [x] 确认 V20 在备份加载失败后遗漏有效 `_tmp`、强制保存可与异步保存重叠、显式清除可能遗留旧备份
 - [x] V41 增加 backup → tmp 的有界加载回退，串行化保存，并在明确删除/清空后清除恢复旁路文件
-- [x] 完成用户词典本地自动备份和手动恢复：复用原生 exporter/importer，由用户选择仅本地 SAF 目录，通过 `.partial` 校验后 rename 发布并轮换版本；备份和内置导入共用该目录（见 `docs/dictionary-auto-backup-design.md`）
+- [x] 完成用户词典自动备份和手动恢复：复用原生 exporter/importer，由用户选择 SAF 目录，通过 `.partial` 校验后 rename 发布并轮换版本；备份和内置导入共用该目录（见 `docs/dictionary-auto-backup-design.md`）
+- [ ] 使用 Google Drive 目录验证授权、立即备份、内置导入、版本轮换、离线失败和网络恢复后的重试行为
 - [x] 真机验证“自选本地目录 → 立即备份 → 内置列表导入”，确认备份与导入共用自定义路径且功能正常；卸载重装后的重新授权恢复继续作为长期灾难恢复观察项
 - [x] 增加按需“当前用户词库状态”设计与实现：仅进入词典设置页后异步读取中英文 native 词条数、主文件/滚动副本大小、恢复旁路和最近落盘时间（见 `docs/dictionary-health-status-design.md`）
 - [ ] 在独立 `dictionarystatusaudit` 包验证空词库、已有中英文词条、有/无 `_bak`、状态行手动刷新、退出页面时迟到回调和键盘启动零扫描

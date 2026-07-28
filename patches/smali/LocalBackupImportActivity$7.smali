@@ -25,7 +25,7 @@
 .method constructor <init>(Lcom/google/android/inputmethod/pinyin/LocalBackupImportActivity;)V
     .registers 2
 
-    .line 71
+    .line 77
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/LocalBackupImportActivity$7;->this$0:Lcom/google/android/inputmethod/pinyin/LocalBackupImportActivity;
 
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
@@ -38,7 +38,7 @@
 .method public onClick(Landroid/content/DialogInterface;I)V
     .registers 3
 
-    .line 72
+    .line 78
     iget-object p1, p0, Lcom/google/android/inputmethod/pinyin/LocalBackupImportActivity$7;->this$0:Lcom/google/android/inputmethod/pinyin/LocalBackupImportActivity;
 
     invoke-virtual {p1}, Lcom/google/android/inputmethod/pinyin/LocalBackupImportActivity;->finish()V
