@@ -78,7 +78,8 @@
 
 - [ ] 清理或禁用失效的统计、Firebase 与反馈上传逻辑
 - [ ] 回归测试拼音九键、拼音全键盘、英文输入和滑行输入
-- [ ] 清理旧账号同步功能及不再需要的权限
+- [x] 移除失效的 Google 账户词典 SyncAdapter、认证 Activity、设置入口及账户/同步权限
+- [ ] 在正式包名覆盖安装后验证设置页、Google Drive 备份，并重启确认不再申请 Google 账户权限
 - [ ] 分阶段提升 `targetSdkVersion`，逐代处理 Android 行为变更
 - [ ] 在真正的 16 KiB page-size 设备上验证原生库
 - [ ] 调查并消除 `MetricsProcessorHelper` 的反射参数错误日志

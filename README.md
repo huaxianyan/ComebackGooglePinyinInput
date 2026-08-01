@@ -63,7 +63,7 @@ Google 拼音输入法最初由 Google 发布并通过 Google Play 等官方 And
 - 支持 1/3/7/14/30 天备份间隔、3/5/10/20/30 个保留版本、立即备份和手动导入。
 - 在进入词典设置页后按需显示中英文词条数、主文件、滚动副本、恢复旁路和最近落盘时间；应用及键盘启动时不扫描。
 - 备份使用 Google 拼音原生 UTF-16LE 用户词典导出/导入格式；应用自身不实现云同步或自动恢复，云端 I/O 由用户选择的 DocumentsProvider 管理。
-- 清理失效的 Clearcut/Primes、Firebase、反馈上传和在线词典更新组件。
+- 清理失效的 Clearcut/Primes、Firebase、反馈上传、在线词典更新及旧 Google 账户词典同步组件；Google Drive 备份只使用系统 SAF 目录授权。
 - 补全现代 Android 要求的关键 `android:exported` 声明。
 
 更完整的实现记录、Gboard 对照研究和测试结论位于 [`docs/`](docs/) 与 [`CHANGELOG.md`](CHANGELOG.md)。

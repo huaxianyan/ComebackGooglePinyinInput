@@ -738,6 +738,51 @@ def apply(decoded: Path, application_id: str) -> None:
         "    .line 100",
     )
 
+    # The original account-backed dictionary sync is discontinued. Never
+    # construct its Google AuthHandler, even if a restored preference still
+    # says that synchronization was enabled.
+    account_auth_factory = decoded / "smali/aco.smali"
+    replace_once(
+        account_auth_factory,
+        ".method public static a(Landroid/content/Context;)Lcom/google/android/apps/inputmethod/libs/dataservice/auth/AuthHandler;\n"
+        "    .locals 1\n\n"
+        "    .prologue\n"
+        "    .line 39\n"
+        "    invoke-static {p0}, Laco;->a(Landroid/content/Context;)Z\n\n"
+        "    move-result v0\n\n"
+        "    if-eqz v0, :cond_0\n\n"
+        "    new-instance v0, Lacp;\n\n"
+        "    invoke-direct {v0, p0}, Lacp;-><init>(Landroid/content/Context;)V\n\n"
+        "    :goto_0\n"
+        "    return-object v0\n\n"
+        "    :cond_0\n"
+        "    const/4 v0, 0x0\n\n"
+        "    goto :goto_0\n"
+        ".end method",
+        ".method public static a(Landroid/content/Context;)Lcom/google/android/apps/inputmethod/libs/dataservice/auth/AuthHandler;\n"
+        "    .locals 1\n\n"
+        "    const/4 v0, 0x0\n\n"
+        "    return-object v0\n"
+        ".end method",
+    )
+
+    # AbstractDictionarySettings persists the legacy toggle. Force its resume
+    # path through the disabled branch before the now-removed Preference could
+    # be dereferenced, and let the native preference wrapper persist false.
+    dictionary_settings_fragment = decoded / "smali/ado.smali"
+    replace_once(
+        dictionary_settings_fragment,
+        "    invoke-virtual {v0, v5, v1}, Lamx;->a(IZ)Z\n\n"
+        "    move-result v0\n\n"
+        "    .line 62\n"
+        "    if-eqz v0, :cond_2",
+        "    invoke-virtual {v0, v5, v1}, Lamx;->a(IZ)Z\n\n"
+        "    move-result v0\n\n"
+        "    const/4 v0, 0x0\n\n"
+        "    .line 62\n"
+        "    if-eqz v0, :cond_2",
+    )
+
     # Remove obsolete network-facing features and their settings entry points.
     replace_once(
         decoded / "res/xml/setting_other.xml",
@@ -757,6 +802,25 @@ def apply(decoded: Path, application_id: str) -> None:
         "",
     )
     dictionary_settings_xml = decoded / "res/xml/setting_dictionary.xml"
+
+    # The original Google-account dictionary sync service is no longer usable
+    # with this independently signed package. Leaving its controls visible can
+    # re-enable the platform SyncAdapter and repeatedly request account access.
+    for obsolete_sync_preference in (
+        '        <com.google.android.apps.inputmethod.libs.framework.preference.widget.'
+        'AutoSyncedCheckBoxPreference android:persistent="true" '
+        'android:title="@string/setting_sync_enabled_title" '
+        'android:key="@string/pref_key_enable_sync_user_dictionary" />\n',
+        '        <Preference android:persistent="false" '
+        'android:title="@string/setting_sync_now_title" '
+        'android:key="@string/setting_sync_now_key" '
+        'android:dependency="@string/pref_key_enable_sync_user_dictionary" />\n',
+        '        <Preference android:persistent="false" '
+        'android:title="@string/setting_sync_clear_title" '
+        'android:key="@string/setting_sync_clear_key" />\n',
+    ):
+        replace_once(dictionary_settings_xml, obsolete_sync_preference, "")
+
     replace_once(
         dictionary_settings_xml,
         '    <PreferenceCategory android:title="@string/setting_update_category_title">\n'
@@ -1291,6 +1355,44 @@ def apply(decoded: Path, application_id: str) -> None:
         '    const-string v2, "com.google.android.inputmethod.pinyin"',
         f'    const-string v2, "{application_id}"',
     )
+
+    # The discontinued Google-account dictionary sync cannot authenticate an
+    # independently signed package. Android otherwise rediscovers its hidden
+    # SyncAdapter at boot and repeatedly asks the user for Google-account
+    # access. SAF backup providers (including Google Drive) use persisted URI
+    # grants and do not depend on any of these account/sync permissions.
+    for obsolete_account_permission in (
+        "android.permission.USE_CREDENTIALS",
+        "android.permission.GET_ACCOUNTS",
+        "android.permission.MANAGE_ACCOUNTS",
+        "android.permission.READ_SYNC_SETTINGS",
+        "android.permission.WRITE_SYNC_SETTINGS",
+    ):
+        replace_once(
+            manifest,
+            f'    <uses-permission android:name="{obsolete_account_permission}"/>\n',
+            "",
+        )
+
+    obsolete_sync_components = (
+        '        <service android:exported="true" android:label="@string/ime_name_ref" '
+        'android:name="com.google.android.apps.inputmethod.pinyin.preference.SyncService">\n'
+        '            <intent-filter>\n'
+        '                <action android:name="android.content.SyncAdapter"/>\n'
+        '            </intent-filter>\n'
+        '            <meta-data android:name="android.content.SyncAdapter" '
+        'android:resource="@xml/sync_adapter"/>\n'
+        '        </service>\n',
+        '        <activity android:label="@string/android_account_title" '
+        'android:name="com.google.android.apps.inputmethod.libs.dataservice.auth.AndroidAccountActivity" '
+        'android:theme="@style/SettingsTheme"/>\n',
+        f'        <provider android:authorities="{application_id}.user_dictionary" '
+        'android:exported="false" '
+        'android:name="com.google.android.apps.inputmethod.libs.dataservice.sync.StubProvider" '
+        'android:syncable="true"/>\n',
+    )
+    for obsolete_sync_component in obsolete_sync_components:
+        replace_once(manifest, obsolete_sync_component, "")
 
     for obsolete_component in (
         '        <activity android:exported="false" android:name="com.google.android.apps.inputmethod.pinyin.preference.PinyinUserFeedbackActivity"/>\n',

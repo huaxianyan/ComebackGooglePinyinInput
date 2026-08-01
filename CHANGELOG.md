@@ -1,5 +1,12 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+
+- 移除已经失效的 Google 账户用户词典同步适配器、认证 Activity 和账户/同步权限，避免 Android 在重启后反复请求 Google 账户访问权；Google Drive 等 SAF 备份目录继续仅使用持久 URI 授权。
+- 隐藏旧“同步用户词典”设置，并将可能从旧版本恢复的同步开关归一化为关闭，避免设置页重新进入废弃认证路径。
+
 ## [1.0.2] - 2026-07-28
 
 ### Changed
