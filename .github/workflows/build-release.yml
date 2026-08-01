@@ -31,9 +31,9 @@ env:
   SIGNER_SHA256: "e1299fd6fcf4da527dd53735b56127e8ea922a321128123b9c32d619bba1d835"
   ORIGINAL_APK: original/google-pinyin-input-4.5.2.193126728-arm64-v8a.apk
   ORIGINAL_APK_SHA256: "980fd0f4695f683648e6f7ab9a15a24732e8957b5b14b25d49af931176574bd7"
-  RELEASE_APK_NAME: ComebackGooglePinyinInput-arm64-v8a-1.0.2.apk
-  EXPECTED_VERSION_NAME: "1.0.2"
-  EXPECTED_VERSION_CODE: "4520383"
+  RELEASE_APK_NAME: ComebackGooglePinyinInput-arm64-v8a-1.0.3.apk
+  EXPECTED_VERSION_NAME: "1.0.3"
+  EXPECTED_VERSION_CODE: "4520384"
 
 jobs:
   build:
@@ -196,9 +196,9 @@ jobs:
           APK_SHA256: ${{ steps.artifact.outputs.sha256 }}
         run: |
           $notes = @"
-          # Google 拼音输入法 创造性 AI 版 1.0.2
+          # Google 拼音输入法 创造性 AI 版 1.0.3
 
-          本次更新允许将内部存储、SD 卡或 Google Drive 等通过能力验证的 DocumentsProvider 目录用于用户词典备份和内置导入。
+          本次更新移除已失效的 Google 账户词典同步链路及其账户权限请求，并保留完全本地化的原生“清除用户字典”确认流程。
 
           - English project name: ``Comeback Google Pinyin Input``
           - Architecture: ``arm64-v8a``
@@ -217,16 +217,16 @@ jobs:
           gh release view $env:TAG_NAME --repo $env:GITHUB_REPOSITORY *> $null
           if ($LASTEXITCODE -eq 0) {
             gh release upload $env:TAG_NAME `
-              "$env:APK_PATH#ComebackGooglePinyinInput-arm64-v8a-1.0.2.apk" `
-              "$env:APK_PATH.sha256#ComebackGooglePinyinInput-arm64-v8a-1.0.2.apk.sha256" `
+              "$env:APK_PATH#ComebackGooglePinyinInput-arm64-v8a-1.0.3.apk" `
+              "$env:APK_PATH.sha256#ComebackGooglePinyinInput-arm64-v8a-1.0.3.apk.sha256" `
               --repo $env:GITHUB_REPOSITORY --clobber
           } else {
             gh release create $env:TAG_NAME `
-              "$env:APK_PATH#ComebackGooglePinyinInput-arm64-v8a-1.0.2.apk" `
-              "$env:APK_PATH.sha256#ComebackGooglePinyinInput-arm64-v8a-1.0.2.apk.sha256" `
+              "$env:APK_PATH#ComebackGooglePinyinInput-arm64-v8a-1.0.3.apk" `
+              "$env:APK_PATH.sha256#ComebackGooglePinyinInput-arm64-v8a-1.0.3.apk.sha256" `
               --repo $env:GITHUB_REPOSITORY `
               --verify-tag `
-              --title "v1.0.2 - 支持云端备份目录" `
+              --title "v1.0.3 - 移除旧账户同步请求" `
               --notes-file release-notes.md
           }
 

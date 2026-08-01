@@ -35,16 +35,16 @@ Google 拼音输入法最初由 Google 发布并通过 Google Play 等官方 And
 | --- | --- |
 | 项目中文名称 | Google 拼音输入法 创造性 AI 版 |
 | English project name | Comeback Google Pinyin Input |
-| 项目版本 | `1.0.2` |
-| Android versionName | `1.0.2` |
-| Android versionCode | `4520383` |
+| 项目版本 | `1.0.3` |
+| Android versionName | `1.0.3` |
+| Android versionCode | `4520384` |
 | 正式包名 | `com.google.android.inputmethod.pinyin.compat` |
 | 架构 | `arm64-v8a` |
-| 正式 APK | `ComebackGooglePinyinInput-arm64-v8a-1.0.2.apk` |
+| 正式 APK | `ComebackGooglePinyinInput-arm64-v8a-1.0.3.apk` |
 | target SDK | 28 |
 | 主要测试设备 | Pixel 10 Pro / Android 16 |
 
-上表对应正式 Release `v1.0.2`，备份和导入位置可选择内部存储、SD 卡或通过能力验证的 Google Drive 等 DocumentsProvider 目录。后续 `master` 仍可能包含尚未发布的研究或兼容修复；是否发布以 GitHub Release 和 `CHANGELOG.md` 为准。
+上表对应正式 Release `v1.0.3`：备份和导入位置继续支持内部存储、SD 卡及 Google Drive 等 DocumentsProvider，同时移除失效的 Google 账户词典同步请求，并保留本地“清除用户字典”功能。后续 `master` 仍可能包含尚未发布的研究或兼容修复；是否发布以 GitHub Release 和 `CHANGELOG.md` 为准。
 
 创造性 AI 版使用独立包名和项目签名证书，可以与 Google 原始版本同时安装。以后升级时必须继续使用同一签名证书；它不能覆盖由 Google 官方证书签名的原始应用。
 
@@ -184,8 +184,8 @@ gh variable set ANDROID_APPLICATION_ID --body "com.google.android.inputmethod.pi
 配置后可在 GitHub 的 **Actions → Build and release APK → Run workflow** 手动验证一次。确认 artifact 能安装并覆盖正式创造性 AI 版后，以新版本提交创建标签：
 
 ```powershell
-git tag -a v1.0.2 -m "ComebackGooglePinyinInput 1.0.2"
-git push origin v1.0.2
+git tag -a v1.0.3 -m "ComebackGooglePinyinInput 1.0.3"
+git push origin v1.0.3
 ```
 
 标签推送后无需在本地构建或上传 APK。`GITHUB_TOKEN` 由 Actions 自动提供，只授予工作流创建 Release 所需的 `contents: write` 权限。
