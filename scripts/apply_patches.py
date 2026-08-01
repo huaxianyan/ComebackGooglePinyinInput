@@ -815,9 +815,6 @@ def apply(decoded: Path, application_id: str) -> None:
         'android:title="@string/setting_sync_now_title" '
         'android:key="@string/setting_sync_now_key" '
         'android:dependency="@string/pref_key_enable_sync_user_dictionary" />\n',
-        '        <Preference android:persistent="false" '
-        'android:title="@string/setting_sync_clear_title" '
-        'android:key="@string/setting_sync_clear_key" />\n',
     ):
         replace_once(dictionary_settings_xml, obsolete_sync_preference, "")
 
@@ -1285,6 +1282,27 @@ def apply(decoded: Path, application_id: str) -> None:
         "    monitor-exit v2\n\n"
         "    throw v3\n"
         ".end method",
+    )
+
+    # Keep the original confirmed "Clear user dictionary" flow, but run only
+    # its native local task. The removed second task was an obsolete remote
+    # Delight sync clear and would otherwise enter the deleted account path.
+    local_dictionary_clear_controller = decoded / "smali/bdz.smali"
+    replace_once(
+        local_dictionary_clear_controller,
+        "    .line 30\n"
+        "    invoke-static {}, Laib;->a()Laib;\n\n"
+        "    move-result-object v0\n\n"
+        "    const-string v1, \"delight4_user_dict_clear\"\n\n"
+        "    new-instance v2, Lafu;\n\n"
+        "    iget-object v3, p0, Lbdz;->a:Landroid/content/Context;\n\n"
+        "    iget-object v4, p0, Lbdz;->b:Lcom/google/android/apps/inputmethod/libs/framework/core/TaskListener;\n\n"
+        "    const-string v5, \"android-pinyin-input\"\n\n"
+        "    const/4 v6, 0x0\n\n"
+        "    invoke-direct {v2, v3, v4, v5, v6}, Lafu;-><init>(Landroid/content/Context;Lcom/google/android/apps/inputmethod/libs/framework/core/TaskListener;Ljava/lang/String;B)V\n\n"
+        "    invoke-virtual {v0, v1, v2, v8, v9}, Laib;->a(Ljava/lang/String;Lcom/google/android/apps/inputmethod/libs/framework/core/TaskFactory;J)V\n\n"
+        "    .line 31",
+        "    .line 31",
     )
 
     # Retained rolling backups must not resurrect data after an intentional

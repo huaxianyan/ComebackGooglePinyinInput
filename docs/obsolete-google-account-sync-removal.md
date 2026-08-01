@@ -23,10 +23,11 @@ Pixel 10 Pro / Android 16 的只读诊断显示：
 
 1. 从 Manifest 移除 `USE_CREDENTIALS`、`GET_ACCOUNTS`、`MANAGE_ACCOUNTS`、`READ_SYNC_SETTINGS` 和 `WRITE_SYNC_SETTINGS`；
 2. 移除旧 `SyncService`、同步专用 `StubProvider` 和 `AndroidAccountActivity`；
-3. 移除“同步用户词典”“立即同步”和旧同步清除入口；
-4. 让旧 AuthHandler 工厂固定返回空；
-5. 将可能由旧安装或备份恢复的同步开关归一化为关闭，避免设置页访问已移除的 Preference；
-6. 保留 `RECEIVE_BOOT_COMPLETED`，因为 Launcher 图标初始化仍使用它。
+3. 移除“同步用户词典”和“立即同步”入口；
+4. 保留原生“清除用户字典”的四位确认流程，但只执行本机中英文词典清空，移除第二个废弃远端同步清除任务；
+5. 让旧 AuthHandler 工厂固定返回空；
+6. 将可能由旧安装或备份恢复的同步开关归一化为关闭，避免设置页访问已移除的 Preference；
+7. 保留 `RECEIVE_BOOT_COMPLETED`，因为 Launcher 图标初始化仍使用它。
 
 ## 不受影响的功能
 
