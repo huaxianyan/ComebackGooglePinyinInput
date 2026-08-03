@@ -281,13 +281,20 @@ V1 构建记录：
 
 ### target 33 / Android 13
 
-状态：等待。
+分支：`feat/target-sdk-33`
+
+状态：**进行中**。
+
+V1 从已验收的 target 32 创建，只提升到 Android 13 / API 33，不加入无用途权限或后续 API 补丁。
 
 重点：
 
-- 不增加无用途的 `POST_NOTIFICATIONS`；
-- 不增加无用途的 `READ_MEDIA_*`；
-- 复核 BOOT_COMPLETED、联系人权限、WebView 和文件选择器行为。
+- 不声明、不请求无用途的 `POST_NOTIFICATIONS`；本项目没有需要通知权限的用户功能；
+- 不声明、不请求无用途的 `READ_MEDIA_*`，主题图片继续使用系统文件/照片选择器 URI；
+- 复核 `RECEIVE_BOOT_COMPLETED`、联系人权限、WebView 和文件选择器行为；
+- 复核剪贴板候选在 Android 13 隐私提示下仍只读取当前主剪贴项目，且不自行显示额外系统式提示；
+- 默认使用 release-like 非 Debug 包；
+- 不提前混入 API 34 动态 receiver、API 35 edge-to-edge 或 API 36 Back 改动。
 
 ### target 34 / Android 14
 
@@ -381,4 +388,6 @@ V1 构建记录：
 - [x] 从已验收的 target 31 创建 target 32；
 - [x] target 32 V1 可复现 release-like 构建和静态检查；
 - [x] target 32 隔离包首次引导、ART 和功能回归；
-- [ ] 维护者确认后从已验收的 target 32 创建 target 33。
+- [x] 从已验收的 target 32 创建 target 33；
+- [ ] target 33 V1 release-like 构建和权限静态检查；
+- [ ] target 33 隔离包首次引导、ART 和功能回归。

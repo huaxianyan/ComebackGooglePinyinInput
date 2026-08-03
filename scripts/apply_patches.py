@@ -40,12 +40,12 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
         raise RuntimeError("Refusing to make the formal application ID debuggable")
 
     # Target SDK modernization is deliberately staged one API level at a time.
-    # API 31 has passed its isolated audit; this branch isolates Android 12L /
-    # API 32 while retaining the accepted PendingIntent/exported fixes.
+    # API 32 has passed its isolated audit; this branch isolates Android 13 /
+    # API 33 while retaining all previously accepted compatibility fixes.
     replace_once(
         decoded / "apktool.yml",
         "sdkInfo:\n  minSdkVersion: 17\n  targetSdkVersion: 26",
-        "sdkInfo:\n  minSdkVersion: 17\n  targetSdkVersion: 32",
+        "sdkInfo:\n  minSdkVersion: 17\n  targetSdkVersion: 33",
     )
     replace_once(
         decoded / "apktool.yml",

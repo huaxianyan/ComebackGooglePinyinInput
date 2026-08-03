@@ -39,7 +39,7 @@ env:
   RELEASE_APK_NAME: ComebackGooglePinyinInput-arm64-v8a-1.0.3.apk
   EXPECTED_VERSION_NAME: "1.0.3"
   EXPECTED_VERSION_CODE: "4520384"
-  EXPECTED_TARGET_SDK: "32"
+  EXPECTED_TARGET_SDK: "33"
 
 jobs:
   build:
@@ -175,6 +175,10 @@ jobs:
       - name: Verify Android 12 component and PendingIntent invariants
         shell: pwsh
         run: python scripts/verify_target31.py work/decoded
+
+      - name: Verify Android 13 permission invariants
+        shell: pwsh
+        run: python scripts/verify_target33.py work/decoded
 
       - name: Prepare release artifact
         id: artifact
