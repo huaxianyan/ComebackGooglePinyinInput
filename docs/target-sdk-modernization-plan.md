@@ -68,9 +68,9 @@ master / v1.0.3（target 28）
 
 分支：`feat/target-sdk-29`
 
-状态：**进行中**。
+状态：**V1 构建完成，等待真机安装与回归**。
 
-第一版只把 target 28 提升到 29，不预先加入猜测性兼容补丁。重点观察：
+V1 只把 target 28 提升到 29，不预先加入猜测性兼容补丁。重点观察：
 
 - 非 SDK/隐藏 API 限制；
 - scoped storage 的第一阶段行为；
@@ -80,6 +80,22 @@ master / v1.0.3（target 28）
 - IME 服务、设置和首次使用入口。
 
 如发生故障，只在 target 29 分支修复并重新审计。
+
+V1 构建记录：
+
+- commit：`aeb8485e701becb15b4b76c6619fd783be674d97`
+- workflow：[`30779142212`](https://github.com/huaxianyan/comeback-google-pinyin-input/actions/runs/30779142212)
+- artifact ID：`8843056409`
+- artifact：`ComebackGooglePinyinInput-target-sdk-29-audit-v1`
+- application ID：`com.google.android.inputmethod.pinyin.target29audit`
+- versionName / versionCode：`1.0.3` / `4520384`
+- target SDK：`29`
+- APK SHA-256：`ca60e1a12cd62bf61f304e9c449407d4ee760707c530c5c6675e9556ebad1835`
+- zipalign：通过
+- APK Signature Scheme：v1/v2/v3 通过
+- 签名证书 SHA-256：`985CBF843A362169B129AEAC5E153D13095F0923231936D1486A20C8332CDE2F`
+- 旧 Google 账户同步权限和组件：保持移除
+- GitHub Release：未发布（workflow tag 步骤按预期跳过）
 
 ### target 30 / Android 11
 
@@ -191,7 +207,7 @@ master / v1.0.3（target 28）
 - [x] 正式版 `v1.0.3`：target 28 基线冻结；
 - [x] 完成 API 29–37 初步静态调查；
 - [x] 建立逐 target 独立分支策略；
-- [ ] target 29 V1 可复现构建；
+- [x] target 29 V1 可复现构建；
 - [ ] target 29 隔离包安装与 ART 日志检查；
 - [ ] target 29 功能回归；
 - [ ] target 29 结论归档并创建 target 30 分支。
