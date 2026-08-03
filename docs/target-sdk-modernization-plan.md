@@ -171,13 +171,19 @@ V1 构建记录：
 
 ### target 31 / Android 12
 
-状态：等待。
+分支：`feat/target-sdk-31`
 
-已知前置修复：
+状态：**进行中**。
 
-- 所有可达 `PendingIntent` 必须声明 `FLAG_IMMUTABLE` 或确有必要的 `FLAG_MUTABLE`；
-- 复核所有带 intent-filter 的组件均显式声明 `android:exported`；
-- 复核 BackupAgent、设备迁移和首次使用状态。
+V1 在已验收的 target 30 和基础 Debug 构建能力之上提升到 target 31，并只处理 Android 12 的已知硬边界：
+
+- 七个 `PendingIntent` 创建点均保留原 `CANCEL_CURRENT`/`UPDATE_CURRENT` 语义并增加 `FLAG_IMMUTABLE`；这些 token 不使用 RemoteInput、bubble、fill-in 或位置回调，没有可变需求；
+- Firebase IID 组件虽已从 Manifest 移除，其遗留不可达创建点仍补齐 immutable，避免未来代码路径恢复时失败；
+- 五个带 intent-filter 的现存组件全部显式声明 `android:exported`；
+- 新增 `scripts/verify_target31.py`，Actions 必须验证全部 intent-filter 组件和全部七个 PendingIntent 创建点；
+- 默认构建保持非 debuggable；只有普通日志无法解释问题时才构建 debug 变体。
+
+专项复核 BackupAgent、设备迁移和首次使用状态，不提前加入 API 34 receiver、API 35 edge-to-edge 或 API 36 Back 改动。
 
 ### target 32 / Android 12L
 
@@ -281,4 +287,6 @@ V1 构建记录：
 - [x] 验证默认 release-like 有效载荷与已验收 target 30 V1 完全一致，正式 ID 调试构建会被拒绝；
 - [x] 真机覆盖安装 target 30 debug 变体，数据保留、`DEBUGGABLE`、`run-as` 和隐私受限诊断采集均通过；
 - [x] 维护者确认保持基础 Debug，不预先增加重型埋点；
-- [ ] 从已验收的 Debug 基础分支创建 target 31。
+- [x] 从已验收的 Debug 基础分支创建 target 31；
+- [ ] target 31 V1 可复现构建和静态 Android 12 不变量检查；
+- [ ] target 31 release-like 隔离包安装与真机回归。

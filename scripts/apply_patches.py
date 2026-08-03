@@ -40,12 +40,12 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
         raise RuntimeError("Refusing to make the formal application ID debuggable")
 
     # Target SDK modernization is deliberately staged one API level at a time.
-    # API 29 has passed its isolated audit; this branch now isolates Android 11
-    # / API 30 behavior from later PendingIntent and receiver boundaries.
+    # API 30 has passed its isolated audit; this branch isolates Android 12 /
+    # API 31 PendingIntent and component-export behavior.
     replace_once(
         decoded / "apktool.yml",
         "sdkInfo:\n  minSdkVersion: 17\n  targetSdkVersion: 26",
-        "sdkInfo:\n  minSdkVersion: 17\n  targetSdkVersion: 30",
+        "sdkInfo:\n  minSdkVersion: 17\n  targetSdkVersion: 31",
     )
     replace_once(
         decoded / "apktool.yml",
@@ -63,6 +63,65 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
             '<string name="ime_name_ref">@string/ime_name</string>',
             '<string name="ime_name_ref">Google 拼音输入法（测试版）</string>',
         )
+
+    # Android 12 requires every PendingIntent to declare mutability. None of
+    # these seven legacy tokens is modified by its recipient (no RemoteInput,
+    # bubbles, fill-in data, or location callback), so preserve the existing
+    # CANCEL_CURRENT/UPDATE_CURRENT behavior and add FLAG_IMMUTABLE narrowly.
+    pending_intent_flags = (
+        (
+            "smali/agf.smali",
+            "    const/high16 v1, 0x10000000\n\n"
+            "    invoke-static {p0, v0, p1, v1}, Landroid/app/PendingIntent;->getService",
+            "    const/high16 v1, 0x14000000\n\n"
+            "    invoke-static {p0, v0, p1, v1}, Landroid/app/PendingIntent;->getService",
+        ),
+        (
+            "smali/bfn.smali",
+            "    const/high16 v1, 0x10000000\n\n"
+            "    invoke-static {p1, p3, v0, v1}, Landroid/app/PendingIntent;->getActivity",
+            "    const/high16 v1, 0x14000000\n\n"
+            "    invoke-static {p1, p3, v0, v1}, Landroid/app/PendingIntent;->getActivity",
+        ),
+        (
+            "smali/bnr.smali",
+            "    const/high16 v6, 0x8000000\n\n"
+            "    invoke-static {v4, v0, v2, v6}, Landroid/app/PendingIntent;->getActivity",
+            "    const/high16 v6, 0xc000000\n\n"
+            "    invoke-static {v4, v0, v2, v6}, Landroid/app/PendingIntent;->getActivity",
+        ),
+        (
+            "smali/bmm.smali",
+            "    const/high16 v3, 0x8000000\n\n"
+            "    invoke-static {v0, v1, v2, v3}, Landroid/app/PendingIntent;->getActivity",
+            "    const/high16 v3, 0xc000000\n\n"
+            "    invoke-static {v0, v1, v2, v3}, Landroid/app/PendingIntent;->getActivity",
+        ),
+        (
+            "smali/cbs.smali",
+            "    const/4 v3, 0x0\n\n"
+            "    invoke-static {v1, v2, v0, v3}, Landroid/app/PendingIntent;->getBroadcast",
+            "    const/high16 v3, 0x4000000\n\n"
+            "    invoke-static {v1, v2, v0, v3}, Landroid/app/PendingIntent;->getBroadcast",
+        ),
+        (
+            "smali/com/google/firebase/iid/FirebaseInstanceIdService.smali",
+            "    const/high16 v6, 0x10000000\n\n"
+            "    invoke-static {p0, v4, v5, v6}, Landroid/app/PendingIntent;->getBroadcast",
+            "    const/high16 v6, 0x14000000\n\n"
+            "    invoke-static {p0, v4, v5, v6}, Landroid/app/PendingIntent;->getBroadcast",
+        ),
+        (
+            "smali/com/google/android/apps/inputmethod/pinyin/firstrun/"
+            "PinyinFirstRunActivity.smali",
+            "    const/high16 v2, 0x8000000\n\n"
+            "    invoke-static {p0, v0, v1, v2}, Landroid/app/PendingIntent;->getActivity",
+            "    const/high16 v2, 0xc000000\n\n"
+            "    invoke-static {p0, v0, v1, v2}, Landroid/app/PendingIntent;->getActivity",
+        ),
+    )
+    for relative, old, new in pending_intent_flags:
+        replace_once(decoded / relative, old, new)
 
     arrays = decoded / "res/values/arrays.xml"
     replace_once(

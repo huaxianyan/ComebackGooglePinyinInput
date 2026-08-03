@@ -13,6 +13,8 @@
 - target 30 V1 已在 Pixel 10 Pro / Android 16 完成功能、ART、Root、scoped storage、Google Drive SAF 和日志检查，未发现 target 30 新增回归；旧 target 29 审计包已从设备卸载。
 - 按维护者要求暂停 target 31，建立与 release-like 验收分离、且禁止用于正式包的可选 debug 诊断模式。
 - 新增构建期 `--debuggable`/`-Debuggable` 开关、Actions 身份保护和 `capture_audit_diagnostics.ps1`；默认不采集输入、剪贴板、联系人或词典正文。
+- 基础 Debug 模式完成真机使用和隐私检查后冻结；后续默认继续使用 release-like 包，仅在普通诊断不足时启用 Debug。
+- 创建 `feat/target-sdk-31`，将 target 提升到 31，为七个遗留 PendingIntent 增加 `FLAG_IMMUTABLE`，并新增 Android 12 `android:exported`/mutability 静态构建门禁。
 
 ## [1.0.3] - 2026-08-01
 

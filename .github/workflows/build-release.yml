@@ -39,7 +39,7 @@ env:
   RELEASE_APK_NAME: ComebackGooglePinyinInput-arm64-v8a-1.0.3.apk
   EXPECTED_VERSION_NAME: "1.0.3"
   EXPECTED_VERSION_CODE: "4520384"
-  EXPECTED_TARGET_SDK: "30"
+  EXPECTED_TARGET_SDK: "31"
 
 jobs:
   build:
@@ -171,6 +171,10 @@ jobs:
           if ($hasDebuggable -ne $expectsDebuggable) {
             throw "Debuggable mismatch; expected $expectsDebuggable, manifest=$hasDebuggable"
           }
+
+      - name: Verify Android 12 component and PendingIntent invariants
+        shell: pwsh
+        run: python scripts/verify_target31.py work/decoded
 
       - name: Prepare release artifact
         id: artifact
