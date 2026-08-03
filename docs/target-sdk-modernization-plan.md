@@ -337,7 +337,7 @@ V1 构建记录：
 
 分支：`feat/target-sdk-34`
 
-状态：**V1 已构建并安装，等待首次引导与真机回归**。
+状态：**已完成并验收**。
 
 V1 从已验收的 target 33 创建，只提升到 Android 14 / API 34，并处理该级已经确认的动态 receiver 硬边界：
 
@@ -370,6 +370,22 @@ V1 构建记录：
 - 设备安装后的 `base.apk` SHA-256 与 artifact 完全一致；
 - 安装后未启动、启用或选择 target 34 IME，首次引导保持全新；
 - target 33 旧测试包已卸载，系统默认 IME 临时回退到 LatinIME。
+
+真机验收记录（Pixel 10 Pro / Android 16）：
+
+- 维护者完成首次引导和视觉/功能回归，未发现用户可见异常；`guide_complete=true`，当前默认且已启用的 IME 为 target 34，进程持续存活；
+- 全键盘、九键、英文、候选与分页、符号/Emoji、剪贴板候选、主题、设置及 Back/Insets 行为未发现 target 34 回归；
+- 中文手写实际执行 1–3 笔 native 识别并正常完成，`libhmm_gesture_hwr_zh.so` 与中英文数据库均已加载；
+- 联系人权限为 `allow`，中英文联系人词典、用户词典、快捷词典和自定义主题包均正常生成；传统外部存储与无用途的通知/媒体 AppOps 保持 `ignore`；
+- Google Drive SAF 自动备份状态为“备份成功”，连续失败数为 0，持久目录授权、document URI 和备份 SHA-256 均已记录；
+- 没有 `.partial`、`_tmp` 或 `_unreadable` 异常残留；
+- DropBox 中没有 Java crash、ANR、native crash 或 tombstone，ApplicationExitInfo 没有该包异常退出记录；
+- ART Dexopt 状态为 `verify` 且 oat 最新；没有运行时 `DexClassLoader`/`DexFile` 故障；
+- 运行日志没有动态 receiver `SecurityException`、`VerifyError`、`UnsatisfiedLinkError`、权限拒绝或隐藏 API 故障；活动 receiver 表中 target 34 当前注册项均为系统广播，已移除的统计网络路径没有注册 GServices receiver；
+- `keyboardsnapshotcache_*.png` 惰性 miss、RenderScript fallback、少量资源 finalizer 警告和 `SHOW_MORE_APPS` 无效键码均为此前已分类的原版遗留日志，没有崩溃或可见影响；
+- 安装后的 `base.apk` SHA-256 再次确认与 Actions artifact 完全一致；采集时 170 个 FD、48 个线程，没有资源失控迹象。
+
+结论：target 34 / Android 14 行为边界通过。默认 release-like 包已提供充分证据，无需构建 Debug 变体；可以从该验收里程碑创建 target 35，但 target 35 是 edge-to-edge、TextView 测量和旧设置 UI 的独立视觉边界。
 
 ### target 35 / Android 15
 
