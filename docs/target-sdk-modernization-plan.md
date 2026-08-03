@@ -337,7 +337,7 @@ V1 构建记录：
 
 分支：`feat/target-sdk-34`
 
-状态：**V1 实现与构建验证中**。
+状态：**V1 已构建并通过静态验证，等待安装与真机回归**。
 
 V1 从已验收的 target 33 创建，只提升到 Android 14 / API 34，并处理该级已经确认的动态 receiver 硬边界：
 
@@ -348,6 +348,25 @@ V1 从已验收的 target 33 创建，只提升到 Android 14 / API 34，并处�
 - 继续检查隐式 Intent 对未导出组件的限制，但不预先修改已通过的系统设置、SAF、WebView 或主题选择器 Intent；
 - 保留 Android 12 exported/PendingIntent 和 Android 13 无通知/媒体权限静态门禁；
 - 不提前混入 API 35 edge-to-edge/TextView 或 API 36 Back 改动。
+
+V1 构建记录：
+
+- implementation commit：`fda7ef2`
+- redecoded-artifact verifier fix：`82a8a78`
+- workflow：[`30791953489`](https://github.com/huaxianyan/comeback-google-pinyin-input/actions/runs/30791953489)
+- artifact ID：`8847387026`
+- artifact：`ComebackGooglePinyinInput-target-sdk-34-audit-v1`
+- application ID：`com.google.android.inputmethod.pinyin.target34audit`
+- 显示名称：`Google 拼音输入法（测试版）`
+- versionName / versionCode：`1.0.3` / `4520384`
+- min / target SDK：`17` / `34`
+- Debuggable：否（release-like）
+- APK SHA-256：`3a69ad0f48989897088eadaf3d838f0d7c8fb2148bf6ef52da15d69094ae6abd`
+- zipalign：通过
+- APK Signature Scheme：v1/v2/v3 通过
+- 签名证书 SHA-256：`985CBF843A362169B129AEAC5E153D13095F0923231936D1486A20C8332CDE2F`
+- Android 12 exported/PendingIntent、Android 13 权限和 Android 14 receiver/动态代码门禁均通过；
+- Actions 仅生成 artifact，tag Release 步骤按预期跳过，未发布 GitHub Release。
 
 ### target 35 / Android 15
 
