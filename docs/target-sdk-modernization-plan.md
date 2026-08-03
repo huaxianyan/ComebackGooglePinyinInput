@@ -117,7 +117,11 @@ V1 构建记录：
 
 ### target 30 / Android 11
 
-状态：等待 target 29 完成。
+分支：`feat/target-sdk-30`
+
+状态：**进行中**。
+
+V1 继续采用纯 target 边界策略：在已验收的 target 29 基础上只提升到 target 30，不预先加入 scoped storage、Toast 或 package visibility 猜测性补丁。
 
 重点：
 
@@ -229,4 +233,7 @@ V1 构建记录：
 - [x] target 29 隔离包安装与 ART 日志检查；
 - [x] target 29 功能回归；
 - [x] target 29 结论归档；
-- [ ] 从已验收的 target 29 创建 target 30 分支。
+- [x] 从已验收的 target 29 创建 target 30 分支；
+- [ ] target 30 V1 可复现构建；
+- [ ] target 30 隔离包安装与 ART/存储日志检查；
+- [ ] target 30 功能和 scoped storage 回归。

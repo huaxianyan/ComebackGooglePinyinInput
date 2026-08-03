@@ -37,12 +37,12 @@ def apply(decoded: Path, application_id: str) -> None:
         raise RuntimeError(f"Not an apktool output directory: {decoded}")
 
     # Target SDK modernization is deliberately staged one API level at a time.
-    # This branch isolates Android 10 / API 29 behavior changes from later
-    # PendingIntent, receiver, edge-to-edge, and predictive-back boundaries.
+    # API 29 has passed its isolated audit; this branch now isolates Android 11
+    # / API 30 behavior from later PendingIntent and receiver boundaries.
     replace_once(
         decoded / "apktool.yml",
         "sdkInfo:\n  minSdkVersion: 17\n  targetSdkVersion: 26",
-        "sdkInfo:\n  minSdkVersion: 17\n  targetSdkVersion: 29",
+        "sdkInfo:\n  minSdkVersion: 17\n  targetSdkVersion: 30",
     )
     replace_once(
         decoded / "apktool.yml",

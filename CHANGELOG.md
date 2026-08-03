@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased - target SDK 29 audit]
+## [Unreleased - target SDK modernization audits]
 
 ### Changed
 
@@ -9,6 +9,7 @@
 - GitHub Actions 增加预期 target SDK 身份检查和构建摘要，防止审计产物在目标版本不符时继续发布。
 - target 29 V1 已在 Pixel 10 Pro / Android 16 完成首次引导、核心输入、手写、候选、剪贴板、主题、联系人及 SAF 备份测试；ART、DropBox、进程日志和 Root 文件检查未发现新增问题。
 - 所有非正式 application ID 的后续审计包统一显示为“Google 拼音输入法（测试版）”，便于在 Launcher、应用列表和输入法选择器中与正式版区分。
+- 从已验收的 target 29 里程碑创建 `feat/target-sdk-30`，第一版只启用 Android 11 / API 30 target 行为，不预先隐藏 scoped storage、Toast 或 package visibility 问题。
 
 ## [1.0.3] - 2026-08-01
 

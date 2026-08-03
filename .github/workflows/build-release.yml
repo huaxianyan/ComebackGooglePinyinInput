@@ -34,7 +34,7 @@ env:
   RELEASE_APK_NAME: ComebackGooglePinyinInput-arm64-v8a-1.0.3.apk
   EXPECTED_VERSION_NAME: "1.0.3"
   EXPECTED_VERSION_CODE: "4520384"
-  EXPECTED_TARGET_SDK: "29"
+  EXPECTED_TARGET_SDK: "30"
 
 jobs:
   build:
