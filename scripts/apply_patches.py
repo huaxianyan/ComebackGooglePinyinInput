@@ -153,6 +153,43 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
         "    goto :goto_0",
     )
 
+    # Android 15 disables the bottom offset for edge-to-edge windows. Keep
+    # interactive first-run controls and the IME keyboard body above the
+    # navigation bar by applying the real bottom WindowInset. The IME root
+    # paints the existing keyboard-area background through that inset region.
+    first_run_activity = decoded / "smali/apy.smali"
+    replace_once(
+        first_run_activity,
+        "    const v0, 0x7f040034\n\n"
+        "    invoke-virtual {p0, v0}, Lapy;->setContentView(I)V\n\n"
+        "    .line 28",
+        "    const v0, 0x7f040034\n\n"
+        "    invoke-virtual {p0, v0}, Lapy;->setContentView(I)V\n\n"
+        "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/"
+        "EdgeToEdgeCompat;->attachFirstRun(Landroid/app/Activity;)V\n\n"
+        "    .line 28",
+    )
+
+    input_view = decoded / (
+        "smali/com/google/android/apps/inputmethod/libs/framework/core/InputView.smali"
+    )
+    replace_once(
+        input_view,
+        "    .line 9\n    :cond_0\n    return-void",
+        "    .line 9\n    :cond_0\n"
+        "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/"
+        "EdgeToEdgeCompat;->attachInputView(Landroid/view/View;)V\n\n"
+        "    return-void",
+    )
+
+    for relative in ("res/layout/ims_input_view.xml", "res/layout-v21/ims_input_view.xml"):
+        path = decoded / relative
+        replace_once(
+            path,
+            'android:layoutDirection="ltr"',
+            'android:layoutDirection="ltr" android:background="?BgKeyboardArea"',
+        )
+
     arrays = decoded / "res/values/arrays.xml"
     replace_once(
         arrays,
@@ -1795,6 +1832,8 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
         "NavigationBarCompat.smali",
         "ScrollTouchCompat.smali",
         "DictionaryRecoveryCompat.smali",
+        "EdgeToEdgeCompat.smali",
+        "EdgeToEdgeCompat$BottomInsetsListener.smali",
     ):
         helper_src = ROOT / "patches/smali" / helper_name
         helper_dst = decoded / "smali/com/google/android/inputmethod/pinyin" / helper_name

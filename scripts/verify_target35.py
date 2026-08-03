@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Verify the clean Android 15 visual-boundary baseline.
+"""Verify Android 15 edge-to-edge and TextView audit invariants.
 
-Target 35 V1 intentionally enables platform edge-to-edge and TextView behavior
-without an opt-out or speculative candidate measurement changes. Device visual
-comparison determines whether any narrow follow-up is necessary.
+The accepted direction keeps platform edge-to-edge enabled, forbids speculative
+TextView/candidate changes, and requires the narrow bottom-inset fixes proven by
+target 35 V1 device testing for first-run controls and the IME input view.
 """
 
 from __future__ import annotations
@@ -38,7 +38,7 @@ def main() -> None:
                     findings.append(f"{path}: {description} ({token})")
     if findings:
         raise RuntimeError(
-            "Target 35 V1 must remain an unmasked platform-behavior baseline:\n"
+            "Target 35 must keep the platform behavior unmasked:\n"
             + "\n".join(findings)
         )
 
@@ -73,14 +73,56 @@ def main() -> None:
     layout_v35 = decoded / "res/layout-v35"
     if layout_v35.exists() and any(layout_v35.rglob("*")):
         raise RuntimeError(
-            "Unexpected target-35 layout override; V1 must preserve native keyboard, "
-            "candidate and pager geometry"
+            "Unexpected target-35 layout override; native keyboard, candidate and "
+            "pager geometry must remain unchanged"
         )
 
+    helper = decoded / (
+        "smali/com/google/android/inputmethod/pinyin/EdgeToEdgeCompat.smali"
+    )
+    listener = decoded / (
+        "smali/com/google/android/inputmethod/pinyin/"
+        "EdgeToEdgeCompat$BottomInsetsListener.smali"
+    )
+    if not helper.is_file() or not listener.is_file():
+        raise RuntimeError("Missing narrow Android 15 bottom-inset helper")
+    helper_text = helper.read_text(encoding="utf-8")
+    listener_text = listener.read_text(encoding="utf-8")
+    required_helper = (
+        "attachFirstRun(Landroid/app/Activity;)V",
+        "attachInputView(Landroid/view/View;)V",
+        "const/16 v1, 0x23",
+    )
+    required_listener = (
+        "Landroid/view/View$OnApplyWindowInsetsListener;",
+        "getSystemWindowInsetBottom()I",
+        "->setPadding(IIII)V",
+        "Landroid/view/ViewGroup$LayoutParams;->height:I",
+    )
+    missing = [item for item in required_helper if item not in helper_text]
+    missing += [item for item in required_listener if item not in listener_text]
+    if missing:
+        raise RuntimeError(f"Incomplete Android 15 bottom-inset helper: {missing}")
+
+    apy = (decoded / "smali/apy.smali").read_text(encoding="utf-8")
+    input_view = (
+        decoded
+        / "smali/com/google/android/apps/inputmethod/libs/framework/core/InputView.smali"
+    ).read_text(encoding="utf-8")
+    if "EdgeToEdgeCompat;->attachFirstRun" not in apy:
+        raise RuntimeError("First-run footer does not receive bottom insets")
+    if "EdgeToEdgeCompat;->attachInputView" not in input_view:
+        raise RuntimeError("IME input root does not receive bottom insets")
+    for relative in ("res/layout/ims_input_view.xml", "res/layout-v21/ims_input_view.xml"):
+        text = (decoded / relative).read_text(encoding="utf-8")
+        if 'android:background="?BgKeyboardArea"' not in text:
+            raise RuntimeError(f"IME inset region has no keyboard background: {relative}")
+
     print(
-        "Android 15 baseline verified: target 35, enforced edge-to-edge is not "
-        "opted out, API-35 day/night first-run styles are present, and no "
-        "speculative TextView or layout compensation was introduced"
+        "Android 15 invariants verified: edge-to-edge is not opted out, the "
+        "proven first-run/IME bottom insets are applied, API-35 day/night "
+        "first-run styles remain present, and no speculative TextView or "
+        "keyboard-layout compensation was introduced"
     )
 
 

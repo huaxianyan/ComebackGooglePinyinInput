@@ -391,7 +391,7 @@ V1 构建记录：
 
 分支：`feat/target-sdk-35`
 
-状态：**V1 已构建并安装，等待首次引导与独立视觉回归**。
+状态：**V1 已确认 edge-to-edge 底部遮挡，V2 窄修复构建验证中**。
 
 这是独立视觉边界。V1 从已验收的 target 34 创建，只提升到 Android 15 / API 35，刻意采用不掩盖平台行为的基线：
 
@@ -428,6 +428,23 @@ V1 构建记录：
 - 安装后未启动、启用或选择 target 35 IME，首次引导保持全新；
 - target 34 旧测试包已卸载，系统默认 IME 临时回退到 LatinIME；
 - Actions 仅生成 artifact，未发布 GitHub Release。
+
+V1 真机视觉结果：
+
+- 首次引导顶部和设置页顶部未被状态栏遮挡，旧 AppCompat 顶部 inset 路径继续有效；
+- 首次引导“上一步/下一步”页脚进入三键导航栏区域，按钮点击困难；
+- IME 底部一行进入虚拟导航键区域，按钮无法交互，导致 Emoji、标点和符号入口无法测试；键盘整体体感也比 target 34 偏低；
+- 中英文输入、剪贴板、手写、备份和导入未发现其他异常；
+- 设置页底部显示纯黑三键导航栏，但内容未报告遮挡。Android 15 对三键导航默认使用约 80% 不透明背景，并在未应用 bottom inset 时让内容绘制到其后；先保留该非阻塞视觉现象，不用全局颜色覆盖掩盖因果。
+
+V2 窄修复：
+
+- 保持 edge-to-edge 强制行为开启，不使用 opt-out；
+- 新增 `EdgeToEdgeCompat`，仅在 API 35+ 读取真实 bottom system-window inset；
+- 首次引导页脚高度增加 bottom inset、页脚内部增加等量 bottom padding，并同步增加 pager bottom padding，使原 64dp 页脚完整位于导航栏上方；
+- IME `InputView` 增加 bottom inset padding，使原生键盘 body 和全部底部按键整体上移，同时让 root 使用既有 `BgKeyboardArea` 绘制导航栏后的区域；
+- 不改变键盘 body、候选、分页、Emoji/符号、手写或触摸布局尺寸，不加入 TextView 补偿；
+- 设置和主题 Activity 暂不增加全局 padding，因为顶部正常且尚无底部控件被遮挡的证据。
 
 ### target 36 / Android 16
 
