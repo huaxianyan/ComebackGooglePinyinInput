@@ -11,7 +11,8 @@
 - 所有非正式 application ID 的后续审计包统一显示为“Google 拼音输入法（测试版）”，便于在 Launcher、应用列表和输入法选择器中与正式版区分。
 - 从已验收的 target 29 里程碑创建 `feat/target-sdk-30`，第一版只启用 Android 11 / API 30 target 行为，不预先隐藏 scoped storage、Toast 或 package visibility 问题。
 - target 30 V1 已在 Pixel 10 Pro / Android 16 完成功能、ART、Root、scoped storage、Google Drive SAF 和日志检查，未发现 target 30 新增回归；旧 target 29 审计包已从设备卸载。
-- 按维护者要求暂停 target 31，先建立与 release-like 验收分离、且禁止用于正式包的可选 debug 诊断模式。
+- 按维护者要求暂停 target 31，建立与 release-like 验收分离、且禁止用于正式包的可选 debug 诊断模式。
+- 新增构建期 `--debuggable`/`-Debuggable` 开关、Actions 身份保护和 `capture_audit_diagnostics.ps1`；默认不采集输入、剪贴板、联系人或词典正文。
 
 ## [1.0.3] - 2026-08-01
 

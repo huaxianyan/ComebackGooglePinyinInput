@@ -24,7 +24,8 @@ Google Play 当前要求新应用和更新面向 Android 16（API 36）或更高
 master / v1.0.3（target 28）
   └─ feat/target-sdk-29
        └─ feat/target-sdk-30
-            └─ feat/target-sdk-31
+            └─ feat/audit-debug-mode（不提升 target）
+                 └─ feat/target-sdk-31
                  └─ feat/target-sdk-32
                       └─ feat/target-sdk-33
                            └─ feat/target-sdk-34
@@ -46,6 +47,7 @@ master / v1.0.3（target 28）
 7. 正式包仍保持 `com.google.android.inputmethod.pinyin.compat` 和现有签名身份。
 8. 达到选定的正式里程碑前不合并 `master`；当前预期正式里程碑为 target 36。
 9. 如果某一级发现与 target 无关、且正式版也需要的严重修复，单独建修复分支处理，再同步到 target 分支链，避免混淆归因。
+10. 默认审计包保持非 debuggable，作为 target 验收依据；可选 debug 变体只用于诊断，禁止使用正式 application ID，详见 [`audit-debug-mode.md`](audit-debug-mode.md)。
 
 ## 每一级的共同完成条件
 
@@ -273,6 +275,7 @@ V1 构建记录：
 - [x] target 30 V1 可复现构建；
 - [x] target 30 隔离包安装与 ART/存储日志检查；
 - [x] target 30 功能和 scoped storage 回归；
-- [ ] 在独立分支引入仅限隔离审计包的可选 debug 模式；
+- [x] 创建 `feat/audit-debug-mode`，不提升 target；
+- [x] 加入仅限隔离审计包的可选 debug 构建开关和隐私受限诊断脚本；
 - [ ] 验证 debug 模式不会改变默认 release-like 构建，也不会进入正式包；
 - [ ] debug 诊断能力验收后再决定何时创建 target 31。

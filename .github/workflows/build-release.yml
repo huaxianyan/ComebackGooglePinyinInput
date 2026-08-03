@@ -16,6 +16,11 @@ on:
         description: Optional Actions artifact label
         required: false
         type: string
+      debuggable:
+        description: Enable Android debug capabilities (isolated audit IDs only)
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -48,6 +53,7 @@ jobs:
       EXPECTED_CERT_SHA256: ${{ vars.ANDROID_SIGNING_CERT_SHA256 }}
       APPLICATION_ID: ${{ inputs.application_id || vars.ANDROID_APPLICATION_ID }}
       ARTIFACT_LABEL: ${{ inputs.artifact_name || github.sha }}
+      DEBUGGABLE: ${{ inputs.debuggable || 'false' }}
 
     steps:
       - name: Check out source
@@ -78,6 +84,9 @@ jobs:
           $missing = @($required.Keys | Where-Object { [string]::IsNullOrWhiteSpace($required[$_]) })
           if ($missing.Count -ne 0) {
             throw "Missing GitHub Actions secrets/variables: $($missing -join ', ')"
+          }
+          if ($env:DEBUGGABLE -eq "true" -and $env:APPLICATION_ID -eq "com.google.android.inputmethod.pinyin.compat") {
+            throw "Debug mode is forbidden for the formal application ID"
           }
 
       - name: Download and verify build tools
@@ -137,7 +146,8 @@ jobs:
             -KeyAlias $env:KEY_ALIAS `
             -StorePassword $env:STORE_PASSWORD `
             -KeyPassword $env:KEY_PASSWORD `
-            -ApplicationId $env:APPLICATION_ID
+            -ApplicationId $env:APPLICATION_ID `
+            -Debuggable:($env:DEBUGGABLE -eq "true")
 
       - name: Verify package and version identity
         shell: pwsh
@@ -155,6 +165,11 @@ jobs:
           }
           if ($manifest -notmatch ('package="' + [regex]::Escape($env:APPLICATION_ID) + '"')) {
             throw "Application ID mismatch; expected $env:APPLICATION_ID"
+          }
+          $hasDebuggable = $manifest -match 'android:debuggable="true"'
+          $expectsDebuggable = $env:DEBUGGABLE -eq "true"
+          if ($hasDebuggable -ne $expectsDebuggable) {
+            throw "Debuggable mismatch; expected $expectsDebuggable, manifest=$hasDebuggable"
           }
 
       - name: Prepare release artifact
@@ -178,6 +193,7 @@ jobs:
           - SHA-256: ``$sha256``
           - Application ID: ``$env:APPLICATION_ID``
           - target SDK: ``$env:EXPECTED_TARGET_SDK``
+          - Debuggable: ``$env:DEBUGGABLE``
           - Signing certificate: ``$env:EXPECTED_CERT_SHA256``
           "@
 

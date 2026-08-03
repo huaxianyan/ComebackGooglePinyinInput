@@ -14,6 +14,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+FORMAL_APPLICATION_ID = "com.google.android.inputmethod.pinyin.compat"
 
 
 def replace_once(path: Path, old: str, new: str) -> None:
@@ -32,9 +33,11 @@ def replace_exactly(path: Path, old: str, new: str, expected: int) -> None:
     path.write_text(text.replace(old, new), encoding="utf-8", newline="\n")
 
 
-def apply(decoded: Path, application_id: str) -> None:
+def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
     if not (decoded / "apktool.yml").is_file():
         raise RuntimeError(f"Not an apktool output directory: {decoded}")
+    if debuggable and application_id == FORMAL_APPLICATION_ID:
+        raise RuntimeError("Refusing to make the formal application ID debuggable")
 
     # Target SDK modernization is deliberately staged one API level at a time.
     # API 29 has passed its isolated audit; this branch now isolates Android 11
@@ -54,7 +57,7 @@ def apply(decoded: Path, application_id: str) -> None:
     # Keep the formal product name unchanged. Isolated audit packages use a
     # conspicuous label so they can be distinguished in Launcher, Android's
     # app list, and the input-method picker without changing keyboard UI.
-    if application_id != "com.google.android.inputmethod.pinyin.compat":
+    if application_id != FORMAL_APPLICATION_ID:
         replace_once(
             decoded / "res/values/strings.xml",
             '<string name="ime_name_ref">@string/ime_name</string>',
@@ -1369,6 +1372,15 @@ def apply(decoded: Path, application_id: str) -> None:
         'package="com.google.android.inputmethod.pinyin"',
         f'package="{application_id}"',
     )
+    if debuggable:
+        # Debug mode is deliberately build-time-only and restricted to isolated
+        # audit IDs. It enables run-as, JDWP, heapprofd/Perfetto and debugger
+        # attachment without changing the release-like build by default.
+        replace_once(
+            manifest,
+            "    <application android:backupAgent=",
+            '    <application android:debuggable="true" android:backupAgent=',
+        )
     replace_once(
         manifest,
         'android:authorities="com.google.android.inputmethod.pinyin.user_dictionary"',
@@ -1758,7 +1770,11 @@ def apply(decoded: Path, application_id: str) -> None:
         raise RuntimeError(f"Refusing to overwrite existing helper: {candidate_dst}")
     shutil.copyfile(candidate_src, candidate_dst)
 
-    print(f"Applied Google Pinyin compatibility 4.5.2 to {decoded} ({application_id})")
+    mode = "debuggable audit" if debuggable else "release-like"
+    print(
+        f"Applied Google Pinyin compatibility 4.5.2 to {decoded} "
+        f"({application_id}, {mode})"
+    )
 
 
 def main() -> None:
@@ -1766,11 +1782,16 @@ def main() -> None:
     parser.add_argument("decoded", type=Path, help="apktool decoded directory")
     parser.add_argument(
         "--application-id",
-        default="com.google.android.inputmethod.pinyin.compat",
+        default=FORMAL_APPLICATION_ID,
         help="application ID for coexistence builds",
     )
+    parser.add_argument(
+        "--debuggable",
+        action="store_true",
+        help="enable Android debugging for an isolated non-formal audit ID",
+    )
     args = parser.parse_args()
-    apply(args.decoded.resolve(), args.application_id)
+    apply(args.decoded.resolve(), args.application_id, args.debuggable)
 
 
 if __name__ == "__main__":

@@ -7,7 +7,8 @@ param(
     [Parameter(Mandatory = $true)][string]$KeyAlias,
     [Parameter(Mandatory = $true)][string]$StorePassword,
     [Parameter(Mandatory = $true)][string]$KeyPassword,
-    [string]$ApplicationId = "com.google.android.inputmethod.pinyin.compat"
+    [string]$ApplicationId = "com.google.android.inputmethod.pinyin.compat",
+    [switch]$Debuggable
 )
 
 $ErrorActionPreference = "Stop"
@@ -38,7 +39,11 @@ Write-Host "[1/4] Decoding original APK..."
 if ($LASTEXITCODE -ne 0) { throw "apktool decode failed" }
 
 Write-Host "[2/4] Applying compatibility patches..."
-& python (Join-Path $PSScriptRoot "apply_patches.py") $WorkDir --application-id $ApplicationId
+$PatchArguments = @($WorkDir, "--application-id", $ApplicationId)
+if ($Debuggable) {
+    $PatchArguments += "--debuggable"
+}
+& python (Join-Path $PSScriptRoot "apply_patches.py") @PatchArguments
 if ($LASTEXITCODE -ne 0) { throw "patching failed" }
 
 $UnsignedApk = Join-Path $BuildDir "google-pinyin-4.5.2-compat-unsigned.apk"
