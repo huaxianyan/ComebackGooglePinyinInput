@@ -80,6 +80,34 @@ work/device-diagnostics/<package>-<timestamp>/
 
 Verbose 日志在分享前必须人工检查。脚本不会自动生成完整 bugreport，也不会读取剪贴板、词典正文、联系人正文或 SharedPreferences 正文。
 
+## 首次双模式构建记录
+
+源提交：`d5e2e3c85b38b0eaaf969e48a3798d5a932f588a`
+
+Release-like 基准验证：
+
+- workflow：[`30782851827`](https://github.com/huaxianyan/comeback-google-pinyin-input/actions/runs/30782851827)
+- artifact ID：`8844253668`
+- artifact：`ComebackGooglePinyinInput-target-sdk-30-release-like-debug-infra-check`
+- APK SHA-256：`82b6c289005b8837499bdd1d78d593be08161c479503707fc08f28c3daa2fe55`
+- Manifest：没有 `android:debuggable="true"`
+
+Debug V1：
+
+- workflow：[`30782855073`](https://github.com/huaxianyan/comeback-google-pinyin-input/actions/runs/30782855073)
+- artifact ID：`8844264204`
+- artifact：`ComebackGooglePinyinInput-target-sdk-30-debug-v1`
+- APK SHA-256：`fdff4030bc12e0aa7111804bdb6b2fff0d10a40b0a0980c544f29f705bbb9277`
+- Manifest：包含 `android:debuggable="true"`
+
+两者均通过 zipalign、v1/v2/v3 签名和证书检查。解码后排除 Manifest 与重新签名产生的 `META-INF` 文件，5571 个代码、资源、assets 和 native 文件的路径及 SHA-256 完全一致。新的默认 release-like 构建与已经验收的 target 30 V1 也有相同的 5571 个有效载荷文件哈希。因此 debug 变体没有夹带功能代码差异。
+
+本地负向测试确认：
+
+- 正式 application ID 加 `--debuggable` 会在修改输出前失败；
+- 正式 application ID 的默认构建仍不含 debuggable 属性；
+- PowerShell 诊断脚本通过语法解析。
+
 ## 分支策略
 
 `feat/audit-debug-mode` 从已经验收的 `feat/target-sdk-30` 创建。Target 31 暂不创建。Debug 能力通过验证后，后续 target 分支继承“可选构建能力”，但每一级首先构建和验收默认非 debug 包；只有需要深入诊断时才构建同 application ID、同签名的 debug 变体覆盖安装，保留该级测试数据。
