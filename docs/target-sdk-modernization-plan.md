@@ -389,17 +389,23 @@ V1 构建记录：
 
 ### target 35 / Android 15
 
-状态：等待。
+分支：`feat/target-sdk-35`
 
-这是独立视觉边界，重点：
+状态：**V1 实现与构建验证中**。
 
-- Activity edge-to-edge；
-- Settings、First Run、Theme 和备份导入 Activity 的 WindowInsets；
-- `TextView` 新宽度测量对候选宽度和分页的影响；
-- 字体行高、键盘尺寸、导航区和候选栏截图对比；
-- 按键音和振动。
+这是独立视觉边界。V1 从已验收的 target 34 创建，只提升到 Android 15 / API 35，刻意采用不掩盖平台行为的基线：
 
-允许用临时 edge-to-edge opt-out 做故障隔离，但不能把它作为 target 36 的最终实现。
+- 不设置 `windowOptOutEdgeToEdgeEnforcement`，让 Android 15 的 edge-to-edge target 行为真实生效；
+- 不预先加入 `setDecorFitsSystemWindows()`、全局 padding 或猜测性的 WindowInsets 补偿；先分别观察 Settings、First Run、Theme 和备份导入 Activity，只有设备证据证明重叠时才做窄修复；
+- 保留旧 AppCompat 自带的 `fitsSystemWindows`/insets 逻辑，不因 target 提升而推测性删除；
+- 保留已经存在的 API 35 首次引导 day/night 样式和系统栏明暗图标配置；
+- 不预先设置 `elegantTextHeight`、`fallbackLineSpacing` 或候选宽度补偿，直接审计 Android 15 `TextView` 变化对原生候选测量、分页、字体行高和截断的实际影响；
+- 不新增 `layout-v35` 键盘覆盖，保持候选、分页、手写、符号/Emoji 和触摸几何原样；
+- 新增 `scripts/verify_target35.py`，拒绝 edge-to-edge opt-out、推测性 TextView 补偿和 API 35 布局覆盖；
+- 重点截图对比状态栏、导航区、键盘高度、候选栏、设置标题栏、主题编辑器、首次引导三页和备份导入页；
+- 继续验证按键音、振动、剪贴板候选、手写和 Back，但不提前混入 API 36 predictive Back 改动。
+
+如果 V1 发现重叠，可临时用 edge-to-edge opt-out 做因果隔离，但验收实现必须使用真实 WindowInsets 适配，因为该 opt-out 不能成为 target 36 的最终方案。
 
 ### target 36 / Android 16
 

@@ -22,6 +22,7 @@
 - target 33 V1 已在 Pixel 10 Pro / Android 16 完成首次引导、核心输入、手写、剪贴板、主题/系统图片选择器、联系人、词典和 Google Drive SAF 回归；未请求通知或媒体权限，没有 crash/ANR、权限异常或 API 33 新增回归。
 - 从已验收的 target 33 创建 `feat/target-sdk-34`；V1 提升到 Android 14 / API 34，为跨包 GServices 动态 receiver 增加 `RECEIVER_EXPORTED` 与旧系统兼容分支，并新增 receiver/动态代码静态门禁。
 - target 34 V1 已在 Pixel 10 Pro / Android 16 完成首次引导、核心输入、手写、主题、联系人、词典、Google Drive SAF、ART/Root 和动态 receiver 回归；没有 crash/ANR、receiver 安全异常、动态代码错误或 API 34 新增回归。
+- 从已验收的 target 34 创建 `feat/target-sdk-35`；V1 仅提升到 Android 15 / API 35，不使用 edge-to-edge opt-out，也不预先加入推测性的 Insets、TextView 或键盘布局补偿，以保留可归因的视觉基线。
 
 ## [1.0.3] - 2026-08-01
 
