@@ -227,7 +227,7 @@ V1 构建记录：
 
 分支：`feat/target-sdk-32`
 
-状态：**进行中**。
+状态：**V1 已构建并安装，等待真机回归**。
 
 没有已知独立硬阻塞。V1 从已验收的 target 31 分支创建，只把 target 提升到 32，保留已经通过的 PendingIntent、exported 和基础 Debug 构建能力，不加入 API 33+ 猜测性补丁。
 
@@ -238,6 +238,27 @@ V1 构建记录：
 - InputConnection、窗口 Insets、候选栏和主题 Activity；
 - ART、native loader、词典、联系人和 SAF；
 - 默认仍使用 release-like 非 Debug 包。
+
+V1 构建记录：
+
+- commit：`1e303f8c2f39c6764c0551eff6ab5e7139949835`
+- workflow：[`30787151326`](https://github.com/huaxianyan/comeback-google-pinyin-input/actions/runs/30787151326)
+- artifact ID：`8845645932`
+- artifact：`ComebackGooglePinyinInput-target-sdk-32-audit-v1`
+- application ID：`com.google.android.inputmethod.pinyin.target32audit`
+- 显示名称：`Google 拼音输入法（测试版）`
+- versionName / versionCode：`1.0.3` / `4520384`
+- min / target SDK：`17` / `32`
+- Debuggable：否（release-like）
+- APK SHA-256：`02faeb7033c0182487a42b3203efd18f93049a8b7ed017814e34f9d71d63ca13`
+- zipalign：通过
+- APK Signature Scheme：v1/v2/v3 通过
+- 签名证书 SHA-256：`985CBF843A362169B129AEAC5E153D13095F0923231936D1486A20C8332CDE2F`
+- Android 12 静态门禁：5 个 intent-filter 组件和 7 个 immutable PendingIntent 通过；
+- 设备安装后的 `base.apk` 哈希与 artifact 完全一致；
+- 安装后未启动、启用或选择 target 32 IME，首次引导保持全新；
+- target 31 旧测试包已卸载，系统默认 IME 保持 LatinIME；
+- GitHub Release：未发布。
 
 ### target 33 / Android 13
 
@@ -339,5 +360,5 @@ V1 构建记录：
 - [x] target 31 V1 可复现构建和静态 Android 12 不变量检查；
 - [x] target 31 release-like 隔离包安装后的首次引导、ART 和功能回归；
 - [x] 从已验收的 target 31 创建 target 32；
-- [ ] target 32 V1 可复现 release-like 构建和静态检查；
+- [x] target 32 V1 可复现 release-like 构建和静态检查；
 - [ ] target 32 隔离包首次引导、ART 和功能回归。
