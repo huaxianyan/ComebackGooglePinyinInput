@@ -15,6 +15,7 @@
 - 新增构建期 `--debuggable`/`-Debuggable` 开关、Actions 身份保护和 `capture_audit_diagnostics.ps1`；默认不采集输入、剪贴板、联系人或词典正文。
 - 基础 Debug 模式完成真机使用和隐私检查后冻结；后续默认继续使用 release-like 包，仅在普通诊断不足时启用 Debug。
 - 创建 `feat/target-sdk-31`，将 target 提升到 31，为七个遗留 PendingIntent 增加 `FLAG_IMMUTABLE`，并新增 Android 12 `android:exported`/mutability 静态构建门禁。
+- target 31 V1 已在 Pixel 10 Pro / Android 16 完成功能、ART、Root、PendingIntent/exported、词典、主题、联系人和 Google Drive SAF 检查；没有 crash/ANR、mutability 异常或新增回归。
 
 ## [1.0.3] - 2026-08-01
 

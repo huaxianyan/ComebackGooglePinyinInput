@@ -173,7 +173,7 @@ V1 构建记录：
 
 分支：`feat/target-sdk-31`
 
-状态：**V1 已构建并安装，等待真机回归**。
+状态：**已完成并验收**。
 
 V1 在已验收的 target 30 和基础 Debug 构建能力之上提升到 target 31，并只处理 Android 12 的已知硬边界：
 
@@ -203,6 +203,23 @@ V1 构建记录：
 - 安装后未启动、启用或选择 target 31 IME，保留全新首次引导状态；
 - 按维护者要求已卸载 target 30 旧测试包，系统当前临时回退到 LatinIME；
 - GitHub Release：未发布。
+
+真机验收记录（Pixel 10 Pro / Android 16）：
+
+- 维护者完成首次引导、核心输入、手写、候选、剪贴板、主题、联系人、词典学习和 Google Drive SAF 备份测试，未发现回归；
+- `guide_complete=true`，target 31 IME 已启用并曾正常运行；检查时用户已手动切回 LatinIME，不属于异常回退；
+- DropBox 中没有 Java crash、ANR、native crash 或 tombstone，ApplicationExitInfo 和 events buffer 也没有该包异常退出记录；
+- 日志中没有 `Targeting S+ requires FLAG_IMMUTABLE or FLAG_MUTABLE`、`VerifyError`、`SecurityException`、隐藏 API 拒绝或 native loader 错误；
+- ART Dexopt 状态为 `verify` 且 oat 最新；
+- 中英文用户词典及各自 `_bak` 均正常生成，主文件已产生新的学习数据；
+- 中英文联系人词典、快捷词典和自定义主题包正常生成；
+- Google Drive SAF 自动备份状态为“备份成功”，连续失败数为 0，并记录文档 URI 和 SHA-256；
+- 传统外部存储 AppOps 仍为 `ignore`，联系人为 `allow`；
+- `liben_data_bundle.so`、`libpinyin_data_bundle.so` 和 `libhmm_gesture_hwr_zh.so` 在运行进程中实际加载；
+- 没有 `.partial`、`_tmp` 或 `_unreadable` 异常残留；
+- 安装后的 `base.apk` SHA-256 再次确认与 Actions artifact 一致。
+
+结论：target 31 的 PendingIntent mutability、component exported 和核心行为边界通过，可以在维护者确认后创建 target 32。
 
 专项复核 BackupAgent、设备迁移和首次使用状态，不提前加入 API 34 receiver、API 35 edge-to-edge 或 API 36 Back 改动。
 
@@ -310,4 +327,5 @@ V1 构建记录：
 - [x] 维护者确认保持基础 Debug，不预先增加重型埋点；
 - [x] 从已验收的 Debug 基础分支创建 target 31；
 - [x] target 31 V1 可复现构建和静态 Android 12 不变量检查；
-- [ ] target 31 release-like 隔离包安装后的首次引导、ART 和功能回归。
+- [x] target 31 release-like 隔离包安装后的首次引导、ART 和功能回归；
+- [ ] 维护者确认后从已验收的 target 31 创建 target 32。
