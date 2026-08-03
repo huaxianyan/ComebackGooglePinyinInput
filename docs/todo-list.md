@@ -82,8 +82,9 @@
 - [x] 正式包名覆盖安装后重启，确认旧 SyncAdapter 不再注册且未再申请 Google 账户权限
 - [x] 真机验证保留的本地“清除用户字典”四位确认流程及清除/恢复行为，未发现其他问题
 - [x] 记录逐 target 独立分支、隔离包和完成门槛：[`target-sdk-modernization-plan.md`](target-sdk-modernization-plan.md)
-- [ ] `feat/target-sdk-29`：V1 隔离构建已完成，等待 Android 10 / API 29 真机 ART 日志和功能回归
-- [ ] target 29 验收后从该分支创建 `feat/target-sdk-30`，其余版本依次推进到 target 36
+- [x] `feat/target-sdk-29`：Android 10 / API 29 隔离构建、真机 ART/Root 检查和功能回归通过
+- [ ] 从已验收的 target 29 创建 `feat/target-sdk-30`，其余版本依次推进到 target 36
+- [x] 非正式 application ID 的审计包统一显示为“Google 拼音输入法（测试版）”，正式包名称保持不变
 - [ ] 在真正的 16 KiB page-size 设备上验证原生库
 - [ ] 调查并消除 `MetricsProcessorHelper` 的反射参数错误日志
 

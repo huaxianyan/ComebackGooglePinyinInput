@@ -51,6 +51,16 @@ def apply(decoded: Path, application_id: str) -> None:
         "  versionName: 1.0.3",
     )
 
+    # Keep the formal product name unchanged. Isolated audit packages use a
+    # conspicuous label so they can be distinguished in Launcher, Android's
+    # app list, and the input-method picker without changing keyboard UI.
+    if application_id != "com.google.android.inputmethod.pinyin.compat":
+        replace_once(
+            decoded / "res/values/strings.xml",
+            '<string name="ime_name_ref">@string/ime_name</string>',
+            '<string name="ime_name_ref">Google 拼音输入法（测试版）</string>',
+        )
+
     arrays = decoded / "res/values/arrays.xml"
     replace_once(
         arrays,

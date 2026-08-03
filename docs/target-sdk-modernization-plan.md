@@ -42,9 +42,10 @@ master / v1.0.3（target 28）
 5. 风险测试使用独立 application ID，不覆盖正式包，也不接触正式包的用户词典：
    - API 29：`com.google.android.inputmethod.pinyin.target29audit`
    - 后续依次使用 `target30audit`、`target31audit` 等。
-6. 正式包仍保持 `com.google.android.inputmethod.pinyin.compat` 和现有签名身份。
-7. 达到选定的正式里程碑前不合并 `master`；当前预期正式里程碑为 target 36。
-8. 如果某一级发现与 target 无关、且正式版也需要的严重修复，单独建修复分支处理，再同步到 target 分支链，避免混淆归因。
+6. 所有非正式 application ID 的审计包统一显示为 `Google 拼音输入法（测试版）`，便于在 Launcher、应用列表和输入法选择器中与正式版区分；正式包显示名称不变。
+7. 正式包仍保持 `com.google.android.inputmethod.pinyin.compat` 和现有签名身份。
+8. 达到选定的正式里程碑前不合并 `master`；当前预期正式里程碑为 target 36。
+9. 如果某一级发现与 target 无关、且正式版也需要的严重修复，单独建修复分支处理，再同步到 target 分支链，避免混淆归因。
 
 ## 每一级的共同完成条件
 
@@ -68,7 +69,7 @@ master / v1.0.3（target 28）
 
 分支：`feat/target-sdk-29`
 
-状态：**V1 构建完成，等待真机安装与回归**。
+状态：**已完成并验收**。
 
 V1 只把 target 28 提升到 29，不预先加入猜测性兼容补丁。重点观察：
 
@@ -96,6 +97,23 @@ V1 构建记录：
 - 签名证书 SHA-256：`985CBF843A362169B129AEAC5E153D13095F0923231936D1486A20C8332CDE2F`
 - 旧 Google 账户同步权限和组件：保持移除
 - GitHub Release：未发布（workflow tag 步骤按预期跳过）
+
+真机验收记录（Pixel 10 Pro / Android 16）：
+
+- 维护者完成首次引导、核心输入、候选、手写、剪贴板、主题、联系人和 SAF 备份测试，未发现回归；
+- `guide_complete=true`，首次引导完成状态正确；
+- IME 进程保持存活，系统已注册并可正常作为当前输入法运行；
+- DropBox 中没有该包的 `data_app_crash` 或 `data_app_anr`；
+- 进程日志没有 `VerifyError`、`FATAL EXCEPTION`、隐藏 API 拒绝或 native loader 错误；
+- ART Dexopt 状态为 `verify` 且 oat 最新，没有类验证失败；
+- 联系人权限成功授予，中文/英文联系人词典文件均正常生成；
+- 自定义主题包正常生成并落盘；
+- 中英文用户词典文件正常创建和保存；
+- `READ_EXTERNAL_STORAGE`、`WRITE_EXTERNAL_STORAGE` 和 `LEGACY_STORAGE` 均为 `ignore`，但 SAF 仍在独立目录成功发布备份；
+- 备份状态为“备份成功”，连续失败数为 0，并记录正式文档 URI 和 SHA-256；
+- 未发现 target 29 新触发的功能、存储、ART 或 UI 问题。
+
+结论：target 29 行为边界通过，可以从该分支创建 `feat/target-sdk-30`。以后审计包统一使用“测试版”显示名称，不需要为 target 29 重做功能测试。
 
 ### target 30 / Android 11
 
@@ -208,6 +226,7 @@ V1 构建记录：
 - [x] 完成 API 29–37 初步静态调查；
 - [x] 建立逐 target 独立分支策略；
 - [x] target 29 V1 可复现构建；
-- [ ] target 29 隔离包安装与 ART 日志检查；
-- [ ] target 29 功能回归；
-- [ ] target 29 结论归档并创建 target 30 分支。
+- [x] target 29 隔离包安装与 ART 日志检查；
+- [x] target 29 功能回归；
+- [x] target 29 结论归档；
+- [ ] 从已验收的 target 29 创建 target 30 分支。
