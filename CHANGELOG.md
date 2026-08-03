@@ -19,6 +19,7 @@
 - 从已验收的 target 31 创建 `feat/target-sdk-32`；V1 仅提升到 Android 12L / API 32，不预先加入 API 33+ 行为补丁。
 - target 32 V1 已在 Pixel 10 Pro / Android 16 完成功能、ART、Root、手写 native、主题缓存、词典、联系人和 SAF 本地备份检查；没有 crash/ANR 或 API 32 新增回归。
 - 从已验收的 target 32 创建 `feat/target-sdk-33`；V1 仅提升到 Android 13 / API 33，不增加无用途的通知或媒体权限。
+- target 33 V1 已在 Pixel 10 Pro / Android 16 完成首次引导、核心输入、手写、剪贴板、主题/系统图片选择器、联系人、词典和 Google Drive SAF 回归；未请求通知或媒体权限，没有 crash/ANR、权限异常或 API 33 新增回归。
 
 ## [1.0.3] - 2026-08-01
 

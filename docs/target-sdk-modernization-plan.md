@@ -283,7 +283,7 @@ V1 构建记录：
 
 分支：`feat/target-sdk-33`
 
-状态：**V1 已构建并安装，等待真机回归**。
+状态：**已完成并验收**。
 
 V1 从已验收的 target 32 创建，只提升到 Android 13 / API 33，不加入无用途权限或后续 API 补丁。
 
@@ -317,6 +317,21 @@ V1 构建记录：
 - 安装后未启动、启用或选择 target 33 IME，首次引导保持全新；
 - target 32 旧测试包已卸载，系统默认 IME 临时回退到 LatinIME；
 - GitHub Release：未发布。
+
+真机验收记录（Pixel 10 Pro / Android 16）：
+
+- 维护者完成首次引导和视觉/功能回归，未发现用户可见异常；`guide_complete=true`，当前默认且已启用的 IME 为 target 33，进程持续存活；
+- 首次引导及后续使用未请求 `POST_NOTIFICATIONS` 或任何 `READ_MEDIA_*` 权限；主题图片继续通过系统选择器 URI 工作，私有目录中已正常生成自定义主题包；
+- 中英文输入、九键、候选与分页、英文、符号/Emoji、手写、剪贴板候选与关闭、主题、联系人词典、用户词典和返回/Insets 行为未发现 target 33 回归；
+- Google Drive SAF 自动备份状态为“备份成功”，连续失败数为 0，持久目录授权、document URI 和备份 SHA-256 均已记录；
+- 中英文用户词典、联系人词典、快捷词典和主题文件均正常存在，没有 `.partial`、`_tmp` 或 `_unreadable` 异常残留；
+- DropBox 中没有 Java crash、ANR、native crash 或 tombstone，ApplicationExitInfo 没有该包异常退出记录；
+- ART Dexopt 状态为 `verify` 且 oat 最新；运行进程实际加载了拼音、英文和 `libhmm_gesture_hwr_zh.so` 原生库；
+- 运行日志未发现 `VerifyError`、`SecurityException`、`UnsatisfiedLinkError`、权限拒绝或隐藏 API 故障；IME/Insets/Back 日志符合正常窗口切换；
+- `keyboardsnapshotcache_*.png` 在惰性缓存生成前的 `ENOENT` 与 target 32 已分类的原版缓存 miss 一致，没有崩溃或可见影响；
+- 安装后的 `base.apk` SHA-256 再次确认与 Actions artifact 完全一致。
+
+结论：target 33 / Android 13 行为边界通过，可以从该验收里程碑创建 target 34；无需构建 Debug 变体，也不发布 GitHub Release。
 
 ### target 34 / Android 14
 
