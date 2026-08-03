@@ -280,4 +280,5 @@ V1 构建记录：
 - [x] 双模式云构建确认 debug 与 release-like 仅有 Manifest 调试属性和重签名元数据差异；
 - [x] 验证默认 release-like 有效载荷与已验收 target 30 V1 完全一致，正式 ID 调试构建会被拒绝；
 - [x] 真机覆盖安装 target 30 debug 变体，数据保留、`DEBUGGABLE`、`run-as` 和隐私受限诊断采集均通过；
-- [ ] 由维护者确认 debug 诊断模式后，再决定何时创建 target 31。
+- [x] 维护者确认保持基础 Debug，不预先增加重型埋点；
+- [ ] 从已验收的 Debug 基础分支创建 target 31。

@@ -119,6 +119,12 @@ Debug V1：
 - 未发现该包的 crash/ANR，采集时 warning/error 日志为空；
 - 设备上只保留 target 30 审计包，target 29 已卸载。
 
+## 验收结论
+
+维护者完成基础使用后，verbose 采集能够观察 IME/窗口生命周期、ART/GC、渲染、内存、线程、FD、native maps 和私有文件哈希变化，且没有泄露键入内容、候选、剪贴板、联系人或词典正文。没有发现 crash/ANR；唯一额外错误日志 `Invalid key code: SHOW_MORE_APPS` 来自原版遗留资源，不是 debug 或 target 30 引入。
+
+基础 Debug 模式已验收并冻结。暂不加入 StrictMode 或大量内部事件埋点；后续正常 release-like 审计无法解释问题时，再构建同 target 的 debug 变体辅助定位。
+
 ## 分支策略
 
-`feat/audit-debug-mode` 从已经验收的 `feat/target-sdk-30` 创建。Target 31 暂不创建。Debug 能力通过验证后，后续 target 分支继承“可选构建能力”，但每一级首先构建和验收默认非 debug 包；只有需要深入诊断时才构建同 application ID、同签名的 debug 变体覆盖安装，保留该级测试数据。
+`feat/audit-debug-mode` 从已经验收的 `feat/target-sdk-30` 创建。Debug 能力通过验证后，后续 target 分支继承“可选构建能力”，但每一级首先构建和验收默认非 debug 包；只有需要深入诊断时才构建同 application ID、同签名的 debug 变体覆盖安装，保留该级测试数据。Target 31 从该已验收分支创建。
