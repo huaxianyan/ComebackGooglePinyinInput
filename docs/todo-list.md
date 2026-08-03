@@ -89,7 +89,7 @@
 - [x] `feat/target-sdk-32`：release-like 构建、首次引导、ART/Root、核心输入、手写、主题、词典、联系人和 SAF 本地备份回归通过
 - [x] `feat/target-sdk-33`：release-like 构建、Android 12/13 静态门禁、首次引导、ART/Root、核心输入、主题选择器、联系人、词典和 Google Drive SAF 回归通过
 - [x] `feat/target-sdk-34`：release-like 构建、Android 12/13/14 静态门禁、动态 receiver、首次引导、ART/Root、核心输入、手写、主题、联系人、词典和 Google Drive SAF 回归通过
-- [ ] `feat/target-sdk-35`：V1 只提升到 API 35，以无 edge-to-edge opt-out、无推测性 Insets/TextView 补偿的 release-like 基线进行独立视觉审计
+- [ ] `feat/target-sdk-35`：无 edge-to-edge opt-out、无推测性 Insets/TextView 补偿的 V1 release-like 基线已构建并安装；target 34 已卸载，等待首次引导和独立视觉回归
 - [x] 非正式 application ID 的审计包统一显示为“Google 拼音输入法（测试版）”，正式包名称保持不变
 - [ ] 在真正的 16 KiB page-size 设备上验证原生库
 - [ ] 调查并消除 `MetricsProcessorHelper` 的反射参数错误日志

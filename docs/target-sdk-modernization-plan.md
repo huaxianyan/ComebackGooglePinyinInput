@@ -391,7 +391,7 @@ V1 构建记录：
 
 分支：`feat/target-sdk-35`
 
-状态：**V1 实现与构建验证中**。
+状态：**V1 已构建并安装，等待首次引导与独立视觉回归**。
 
 这是独立视觉边界。V1 从已验收的 target 34 创建，只提升到 Android 15 / API 35，刻意采用不掩盖平台行为的基线：
 
@@ -406,6 +406,28 @@ V1 构建记录：
 - 继续验证按键音、振动、剪贴板候选、手写和 Back，但不提前混入 API 36 predictive Back 改动。
 
 如果 V1 发现重叠，可临时用 edge-to-edge opt-out 做因果隔离，但验收实现必须使用真实 WindowInsets 适配，因为该 opt-out 不能成为 target 36 的最终方案。
+
+V1 构建记录：
+
+- commit：`d528a1f`
+- workflow：[`30795970181`](https://github.com/huaxianyan/comeback-google-pinyin-input/actions/runs/30795970181)
+- artifact ID：`8848890150`
+- artifact：`ComebackGooglePinyinInput-target-sdk-35-audit-v1`
+- application ID：`com.google.android.inputmethod.pinyin.target35audit`
+- 显示名称：`Google 拼音输入法（测试版）`
+- versionName / versionCode：`1.0.3` / `4520384`
+- min / target SDK：`17` / `35`
+- Debuggable：否（release-like）
+- APK SHA-256：`40a763ea6e46f3dabc097a8e5392473a8622fae0727319d2de5ca846c1141b45`
+- zipalign：通过
+- APK Signature Scheme：v1/v2/v3 通过
+- 签名证书 SHA-256：`985CBF843A362169B129AEAC5E153D13095F0923231936D1486A20C8332CDE2F`
+- Android 12、13、14 静态门禁及 Android 15 无掩盖视觉基线门禁均通过；
+- `windowOptOutEdgeToEdgeEnforcement`、推测性 Insets/TextView 补偿和 `layout-v35` 键盘覆盖均不存在；
+- 设备安装后的 `base.apk` SHA-256 与 artifact 完全一致；
+- 安装后未启动、启用或选择 target 35 IME，首次引导保持全新；
+- target 34 旧测试包已卸载，系统默认 IME 临时回退到 LatinIME；
+- Actions 仅生成 artifact，未发布 GitHub Release。
 
 ### target 36 / Android 16
 
