@@ -337,7 +337,7 @@ V1 构建记录：
 
 分支：`feat/target-sdk-34`
 
-状态：**V1 已构建并通过静态验证，等待安装与真机回归**。
+状态：**V1 已构建并安装，等待首次引导与真机回归**。
 
 V1 从已验收的 target 33 创建，只提升到 Android 14 / API 34，并处理该级已经确认的动态 receiver 硬边界：
 
@@ -366,7 +366,10 @@ V1 构建记录：
 - APK Signature Scheme：v1/v2/v3 通过
 - 签名证书 SHA-256：`985CBF843A362169B129AEAC5E153D13095F0923231936D1486A20C8332CDE2F`
 - Android 12 exported/PendingIntent、Android 13 权限和 Android 14 receiver/动态代码门禁均通过；
-- Actions 仅生成 artifact，tag Release 步骤按预期跳过，未发布 GitHub Release。
+- Actions 仅生成 artifact，tag Release 步骤按预期跳过，未发布 GitHub Release；
+- 设备安装后的 `base.apk` SHA-256 与 artifact 完全一致；
+- 安装后未启动、启用或选择 target 34 IME，首次引导保持全新；
+- target 33 旧测试包已卸载，系统默认 IME 临时回退到 LatinIME。
 
 ### target 35 / Android 15
 
