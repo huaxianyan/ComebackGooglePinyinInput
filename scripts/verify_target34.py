@@ -65,7 +65,7 @@ def main() -> None:
         GSERVICES_ACTION,
         "Landroid/os/Build$VERSION;->SDK_INT:I",
         "const/16 v6, 0x21",
-        ":register_gservices_legacy",
+        "if-lt v5, v6,",  # API 17-32 takes the two-argument fallback
         "const/4 v5, 0x2",  # Context.RECEIVER_EXPORTED
         FLAGS_REGISTER,
     )
