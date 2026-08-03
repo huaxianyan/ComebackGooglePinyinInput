@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased - target SDK 29 audit]
+
+### Changed
+
+- 在长期保留的 `feat/target-sdk-29` 分支把隔离审计构建从 target 28 提升到 Android 10 / API 29；正式 `v1.0.3` 和 `master` 仍保持 target 28。
+- 记录 API 29–37 逐 target 独立分支、隔离 application ID、完成门槛和后继分支规则；前一级未验收前不进入下一级。
+- GitHub Actions 增加预期 target SDK 身份检查和构建摘要，防止审计产物在目标版本不符时继续发布。
+
 ## [1.0.3] - 2026-08-01
 
 ### Fixed

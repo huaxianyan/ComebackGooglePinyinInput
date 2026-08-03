@@ -46,6 +46,8 @@ Google 拼音输入法最初由 Google 发布并通过 Google Play 等官方 And
 
 上表对应正式 Release `v1.0.3`：备份和导入位置继续支持内部存储、SD 卡及 Google Drive 等 DocumentsProvider，同时移除失效的 Google 账户词典同步请求，并保留本地“清除用户字典”功能。后续 `master` 仍可能包含尚未发布的研究或兼容修复；是否发布以 GitHub Release 和 `CHANGELOG.md` 为准。
 
+`targetSdkVersion` 的后续提升采用逐 API、逐分支、逐项验收策略。正式版 target 28 保持不变，API 29–37 的分支规则、已知行为边界和测试门槛见 [`docs/target-sdk-modernization-plan.md`](docs/target-sdk-modernization-plan.md)。中间审计包使用隔离 application ID，不覆盖正式包，也不发布正式 Release。
+
 创造性 AI 版使用独立包名和项目签名证书，可以与 Google 原始版本同时安装。以后升级时必须继续使用同一签名证书；它不能覆盖由 Google 官方证书签名的原始应用。
 
 ## 主要兼容改进

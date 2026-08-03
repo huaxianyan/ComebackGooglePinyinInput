@@ -4,10 +4,13 @@
 
 - 原版 package：`com.google.android.inputmethod.pinyin`
 - Compatibility v10+ package：`com.google.android.inputmethod.pinyin.compat`
-- versionName：`4.5.2.193126728-arm64-v8a`
-- versionCode：`4520313`
+- 原版 versionName：`4.5.2.193126728-arm64-v8a`
+- 原版 versionCode：`4520313`
+- 最新正式版：`v1.0.3`（versionCode `4520384`）
 - minSdk：17
-- targetSdk：26
+- 原版 targetSdk：26
+- 最新正式版 targetSdk：28
+- 当前现代化审计分支 targetSdk：29
 - 架构：arm64-v8a
 
 ## 原生库
@@ -63,13 +66,19 @@ Compatibility v20 为可变词库文件增加恢复层。原版持久化按 `主
 
 ## target SDK 策略
 
-当前只提升到 28。后续提升前需要处理：
+正式版 `v1.0.3` 冻结在 target 28。从 `feat/target-sdk-29` 开始，每个 target 使用独立且长期保留的分支；后一级从已验收的前一级创建，不跨级混入行为变化。完整分支规则、逐代风险和完成条件见 [`target-sdk-modernization-plan.md`](target-sdk-modernization-plan.md)。
 
+已知边界：
+
+- target 29/30：非 SDK 接口和 scoped storage；
 - target 31+：所有 PendingIntent 必须声明 immutable/mutable；
 - target 31+：所有带 intent-filter 的组件必须显式 exported；
 - target 33/34+：动态 Receiver 注册 flags；
-- target 35+：Activity edge-to-edge 和旧设置 UI；
-- 废弃存储、账号、同步、Firebase 和反馈服务。
+- target 35+：Activity edge-to-edge、TextView 测量和旧设置 UI；
+- target 36+：强制 edge-to-edge 和 predictive back；
+- target 37+：static final 反射、native DCL、本地网络权限和 CJKV IME 辅助功能。
+
+废弃账号同步、Firebase、反馈上传和在线词典更新已在 target 现代化前清理。
 
 ## 手写崩溃
 

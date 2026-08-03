@@ -36,12 +36,13 @@ def apply(decoded: Path, application_id: str) -> None:
     if not (decoded / "apktool.yml").is_file():
         raise RuntimeError(f"Not an apktool output directory: {decoded}")
 
-    # Keep the target increase deliberately small. This removes Android 16's
-    # legacy-app warning without enabling every Android 12-16 behavior change.
+    # Target SDK modernization is deliberately staged one API level at a time.
+    # This branch isolates Android 10 / API 29 behavior changes from later
+    # PendingIntent, receiver, edge-to-edge, and predictive-back boundaries.
     replace_once(
         decoded / "apktool.yml",
         "sdkInfo:\n  minSdkVersion: 17\n  targetSdkVersion: 26",
-        "sdkInfo:\n  minSdkVersion: 17\n  targetSdkVersion: 28",
+        "sdkInfo:\n  minSdkVersion: 17\n  targetSdkVersion: 29",
     )
     replace_once(
         decoded / "apktool.yml",

@@ -34,6 +34,7 @@ env:
   RELEASE_APK_NAME: ComebackGooglePinyinInput-arm64-v8a-1.0.3.apk
   EXPECTED_VERSION_NAME: "1.0.3"
   EXPECTED_VERSION_CODE: "4520384"
+  EXPECTED_TARGET_SDK: "29"
 
 jobs:
   build:
@@ -149,6 +150,9 @@ jobs:
           if ($apktoolMetadata -notmatch "(?m)^\s*versionName:\s*$([regex]::Escape($env:EXPECTED_VERSION_NAME))\s*$") {
             throw "versionName mismatch; expected $env:EXPECTED_VERSION_NAME"
           }
+          if ($apktoolMetadata -notmatch "(?m)^\s*targetSdkVersion:\s*$([regex]::Escape($env:EXPECTED_TARGET_SDK))\s*$") {
+            throw "targetSdkVersion mismatch; expected $env:EXPECTED_TARGET_SDK"
+          }
           if ($manifest -notmatch ('package="' + [regex]::Escape($env:APPLICATION_ID) + '"')) {
             throw "Application ID mismatch; expected $env:APPLICATION_ID"
           }
@@ -173,6 +177,7 @@ jobs:
           - File: ``$env:RELEASE_APK_NAME``
           - SHA-256: ``$sha256``
           - Application ID: ``$env:APPLICATION_ID``
+          - target SDK: ``$env:EXPECTED_TARGET_SDK``
           - Signing certificate: ``$env:EXPECTED_CERT_SHA256``
           "@
 
@@ -204,7 +209,7 @@ jobs:
           - Architecture: ``arm64-v8a``
           - Android versionName: ``$env:EXPECTED_VERSION_NAME``
           - Android versionCode: ``$env:EXPECTED_VERSION_CODE``
-          - target SDK: ``28``
+          - target SDK: ``$env:EXPECTED_TARGET_SDK``
           - Application ID: ``$env:APPLICATION_ID``
           - APK SHA-256: ``$env:APK_SHA256``
           - Signing certificate SHA-256: ``$env:EXPECTED_CERT_SHA256``
