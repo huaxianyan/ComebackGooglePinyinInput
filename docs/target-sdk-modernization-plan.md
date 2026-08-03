@@ -391,7 +391,7 @@ V1 构建记录：
 
 分支：`feat/target-sdk-35`
 
-状态：**V1 已确认 edge-to-edge 底部遮挡，V2 窄修复构建验证中**。
+状态：**V1 已确认 edge-to-edge 底部遮挡，V2 窄修复已构建，等待设备重连安装**。
 
 这是独立视觉边界。V1 从已验收的 target 34 创建，只提升到 Android 15 / API 35，刻意采用不掩盖平台行为的基线：
 
@@ -445,6 +445,19 @@ V2 窄修复：
 - IME `InputView` 增加 bottom inset padding，使原生键盘 body 和全部底部按键整体上移，同时让 root 使用既有 `BgKeyboardArea` 绘制导航栏后的区域；
 - 不改变键盘 body、候选、分页、Emoji/符号、手写或触摸布局尺寸，不加入 TextView 补偿；
 - 设置和主题 Activity 暂不增加全局 padding，因为顶部正常且尚无底部控件被遮挡的证据。
+
+V2 构建记录：
+
+- commit：`a64b96a`
+- workflow：[`30798882944`](https://github.com/huaxianyan/comeback-google-pinyin-input/actions/runs/30798882944)
+- artifact ID：`8850012125`
+- artifact：`ComebackGooglePinyinInput-target-sdk-35-audit-v2`
+- application ID：`com.google.android.inputmethod.pinyin.target35audit`
+- Debuggable：否（release-like）
+- APK SHA-256：`c89fee4ebdee2f950f48d2bf4ff1c8a53079983bba147e983def6b4d4d0eb80d`
+- zipalign、v1/v2/v3 签名、签名证书和 Android 12–15 全部门禁通过；
+- tag Release 步骤按预期跳过，未发布 GitHub Release；
+- 构建验证后设备 ADB 连接中断，尚未覆盖安装，V1 数据和当前输入法状态未被修改。
 
 ### target 36 / Android 16
 
