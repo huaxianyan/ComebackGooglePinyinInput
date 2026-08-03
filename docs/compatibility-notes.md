@@ -11,7 +11,7 @@
 - 原版 targetSdk：26
 - 最新正式版 targetSdk：28
 - 已验收现代化阶段：targetSdk 29、30、31、32、33
-- 下一现代化审计阶段 targetSdk：34
+- 当前现代化审计分支 targetSdk：34
 - 架构：arm64-v8a
 
 ## 原生库

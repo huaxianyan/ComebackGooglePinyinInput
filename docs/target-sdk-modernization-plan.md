@@ -335,13 +335,19 @@ V1 构建记录：
 
 ### target 34 / Android 14
 
-状态：等待。
+分支：`feat/target-sdk-34`
 
-已知前置修复：
+状态：**V1 实现与构建验证中**。
 
-- `com.google.gservices.intent.action.GSERVICES_CHANGED` 动态 receiver 必须明确导出行为，或在证明无用途后移除；
-- 系统广播 receiver 保持系统广播例外语义；
-- 检查动态 DEX/JAR 加载和隐式 Intent 限制。
+V1 从已验收的 target 33 创建，只提升到 Android 14 / API 34，并处理该级已经确认的动态 receiver 硬边界：
+
+- `com.google.gservices.intent.action.GSERVICES_CHANGED` 来自其他 Google 包；为保持原有 GServices 缓存失效语义，在 API 33+ 使用 `Context.RECEIVER_EXPORTED`，API 17–32 继续使用旧两参数重载；
+- 其他动态 receiver 只监听电源、电池、解锁、软件包、屏幕、网络、语言区域及时区等系统广播，保留 Android 的 system-broadcast 例外语义，不扩大导出面；
+- 新增 `scripts/verify_target34.py`，固定全部动态 receiver 站点、GServices API 分支与 exported flag，并拒绝新引入的 `DexClassLoader` 路径；
+- 原包唯一的 `DexFile.loadDex()` 位于旧 multidex 安装器，只用于 Android 5.0 以前设备，不是 Android 14 动态代码路径；
+- 继续检查隐式 Intent 对未导出组件的限制，但不预先修改已通过的系统设置、SAF、WebView 或主题选择器 Intent；
+- 保留 Android 12 exported/PendingIntent 和 Android 13 无通知/媒体权限静态门禁；
+- 不提前混入 API 35 edge-to-edge/TextView 或 API 36 Back 改动。
 
 ### target 35 / Android 15
 

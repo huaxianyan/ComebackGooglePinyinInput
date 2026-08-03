@@ -40,12 +40,12 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
         raise RuntimeError("Refusing to make the formal application ID debuggable")
 
     # Target SDK modernization is deliberately staged one API level at a time.
-    # API 32 has passed its isolated audit; this branch isolates Android 13 /
-    # API 33 while retaining all previously accepted compatibility fixes.
+    # API 33 has passed its isolated audit; this branch isolates Android 14 /
+    # API 34 while retaining all previously accepted compatibility fixes.
     replace_once(
         decoded / "apktool.yml",
         "sdkInfo:\n  minSdkVersion: 17\n  targetSdkVersion: 26",
-        "sdkInfo:\n  minSdkVersion: 17\n  targetSdkVersion: 33",
+        "sdkInfo:\n  minSdkVersion: 17\n  targetSdkVersion: 34",
     )
     replace_once(
         decoded / "apktool.yml",
@@ -122,6 +122,33 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
     )
     for relative, old, new in pending_intent_flags:
         replace_once(decoded / relative, old, new)
+
+    # Android 14 requires an explicit exported/not-exported flag when a
+    # target-34 app dynamically registers for a non-system broadcast. This
+    # GServices cache invalidation action is sent by another Google package,
+    # so preserve the legacy cross-package behavior with RECEIVER_EXPORTED.
+    # Keep the two-argument overload below API 33 so minSdk 17 remains valid.
+    replace_once(
+        decoded / "smali/btp.smali",
+        "    invoke-virtual {v1, v0, v4}, Landroid/content/Context;->registerReceiver("
+        "Landroid/content/BroadcastReceiver;Landroid/content/IntentFilter;)"
+        "Landroid/content/Intent;\n\n"
+        "    goto :goto_0",
+        "    sget v5, Landroid/os/Build$VERSION;->SDK_INT:I\n\n"
+        "    const/16 v6, 0x21\n\n"
+        "    if-lt v5, v6, :register_gservices_legacy\n\n"
+        "    const/4 v5, 0x2\n\n"
+        "    invoke-virtual {v1, v0, v4, v5}, Landroid/content/Context;->registerReceiver("
+        "Landroid/content/BroadcastReceiver;Landroid/content/IntentFilter;I)"
+        "Landroid/content/Intent;\n\n"
+        "    goto :gservices_receiver_registered\n\n"
+        "    :register_gservices_legacy\n"
+        "    invoke-virtual {v1, v0, v4}, Landroid/content/Context;->registerReceiver("
+        "Landroid/content/BroadcastReceiver;Landroid/content/IntentFilter;)"
+        "Landroid/content/Intent;\n\n"
+        "    :gservices_receiver_registered\n"
+        "    goto :goto_0",
+    )
 
     arrays = decoded / "res/values/arrays.xml"
     replace_once(
