@@ -86,7 +86,7 @@
 - [x] `feat/target-sdk-30`：Android 11 / API 30 隔离构建、真机 ART/Root 检查、scoped storage 和功能回归通过
 - [x] `feat/audit-debug-mode`：双模式云构建、签名、有效载荷一致性、正式 ID 防护、覆盖安装、数据保留、`run-as`、隐私检查和基础使用均通过
 - [x] `feat/target-sdk-31`：release-like 构建、Android 12 静态门禁、首次引导、ART/Root、PendingIntent/exported、词典、主题、联系人和 Drive SAF 回归通过
-- [ ] 维护者确认后从已验收的 target 31 创建 `feat/target-sdk-32`
+- [ ] `feat/target-sdk-32`：已从验收完成的 target 31 创建，只提升到 API 32，等待 release-like 构建和真机回归
 - [x] 非正式 application ID 的审计包统一显示为“Google 拼音输入法（测试版）”，正式包名称保持不变
 - [ ] 在真正的 16 KiB page-size 设备上验证原生库
 - [ ] 调查并消除 `MetricsProcessorHelper` 的反射参数错误日志

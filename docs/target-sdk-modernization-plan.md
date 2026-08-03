@@ -225,9 +225,19 @@ V1 构建记录：
 
 ### target 32 / Android 12L
 
-状态：等待。
+分支：`feat/target-sdk-32`
 
-没有已知独立硬阻塞，但仍保留单独分支和启动回归，以维持逐级可定位历史。
+状态：**进行中**。
+
+没有已知独立硬阻塞。V1 从已验收的 target 31 分支创建，只把 target 提升到 32，保留已经通过的 PendingIntent、exported 和基础 Debug 构建能力，不加入 API 33+ 猜测性补丁。
+
+重点检查：
+
+- Android 12L 下 IME 服务、设置和首次引导启动；
+- 大屏/折叠屏兼容行为是否意外影响普通手机布局；
+- InputConnection、窗口 Insets、候选栏和主题 Activity；
+- ART、native loader、词典、联系人和 SAF；
+- 默认仍使用 release-like 非 Debug 包。
 
 ### target 33 / Android 13
 
@@ -328,4 +338,6 @@ V1 构建记录：
 - [x] 从已验收的 Debug 基础分支创建 target 31；
 - [x] target 31 V1 可复现构建和静态 Android 12 不变量检查；
 - [x] target 31 release-like 隔离包安装后的首次引导、ART 和功能回归；
-- [ ] 维护者确认后从已验收的 target 31 创建 target 32。
+- [x] 从已验收的 target 31 创建 target 32；
+- [ ] target 32 V1 可复现 release-like 构建和静态检查；
+- [ ] target 32 隔离包首次引导、ART 和功能回归。
