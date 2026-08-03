@@ -173,7 +173,7 @@ V1 构建记录：
 
 分支：`feat/target-sdk-31`
 
-状态：**进行中**。
+状态：**V1 已构建并安装，等待真机回归**。
 
 V1 在已验收的 target 30 和基础 Debug 构建能力之上提升到 target 31，并只处理 Android 12 的已知硬边界：
 
@@ -182,6 +182,27 @@ V1 在已验收的 target 30 和基础 Debug 构建能力之上提升到 target 
 - 五个带 intent-filter 的现存组件全部显式声明 `android:exported`；
 - 新增 `scripts/verify_target31.py`，Actions 必须验证全部 intent-filter 组件和全部七个 PendingIntent 创建点；
 - 默认构建保持非 debuggable；只有普通日志无法解释问题时才构建 debug 变体。
+
+V1 构建记录：
+
+- commit：`126632cfe70403f8c0b4e7f53f9da95e5134e39d`
+- workflow：[`30785523255`](https://github.com/huaxianyan/comeback-google-pinyin-input/actions/runs/30785523255)
+- artifact ID：`8845124346`
+- artifact：`ComebackGooglePinyinInput-target-sdk-31-audit-v1`
+- application ID：`com.google.android.inputmethod.pinyin.target31audit`
+- 显示名称：`Google 拼音输入法（测试版）`
+- versionName / versionCode：`1.0.3` / `4520384`
+- min / target SDK：`17` / `31`
+- Debuggable：否（release-like）
+- APK SHA-256：`1efd851ccf9b2a5dacc237a7ea1915bab6c43d024caed4ea742a57c5e7b76127`
+- zipalign：通过
+- APK Signature Scheme：v1/v2/v3 通过
+- 签名证书 SHA-256：`985CBF843A362169B129AEAC5E153D13095F0923231936D1486A20C8332CDE2F`
+- Actions 和最终 APK 复检：5 个 intent-filter 组件均显式 exported，7 个 PendingIntent 均显式 immutable；
+- 设备安装后的 `base.apk` 哈希与 artifact 完全一致；
+- 安装后未启动、启用或选择 target 31 IME，保留全新首次引导状态；
+- 按维护者要求已卸载 target 30 旧测试包，系统当前临时回退到 LatinIME；
+- GitHub Release：未发布。
 
 专项复核 BackupAgent、设备迁移和首次使用状态，不提前加入 API 34 receiver、API 35 edge-to-edge 或 API 36 Back 改动。
 
@@ -288,5 +309,5 @@ V1 在已验收的 target 30 和基础 Debug 构建能力之上提升到 target 
 - [x] 真机覆盖安装 target 30 debug 变体，数据保留、`DEBUGGABLE`、`run-as` 和隐私受限诊断采集均通过；
 - [x] 维护者确认保持基础 Debug，不预先增加重型埋点；
 - [x] 从已验收的 Debug 基础分支创建 target 31；
-- [ ] target 31 V1 可复现构建和静态 Android 12 不变量检查；
-- [ ] target 31 release-like 隔离包安装与真机回归。
+- [x] target 31 V1 可复现构建和静态 Android 12 不变量检查；
+- [ ] target 31 release-like 隔离包安装后的首次引导、ART 和功能回归。
