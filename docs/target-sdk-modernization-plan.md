@@ -119,7 +119,7 @@ V1 构建记录：
 
 分支：`feat/target-sdk-30`
 
-状态：**V1 已构建并安装，等待真机回归**。
+状态：**已完成并验收**。
 
 V1 继续采用纯 target 边界策略：在已验收的 target 29 基础上只提升到 target 30，不预先加入 scoped storage、Toast 或 package visibility 猜测性补丁。
 
@@ -140,6 +140,24 @@ V1 构建记录：
 - 设备安装后的 `base.apk` 哈希与 artifact 完全一致；
 - 安装过程未启用或切换 target 30 IME，当前输入法仍是 target 29 审计包；
 - GitHub Release：未发布。
+
+真机验收记录（Pixel 10 Pro / Android 16）：
+
+- 维护者完成首次引导、核心输入、手写、候选、剪贴板、主题、联系人、SAF 和 Google Drive 测试，未发现回归；
+- 当前默认 IME 正确切换到 target 30，进程持续存活；
+- DropBox 中没有该包的 `data_app_crash` 或 `data_app_anr`；
+- 进程和系统日志没有属于该包的 `FATAL EXCEPTION`、`VerifyError`、隐藏 API 拒绝、`SecurityException` 或 native loader 错误；日志中的隐藏 API 拒绝来自 QQ，与本审计包无关；
+- ART Dexopt 状态为 `verify` 且 oat 最新；
+- `guide_complete=true`，首次引导状态正确；
+- 联系人权限为 `allow`，中英文联系人词典正常生成，记录联系人 78 个；
+- 自定义主题包正常生成并落盘；
+- `READ_EXTERNAL_STORAGE`、`WRITE_EXTERNAL_STORAGE` 和 `LEGACY_STORAGE` 均为 `ignore`，没有发现传统存储权限依赖；
+- Google Drive SAF 自动备份状态为“备份成功”，连续失败数为 0，并记录文档 URI 和 SHA-256；
+- 手写/手势 native 库 `libhmm_gesture_hwr_zh.so` 已在运行进程中实际加载；
+- 没有发现 `.partial`、`.unreadable` 或其他异常残留；
+- target 29 旧审计包已卸载，当前只保留 target 30 审计包。
+
+结论：target 30 行为边界通过。按维护者要求，暂不创建 target 31；先在独立分支引入可选调试构建和诊断采集能力，且不得让调试属性进入正式包或替代 release-like 验收。
 
 重点：
 
@@ -253,5 +271,8 @@ V1 构建记录：
 - [x] target 29 结论归档；
 - [x] 从已验收的 target 29 创建 target 30 分支；
 - [x] target 30 V1 可复现构建；
-- [ ] target 30 隔离包安装与 ART/存储日志检查；
-- [ ] target 30 功能和 scoped storage 回归。
+- [x] target 30 隔离包安装与 ART/存储日志检查；
+- [x] target 30 功能和 scoped storage 回归；
+- [ ] 在独立分支引入仅限隔离审计包的可选 debug 模式；
+- [ ] 验证 debug 模式不会改变默认 release-like 构建，也不会进入正式包；
+- [ ] debug 诊断能力验收后再决定何时创建 target 31。
