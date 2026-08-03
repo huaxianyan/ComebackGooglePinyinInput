@@ -283,7 +283,7 @@ V1 构建记录：
 
 分支：`feat/target-sdk-33`
 
-状态：**进行中**。
+状态：**V1 已构建并安装，等待真机回归**。
 
 V1 从已验收的 target 32 创建，只提升到 Android 13 / API 33，不加入无用途权限或后续 API 补丁。
 
@@ -295,6 +295,28 @@ V1 从已验收的 target 32 创建，只提升到 Android 13 / API 33，不加�
 - 复核剪贴板候选在 Android 13 隐私提示下仍只读取当前主剪贴项目，且不自行显示额外系统式提示；
 - 默认使用 release-like 非 Debug 包；
 - 不提前混入 API 34 动态 receiver、API 35 edge-to-edge 或 API 36 Back 改动。
+
+V1 构建记录：
+
+- commit：`7b7338f861867b0fe0c7c54045ec95482ad09481`
+- workflow：[`30789350108`](https://github.com/huaxianyan/comeback-google-pinyin-input/actions/runs/30789350108)
+- artifact ID：`8846454792`
+- artifact：`ComebackGooglePinyinInput-target-sdk-33-audit-v1`
+- application ID：`com.google.android.inputmethod.pinyin.target33audit`
+- 显示名称：`Google 拼音输入法（测试版）`
+- versionName / versionCode：`1.0.3` / `4520384`
+- min / target SDK：`17` / `33`
+- Debuggable：否（release-like）
+- APK SHA-256：`289e2bf7c77a0e1dda63f13d1e09926a54de1788377366e603f20063890210ae`
+- zipalign：通过
+- APK Signature Scheme：v1/v2/v3 通过
+- 签名证书 SHA-256：`985CBF843A362169B129AEAC5E153D13095F0923231936D1486A20C8332CDE2F`
+- Android 12 静态门禁：5 个 intent-filter 组件和 7 个 immutable PendingIntent 通过；
+- Android 13 权限门禁：无 `POST_NOTIFICATIONS` 或 `READ_MEDIA_*` 声明/请求；
+- 设备安装后的 `base.apk` 哈希与 artifact 完全一致；
+- 安装后未启动、启用或选择 target 33 IME，首次引导保持全新；
+- target 32 旧测试包已卸载，系统默认 IME 临时回退到 LatinIME；
+- GitHub Release：未发布。
 
 ### target 34 / Android 14
 
@@ -389,5 +411,5 @@ V1 从已验收的 target 32 创建，只提升到 Android 13 / API 33，不加�
 - [x] target 32 V1 可复现 release-like 构建和静态检查；
 - [x] target 32 隔离包首次引导、ART 和功能回归；
 - [x] 从已验收的 target 32 创建 target 33；
-- [ ] target 33 V1 release-like 构建和权限静态检查；
+- [x] target 33 V1 release-like 构建和权限静态检查；
 - [ ] target 33 隔离包首次引导、ART 和功能回归。
