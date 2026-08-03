@@ -108,6 +108,17 @@ Debug V1：
 - 正式 application ID 的默认构建仍不含 debuggable 属性；
 - PowerShell 诊断脚本通过语法解析。
 
+真机验证（Pixel 10 Pro / Android 16）：
+
+- Debug V1 以同 application ID、同签名覆盖安装 target 30 V1，安装后 APK SHA-256 与云端 artifact 一致；
+- 当前默认 IME 未改变，首次引导、设置、主题、联系人词典和备份配置数据均保留；
+- 升级前后私有文件哈希只有原应用启动时本来就会清理的 `UserHistory.en.dict` 消失，其相同内容仍保存在 `Personal.en.dict`，其余文件哈希不变；
+- `dumpsys package` 明确报告 `DEBUGGABLE`；
+- `run-as` 成功进入隔离 UID `u0_a456`；
+- 诊断脚本成功生成包、IME、权限/AppOps、DropBox、私有文件元数据/哈希、meminfo、gfxinfo、进程 maps/FD/线程及 warning/error 日志；
+- 未发现该包的 crash/ANR，采集时 warning/error 日志为空；
+- 设备上只保留 target 30 审计包，target 29 已卸载。
+
 ## 分支策略
 
 `feat/audit-debug-mode` 从已经验收的 `feat/target-sdk-30` 创建。Target 31 暂不创建。Debug 能力通过验证后，后续 target 分支继承“可选构建能力”，但每一级首先构建和验收默认非 debug 包；只有需要深入诊断时才构建同 application ID、同签名的 debug 变体覆盖安装，保留该级测试数据。

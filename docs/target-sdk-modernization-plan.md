@@ -279,5 +279,5 @@ V1 构建记录：
 - [x] 加入仅限隔离审计包的可选 debug 构建开关和隐私受限诊断脚本；
 - [x] 双模式云构建确认 debug 与 release-like 仅有 Manifest 调试属性和重签名元数据差异；
 - [x] 验证默认 release-like 有效载荷与已验收 target 30 V1 完全一致，正式 ID 调试构建会被拒绝；
-- [ ] 在真机覆盖安装 target 30 debug 变体并验证 `run-as`/诊断采集；
-- [ ] debug 诊断能力验收后再决定何时创建 target 31。
+- [x] 真机覆盖安装 target 30 debug 变体，数据保留、`DEBUGGABLE`、`run-as` 和隐私受限诊断采集均通过；
+- [ ] 由维护者确认 debug 诊断模式后，再决定何时创建 target 31。
