@@ -119,9 +119,27 @@ V1 构建记录：
 
 分支：`feat/target-sdk-30`
 
-状态：**进行中**。
+状态：**V1 已构建并安装，等待真机回归**。
 
 V1 继续采用纯 target 边界策略：在已验收的 target 29 基础上只提升到 target 30，不预先加入 scoped storage、Toast 或 package visibility 猜测性补丁。
+
+V1 构建记录：
+
+- commit：`c10a53f07332c5c4a227014b02e2fd8761437c40`
+- workflow：[`30781021822`](https://github.com/huaxianyan/comeback-google-pinyin-input/actions/runs/30781021822)
+- artifact ID：`8843639468`
+- artifact：`ComebackGooglePinyinInput-target-sdk-30-audit-v1`
+- application ID：`com.google.android.inputmethod.pinyin.target30audit`
+- 显示名称：`Google 拼音输入法（测试版）`
+- versionName / versionCode：`1.0.3` / `4520384`
+- min / target SDK：`17` / `30`
+- APK SHA-256：`08ce40d4d94d80607b953c540de7ddc091f3251742e6ec96848ad55fd1343d93`
+- zipalign：通过
+- APK Signature Scheme：v1/v2/v3 通过
+- 签名证书 SHA-256：`985CBF843A362169B129AEAC5E153D13095F0923231936D1486A20C8332CDE2F`
+- 设备安装后的 `base.apk` 哈希与 artifact 完全一致；
+- 安装过程未启用或切换 target 30 IME，当前输入法仍是 target 29 审计包；
+- GitHub Release：未发布。
 
 重点：
 
@@ -234,6 +252,6 @@ V1 继续采用纯 target 边界策略：在已验收的 target 29 基础上只�
 - [x] target 29 功能回归；
 - [x] target 29 结论归档；
 - [x] 从已验收的 target 29 创建 target 30 分支；
-- [ ] target 30 V1 可复现构建；
+- [x] target 30 V1 可复现构建；
 - [ ] target 30 隔离包安装与 ART/存储日志检查；
 - [ ] target 30 功能和 scoped storage 回归。

@@ -83,7 +83,7 @@
 - [x] 真机验证保留的本地“清除用户字典”四位确认流程及清除/恢复行为，未发现其他问题
 - [x] 记录逐 target 独立分支、隔离包和完成门槛：[`target-sdk-modernization-plan.md`](target-sdk-modernization-plan.md)
 - [x] `feat/target-sdk-29`：Android 10 / API 29 隔离构建、真机 ART/Root 检查和功能回归通过
-- [ ] `feat/target-sdk-30`：分支已从验收完成的 target 29 创建，等待 Android 11 / API 30 隔离构建、ART/存储日志和功能回归
+- [ ] `feat/target-sdk-30`：V1 隔离包已构建并安装，等待 Android 11 / API 30 ART/存储日志和功能回归
 - [x] 非正式 application ID 的审计包统一显示为“Google 拼音输入法（测试版）”，正式包名称保持不变
 - [ ] 在真正的 16 KiB page-size 设备上验证原生库
 - [ ] 调查并消除 `MetricsProcessorHelper` 的反射参数错误日志
