@@ -227,7 +227,7 @@ V1 构建记录：
 
 分支：`feat/target-sdk-32`
 
-状态：**V1 已构建并安装，等待真机回归**。
+状态：**已完成并验收**。
 
 没有已知独立硬阻塞。V1 从已验收的 target 31 分支创建，只把 target 提升到 32，保留已经通过的 PendingIntent、exported 和基础 Debug 构建能力，不加入 API 33+ 猜测性补丁。
 
@@ -259,6 +259,25 @@ V1 构建记录：
 - 安装后未启动、启用或选择 target 32 IME，首次引导保持全新；
 - target 31 旧测试包已卸载，系统默认 IME 保持 LatinIME；
 - GitHub Release：未发布。
+
+真机验收记录（Pixel 10 Pro / Android 16）：
+
+- 维护者完成首次引导、核心输入、手写、候选、剪贴板、主题、自定义背景、联系人、词典学习和 SAF 本地备份测试，未发现回归；
+- Target 32 IME 已启用并作为当前默认输入法正常运行，进程持续存活；
+- `guide_complete=true`，首次引导状态正确；
+- DropBox 中没有 Java crash、ANR、native crash 或 tombstone，ApplicationExitInfo 也没有异常退出；
+- 日志没有 `VerifyError`、`SecurityException`、隐藏 API 拒绝、PendingIntent mutability 或 native loader 错误；
+- ART Dexopt 状态为 `verify` 且 oat 最新；
+- 中英文用户词典及 `_bak`、中英文联系人词典、快捷词典和自定义主题包均正常生成；
+- SAF 内部存储备份状态为“备份成功”，连续失败数为 0，并记录 document URI 和 SHA-256；
+- 传统外部存储 AppOps 仍为 `ignore`，联系人权限为 `allow`；
+- 手写 native 识别实际运行，日志记录 1–3 笔请求和完成耗时，`libhmm_gesture_hwr_zh.so` 已加载；
+- 没有 `.partial`、`_tmp` 或 `_unreadable` 异常残留；
+- 主题预览曾先尝试读取尚未生成的 `keyboardsnapshotcache_*.png`，随后同一流程成功生成对应缓存和主题包；这是原版的惰性缓存 miss 日志，没有造成 UI 或文件异常；
+- RenderScript 在无 HIDL 服务时按设计使用 fallback path；少量资源 finalizer 警告没有持续重复、崩溃或可见问题；
+- 安装后的 `base.apk` SHA-256 再次确认与 Actions artifact 一致。
+
+结论：target 32 / Android 12L 行为边界通过，可以在维护者确认后创建 target 33。
 
 ### target 33 / Android 13
 
@@ -361,4 +380,5 @@ V1 构建记录：
 - [x] target 31 release-like 隔离包安装后的首次引导、ART 和功能回归；
 - [x] 从已验收的 target 31 创建 target 32；
 - [x] target 32 V1 可复现 release-like 构建和静态检查；
-- [ ] target 32 隔离包首次引导、ART 和功能回归。
+- [x] target 32 隔离包首次引导、ART 和功能回归；
+- [ ] 维护者确认后从已验收的 target 32 创建 target 33。
