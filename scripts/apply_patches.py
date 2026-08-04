@@ -1850,6 +1850,24 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
         helper_dst.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(helper_src, helper_dst)
 
+    if debuggable:
+        decor_diagnostics_src = ROOT / "patches/smali/ImeDecorDiagnosticsCompat.smali"
+        decor_diagnostics_dst = decoded / (
+            "smali/com/google/android/inputmethod/pinyin/ImeDecorDiagnosticsCompat.smali"
+        )
+        shutil.copyfile(decor_diagnostics_src, decor_diagnostics_dst)
+        ime_insets_listener = decoded / (
+            "smali/com/google/android/inputmethod/pinyin/"
+            "EdgeToEdgeCompat$ImeInsetsListener.smali"
+        )
+        replace_once(
+            ime_insets_listener,
+            "    :done\n    return-object p2",
+            "    :done\n    invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/"
+            "ImeDecorDiagnosticsCompat;->dumpOnce(Landroid/view/View;)V\n\n"
+            "    return-object p2",
+        )
+
     auto_backup_helpers = sorted(
         list((ROOT / "patches/smali").glob("DictionaryAutoBackup*.smali"))
         + list((ROOT / "patches/smali").glob("DictionaryHealthStatusCompat*.smali"))
