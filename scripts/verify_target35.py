@@ -97,9 +97,6 @@ def main() -> None:
     required_helper = (
         "attachFirstRun(Landroid/app/Activity;)V",
         "attachInputView(Landroid/view/View;)V",
-        "getInputViewMeasuredHeight(Landroid/view/View;)I",
-        "const v1, 0x7f0f0050",
-        "const v2, 0x7f0f0012",
         "configureImeWindow(Landroid/inputmethodservice/InputMethodService;)V",
         "Landroid/view/Window;->setDecorFitsSystemWindows(Z)V",
         "Landroid/view/WindowManager$LayoutParams;->setFitInsetsSides(I)V",
@@ -145,24 +142,28 @@ def main() -> None:
         raise RuntimeError("IME lifecycle does not configure system-bar fitting")
     if "EdgeToEdgeCompat;->attachInputView" not in input_view:
         raise RuntimeError("IME InputView does not attach the bottom-frame coordinator")
-    if "EdgeToEdgeCompat;->getInputViewMeasuredHeight" not in input_view:
-        raise RuntimeError("IME InputView does not include the bottom frame in measurement")
-    if input_view.count("->setMeasuredDimension(II)V") != 2:
-        raise RuntimeError("Unexpected target-35 InputView measurement changes")
+    if "EdgeToEdgeCompat;->getInputViewMeasuredHeight" in input_view:
+        raise RuntimeError("Rejected V8/V9 InputView measurement compensation remains")
+    if input_view.count("->setMeasuredDimension(II)V") != 1:
+        raise RuntimeError("Target-35 InputView measurement must remain original")
     if "->setPadding(IIII)V" in input_view:
         raise RuntimeError("IME InputView must retain native padding behavior")
     required_ime_listener = (
         "getInsetsIgnoringVisibility(I)Landroid/graphics/Insets;",
         "Landroid/view/ViewGroup$MarginLayoutParams;->bottomMargin:I",
+        "Landroid/view/ViewGroup;->addView(Landroid/view/View;Landroid/view/ViewGroup$LayoutParams;)V",
+        "Landroid/widget/FrameLayout$LayoutParams;-><init>(III)V",
         "Landroid/view/ViewGroup$LayoutParams;->height:I",
         "const v0, 0x7f0f0153",
-        "const v0, 0x7f0f06eb",
+        "Landroid/graphics/drawable/Drawable$ConstantState;->newDrawable",
     )
     missing = [item for item in required_ime_listener if item not in ime_listener_text]
     if missing:
         raise RuntimeError(f"Incomplete IME bottom-frame coordinator: {missing}")
     if "->setPadding(IIII)V" in ime_listener_text:
         raise RuntimeError("IME coordinator must not restore root-padding strategy")
+    if "0x7f0f06eb" in ime_listener_text:
+        raise RuntimeError("Rejected InputView-child bottom frame remains")
 
     # setDecorFitsSystemWindows(true) is deliberately scoped to the IME helper.
     # It is not Android 15's manifest/theme opt-out: it selects Gboard's
@@ -187,12 +188,12 @@ def main() -> None:
 
     for relative in ("res/layout/ims_input_view.xml", "res/layout-v21/ims_input_view.xml"):
         text = (decoded / relative).read_text(encoding="utf-8")
-        if text.count('android:background="?BgKeyboardArea"') != 2:
+        if text.count('android:background="?BgKeyboardArea"') != 1:
             raise RuntimeError(
-                f"IME must have native keyboard surface plus one bottom frame: {relative}"
+                f"IME XML must retain only the native keyboard surface: {relative}"
             )
-        if 'android:id="@id/ime_navigation_frame"' not in text:
-            raise RuntimeError(f"Missing dedicated IME bottom frame: {relative}")
+        if 'ime_navigation_frame' in text:
+            raise RuntimeError(f"Rejected InputView-child bottom frame remains: {relative}")
 
     print(
         "Android 15 invariants verified: edge-to-edge is not opted out, first-run "

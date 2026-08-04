@@ -7,9 +7,11 @@
 
 
 # instance fields
-.field private final bottomFrame:Landroid/view/View;
+.field private bottomFrame:Landroid/view/View;
 
 .field private final keyboardArea:Landroid/view/View;
+
+.field private final root:Landroid/view/View;
 
 
 # direct methods
@@ -17,6 +19,8 @@
     .locals 1
 
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
+
+    iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat$ImeInsetsListener;->root:Landroid/view/View;
 
     const v0, 0x7f0f0153
 
@@ -26,21 +30,13 @@
 
     iput-object v0, p0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat$ImeInsetsListener;->keyboardArea:Landroid/view/View;
 
-    const v0, 0x7f0f06eb
-
-    invoke-virtual {p1, v0}, Landroid/view/View;->findViewById(I)Landroid/view/View;
-
-    move-result-object v0
-
-    iput-object v0, p0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat$ImeInsetsListener;->bottomFrame:Landroid/view/View;
-
     return-void
 .end method
 
 
 # virtual methods
 .method public onApplyWindowInsets(Landroid/view/View;Landroid/view/WindowInsets;)Landroid/view/WindowInsets;
-    .locals 4
+    .locals 7
 
     invoke-static {}, Landroid/view/WindowInsets$Type;->navigationBars()I
 
@@ -52,9 +48,7 @@
 
     iget v0, v0, Landroid/graphics/Insets;->bottom:I
 
-    iget-object v1, p0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat$ImeInsetsListener;->keyboardArea:Landroid/view/View;
-
-    if-eqz v1, :frame
+    iget-object v1, p0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat$ImeInsetsListener;->root:Landroid/view/View;
 
     invoke-virtual {v1}, Landroid/view/View;->getLayoutParams()Landroid/view/ViewGroup$LayoutParams;
 
@@ -62,36 +56,105 @@
 
     instance-of v3, v2, Landroid/view/ViewGroup$MarginLayoutParams;
 
-    if-eqz v3, :frame
+    if-eqz v3, :parent
 
     check-cast v2, Landroid/view/ViewGroup$MarginLayoutParams;
 
     iget v3, v2, Landroid/view/ViewGroup$MarginLayoutParams;->bottomMargin:I
 
-    if-eq v3, v0, :frame
+    if-eq v3, v0, :parent
 
     iput v0, v2, Landroid/view/ViewGroup$MarginLayoutParams;->bottomMargin:I
 
     invoke-virtual {v1, v2}, Landroid/view/View;->setLayoutParams(Landroid/view/ViewGroup$LayoutParams;)V
 
-    :frame
-    iget-object p0, p0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat$ImeInsetsListener;->bottomFrame:Landroid/view/View;
+    :parent
+    invoke-virtual {v1}, Landroid/view/View;->getParent()Landroid/view/ViewParent;
 
-    if-eqz p0, :done
+    move-result-object v3
 
-    invoke-virtual {p0}, Landroid/view/View;->getLayoutParams()Landroid/view/ViewGroup$LayoutParams;
+    instance-of v2, v3, Landroid/view/ViewGroup;
+
+    if-eqz v2, :done
+
+    check-cast v3, Landroid/view/ViewGroup;
+
+    iget-object v4, p0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat$ImeInsetsListener;->bottomFrame:Landroid/view/View;
+
+    if-nez v4, :update_frame
+
+    invoke-virtual {v1}, Landroid/view/View;->getContext()Landroid/content/Context;
+
+    move-result-object v2
+
+    new-instance v4, Landroid/view/View;
+
+    invoke-direct {v4, v2}, Landroid/view/View;-><init>(Landroid/content/Context;)V
+
+    const/4 v2, 0x2
+
+    invoke-virtual {v4, v2}, Landroid/view/View;->setImportantForAccessibility(I)V
+
+    iput-object v4, p0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat$ImeInsetsListener;->bottomFrame:Landroid/view/View;
+
+    new-instance v2, Landroid/widget/FrameLayout$LayoutParams;
+
+    const/4 v5, -0x1
+
+    const/16 v6, 0x50
+
+    invoke-direct {v2, v5, v0, v6}, Landroid/widget/FrameLayout$LayoutParams;-><init>(III)V
+
+    invoke-virtual {v3, v4, v2}, Landroid/view/ViewGroup;->addView(Landroid/view/View;Landroid/view/ViewGroup$LayoutParams;)V
+
+    goto :background
+
+    :update_frame
+    invoke-virtual {v4}, Landroid/view/View;->getLayoutParams()Landroid/view/ViewGroup$LayoutParams;
+
+    move-result-object v2
+
+    if-eqz v2, :background
+
+    iget v3, v2, Landroid/view/ViewGroup$LayoutParams;->height:I
+
+    if-eq v3, v0, :background
+
+    iput v0, v2, Landroid/view/ViewGroup$LayoutParams;->height:I
+
+    invoke-virtual {v4, v2}, Landroid/view/View;->setLayoutParams(Landroid/view/ViewGroup$LayoutParams;)V
+
+    :background
+    iget-object v2, p0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat$ImeInsetsListener;->keyboardArea:Landroid/view/View;
+
+    if-eqz v2, :done
+
+    invoke-virtual {v2}, Landroid/view/View;->getBackground()Landroid/graphics/drawable/Drawable;
+
+    move-result-object v2
+
+    if-eqz v2, :done
+
+    invoke-virtual {v2}, Landroid/graphics/drawable/Drawable;->getConstantState()Landroid/graphics/drawable/Drawable$ConstantState;
+
+    move-result-object v3
+
+    if-eqz v3, :shared_background
+
+    invoke-virtual {v1}, Landroid/view/View;->getResources()Landroid/content/res/Resources;
 
     move-result-object v1
 
-    if-eqz v1, :done
+    invoke-virtual {v3, v1}, Landroid/graphics/drawable/Drawable$ConstantState;->newDrawable(Landroid/content/res/Resources;)Landroid/graphics/drawable/Drawable;
 
-    iget v2, v1, Landroid/view/ViewGroup$LayoutParams;->height:I
+    move-result-object v2
 
-    if-eq v2, v0, :done
+    invoke-virtual {v2}, Landroid/graphics/drawable/Drawable;->mutate()Landroid/graphics/drawable/Drawable;
 
-    iput v0, v1, Landroid/view/ViewGroup$LayoutParams;->height:I
+    move-result-object v2
 
-    invoke-virtual {p0, v1}, Landroid/view/View;->setLayoutParams(Landroid/view/ViewGroup$LayoutParams;)V
+    :shared_background
+    invoke-virtual {v4, v2}, Landroid/view/View;->setBackground(Landroid/graphics/drawable/Drawable;)V
 
     :done
     return-object p2

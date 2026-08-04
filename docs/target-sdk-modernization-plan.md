@@ -550,7 +550,10 @@ V4 复测与 V5 架构修正：
 - 根因是旧 `InputView.onMeasure()` 在 `AT_MOST` 下会在 `FrameLayout.onMeasure()` 之后强制使用父 MeasureSpec size；因此 keyboard-area margin 与 bottom-frame child 虽已更新为 126 px，root 的 measured height 仍被压回 803 px。V7 不可验收。
 - V8 保留 V7 正确的 Window/source 和独立 bottom-frame 模型，仅在旧 `InputView.onMeasure()` 尾部尝试令 API 35+ measured height 等于 `keyboard_area.measuredHeight + ime_navigation_frame.height`；现场仍失败，键盘最低行未回到导航栏上方。
 - V8 可见状态再次确认 `ime=[0,1607][1080,2410]`、`navigationBars=[0,2284][1080,2410]`，Window/source 与应用侧上移保持正确；但 root measure 仍是 803 px。原因进一步收敛为：父级给 root 的 803 px 约束扣除 126 px margin 后，`keyboard_area.measuredHeight` 本身已被压成约 677 px，因此 V8 又计算回 803 px，形成闭环。
-- V9 不从已被父级压缩的 `keyboard_area` 容器取 body 高度，改为读取其原生垂直内容 `header_group_view.measuredHeight + body_group_view.measuredHeight`，再加动态 bottom-frame height；只在结果大于当前 root measured height 时扩展。原生 header/body holder 仍由既有 `KeyboardBodyHeight`/主题/布局测量，未写死设备像素或键盘高度。
+- V9 不从已被父级压缩的 `keyboard_area` 容器取 body 高度，改为读取其原生垂直内容 `header_group_view.measuredHeight + body_group_view.measuredHeight`，再加动态 bottom-frame height；现场最低行仍未回到导航栏上方，证明 `InputMethodService` 的父级 input frame 最终约束不会被 InputView 自报 measured height 改写。V8/V9 测量补偿全部判定无效并移除。
+- 复核 Gboard `eht.aD()` 后确认 covering-navigation 模式确实会根据统一 `sbr` metrics 处理 navigation bottom，并在 InputView 外保持完整 Window/source；但本项目不能继续复制 V2–V4 已失败的 root-padding/background 组合。
+- V10 改在 Android `InputMethodService.setInputView()` 创建的直接父级 input frame 处理：原生 InputView 自身不改 padding、measurement、keyboard-area margin 或 background，仅给 InputView 的父级 LayoutParams 设置动态 bottom margin；同一父级增加一个 bottom-gravity sibling frame，使用 keyboard-area drawable 的独立 ConstantState 副本绘制导航区。
+- V10 三键导航预期为：原生 InputView `[1481,2284]`，父级 sibling bottom frame `[2284,2410]`，IME source `[1481,2410]`。`onComputeInsets()` 继续依据 InputView 的 window/global coordinates 自动生成 content/visible/touchable geometry；导航高度仍来自实时 `navigationBars`，不硬编码 126 px。
 
 ### target 36 / Android 16
 
