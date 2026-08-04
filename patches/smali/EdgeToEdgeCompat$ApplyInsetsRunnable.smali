@@ -24,7 +24,7 @@
 
 # virtual methods
 .method public run()V
-    .locals 1
+    .locals 2
 
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat$ApplyInsetsRunnable;->view:Landroid/view/View;
 
@@ -36,6 +36,15 @@
 
     if-eqz p0, :done
 
+    invoke-virtual {v0}, Landroid/view/View;->getRootWindowInsets()Landroid/view/WindowInsets;
+
+    move-result-object v1
+
+    if-eqz v1, :request
+
+    invoke-virtual {v0, v1}, Landroid/view/View;->dispatchApplyWindowInsets(Landroid/view/WindowInsets;)Landroid/view/WindowInsets;
+
+    :request
     invoke-virtual {v0}, Landroid/view/View;->requestApplyInsets()V
 
     invoke-virtual {v0}, Landroid/view/View;->requestLayout()V

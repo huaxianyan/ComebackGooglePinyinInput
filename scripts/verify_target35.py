@@ -119,6 +119,8 @@ def main() -> None:
     required_runnable = (
         "Ljava/lang/Runnable;",
         "Landroid/view/View;->isAttachedToWindow()Z",
+        "Landroid/view/View;->getRootWindowInsets()Landroid/view/WindowInsets;",
+        "Landroid/view/View;->dispatchApplyWindowInsets(Landroid/view/WindowInsets;)Landroid/view/WindowInsets;",
         "Landroid/view/View;->requestApplyInsets()V",
         "Landroid/view/View;->requestLayout()V",
     )

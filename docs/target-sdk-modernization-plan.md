@@ -560,7 +560,8 @@ V4 复测与 V5 架构修正：
 - V12 把 coordinator 安装点从 InputView 构造函数移到 `GoogleInputMethodService.c()` 中 `setInputView(view)` 返回之后。后续多次主题切换均保持最低行在导航栏上方，但刚安装后的第一次弹出仍出现一次下沉，说明首次创建时还存在 Window fit attributes 与首个 Insets request 的顺序窗口；应用输入区始终正确。
 - V12 的 decor frame 已开始跟随主题，但颜色与候选栏/keyboard-area 外层一致，而非用户期望的主键盘 body。原因是背景源取自 `@id/keyboard_area` 的 `?BgKeyboardArea`；Google 拼音将候选/外围和主按键区分别用 `BgKeyboardArea`、`BgKeyboardBody` 着色。
 - V13 在 helper 中保存当前已 attach 的 InputView，并在 `configureImeWindow()` 完成 Window attributes 后再次 `requestApplyInsets()`；主键盘 body 颜色修复已确认，后续主题切换/隐藏/重开也保持几何正常。但解锁后的第一次自动弹出仍下沉，说明同一主线程调用栈里的直接 request 仍可能早于首个 attach/layout traversal。
-- V14 保留所有已确认的几何和主题逻辑，增加隐私安全、幂等的 `ApplyInsetsRunnable`：attach 与 Window configure 均先直接 request，再通过 `View.post()` 延迟到当前 InputMethodService 生命周期调用栈结束后复核；Runnable 仅在 View 已 attach 时执行 `requestApplyInsets()` 与 `requestLayout()`，不读取输入、候选、剪贴板或偏好内容。这样首次创建、解锁自动恢复和主题重建都应在最终 parent/decor/Window 状态下至少执行一次 Insets 布局。
+- V14 保留所有已确认的几何和主题逻辑，增加隐私安全、幂等的 post-layout `ApplyInsetsRunnable`；现场首次展开仍为 `ime=[0,1607][1080,2410]`，证明单纯 `requestApplyInsets()` 即使延后执行，在系统判断 Insets 状态未变化时仍可能不重新 dispatch listener。V14 不可验收。
+- V15 的 deferred runnable 在 View 已 attach 后读取公开 API `getRootWindowInsets()`，若非空则通过 `dispatchApplyWindowInsets(rootInsets)` 主动把当前真实 WindowInsets 分发给已安装的 listener，再 request/layout。它不伪造 Insets、不缓存像素，也不依赖系统产生新的 Insets change event；因此首次展开和主题重建使用同一个幂等 apply 路径。所有操作仍在主线程且只处理 geometry/theme metadata。
 
 ### target 36 / Android 16
 
