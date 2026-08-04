@@ -544,6 +544,8 @@ V4 复测与 V5 架构修正：
 - V7 将 Window fit sides 恢复为 `LEFT|TOP|RIGHT (0x07)`，不 fit `BOTTOM`；不恢复 root padding/background，而是在两套 `ims_input_view.xml` 中加入独立 `ime_navigation_frame`；
 - `ImeInsetsListener` 使用 `navigationBars` ignoring-visibility bottom inset，同时设置 `keyboard_area.bottomMargin` 和 bottom frame height。FrameLayout 总高度为“原生键盘高度 + 导航区”，键盘高度逻辑本身保持不变；
 - V7 预期 frame：IME/source 到 display bottom，keyboard area 到 navigation top，底部 frame 只覆盖 navigation region；需同时验证应用编辑区上移、主题颜色、反复高度切换和手势导航零/小 inset。
+- V7 implementation `138af07`；workflow `30878039751`，artifact ID `8880234263`，artifact `ComebackGooglePinyinInput-ComebackGooglePinyinInput-target-sdk-35-audit-v7`，APK SHA-256 `4aa24ef61241c0a2120aa41d198081d95a44732311118b283223e07714c4d79f`。
+- V7 已通过 clean decode/patch、target 31/33/34/35 静态门禁、apktool rebuild、云端 build/sign、zipalign、v1/v2/v3 signature、证书和最终 APK re-decode；overlay 安装后的 APK hash 与 artifact 一致，16 个 private dictionary/theme/SharedPreferences 文件 hash 全部保持不变。
 
 ### target 36 / Android 16
 
