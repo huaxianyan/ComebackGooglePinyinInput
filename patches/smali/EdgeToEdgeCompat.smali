@@ -66,34 +66,6 @@
     return-void
 .end method
 
-.method public static logImeGeometry(Ljava/lang/String;I)V
-    .locals 2
-
-    new-instance v0, Ljava/lang/StringBuilder;
-
-    const-string v1, "event="
-
-    invoke-direct {v0, v1}, Ljava/lang/StringBuilder;-><init>(Ljava/lang/String;)V
-
-    invoke-virtual {v0, p0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
-
-    const-string p0, " value="
-
-    invoke-virtual {v0, p0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
-
-    invoke-virtual {v0, p1}, Ljava/lang/StringBuilder;->append(I)Ljava/lang/StringBuilder;
-
-    invoke-virtual {v0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
-
-    move-result-object p0
-
-    const-string p1, "GooglePinyinImeGeometry"
-
-    invoke-static {p1, p0}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
-
-    return-void
-.end method
-
 .method public static getNavigationBarBottomInset(Landroid/view/View;)I
     .locals 3
 
@@ -134,10 +106,6 @@
     iget v0, p0, Landroid/graphics/Insets;->bottom:I
 
     :done
-    const-string p0, "windowNavBottom"
-
-    invoke-static {p0, v0}, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->logImeGeometry(Ljava/lang/String;I)V
-
     return v0
 .end method
 
@@ -169,14 +137,6 @@
 
     if-eqz p0, :done
 
-    invoke-virtual {p0}, Landroid/view/View;->isAttachedToWindow()Z
-
-    move-result v0
-
-    const-string v1, "attachCalledAttached"
-
-    invoke-static {v1, v0}, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->logImeGeometry(Ljava/lang/String;I)V
-
     sput-object p0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->inputView:Landroid/view/View;
 
     new-instance v0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat$ImeInsetsListener;
@@ -191,12 +151,6 @@
 
     invoke-virtual {p0, v0}, Landroid/view/View;->addOnAttachStateChangeListener(Landroid/view/View$OnAttachStateChangeListener;)V
 
-    new-instance v0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat$ImeLayoutDiagnosticsListener;
-
-    invoke-direct {v0}, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat$ImeLayoutDiagnosticsListener;-><init>()V
-
-    invoke-virtual {p0, v0}, Landroid/view/View;->addOnLayoutChangeListener(Landroid/view/View$OnLayoutChangeListener;)V
-
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->scheduleApplyInsets(Landroid/view/View;)V
 
     :done
@@ -205,12 +159,6 @@
 
 .method public static configureImeWindow(Landroid/inputmethodservice/InputMethodService;)V
     .locals 3
-
-    const-string v0, "configureImeWindow"
-
-    const/4 v1, 0x1
-
-    invoke-static {v0, v1}, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->logImeGeometry(Ljava/lang/String;I)V
 
     sget v0, Landroid/os/Build$VERSION;->SDK_INT:I
 
