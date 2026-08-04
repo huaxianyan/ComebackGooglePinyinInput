@@ -180,12 +180,15 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
     )
     replace_once(
         google_ime,
-        "    invoke-virtual {p0, v0}, Lcom/google/android/apps/inputmethod/libs/"
-        "framework/core/GoogleInputMethodService;->setInputView(Landroid/view/View;)V\n",
-        "    invoke-virtual {p0, v0}, Lcom/google/android/apps/inputmethod/libs/"
-        "framework/core/GoogleInputMethodService;->setInputView(Landroid/view/View;)V\n\n"
+        "    .line 489\n    iget-object v0, p0, Lcom/google/android/apps/inputmethod/"
+        "libs/framework/core/GoogleInputMethodService;->a:Lcom/google/android/apps/"
+        "inputmethod/libs/framework/core/InputView;\n\n    goto/16 :goto_0",
+        "    .line 489\n    iget-object v0, p0, Lcom/google/android/apps/inputmethod/"
+        "libs/framework/core/GoogleInputMethodService;->a:Lcom/google/android/apps/"
+        "inputmethod/libs/framework/core/InputView;\n\n"
         "    invoke-static {v0}, Lcom/google/android/inputmethod/pinyin/"
-        "EdgeToEdgeCompat;->attachInputView(Landroid/view/View;)V\n",
+        "EdgeToEdgeCompat;->attachInputView(Landroid/view/View;)V\n\n"
+        "    goto/16 :goto_0",
     )
 
     arrays = decoded / "res/values/arrays.xml"

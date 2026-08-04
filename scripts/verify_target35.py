@@ -203,11 +203,12 @@ def main() -> None:
     if "EdgeToEdgeCompat;->attachInputView" in input_view:
         raise RuntimeError("Coordinator must not attach before InputView has a parent")
     if google_ime.count("EdgeToEdgeCompat;->attachInputView") != 1:
-        raise RuntimeError("IME coordinator must attach exactly once after setInputView")
-    set_input = google_ime.find("->setInputView(Landroid/view/View;)V")
+        raise RuntimeError("IME coordinator must attach exactly once in onCreateInputView")
+    create_start = google_ime.find(".method public onCreateInputView()Landroid/view/View;")
+    create_end = google_ime.find(".end method", create_start)
     attach = google_ime.find("EdgeToEdgeCompat;->attachInputView")
-    if set_input < 0 or attach < set_input:
-        raise RuntimeError("IME coordinator attaches before setInputView")
+    if create_start < 0 or not (create_start < attach < create_end):
+        raise RuntimeError("Initial framework onCreateInputView path lacks coordinator")
     if "EdgeToEdgeCompat;->getInputViewMeasuredHeight" in input_view:
         raise RuntimeError("Rejected V8/V9 InputView measurement compensation remains")
     if input_view.count("->setMeasuredDimension(II)V") != 1:

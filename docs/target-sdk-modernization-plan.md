@@ -565,6 +565,8 @@ V4 复测与 V5 架构修正：
 - V16 同时增加 attach listener 和 WindowMetrics source，但首次仍下沉；在继续修改生命周期前必须确认是“callback 未执行”“metrics 为 0”“LayoutParams 不是 margin”还是“margin 写入后被 framework 覆盖”，停止无证据迭代。
 - V17 是临时 release-like geometry diagnostic：仅记录 `onViewAttached`、runnable attached 状态、root Insets 是否存在、WindowMetrics navigation bottom、listener inset、margin before/applied 等整数/布尔元数据。固定 tag 为 `GooglePinyinImeGeometry`；禁止并且不采集输入文本、候选、剪贴板、联系人、词典、手写坐标或 SharedPreferences。定位后这些日志应移除，V17 不作为最终验收包。
 - V16/V17 首次问题仍复现后，维护者明确要求隔离 Debug 深入诊断。V18 使用独立 `com.google.android.inputmethod.pinyin.target35debug`、`android:debuggable=true`，不能替代 release-like 验收包；新增的 layout listener 只记录 InputView layout top/bottom/height、window Y 和 LayoutParams bottomMargin，结合既有 callback/metrics 日志判断 margin 是未写入还是写入后被 framework 覆盖。仍不记录任何输入或用户内容。
+- V18 首次展开日志只有两次 `configureImeWindow`，完全没有 `attachCalledAttached`、attach、runnable、metrics、listener 或 layout 事件；现场 `ime=[0,1670][1080,2410]`。根因由此确定：Android framework 首次创建 IME 时直接调用 `onCreateInputView()` 并自行安装返回值，不经过项目的 `GoogleInputMethodService.c()`；此前 post-`setInputView()` hook 只覆盖主题重建路径，所以切换主题后才永久恢复。
+- V19 Debug 将唯一 coordinator hook 移入 `GoogleInputMethodService.onCreateInputView()` 的新视图返回路径。首次 framework 创建与 `c()` 主题重建都会调用这个方法；listener 可在 View 尚未 attach 时注册，一次性 attach callback 在 framework 随后安装 View 后执行。V19 先用 Debug 日志确认完整顺序，再移除诊断并生成 release-like 修复包。
 
 ### target 36 / Android 16
 
