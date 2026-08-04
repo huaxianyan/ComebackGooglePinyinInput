@@ -86,7 +86,7 @@
 .end method
 
 .method public static getInputViewMeasuredHeight(Landroid/view/View;)I
-    .locals 3
+    .locals 4
 
     invoke-virtual {p0}, Landroid/view/View;->getMeasuredHeight()I
 
@@ -98,7 +98,7 @@
 
     if-lt v1, v2, :done
 
-    const v1, 0x7f0f0153
+    const v1, 0x7f0f0050
 
     invoke-virtual {p0, v1}, Landroid/view/View;->findViewById(I)Landroid/view/View;
 
@@ -109,6 +109,20 @@
     invoke-virtual {v1}, Landroid/view/View;->getMeasuredHeight()I
 
     move-result v1
+
+    const v2, 0x7f0f0012
+
+    invoke-virtual {p0, v2}, Landroid/view/View;->findViewById(I)Landroid/view/View;
+
+    move-result-object v2
+
+    if-eqz v2, :done
+
+    invoke-virtual {v2}, Landroid/view/View;->getMeasuredHeight()I
+
+    move-result v2
+
+    add-int/2addr v1, v2
 
     if-lez v1, :done
 
@@ -130,7 +144,11 @@
 
     if-lez p0, :done
 
-    add-int v0, v1, p0
+    add-int v3, v1, p0
+
+    if-le v3, v0, :done
+
+    move v0, v3
 
     :done
     return v0

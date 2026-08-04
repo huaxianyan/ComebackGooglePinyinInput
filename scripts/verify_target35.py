@@ -98,6 +98,8 @@ def main() -> None:
         "attachFirstRun(Landroid/app/Activity;)V",
         "attachInputView(Landroid/view/View;)V",
         "getInputViewMeasuredHeight(Landroid/view/View;)I",
+        "const v1, 0x7f0f0050",
+        "const v2, 0x7f0f0012",
         "configureImeWindow(Landroid/inputmethodservice/InputMethodService;)V",
         "Landroid/view/Window;->setDecorFitsSystemWindows(Z)V",
         "Landroid/view/WindowManager$LayoutParams;->setFitInsetsSides(I)V",

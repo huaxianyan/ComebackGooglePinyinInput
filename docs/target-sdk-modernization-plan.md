@@ -548,7 +548,9 @@ V4 复测与 V5 架构修正：
 - V7 已通过 clean decode/patch、target 31/33/34/35 静态门禁、apktool rebuild、云端 build/sign、zipalign、v1/v2/v3 signature、证书和最终 APK re-decode；overlay 安装后的 APK hash 与 artifact 一致，16 个 private dictionary/theme/SharedPreferences 文件 hash 全部保持不变。
 - V7 现场 frame 为 `ime=[0,1607][1080,2410]`、`navigationBars=[0,2284][1080,2410]`：应用输入区已正确上移，证明 bottom-anchored IME source 修复有效；但键盘 body 仍占满 803 px Window 并下沉到导航栏后，bottom frame 没有增加 Window 测量高度。
 - 根因是旧 `InputView.onMeasure()` 在 `AT_MOST` 下会在 `FrameLayout.onMeasure()` 之后强制使用父 MeasureSpec size；因此 keyboard-area margin 与 bottom-frame child 虽已更新为 126 px，root 的 measured height 仍被压回 803 px。V7 不可验收。
-- V8 保留 V7 正确的 Window/source 和独立 bottom-frame 模型，仅在旧 `InputView.onMeasure()` 尾部做窄修正：API 35+ measured height 明确等于原生 `keyboard_area.measuredHeight + ime_navigation_frame.height`。不改变 keyboard area 自身 measured height、padding、按键布局或 `keyboard_height_ratio`；Insets 更新继续触发重新测量，因此反复高度切换必须同步验证。
+- V8 保留 V7 正确的 Window/source 和独立 bottom-frame 模型，仅在旧 `InputView.onMeasure()` 尾部尝试令 API 35+ measured height 等于 `keyboard_area.measuredHeight + ime_navigation_frame.height`；现场仍失败，键盘最低行未回到导航栏上方。
+- V8 可见状态再次确认 `ime=[0,1607][1080,2410]`、`navigationBars=[0,2284][1080,2410]`，Window/source 与应用侧上移保持正确；但 root measure 仍是 803 px。原因进一步收敛为：父级给 root 的 803 px 约束扣除 126 px margin 后，`keyboard_area.measuredHeight` 本身已被压成约 677 px，因此 V8 又计算回 803 px，形成闭环。
+- V9 不从已被父级压缩的 `keyboard_area` 容器取 body 高度，改为读取其原生垂直内容 `header_group_view.measuredHeight + body_group_view.measuredHeight`，再加动态 bottom-frame height；只在结果大于当前 root measured height 时扩展。原生 header/body holder 仍由既有 `KeyboardBodyHeight`/主题/布局测量，未写死设备像素或键盘高度。
 
 ### target 36 / Android 16
 
