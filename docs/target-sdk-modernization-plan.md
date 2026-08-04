@@ -391,7 +391,7 @@ V1 构建记录：
 
 分支：`feat/target-sdk-35`
 
-状态：**V1 已确认 edge-to-edge 底部遮挡，V2 窄修复已构建，等待设备重连安装**。
+状态：**V1 已确认 edge-to-edge 底部遮挡，V2 窄修复已覆盖安装，等待视觉复测**。
 
 这是独立视觉边界。V1 从已验收的 target 34 创建，只提升到 Android 15 / API 35，刻意采用不掩盖平台行为的基线：
 
@@ -457,7 +457,9 @@ V2 构建记录：
 - APK SHA-256：`c89fee4ebdee2f950f48d2bf4ff1c8a53079983bba147e983def6b4d4d0eb80d`
 - zipalign、v1/v2/v3 签名、签名证书和 Android 12–15 全部门禁通过；
 - tag Release 步骤按预期跳过，未发布 GitHub Release；
-- 构建验证后设备 ADB 连接中断，尚未覆盖安装，V1 数据和当前输入法状态未被修改。
+- 设备重连后已覆盖安装 V2；安装包 SHA-256 与 artifact 一致，首次安装时间保持不变；
+- 覆盖安装前后 14 个私有词典、主题和 SharedPreferences 文件的路径及 SHA-256 完全一致，V1 测试数据未改变；
+- 安装时用户当前使用正式包，V2 没有被助手切换为默认输入法；等待维护者手动选择 target 35 后复测 IME 底行。
 
 ### target 36 / Android 16
 
