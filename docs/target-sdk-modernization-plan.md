@@ -587,7 +587,8 @@ V4 复测与 V5 架构修正：
 - V36 Debug 在当前 DecorView 上安装一次普通 `OnLayoutChangeListener`，但用户确认三按钮灰层仍在，其他路径正常。持续 layout listener 与同步操作自身的 `setBackground/setVisibility` 会互相触发布局，既可能形成反馈，也不能保证回调恰好落在平台 color View 替换后的结构，因此不进入正式实现。
 - V37 Debug 删除 layout listener，改为每次 Insets/theme callback 立即 post 一次、并对同一 Runnable 再 `postDelayed(300ms)` 一次。后续发现覆盖安装 Debug 时 Android 自动回退到了仍启用的 `target35audit`，所以此前 V35–V37“仍灰”的观察不是这些 Debug 版本的有效结果。
 - V38 使用全新 `GooglePinyinImeSync` tag，只记录 schedule、候选是否 ViewGroup、候选高度和 tappable bottom 整数。重新显式选择 `target35debug` 后，日志证明过渡/手势结构为 `candidateGroup=1` 并被拒绝，稳定三按钮为 `candidateGroup=0, candidateHeight=126, tappableBottom=126` 并正确同步。用户确认首次正常、主题切换正常、三按钮→手势→三按钮多轮往返正常，无白屏、灰层、几何、控件或应用 Insets 回归。
-- Release-like 转换将已证明的逻辑移入无日志的 `ImeNavigationColorCompat`：仅保留立即 post、300ms 有界重试、非 ViewGroup/正高度/等于正数 tappable bottom 的结构守卫，以及从专用 theme frame 克隆 Drawable 到平台 color View；删除 `ImeDecorDiagnosticsCompat`、tree dump 和全部 Debug tag。覆盖安装后必须显式恢复 `target35audit` 为默认输入法再测试，避免再次把系统 fallback 包误认为新构建。
+- Release-like V39 将已证明的逻辑移入无日志的 `ImeNavigationColorCompat`：保留立即 post、300ms 有界重试、非 ViewGroup/正高度/等于正数 tappable bottom 的结构守卫，以及从专用 theme frame 克隆 Drawable 到平台 color View；删除 `ImeDecorDiagnosticsCompat`、tree dump 和全部 Debug tag。覆盖安装后显式恢复 `target35audit` 并卸载 Debug。用户在首次手势→三按钮时看到一次白屏，此后多轮导航、主题和高度切换均无法复现，其他路径正常；当前 Window、ART crash buffer 和 DropBox 均无本包异常。
+- V38 的递归 tree dump/logging 在执行同步前引入了显著时序开销，而无日志 V39 的立即 Runnable 更早，可能在 View 仍保留旧 measured 126、但 framework 已请求下一次全屏布局的瞬间命中原守卫。V40 因此不依赖诊断延迟，增加公开稳定布局条件：root 与候选均 `!isLayoutRequested()`、候选 `isLaidOut()`、候选 bottom 等于 root height、宽度等于 root width；300ms 有界重试保留。这样旧测量值/待布局过渡帧被拒绝，稳定三按钮背景仍满足全部条件。
 
 ### target 36 / Android 16
 
