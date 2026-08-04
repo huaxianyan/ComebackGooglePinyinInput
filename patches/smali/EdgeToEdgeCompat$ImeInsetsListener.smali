@@ -194,6 +194,8 @@
     invoke-virtual {v4, v2}, Landroid/view/View;->setBackground(Landroid/graphics/drawable/Drawable;)V
 
     :done
+    invoke-static {}, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->refreshNavigationBarTheme()V
+
     invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->suppressNavigationBarContrast(Landroid/view/View;)V
 
     return-object p2

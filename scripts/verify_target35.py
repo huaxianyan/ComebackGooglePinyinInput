@@ -111,6 +111,9 @@ def main() -> None:
         "Landroid/view/WindowMetrics;->getWindowInsets()Landroid/view/WindowInsets;",
         "Landroid/view/WindowInsets$Type;->navigationBars()I",
         "getInsetsIgnoringVisibility(I)Landroid/graphics/Insets;",
+        "refreshNavigationBarTheme()V",
+        "sput-object p0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->imeService:Landroid/inputmethodservice/InputMethodService;",
+        "NavigationBarCompat;->apply(Lcom/google/android/apps/inputmethod/libs/framework/core/GoogleInputMethodService;)V",
         "suppressNavigationBarContrast(Landroid/view/View;)V",
         "sput-object v0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->imeWindow:Landroid/view/Window;",
         "sget-object v0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->imeWindow:Landroid/view/Window;",
@@ -217,6 +220,7 @@ def main() -> None:
             raise RuntimeError(f"Incomplete initial InputView attach listener: {item}")
     required_ime_listener = (
         "EdgeToEdgeCompat;->getNavigationBarBottomInset(Landroid/view/View;)I",
+        "EdgeToEdgeCompat;->refreshNavigationBarTheme()V",
         "EdgeToEdgeCompat;->suppressNavigationBarContrast(Landroid/view/View;)V",
         "Landroid/view/ViewGroup$MarginLayoutParams;->bottomMargin:I",
         "Landroid/view/View;->getRootView()Landroid/view/View;",

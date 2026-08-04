@@ -1865,10 +1865,14 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
         )
         replace_once(
             ime_insets_listener,
-            "    :done\n    invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/"
+            "    :done\n    invoke-static {}, Lcom/google/android/inputmethod/pinyin/"
+            "EdgeToEdgeCompat;->refreshNavigationBarTheme()V\n\n"
+            "    invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/"
             "EdgeToEdgeCompat;->suppressNavigationBarContrast(Landroid/view/View;)V\n\n"
             "    return-object p2",
-            "    :done\n    invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/"
+            "    :done\n    invoke-static {}, Lcom/google/android/inputmethod/pinyin/"
+            "EdgeToEdgeCompat;->refreshNavigationBarTheme()V\n\n"
+            "    invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/"
             "EdgeToEdgeCompat;->suppressNavigationBarContrast(Landroid/view/View;)V\n\n"
             "    invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/"
             "ImeDecorDiagnosticsCompat;->dumpOnce(Landroid/view/View;)V\n\n"

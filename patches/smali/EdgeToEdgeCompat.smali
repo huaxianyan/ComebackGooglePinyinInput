@@ -8,6 +8,8 @@
 
 .field private static imeWindow:Landroid/view/Window;
 
+.field private static imeService:Landroid/inputmethodservice/InputMethodService;
+
 
 # direct methods
 .method private constructor <init>()V
@@ -111,6 +113,23 @@
     return v0
 .end method
 
+.method public static refreshNavigationBarTheme()V
+    .locals 2
+
+    sget-object v0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->imeService:Landroid/inputmethodservice/InputMethodService;
+
+    instance-of v1, v0, Lcom/google/android/apps/inputmethod/libs/framework/core/GoogleInputMethodService;
+
+    if-eqz v1, :done
+
+    check-cast v0, Lcom/google/android/apps/inputmethod/libs/framework/core/GoogleInputMethodService;
+
+    invoke-static {v0}, Lcom/google/android/inputmethod/pinyin/NavigationBarCompat;->apply(Lcom/google/android/apps/inputmethod/libs/framework/core/GoogleInputMethodService;)V
+
+    :done
+    return-void
+.end method
+
 .method public static suppressNavigationBarContrast(Landroid/view/View;)V
     .locals 2
 
@@ -182,6 +201,8 @@
 
 .method public static configureImeWindow(Landroid/inputmethodservice/InputMethodService;)V
     .locals 3
+
+    sput-object p0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->imeService:Landroid/inputmethodservice/InputMethodService;
 
     sget v0, Landroid/os/Build$VERSION;->SDK_INT:I
 
