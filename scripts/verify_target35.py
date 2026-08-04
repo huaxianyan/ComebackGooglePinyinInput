@@ -106,12 +106,10 @@ def main() -> None:
         "attachInputView(Landroid/view/View;)V",
         "sput-object p0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->inputView:Landroid/view/View;",
         "sget-object v0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->inputView:Landroid/view/View;",
-        "getImeControlBottomInset(Landroid/view/View;)I",
+        "getNavigationBarBottomInset(Landroid/view/View;)I",
         "Landroid/view/WindowManager;->getCurrentWindowMetrics()Landroid/view/WindowMetrics;",
         "Landroid/view/WindowMetrics;->getWindowInsets()Landroid/view/WindowInsets;",
         "Landroid/view/WindowInsets$Type;->navigationBars()I",
-        "Landroid/view/WindowInsets$Type;->mandatorySystemGestures()I",
-        "or-int/2addr v1, v2",
         "getInsetsIgnoringVisibility(I)Landroid/graphics/Insets;",
         "scheduleApplyInsets(Landroid/view/View;)V",
         "Landroid/view/View;->post(Ljava/lang/Runnable;)Z",
@@ -214,7 +212,7 @@ def main() -> None:
         if item not in attach_listener_text:
             raise RuntimeError(f"Incomplete initial InputView attach listener: {item}")
     required_ime_listener = (
-        "EdgeToEdgeCompat;->getImeControlBottomInset(Landroid/view/View;)I",
+        "EdgeToEdgeCompat;->getNavigationBarBottomInset(Landroid/view/View;)I",
         "Landroid/view/ViewGroup$MarginLayoutParams;->bottomMargin:I",
         "Landroid/view/View;->getRootView()Landroid/view/View;",
         "findViewWithTag(Ljava/lang/Object;)Landroid/view/View;",
@@ -229,6 +227,8 @@ def main() -> None:
     missing = [item for item in required_ime_listener if item not in ime_listener_text]
     if missing:
         raise RuntimeError(f"Incomplete IME bottom-frame coordinator: {missing}")
+    if "Landroid/view/WindowInsets$Type;->mandatorySystemGestures()I" in helper_text:
+        raise RuntimeError("Mandatory gesture exclusion must not enlarge the visual navigation frame")
     if "Landroid/view/View;->bringToFront()V" in ime_listener_text:
         raise RuntimeError("IME theme frame must remain below system navigation controls")
     if "->setPadding(IIII)V" in ime_listener_text:

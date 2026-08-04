@@ -66,7 +66,7 @@
     return-void
 .end method
 
-.method public static getImeControlBottomInset(Landroid/view/View;)I
+.method public static getNavigationBarBottomInset(Landroid/view/View;)I
     .locals 3
 
     const/4 v0, 0x0
@@ -98,12 +98,6 @@
     invoke-static {}, Landroid/view/WindowInsets$Type;->navigationBars()I
 
     move-result v1
-
-    invoke-static {}, Landroid/view/WindowInsets$Type;->mandatorySystemGestures()I
-
-    move-result v2
-
-    or-int/2addr v1, v2
 
     invoke-virtual {p0, v1}, Landroid/view/WindowInsets;->getInsetsIgnoringVisibility(I)Landroid/graphics/Insets;
 
