@@ -526,7 +526,14 @@ V4 复测与 V5 架构修正：
 - 现场 `dumpsys window` 显示调用已生效为 `fitTypes=statusBars navigationBars`，但 IME attrs 仍为 `fitSides=LEFT TOP RIGHT`，明确缺少 `BOTTOM`；
 - 这证明 Android 的 `InputMethodService` Window 默认排除 bottom fit side，单独调用 `setDecorFitsSystemWindows(true)` 不足以建立 non-covering IME；
 - V6 保留无 InputView padding/background 的 V5 基础，并显式设置 `WindowManager.LayoutParams.setFitInsetsSides(0x0f)`（LEFT|TOP|RIGHT|BOTTOM），再回写 Window attrs；该值是平台 side bitmask，不是设备尺寸；
-- V6 首要静态/真机判据为 `fitSides=LEFT TOP RIGHT BOTTOM`，之后再按“默认 → 最高 → 默认 → 最低/中间 → 重复切换”复测键盘几何、底行和导航区。
+- V6 首要静态/真机判据为 `fitSides=LEFT TOP RIGHT BOTTOM`，之后再按“默认 → 最高 → 默认 → 最低/中间 → 重复切换”复测键盘几何、底行和导航区；
+- V6 implementation/research commit：`ed33f90`；
+- workflow：[`30875607013`](https://github.com/huaxianyan/comeback-google-pinyin-input/actions/runs/30875607013)；
+- artifact ID：`8879422879`；
+- artifact：`ComebackGooglePinyinInput-ComebackGooglePinyinInput-target-sdk-35-audit-v6`；
+- APK SHA-256：`74eb1608d90e492f1602c549588ab6f32bbc46e9b335150f4727b6d880b04515`；
+- 云端全部门禁、zipalign、v1/v2/v3 签名和证书验证通过，未发布 Release；
+- 已覆盖安装，默认 IME 保持 target 35，覆盖前后 16 个私有文件 SHA-256 完全一致；等待首次显示现场复测和可见状态下的 Window attrs 采集。
 
 ### target 36 / Android 16
 
