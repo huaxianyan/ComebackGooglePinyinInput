@@ -391,7 +391,7 @@ V1 构建记录：
 
 分支：`feat/target-sdk-35`
 
-状态：**V3 复测发现导航栏可见性切换导致 inset 归零，V4 稳定 inset 修复中**。
+状态：**V3 复测发现导航栏可见性切换导致 inset 归零，V4 稳定 inset 修复已安装，等待复测**。
 
 这是独立视觉边界。V1 从已验收的 target 34 创建，只提升到 Android 15 / API 35，刻意采用不掩盖平台行为的基线：
 
@@ -490,6 +490,18 @@ V3 复测结果与 V4 修正：
 - V4 改为 `getInsetsIgnoringVisibility(Type.navigationBars())`，始终使用设备导航栏的稳定几何高度，不受设置页切换、IME 隐藏/显示或一次键盘高度调整影响；
 - 仍然只查询 navigation bars，不混入 IME、状态栏或其他 inset source，也不写死像素值；
 - 门禁同时拒绝旧 broad API 和 visibility-sensitive `getInsets()`。
+
+V4 构建与安装记录：
+
+- commit：`573c2a3`
+- workflow：[`30870850802`](https://github.com/huaxianyan/comeback-google-pinyin-input/actions/runs/30870850802)
+- artifact ID：`8877826072`
+- artifact：`ComebackGooglePinyinInput-target-sdk-35-audit-v4`
+- APK SHA-256：`2403969b27651d542661f894f17911e671d46141331cecb9fa0dd7f82639ae1d`
+- zipalign、v1/v2/v3 签名、签名证书、重解码及 Android 12–15 全部门禁通过；
+- 已覆盖安装，设备 `base.apk` 哈希一致，target 35 仍为默认 IME；
+- 覆盖安装前后私有词典、主题和 SharedPreferences 哈希完全一致；
+- 进程已正常重启，等待反复调整默认/最高键盘高度后的稳定性复测。
 
 ### target 36 / Android 16
 
