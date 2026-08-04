@@ -115,6 +115,7 @@ def main() -> None:
         "scheduleApplyInsets(Landroid/view/View;)V",
         "Landroid/view/View;->post(Ljava/lang/Runnable;)Z",
         "Landroid/view/View;->addOnAttachStateChangeListener(Landroid/view/View$OnAttachStateChangeListener;)V",
+        "Landroid/view/View;->addOnLayoutChangeListener(Landroid/view/View$OnLayoutChangeListener;)V",
         "configureImeWindow(Landroid/inputmethodservice/InputMethodService;)V",
         "Landroid/view/Window;->setDecorFitsSystemWindows(Z)V",
         "Landroid/view/WindowManager$LayoutParams;->setFitInsetsSides(I)V",
@@ -123,7 +124,23 @@ def main() -> None:
         "const/16 v1, 0x23",
         "const/16 v1, 0x1e",
     )
-    diagnostic_text = helper_text + ime_listener_text + apply_runnable_text
+    layout_listener = decoded / (
+        "smali/com/google/android/inputmethod/pinyin/"
+        "EdgeToEdgeCompat$ImeLayoutDiagnosticsListener.smali"
+    )
+    if not layout_listener.is_file():
+        raise RuntimeError("Missing temporary IME layout diagnostics listener")
+    layout_listener_text = layout_listener.read_text(encoding="utf-8")
+    for item in (
+        "Landroid/view/View$OnLayoutChangeListener;",
+        "locationInWindowY",
+        "layoutBottomMargin",
+    ):
+        if item not in layout_listener_text:
+            raise RuntimeError(f"Incomplete IME layout diagnostics: {item}")
+    diagnostic_text = (
+        helper_text + ime_listener_text + apply_runnable_text + layout_listener_text
+    )
     for forbidden in (
         "candidateText",
         "clipboard",

@@ -1839,6 +1839,7 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
         "EdgeToEdgeCompat$ApplyInsetsRunnable.smali",
         "EdgeToEdgeCompat$InputViewAttachListener.smali",
         "EdgeToEdgeCompat$ImeInsetsListener.smali",
+        "EdgeToEdgeCompat$ImeLayoutDiagnosticsListener.smali",
     ):
         helper_src = ROOT / "patches/smali" / helper_name
         helper_dst = decoded / "smali/com/google/android/inputmethod/pinyin" / helper_name

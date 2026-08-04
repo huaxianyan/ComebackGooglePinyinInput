@@ -564,6 +564,7 @@ V4 复测与 V5 架构修正：
 - V15 的 deferred runnable 主动 dispatch root Insets；首次现场仍为 `ime=[0,1607][1080,2410]`。这证明首次 Window 尚未 attach 时 post runnable 会因 `isAttachedToWindow=false` 退出，且 InputView/root Insets 的 navigation bottom 还可能是 decor 消费后的 0；主题重建时 Window 已 attach，所以后续恢复。
 - V16 同时增加 attach listener 和 WindowMetrics source，但首次仍下沉；在继续修改生命周期前必须确认是“callback 未执行”“metrics 为 0”“LayoutParams 不是 margin”还是“margin 写入后被 framework 覆盖”，停止无证据迭代。
 - V17 是临时 release-like geometry diagnostic：仅记录 `onViewAttached`、runnable attached 状态、root Insets 是否存在、WindowMetrics navigation bottom、listener inset、margin before/applied 等整数/布尔元数据。固定 tag 为 `GooglePinyinImeGeometry`；禁止并且不采集输入文本、候选、剪贴板、联系人、词典、手写坐标或 SharedPreferences。定位后这些日志应移除，V17 不作为最终验收包。
+- V16/V17 首次问题仍复现后，维护者明确要求隔离 Debug 深入诊断。V18 使用独立 `com.google.android.inputmethod.pinyin.target35debug`、`android:debuggable=true`，不能替代 release-like 验收包；新增的 layout listener 只记录 InputView layout top/bottom/height、window Y 和 LayoutParams bottomMargin，结合既有 callback/metrics 日志判断 margin 是未写入还是写入后被 framework 覆盖。仍不记录任何输入或用户内容。
 
 ### target 36 / Android 16
 
