@@ -106,8 +106,13 @@ def main() -> None:
         "attachInputView(Landroid/view/View;)V",
         "sput-object p0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->inputView:Landroid/view/View;",
         "sget-object v0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->inputView:Landroid/view/View;",
+        "getNavigationBarBottomInset(Landroid/view/View;)I",
+        "Landroid/view/WindowManager;->getCurrentWindowMetrics()Landroid/view/WindowMetrics;",
+        "Landroid/view/WindowMetrics;->getWindowInsets()Landroid/view/WindowInsets;",
+        "getInsetsIgnoringVisibility(I)Landroid/graphics/Insets;",
         "scheduleApplyInsets(Landroid/view/View;)V",
         "Landroid/view/View;->post(Ljava/lang/Runnable;)Z",
+        "Landroid/view/View;->addOnAttachStateChangeListener(Landroid/view/View$OnAttachStateChangeListener;)V",
         "configureImeWindow(Landroid/inputmethodservice/InputMethodService;)V",
         "Landroid/view/Window;->setDecorFitsSystemWindows(Z)V",
         "Landroid/view/WindowManager$LayoutParams;->setFitInsetsSides(I)V",
@@ -180,8 +185,23 @@ def main() -> None:
         raise RuntimeError("Target-35 InputView measurement must remain original")
     if "->setPadding(IIII)V" in input_view:
         raise RuntimeError("IME InputView must retain native padding behavior")
+    attach_listener = decoded / (
+        "smali/com/google/android/inputmethod/pinyin/"
+        "EdgeToEdgeCompat$InputViewAttachListener.smali"
+    )
+    if not attach_listener.is_file():
+        raise RuntimeError("Missing initial InputView attach listener")
+    attach_listener_text = attach_listener.read_text(encoding="utf-8")
+    for item in (
+        "Landroid/view/View$OnAttachStateChangeListener;",
+        "onViewAttachedToWindow(Landroid/view/View;)V",
+        "removeOnAttachStateChangeListener",
+        "EdgeToEdgeCompat;->scheduleApplyInsets(Landroid/view/View;)V",
+    ):
+        if item not in attach_listener_text:
+            raise RuntimeError(f"Incomplete initial InputView attach listener: {item}")
     required_ime_listener = (
-        "getInsetsIgnoringVisibility(I)Landroid/graphics/Insets;",
+        "EdgeToEdgeCompat;->getNavigationBarBottomInset(Landroid/view/View;)I",
         "Landroid/view/ViewGroup$MarginLayoutParams;->bottomMargin:I",
         "Landroid/view/View;->getRootView()Landroid/view/View;",
         "findViewWithTag(Ljava/lang/Object;)Landroid/view/View;",

@@ -28,15 +28,9 @@
 .method public onApplyWindowInsets(Landroid/view/View;Landroid/view/WindowInsets;)Landroid/view/WindowInsets;
     .locals 7
 
-    invoke-static {}, Landroid/view/WindowInsets$Type;->navigationBars()I
+    invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->getNavigationBarBottomInset(Landroid/view/View;)I
 
     move-result v0
-
-    invoke-virtual {p2, v0}, Landroid/view/WindowInsets;->getInsetsIgnoringVisibility(I)Landroid/graphics/Insets;
-
-    move-result-object v0
-
-    iget v0, v0, Landroid/graphics/Insets;->bottom:I
 
     iget-object v1, p0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat$ImeInsetsListener;->root:Landroid/view/View;
 

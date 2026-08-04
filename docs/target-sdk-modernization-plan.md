@@ -561,7 +561,8 @@ V4 复测与 V5 架构修正：
 - V12 的 decor frame 已开始跟随主题，但颜色与候选栏/keyboard-area 外层一致，而非用户期望的主键盘 body。原因是背景源取自 `@id/keyboard_area` 的 `?BgKeyboardArea`；Google 拼音将候选/外围和主按键区分别用 `BgKeyboardArea`、`BgKeyboardBody` 着色。
 - V13 在 helper 中保存当前已 attach 的 InputView，并在 `configureImeWindow()` 完成 Window attributes 后再次 `requestApplyInsets()`；主键盘 body 颜色修复已确认，后续主题切换/隐藏/重开也保持几何正常。但解锁后的第一次自动弹出仍下沉，说明同一主线程调用栈里的直接 request 仍可能早于首个 attach/layout traversal。
 - V14 保留所有已确认的几何和主题逻辑，增加隐私安全、幂等的 post-layout `ApplyInsetsRunnable`；现场首次展开仍为 `ime=[0,1607][1080,2410]`，证明单纯 `requestApplyInsets()` 即使延后执行，在系统判断 Insets 状态未变化时仍可能不重新 dispatch listener。V14 不可验收。
-- V15 的 deferred runnable 在 View 已 attach 后读取公开 API `getRootWindowInsets()`，若非空则通过 `dispatchApplyWindowInsets(rootInsets)` 主动把当前真实 WindowInsets 分发给已安装的 listener，再 request/layout。它不伪造 Insets、不缓存像素，也不依赖系统产生新的 Insets change event；因此首次展开和主题重建使用同一个幂等 apply 路径。所有操作仍在主线程且只处理 geometry/theme metadata。
+- V15 的 deferred runnable 主动 dispatch root Insets；首次现场仍为 `ime=[0,1607][1080,2410]`。这证明首次 Window 尚未 attach 时 post runnable 会因 `isAttachedToWindow=false` 退出，且 InputView/root Insets 的 navigation bottom 还可能是 decor 消费后的 0；主题重建时 Window 已 attach，所以后续恢复。
+- V16 同时消除这两个首次专属条件：注册一次性 `OnAttachStateChangeListener`，在真正 attach 后再 schedule；navigation bottom 不再取 InputView 收到的可能已消费 Insets，而通过公开 API `WindowManager.getCurrentWindowMetrics().getWindowInsets().getInsetsIgnoringVisibility(navigationBars)` 读取 Window 级 metrics。这与 Gboard `sbr` 统一 Window metrics 架构一致，仍然动态适配设备、方向和导航模式，不硬编码 126 px。
 
 ### target 36 / Android 16
 

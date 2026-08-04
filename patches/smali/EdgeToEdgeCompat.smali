@@ -66,7 +66,50 @@
     return-void
 .end method
 
-.method private static scheduleApplyInsets(Landroid/view/View;)V
+.method public static getNavigationBarBottomInset(Landroid/view/View;)I
+    .locals 3
+
+    const/4 v0, 0x0
+
+    if-eqz p0, :done
+
+    invoke-virtual {p0}, Landroid/view/View;->getContext()Landroid/content/Context;
+
+    move-result-object p0
+
+    const-class v1, Landroid/view/WindowManager;
+
+    invoke-virtual {p0, v1}, Landroid/content/Context;->getSystemService(Ljava/lang/Class;)Ljava/lang/Object;
+
+    move-result-object p0
+
+    check-cast p0, Landroid/view/WindowManager;
+
+    if-eqz p0, :done
+
+    invoke-interface {p0}, Landroid/view/WindowManager;->getCurrentWindowMetrics()Landroid/view/WindowMetrics;
+
+    move-result-object p0
+
+    invoke-virtual {p0}, Landroid/view/WindowMetrics;->getWindowInsets()Landroid/view/WindowInsets;
+
+    move-result-object p0
+
+    invoke-static {}, Landroid/view/WindowInsets$Type;->navigationBars()I
+
+    move-result v1
+
+    invoke-virtual {p0, v1}, Landroid/view/WindowInsets;->getInsetsIgnoringVisibility(I)Landroid/graphics/Insets;
+
+    move-result-object p0
+
+    iget v0, p0, Landroid/graphics/Insets;->bottom:I
+
+    :done
+    return v0
+.end method
+
+.method public static scheduleApplyInsets(Landroid/view/View;)V
     .locals 1
 
     if-eqz p0, :done
@@ -101,6 +144,12 @@
     invoke-direct {v0, p0}, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat$ImeInsetsListener;-><init>(Landroid/view/View;)V
 
     invoke-virtual {p0, v0}, Landroid/view/View;->setOnApplyWindowInsetsListener(Landroid/view/View$OnApplyWindowInsetsListener;)V
+
+    new-instance v0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat$InputViewAttachListener;
+
+    invoke-direct {v0}, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat$InputViewAttachListener;-><init>()V
+
+    invoke-virtual {p0, v0}, Landroid/view/View;->addOnAttachStateChangeListener(Landroid/view/View$OnAttachStateChangeListener;)V
 
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->scheduleApplyInsets(Landroid/view/View;)V
 
