@@ -1,0 +1,40 @@
+name: Build ADB LAN Forwarder
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Compile Windows application
+        shell: cmd
+        working-directory: scripts/adb-lan-forwarder
+        run: build.cmd
+
+      - name: Prepare artifact
+        shell: pwsh
+        run: |
+          $out = Join-Path $PWD "dist\AdbLanForwarder-Windows-x64"
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+          Copy-Item scripts/adb-lan-forwarder/AdbLanForwarder.exe $out/
+          Copy-Item scripts/adb-lan-forwarder/AdbLanForwarder.ini $out/
+          Copy-Item scripts/adb-lan-forwarder/OpenRemoteAdbShell.cmd $out/
+          Copy-Item scripts/adb-lan-forwarder/README.md $out/
+          Get-FileHash -Algorithm SHA256 "$out\AdbLanForwarder.exe" |
+            ForEach-Object { "SHA-256  $($_.Hash.ToLowerInvariant())  AdbLanForwarder.exe" } |
+            Set-Content -Encoding ascii "$out\AdbLanForwarder.exe.sha256"
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AdbLanForwarder-Windows-x64
+          path: dist/AdbLanForwarder-Windows-x64
+          if-no-files-found: error
+          retention-days: 30
