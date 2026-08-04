@@ -66,6 +66,23 @@
     return-void
 .end method
 
+.method private static scheduleApplyInsets(Landroid/view/View;)V
+    .locals 1
+
+    if-eqz p0, :done
+
+    invoke-virtual {p0}, Landroid/view/View;->requestApplyInsets()V
+
+    new-instance v0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat$ApplyInsetsRunnable;
+
+    invoke-direct {v0, p0}, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat$ApplyInsetsRunnable;-><init>(Landroid/view/View;)V
+
+    invoke-virtual {p0, v0}, Landroid/view/View;->post(Ljava/lang/Runnable;)Z
+
+    :done
+    return-void
+.end method
+
 .method public static attachInputView(Landroid/view/View;)V
     .locals 2
 
@@ -85,7 +102,7 @@
 
     invoke-virtual {p0, v0}, Landroid/view/View;->setOnApplyWindowInsetsListener(Landroid/view/View$OnApplyWindowInsetsListener;)V
 
-    invoke-virtual {p0}, Landroid/view/View;->requestApplyInsets()V
+    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->scheduleApplyInsets(Landroid/view/View;)V
 
     :done
     return-void
@@ -130,7 +147,7 @@
 
     if-eqz v0, :done
 
-    invoke-virtual {v0}, Landroid/view/View;->requestApplyInsets()V
+    invoke-static {v0}, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->scheduleApplyInsets(Landroid/view/View;)V
 
     :done
     return-void

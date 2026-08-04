@@ -94,11 +94,20 @@ def main() -> None:
     if not ime_listener.is_file():
         raise RuntimeError("Missing dedicated IME bottom-frame inset listener")
     ime_listener_text = ime_listener.read_text(encoding="utf-8")
+    apply_runnable = decoded / (
+        "smali/com/google/android/inputmethod/pinyin/"
+        "EdgeToEdgeCompat$ApplyInsetsRunnable.smali"
+    )
+    if not apply_runnable.is_file():
+        raise RuntimeError("Missing deferred IME inset runnable")
+    apply_runnable_text = apply_runnable.read_text(encoding="utf-8")
     required_helper = (
         "attachFirstRun(Landroid/app/Activity;)V",
         "attachInputView(Landroid/view/View;)V",
         "sput-object p0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->inputView:Landroid/view/View;",
         "sget-object v0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->inputView:Landroid/view/View;",
+        "scheduleApplyInsets(Landroid/view/View;)V",
+        "Landroid/view/View;->post(Ljava/lang/Runnable;)Z",
         "configureImeWindow(Landroid/inputmethodservice/InputMethodService;)V",
         "Landroid/view/Window;->setDecorFitsSystemWindows(Z)V",
         "Landroid/view/WindowManager$LayoutParams;->setFitInsetsSides(I)V",
@@ -107,6 +116,15 @@ def main() -> None:
         "const/16 v1, 0x23",
         "const/16 v1, 0x1e",
     )
+    required_runnable = (
+        "Ljava/lang/Runnable;",
+        "Landroid/view/View;->isAttachedToWindow()Z",
+        "Landroid/view/View;->requestApplyInsets()V",
+        "Landroid/view/View;->requestLayout()V",
+    )
+    missing = [item for item in required_runnable if item not in apply_runnable_text]
+    if missing:
+        raise RuntimeError(f"Incomplete deferred IME inset runnable: {missing}")
     required_listener = (
         "Landroid/view/View$OnApplyWindowInsetsListener;",
         "Landroid/view/WindowInsets$Type;->navigationBars()I",

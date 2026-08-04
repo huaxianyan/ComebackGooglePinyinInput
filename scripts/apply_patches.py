@@ -1836,6 +1836,7 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
         "DictionaryRecoveryCompat.smali",
         "EdgeToEdgeCompat.smali",
         "EdgeToEdgeCompat$BottomInsetsListener.smali",
+        "EdgeToEdgeCompat$ApplyInsetsRunnable.smali",
         "EdgeToEdgeCompat$ImeInsetsListener.smali",
     ):
         helper_src = ROOT / "patches/smali" / helper_name
