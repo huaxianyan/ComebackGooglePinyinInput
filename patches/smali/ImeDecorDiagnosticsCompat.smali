@@ -4,35 +4,20 @@
 
 .field private static logged:Z
 
-.field private static observedRoot:Landroid/view/View;
-
 .method public static dumpOnce(Landroid/view/View;)V
     .locals 3
 
     if-eqz p0, :done
 
-    invoke-virtual {p0}, Landroid/view/View;->getRootView()Landroid/view/View;
-
-    move-result-object v1
-
-    sget-object v2, Lcom/google/android/inputmethod/pinyin/ImeDecorDiagnosticsCompat;->observedRoot:Landroid/view/View;
-
-    if-eq v1, v2, :post
-
-    sput-object v1, Lcom/google/android/inputmethod/pinyin/ImeDecorDiagnosticsCompat;->observedRoot:Landroid/view/View;
-
-    new-instance v2, Lcom/google/android/inputmethod/pinyin/ImeDecorDiagnosticsCompat$LayoutListener;
-
-    invoke-direct {v2, p0}, Lcom/google/android/inputmethod/pinyin/ImeDecorDiagnosticsCompat$LayoutListener;-><init>(Landroid/view/View;)V
-
-    invoke-virtual {v1, v2}, Landroid/view/View;->addOnLayoutChangeListener(Landroid/view/View$OnLayoutChangeListener;)V
-
-    :post
     new-instance v0, Lcom/google/android/inputmethod/pinyin/ImeDecorDiagnosticsCompat$DumpRunnable;
 
     invoke-direct {v0, p0}, Lcom/google/android/inputmethod/pinyin/ImeDecorDiagnosticsCompat$DumpRunnable;-><init>(Landroid/view/View;)V
 
     invoke-virtual {p0, v0}, Landroid/view/View;->post(Ljava/lang/Runnable;)Z
+
+    const-wide/16 v1, 0x12c
+
+    invoke-virtual {p0, v0, v1, v2}, Landroid/view/View;->postDelayed(Ljava/lang/Runnable;J)Z
 
     :done
     return-void
