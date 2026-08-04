@@ -68,6 +68,12 @@
 
     if-lez v1, :done
 
+    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->getTappableElementBottomInset(Landroid/view/View;)I
+
+    move-result p0
+
+    if-ne v1, p0, :done
+
     invoke-virtual {v2}, Landroid/view/View;->getBackground()Landroid/graphics/drawable/Drawable;
 
     move-result-object v1

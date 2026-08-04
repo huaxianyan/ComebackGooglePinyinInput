@@ -582,7 +582,8 @@ V4 复测与 V5 架构修正：
 - V30 深层日志确认三按钮最终 DecorView 的主题 frame 已完整覆盖底部 126 px，InputView 正确结束在它上方；最后一个 direct child 是同样位于底部 126 px、带 ColorDrawable 但 `visibility=INVISIBLE` 的平台 navigation color View，导航按钮由外部 Taskbar surface 提供。target 28 的旧 decor 模型会显示这个平台颜色 View，而 target 35 edge-to-edge 将其隐藏，外部三按钮半透明层因而覆盖主题 frame形成灰色。V31 Debug 只在最后一个 direct child 是非 ViewGroup、正高度且隐藏时将其设为 VISIBLE；三按钮灰层随即消失且按钮仍正常，证明平台 color View 是正确承载层。手势模式最后一个 child 是导航 ViewGroup，结构条件不成立。
 - V31 的平台 color View 颜色未随当前主题正确适配。V32 Debug 在 Insets listener 已取得稳定 body 后再次调用 `NavigationBarCompat.apply()`，但用户确认颜色仍不一致，说明 target-35 edge-to-edge 下 Window navigation color 不会再同步到被平台隐藏的 ColorDrawable。
 - V33 Debug 在与 V31 相同的三按钮专属结构条件下，从已经显示正确的专用 theme frame 取得 background，优先通过 `ConstantState.newDrawable(resources).mutate()` 创建独立副本，并直接赋给平台 color View 后再显示；当前主题因此完全同步、按钮正常，但切换任何其他主题后不同步。根因是诊断入口仍受进程级 `dumpOnce` 门控，只在第一次 Insets 执行，后续主题 rebuild 虽更新 theme frame 却不再同步平台 View。
-- V34 Debug 移除该一次性门控，让每次专用 IME Insets/theme callback 都 post 同一结构验证和 Drawable 同步；这验证的是更新生命周期，不改变颜色算法或层级。浅色、深色、多次往返都同步后，再切手势验证结构条件不会误触发。
+- V34 Debug 移除该一次性门控，让每次专用 IME Insets/theme callback 都 post 同一结构验证和 Drawable 同步。用户确认三按钮多主题和首次切到手势均正常，但手势再切回三按钮时曾出现平台 color View 覆盖全屏、三按钮消失；切走再回来后恢复几何但灰层复发。说明“最后一个非 ViewGroup 且正高度”在导航模式过渡帧中过宽，会把暂时全屏的 decor color View误判为稳定三按钮背景。
+- V35 Debug 增加公开 WindowMetrics `WindowInsets.Type.tappableElement()` 判定：只有候选平台 View 的实际 height 精确等于正数 `tappableElement.bottom` 才同步/显示。稳定三按钮两者均为 126；手势为 0；过渡期全屏 View 为 2238，不会命中。该条件同时约束导航模式和最终布局稳定性，需完成“三按钮→手势→三按钮”多轮往返、主题切换和首次输入验证。
 
 ### target 36 / Android 16
 

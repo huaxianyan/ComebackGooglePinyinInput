@@ -107,6 +107,8 @@ def main() -> None:
         "sput-object p0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->inputView:Landroid/view/View;",
         "sget-object v0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->inputView:Landroid/view/View;",
         "getNavigationBarBottomInset(Landroid/view/View;)I",
+        "getTappableElementBottomInset(Landroid/view/View;)I",
+        "Landroid/view/WindowInsets$Type;->tappableElement()I",
         "Landroid/view/WindowManager;->getCurrentWindowMetrics()Landroid/view/WindowMetrics;",
         "Landroid/view/WindowMetrics;->getWindowInsets()Landroid/view/WindowInsets;",
         "Landroid/view/WindowInsets$Type;->navigationBars()I",

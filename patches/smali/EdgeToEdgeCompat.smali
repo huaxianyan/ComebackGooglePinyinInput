@@ -151,6 +151,49 @@
     return-void
 .end method
 
+.method public static getTappableElementBottomInset(Landroid/view/View;)I
+    .locals 2
+
+    const/4 v0, 0x0
+
+    if-eqz p0, :done
+
+    invoke-virtual {p0}, Landroid/view/View;->getContext()Landroid/content/Context;
+
+    move-result-object p0
+
+    const-class v1, Landroid/view/WindowManager;
+
+    invoke-virtual {p0, v1}, Landroid/content/Context;->getSystemService(Ljava/lang/Class;)Ljava/lang/Object;
+
+    move-result-object p0
+
+    check-cast p0, Landroid/view/WindowManager;
+
+    if-eqz p0, :done
+
+    invoke-interface {p0}, Landroid/view/WindowManager;->getCurrentWindowMetrics()Landroid/view/WindowMetrics;
+
+    move-result-object p0
+
+    invoke-virtual {p0}, Landroid/view/WindowMetrics;->getWindowInsets()Landroid/view/WindowInsets;
+
+    move-result-object p0
+
+    invoke-static {}, Landroid/view/WindowInsets$Type;->tappableElement()I
+
+    move-result v1
+
+    invoke-virtual {p0, v1}, Landroid/view/WindowInsets;->getInsetsIgnoringVisibility(I)Landroid/graphics/Insets;
+
+    move-result-object p0
+
+    iget v0, p0, Landroid/graphics/Insets;->bottom:I
+
+    :done
+    return v0
+.end method
+
 .method public static scheduleApplyInsets(Landroid/view/View;)V
     .locals 1
 
