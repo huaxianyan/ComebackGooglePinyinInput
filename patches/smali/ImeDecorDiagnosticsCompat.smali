@@ -17,6 +17,21 @@
 
     sput-boolean v0, Lcom/google/android/inputmethod/pinyin/ImeDecorDiagnosticsCompat;->logged:Z
 
+    new-instance v0, Lcom/google/android/inputmethod/pinyin/ImeDecorDiagnosticsCompat$DumpRunnable;
+
+    invoke-direct {v0, p0}, Lcom/google/android/inputmethod/pinyin/ImeDecorDiagnosticsCompat$DumpRunnable;-><init>(Landroid/view/View;)V
+
+    invoke-virtual {p0, v0}, Landroid/view/View;->post(Ljava/lang/Runnable;)Z
+
+    :done
+    return-void
+.end method
+
+.method public static dumpNow(Landroid/view/View;)V
+    .locals 3
+
+    if-eqz p0, :done
+
     invoke-virtual {p0}, Landroid/view/View;->getRootView()Landroid/view/View;
 
     move-result-object v0

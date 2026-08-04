@@ -1851,11 +1851,14 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
         shutil.copyfile(helper_src, helper_dst)
 
     if debuggable:
-        decor_diagnostics_src = ROOT / "patches/smali/ImeDecorDiagnosticsCompat.smali"
-        decor_diagnostics_dst = decoded / (
-            "smali/com/google/android/inputmethod/pinyin/ImeDecorDiagnosticsCompat.smali"
-        )
-        shutil.copyfile(decor_diagnostics_src, decor_diagnostics_dst)
+        for decor_diagnostics_src in sorted(
+            (ROOT / "patches/smali").glob("ImeDecorDiagnosticsCompat*.smali")
+        ):
+            decor_diagnostics_dst = decoded / (
+                "smali/com/google/android/inputmethod/pinyin/"
+                + decor_diagnostics_src.name
+            )
+            shutil.copyfile(decor_diagnostics_src, decor_diagnostics_dst)
         ime_insets_listener = decoded / (
             "smali/com/google/android/inputmethod/pinyin/"
             "EdgeToEdgeCompat$ImeInsetsListener.smali"
