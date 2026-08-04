@@ -580,7 +580,8 @@ V4 复测与 V5 架构修正：
 - V29 隔离 Debug 将 decor tree 深度扩展到 8。三按钮现场显示最终 DecorView 的最后一个 direct child 已变成 `visibility=INVISIBLE` 的普通 ColorDrawable View，而不是 V25 手势现场的 navigation container；因此实验性 `setWillNotDraw()` 保护条件没有执行，不能解释灰色。更关键的是，V28 透明色和 V27 contrast false 都无变化，结合代码审查发现 late helper 通过 `InputView.getContext() instanceof InputMethodService` 取 Window；实际 InputView 可由包装 Context 创建，这条分支可以静默 no-op。
 - V30 Debug 在 `configureImeWindow(InputMethodService)` 已取得真实 Window 时保存该公开 Window 引用，最终 Insets listener 直接用它重申 `setNavigationBarContrastEnforced(false)`；不再通过 View Context 猜测 Service，也撤销 V28 的透明色实验和 V29 的 `setWillNotDraw()` 实验。用户确认灰层仍无变化，彻底排除 contrast flag。
 - V30 深层日志确认三按钮最终 DecorView 的主题 frame 已完整覆盖底部 126 px，InputView 正确结束在它上方；最后一个 direct child 是同样位于底部 126 px、带 ColorDrawable 但 `visibility=INVISIBLE` 的平台 navigation color View，导航按钮由外部 Taskbar surface 提供。target 28 的旧 decor 模型会显示这个平台颜色 View，而 target 35 edge-to-edge 将其隐藏，外部三按钮半透明层因而覆盖主题 frame形成灰色。V31 Debug 只在最后一个 direct child 是非 ViewGroup、正高度且隐藏时将其设为 VISIBLE；三按钮灰层随即消失且按钮仍正常，证明平台 color View 是正确承载层。手势模式最后一个 child 是导航 ViewGroup，结构条件不成立。
-- V31 的平台 color View 颜色未随当前主题正确适配，因为旧 `NavigationBarCompat.apply()` 可能发生在 body 尚未稳定的早期生命周期。V32 Debug 保存权威 InputMethodService 引用，在 Insets listener 已取得实际 body background 并完成主题 frame 更新后再次调用现有 `NavigationBarCompat.apply()`，随后 V31 的 posted diagnostic 才显示平台 color View；这样平台 ColorDrawable、图标 appearance 与同一次稳定主题状态同步。先验证三按钮多主题，再切手势验证结构条件和颜色无回归。
+- V31 的平台 color View 颜色未随当前主题正确适配。V32 Debug 在 Insets listener 已取得稳定 body 后再次调用 `NavigationBarCompat.apply()`，但用户确认颜色仍不一致，说明 target-35 edge-to-edge 下 Window navigation color 不会再同步到被平台隐藏的 ColorDrawable。
+- V33 Debug 在与 V31 相同的三按钮专属结构条件下，从已经显示正确的专用 theme frame 取得 background，优先通过 `ConstantState.newDrawable(resources).mutate()` 创建独立副本，并直接赋给平台 color View 后再显示；没有 ConstantState 时才共享原 Drawable。这样两个底部承载层使用同一次 theme frame 状态，不依赖已失效的 Window color 同步。手势模式结构条件仍不成立；三按钮需切换浅/深主题验证实时更新后，再切手势回归。
 
 ### target 36 / Android 16
 
