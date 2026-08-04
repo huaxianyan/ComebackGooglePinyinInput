@@ -25,6 +25,7 @@
 - 从已验收的 target 34 创建 `feat/target-sdk-35`；V1 仅提升到 Android 15 / API 35，不使用 edge-to-edge opt-out，也不预先加入推测性的 Insets、TextView 或键盘布局补偿，以保留可归因的视觉基线。
 - target 35 V1 真机确认首次引导页脚和 IME 底行被三键导航栏遮挡；V2 保持 edge-to-edge 开启，仅为 first-run footer/pager 与 InputView 应用 bottom inset，并用原键盘背景绘制 IME inset 区域。
 - V2 复测发现 broad system-window bottom inset 在 IME 窗口产生过大黑区且最高键盘仍可被遮挡；V3 改为只读取 `WindowInsets.Type.navigationBars()`，避免混入其他 inset source。
+- V3 在键盘高度调整引发的系统栏可见性过渡中会收到临时 bottom=0；V4 改用 `getInsetsIgnoringVisibility(Type.navigationBars())` 保持设备动态导航栏高度稳定，不写死像素值。
 
 ## [1.0.3] - 2026-08-01
 

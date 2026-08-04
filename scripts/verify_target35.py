@@ -96,7 +96,7 @@ def main() -> None:
     required_listener = (
         "Landroid/view/View$OnApplyWindowInsetsListener;",
         "Landroid/view/WindowInsets$Type;->navigationBars()I",
-        "Landroid/view/WindowInsets;->getInsets(I)Landroid/graphics/Insets;",
+        "Landroid/view/WindowInsets;->getInsetsIgnoringVisibility(I)Landroid/graphics/Insets;",
         "Landroid/graphics/Insets;->bottom:I",
         "->setPadding(IIII)V",
         "Landroid/view/ViewGroup$LayoutParams;->height:I",
@@ -105,6 +105,11 @@ def main() -> None:
         raise RuntimeError(
             "Broad system-window inset would include unrelated IME/content insets; "
             "use WindowInsets.Type.navigationBars() only"
+        )
+    if "Landroid/view/WindowInsets;->getInsets(I)" in listener_text:
+        raise RuntimeError(
+            "Visibility-sensitive navigation insets can collapse during keyboard-height "
+            "reconfiguration; use getInsetsIgnoringVisibility() for a stable baseline"
         )
     missing = [item for item in required_helper if item not in helper_text]
     missing += [item for item in required_listener if item not in listener_text]

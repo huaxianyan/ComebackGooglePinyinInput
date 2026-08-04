@@ -391,7 +391,7 @@ V1 构建记录：
 
 分支：`feat/target-sdk-35`
 
-状态：**V2 复测发现 inset 类型过宽，V3 navigationBars-only 修复已安装，等待视觉复测**。
+状态：**V3 复测发现导航栏可见性切换导致 inset 归零，V4 稳定 inset 修复中**。
 
 这是独立视觉边界。V1 从已验收的 target 34 创建，只提升到 Android 15 / API 35，刻意采用不掩盖平台行为的基线：
 
@@ -481,6 +481,15 @@ V3 构建与安装记录：
 - 已覆盖安装，设备 `base.apk` SHA-256 与 artifact 一致；
 - 覆盖安装前后私有词典、主题与 SharedPreferences 文件 SHA-256 完全一致；
 - target 35 仍为当前默认 IME，进程已由系统正常重启，等待默认和最高键盘高度复测。
+
+V3 复测结果与 V4 修正：
+
+- V3 首次显示时能够预留虚拟键区域，但只要改变一次键盘高度，键盘就再次向下移动，黑色安全区同步缩小，底部保护不再稳定；
+- 代码和静态调用审计没有发现旧键盘高度逻辑会直接覆盖 `InputView` padding；
+- 原因是 V3 使用 visibility-sensitive 的 `getInsets(Type.navigationBars())`。调整键盘高度会触发 IME/Settings 窗口及系统栏可见性过渡，回调可能在导航栏暂时不可见时返回 bottom=0，并用该值重置原始 padding；
+- V4 改为 `getInsetsIgnoringVisibility(Type.navigationBars())`，始终使用设备导航栏的稳定几何高度，不受设置页切换、IME 隐藏/显示或一次键盘高度调整影响；
+- 仍然只查询 navigation bars，不混入 IME、状态栏或其他 inset source，也不写死像素值；
+- 门禁同时拒绝旧 broad API 和 visibility-sensitive `getInsets()`。
 
 ### target 36 / Android 16
 
