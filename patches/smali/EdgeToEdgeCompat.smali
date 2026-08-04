@@ -6,6 +6,8 @@
 # static fields
 .field private static inputView:Landroid/view/View;
 
+.field private static imeWindow:Landroid/view/Window;
+
 
 # direct methods
 .method private constructor <init>()V
@@ -109,8 +111,8 @@
     return v0
 .end method
 
-.method public static configureNavigationBarSurface(Landroid/view/View;)V
-    .locals 3
+.method public static suppressNavigationBarContrast(Landroid/view/View;)V
+    .locals 2
 
     sget v0, Landroid/os/Build$VERSION;->SDK_INT:I
 
@@ -118,33 +120,11 @@
 
     if-lt v0, v1, :done
 
-    if-eqz p0, :done
-
-    invoke-virtual {p0}, Landroid/view/View;->getContext()Landroid/content/Context;
-
-    move-result-object p0
-
-    instance-of v0, p0, Landroid/inputmethodservice/InputMethodService;
-
-    if-eqz v0, :done
-
-    check-cast p0, Landroid/inputmethodservice/InputMethodService;
-
-    invoke-virtual {p0}, Landroid/inputmethodservice/InputMethodService;->getWindow()Landroid/app/Dialog;
-
-    move-result-object v0
-
-    if-eqz v0, :done
-
-    invoke-virtual {v0}, Landroid/app/Dialog;->getWindow()Landroid/view/Window;
-
-    move-result-object v0
+    sget-object v0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->imeWindow:Landroid/view/Window;
 
     if-eqz v0, :done
 
     const/4 v1, 0x0
-
-    invoke-virtual {v0, v1}, Landroid/view/Window;->setNavigationBarColor(I)V
 
     invoke-virtual {v0, v1}, Landroid/view/Window;->setNavigationBarContrastEnforced(Z)V
 
@@ -220,6 +200,8 @@
     move-result-object v0
 
     if-eqz v0, :done
+
+    sput-object v0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->imeWindow:Landroid/view/Window;
 
     const/4 v1, 0x1
 

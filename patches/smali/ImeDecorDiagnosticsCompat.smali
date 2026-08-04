@@ -42,54 +42,6 @@
 
     invoke-static {v0, v1, v2}, Lcom/google/android/inputmethod/pinyin/ImeDecorDiagnosticsCompat;->dump(Landroid/view/View;II)V
 
-    instance-of v1, v0, Landroid/view/ViewGroup;
-
-    if-eqz v1, :done
-
-    check-cast v0, Landroid/view/ViewGroup;
-
-    invoke-virtual {v0}, Landroid/view/ViewGroup;->getChildCount()I
-
-    move-result v1
-
-    if-lez v1, :done
-
-    add-int/lit8 v1, v1, -0x1
-
-    invoke-virtual {v0, v1}, Landroid/view/ViewGroup;->getChildAt(I)Landroid/view/View;
-
-    move-result-object v0
-
-    instance-of v1, v0, Landroid/view/ViewGroup;
-
-    if-eqz v1, :done
-
-    check-cast v0, Landroid/view/ViewGroup;
-
-    invoke-virtual {v0}, Landroid/view/ViewGroup;->getChildCount()I
-
-    move-result v1
-
-    if-lez v1, :done
-
-    add-int/lit8 v1, v1, -0x1
-
-    invoke-virtual {v0, v1}, Landroid/view/ViewGroup;->getChildAt(I)Landroid/view/View;
-
-    move-result-object v0
-
-    const-string v1, "diagnosticSetWillNotDraw"
-
-    const-string v2, "GooglePinyinImeDecor"
-
-    invoke-static {v2, v1}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
-
-    const/4 v1, 0x1
-
-    invoke-virtual {v0, v1}, Landroid/view/View;->setWillNotDraw(Z)V
-
-    invoke-virtual {v0}, Landroid/view/View;->invalidate()V
-
     :done
     return-void
 .end method
