@@ -111,7 +111,8 @@ def main() -> None:
         "Landroid/view/WindowMetrics;->getWindowInsets()Landroid/view/WindowInsets;",
         "Landroid/view/WindowInsets$Type;->navigationBars()I",
         "getInsetsIgnoringVisibility(I)Landroid/graphics/Insets;",
-        "suppressNavigationBarContrast(Landroid/view/View;)V",
+        "configureNavigationBarSurface(Landroid/view/View;)V",
+        "Landroid/view/Window;->setNavigationBarColor(I)V",
         "Landroid/view/Window;->setNavigationBarContrastEnforced(Z)V",
         "scheduleApplyInsets(Landroid/view/View;)V",
         "Landroid/view/View;->post(Ljava/lang/Runnable;)Z",
@@ -215,7 +216,7 @@ def main() -> None:
             raise RuntimeError(f"Incomplete initial InputView attach listener: {item}")
     required_ime_listener = (
         "EdgeToEdgeCompat;->getNavigationBarBottomInset(Landroid/view/View;)I",
-        "EdgeToEdgeCompat;->suppressNavigationBarContrast(Landroid/view/View;)V",
+        "EdgeToEdgeCompat;->configureNavigationBarSurface(Landroid/view/View;)V",
         "Landroid/view/ViewGroup$MarginLayoutParams;->bottomMargin:I",
         "Landroid/view/View;->getRootView()Landroid/view/View;",
         "Landroid/view/ViewGroup;->getChildCount()I",

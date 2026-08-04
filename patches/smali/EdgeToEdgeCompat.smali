@@ -109,7 +109,7 @@
     return v0
 .end method
 
-.method public static suppressNavigationBarContrast(Landroid/view/View;)V
+.method public static configureNavigationBarSurface(Landroid/view/View;)V
     .locals 3
 
     sget v0, Landroid/os/Build$VERSION;->SDK_INT:I
@@ -143,6 +143,8 @@
     if-eqz v0, :done
 
     const/4 v1, 0x0
+
+    invoke-virtual {v0, v1}, Landroid/view/Window;->setNavigationBarColor(I)V
 
     invoke-virtual {v0, v1}, Landroid/view/Window;->setNavigationBarContrastEnforced(Z)V
 
