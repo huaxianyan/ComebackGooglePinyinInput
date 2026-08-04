@@ -585,7 +585,7 @@ V4 复测与 V5 架构修正：
 - V34 Debug 移除该一次性门控，让每次专用 IME Insets/theme callback 都 post 同一结构验证和 Drawable 同步。用户确认三按钮多主题和首次切到手势均正常，但手势再切回三按钮时曾出现平台 color View 覆盖全屏、三按钮消失；切走再回来后恢复几何但灰层复发。说明“最后一个非 ViewGroup 且正高度”在导航模式过渡帧中过宽，会把暂时全屏的 decor color View误判为稳定三按钮背景。
 - V35 Debug 增加公开 WindowMetrics `WindowInsets.Type.tappableElement()` 判定：只有候选平台 View 的实际 height 精确等于正数 `tappableElement.bottom` 才同步/显示。V35 不再出现全屏白色，手势、几何和应用 Insets 正常，但切回三按钮后灰层仍在；说明所有 Insets callbacks 都发生在 decor 过渡结构阶段并被正确拒绝，而最终稳定的三按钮 color View 出现后没有新的 Insets callback。
 - V36 Debug 在当前 DecorView 上安装一次普通 `OnLayoutChangeListener`，但用户确认三按钮灰层仍在，其他路径正常。持续 layout listener 与同步操作自身的 `setBackground/setVisibility` 会互相触发布局，既可能形成反馈，也不能保证回调恰好落在平台 color View 替换后的结构，因此不进入正式实现。
-- V37 Debug 删除 layout listener，改为每次 Insets/theme callback 立即 post 一次、并对同一 Runnable 再 `postDelayed(300ms)` 一次。立即执行仍由 tappable-height 条件过滤过渡全屏帧；300ms bounded retry 在 framework 完成导航模式重建后同步稳定 color View，不建立持久监听或反馈循环。必须验证模式往返、主题切换和首次输入；若系统动画极端情况下仍不够，再根据日志调整为有限多帧状态机，而不是恢复永久 listener。
+- V37 Debug 删除 layout listener，改为每次 Insets/theme callback 立即 post 一次、并对同一 Runnable 再 `postDelayed(300ms)` 一次；用户确认三按钮首次仍有灰层。V38 改用全新 `GooglePinyinImeSync` tag，只记录 schedule、候选是否 ViewGroup、候选高度和 tappable bottom 整数，以绕过旧 decor tag 的 logd 噪声/抑制并确定是入口未调用、结构不匹配还是 WindowMetrics 值不匹配。仍不记录任何内容或颜色数据。
 
 ### target 36 / Android 16
 

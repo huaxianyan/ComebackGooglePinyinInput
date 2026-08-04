@@ -4,10 +4,40 @@
 
 .field private static logged:Z
 
+.method private static logSync(Ljava/lang/String;I)V
+    .locals 2
+
+    new-instance v0, Ljava/lang/StringBuilder;
+
+    invoke-direct {v0, p0}, Ljava/lang/StringBuilder;-><init>(Ljava/lang/String;)V
+
+    const-string v1, "="
+
+    invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+
+    invoke-virtual {v0, p1}, Ljava/lang/StringBuilder;->append(I)Ljava/lang/StringBuilder;
+
+    invoke-virtual {v0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
+
+    move-result-object v0
+
+    const-string v1, "GooglePinyinImeSync"
+
+    invoke-static {v1, v0}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
+
+    return-void
+.end method
+
 .method public static dumpOnce(Landroid/view/View;)V
     .locals 3
 
     if-eqz p0, :done
+
+    const-string v0, "schedule"
+
+    const/4 v1, 0x1
+
+    invoke-static {v0, v1}, Lcom/google/android/inputmethod/pinyin/ImeDecorDiagnosticsCompat;->logSync(Ljava/lang/String;I)V
 
     new-instance v0, Lcom/google/android/inputmethod/pinyin/ImeDecorDiagnosticsCompat$DumpRunnable;
 
@@ -24,7 +54,7 @@
 .end method
 
 .method public static dumpNow(Landroid/view/View;)V
-    .locals 3
+    .locals 4
 
     if-eqz p0, :done
 
@@ -64,17 +94,29 @@
 
     instance-of v1, v0, Landroid/view/ViewGroup;
 
+    const-string v3, "candidateGroup"
+
+    invoke-static {v3, v1}, Lcom/google/android/inputmethod/pinyin/ImeDecorDiagnosticsCompat;->logSync(Ljava/lang/String;I)V
+
     if-nez v1, :done
 
     invoke-virtual {v0}, Landroid/view/View;->getHeight()I
 
     move-result v1
 
+    const-string v3, "candidateHeight"
+
+    invoke-static {v3, v1}, Lcom/google/android/inputmethod/pinyin/ImeDecorDiagnosticsCompat;->logSync(Ljava/lang/String;I)V
+
     if-lez v1, :done
 
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->getTappableElementBottomInset(Landroid/view/View;)I
 
     move-result p0
+
+    const-string v3, "tappableBottom"
+
+    invoke-static {v3, p0}, Lcom/google/android/inputmethod/pinyin/ImeDecorDiagnosticsCompat;->logSync(Ljava/lang/String;I)V
 
     if-ne v1, p0, :done
 
