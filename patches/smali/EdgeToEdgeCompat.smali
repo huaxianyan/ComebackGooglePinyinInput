@@ -66,6 +66,34 @@
     return-void
 .end method
 
+.method public static logImeGeometry(Ljava/lang/String;I)V
+    .locals 2
+
+    new-instance v0, Ljava/lang/StringBuilder;
+
+    const-string v1, "event="
+
+    invoke-direct {v0, v1}, Ljava/lang/StringBuilder;-><init>(Ljava/lang/String;)V
+
+    invoke-virtual {v0, p0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+
+    const-string p0, " value="
+
+    invoke-virtual {v0, p0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+
+    invoke-virtual {v0, p1}, Ljava/lang/StringBuilder;->append(I)Ljava/lang/StringBuilder;
+
+    invoke-virtual {v0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
+
+    move-result-object p0
+
+    const-string p1, "GooglePinyinImeGeometry"
+
+    invoke-static {p1, p0}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
+
+    return-void
+.end method
+
 .method public static getNavigationBarBottomInset(Landroid/view/View;)I
     .locals 3
 
@@ -106,6 +134,10 @@
     iget v0, p0, Landroid/graphics/Insets;->bottom:I
 
     :done
+    const-string p0, "windowNavBottom"
+
+    invoke-static {p0, v0}, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->logImeGeometry(Ljava/lang/String;I)V
+
     return v0
 .end method
 

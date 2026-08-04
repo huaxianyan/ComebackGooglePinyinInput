@@ -34,13 +34,45 @@
 
     move-result p0
 
+    const-string v1, "runnableAttached"
+
+    invoke-static {v1, p0}, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->logImeGeometry(Ljava/lang/String;I)V
+
     if-eqz p0, :done
 
     invoke-virtual {v0}, Landroid/view/View;->getRootWindowInsets()Landroid/view/WindowInsets;
 
     move-result-object v1
 
+    if-eqz v1, :root_missing
+
+    const/4 p0, 0x1
+
+    goto :root_logged
+
+    :root_missing
+    const/4 p0, 0x0
+
+    :root_logged
+    const-string p0, "rootInsetsPresent"
+
+    if-eqz v1, :log_root_missing
+
+    const/4 v1, 0x1
+
+    goto :log_root
+
+    :log_root_missing
+    const/4 v1, 0x0
+
+    :log_root
+    invoke-static {p0, v1}, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->logImeGeometry(Ljava/lang/String;I)V
+
     if-eqz v1, :request
+
+    invoke-virtual {v0}, Landroid/view/View;->getRootWindowInsets()Landroid/view/WindowInsets;
+
+    move-result-object v1
 
     invoke-virtual {v0, v1}, Landroid/view/View;->dispatchApplyWindowInsets(Landroid/view/WindowInsets;)Landroid/view/WindowInsets;
 

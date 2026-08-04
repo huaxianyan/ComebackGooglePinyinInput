@@ -106,6 +106,8 @@ def main() -> None:
         "attachInputView(Landroid/view/View;)V",
         "sput-object p0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->inputView:Landroid/view/View;",
         "sget-object v0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->inputView:Landroid/view/View;",
+        "logImeGeometry(Ljava/lang/String;I)V",
+        'const-string p1, "GooglePinyinImeGeometry"',
         "getNavigationBarBottomInset(Landroid/view/View;)I",
         "Landroid/view/WindowManager;->getCurrentWindowMetrics()Landroid/view/WindowMetrics;",
         "Landroid/view/WindowMetrics;->getWindowInsets()Landroid/view/WindowInsets;",
@@ -121,6 +123,16 @@ def main() -> None:
         "const/16 v1, 0x23",
         "const/16 v1, 0x1e",
     )
+    diagnostic_text = helper_text + ime_listener_text + apply_runnable_text
+    for forbidden in (
+        "candidateText",
+        "clipboard",
+        "getText()",
+        "SharedPreferences",
+        "InputConnection",
+    ):
+        if forbidden in diagnostic_text:
+            raise RuntimeError(f"Sensitive content in IME geometry diagnostics: {forbidden}")
     required_runnable = (
         "Ljava/lang/Runnable;",
         "Landroid/view/View;->isAttachedToWindow()Z",

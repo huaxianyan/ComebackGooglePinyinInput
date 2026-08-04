@@ -18,7 +18,13 @@
 
 # virtual methods
 .method public onViewAttachedToWindow(Landroid/view/View;)V
-    .locals 0
+    .locals 2
+
+    const-string v0, "onViewAttached"
+
+    const/4 v1, 0x1
+
+    invoke-static {v0, v1}, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->logImeGeometry(Ljava/lang/String;I)V
 
     invoke-virtual {p1, p0}, Landroid/view/View;->removeOnAttachStateChangeListener(Landroid/view/View$OnAttachStateChangeListener;)V
 

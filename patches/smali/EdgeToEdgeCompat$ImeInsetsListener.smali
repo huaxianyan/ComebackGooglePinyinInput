@@ -32,6 +32,10 @@
 
     move-result v0
 
+    const-string p1, "listenerInset"
+
+    invoke-static {p1, v0}, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->logImeGeometry(Ljava/lang/String;I)V
+
     iget-object v1, p0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat$ImeInsetsListener;->root:Landroid/view/View;
 
     invoke-virtual {v1}, Landroid/view/View;->getLayoutParams()Landroid/view/ViewGroup$LayoutParams;
@@ -46,11 +50,19 @@
 
     iget v3, v2, Landroid/view/ViewGroup$MarginLayoutParams;->bottomMargin:I
 
+    const-string p1, "marginBefore"
+
+    invoke-static {p1, v3}, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->logImeGeometry(Ljava/lang/String;I)V
+
     if-eq v3, v0, :parent
 
     iput v0, v2, Landroid/view/ViewGroup$MarginLayoutParams;->bottomMargin:I
 
     invoke-virtual {v1, v2}, Landroid/view/View;->setLayoutParams(Landroid/view/ViewGroup$LayoutParams;)V
+
+    const-string p1, "marginApplied"
+
+    invoke-static {p1, v0}, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->logImeGeometry(Ljava/lang/String;I)V
 
     :parent
     invoke-virtual {v1}, Landroid/view/View;->getRootView()Landroid/view/View;
