@@ -97,6 +97,7 @@ def main() -> None:
     required_helper = (
         "attachFirstRun(Landroid/app/Activity;)V",
         "attachInputView(Landroid/view/View;)V",
+        "getInputViewMeasuredHeight(Landroid/view/View;)I",
         "configureImeWindow(Landroid/inputmethodservice/InputMethodService;)V",
         "Landroid/view/Window;->setDecorFitsSystemWindows(Z)V",
         "Landroid/view/WindowManager$LayoutParams;->setFitInsetsSides(I)V",
@@ -142,6 +143,10 @@ def main() -> None:
         raise RuntimeError("IME lifecycle does not configure system-bar fitting")
     if "EdgeToEdgeCompat;->attachInputView" not in input_view:
         raise RuntimeError("IME InputView does not attach the bottom-frame coordinator")
+    if "EdgeToEdgeCompat;->getInputViewMeasuredHeight" not in input_view:
+        raise RuntimeError("IME InputView does not include the bottom frame in measurement")
+    if input_view.count("->setMeasuredDimension(II)V") != 2:
+        raise RuntimeError("Unexpected target-35 InputView measurement changes")
     if "->setPadding(IIII)V" in input_view:
         raise RuntimeError("IME InputView must retain native padding behavior")
     required_ime_listener = (

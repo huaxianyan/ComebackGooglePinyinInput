@@ -546,6 +546,9 @@ V4 复测与 V5 架构修正：
 - V7 预期 frame：IME/source 到 display bottom，keyboard area 到 navigation top，底部 frame 只覆盖 navigation region；需同时验证应用编辑区上移、主题颜色、反复高度切换和手势导航零/小 inset。
 - V7 implementation `138af07`；workflow `30878039751`，artifact ID `8880234263`，artifact `ComebackGooglePinyinInput-ComebackGooglePinyinInput-target-sdk-35-audit-v7`，APK SHA-256 `4aa24ef61241c0a2120aa41d198081d95a44732311118b283223e07714c4d79f`。
 - V7 已通过 clean decode/patch、target 31/33/34/35 静态门禁、apktool rebuild、云端 build/sign、zipalign、v1/v2/v3 signature、证书和最终 APK re-decode；overlay 安装后的 APK hash 与 artifact 一致，16 个 private dictionary/theme/SharedPreferences 文件 hash 全部保持不变。
+- V7 现场 frame 为 `ime=[0,1607][1080,2410]`、`navigationBars=[0,2284][1080,2410]`：应用输入区已正确上移，证明 bottom-anchored IME source 修复有效；但键盘 body 仍占满 803 px Window 并下沉到导航栏后，bottom frame 没有增加 Window 测量高度。
+- 根因是旧 `InputView.onMeasure()` 在 `AT_MOST` 下会在 `FrameLayout.onMeasure()` 之后强制使用父 MeasureSpec size；因此 keyboard-area margin 与 bottom-frame child 虽已更新为 126 px，root 的 measured height 仍被压回 803 px。V7 不可验收。
+- V8 保留 V7 正确的 Window/source 和独立 bottom-frame 模型，仅在旧 `InputView.onMeasure()` 尾部做窄修正：API 35+ measured height 明确等于原生 `keyboard_area.measuredHeight + ime_navigation_frame.height`。不改变 keyboard area 自身 measured height、padding、按键布局或 `keyboard_height_ratio`；Insets 更新继续触发重新测量，因此反复高度切换必须同步验证。
 
 ### target 36 / Android 16
 

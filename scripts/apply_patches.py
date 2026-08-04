@@ -182,6 +182,25 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
         "EdgeToEdgeCompat;->attachInputView(Landroid/view/View;)V\n\n"
         "    return-void",
     )
+    replace_once(
+        input_view,
+        "    .line 30\n    :cond_1\n    return-void",
+        "    .line 30\n    :cond_1\n"
+        "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/"
+        "EdgeToEdgeCompat;->getInputViewMeasuredHeight(Landroid/view/View;)I\n\n"
+        "    move-result v0\n\n"
+        "    invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/libs/framework/"
+        "core/InputView;->getMeasuredHeight()I\n\n"
+        "    move-result v1\n\n"
+        "    if-eq v0, v1, :measurement_done\n\n"
+        "    invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/libs/framework/"
+        "core/InputView;->getMeasuredWidth()I\n\n"
+        "    move-result v1\n\n"
+        "    invoke-virtual {p0, v1, v0}, Lcom/google/android/apps/inputmethod/libs/"
+        "framework/core/InputView;->setMeasuredDimension(II)V\n\n"
+        "    :measurement_done\n"
+        "    return-void",
+    )
 
     ids = decoded / "res/values/ids.xml"
     replace_once(

@@ -85,6 +85,57 @@
     return-void
 .end method
 
+.method public static getInputViewMeasuredHeight(Landroid/view/View;)I
+    .locals 3
+
+    invoke-virtual {p0}, Landroid/view/View;->getMeasuredHeight()I
+
+    move-result v0
+
+    sget v1, Landroid/os/Build$VERSION;->SDK_INT:I
+
+    const/16 v2, 0x23
+
+    if-lt v1, v2, :done
+
+    const v1, 0x7f0f0153
+
+    invoke-virtual {p0, v1}, Landroid/view/View;->findViewById(I)Landroid/view/View;
+
+    move-result-object v1
+
+    if-eqz v1, :done
+
+    invoke-virtual {v1}, Landroid/view/View;->getMeasuredHeight()I
+
+    move-result v1
+
+    if-lez v1, :done
+
+    const v2, 0x7f0f06eb
+
+    invoke-virtual {p0, v2}, Landroid/view/View;->findViewById(I)Landroid/view/View;
+
+    move-result-object p0
+
+    if-eqz p0, :done
+
+    invoke-virtual {p0}, Landroid/view/View;->getLayoutParams()Landroid/view/ViewGroup$LayoutParams;
+
+    move-result-object p0
+
+    if-eqz p0, :done
+
+    iget p0, p0, Landroid/view/ViewGroup$LayoutParams;->height:I
+
+    if-lez p0, :done
+
+    add-int v0, v1, p0
+
+    :done
+    return v0
+.end method
+
 .method public static configureImeWindow(Landroid/inputmethodservice/InputMethodService;)V
     .locals 3
 
