@@ -62,6 +62,29 @@
     return-void
 .end method
 
+.method public static attachInputView(Landroid/view/View;)V
+    .locals 2
+
+    sget v0, Landroid/os/Build$VERSION;->SDK_INT:I
+
+    const/16 v1, 0x23
+
+    if-lt v0, v1, :done
+
+    if-eqz p0, :done
+
+    new-instance v0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat$ImeInsetsListener;
+
+    invoke-direct {v0, p0}, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat$ImeInsetsListener;-><init>(Landroid/view/View;)V
+
+    invoke-virtual {p0, v0}, Landroid/view/View;->setOnApplyWindowInsetsListener(Landroid/view/View$OnApplyWindowInsetsListener;)V
+
+    invoke-virtual {p0}, Landroid/view/View;->requestApplyInsets()V
+
+    :done
+    return-void
+.end method
+
 .method public static configureImeWindow(Landroid/inputmethodservice/InputMethodService;)V
     .locals 3
 
@@ -91,7 +114,7 @@
 
     move-result-object v1
 
-    const/16 v2, 0xf
+    const/4 v2, 0x7
 
     invoke-virtual {v1, v2}, Landroid/view/WindowManager$LayoutParams;->setFitInsetsSides(I)V
 

@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Verify Android 15 edge-to-edge and TextView audit invariants.
 
-Activities keep narrow inset handling. The IME uses system-owned navigation-bar
-avoidance through its Window, without padding or resizing the legacy InputView.
+Activities keep narrow inset handling. The IME Window covers the navigation
+region, while a dedicated themed bottom frame reserves space below the untouched
+legacy keyboard body and keeps the complete IME inset visible to applications.
 """
 
 from __future__ import annotations
@@ -86,13 +87,21 @@ def main() -> None:
         raise RuntimeError("Missing narrow Android 15 bottom-inset helper")
     helper_text = helper.read_text(encoding="utf-8")
     listener_text = listener.read_text(encoding="utf-8")
+    ime_listener = decoded / (
+        "smali/com/google/android/inputmethod/pinyin/"
+        "EdgeToEdgeCompat$ImeInsetsListener.smali"
+    )
+    if not ime_listener.is_file():
+        raise RuntimeError("Missing dedicated IME bottom-frame inset listener")
+    ime_listener_text = ime_listener.read_text(encoding="utf-8")
     required_helper = (
         "attachFirstRun(Landroid/app/Activity;)V",
+        "attachInputView(Landroid/view/View;)V",
         "configureImeWindow(Landroid/inputmethodservice/InputMethodService;)V",
         "Landroid/view/Window;->setDecorFitsSystemWindows(Z)V",
         "Landroid/view/WindowManager$LayoutParams;->setFitInsetsSides(I)V",
         "Landroid/view/Window;->setAttributes(Landroid/view/WindowManager$LayoutParams;)V",
-        "const/16 v2, 0xf",
+        "const/4 v2, 0x7",
         "const/16 v1, 0x23",
         "const/16 v1, 0x1e",
     )
@@ -131,10 +140,22 @@ def main() -> None:
         raise RuntimeError("First-run footer does not receive bottom insets")
     if "EdgeToEdgeCompat;->configureImeWindow" not in pinyin_ime:
         raise RuntimeError("IME lifecycle does not configure system-bar fitting")
-    if "EdgeToEdgeCompat" in input_view or "->setPadding(IIII)V" in input_view:
-        raise RuntimeError(
-            "IME InputView must retain native padding and measurement behavior"
-        )
+    if "EdgeToEdgeCompat;->attachInputView" not in input_view:
+        raise RuntimeError("IME InputView does not attach the bottom-frame coordinator")
+    if "->setPadding(IIII)V" in input_view:
+        raise RuntimeError("IME InputView must retain native padding behavior")
+    required_ime_listener = (
+        "getInsetsIgnoringVisibility(I)Landroid/graphics/Insets;",
+        "Landroid/view/ViewGroup$MarginLayoutParams;->bottomMargin:I",
+        "Landroid/view/ViewGroup$LayoutParams;->height:I",
+        "const v0, 0x7f0f0153",
+        "const v0, 0x7f0f06eb",
+    )
+    missing = [item for item in required_ime_listener if item not in ime_listener_text]
+    if missing:
+        raise RuntimeError(f"Incomplete IME bottom-frame coordinator: {missing}")
+    if "->setPadding(IIII)V" in ime_listener_text:
+        raise RuntimeError("IME coordinator must not restore root-padding strategy")
 
     # setDecorFitsSystemWindows(true) is deliberately scoped to the IME helper.
     # It is not Android 15's manifest/theme opt-out: it selects Gboard's
@@ -152,22 +173,24 @@ def main() -> None:
         )
     if "const/4 v1, 0x1" not in helper_text:
         raise RuntimeError("IME Window must use non-covering decor fitting")
-    if "const/16 v2, 0xf" not in helper_text:
+    if "const/4 v2, 0x7" not in helper_text:
         raise RuntimeError(
-            "IME fitInsetsSides must include LEFT|TOP|RIGHT|BOTTOM"
+            "Covering IME Window must fit LEFT|TOP|RIGHT and leave BOTTOM to its frame"
         )
 
     for relative in ("res/layout/ims_input_view.xml", "res/layout-v21/ims_input_view.xml"):
         text = (decoded / relative).read_text(encoding="utf-8")
-        if text.count('android:background="?BgKeyboardArea"') != 1:
+        if text.count('android:background="?BgKeyboardArea"') != 2:
             raise RuntimeError(
-                f"IME root background override or native keyboard-area loss: {relative}"
+                f"IME must have native keyboard surface plus one bottom frame: {relative}"
             )
+        if 'android:id="@id/ime_navigation_frame"' not in text:
+            raise RuntimeError(f"Missing dedicated IME bottom frame: {relative}")
 
     print(
         "Android 15 invariants verified: edge-to-edge is not opted out, first-run "
-        "controls receive narrow insets, the IME Window owns system-bar avoidance, "
-        "InputView geometry remains native, and no speculative TextView or "
+        "controls receive narrow insets, the IME owns a dedicated themed bottom frame, "
+        "the keyboard body remains native, and no speculative TextView or "
         "keyboard-layout compensation was introduced"
     )
 

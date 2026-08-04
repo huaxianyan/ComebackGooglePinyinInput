@@ -220,4 +220,30 @@ ime visibleFrame=[0,1481][1080,2284]
 mImeShowing=true mLastDrawn=true
 ```
 
-IME 的 bottom 恰好等于 navigation bar 的 top，两个区域没有像素重叠。维护者在多个键盘高度间来回切换后，最下一行始终位于导航键上方，且 V5 已消失的黑色大 surface 没有恢复。这证明 `fitInsetsSides(BOTTOM)` 位于正确的 Window 几何层，并与旧 `keyboard_height_ratio` 管线解耦。
+IME 的 bottom 恰好等于 navigation bar 的 top，两个区域没有像素重叠。维护者在多个键盘高度间来回切换后，最下一行始终位于导航键上方，且 V5 已消失的黑色大 surface 没有恢复。这个结果只证明 `fitInsetsSides(BOTTOM)` 能稳定分离键盘 body 和导航栏，**不能证明完整 IME 协议正确**。
+
+### V6 应用侧反证：IME source 不能在 navigation top 结束
+
+进一步功能回归出现两个严重问题：
+
+1. 底部输入区域不再随键盘正确上移，会被 IME 遮挡；
+2. navigation region 不属于 IME surface，透明导航栏显示应用内容，无法按键盘主题绘制。
+
+现场目标应用使用 `ADJUST_NOTHING` 并依赖现代 WindowInsets。V6 发布的 IME source 是 `[0,1481][1080,2284]`，没有延伸到 display bottom `2410`。这会破坏应用所依赖的 bottom-anchored IME inset 语义。正确几何不能只是“键盘和导航栏不重叠”，而必须同时满足：
+
+- IME Window/source 延伸到 display bottom，让应用收到完整 IME inset；
+- 实际 keyboard area 在 navigation top 结束；
+- navigation region 仍属于 IME surface，并由键盘主题绘制；
+- 导航区不进入 `keyboard_height_ratio` 的 body 高度。
+
+因此 V7 改用 Gboard 的 covering 模型，而不是 V6 的 Window 裁切模型：Window fit sides 为 `LEFT|TOP|RIGHT`，明确不 fit `BOTTOM`；InputView 内新增专用 bottom frame。Insets coordinator 不修改 root padding，而把 navigation inset 同时写成 `keyboard_area.bottomMargin` 和 bottom-frame height。对 FrameLayout 而言，root 测量高度变成原生 keyboard area 加 bottom margin；键盘 body 上移而高度不变，bottom frame 只绘制最底部 navigation region。
+
+预期三键导航几何为：
+
+```text
+ime/source bottom = display bottom
+keyboard_area bottom = navigation bar top
+bottom_frame = navigation bar frame
+```
+
+这也解释了为什么 V2–V4 的 root padding/background 方案不应恢复：root background 会绘制整个可能扩展的 IME surface，而专用 frame 只绘制 navigation inset；margin/spacer 是键盘 body 之外的兄弟几何，不污染 body 的高度设置。

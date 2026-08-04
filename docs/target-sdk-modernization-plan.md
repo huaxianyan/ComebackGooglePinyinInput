@@ -537,7 +537,13 @@ V4 复测与 V5 架构修正：
 - 维护者反复切换多个键盘高度后确认：最下一行始终位于三键导航键上方，未再出现下沉或黑色大 surface；
 - 键盘保持可见时的现场 Window 证据：navigation bar frame 为 `[0,2284][1080,2410]`，IME frame/visibleFrame 为 `[0,1481][1080,2284]`，两者边界精确相接且不重叠；
 - `mImeShowing=true`、`mLastDrawn=true`，IME Window surface on-screen；V5 的 `fitSides=LEFT TOP RIGHT` 不再出现（全 side 默认值在 dumpsys 中省略）；
-- crash buffer 及 DropBox crash/ANR metadata 均无 target 35 命中；V6 的 IME Window geometry 初步通过，继续做功能和导航模式回归后再接受 target 35。
+- crash buffer 及 DropBox crash/ANR metadata 均无 target 35 命中；
+- 随后的应用侧回归发现 V6 仍不可验收：IME source 在 navigation bar 顶边 `2284` 结束，应用收到的 IME inset 不再延伸到 display bottom；使用现代 Insets/`ADJUST_NOTHING` 的输入界面不会随键盘正确上移，底部编辑区会被遮挡；
+- V6 同时让 navigation region 完全脱离 IME surface，系统透明导航栏显示应用内容，无法使用键盘主题绘制底部区域；
+- 这两个问题共同证明正确模型必须是 Gboard 的 covering Window + dedicated bottom frame：IME source 延伸到屏幕底部以保留应用侧完整 inset，键盘 body 在 Window 内上移，navigation region 由独立主题 frame 绘制；
+- V7 将 Window fit sides 恢复为 `LEFT|TOP|RIGHT (0x07)`，不 fit `BOTTOM`；不恢复 root padding/background，而是在两套 `ims_input_view.xml` 中加入独立 `ime_navigation_frame`；
+- `ImeInsetsListener` 使用 `navigationBars` ignoring-visibility bottom inset，同时设置 `keyboard_area.bottomMargin` 和 bottom frame height。FrameLayout 总高度为“原生键盘高度 + 导航区”，键盘高度逻辑本身保持不变；
+- V7 预期 frame：IME/source 到 display bottom，keyboard area 到 navigation top，底部 frame 只覆盖 navigation region；需同时验证应用编辑区上移、主题颜色、反复高度切换和手势导航零/小 inset。
 
 ### target 36 / Android 16
 

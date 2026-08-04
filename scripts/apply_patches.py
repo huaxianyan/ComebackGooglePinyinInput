@@ -155,9 +155,9 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
 
     # Android 15 disables the legacy bottom offset for edge-to-edge windows.
     # Activities keep their narrow bottom-inset handling. For the IME, follow
-    # a non-covering window mode: ask the IME Window to fit system bars on all
-    # four sides. InputMethodService defaults to LEFT|TOP|RIGHT only, so BOTTOM
-    # must be explicit; never change InputView or keyboard-body measurements.
+    # Gboard's covering IME model: the Window continues through the navigation
+    # region so apps receive the complete IME inset, while a dedicated themed
+    # bottom frame reserves navigationBars space below the native keyboard body.
     first_run_activity = decoded / "smali/apy.smali"
     replace_once(
         first_run_activity,
@@ -170,6 +170,47 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
         "EdgeToEdgeCompat;->attachFirstRun(Landroid/app/Activity;)V\n\n"
         "    .line 28",
     )
+
+    input_view = decoded / (
+        "smali/com/google/android/apps/inputmethod/libs/framework/core/InputView.smali"
+    )
+    replace_once(
+        input_view,
+        "    .line 9\n    :cond_0\n    return-void",
+        "    .line 9\n    :cond_0\n"
+        "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/"
+        "EdgeToEdgeCompat;->attachInputView(Landroid/view/View;)V\n\n"
+        "    return-void",
+    )
+
+    ids = decoded / "res/values/ids.xml"
+    replace_once(
+        ids,
+        "    <item type=\"id\" name=\"action_clear_all\" />\n</resources>",
+        "    <item type=\"id\" name=\"action_clear_all\" />\n"
+        "    <item type=\"id\" name=\"ime_navigation_frame\" />\n</resources>",
+    )
+    public = decoded / "res/values/public.xml"
+    replace_once(
+        public,
+        '    <public type="id" name="action_clear_all" id="0x7f0f06ea" />\n',
+        '    <public type="id" name="action_clear_all" id="0x7f0f06ea" />\n'
+        '    <public type="id" name="ime_navigation_frame" id="0x7f0f06eb" />\n',
+    )
+    bottom_frame = (
+        '    <View android:layout_gravity="bottom" '
+        'android:id="@id/ime_navigation_frame" '
+        'android:background="?BgKeyboardArea" android:layout_width="fill_parent" '
+        'android:layout_height="0.0dip" />\n'
+    )
+    for relative in ("res/layout/ims_input_view.xml", "res/layout-v21/ims_input_view.xml"):
+        path = decoded / relative
+        replace_once(
+            path,
+            "    </FrameLayout>\n</com.google.android.apps.inputmethod.libs.framework.core.InputView>",
+            "    </FrameLayout>\n" + bottom_frame
+            + "</com.google.android.apps.inputmethod.libs.framework.core.InputView>",
+        )
 
     arrays = decoded / "res/values/arrays.xml"
     replace_once(
@@ -1819,6 +1860,7 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
         "DictionaryRecoveryCompat.smali",
         "EdgeToEdgeCompat.smali",
         "EdgeToEdgeCompat$BottomInsetsListener.smali",
+        "EdgeToEdgeCompat$ImeInsetsListener.smali",
     ):
         helper_src = ROOT / "patches/smali" / helper_name
         helper_dst = decoded / "smali/com/google/android/inputmethod/pinyin" / helper_name
