@@ -219,9 +219,8 @@ def main() -> None:
         "Landroid/view/View;->getRootView()Landroid/view/View;",
         "findViewWithTag(Ljava/lang/Object;)Landroid/view/View;",
         'const-string v5, "ime-navigation-frame"',
-        "Landroid/view/View;->bringToFront()V",
         'const-string v2, ".keyboard-body-area"',
-        "Landroid/view/ViewGroup;->addView(Landroid/view/View;Landroid/view/ViewGroup$LayoutParams;)V",
+        "Landroid/view/ViewGroup;->addView(Landroid/view/View;ILandroid/view/ViewGroup$LayoutParams;)V",
         "Landroid/widget/FrameLayout$LayoutParams;-><init>(III)V",
         "Landroid/view/ViewGroup$LayoutParams;->height:I",
         "const v2, 0x7f0f0153",
@@ -230,6 +229,8 @@ def main() -> None:
     missing = [item for item in required_ime_listener if item not in ime_listener_text]
     if missing:
         raise RuntimeError(f"Incomplete IME bottom-frame coordinator: {missing}")
+    if "Landroid/view/View;->bringToFront()V" in ime_listener_text:
+        raise RuntimeError("IME theme frame must remain below system navigation controls")
     if "->setPadding(IIII)V" in ime_listener_text:
         raise RuntimeError("IME coordinator must not restore root-padding strategy")
     if "0x7f0f06eb" in ime_listener_text:

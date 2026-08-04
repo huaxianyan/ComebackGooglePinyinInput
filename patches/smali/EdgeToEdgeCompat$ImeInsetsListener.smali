@@ -93,7 +93,9 @@
 
     invoke-direct {v2, v5, v0, v6}, Landroid/widget/FrameLayout$LayoutParams;-><init>(III)V
 
-    invoke-virtual {v3, v4, v2}, Landroid/view/ViewGroup;->addView(Landroid/view/View;Landroid/view/ViewGroup$LayoutParams;)V
+    const/4 v5, 0x0
+
+    invoke-virtual {v3, v4, v5, v2}, Landroid/view/ViewGroup;->addView(Landroid/view/View;ILandroid/view/ViewGroup$LayoutParams;)V
 
     :reuse_frame
     iput-object v4, p0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat$ImeInsetsListener;->bottomFrame:Landroid/view/View;
@@ -157,8 +159,6 @@
 
     :shared_background
     invoke-virtual {v4, v2}, Landroid/view/View;->setBackground(Landroid/graphics/drawable/Drawable;)V
-
-    invoke-virtual {v4}, Landroid/view/View;->bringToFront()V
 
     :done
     return-object p2
