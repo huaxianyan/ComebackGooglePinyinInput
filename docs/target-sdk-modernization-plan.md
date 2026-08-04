@@ -569,6 +569,7 @@ V4 复测与 V5 架构修正：
 - V19 Debug 将唯一 coordinator hook 移入 `GoogleInputMethodService.onCreateInputView()` 的新视图返回路径。首次 framework 创建与 `c()` 主题重建都会调用这个方法；listener 可在 View 尚未 attach 时注册，一次性 attach callback 在 framework 随后安装 View 后执行。
 - V19 首次展开已由用户确认正常。现场从 V18 的 `ime=[0,1670][1080,2410]` 修正为 `ime=[0,1544][1080,2410]`；导航栏仍为 `[0,2284][1080,2410]`，新增的 126 px 正好来自当次 WindowMetrics，而非硬编码。日志确认 `windowNavBottom=126`、`runnableAttached=1`、`rootInsetsPresent=1`、`layoutBottomMargin=126`，证明首次路径、动态 inset 和 parent margin 均生效且未被 framework 覆盖。随后移除固定 tag、全部 geometry log 和 layout diagnostics listener，只保留已验证的公开 API 实现与 `onCreateInputView()` hook。
 - 干净的 release-like V20 首次展开也由用户确认正常；现场为 `navigationBars=[0,2284][1080,2410]`、`ime=[0,1481][1080,2410]`、`fitSides=LEFT TOP RIGHT`、`mImeShowing=true`。这同时确认应用获得延伸至屏幕底部的完整 IME source，而原生键盘 body 通过动态导航间距停在导航栏上方。V20 不可调试、无临时 geometry 日志，覆盖安装前后 16 个私有文件哈希保持一致。
+- V20 功能回归正常，但手势导航下系统“收回键盘”和“切换输入法”控制被键盘 surface 挡住一部分。显示现场证明 `navigationBars.bottom=63`，而 `mandatorySystemGestures.bottom=84`；IME source 为 `[0,1544][1080,2410]`，Taskbar 明确同时提供这两个公开 Insets source。V20 只预留 63 px，因此关键系统控制区域上方 21 px 仍与可触摸键盘 body 重叠。V21 不使用固定差值，而从 WindowMetrics 对 `navigationBars() | mandatorySystemGestures()` 调用 `getInsetsIgnoringVisibility()`；Android 对组合 type 返回各边最大值。三键模式两者相同，不改变已验收几何；手势模式则动态预留完整 84 px 控制/强制手势区域。刻意不使用普通 `systemGestures()`，避免把左右返回手势带误作底部键盘间距。
 
 ### target 36 / Android 16
 

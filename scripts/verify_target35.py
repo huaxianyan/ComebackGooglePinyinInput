@@ -106,9 +106,12 @@ def main() -> None:
         "attachInputView(Landroid/view/View;)V",
         "sput-object p0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->inputView:Landroid/view/View;",
         "sget-object v0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->inputView:Landroid/view/View;",
-        "getNavigationBarBottomInset(Landroid/view/View;)I",
+        "getImeControlBottomInset(Landroid/view/View;)I",
         "Landroid/view/WindowManager;->getCurrentWindowMetrics()Landroid/view/WindowMetrics;",
         "Landroid/view/WindowMetrics;->getWindowInsets()Landroid/view/WindowInsets;",
+        "Landroid/view/WindowInsets$Type;->navigationBars()I",
+        "Landroid/view/WindowInsets$Type;->mandatorySystemGestures()I",
+        "or-int/2addr v1, v2",
         "getInsetsIgnoringVisibility(I)Landroid/graphics/Insets;",
         "scheduleApplyInsets(Landroid/view/View;)V",
         "Landroid/view/View;->post(Ljava/lang/Runnable;)Z",
@@ -211,7 +214,7 @@ def main() -> None:
         if item not in attach_listener_text:
             raise RuntimeError(f"Incomplete initial InputView attach listener: {item}")
     required_ime_listener = (
-        "EdgeToEdgeCompat;->getNavigationBarBottomInset(Landroid/view/View;)I",
+        "EdgeToEdgeCompat;->getImeControlBottomInset(Landroid/view/View;)I",
         "Landroid/view/ViewGroup$MarginLayoutParams;->bottomMargin:I",
         "Landroid/view/View;->getRootView()Landroid/view/View;",
         "findViewWithTag(Ljava/lang/Object;)Landroid/view/View;",

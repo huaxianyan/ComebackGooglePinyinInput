@@ -28,7 +28,7 @@
 .method public onApplyWindowInsets(Landroid/view/View;Landroid/view/WindowInsets;)Landroid/view/WindowInsets;
     .locals 7
 
-    invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->getNavigationBarBottomInset(Landroid/view/View;)I
+    invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->getImeControlBottomInset(Landroid/view/View;)I
 
     move-result v0
 
