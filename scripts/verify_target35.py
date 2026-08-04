@@ -215,6 +215,9 @@ def main() -> None:
         "EdgeToEdgeCompat;->getNavigationBarBottomInset(Landroid/view/View;)I",
         "Landroid/view/ViewGroup$MarginLayoutParams;->bottomMargin:I",
         "Landroid/view/View;->getRootView()Landroid/view/View;",
+        "Landroid/view/ViewGroup;->getChildCount()I",
+        "Landroid/view/ViewGroup;->getChildAt(I)Landroid/view/View;",
+        "Landroid/view/View;->getHeight()I",
         "findViewWithTag(Ljava/lang/Object;)Landroid/view/View;",
         'const-string v5, "ime-navigation-frame"',
         'const-string v2, ".keyboard-body-area"',
@@ -227,6 +230,8 @@ def main() -> None:
     missing = [item for item in required_ime_listener if item not in ime_listener_text]
     if missing:
         raise RuntimeError(f"Incomplete IME bottom-frame coordinator: {missing}")
+    if "NavigationBarFrame" in ime_listener_text or "java/lang/reflect" in ime_listener_text:
+        raise RuntimeError("IME coordinator must not reference hidden navigation classes or reflection")
     if "Landroid/view/WindowInsets$Type;->mandatorySystemGestures()I" in helper_text:
         raise RuntimeError("Mandatory gesture exclusion must not enlarge the visual navigation frame")
     if "Landroid/view/View;->bringToFront()V" in ime_listener_text:

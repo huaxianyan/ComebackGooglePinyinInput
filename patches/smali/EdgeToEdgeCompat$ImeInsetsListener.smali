@@ -34,29 +34,62 @@
 
     iget-object v1, p0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat$ImeInsetsListener;->root:Landroid/view/View;
 
+    invoke-virtual {v1}, Landroid/view/View;->getRootView()Landroid/view/View;
+
+    move-result-object v3
+
+    instance-of v2, v3, Landroid/view/ViewGroup;
+
+    if-eqz v2, :apply_margin
+
+    check-cast v3, Landroid/view/ViewGroup;
+
+    invoke-virtual {v3}, Landroid/view/ViewGroup;->getChildCount()I
+
+    move-result v2
+
+    if-lez v2, :apply_margin
+
+    add-int/lit8 v2, v2, -0x1
+
+    invoke-virtual {v3, v2}, Landroid/view/ViewGroup;->getChildAt(I)Landroid/view/View;
+
+    move-result-object v4
+
+    instance-of v2, v4, Landroid/view/ViewGroup;
+
+    if-eqz v2, :apply_margin
+
+    invoke-virtual {v4}, Landroid/view/View;->getHeight()I
+
+    move-result v2
+
+    if-lez v2, :apply_margin
+
+    move v0, v2
+
+    move-object v3, v4
+
+    :apply_margin
     invoke-virtual {v1}, Landroid/view/View;->getLayoutParams()Landroid/view/ViewGroup$LayoutParams;
 
     move-result-object v2
 
-    instance-of v3, v2, Landroid/view/ViewGroup$MarginLayoutParams;
+    instance-of v4, v2, Landroid/view/ViewGroup$MarginLayoutParams;
 
-    if-eqz v3, :parent
+    if-eqz v4, :frame_parent
 
     check-cast v2, Landroid/view/ViewGroup$MarginLayoutParams;
 
-    iget v3, v2, Landroid/view/ViewGroup$MarginLayoutParams;->bottomMargin:I
+    iget v4, v2, Landroid/view/ViewGroup$MarginLayoutParams;->bottomMargin:I
 
-    if-eq v3, v0, :parent
+    if-eq v4, v0, :frame_parent
 
     iput v0, v2, Landroid/view/ViewGroup$MarginLayoutParams;->bottomMargin:I
 
     invoke-virtual {v1, v2}, Landroid/view/View;->setLayoutParams(Landroid/view/ViewGroup$LayoutParams;)V
 
-    :parent
-    invoke-virtual {v1}, Landroid/view/View;->getRootView()Landroid/view/View;
-
-    move-result-object v3
-
+    :frame_parent
     instance-of v2, v3, Landroid/view/ViewGroup;
 
     if-eqz v2, :done
