@@ -131,12 +131,33 @@ def main() -> None:
         "const/16 v1, 0x23",
         "const/16 v1, 0x1e",
     )
-    diagnostic_text = helper_text + ime_listener_text + apply_runnable_text
+    nav_color_helper = decoded / (
+        "smali/com/google/android/inputmethod/pinyin/ImeNavigationColorCompat.smali"
+    )
+    nav_color_runnable = decoded / (
+        "smali/com/google/android/inputmethod/pinyin/"
+        "ImeNavigationColorCompat$SyncRunnable.smali"
+    )
+    if not nav_color_helper.is_file() or not nav_color_runnable.is_file():
+        raise RuntimeError("Missing clean IME navigation-color synchronizer")
+    nav_color_text = nav_color_helper.read_text(encoding="utf-8")
+    nav_color_runnable_text = nav_color_runnable.read_text(encoding="utf-8")
+    diagnostic_text = (
+        helper_text
+        + ime_listener_text
+        + apply_runnable_text
+        + nav_color_text
+        + nav_color_runnable_text
+    )
     for diagnostic in (
         "GooglePinyinImeGeometry",
+        "GooglePinyinImeDecor",
+        "GooglePinyinImeSync",
+        "ImeDecorDiagnosticsCompat",
         "logImeGeometry",
         "ImeLayoutDiagnosticsListener",
         "addOnLayoutChangeListener",
+        "android/util/Log",
     ):
         if diagnostic in diagnostic_text:
             raise RuntimeError(f"Temporary IME geometry diagnostics remain: {diagnostic}")
@@ -237,10 +258,42 @@ def main() -> None:
         "Landroid/view/ViewGroup$LayoutParams;->height:I",
         "const v2, 0x7f0f0153",
         "Landroid/graphics/drawable/Drawable$ConstantState;->newDrawable",
+        "ImeNavigationColorCompat;->schedule(Landroid/view/View;)V",
     )
     missing = [item for item in required_ime_listener if item not in ime_listener_text]
     if missing:
         raise RuntimeError(f"Incomplete IME bottom-frame coordinator: {missing}")
+    required_nav_color = (
+        "schedule(Landroid/view/View;)V",
+        "syncNow(Landroid/view/View;)V",
+        "Landroid/view/View;->post(Ljava/lang/Runnable;)Z",
+        "Landroid/view/View;->postDelayed(Ljava/lang/Runnable;J)Z",
+        "const-wide/16 v1, 0x12c",
+        "Landroid/view/View;->getRootView()Landroid/view/View;",
+        "Landroid/view/ViewGroup;->getChildCount()I",
+        "Landroid/view/ViewGroup;->getChildAt(I)Landroid/view/View;",
+        "instance-of v1, v0, Landroid/view/ViewGroup;",
+        "EdgeToEdgeCompat;->getTappableElementBottomInset(Landroid/view/View;)I",
+        "Landroid/view/View;->getHeight()I",
+        "Landroid/graphics/drawable/Drawable$ConstantState;->newDrawable",
+        "Landroid/view/View;->setBackground(Landroid/graphics/drawable/Drawable;)V",
+        "Landroid/view/View;->setVisibility(I)V",
+        "Landroid/view/View;->invalidate()V",
+    )
+    missing = [item for item in required_nav_color if item not in nav_color_text]
+    if missing:
+        raise RuntimeError(f"Incomplete stable navigation-color synchronizer: {missing}")
+    if "java/lang/reflect" in nav_color_text or "NavigationBarFrame" in nav_color_text:
+        raise RuntimeError(
+            "Navigation-color synchronizer must use public structural APIs only"
+        )
+    stale_diagnostics = list(
+        (decoded / "smali/com/google/android/inputmethod/pinyin").glob(
+            "ImeDecorDiagnosticsCompat*.smali"
+        )
+    )
+    if stale_diagnostics:
+        raise RuntimeError(f"Debug decor diagnostics remain: {stale_diagnostics}")
     if "NavigationBarFrame" in ime_listener_text or "java/lang/reflect" in ime_listener_text:
         raise RuntimeError("IME coordinator must not reference hidden navigation classes or reflection")
     if "Landroid/view/WindowInsets$Type;->mandatorySystemGestures()I" in helper_text:

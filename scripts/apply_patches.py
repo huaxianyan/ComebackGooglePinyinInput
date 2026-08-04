@@ -1842,6 +1842,8 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
         "EdgeToEdgeCompat$ApplyInsetsRunnable.smali",
         "EdgeToEdgeCompat$InputViewAttachListener.smali",
         "EdgeToEdgeCompat$ImeInsetsListener.smali",
+        "ImeNavigationColorCompat.smali",
+        "ImeNavigationColorCompat$SyncRunnable.smali",
     ):
         helper_src = ROOT / "patches/smali" / helper_name
         helper_dst = decoded / "smali/com/google/android/inputmethod/pinyin" / helper_name
@@ -1850,34 +1852,25 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
         helper_dst.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(helper_src, helper_dst)
 
-    if debuggable:
-        for decor_diagnostics_src in sorted(
-            (ROOT / "patches/smali").glob("ImeDecorDiagnosticsCompat*.smali")
-        ):
-            decor_diagnostics_dst = decoded / (
-                "smali/com/google/android/inputmethod/pinyin/"
-                + decor_diagnostics_src.name
-            )
-            shutil.copyfile(decor_diagnostics_src, decor_diagnostics_dst)
-        ime_insets_listener = decoded / (
-            "smali/com/google/android/inputmethod/pinyin/"
-            "EdgeToEdgeCompat$ImeInsetsListener.smali"
-        )
-        replace_once(
-            ime_insets_listener,
-            "    :done\n    invoke-static {}, Lcom/google/android/inputmethod/pinyin/"
-            "EdgeToEdgeCompat;->refreshNavigationBarTheme()V\n\n"
-            "    invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/"
-            "EdgeToEdgeCompat;->suppressNavigationBarContrast(Landroid/view/View;)V\n\n"
-            "    return-object p2",
-            "    :done\n    invoke-static {}, Lcom/google/android/inputmethod/pinyin/"
-            "EdgeToEdgeCompat;->refreshNavigationBarTheme()V\n\n"
-            "    invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/"
-            "EdgeToEdgeCompat;->suppressNavigationBarContrast(Landroid/view/View;)V\n\n"
-            "    invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/"
-            "ImeDecorDiagnosticsCompat;->dumpOnce(Landroid/view/View;)V\n\n"
-            "    return-object p2",
-        )
+    ime_insets_listener = decoded / (
+        "smali/com/google/android/inputmethod/pinyin/"
+        "EdgeToEdgeCompat$ImeInsetsListener.smali"
+    )
+    replace_once(
+        ime_insets_listener,
+        "    :done\n    invoke-static {}, Lcom/google/android/inputmethod/pinyin/"
+        "EdgeToEdgeCompat;->refreshNavigationBarTheme()V\n\n"
+        "    invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/"
+        "EdgeToEdgeCompat;->suppressNavigationBarContrast(Landroid/view/View;)V\n\n"
+        "    return-object p2",
+        "    :done\n    invoke-static {}, Lcom/google/android/inputmethod/pinyin/"
+        "EdgeToEdgeCompat;->refreshNavigationBarTheme()V\n\n"
+        "    invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/"
+        "EdgeToEdgeCompat;->suppressNavigationBarContrast(Landroid/view/View;)V\n\n"
+        "    invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/"
+        "ImeNavigationColorCompat;->schedule(Landroid/view/View;)V\n\n"
+        "    return-object p2",
+    )
 
     auto_backup_helpers = sorted(
         list((ROOT / "patches/smali").glob("DictionaryAutoBackup*.smali"))
