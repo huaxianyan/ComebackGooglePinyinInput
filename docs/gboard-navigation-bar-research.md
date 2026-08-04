@@ -209,4 +209,15 @@ attrs.setFitInsetsSides(
 window.setAttributes(attrs);
 ```
 
-对应常量为 `0x0f`，不是任何设备像素。这样 system 在 Window layout 层把 bottom navigation inset 纳入 IME frame，而不是再次修改 InputView。V6 将以 `dumpsys` 中 `fitSides=LEFT TOP RIGHT BOTTOM` 和键盘首次显示即位于导航栏上方作为首要验收条件。
+对应常量为 `0x0f`，不是任何设备像素。这样 system 在 Window layout 层把 bottom navigation inset 纳入 IME frame，而不是再次修改 InputView。V6 将以键盘首次显示即位于导航栏上方及 Window frame 无重叠作为首要验收条件。
+
+V6 真机确认中，全 side 默认值未再以单独 `fitSides=` 行打印，但实际 frame 给出了更直接的证明：
+
+```text
+navigationBars frame=[0,2284][1080,2410]
+ime frame=[0,1481][1080,2284]
+ime visibleFrame=[0,1481][1080,2284]
+mImeShowing=true mLastDrawn=true
+```
+
+IME 的 bottom 恰好等于 navigation bar 的 top，两个区域没有像素重叠。维护者在多个键盘高度间来回切换后，最下一行始终位于导航键上方，且 V5 已消失的黑色大 surface 没有恢复。这证明 `fitInsetsSides(BOTTOM)` 位于正确的 Window 几何层，并与旧 `keyboard_height_ratio` 管线解耦。

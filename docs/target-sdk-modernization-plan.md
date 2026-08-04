@@ -533,7 +533,11 @@ V4 复测与 V5 架构修正：
 - artifact：`ComebackGooglePinyinInput-ComebackGooglePinyinInput-target-sdk-35-audit-v6`；
 - APK SHA-256：`74eb1608d90e492f1602c549588ab6f32bbc46e9b335150f4727b6d880b04515`；
 - 云端全部门禁、zipalign、v1/v2/v3 签名和证书验证通过，未发布 Release；
-- 已覆盖安装，默认 IME 保持 target 35，覆盖前后 16 个私有文件 SHA-256 完全一致；等待首次显示现场复测和可见状态下的 Window attrs 采集。
+- 已覆盖安装，默认 IME 保持 target 35，覆盖前后 16 个私有文件 SHA-256 完全一致；
+- 维护者反复切换多个键盘高度后确认：最下一行始终位于三键导航键上方，未再出现下沉或黑色大 surface；
+- 键盘保持可见时的现场 Window 证据：navigation bar frame 为 `[0,2284][1080,2410]`，IME frame/visibleFrame 为 `[0,1481][1080,2284]`，两者边界精确相接且不重叠；
+- `mImeShowing=true`、`mLastDrawn=true`，IME Window surface on-screen；V5 的 `fitSides=LEFT TOP RIGHT` 不再出现（全 side 默认值在 dumpsys 中省略）；
+- crash buffer 及 DropBox crash/ANR metadata 均无 target 35 命中；V6 的 IME Window geometry 初步通过，继续做功能和导航模式回归后再接受 target 35。
 
 ### target 36 / Android 16
 
