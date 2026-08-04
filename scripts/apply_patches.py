@@ -174,13 +174,18 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
     input_view = decoded / (
         "smali/com/google/android/apps/inputmethod/libs/framework/core/InputView.smali"
     )
+    google_ime = decoded / (
+        "smali/com/google/android/apps/inputmethod/libs/framework/core/"
+        "GoogleInputMethodService.smali"
+    )
     replace_once(
-        input_view,
-        "    .line 9\n    :cond_0\n    return-void",
-        "    .line 9\n    :cond_0\n"
-        "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/"
-        "EdgeToEdgeCompat;->attachInputView(Landroid/view/View;)V\n\n"
-        "    return-void",
+        google_ime,
+        "    invoke-virtual {p0, v0}, Lcom/google/android/apps/inputmethod/libs/"
+        "framework/core/GoogleInputMethodService;->setInputView(Landroid/view/View;)V\n",
+        "    invoke-virtual {p0, v0}, Lcom/google/android/apps/inputmethod/libs/"
+        "framework/core/GoogleInputMethodService;->setInputView(Landroid/view/View;)V\n\n"
+        "    invoke-static {v0}, Lcom/google/android/inputmethod/pinyin/"
+        "EdgeToEdgeCompat;->attachInputView(Landroid/view/View;)V\n",
     )
 
     arrays = decoded / "res/values/arrays.xml"

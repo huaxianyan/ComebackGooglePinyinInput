@@ -161,6 +161,8 @@
     :shared_background
     invoke-virtual {v4, v2}, Landroid/view/View;->setBackground(Landroid/graphics/drawable/Drawable;)V
 
+    invoke-virtual {v4}, Landroid/view/View;->bringToFront()V
+
     :done
     return-object p2
 .end method

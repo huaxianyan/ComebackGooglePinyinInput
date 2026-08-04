@@ -136,12 +136,22 @@ def main() -> None:
         decoded
         / "smali/com/google/android/apps/inputmethod/libs/framework/core/InputView.smali"
     ).read_text(encoding="utf-8")
+    google_ime = (
+        decoded
+        / "smali/com/google/android/apps/inputmethod/libs/framework/core/GoogleInputMethodService.smali"
+    ).read_text(encoding="utf-8")
     if "EdgeToEdgeCompat;->attachFirstRun" not in apy:
         raise RuntimeError("First-run footer does not receive bottom insets")
     if "EdgeToEdgeCompat;->configureImeWindow" not in pinyin_ime:
         raise RuntimeError("IME lifecycle does not configure system-bar fitting")
-    if "EdgeToEdgeCompat;->attachInputView" not in input_view:
-        raise RuntimeError("IME InputView does not attach the bottom-frame coordinator")
+    if "EdgeToEdgeCompat;->attachInputView" in input_view:
+        raise RuntimeError("Coordinator must not attach before InputView has a parent")
+    if google_ime.count("EdgeToEdgeCompat;->attachInputView") != 1:
+        raise RuntimeError("IME coordinator must attach exactly once after setInputView")
+    set_input = google_ime.find("->setInputView(Landroid/view/View;)V")
+    attach = google_ime.find("EdgeToEdgeCompat;->attachInputView")
+    if set_input < 0 or attach < set_input:
+        raise RuntimeError("IME coordinator attaches before setInputView")
     if "EdgeToEdgeCompat;->getInputViewMeasuredHeight" in input_view:
         raise RuntimeError("Rejected V8/V9 InputView measurement compensation remains")
     if input_view.count("->setMeasuredDimension(II)V") != 1:
@@ -154,6 +164,7 @@ def main() -> None:
         "Landroid/view/View;->getRootView()Landroid/view/View;",
         "findViewWithTag(Ljava/lang/Object;)Landroid/view/View;",
         'const-string v5, "ime-navigation-frame"',
+        "Landroid/view/View;->bringToFront()V",
         "Landroid/view/ViewGroup;->addView(Landroid/view/View;Landroid/view/ViewGroup$LayoutParams;)V",
         "Landroid/widget/FrameLayout$LayoutParams;-><init>(III)V",
         "Landroid/view/ViewGroup$LayoutParams;->height:I",
@@ -169,8 +180,8 @@ def main() -> None:
         raise RuntimeError("Rejected InputView-child bottom frame remains")
 
     # setDecorFitsSystemWindows(true) is deliberately scoped to the IME helper.
-    # It is not Android 15's manifest/theme opt-out: it selects Gboard's
-    # non-covering IME-window mode while platform edge-to-edge remains enabled.
+    # BOTTOM is then excluded explicitly so the Window/source covers navigation;
+    # the attached input-frame coordinator reserves and paints that region.
     decor_fit_sites: list[Path] = []
     for path in (decoded / "smali").rglob("*.smali"):
         if "setDecorFitsSystemWindows" in path.read_text(

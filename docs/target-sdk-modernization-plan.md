@@ -555,7 +555,9 @@ V4 复测与 V5 架构修正：
 - V10 改在 Android `InputMethodService.setInputView()` 创建的直接父级 input frame 处理：原生 InputView 自身不改 padding、measurement、keyboard-area margin 或 background，仅给 InputView 的父级 LayoutParams 设置动态 bottom margin；同一父级增加一个 bottom-gravity sibling frame，使用 keyboard-area drawable 的独立 ConstantState 副本绘制导航区。
 - V10 三键导航现场确认：最低行位于导航栏上方、应用输入区域正确上移；Window 证据为 `InputView/content top=1481`、`navigationBars=[0,2284][1080,2410]`、`ime=[0,1481][1080,2410]`。这证明父级 bottom-margin 几何方案正确，V6 与 V7–V9 的两个互斥问题首次同时解决。
 - V10 唯一剩余问题是导航区域没有显示键盘主题。即时 sibling frame 加在 `mInputFrame` 内，其绘制受该父级自身 bounds/clipping 约束，虽然 margin 参与了父级测量，frame 没有可靠绘制到系统导航区。
-- V11 保留已确认的 InputView parent bottom margin，只把主题 bottom frame 提升到 IME Window 的 decor root，以 bottom gravity 精确覆盖 navigation inset；通过固定 tag 查找/复用，避免 InputView 重建或主题切换时重复添加。frame 仍使用 keyboard-area drawable 的独立 ConstantState 副本，不设置 InputView/root background，也不参与键盘测量或触摸区域。
+- V11 保留已确认的 InputView parent bottom margin，只把主题 bottom frame 提升到 IME Window 的 decor root；现场导航区仍未随主题绘制，而且反复切换主题会在“键盘上移/下沉”之间变化，V11 不可验收。
+- 主题切换反证暴露了生命周期竞态：旧实现从 `InputView` XML 构造函数立即注册并 `requestApplyInsets()`，此时 `InputMethodService.setInputView()` 尚未把它加入 `mInputFrame`。首次/重建后 Insets 是否重新分发取决于当次 framework traversal，因此 margin 有时生效、有时不生效；bottom frame 的 decor root 和主题 drawable 时机也不稳定。
+- V12 把 coordinator 安装点从 InputView 构造函数移到 `GoogleInputMethodService.c()` 中 `setInputView(view)` 返回之后。该方法正是首次创建和主题重建共用路径，因此每一个新 InputView 都在拥有真实 parent/decor root 后注册 listener 并请求 Insets。decor bottom frame 继续按 tag 复用、每次从新 keyboard area 刷新主题 drawable，并调用 `bringToFront()`，以避免 DecorView 内部颜色层覆盖。
 
 ### target 36 / Android 16
 
