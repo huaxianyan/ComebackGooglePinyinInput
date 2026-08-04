@@ -23,7 +23,8 @@
 - 从已验收的 target 33 创建 `feat/target-sdk-34`；V1 提升到 Android 14 / API 34，为跨包 GServices 动态 receiver 增加 `RECEIVER_EXPORTED` 与旧系统兼容分支，并新增 receiver/动态代码静态门禁。
 - target 34 V1 已在 Pixel 10 Pro / Android 16 完成首次引导、核心输入、手写、主题、联系人、词典、Google Drive SAF、ART/Root 和动态 receiver 回归；没有 crash/ANR、receiver 安全异常、动态代码错误或 API 34 新增回归。
 - 从已验收的 target 34 创建 `feat/target-sdk-35`；V1 仅提升到 Android 15 / API 35，不使用 edge-to-edge opt-out，也不预先加入推测性的 Insets、TextView 或键盘布局补偿，以保留可归因的视觉基线。
-- target 35 V1 真机确认首次引导页脚和 IME 底行被三键导航栏遮挡；V2 保持 edge-to-edge 开启，仅为 first-run footer/pager 与 InputView 应用真实 bottom inset，并用原键盘背景绘制 IME inset 区域。
+- target 35 V1 真机确认首次引导页脚和 IME 底行被三键导航栏遮挡；V2 保持 edge-to-edge 开启，仅为 first-run footer/pager 与 InputView 应用 bottom inset，并用原键盘背景绘制 IME inset 区域。
+- V2 复测发现 broad system-window bottom inset 在 IME 窗口产生过大黑区且最高键盘仍可被遮挡；V3 改为只读取 `WindowInsets.Type.navigationBars()`，避免混入其他 inset source。
 
 ## [1.0.3] - 2026-08-01
 

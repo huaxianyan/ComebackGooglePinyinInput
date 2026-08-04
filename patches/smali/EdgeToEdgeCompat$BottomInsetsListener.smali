@@ -80,9 +80,15 @@
 .method public onApplyWindowInsets(Landroid/view/View;Landroid/view/WindowInsets;)Landroid/view/WindowInsets;
     .locals 6
 
-    invoke-virtual {p2}, Landroid/view/WindowInsets;->getSystemWindowInsetBottom()I
+    invoke-static {}, Landroid/view/WindowInsets$Type;->navigationBars()I
 
     move-result v0
+
+    invoke-virtual {p2, v0}, Landroid/view/WindowInsets;->getInsets(I)Landroid/graphics/Insets;
+
+    move-result-object v0
+
+    iget v0, v0, Landroid/graphics/Insets;->bottom:I
 
     iget-object v1, p0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat$BottomInsetsListener;->view:Landroid/view/View;
 

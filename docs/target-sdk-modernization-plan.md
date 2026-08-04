@@ -391,7 +391,7 @@ V1 构建记录：
 
 分支：`feat/target-sdk-35`
 
-状态：**V1 已确认 edge-to-edge 底部遮挡，V2 窄修复已覆盖安装，等待视觉复测**。
+状态：**V2 复测发现 inset 类型过宽，V3 navigationBars-only 修复中**。
 
 这是独立视觉边界。V1 从已验收的 target 34 创建，只提升到 Android 15 / API 35，刻意采用不掩盖平台行为的基线：
 
@@ -460,6 +460,15 @@ V2 构建记录：
 - 设备重连后已覆盖安装 V2；安装包 SHA-256 与 artifact 一致，首次安装时间保持不变；
 - 覆盖安装前后 14 个私有词典、主题和 SharedPreferences 文件的路径及 SHA-256 完全一致，V1 测试数据未改变；
 - 安装时用户当前使用正式包，V2 没有被助手切换为默认输入法；等待维护者手动选择 target 35 后复测 IME 底行。
+
+V2 复测结果与 V3 修正：
+
+- 默认键盘高度下，底部确实被抬起，但出现过大的黑色背景并覆盖键盘上方区域；
+- 键盘高度设为最高时，最底行仍可能进入导航栏后方；
+- 原因是 V2 使用旧 `getSystemWindowInsetBottom()`，它返回合并后的 broad system-window bottom inset；在特殊的 IME edge-to-edge 窗口中可能包含导航栏以外的 inset source，不适合作为键盘底部安全区；
+- V3 改为 `WindowInsets.getInsets(WindowInsets.Type.navigationBars()).bottom`，只取设备当前三键导航栏的 126 px inset；首次引导和 IME 共用该精确值；
+- 保留 V2 的原始 padding/高度基线算法与键盘背景，不改变用户键盘高度设置，避免重复累加或固定高度假设；
+- 静态门禁新增禁止 `getSystemWindowInsetBottom()`，强制 navigationBars-only 查询。
 
 ### target 36 / Android 16
 

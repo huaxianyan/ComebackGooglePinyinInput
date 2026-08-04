@@ -95,10 +95,17 @@ def main() -> None:
     )
     required_listener = (
         "Landroid/view/View$OnApplyWindowInsetsListener;",
-        "getSystemWindowInsetBottom()I",
+        "Landroid/view/WindowInsets$Type;->navigationBars()I",
+        "Landroid/view/WindowInsets;->getInsets(I)Landroid/graphics/Insets;",
+        "Landroid/graphics/Insets;->bottom:I",
         "->setPadding(IIII)V",
         "Landroid/view/ViewGroup$LayoutParams;->height:I",
     )
+    if "getSystemWindowInsetBottom()I" in listener_text:
+        raise RuntimeError(
+            "Broad system-window inset would include unrelated IME/content insets; "
+            "use WindowInsets.Type.navigationBars() only"
+        )
     missing = [item for item in required_helper if item not in helper_text]
     missing += [item for item in required_listener if item not in listener_text]
     if missing:
