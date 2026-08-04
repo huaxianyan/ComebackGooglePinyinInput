@@ -513,7 +513,16 @@ V4 复测与 V5 架构修正：
 - `NavigationBarCompat` 继续只负责 navigation surface 颜色、divider、图标和 contrast，不参与键盘 body 高度；
 - first-run Activity 保留 navigation-bars-only bottom inset，因为其固定 footer 是独立的 Activity edge-to-edge 问题；
 - V5 不使用 `windowOptOutEdgeToEdgeEnforcement`，不写死 126 px，不改变 `InputView.onMeasure()`、`onComputeInsets()`、候选、手写、pager 或触摸区域；
-- 本地 clean decode、完整补丁、target 31/33/34/35 静态门禁和 apktool rebuild 已通过，等待 release-like 云构建与真机反复高度测试。
+- 本地 clean decode、完整补丁、target 31/33/34/35 静态门禁和 apktool rebuild 已通过；
+- V5 implementation/docs commit：`ec0fca6`；
+- workflow：[`30873616949`](https://github.com/huaxianyan/comeback-google-pinyin-input/actions/runs/30873616949)；
+- artifact ID：`8878729543`；
+- artifact：`ComebackGooglePinyinInput-ComebackGooglePinyinInput-target-sdk-35-audit-v5`；
+- APK SHA-256：`5844da7a00f31bce45fd0385138f239d385c2e1ac087d36d9ccfc75cbd75c4ff`；
+- 云端 build/sign、包与版本身份、target 31/33/34/35 门禁、zipalign 和 v1/v2/v3 签名全部通过，证书仍为 `985CBF843A362169B129AEAC5E153D13095F0923231936D1486A20C8332CDE2F`；
+- 已覆盖安装到现有 `target35audit`；installed `base.apk` 与 artifact SHA-256 一致，默认 IME 保持不变；
+- 覆盖安装前后 16 个词典、主题和 SharedPreferences 文件的路径及 SHA-256 完全一致；
+- 等待维护者按“默认 → 最高 → 默认 → 最低/中间 → 重复切换”复测键盘几何、底行和导航区。
 
 ### target 36 / Android 16
 
