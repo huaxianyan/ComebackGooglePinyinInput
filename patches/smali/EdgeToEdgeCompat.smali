@@ -109,6 +109,47 @@
     return v0
 .end method
 
+.method public static suppressNavigationBarContrast(Landroid/view/View;)V
+    .locals 3
+
+    sget v0, Landroid/os/Build$VERSION;->SDK_INT:I
+
+    const/16 v1, 0x1d
+
+    if-lt v0, v1, :done
+
+    if-eqz p0, :done
+
+    invoke-virtual {p0}, Landroid/view/View;->getContext()Landroid/content/Context;
+
+    move-result-object p0
+
+    instance-of v0, p0, Landroid/inputmethodservice/InputMethodService;
+
+    if-eqz v0, :done
+
+    check-cast p0, Landroid/inputmethodservice/InputMethodService;
+
+    invoke-virtual {p0}, Landroid/inputmethodservice/InputMethodService;->getWindow()Landroid/app/Dialog;
+
+    move-result-object v0
+
+    if-eqz v0, :done
+
+    invoke-virtual {v0}, Landroid/app/Dialog;->getWindow()Landroid/view/Window;
+
+    move-result-object v0
+
+    if-eqz v0, :done
+
+    const/4 v1, 0x0
+
+    invoke-virtual {v0, v1}, Landroid/view/Window;->setNavigationBarContrastEnforced(Z)V
+
+    :done
+    return-void
+.end method
+
 .method public static scheduleApplyInsets(Landroid/view/View;)V
     .locals 1
 
