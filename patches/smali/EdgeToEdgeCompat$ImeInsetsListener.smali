@@ -69,7 +69,7 @@
     invoke-virtual {v1, v2}, Landroid/view/View;->setLayoutParams(Landroid/view/ViewGroup$LayoutParams;)V
 
     :parent
-    invoke-virtual {v1}, Landroid/view/View;->getParent()Landroid/view/ViewParent;
+    invoke-virtual {v1}, Landroid/view/View;->getRootView()Landroid/view/View;
 
     move-result-object v3
 
@@ -79,9 +79,13 @@
 
     check-cast v3, Landroid/view/ViewGroup;
 
-    iget-object v4, p0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat$ImeInsetsListener;->bottomFrame:Landroid/view/View;
+    const-string v5, "ime-navigation-frame"
 
-    if-nez v4, :update_frame
+    invoke-virtual {v3, v5}, Landroid/view/ViewGroup;->findViewWithTag(Ljava/lang/Object;)Landroid/view/View;
+
+    move-result-object v4
+
+    if-nez v4, :reuse_frame
 
     invoke-virtual {v1}, Landroid/view/View;->getContext()Landroid/content/Context;
 
@@ -91,11 +95,11 @@
 
     invoke-direct {v4, v2}, Landroid/view/View;-><init>(Landroid/content/Context;)V
 
+    invoke-virtual {v4, v5}, Landroid/view/View;->setTag(Ljava/lang/Object;)V
+
     const/4 v2, 0x2
 
     invoke-virtual {v4, v2}, Landroid/view/View;->setImportantForAccessibility(I)V
-
-    iput-object v4, p0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat$ImeInsetsListener;->bottomFrame:Landroid/view/View;
 
     new-instance v2, Landroid/widget/FrameLayout$LayoutParams;
 
@@ -107,7 +111,8 @@
 
     invoke-virtual {v3, v4, v2}, Landroid/view/ViewGroup;->addView(Landroid/view/View;Landroid/view/ViewGroup$LayoutParams;)V
 
-    goto :background
+    :reuse_frame
+    iput-object v4, p0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat$ImeInsetsListener;->bottomFrame:Landroid/view/View;
 
     :update_frame
     invoke-virtual {v4}, Landroid/view/View;->getLayoutParams()Landroid/view/ViewGroup$LayoutParams;

@@ -553,7 +553,9 @@ V4 复测与 V5 架构修正：
 - V9 不从已被父级压缩的 `keyboard_area` 容器取 body 高度，改为读取其原生垂直内容 `header_group_view.measuredHeight + body_group_view.measuredHeight`，再加动态 bottom-frame height；现场最低行仍未回到导航栏上方，证明 `InputMethodService` 的父级 input frame 最终约束不会被 InputView 自报 measured height 改写。V8/V9 测量补偿全部判定无效并移除。
 - 复核 Gboard `eht.aD()` 后确认 covering-navigation 模式确实会根据统一 `sbr` metrics 处理 navigation bottom，并在 InputView 外保持完整 Window/source；但本项目不能继续复制 V2–V4 已失败的 root-padding/background 组合。
 - V10 改在 Android `InputMethodService.setInputView()` 创建的直接父级 input frame 处理：原生 InputView 自身不改 padding、measurement、keyboard-area margin 或 background，仅给 InputView 的父级 LayoutParams 设置动态 bottom margin；同一父级增加一个 bottom-gravity sibling frame，使用 keyboard-area drawable 的独立 ConstantState 副本绘制导航区。
-- V10 三键导航预期为：原生 InputView `[1481,2284]`，父级 sibling bottom frame `[2284,2410]`，IME source `[1481,2410]`。`onComputeInsets()` 继续依据 InputView 的 window/global coordinates 自动生成 content/visible/touchable geometry；导航高度仍来自实时 `navigationBars`，不硬编码 126 px。
+- V10 三键导航现场确认：最低行位于导航栏上方、应用输入区域正确上移；Window 证据为 `InputView/content top=1481`、`navigationBars=[0,2284][1080,2410]`、`ime=[0,1481][1080,2410]`。这证明父级 bottom-margin 几何方案正确，V6 与 V7–V9 的两个互斥问题首次同时解决。
+- V10 唯一剩余问题是导航区域没有显示键盘主题。即时 sibling frame 加在 `mInputFrame` 内，其绘制受该父级自身 bounds/clipping 约束，虽然 margin 参与了父级测量，frame 没有可靠绘制到系统导航区。
+- V11 保留已确认的 InputView parent bottom margin，只把主题 bottom frame 提升到 IME Window 的 decor root，以 bottom gravity 精确覆盖 navigation inset；通过固定 tag 查找/复用，避免 InputView 重建或主题切换时重复添加。frame 仍使用 keyboard-area drawable 的独立 ConstantState 副本，不设置 InputView/root background，也不参与键盘测量或触摸区域。
 
 ### target 36 / Android 16
 

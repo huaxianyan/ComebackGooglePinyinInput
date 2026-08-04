@@ -151,6 +151,9 @@ def main() -> None:
     required_ime_listener = (
         "getInsetsIgnoringVisibility(I)Landroid/graphics/Insets;",
         "Landroid/view/ViewGroup$MarginLayoutParams;->bottomMargin:I",
+        "Landroid/view/View;->getRootView()Landroid/view/View;",
+        "findViewWithTag(Ljava/lang/Object;)Landroid/view/View;",
+        'const-string v5, "ime-navigation-frame"',
         "Landroid/view/ViewGroup;->addView(Landroid/view/View;Landroid/view/ViewGroup$LayoutParams;)V",
         "Landroid/widget/FrameLayout$LayoutParams;-><init>(III)V",
         "Landroid/view/ViewGroup$LayoutParams;->height:I",
