@@ -186,3 +186,27 @@ target 35 V5 应采用 Gboard 已存在的另一条完整路径：
 6. 首次引导 Activity 仍使用自己的窄 bottom-inset listener，因为 Activity footer 与 IME Window 是不同问题。
 
 这不是 `windowOptOutEdgeToEdgeEnforcement`：没有设置 manifest/theme opt-out，也没有恢复旧 target 行为；它使用现代 Window API 明确声明 IME 内容不覆盖系统栏。若未来增加浮动/覆盖导航区模式，再同时引入 Gboard 式的 window-metrics model 和专用 bottom frame，不能重新采用孤立的 root-padding listener。
+
+### V5 真机反证：InputMethodService 默认排除 BOTTOM side
+
+V5 只调用 `setDecorFitsSystemWindows(true)` 后，黑色大 surface 消失，但键盘从第一次显示起仍位于三键导航区后方。现场 `dumpsys window` 给出了决定性信息：
+
+```text
+InputMethod ... EDGE_TO_EDGE_ENFORCED FIT_INSETS_CONTROLLED
+fitTypes=statusBars navigationBars
+fitSides=LEFT TOP RIGHT
+```
+
+也就是说，`setDecorFitsSystemWindows(true)` 已成功恢复 `statusBars navigationBars` 两种 fit type，但 `InputMethodService` 的 Window attrs 明确没有 `BOTTOM` side。对普通 Activity，“fits system windows”通常包含底边；对底部 IME Window，框架默认让它延伸到 navigation region，由 IME 自己提供 bottom frame。这解释了为什么 V5 不再有黑色 root，却仍能透过透明导航栏看到后面的键盘。
+
+Google 拼音不具备 Gboard 的 cover-navigation/bottom-frame 管线，因此 non-covering 路径还必须显式调用 API 30+：
+
+```java
+WindowManager.LayoutParams attrs = window.getAttributes();
+attrs.setFitInsetsSides(
+    WindowInsets.Side.LEFT | WindowInsets.Side.TOP |
+    WindowInsets.Side.RIGHT | WindowInsets.Side.BOTTOM);
+window.setAttributes(attrs);
+```
+
+对应常量为 `0x0f`，不是任何设备像素。这样 system 在 Window layout 层把 bottom navigation inset 纳入 IME frame，而不是再次修改 InputView。V6 将以 `dumpsys` 中 `fitSides=LEFT TOP RIGHT BOTTOM` 和键盘首次显示即位于导航栏上方作为首要验收条件。

@@ -90,6 +90,9 @@ def main() -> None:
         "attachFirstRun(Landroid/app/Activity;)V",
         "configureImeWindow(Landroid/inputmethodservice/InputMethodService;)V",
         "Landroid/view/Window;->setDecorFitsSystemWindows(Z)V",
+        "Landroid/view/WindowManager$LayoutParams;->setFitInsetsSides(I)V",
+        "Landroid/view/Window;->setAttributes(Landroid/view/WindowManager$LayoutParams;)V",
+        "const/16 v2, 0xf",
         "const/16 v1, 0x23",
         "const/16 v1, 0x1e",
     )
@@ -149,6 +152,10 @@ def main() -> None:
         )
     if "const/4 v1, 0x1" not in helper_text:
         raise RuntimeError("IME Window must use non-covering decor fitting")
+    if "const/16 v2, 0xf" not in helper_text:
+        raise RuntimeError(
+            "IME fitInsetsSides must include LEFT|TOP|RIGHT|BOTTOM"
+        )
 
     for relative in ("res/layout/ims_input_view.xml", "res/layout-v21/ims_input_view.xml"):
         text = (decoded / relative).read_text(encoding="utf-8")

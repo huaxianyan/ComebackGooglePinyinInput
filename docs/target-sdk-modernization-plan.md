@@ -522,7 +522,11 @@ V4 复测与 V5 架构修正：
 - 云端 build/sign、包与版本身份、target 31/33/34/35 门禁、zipalign 和 v1/v2/v3 签名全部通过，证书仍为 `985CBF843A362169B129AEAC5E153D13095F0923231936D1486A20C8332CDE2F`；
 - 已覆盖安装到现有 `target35audit`；installed `base.apk` 与 artifact SHA-256 一致，默认 IME 保持不变；
 - 覆盖安装前后 16 个词典、主题和 SharedPreferences 文件的路径及 SHA-256 完全一致；
-- 等待维护者按“默认 → 最高 → 默认 → 最低/中间 → 重复切换”复测键盘几何、底行和导航区。
+- V5 真机结果：大面积黑色区域已消失，但键盘首次显示就进入三键导航区，透过透明导航栏可见后方按键；无需调整高度即可复现，因此 V5 不可验收；
+- 现场 `dumpsys window` 显示调用已生效为 `fitTypes=statusBars navigationBars`，但 IME attrs 仍为 `fitSides=LEFT TOP RIGHT`，明确缺少 `BOTTOM`；
+- 这证明 Android 的 `InputMethodService` Window 默认排除 bottom fit side，单独调用 `setDecorFitsSystemWindows(true)` 不足以建立 non-covering IME；
+- V6 保留无 InputView padding/background 的 V5 基础，并显式设置 `WindowManager.LayoutParams.setFitInsetsSides(0x0f)`（LEFT|TOP|RIGHT|BOTTOM），再回写 Window attrs；该值是平台 side bitmask，不是设备尺寸；
+- V6 首要静态/真机判据为 `fitSides=LEFT TOP RIGHT BOTTOM`，之后再按“默认 → 最高 → 默认 → 最低/中间 → 重复切换”复测键盘几何、底行和导航区。
 
 ### target 36 / Android 16
 

@@ -155,8 +155,9 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
 
     # Android 15 disables the legacy bottom offset for edge-to-edge windows.
     # Activities keep their narrow bottom-inset handling. For the IME, follow
-    # Gboard's non-covering window mode: ask the IME Window to fit system bars
-    # instead of changing InputView padding or keyboard-body measurements.
+    # a non-covering window mode: ask the IME Window to fit system bars on all
+    # four sides. InputMethodService defaults to LEFT|TOP|RIGHT only, so BOTTOM
+    # must be explicit; never change InputView or keyboard-body measurements.
     first_run_activity = decoded / "smali/apy.smali"
     replace_once(
         first_run_activity,
