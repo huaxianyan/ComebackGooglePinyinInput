@@ -62,19 +62,31 @@
     return-void
 .end method
 
-.method public static attachInputView(Landroid/view/View;)V
-    .locals 2
+.method public static configureImeWindow(Landroid/inputmethodservice/InputMethodService;)V
+    .locals 3
 
     sget v0, Landroid/os/Build$VERSION;->SDK_INT:I
 
-    const/16 v1, 0x23
+    const/16 v1, 0x1e
 
-    if-lt v0, v1, :cond_0
+    if-lt v0, v1, :done
 
-    const/4 v0, 0x0
+    invoke-virtual {p0}, Landroid/inputmethodservice/InputMethodService;->getWindow()Landroid/app/Dialog;
 
-    invoke-static {p0, v0}, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->attach(Landroid/view/View;Z)V
+    move-result-object v0
 
-    :cond_0
+    if-eqz v0, :done
+
+    invoke-virtual {v0}, Landroid/app/Dialog;->getWindow()Landroid/view/Window;
+
+    move-result-object v0
+
+    if-eqz v0, :done
+
+    const/4 v1, 0x1
+
+    invoke-virtual {v0, v1}, Landroid/view/Window;->setDecorFitsSystemWindows(Z)V
+
+    :done
     return-void
 .end method

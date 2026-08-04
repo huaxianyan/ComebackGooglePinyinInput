@@ -503,6 +503,18 @@ V4 构建与安装记录：
 - 覆盖安装前后私有词典、主题和 SharedPreferences 哈希完全一致；
 - 进程已正常重启，等待反复调整默认/最高键盘高度后的稳定性复测。
 
+V4 复测与 V5 架构修正：
+
+- V4 在调整键盘高度后仍然下沉，且大面积黑色 surface 在调整前后都存在；这推翻了“只因 navigation bar visibility 短暂变化”的 V3/V4 假设；
+- Gboard 完整调用链表明，它先用 `Window.setDecorFitsSystemWindows(!coverNavigation)` 选择 IME Window 模式，再由同一状态决定是否给 InputView 增加 stable inset；默认 non-covering 模式使用 `setDecorFitsSystemWindows(true)` 且 InputView bottom padding 为零；
+- Gboard 的 Insets listener 只更新统一 window-metrics model，不直接修改 InputView；覆盖导航区时还使用专用 bottom-frame paint 和颜色 model，而不是给整个 root 设置背景；
+- Google 拼音没有这套统一 model。V2–V4 把一个孤立 listener 永久安装在旧 InputView 上，使导航高度进入 root 测量，却不进入 `KeyboardBodyHeight`/`keyboard_height_ratio` 的原生高度来源，所以高度设置重建后几何失配；
+- V5 删除 IME InputView listener、bottom padding 和 root background 覆盖；API 30+ 在 `PinyinIME.onStartInputView()` 后调用 `Window.setDecorFitsSystemWindows(true)`，由 IME Window/system 在三键和手势模式下负责系统栏避让；
+- `NavigationBarCompat` 继续只负责 navigation surface 颜色、divider、图标和 contrast，不参与键盘 body 高度；
+- first-run Activity 保留 navigation-bars-only bottom inset，因为其固定 footer 是独立的 Activity edge-to-edge 问题；
+- V5 不使用 `windowOptOutEdgeToEdgeEnforcement`，不写死 126 px，不改变 `InputView.onMeasure()`、`onComputeInsets()`、候选、手写、pager 或触摸区域；
+- 本地 clean decode、完整补丁、target 31/33/34/35 静态门禁和 apktool rebuild 已通过，等待 release-like 云构建与真机反复高度测试。
+
 ### target 36 / Android 16
 
 状态：等待。

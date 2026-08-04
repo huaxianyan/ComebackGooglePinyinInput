@@ -153,10 +153,10 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
         "    goto :goto_0",
     )
 
-    # Android 15 disables the bottom offset for edge-to-edge windows. Keep
-    # interactive first-run controls and the IME keyboard body above the
-    # navigation bar by applying the real bottom WindowInset. The IME root
-    # paints the existing keyboard-area background through that inset region.
+    # Android 15 disables the legacy bottom offset for edge-to-edge windows.
+    # Activities keep their narrow bottom-inset handling. For the IME, follow
+    # Gboard's non-covering window mode: ask the IME Window to fit system bars
+    # instead of changing InputView padding or keyboard-body measurements.
     first_run_activity = decoded / "smali/apy.smali"
     replace_once(
         first_run_activity,
@@ -169,26 +169,6 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
         "EdgeToEdgeCompat;->attachFirstRun(Landroid/app/Activity;)V\n\n"
         "    .line 28",
     )
-
-    input_view = decoded / (
-        "smali/com/google/android/apps/inputmethod/libs/framework/core/InputView.smali"
-    )
-    replace_once(
-        input_view,
-        "    .line 9\n    :cond_0\n    return-void",
-        "    .line 9\n    :cond_0\n"
-        "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/"
-        "EdgeToEdgeCompat;->attachInputView(Landroid/view/View;)V\n\n"
-        "    return-void",
-    )
-
-    for relative in ("res/layout/ims_input_view.xml", "res/layout-v21/ims_input_view.xml"):
-        path = decoded / relative
-        replace_once(
-            path,
-            'android:layoutDirection="ltr"',
-            'android:layoutDirection="ltr" android:background="?BgKeyboardArea"',
-        )
 
     arrays = decoded / "res/values/arrays.xml"
     replace_once(
@@ -1656,6 +1636,10 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
         "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/firstrun/"
         "FirstRunStateCompat;->markDashboardHandled(Landroid/content/Context;)V\n\n"
         "    :first_run_dashboard_done\n"
+        "    # Android 15+: keep the non-floating IME content above system bars.\n"
+        "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/"
+        "EdgeToEdgeCompat;->configureImeWindow(Landroid/inputmethodservice/"
+        "InputMethodService;)V\n\n"
         "    # Android 16: match the navigation area to the keyboard theme.\n"
         "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/NavigationBarCompat;"
         "->apply(Lcom/google/android/apps/inputmethod/libs/framework/core/"

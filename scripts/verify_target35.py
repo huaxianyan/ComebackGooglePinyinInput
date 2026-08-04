@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """Verify Android 15 edge-to-edge and TextView audit invariants.
 
-The accepted direction keeps platform edge-to-edge enabled, forbids speculative
-TextView/candidate changes, and requires the narrow bottom-inset fixes proven by
-target 35 V1 device testing for first-run controls and the IME input view.
+Activities keep narrow inset handling. The IME uses system-owned navigation-bar
+avoidance through its Window, without padding or resizing the legacy InputView.
 """
 
 from __future__ import annotations
@@ -13,7 +12,6 @@ from pathlib import Path
 
 FORBIDDEN_BASELINE_REFERENCES = {
     "windowOptOutEdgeToEdgeEnforcement": "temporary edge-to-edge opt-out",
-    "setDecorFitsSystemWindows": "programmatic edge-to-edge override",
     "elegantTextHeight": "speculative TextView height compensation",
     "fallbackLineSpacing": "speculative TextView line-spacing compensation",
 }
@@ -90,8 +88,10 @@ def main() -> None:
     listener_text = listener.read_text(encoding="utf-8")
     required_helper = (
         "attachFirstRun(Landroid/app/Activity;)V",
-        "attachInputView(Landroid/view/View;)V",
+        "configureImeWindow(Landroid/inputmethodservice/InputMethodService;)V",
+        "Landroid/view/Window;->setDecorFitsSystemWindows(Z)V",
         "const/16 v1, 0x23",
+        "const/16 v1, 0x1e",
     )
     required_listener = (
         "Landroid/view/View$OnApplyWindowInsetsListener;",
@@ -117,23 +117,50 @@ def main() -> None:
         raise RuntimeError(f"Incomplete Android 15 bottom-inset helper: {missing}")
 
     apy = (decoded / "smali/apy.smali").read_text(encoding="utf-8")
+    pinyin_ime = (
+        decoded / "smali/com/google/android/inputmethod/pinyin/PinyinIME.smali"
+    ).read_text(encoding="utf-8")
     input_view = (
         decoded
         / "smali/com/google/android/apps/inputmethod/libs/framework/core/InputView.smali"
     ).read_text(encoding="utf-8")
     if "EdgeToEdgeCompat;->attachFirstRun" not in apy:
         raise RuntimeError("First-run footer does not receive bottom insets")
-    if "EdgeToEdgeCompat;->attachInputView" not in input_view:
-        raise RuntimeError("IME input root does not receive bottom insets")
+    if "EdgeToEdgeCompat;->configureImeWindow" not in pinyin_ime:
+        raise RuntimeError("IME lifecycle does not configure system-bar fitting")
+    if "EdgeToEdgeCompat" in input_view or "->setPadding(IIII)V" in input_view:
+        raise RuntimeError(
+            "IME InputView must retain native padding and measurement behavior"
+        )
+
+    # setDecorFitsSystemWindows(true) is deliberately scoped to the IME helper.
+    # It is not Android 15's manifest/theme opt-out: it selects Gboard's
+    # non-covering IME-window mode while platform edge-to-edge remains enabled.
+    decor_fit_sites: list[Path] = []
+    for path in (decoded / "smali").rglob("*.smali"):
+        if "setDecorFitsSystemWindows" in path.read_text(
+            encoding="utf-8", errors="ignore"
+        ):
+            decor_fit_sites.append(path.resolve())
+    if decor_fit_sites != [helper.resolve()]:
+        raise RuntimeError(
+            "setDecorFitsSystemWindows must be isolated to EdgeToEdgeCompat: "
+            f"{decor_fit_sites}"
+        )
+    if "const/4 v1, 0x1" not in helper_text:
+        raise RuntimeError("IME Window must use non-covering decor fitting")
+
     for relative in ("res/layout/ims_input_view.xml", "res/layout-v21/ims_input_view.xml"):
         text = (decoded / relative).read_text(encoding="utf-8")
-        if 'android:background="?BgKeyboardArea"' not in text:
-            raise RuntimeError(f"IME inset region has no keyboard background: {relative}")
+        if text.count('android:background="?BgKeyboardArea"') != 1:
+            raise RuntimeError(
+                f"IME root background override or native keyboard-area loss: {relative}"
+            )
 
     print(
-        "Android 15 invariants verified: edge-to-edge is not opted out, the "
-        "proven first-run/IME bottom insets are applied, API-35 day/night "
-        "first-run styles remain present, and no speculative TextView or "
+        "Android 15 invariants verified: edge-to-edge is not opted out, first-run "
+        "controls receive narrow insets, the IME Window owns system-bar avoidance, "
+        "InputView geometry remains native, and no speculative TextView or "
         "keyboard-layout compensation was introduced"
     )
 

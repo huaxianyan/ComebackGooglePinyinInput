@@ -128,3 +128,61 @@ Google 拼音 4.5.2 的 `GoogleInputMethodService` 在 header/body/extension 可
 V27 的首次真机主题切换结果仍只出现两套兜底颜色。进一步确认 Google 拼音 stylesheet 不会直接改写 XML `GradientDrawable` 的 solid color，而是用自定义 `bam` Drawable 包装原背景，并将最终主题 tint 保存在其公开 `ColorStateList` 中。V27 未识别该包装类型，因此 body 和 keyboard area 都返回无效颜色，确实全部进入了名称 fallback。
 
 V28 已优先读取 `bam` 当前 state 对应的最终颜色，之后才处理 Android 标准 Drawable；名称判断仍只作为真正的早期生命周期 fallback。当前仅替换颜色来源和图标亮度输入，divider、WindowInsets、导航模式与 contrast enforcement 尚未改变。
+
+## Android 15 IME Window 与键盘高度的完整路径
+
+进一步跟踪 `eht`、`obk`、`sbr` 和 Gboard `InputView` 后，可以把“Gboard 也设置了 InputView bottom padding”和 V2–V4 的失败区分开来：Gboard 的 padding 不是一个独立的 Insets listener 修补，而是受 **IME Window 覆盖模式**统一控制。
+
+### Window 模式先于 InputView padding
+
+`eht.ag` 表示 InputView 是否覆盖系统导航区域。API 30+ 每次开始输入时，`eht.u()` 都执行等价于：
+
+```java
+window.setDecorFitsSystemWindows(!coverNavigation);
+```
+
+随后 `eht.aD()` 才根据同一个布尔状态更新 InputView：
+
+- `coverNavigation == false`：bottom padding 强制为 `0`，由 Window/system 负责把 IME 内容放在系统栏上方；
+- `coverNavigation == true`：bottom padding 使用统一 window-metrics 状态中的 stable bottom inset，让 InputView 主动延伸到导航区；
+- padding 变化后调用 Gboard `InputView.a()`，只负责启用 bottom-frame 绘制，不改变键盘 body 的高度来源。
+
+因此，Gboard 的默认非覆盖路径不是“边到边以后总给 root 增加导航栏 padding”，而是明确选择 `setDecorFitsSystemWindows(true)` 并保持 root bottom padding 为零。只有产品状态明确要求覆盖导航区时，才同时切换 Window 模式和 bottom frame。
+
+### Insets 不直接驱动键盘 root
+
+Gboard 的 `obk`（`WindowMetricsHelper`）在 decor view 上监听 WindowInsets 和 layout change，但 listener 本身不修改 InputView。它在布局稳定后读取：
+
+- `getWindowVisibleDisplayFrame()`；
+- `getRootWindowInsets()`；
+- API 30+ 的 `getInsetsIgnoringVisibility(...)`；
+- display rotation、真实 display metrics、cutout 和 density。
+
+结果被发布为进程级 `sbr` window-metrics model。`eht.aD()`、键盘高度计算和 bottom-gap 计算都读取同一个 model，而不是各自监听一次 Insets 后写入自己的 View。这样高度设置变化、Window 重建和导航栏可见性变化不会产生多个互相竞争的几何基线。
+
+### Bottom frame 是单独的绘制状态
+
+Gboard `InputView` 有独立颜色字段 `d`。当 bottom padding 大于零且颜色有效时，`onDraw()` 只在 View 最底部 padding 对应的矩形中绘制 bottom-frame color。`qgw/qgs/qgv` 同时协调：
+
+- Window navigation-bar color/divider；
+- 可选 bottom-frame colors；
+- light navigation icon appearance；
+- navigation bar show/hide；
+- `FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS` 和 contrast enforcement。
+
+这说明 bottom frame 是“覆盖导航区”模式的显式 surface，不是给整个 InputView 设置背景后产生的大面积黑色填充。
+
+### 对 Google 拼音 target 35 的结论
+
+Google 拼音的旧 `InputView` 虽然和 Gboard 一样是 `FrameLayout + wrap_content`，但它没有 Gboard 的 window-metrics model、覆盖模式状态、专用 bottom-frame paint 和统一键盘高度管线。V2–V4 在构造函数中永久安装 Insets listener，并把导航高度直接写成 root padding；当 `keyboard_height_ratio` 触发旧框架重新创建/测量 keyboard holder 时，这个额外 root 几何不属于原生高度模型，因而出现下沉和超大背景面。
+
+target 35 V5 应采用 Gboard 已存在的另一条完整路径：
+
+1. 非浮动 Google 拼音 IME 选择 **non-covering Window mode**；
+2. API 30+ 在 `onStartInputView()` 生命周期调用 `Window.setDecorFitsSystemWindows(true)`；
+3. 删除 InputView Insets listener、root padding 和 root background 覆盖；
+4. 保持原生 `InputView.onMeasure()`、`KeyboardBodyHeight`、`keyboard_height_ratio` 和 `onComputeInsets()` 不变；
+5. 继续由 `NavigationBarCompat` 管理 navigation surface 颜色与图标，但不让它参与键盘高度；
+6. 首次引导 Activity 仍使用自己的窄 bottom-inset listener，因为 Activity footer 与 IME Window 是不同问题。
+
+这不是 `windowOptOutEdgeToEdgeEnforcement`：没有设置 manifest/theme opt-out，也没有恢复旧 target 行为；它使用现代 Window API 明确声明 IME 内容不覆盖系统栏。若未来增加浮动/覆盖导航区模式，再同时引入 Gboard 式的 window-metrics model 和专用 bottom frame，不能重新采用孤立的 root-padding listener。
