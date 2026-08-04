@@ -9,14 +9,6 @@
 
     if-eqz p0, :done
 
-    sget-boolean v0, Lcom/google/android/inputmethod/pinyin/ImeDecorDiagnosticsCompat;->logged:Z
-
-    if-nez v0, :done
-
-    const/4 v0, 0x1
-
-    sput-boolean v0, Lcom/google/android/inputmethod/pinyin/ImeDecorDiagnosticsCompat;->logged:Z
-
     new-instance v0, Lcom/google/android/inputmethod/pinyin/ImeDecorDiagnosticsCompat$DumpRunnable;
 
     invoke-direct {v0, p0}, Lcom/google/android/inputmethod/pinyin/ImeDecorDiagnosticsCompat$DumpRunnable;-><init>(Landroid/view/View;)V
