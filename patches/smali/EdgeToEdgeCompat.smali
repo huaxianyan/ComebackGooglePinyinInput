@@ -3,6 +3,10 @@
 .source "EdgeToEdgeCompat.java"
 
 
+# static fields
+.field private static inputView:Landroid/view/View;
+
+
 # direct methods
 .method private constructor <init>()V
     .locals 0
@@ -73,6 +77,8 @@
 
     if-eqz p0, :done
 
+    sput-object p0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->inputView:Landroid/view/View;
+
     new-instance v0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat$ImeInsetsListener;
 
     invoke-direct {v0, p0}, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat$ImeInsetsListener;-><init>(Landroid/view/View;)V
@@ -119,6 +125,12 @@
     invoke-virtual {v1, v2}, Landroid/view/WindowManager$LayoutParams;->setFitInsetsSides(I)V
 
     invoke-virtual {v0, v1}, Landroid/view/Window;->setAttributes(Landroid/view/WindowManager$LayoutParams;)V
+
+    sget-object v0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->inputView:Landroid/view/View;
+
+    if-eqz v0, :done
+
+    invoke-virtual {v0}, Landroid/view/View;->requestApplyInsets()V
 
     :done
     return-void

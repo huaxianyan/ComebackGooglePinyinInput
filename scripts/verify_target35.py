@@ -97,6 +97,8 @@ def main() -> None:
     required_helper = (
         "attachFirstRun(Landroid/app/Activity;)V",
         "attachInputView(Landroid/view/View;)V",
+        "sput-object p0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->inputView:Landroid/view/View;",
+        "sget-object v0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->inputView:Landroid/view/View;",
         "configureImeWindow(Landroid/inputmethodservice/InputMethodService;)V",
         "Landroid/view/Window;->setDecorFitsSystemWindows(Z)V",
         "Landroid/view/WindowManager$LayoutParams;->setFitInsetsSides(I)V",
@@ -165,10 +167,11 @@ def main() -> None:
         "findViewWithTag(Ljava/lang/Object;)Landroid/view/View;",
         'const-string v5, "ime-navigation-frame"',
         "Landroid/view/View;->bringToFront()V",
+        'const-string v2, ".keyboard-body-area"',
         "Landroid/view/ViewGroup;->addView(Landroid/view/View;Landroid/view/ViewGroup$LayoutParams;)V",
         "Landroid/widget/FrameLayout$LayoutParams;-><init>(III)V",
         "Landroid/view/ViewGroup$LayoutParams;->height:I",
-        "const v0, 0x7f0f0153",
+        "const v2, 0x7f0f0153",
         "Landroid/graphics/drawable/Drawable$ConstantState;->newDrawable",
     )
     missing = [item for item in required_ime_listener if item not in ime_listener_text]

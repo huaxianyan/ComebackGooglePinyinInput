@@ -557,7 +557,9 @@ V4 复测与 V5 架构修正：
 - V10 唯一剩余问题是导航区域没有显示键盘主题。即时 sibling frame 加在 `mInputFrame` 内，其绘制受该父级自身 bounds/clipping 约束，虽然 margin 参与了父级测量，frame 没有可靠绘制到系统导航区。
 - V11 保留已确认的 InputView parent bottom margin，只把主题 bottom frame 提升到 IME Window 的 decor root；现场导航区仍未随主题绘制，而且反复切换主题会在“键盘上移/下沉”之间变化，V11 不可验收。
 - 主题切换反证暴露了生命周期竞态：旧实现从 `InputView` XML 构造函数立即注册并 `requestApplyInsets()`，此时 `InputMethodService.setInputView()` 尚未把它加入 `mInputFrame`。首次/重建后 Insets 是否重新分发取决于当次 framework traversal，因此 margin 有时生效、有时不生效；bottom frame 的 decor root 和主题 drawable 时机也不稳定。
-- V12 把 coordinator 安装点从 InputView 构造函数移到 `GoogleInputMethodService.c()` 中 `setInputView(view)` 返回之后。该方法正是首次创建和主题重建共用路径，因此每一个新 InputView 都在拥有真实 parent/decor root 后注册 listener 并请求 Insets。decor bottom frame 继续按 tag 复用、每次从新 keyboard area 刷新主题 drawable，并调用 `bringToFront()`，以避免 DecorView 内部颜色层覆盖。
+- V12 把 coordinator 安装点从 InputView 构造函数移到 `GoogleInputMethodService.c()` 中 `setInputView(view)` 返回之后。后续多次主题切换均保持最低行在导航栏上方，但刚安装后的第一次弹出仍出现一次下沉，说明首次创建时还存在 Window fit attributes 与首个 Insets request 的顺序窗口；应用输入区始终正确。
+- V12 的 decor frame 已开始跟随主题，但颜色与候选栏/keyboard-area 外层一致，而非用户期望的主键盘 body。原因是背景源取自 `@id/keyboard_area` 的 `?BgKeyboardArea`；Google 拼音将候选/外围和主按键区分别用 `BgKeyboardArea`、`BgKeyboardBody` 着色。
+- V13 在 helper 中保存当前已 attach 的 InputView，并在 `configureImeWindow()` 完成 `setFitInsetsSides(LEFT|TOP|RIGHT)`/`setAttributes()` 后再次 `requestApplyInsets()`，确保首次弹出也按最终 Window 模式重算 margin。bottom frame 每次 apply 时动态查找当前 `.keyboard-body-area` 的实际背景，找不到才回退到 keyboard-area；因此主题重建后取主键盘颜色而不是候选栏颜色。
 
 ### target 36 / Android 16
 
