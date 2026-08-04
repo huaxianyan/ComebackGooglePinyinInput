@@ -391,7 +391,7 @@ V1 构建记录：
 
 分支：`feat/target-sdk-35`
 
-状态：**V2 复测发现 inset 类型过宽，V3 navigationBars-only 修复中**。
+状态：**V2 复测发现 inset 类型过宽，V3 navigationBars-only 修复已安装，等待视觉复测**。
 
 这是独立视觉边界。V1 从已验收的 target 34 创建，只提升到 Android 15 / API 35，刻意采用不掩盖平台行为的基线：
 
@@ -469,6 +469,18 @@ V2 复测结果与 V3 修正：
 - V3 改为 `WindowInsets.getInsets(WindowInsets.Type.navigationBars()).bottom`，只取设备当前三键导航栏的 126 px inset；首次引导和 IME 共用该精确值；
 - 保留 V2 的原始 padding/高度基线算法与键盘背景，不改变用户键盘高度设置，避免重复累加或固定高度假设；
 - 静态门禁新增禁止 `getSystemWindowInsetBottom()`，强制 navigationBars-only 查询。
+
+V3 构建与安装记录：
+
+- commit：`677afbe`
+- workflow：[`30868815100`](https://github.com/huaxianyan/comeback-google-pinyin-input/actions/runs/30868815100)
+- artifact ID：`8877113156`
+- artifact：`ComebackGooglePinyinInput-target-sdk-35-audit-v3`
+- APK SHA-256：`33457bea419d9de9e302b9d99c21ba0a08e942acc64f047cf41d35358ff5f9ad`
+- zipalign、v1/v2/v3 签名、签名证书、重解码及 Android 12–15 全部门禁通过；
+- 已覆盖安装，设备 `base.apk` SHA-256 与 artifact 一致；
+- 覆盖安装前后私有词典、主题与 SharedPreferences 文件 SHA-256 完全一致；
+- target 35 仍为当前默认 IME，进程已由系统正常重启，等待默认和最高键盘高度复测。
 
 ### target 36 / Android 16
 
