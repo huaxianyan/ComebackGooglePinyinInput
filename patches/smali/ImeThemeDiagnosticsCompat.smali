@@ -279,7 +279,7 @@
     const-string v1, "moreArea"
     invoke-static {v0, v1, v4}, Lcom/google/android/inputmethod/pinyin/ImeThemeDiagnosticsCompat;->appendView(Ljava/lang/StringBuilder;Ljava/lang/String;Landroid/view/View;)V
     const-string v1, "moreChild"
-    const/4 v5, 0x2
+    const/4 v5, 0x3
     invoke-static {v0, v1, v4, v5}, Lcom/google/android/inputmethod/pinyin/ImeThemeDiagnosticsCompat;->appendTree(Ljava/lang/StringBuilder;Ljava/lang/String;Landroid/view/View;I)V
 
     const v1, 0x7f0f0156
