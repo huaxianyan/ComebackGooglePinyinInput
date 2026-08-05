@@ -73,20 +73,43 @@ states that this device must convert `/data` to ext4 for the 16 KiB developer
 option and that this conversion erases the device. Unlocking the bootloader and
 later relocking it are also factory-reset boundaries.
 
-Consequently, this phone **can become** the authoritative 16 KiB runtime test
-device, but only after an explicitly approved destructive migration. No
-bootloader, filesystem, OEM-unlock, root/module, or phone-setting change may be
-performed as part of ordinary diagnostics.
+Consequently, this phone **could technically become** a 16 KiB runtime test
+device, but only after a destructive migration. The project decision is not to
+use this daily device for 16 KiB testing merely because it can be converted.
+No bootloader, filesystem, OEM-unlock, root/module, or phone-setting change will
+be made for this stage. The phone remains the authoritative 4 KiB regression
+device only.
 
-After conversion, every acceptance capture must verify the runtime rather than
-assuming the toggle succeeded:
+## Emulator test environment
+
+The Google SDK repository currently provides stable API 36 revision 7 images
+specifically tagged `16 KB Page Size`:
+
+```text
+system-images;android-36;google_apis_ps16k;arm64-v8a
+system-images;android-36;google_apis_ps16k;x86_64
+```
+
+Both require Android Emulator 35.4.9 or newer. The AArch64 image is preferred
+for final native acceptance because the application ships only AArch64 native
+libraries. An x86_64 image, even if it offers ARM translation, is secondary
+diagnostic evidence and must not silently replace native AArch64 execution.
+
+The current Windows host does not yet have an Android SDK/emulator installed.
+Its Intel Core i7-8700K supports VT-x and SLAT, but firmware virtualization is
+currently disabled and no hypervisor is active. Emulator provisioning therefore
+requires the user to enable CPU virtualization in firmware first; tooling must
+not alter firmware or Windows virtualization features silently.
+
+Every emulator acceptance capture must verify the guest rather than infer its
+page size from the image name:
 
 ```bash
 adb shell getconf PAGESIZE
 adb shell getprop ro.boot.hardware.cpu.pagesize
 ```
 
-Both must report `16384` for a true 16 KiB run.
+The runtime page size must report `16384`.
 
 ## Runtime acceptance boundary
 
