@@ -137,6 +137,10 @@
     invoke-virtual {p0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
     iget-object v1, v0, Lcom/google/android/inputmethod/pinyin/ImeSurfaceSliceDrawable;->overlay2:Landroid/graphics/drawable/Drawable;
     invoke-static {p0, v1}, Lcom/google/android/inputmethod/pinyin/ImeThemeDiagnosticsCompat;->appendDrawableClass(Ljava/lang/StringBuilder;Landroid/graphics/drawable/Drawable;)V
+    const-string v1, ","
+    invoke-virtual {p0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+    iget-object v1, v0, Lcom/google/android/inputmethod/pinyin/ImeSurfaceSliceDrawable;->overlay3:Landroid/graphics/drawable/Drawable;
+    invoke-static {p0, v1}, Lcom/google/android/inputmethod/pinyin/ImeThemeDiagnosticsCompat;->appendDrawableClass(Ljava/lang/StringBuilder;Landroid/graphics/drawable/Drawable;)V
     const-string v1, "]"
     invoke-virtual {p0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 

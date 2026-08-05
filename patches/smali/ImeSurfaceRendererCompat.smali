@@ -36,7 +36,7 @@
 .end method
 
 .method private static imageBottomWithOverlay(Landroid/view/View;Landroid/graphics/drawable/Drawable;ILandroid/content/res/Resources;)Landroid/graphics/drawable/Drawable;
-    .locals 10
+    .locals 12
 
     const v0, 0x7f0f0154
     invoke-virtual {p0, v0}, Landroid/view/View;->findViewById(I)Landroid/view/View;
@@ -84,6 +84,33 @@
     move-result-object v9
 
     :overlay_ready
+    # The visible expanded page is painted by four row Views. Their shared
+    # non-content row background is the visual surface behind candidate cells.
+    const/4 v10, 0x0
+    const v6, 0x7f0f02bd
+    invoke-virtual {p0, v6}, Landroid/view/View;->findViewById(I)Landroid/view/View;
+    move-result-object v6
+    instance-of v7, v6, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/widget/PageableCandidatesHolderView;
+    if-eqz v7, :row_ready
+    check-cast v6, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/widget/PageableCandidatesHolderView;
+    iget-object v7, v6, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/widget/PageableCandidatesHolderView;->a:Lavs;
+    if-nez v7, :have_page
+    iget-object v7, v6, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/widget/PageableCandidatesHolderView;->b:Lavs;
+    :have_page
+    if-eqz v7, :row_ready
+    invoke-virtual {v7}, Landroid/view/ViewGroup;->getChildCount()I
+    move-result v6
+    if-lez v6, :row_ready
+    add-int/lit8 v6, v6, -0x1
+    invoke-virtual {v7, v6}, Landroid/view/ViewGroup;->getChildAt(I)Landroid/view/View;
+    move-result-object v6
+    if-eqz v6, :row_ready
+    invoke-virtual {v6}, Landroid/view/View;->getBackground()Landroid/graphics/drawable/Drawable;
+    move-result-object v6
+    invoke-static {v6, p3}, Lcom/google/android/inputmethod/pinyin/ImeSurfaceRendererCompat;->cloneDrawable(Landroid/graphics/drawable/Drawable;Landroid/content/res/Resources;)Landroid/graphics/drawable/Drawable;
+    move-result-object v10
+
+    :row_ready
     add-int v6, v1, p2
     move v8, v1
     new-instance v0, Lcom/google/android/inputmethod/pinyin/ImeSurfaceSliceDrawable;
@@ -93,6 +120,10 @@
     move v4, v8
     move v5, v6
     invoke-direct/range {v0 .. v5}, Lcom/google/android/inputmethod/pinyin/ImeSurfaceSliceDrawable;-><init>(Landroid/graphics/drawable/Drawable;Landroid/graphics/drawable/Drawable;Landroid/graphics/drawable/Drawable;II)V
+    iput-object v10, v0, Lcom/google/android/inputmethod/pinyin/ImeSurfaceSliceDrawable;->overlay3:Landroid/graphics/drawable/Drawable;
+    if-eqz v10, :return_slice
+    invoke-virtual {v10, v0}, Landroid/graphics/drawable/Drawable;->setCallback(Landroid/graphics/drawable/Drawable$Callback;)V
+    :return_slice
     return-object v0
 
     :none
@@ -101,7 +132,7 @@
 .end method
 
 .method public static copyForPlatform(Landroid/graphics/drawable/Drawable;Landroid/content/res/Resources;)Landroid/graphics/drawable/Drawable;
-    .locals 6
+    .locals 7
 
     instance-of v0, p0, Lcom/google/android/inputmethod/pinyin/ImeSurfaceSliceDrawable;
     if-eqz v0, :ordinary
@@ -115,6 +146,9 @@
     iget-object v2, p0, Lcom/google/android/inputmethod/pinyin/ImeSurfaceSliceDrawable;->overlay2:Landroid/graphics/drawable/Drawable;
     invoke-static {v2, p1}, Lcom/google/android/inputmethod/pinyin/ImeSurfaceRendererCompat;->cloneDrawable(Landroid/graphics/drawable/Drawable;Landroid/content/res/Resources;)Landroid/graphics/drawable/Drawable;
     move-result-object v2
+    iget-object v6, p0, Lcom/google/android/inputmethod/pinyin/ImeSurfaceSliceDrawable;->overlay3:Landroid/graphics/drawable/Drawable;
+    invoke-static {v6, p1}, Lcom/google/android/inputmethod/pinyin/ImeSurfaceRendererCompat;->cloneDrawable(Landroid/graphics/drawable/Drawable;Landroid/content/res/Resources;)Landroid/graphics/drawable/Drawable;
+    move-result-object v6
     iget v3, p0, Lcom/google/android/inputmethod/pinyin/ImeSurfaceSliceDrawable;->offsetY:I
     iget v4, p0, Lcom/google/android/inputmethod/pinyin/ImeSurfaceSliceDrawable;->totalHeight:I
     move v5, v4
@@ -124,6 +158,10 @@
     move-object v1, v0
     new-instance v0, Lcom/google/android/inputmethod/pinyin/ImeSurfaceSliceDrawable;
     invoke-direct/range {v0 .. v5}, Lcom/google/android/inputmethod/pinyin/ImeSurfaceSliceDrawable;-><init>(Landroid/graphics/drawable/Drawable;Landroid/graphics/drawable/Drawable;Landroid/graphics/drawable/Drawable;II)V
+    iput-object v6, v0, Lcom/google/android/inputmethod/pinyin/ImeSurfaceSliceDrawable;->overlay3:Landroid/graphics/drawable/Drawable;
+    if-eqz v6, :platform_ready
+    invoke-virtual {v6, v0}, Landroid/graphics/drawable/Drawable;->setCallback(Landroid/graphics/drawable/Drawable$Callback;)V
+    :platform_ready
     return-object v0
 
     :ordinary

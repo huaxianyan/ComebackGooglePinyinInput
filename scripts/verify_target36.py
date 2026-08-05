@@ -124,6 +124,8 @@ def main() -> None:
         "imageBottomWithOverlay",
         "Drawable;->getState()[I",
         "overlay2:Landroid/graphics/drawable/Drawable;",
+        "overlay3:Landroid/graphics/drawable/Drawable;",
+        "const v6, 0x7f0f02bd",
         "Lcom/google/android/apps/inputmethod/libs/framework/core/KeyboardViewHolder;->a:Landroid/view/View;",
         "add-int v6, v4, v2",
         "ImeNavigationColorCompat;->schedule",
@@ -138,6 +140,7 @@ def main() -> None:
         "offsetY:I",
         "overlay:Landroid/graphics/drawable/Drawable;",
         "overlay2:Landroid/graphics/drawable/Drawable;",
+        "overlay3:Landroid/graphics/drawable/Drawable;",
         "totalHeight:I",
     )
     missing = [token for token in slice_tokens if token not in slice_drawable]
