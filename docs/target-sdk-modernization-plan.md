@@ -594,7 +594,9 @@ V4 复测与 V5 架构修正：
 
 ### target 36 / Android 16
 
-状态：target 35 已验收，可创建独立分支；尚未开始实现。
+状态：已从 target 35 验收提交 `c749727` 创建 `feat/target-sdk-36`；V1 仅提升 `targetSdkVersion: 35 → 36`，等待 release-like 构建与真机基线。
+
+V1 保留 target 35 已验收的 covering IME Window、双导航主题同步、首次引导和所有功能实现，不加入预测返回回调或 MD3 重写。Manifest 显式设置应用级 `android:enableOnBackInvokedCallback="false"`，先冻结普通 `onBackPressed()` 语义；新增 `scripts/verify_target36.py`，要求 target 36、真实 edge-to-edge、显式 legacy Back opt-out，并拒绝在首个 target-only 候选中混入 `OnBackInvokedCallback`。
 
 目标正式里程碑。重点：
 

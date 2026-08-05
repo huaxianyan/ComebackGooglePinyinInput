@@ -188,6 +188,10 @@ jobs:
         shell: pwsh
         run: python scripts/verify_target35.py work/decoded
 
+      - name: Verify Android 16 target-only baseline
+        shell: pwsh
+        run: python scripts/verify_target36.py work/decoded
+
       - name: Prepare release artifact
         id: artifact
         shell: pwsh

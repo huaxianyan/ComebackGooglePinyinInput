@@ -40,15 +40,15 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
         raise RuntimeError("Refusing to make the formal application ID debuggable")
 
     # Target SDK modernization is deliberately staged one API level at a time.
-    # API 34 has passed its isolated audit; this branch isolates Android 15 /
-    # API 35 while retaining all previously accepted compatibility fixes.
+    # API 35 has passed its isolated audit; this branch isolates Android 16 /
+    # API 36 while retaining all previously accepted compatibility fixes.
     # V1 deliberately accepts enforced edge-to-edge without an opt-out or
     # speculative inset/measurement compensation so visual changes remain
     # attributable and can be fixed only where device evidence requires it.
     replace_once(
         decoded / "apktool.yml",
         "sdkInfo:\n  minSdkVersion: 17\n  targetSdkVersion: 26",
-        "sdkInfo:\n  minSdkVersion: 17\n  targetSdkVersion: 35",
+        "sdkInfo:\n  minSdkVersion: 17\n  targetSdkVersion: 36",
     )
     replace_once(
         decoded / "apktool.yml",
@@ -1506,7 +1506,15 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
         replace_once(
             manifest,
             "    <application android:backupAgent=",
-            '    <application android:debuggable="true" android:backupAgent=',
+            '    <application android:debuggable="true" '
+            'android:enableOnBackInvokedCallback="false" android:backupAgent=',
+        )
+    else:
+        replace_once(
+            manifest,
+            "    <application android:backupAgent=",
+            '    <application android:enableOnBackInvokedCallback="false" '
+            'android:backupAgent=',
         )
     replace_once(
         manifest,

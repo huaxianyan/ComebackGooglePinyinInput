@@ -25,8 +25,10 @@ def main() -> None:
     decoded = args.decoded.resolve()
 
     apktool = (decoded / "apktool.yml").read_text(encoding="utf-8")
-    if "targetSdkVersion: 35" not in apktool:
-        raise RuntimeError("Android 15 verifier requires targetSdkVersion 35")
+    if not any(
+        f"targetSdkVersion: {target}" in apktool for target in (35, 36)
+    ):
+        raise RuntimeError("Android 15 verifier requires targetSdkVersion 35+")
 
     findings: list[str] = []
     for base, pattern in ((decoded / "smali", "*.smali"), (decoded / "res", "*.xml")):
