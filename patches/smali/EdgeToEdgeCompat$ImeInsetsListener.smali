@@ -68,7 +68,11 @@
 
     if-lez v2, :no_stable_frame_parent
 
-    if-ne v2, v0, :no_stable_frame_parent
+    invoke-virtual {v3}, Landroid/view/View;->getHeight()I
+
+    move-result v6
+
+    if-ge v2, v6, :no_stable_frame_parent
 
     invoke-virtual {v4}, Landroid/view/View;->getBottom()I
 
@@ -89,6 +93,10 @@
     move-result v6
 
     if-ne v5, v6, :no_stable_frame_parent
+
+    invoke-virtual {v4}, Landroid/view/View;->getHeight()I
+
+    move-result v0
 
     instance-of v2, v4, Landroid/view/ViewGroup;
 

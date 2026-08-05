@@ -72,6 +72,7 @@ def main() -> None:
         "Landroid/view/View;->isLaidOut()Z",
         "Landroid/view/View;->getBottom()I",
         "Landroid/view/View;->getWidth()I",
+        "if-ge v2, v6, :no_stable_frame_parent",
         ":no_stable_frame_parent",
     )
     missing = [
@@ -79,7 +80,7 @@ def main() -> None:
     ]
     if missing:
         raise RuntimeError(
-            "IME margin coordinator can accept transitional navigation geometry: "
+            "IME margin coordinator can accept full-root transitional geometry: "
             f"{missing}"
         )
 

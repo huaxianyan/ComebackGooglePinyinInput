@@ -606,7 +606,11 @@ V3 从 bottom-margin/frame-parent 判定中移除 `isLayoutRequested()`，保留
 
 Debug 现场证明稳定三按钮 DecorView 只有两个直属子项：`child0=LinearLayout`（全高、无背景）和 `child1=View`（`126 px`、底部全宽、`ColorDrawable`）；`themeFrame=null`。颜色同步器虽然多次达到 `sync-applied`，但因首子项背景为空，只能保持平台 View 可见，无法复制当前键盘主题。V2/V3 的共同问题是把“候选必须为 ViewGroup”作为稳定条件，因而从未在这个稳定的非 ViewGroup 平台导航 View 结构下创建直属 theme frame。V1 之所以能跟随，是旧逻辑在非 ViewGroup 分支保留 DecorView 作为 frame parent，但它同时会错误接受语音切换时的全屏 ViewGroup。
 
-V4 Debug 将候选类型与几何稳定性分开：所有候选都必须已布局、高度严格等于公开 `navigationBars.bottom`、底部对齐且全宽；稳定非 ViewGroup 候选使用 DecorView 作为 theme-frame parent，稳定 ViewGroup 候选继续使用候选容器，任何全屏过渡候选仍被拒绝。这样三按钮结构会恢复 `themeFrame` 直属首子项，颜色同步器可从其键盘主题 Drawable 更新最后的平台颜色 View，同时不会恢复 V1 的全屏 margin 缺陷。
+V4 Debug 将候选类型与几何稳定性分开：所有候选都必须已布局、高度严格等于公开 `navigationBars.bottom`、底部对齐且全宽；稳定非 ViewGroup 候选使用 DecorView 作为 theme-frame parent，稳定 ViewGroup 候选继续使用候选容器，任何全屏过渡候选仍被拒绝。三按钮下语音、主题和重复往返通过。
+
+手势模式 Debug 现场进一步证明不能要求候选高度等于 `navigationBars.bottom`：系统公开 navigation bar 为 `63 px`，但 IME DecorView 的稳定末子项是一个底部全宽 ViewGroup，实际高度为 `126 px`；InputView 因 fallback margin 仅保留 `63 px`，高度变成 `2175 px`，键盘区域屏幕顶部变为 `1544`，同时 `themeFrame=null`，形成用户观察到的整体矮 `63 px` 和底部黑色断层。target 28/已验收几何的键盘顶部为 `1481`，差值正是被漏掉的 `63 px`。
+
+V5 Debug 不再把系统 `navigationBars.bottom` 当作框架 IME 导航容器的视觉高度；它只作为没有稳定候选时的安全 fallback。稳定候选必须使用公开 View 几何满足：已布局、正高度、严格小于根高度、底部对齐且全宽。其真实高度动态成为 InputView margin 和 theme-frame 高度；候选为 ViewGroup 时 frame 放在容器内，普通 View 时 frame 放在 DecorView。语音切换时的全根临时容器因高度等于根高度而被拒绝，不需要固定 `63/126/2238 px`、隐藏 ID、内部类名或反射。
 
 目标正式里程碑。重点：
 
