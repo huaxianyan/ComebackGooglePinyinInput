@@ -156,6 +156,29 @@
     const-string v1, "keyboardArea"
     invoke-static {v0, v1, v3}, Lcom/google/android/inputmethod/pinyin/ImeThemeDiagnosticsCompat;->appendView(Ljava/lang/StringBuilder;Ljava/lang/String;Landroid/view/View;)V
 
+    instance-of v1, v3, Landroid/view/ViewGroup;
+    if-eqz v1, :emit
+    check-cast v3, Landroid/view/ViewGroup;
+    invoke-virtual {v3}, Landroid/view/ViewGroup;->getChildCount()I
+    move-result v4
+    const/4 v5, 0x0
+
+    :area_child_loop
+    if-ge v5, v4, :emit
+    invoke-virtual {v3, v5}, Landroid/view/ViewGroup;->getChildAt(I)Landroid/view/View;
+    move-result-object v6
+    new-instance v7, Ljava/lang/StringBuilder;
+    invoke-direct {v7}, Ljava/lang/StringBuilder;-><init>()V
+    const-string v1, "areaChild"
+    invoke-virtual {v7, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+    invoke-virtual {v7, v5}, Ljava/lang/StringBuilder;->append(I)Ljava/lang/StringBuilder;
+    invoke-virtual {v7}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
+    move-result-object v7
+    invoke-static {v0, v7, v6}, Lcom/google/android/inputmethod/pinyin/ImeThemeDiagnosticsCompat;->appendView(Ljava/lang/StringBuilder;Ljava/lang/String;Landroid/view/View;)V
+    add-int/lit8 v5, v5, 0x1
+    goto :area_child_loop
+
+    :emit
     const-string v1, "GooglePinyinImeSync"
     invoke-virtual {v0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
     move-result-object v0
