@@ -1,11 +1,14 @@
 # Changelog
 
-## [Unreleased - target SDK modernization audits]
+## [2.0.0 - Unreleased]
+
+Android 16 大版本开发基线。已验收的 target SDK 29–36 分支合并到 `master`；后续 Material You/MD3、16 KiB、预测返回和其他开发均以该基线为起点。除非明确创建并推送 `v2.0.0` 标签，否则这里只产生构建 Artifact，不发布 GitHub Release。
 
 ### Changed
 
-- 在长期保留的 `feat/target-sdk-29` 分支把隔离审计构建从 target 28 提升到 Android 10 / API 29；正式 `v1.0.3` 和 `master` 仍保持 target 28。
-- 记录 API 29–37 逐 target 独立分支、隔离 application ID、完成门槛和后继分支规则；前一级未验收前不进入下一级。
+- 正式开发身份更新为 Android `versionName 2.0.0`、`versionCode 4520385`、target SDK 36；application ID 和签名身份保持不变，可覆盖升级 `v1.0.3`。
+- 将 target 36 V19 的 covering-IME、双导航主题延伸、动态图片裁剪和 Android 12–16 静态门禁作为新的 `master` 基线。
+- 保留 API 29–36 的长期审计分支、隔离 application ID、完成门槛和历史取证；Android 17 继续作为独立调查阶段。
 - GitHub Actions 增加预期 target SDK 身份检查和构建摘要，防止审计产物在目标版本不符时继续发布。
 - target 29 V1 已在 Pixel 10 Pro / Android 16 完成首次引导、核心输入、手写、候选、剪贴板、主题、联系人及 SAF 备份测试；ART、DropBox、进程日志和 Root 文件检查未发现新增问题。
 - 所有非正式 application ID 的后续审计包统一显示为“Google 拼音输入法（测试版）”，便于在 Launcher、应用列表和输入法选择器中与正式版区分。

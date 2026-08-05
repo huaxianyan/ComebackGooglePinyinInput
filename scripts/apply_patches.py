@@ -53,8 +53,8 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
     replace_once(
         decoded / "apktool.yml",
         "versionInfo:\n  versionCode: 4520313\n  versionName: 4.5.2.193126728-arm64-v8a",
-        "versionInfo:\n  versionCode: 4520384\n"
-        "  versionName: 1.0.3",
+        "versionInfo:\n  versionCode: 4520385\n"
+        "  versionName: 2.0.0",
     )
 
     # Keep the formal product name unchanged. Isolated audit packages use a

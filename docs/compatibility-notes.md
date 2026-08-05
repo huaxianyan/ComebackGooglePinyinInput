@@ -6,12 +6,12 @@
 - Compatibility v10+ package：`com.google.android.inputmethod.pinyin.compat`
 - 原版 versionName：`4.5.2.193126728-arm64-v8a`
 - 原版 versionCode：`4520313`
-- 最新正式版：`v1.0.3`（versionCode `4520384`）
+- 最新已发布正式版：`v1.0.3`（versionCode `4520384`，targetSdk 28）
+- 当前 `master` 开发版：`2.0.0`（versionCode `4520385`，targetSdk 36）
 - minSdk：17
 - 原版 targetSdk：26
-- 最新正式版 targetSdk：28
-- 已验收现代化阶段：targetSdk 29、30、31、32、33、34
-- 当前现代化审计分支 targetSdk：35
+- 已验收并合并的现代化阶段：targetSdk 29、30、31、32、33、34、35、36
+- Android 17 / targetSdk 37：独立后续调查
 - 架构：arm64-v8a
 
 ## 原生库
@@ -67,7 +67,7 @@ Compatibility v20 为可变词库文件增加恢复层。原版持久化按 `主
 
 ## target SDK 策略
 
-正式版 `v1.0.3` 冻结在 target 28。从 `feat/target-sdk-29` 开始，每个 target 使用独立且长期保留的分支；后一级从已验收的前一级创建，不跨级混入行为变化。完整分支规则、逐代风险和完成条件见 [`target-sdk-modernization-plan.md`](target-sdk-modernization-plan.md)。
+正式 Release `v1.0.3` 冻结在 target 28。`feat/target-sdk-29` 至 `feat/target-sdk-36` 采用独立长期分支逐级完成验收，最终 target 36 V19 已合并到 `master` 并将开发版本提升到 `2.0.0`。后续功能分支都从该 target 36 基线创建；Android 17 仍不与 Material You/MD3、16 KiB 或预测返回混合。完整历史、风险和完成条件见 [`target-sdk-modernization-plan.md`](target-sdk-modernization-plan.md)。
 
 已知边界：
 

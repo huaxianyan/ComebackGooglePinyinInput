@@ -29,6 +29,20 @@
 
 Google 拼音输入法最初由 Google 发布并通过 Google Play 等官方 Android 分发渠道提供。本仓库中的原始 APK 用于软件保存、兼容性研究和可复现构建，其文件哈希与签名信息列于上表，便于独立校验来源和完整性。
 
+### 当前主分支开发基线
+
+| 项目 | 内容 |
+| --- | --- |
+| 开发版本 | `2.0.0` |
+| Android versionName | `2.0.0` |
+| Android versionCode | `4520385` |
+| 正式包名 | `com.google.android.inputmethod.pinyin.compat` |
+| 架构 | `arm64-v8a` |
+| target SDK | 36 |
+| 基线 | 已验收 target 36 V19（Android 16） |
+
+`master` 已合并逐 API 29–36 的验收成果，后续 Material You/MD3、16 KiB、预测返回和其他开发均从这个 Android 16 基线分支，不再从 target 28 开始。`2.0.0` 当前是开发版本；在明确创建版本标签前不会自动发布 GitHub Release。
+
 ### 最新正式版本
 
 | 项目 | 内容 |
@@ -46,7 +60,7 @@ Google 拼音输入法最初由 Google 发布并通过 Google Play 等官方 And
 
 上表对应正式 Release `v1.0.3`：备份和导入位置继续支持内部存储、SD 卡及 Google Drive 等 DocumentsProvider，同时移除失效的 Google 账户词典同步请求，并保留本地“清除用户字典”功能。后续 `master` 仍可能包含尚未发布的研究或兼容修复；是否发布以 GitHub Release 和 `CHANGELOG.md` 为准。
 
-`targetSdkVersion` 的后续提升采用逐 API、逐分支、逐项验收策略。正式版 target 28 保持不变，API 29–37 的分支规则、已知行为边界和测试门槛见 [`docs/target-sdk-modernization-plan.md`](docs/target-sdk-modernization-plan.md)。中间审计包使用隔离 application ID，不覆盖正式包，也不发布正式 Release。
+`targetSdkVersion` 29–36 的提升已经按逐 API、逐分支、逐项验收策略完成并合并到 `master`。历史分支、已知行为边界和测试门槛见 [`docs/target-sdk-modernization-plan.md`](docs/target-sdk-modernization-plan.md)。Android 17 继续作为独立调查阶段；中间审计包使用隔离 application ID，不覆盖正式包，也不发布正式 Release。
 
 创造性 AI 版使用独立包名和项目签名证书，可以与 Google 原始版本同时安装。以后升级时必须继续使用同一签名证书；它不能覆盖由 Google 官方证书签名的原始应用。
 
@@ -186,8 +200,8 @@ gh variable set ANDROID_APPLICATION_ID --body "com.google.android.inputmethod.pi
 配置后可在 GitHub 的 **Actions → Build and release APK → Run workflow** 手动验证一次。确认 artifact 能安装并覆盖正式创造性 AI 版后，以新版本提交创建标签：
 
 ```powershell
-git tag -a v1.0.3 -m "ComebackGooglePinyinInput 1.0.3"
-git push origin v1.0.3
+git tag -a v2.0.0 -m "ComebackGooglePinyinInput 2.0.0"
+git push origin v2.0.0
 ```
 
 标签推送后无需在本地构建或上传 APK。`GITHUB_TOKEN` 由 Actions 自动提供，只授予工作流创建 Release 所需的 `contents: write` 权限。

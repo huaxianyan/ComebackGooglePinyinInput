@@ -2,7 +2,7 @@
 
 ## 目标
 
-Google 拼音输入法 4.5.2 的原始 `targetSdkVersion` 为 26，当前正式版 `v1.0.3` 已提升到 28。后续目标是在不改变原生输入行为、候选逻辑、词典格式、学习权重、手写识别、主题和触摸路由的前提下，逐代处理 Android 的目标版本行为变更，最终稳定面向 Android 16（API 36），并为 Android 17（API 37）保留独立调查阶段。
+Google 拼音输入法 4.5.2 的原始 `targetSdkVersion` 为 26，正式 Release `v1.0.3` 为 target 28。API 29–36 已在不改变原生输入行为、候选逻辑、词典格式、学习权重、手写识别、主题和触摸路由的前提下逐代完成验收，并作为开发版本 `2.0.0` 合并到 `master`。Android 17（API 37）继续保留为独立调查阶段。
 
 Google Play 当前要求新应用和更新面向 Android 16（API 36）或更高版本，但本项目不以赶进度为目标。每一级 target 必须完成构建、静态检查、真机 ART 启动和相关功能回归后，才进入下一级：
 
@@ -21,7 +21,7 @@ Google Play 当前要求新应用和更新面向 Android 16（API 36）或更高
 每个 target 使用一个长期保留的独立分支。后一级从已经验收的前一级分支创建，使修复按 API 顺序累积，同时保留每个行为边界的准确历史：
 
 ```text
-master / v1.0.3（target 28）
+v1.0.3 历史基线（target 28）
   └─ feat/target-sdk-29
        └─ feat/target-sdk-30
             └─ feat/audit-debug-mode（不提升 target）
@@ -30,8 +30,11 @@ master / v1.0.3（target 28）
                       └─ feat/target-sdk-33
                            └─ feat/target-sdk-34
                                 └─ feat/target-sdk-35
-                                     └─ feat/target-sdk-36
-                                          └─ feat/target-sdk-37
+                                     └─ feat/target-sdk-36（已验收）
+                                          └─ master / 2.0.0（target 36）
+                                               ├─ Material You / MD3
+                                               ├─ 16 KiB native 调查
+                                               └─ feat/target-sdk-37（独立后续）
 ```
 
 规则：
