@@ -122,6 +122,8 @@ def main() -> None:
         "const v3, 0x7f0f0156",
         "ImeSurfaceSliceDrawable;-><init>",
         "imageBottomWithOverlay",
+        "new-array v7, v7, [Landroid/graphics/drawable/Drawable;",
+        "Landroid/graphics/drawable/LayerDrawable;-><init>",
         "Lcom/google/android/apps/inputmethod/libs/framework/core/KeyboardViewHolder;->a:Landroid/view/View;",
         "add-int v6, v4, v2",
         "ImeNavigationColorCompat;->schedule",

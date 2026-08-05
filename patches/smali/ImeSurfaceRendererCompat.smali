@@ -25,7 +25,7 @@
 .end method
 
 .method private static imageBottomWithOverlay(Landroid/view/View;Landroid/graphics/drawable/Drawable;ILandroid/content/res/Resources;)Landroid/graphics/drawable/Drawable;
-    .locals 8
+    .locals 10
 
     const v0, 0x7f0f0154
     invoke-virtual {p0, v0}, Landroid/view/View;->findViewById(I)Landroid/view/View;
@@ -54,6 +54,34 @@
     move-result-object v4
     invoke-static {p1, p3}, Lcom/google/android/inputmethod/pinyin/ImeSurfaceRendererCompat;->cloneDrawable(Landroid/graphics/drawable/Drawable;Landroid/content/res/Resources;)Landroid/graphics/drawable/Drawable;
     move-result-object v5
+
+    # Expanded-candidate opacity is authored as an additional translucent
+    # layer over the native keyboard-body shadow, not as a replacement for it.
+    # Recreate that same stack over the continuous image slice.
+    const v6, 0x7f0f0156
+    invoke-virtual {p0, v6}, Landroid/view/View;->findViewById(I)Landroid/view/View;
+    move-result-object v6
+    instance-of v7, v6, Lcom/google/android/apps/inputmethod/libs/framework/core/KeyboardViewHolder;
+    if-eqz v7, :overlay_ready
+    check-cast v6, Lcom/google/android/apps/inputmethod/libs/framework/core/KeyboardViewHolder;
+    iget-object v6, v6, Lcom/google/android/apps/inputmethod/libs/framework/core/KeyboardViewHolder;->a:Landroid/view/View;
+    if-eqz v6, :overlay_ready
+    invoke-virtual {v6}, Landroid/view/View;->getBackground()Landroid/graphics/drawable/Drawable;
+    move-result-object v6
+    invoke-static {v6, p3}, Lcom/google/android/inputmethod/pinyin/ImeSurfaceRendererCompat;->cloneDrawable(Landroid/graphics/drawable/Drawable;Landroid/content/res/Resources;)Landroid/graphics/drawable/Drawable;
+    move-result-object v6
+    if-eqz v6, :overlay_ready
+    const/4 v7, 0x2
+    new-array v7, v7, [Landroid/graphics/drawable/Drawable;
+    const/4 v8, 0x0
+    aput-object v6, v7, v8
+    const/4 v8, 0x1
+    aput-object v5, v7, v8
+    new-instance v8, Landroid/graphics/drawable/LayerDrawable;
+    invoke-direct {v8, v7}, Landroid/graphics/drawable/LayerDrawable;-><init>([Landroid/graphics/drawable/Drawable;)V
+    move-object v5, v8
+
+    :overlay_ready
     add-int v6, v1, p2
     new-instance v7, Lcom/google/android/inputmethod/pinyin/ImeSurfaceSliceDrawable;
     invoke-direct {v7, v4, v5, v1, v6}, Lcom/google/android/inputmethod/pinyin/ImeSurfaceSliceDrawable;-><init>(Landroid/graphics/drawable/Drawable;Landroid/graphics/drawable/Drawable;II)V
