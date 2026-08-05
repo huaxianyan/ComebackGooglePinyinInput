@@ -589,11 +589,12 @@ V4 复测与 V5 架构修正：
 - V38 使用全新 `GooglePinyinImeSync` tag，只记录 schedule、候选是否 ViewGroup、候选高度和 tappable bottom 整数。重新显式选择 `target35debug` 后，日志证明过渡/手势结构为 `candidateGroup=1` 并被拒绝，稳定三按钮为 `candidateGroup=0, candidateHeight=126, tappableBottom=126` 并正确同步。用户确认首次正常、主题切换正常、三按钮→手势→三按钮多轮往返正常，无白屏、灰层、几何、控件或应用 Insets 回归。
 - Release-like V39 将已证明的逻辑移入无日志的 `ImeNavigationColorCompat`：保留立即 post、300ms 有界重试、非 ViewGroup/正高度/等于正数 tappable bottom 的结构守卫，以及从专用 theme frame 克隆 Drawable 到平台 color View；删除 `ImeDecorDiagnosticsCompat`、tree dump 和全部 Debug tag。覆盖安装后显式恢复 `target35audit` 并卸载 Debug。用户在首次手势→三按钮时看到一次白屏，此后多轮导航、主题和高度切换均无法复现，其他路径正常；当前 Window、ART crash buffer 和 DropBox 均无本包异常。
 - V38 的递归 tree dump/logging 在执行同步前引入了显著时序开销，而无日志 V39 的立即 Runnable 更早，可能在 View 仍保留旧 measured 126、但 framework 已请求下一次全屏布局的瞬间命中原守卫。V40 因此不依赖诊断延迟，增加公开稳定布局条件：root 与候选均 `!isLayoutRequested()`、候选 `isLaidOut()`、候选 bottom 等于 root height、宽度等于 root width；300ms 有界重试保留。这样旧测量值/待布局过渡帧被拒绝，稳定三按钮背景仍满足全部条件。
-- V40 clean release-like（commit `79ed506`，workflow `30937645444`，artifact `8903797153`，APK SHA-256 `153f2ab453a35f1f565ffaf6d5057a99c62e30add7e5fb7118cc3a43e3985465`）覆盖安装前后 18 个持久私有文件 SHA-256 完全一致，签名/target/non-debug 和 target 31–35 静态门禁全部通过。用户完成首次手势→三按钮、至少五轮导航往返、主题、键盘高度、隐藏/重开及锁屏/解锁测试，确认无白屏、灰层、控件、几何或应用 Insets 回归。随后 release-like crash buffer、DropBox crash/ANR 和 ART verifier 检查均无本包命中。导航 Window 边界至此通过；首次引导 footer 的独立重测仍须获得仅重置隔离 `guide_complete` 标记的明确授权，未授权前不改动。
+- V40 clean release-like（commit `79ed506`，workflow `30937645444`，artifact `8903797153`，APK SHA-256 `153f2ab453a35f1f565ffaf6d5057a99c62e30add7e5fb7118cc3a43e3985465`）覆盖安装前后 18 个持久私有文件 SHA-256 完全一致，签名/target/non-debug 和 target 31–35 静态门禁全部通过。用户完成首次手势→三按钮、至少五轮导航往返、主题、键盘高度、隐藏/重开及锁屏/解锁测试，确认无白屏、灰层、控件、几何或应用 Insets 回归。随后 release-like crash buffer、DropBox crash/ANR 和 ART verifier 检查均无本包命中。
+- 获得明确授权后，仅删除隔离 `guide_complete` 和旧安装本地 `HAD_FIRST_RUN` 标记以复测升级环境中的首次引导；18 个持久文件中只有这两个 SharedPreferences 文件按预期变化，词典、主题和备份文件全部不变。用户确认三页引导弹出，左/右按钮完整位于三按钮导航栏上方，引导页和设置页均可正常交互且无阻挡；完成后 `guide_complete` 已重新写入、默认 IME 为 `target35audit`，crash buffer 与 DropBox 仍无本包命中。现有页面不再做视觉扩建，完整 MD3 重写按决定推迟到 target 36 适配完成之后。至此 target 35 的功能、首次引导、设置、双导航、首次/解锁显示、主题、高度、Insets、ART/Root/DropBox 和数据保留验收全部通过。
 
 ### target 36 / Android 16
 
-状态：等待。
+状态：target 35 已验收，可创建独立分支；尚未开始实现。
 
 目标正式里程碑。重点：
 
