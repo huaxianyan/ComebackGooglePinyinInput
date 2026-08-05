@@ -1864,6 +1864,63 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
         "smali/com/google/android/inputmethod/pinyin/"
         "EdgeToEdgeCompat$ImeInsetsListener.smali"
     )
+    if debuggable:
+        diagnostics_src = ROOT / "patches/smali/ImeThemeDiagnosticsCompat.smali"
+        diagnostics_dst = decoded / (
+            "smali/com/google/android/inputmethod/pinyin/"
+            "ImeThemeDiagnosticsCompat.smali"
+        )
+        shutil.copyfile(diagnostics_src, diagnostics_dst)
+        replace_once(
+            ime_insets_listener,
+            "    invoke-virtual {v1}, Landroid/view/View;->getRootView()"
+            "Landroid/view/View;\n\n    move-result-object v3\n",
+            "    invoke-virtual {v1}, Landroid/view/View;->getRootView()"
+            "Landroid/view/View;\n\n    move-result-object v3\n\n"
+            "    const-string v2, \"insets\"\n\n"
+            "    invoke-static {v1, v2}, Lcom/google/android/inputmethod/pinyin/"
+            "ImeThemeDiagnosticsCompat;->dump(Landroid/view/View;Ljava/lang/String;)V\n",
+        )
+        nav_color_debug = decoded / (
+            "smali/com/google/android/inputmethod/pinyin/"
+            "ImeNavigationColorCompat.smali"
+        )
+        replace_once(
+            nav_color_debug,
+            "    if-eqz p0, :done\n\n"
+            "    invoke-virtual {p0}, Landroid/view/View;->getRootView()",
+            "    if-eqz p0, :done\n\n"
+            "    const-string v1, \"sync-attempt\"\n\n"
+            "    invoke-static {p0, v1}, Lcom/google/android/inputmethod/pinyin/"
+            "ImeThemeDiagnosticsCompat;->dump(Landroid/view/View;Ljava/lang/String;)V\n\n"
+            "    invoke-virtual {p0}, Landroid/view/View;->getRootView()",
+        )
+        replace_once(
+            nav_color_debug,
+            "    invoke-virtual {v0}, Landroid/view/View;->invalidate()V\n\n"
+            "    :done",
+            "    invoke-virtual {v0}, Landroid/view/View;->invalidate()V\n\n"
+            "    const-string v1, \"sync-applied\"\n\n"
+            "    invoke-static {v3, v1}, Lcom/google/android/inputmethod/pinyin/"
+            "ImeThemeDiagnosticsCompat;->dump(Landroid/view/View;Ljava/lang/String;)V\n\n"
+            "    :done",
+        )
+        navigation_debug = decoded / (
+            "smali/com/google/android/inputmethod/pinyin/NavigationBarCompat.smali"
+        )
+        replace_once(
+            navigation_debug,
+            "    if-lt v0, v1, :done\n\n"
+            "    # Prefer the final rendered keyboard surface.",
+            "    if-lt v0, v1, :done\n\n"
+            "    iget-object v7, p0, Lcom/google/android/apps/inputmethod/libs/"
+            "framework/core/GoogleInputMethodService;->a:Lcom/google/android/apps/"
+            "inputmethod/libs/framework/core/InputView;\n\n"
+            "    const-string v6, \"nav-apply\"\n\n"
+            "    invoke-static {v7, v6}, Lcom/google/android/inputmethod/pinyin/"
+            "ImeThemeDiagnosticsCompat;->dump(Landroid/view/View;Ljava/lang/String;)V\n\n"
+            "    # Prefer the final rendered keyboard surface.",
+        )
     replace_once(
         ime_insets_listener,
         "    :done\n    invoke-static {}, Lcom/google/android/inputmethod/pinyin/"
