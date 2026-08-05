@@ -99,6 +99,8 @@ def main() -> None:
     if (
         'const-string v2, "ime-navigation-frame"' not in nav_color
         or "findViewWithTag(Ljava/lang/Object;)Landroid/view/View;" not in nav_color
+        or ":candidate_loop" not in nav_color
+        or "if-ne v5, v4, :next_candidate" not in nav_color
     ):
         raise RuntimeError("Platform navigation color must source the owned theme frame")
 

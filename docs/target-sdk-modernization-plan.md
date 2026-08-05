@@ -616,7 +616,9 @@ V5 从手势返回三按钮后又暴露一种稳定结构：DecorView 暂时或�
 
 V6 Debug 在“无稳定末候选但公开 fallback inset 为正”时使用 DecorView 作为安全 theme-frame parent，同时始终从整个根树查找唯一 tagged frame。若后续出现稳定 ViewGroup/普通 View 结构，则通过公开 `View.getParent()`/`ViewGroup.removeView()` 将同一个 frame 重挂到正确 parent，而不是创建重复 frame；margin 仍只使用稳定候选真实高度或公开 fallback，绝不采用全根过渡高度。语音往返仍有概率故障，证明继续把自有 surface 绑定到 framework Decor 子项并不可靠。
 
-V7 Debug 停止 DecorView add/remove/reparent 路线，完整采用 InputView-owned covering model：theme frame 永久作为 InputView 内部、不可点击且不可聚焦的底部 sibling；只给现有 keyboard area 写 bottom margin，保留其原生测量高度，不修改 InputView padding 或 `onMeasure()`。稳定 framework bottom candidate 只作为只读几何传感器：已布局、正高度、小于根高度、底部对齐且全宽时记录进程级 `lastStableNavigationHeight`；候选暂时消失或进入全根过渡时继续使用最后稳定值，公开 `navigationBars.bottom` 只作冷启动 fallback。平台三按钮颜色 View 如存在，仅从 InputView 自有 tagged frame 复制 Drawable，不再以 DecorView 首子项作为主题来源，也不移动自有 frame。
+V7 Debug 停止 DecorView add/remove/reparent 路线，完整采用 InputView-owned covering model：theme frame 永久作为 InputView 内部、不可点击且不可聚焦的底部 sibling；只给现有 keyboard area 写 bottom margin，保留其原生测量高度，不修改 InputView padding 或 `onMeasure()`。稳定 framework bottom candidate 只作为只读几何传感器：已布局、正高度、小于根高度、底部对齐且全宽时记录进程级 `lastStableNavigationHeight`；候选暂时消失或进入全根过渡时继续使用最后稳定值，公开 `navigationBars.bottom` 只作冷启动 fallback。V7 现场几何达到 `IME top=1481`，InputView 为 `2238 px`，内部 theme frame 和 keyboard area 分别为 `2112..2238` 与 `1309..2112`，两者 Drawable 均为当前 `bam`；但手势下 DecorView 同时存在位于 theme frame 上方的稳定普通 View 和最后的导航控件 ViewGroup。旧颜色同步器只检查最后一个 child，因其为 ViewGroup 而退出，前一个普通平台颜色 View 保留旧 tint，遮住正确的自有 frame。
+
+V8 Debug 保持 V7 自有布局不变，仅重写平台颜色同步器：主题来源永远是 InputView 自有 tagged frame；从 DecorView 顶层末尾向前扫描，跳过所有 ViewGroup，只接受无 pending layout、已布局、高度严格等于自有 frame、底部对齐且全宽的普通 View。这样可更新位于尾部导航控件 ViewGroup 之前的平台颜色层，同时全屏/旧尺寸过渡层不能通过高度和稳定布局守卫。
 
 目标正式里程碑。重点：
 

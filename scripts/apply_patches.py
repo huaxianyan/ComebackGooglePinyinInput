@@ -1901,13 +1901,13 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
         )
         replace_once(
             nav_color_debug,
-            "    invoke-virtual {v0}, Landroid/view/View;->invalidate()V\n\n"
-            "    :done",
+            "    invoke-virtual {v0}, Landroid/view/View;->invalidate()V\n"
+            "    return-void",
             "    invoke-virtual {v0}, Landroid/view/View;->invalidate()V\n\n"
             "    const-string v1, \"sync-applied\"\n\n"
             "    invoke-static {v3, v1}, Lcom/google/android/inputmethod/pinyin/"
             "ImeThemeDiagnosticsCompat;->dump(Landroid/view/View;Ljava/lang/String;)V\n\n"
-            "    :done",
+            "    return-void",
         )
         navigation_debug = decoded / (
             "smali/com/google/android/inputmethod/pinyin/NavigationBarCompat.smali"
