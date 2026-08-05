@@ -9,9 +9,10 @@
 .field private static imageView:Landroid/view/View;
 
 .method private static cloneDrawable(Landroid/graphics/drawable/Drawable;Landroid/content/res/Resources;)Landroid/graphics/drawable/Drawable;
-    .locals 1
+    .locals 2
 
     if-eqz p0, :done
+    move-object v1, p0
     invoke-virtual {p0}, Landroid/graphics/drawable/Drawable;->getConstantState()Landroid/graphics/drawable/Drawable$ConstantState;
     move-result-object v0
     if-eqz v0, :done
@@ -19,6 +20,16 @@
     move-result-object p0
     invoke-virtual {p0}, Landroid/graphics/drawable/Drawable;->mutate()Landroid/graphics/drawable/Drawable;
     move-result-object p0
+
+    # ConstantState creates theme Drawables in their default state. Expanded
+    # candidate backgrounds can have a different live state, so preserve it
+    # before composing the clone into the navigation surface.
+    invoke-virtual {v1}, Landroid/graphics/drawable/Drawable;->getState()[I
+    move-result-object v0
+    invoke-virtual {p0, v0}, Landroid/graphics/drawable/Drawable;->setState([I)Z
+    invoke-virtual {v1}, Landroid/graphics/drawable/Drawable;->getLevel()I
+    move-result v0
+    invoke-virtual {p0, v0}, Landroid/graphics/drawable/Drawable;->setLevel(I)Z
 
     :done
     return-object p0
@@ -57,7 +68,8 @@
 
     # Expanded-candidate opacity is authored as an additional translucent
     # layer over the native keyboard-body shadow, not as a replacement for it.
-    # Recreate that same stack over the continuous image slice.
+    # Keep both live states independent while recreating that same stack.
+    const/4 v9, 0x0
     const v6, 0x7f0f0156
     invoke-virtual {p0, v6}, Landroid/view/View;->findViewById(I)Landroid/view/View;
     move-result-object v6
@@ -69,23 +81,19 @@
     invoke-virtual {v6}, Landroid/view/View;->getBackground()Landroid/graphics/drawable/Drawable;
     move-result-object v6
     invoke-static {v6, p3}, Lcom/google/android/inputmethod/pinyin/ImeSurfaceRendererCompat;->cloneDrawable(Landroid/graphics/drawable/Drawable;Landroid/content/res/Resources;)Landroid/graphics/drawable/Drawable;
-    move-result-object v6
-    if-eqz v6, :overlay_ready
-    const/4 v7, 0x2
-    new-array v7, v7, [Landroid/graphics/drawable/Drawable;
-    const/4 v8, 0x0
-    aput-object v6, v7, v8
-    const/4 v8, 0x1
-    aput-object v5, v7, v8
-    new-instance v8, Landroid/graphics/drawable/LayerDrawable;
-    invoke-direct {v8, v7}, Landroid/graphics/drawable/LayerDrawable;-><init>([Landroid/graphics/drawable/Drawable;)V
-    move-object v5, v8
+    move-result-object v9
 
     :overlay_ready
     add-int v6, v1, p2
-    new-instance v7, Lcom/google/android/inputmethod/pinyin/ImeSurfaceSliceDrawable;
-    invoke-direct {v7, v4, v5, v1, v6}, Lcom/google/android/inputmethod/pinyin/ImeSurfaceSliceDrawable;-><init>(Landroid/graphics/drawable/Drawable;Landroid/graphics/drawable/Drawable;II)V
-    return-object v7
+    move v8, v1
+    new-instance v0, Lcom/google/android/inputmethod/pinyin/ImeSurfaceSliceDrawable;
+    move-object v1, v4
+    move-object v2, v9
+    move-object v3, v5
+    move v4, v8
+    move v5, v6
+    invoke-direct/range {v0 .. v5}, Lcom/google/android/inputmethod/pinyin/ImeSurfaceSliceDrawable;-><init>(Landroid/graphics/drawable/Drawable;Landroid/graphics/drawable/Drawable;Landroid/graphics/drawable/Drawable;II)V
+    return-object v0
 
     :none
     const/4 v0, 0x0
@@ -93,7 +101,7 @@
 .end method
 
 .method public static copyForPlatform(Landroid/graphics/drawable/Drawable;Landroid/content/res/Resources;)Landroid/graphics/drawable/Drawable;
-    .locals 5
+    .locals 6
 
     instance-of v0, p0, Lcom/google/android/inputmethod/pinyin/ImeSurfaceSliceDrawable;
     if-eqz v0, :ordinary
@@ -104,11 +112,19 @@
     iget-object v1, p0, Lcom/google/android/inputmethod/pinyin/ImeSurfaceSliceDrawable;->overlay:Landroid/graphics/drawable/Drawable;
     invoke-static {v1, p1}, Lcom/google/android/inputmethod/pinyin/ImeSurfaceRendererCompat;->cloneDrawable(Landroid/graphics/drawable/Drawable;Landroid/content/res/Resources;)Landroid/graphics/drawable/Drawable;
     move-result-object v1
-    iget v2, p0, Lcom/google/android/inputmethod/pinyin/ImeSurfaceSliceDrawable;->offsetY:I
-    iget v3, p0, Lcom/google/android/inputmethod/pinyin/ImeSurfaceSliceDrawable;->totalHeight:I
-    new-instance v4, Lcom/google/android/inputmethod/pinyin/ImeSurfaceSliceDrawable;
-    invoke-direct {v4, v0, v1, v2, v3}, Lcom/google/android/inputmethod/pinyin/ImeSurfaceSliceDrawable;-><init>(Landroid/graphics/drawable/Drawable;Landroid/graphics/drawable/Drawable;II)V
-    return-object v4
+    iget-object v2, p0, Lcom/google/android/inputmethod/pinyin/ImeSurfaceSliceDrawable;->overlay2:Landroid/graphics/drawable/Drawable;
+    invoke-static {v2, p1}, Lcom/google/android/inputmethod/pinyin/ImeSurfaceRendererCompat;->cloneDrawable(Landroid/graphics/drawable/Drawable;Landroid/content/res/Resources;)Landroid/graphics/drawable/Drawable;
+    move-result-object v2
+    iget v3, p0, Lcom/google/android/inputmethod/pinyin/ImeSurfaceSliceDrawable;->offsetY:I
+    iget v4, p0, Lcom/google/android/inputmethod/pinyin/ImeSurfaceSliceDrawable;->totalHeight:I
+    move v5, v4
+    move v4, v3
+    move-object v3, v2
+    move-object v2, v1
+    move-object v1, v0
+    new-instance v0, Lcom/google/android/inputmethod/pinyin/ImeSurfaceSliceDrawable;
+    invoke-direct/range {v0 .. v5}, Lcom/google/android/inputmethod/pinyin/ImeSurfaceSliceDrawable;-><init>(Landroid/graphics/drawable/Drawable;Landroid/graphics/drawable/Drawable;Landroid/graphics/drawable/Drawable;II)V
+    return-object v0
 
     :ordinary
     invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/ImeSurfaceRendererCompat;->cloneDrawable(Landroid/graphics/drawable/Drawable;Landroid/content/res/Resources;)Landroid/graphics/drawable/Drawable;
