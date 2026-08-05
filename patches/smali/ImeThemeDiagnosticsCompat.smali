@@ -5,6 +5,23 @@
 # Debug-only, privacy-limited diagnostics. Records View geometry/state,
 # structural class names and Drawable classes; never records text or tags.
 
+.method private static appendDrawableClass(Ljava/lang/StringBuilder;Landroid/graphics/drawable/Drawable;)V
+    .locals 1
+
+    if-nez p1, :present
+    const-string v0, "null"
+    invoke-virtual {p0, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+    return-void
+
+    :present
+    invoke-virtual {p1}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
+    move-result-object v0
+    invoke-virtual {v0}, Ljava/lang/Class;->getName()Ljava/lang/String;
+    move-result-object v0
+    invoke-virtual {p0, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+    return-void
+.end method
+
 .method private static appendView(Ljava/lang/StringBuilder;Ljava/lang/String;Landroid/view/View;)V
     .locals 3
 
@@ -108,6 +125,18 @@
     invoke-virtual {p0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
     iget v1, v0, Lcom/google/android/inputmethod/pinyin/ImeSurfaceSliceDrawable;->totalHeight:I
     invoke-virtual {p0, v1}, Ljava/lang/StringBuilder;->append(I)Ljava/lang/StringBuilder;
+    const-string v1, "] layers["
+    invoke-virtual {p0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+    iget-object v1, v0, Lcom/google/android/inputmethod/pinyin/ImeSurfaceSliceDrawable;->source:Landroid/graphics/drawable/Drawable;
+    invoke-static {p0, v1}, Lcom/google/android/inputmethod/pinyin/ImeThemeDiagnosticsCompat;->appendDrawableClass(Ljava/lang/StringBuilder;Landroid/graphics/drawable/Drawable;)V
+    const-string v1, ","
+    invoke-virtual {p0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+    iget-object v1, v0, Lcom/google/android/inputmethod/pinyin/ImeSurfaceSliceDrawable;->overlay:Landroid/graphics/drawable/Drawable;
+    invoke-static {p0, v1}, Lcom/google/android/inputmethod/pinyin/ImeThemeDiagnosticsCompat;->appendDrawableClass(Ljava/lang/StringBuilder;Landroid/graphics/drawable/Drawable;)V
+    const-string v1, ","
+    invoke-virtual {p0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+    iget-object v1, v0, Lcom/google/android/inputmethod/pinyin/ImeSurfaceSliceDrawable;->overlay2:Landroid/graphics/drawable/Drawable;
+    invoke-static {p0, v1}, Lcom/google/android/inputmethod/pinyin/ImeThemeDiagnosticsCompat;->appendDrawableClass(Ljava/lang/StringBuilder;Landroid/graphics/drawable/Drawable;)V
     const-string v1, "]"
     invoke-virtual {p0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 
@@ -250,7 +279,7 @@
     const-string v1, "moreArea"
     invoke-static {v0, v1, v4}, Lcom/google/android/inputmethod/pinyin/ImeThemeDiagnosticsCompat;->appendView(Ljava/lang/StringBuilder;Ljava/lang/String;Landroid/view/View;)V
     const-string v1, "moreChild"
-    const/4 v5, 0x1
+    const/4 v5, 0x2
     invoke-static {v0, v1, v4, v5}, Lcom/google/android/inputmethod/pinyin/ImeThemeDiagnosticsCompat;->appendTree(Ljava/lang/StringBuilder;Ljava/lang/String;Landroid/view/View;I)V
 
     const v1, 0x7f0f0156
