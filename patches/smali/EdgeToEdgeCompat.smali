@@ -10,6 +10,8 @@
 
 .field private static imeService:Landroid/inputmethodservice/InputMethodService;
 
+.field private static lastStableNavigationHeight:I
+
 
 # direct methods
 .method private constructor <init>()V
@@ -111,6 +113,30 @@
 
     :done
     return v0
+.end method
+
+.method public static rememberStableNavigationHeight(I)V
+    .locals 0
+
+    if-lez p0, :done
+
+    sput p0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->lastStableNavigationHeight:I
+
+    :done
+    return-void
+.end method
+
+.method public static stableNavigationHeightOr(I)I
+    .locals 1
+
+    sget v0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->lastStableNavigationHeight:I
+
+    if-lez v0, :fallback
+
+    return v0
+
+    :fallback
+    return p0
 .end method
 
 .method public static refreshNavigationBarTheme()V

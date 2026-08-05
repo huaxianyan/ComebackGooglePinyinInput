@@ -254,7 +254,6 @@ def main() -> None:
         "Landroid/view/View;->getHeight()I",
         "findViewWithTag(Ljava/lang/Object;)Landroid/view/View;",
         'const-string v5, "ime-navigation-frame"',
-        'const-string v2, ".keyboard-body-area"',
         "Landroid/view/ViewGroup;->addView(Landroid/view/View;ILandroid/view/ViewGroup$LayoutParams;)V",
         "Landroid/widget/FrameLayout$LayoutParams;-><init>(III)V",
         "Landroid/view/ViewGroup$LayoutParams;->height:I",

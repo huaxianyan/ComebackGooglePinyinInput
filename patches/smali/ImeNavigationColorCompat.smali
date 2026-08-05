@@ -42,11 +42,13 @@
 
     if-lez v1, :done
 
-    const/4 v2, 0x0
+    const-string v2, "ime-navigation-frame"
 
-    invoke-virtual {v3, v2}, Landroid/view/ViewGroup;->getChildAt(I)Landroid/view/View;
+    invoke-virtual {v3, v2}, Landroid/view/ViewGroup;->findViewWithTag(Ljava/lang/Object;)Landroid/view/View;
 
     move-result-object v2
+
+    if-eqz v2, :done
 
     add-int/lit8 v1, v1, -0x1
 

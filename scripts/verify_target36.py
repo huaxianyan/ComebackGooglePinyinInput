@@ -72,19 +72,35 @@ def main() -> None:
         "Landroid/view/View;->isLaidOut()Z",
         "Landroid/view/View;->getBottom()I",
         "Landroid/view/View;->getWidth()I",
-        "if-ge v2, v6, :no_stable_frame_parent",
-        "Landroid/view/View;->getParent()Landroid/view/ViewParent;",
-        "Landroid/view/ViewGroup;->removeView(Landroid/view/View;)V",
-        ":no_stable_frame_parent",
+        "if-ge v2, v6, :use_remembered_height",
+        "EdgeToEdgeCompat;->rememberStableNavigationHeight(I)V",
+        "EdgeToEdgeCompat;->stableNavigationHeightOr(I)I",
+        "Landroid/view/ViewGroup$MarginLayoutParams;->bottomMargin:I",
+        'const-string v5, "ime-navigation-frame"',
+        "Landroid/view/ViewGroup;->addView(Landroid/view/View;ILandroid/view/ViewGroup$LayoutParams;)V",
+        "Landroid/view/View;->setClickable(Z)V",
+        "Landroid/view/View;->setFocusable(Z)V",
     )
     missing = [
         token for token in stable_navigation_geometry if token not in ime_listener
     ]
     if missing:
         raise RuntimeError(
-            "IME margin coordinator can accept full-root transitional geometry: "
-            f"{missing}"
+            "Incomplete InputView-owned navigation frame coordinator: " f"{missing}"
         )
+    if "Landroid/view/View;->getParent()Landroid/view/ViewParent;" in ime_listener:
+        raise RuntimeError("IME theme frame must not be reparented through framework decor")
+
+    nav_color_path = decoded / (
+        "smali/com/google/android/inputmethod/pinyin/"
+        "ImeNavigationColorCompat.smali"
+    )
+    nav_color = nav_color_path.read_text(encoding="utf-8")
+    if (
+        'const-string v2, "ime-navigation-frame"' not in nav_color
+        or "findViewWithTag(Ljava/lang/Object;)Landroid/view/View;" not in nav_color
+    ):
+        raise RuntimeError("Platform navigation color must source the owned theme frame")
 
     print(
         "Android 16 baseline verified: targetSdkVersion 36, accepted edge-to-edge "
