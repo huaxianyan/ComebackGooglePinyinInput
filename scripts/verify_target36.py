@@ -73,6 +73,8 @@ def main() -> None:
         "Landroid/view/View;->getBottom()I",
         "Landroid/view/View;->getWidth()I",
         "if-ge v2, v6, :no_stable_frame_parent",
+        "Landroid/view/View;->getParent()Landroid/view/ViewParent;",
+        "Landroid/view/ViewGroup;->removeView(Landroid/view/View;)V",
         ":no_stable_frame_parent",
     )
     missing = [

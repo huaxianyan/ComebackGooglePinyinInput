@@ -107,6 +107,17 @@
     goto :apply_margin
 
     :no_stable_frame_parent
+    if-lez v0, :clear_frame_parent
+
+    invoke-virtual {v1}, Landroid/view/View;->getRootView()Landroid/view/View;
+
+    move-result-object v3
+
+    instance-of v2, v3, Landroid/view/ViewGroup;
+
+    if-nez v2, :apply_margin
+
+    :clear_frame_parent
     const/4 v3, 0x0
 
     :apply_margin
@@ -137,11 +148,15 @@
 
     const-string v5, "ime-navigation-frame"
 
-    invoke-virtual {v3, v5}, Landroid/view/ViewGroup;->findViewWithTag(Ljava/lang/Object;)Landroid/view/View;
+    invoke-virtual {v1}, Landroid/view/View;->getRootView()Landroid/view/View;
+
+    move-result-object v2
+
+    invoke-virtual {v2, v5}, Landroid/view/View;->findViewWithTag(Ljava/lang/Object;)Landroid/view/View;
 
     move-result-object v4
 
-    if-nez v4, :reuse_frame
+    if-nez v4, :check_frame_parent
 
     invoke-virtual {v1}, Landroid/view/View;->getContext()Landroid/content/Context;
 
@@ -157,6 +172,24 @@
 
     invoke-virtual {v4, v2}, Landroid/view/View;->setImportantForAccessibility(I)V
 
+    goto :add_frame_to_parent
+
+    :check_frame_parent
+    invoke-virtual {v4}, Landroid/view/View;->getParent()Landroid/view/ViewParent;
+
+    move-result-object v2
+
+    if-eq v2, v3, :reuse_frame
+
+    instance-of v5, v2, Landroid/view/ViewGroup;
+
+    if-eqz v5, :add_frame_to_parent
+
+    check-cast v2, Landroid/view/ViewGroup;
+
+    invoke-virtual {v2, v4}, Landroid/view/ViewGroup;->removeView(Landroid/view/View;)V
+
+    :add_frame_to_parent
     new-instance v2, Landroid/widget/FrameLayout$LayoutParams;
 
     const/4 v5, -0x1

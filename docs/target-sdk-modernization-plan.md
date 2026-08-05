@@ -612,6 +612,10 @@ V4 Debug 将候选类型与几何稳定性分开：所有候选都必须已布�
 
 V5 Debug 不再把系统 `navigationBars.bottom` 当作框架 IME 导航容器的视觉高度；它只作为没有稳定候选时的安全 fallback。稳定候选必须使用公开 View 几何满足：已布局、正高度、严格小于根高度、底部对齐且全宽。其真实高度动态成为 InputView margin 和 theme-frame 高度；候选为 ViewGroup 时 frame 放在容器内，普通 View 时 frame 放在 DecorView。语音切换时的全根临时容器因高度等于根高度而被拒绝，不需要固定 `63/126/2238 px`、隐藏 ID、内部类名或反射。
 
+V5 从手势返回三按钮后又暴露一种稳定结构：DecorView 暂时或持续只有一个全高 LinearLayout，框架导航 ViewGroup 已随模式切换移除；InputView margin 和 IME top 已正确恢复为 `126 px`/`1481`，但原 theme frame 随旧 ViewGroup 一同被移除，后续无稳定末候选可用于重建，故 `themeFrame=null` 且主题跟随失效。
+
+V6 Debug 在“无稳定末候选但公开 fallback inset 为正”时使用 DecorView 作为安全 theme-frame parent，同时始终从整个根树查找唯一 tagged frame。若后续出现稳定 ViewGroup/普通 View 结构，则通过公开 `View.getParent()`/`ViewGroup.removeView()` 将同一个 frame 重挂到正确 parent，而不是创建重复 frame；margin 仍只使用稳定候选真实高度或公开 fallback，绝不采用全根过渡高度。
+
 目标正式里程碑。重点：
 
 - edge-to-edge opt-out 在 Android 16 上失效，必须完成真正的 Insets 适配；

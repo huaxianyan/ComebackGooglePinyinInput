@@ -1873,8 +1873,12 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
         shutil.copyfile(diagnostics_src, diagnostics_dst)
         replace_once(
             ime_insets_listener,
+            "    iget-object v1, p0, Lcom/google/android/inputmethod/pinyin/"
+            "EdgeToEdgeCompat$ImeInsetsListener;->root:Landroid/view/View;\n\n"
             "    invoke-virtual {v1}, Landroid/view/View;->getRootView()"
             "Landroid/view/View;\n\n    move-result-object v3\n",
+            "    iget-object v1, p0, Lcom/google/android/inputmethod/pinyin/"
+            "EdgeToEdgeCompat$ImeInsetsListener;->root:Landroid/view/View;\n\n"
             "    invoke-virtual {v1}, Landroid/view/View;->getRootView()"
             "Landroid/view/View;\n\n    move-result-object v3\n\n"
             "    const-string v2, \"insets\"\n\n"
