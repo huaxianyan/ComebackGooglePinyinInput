@@ -163,7 +163,21 @@
     sput-object v3, Lcom/google/android/inputmethod/pinyin/ImeSurfaceRendererCompat;->imageView:Landroid/view/View;
     sput-object v3, Lcom/google/android/inputmethod/pinyin/ImeSurfaceRendererCompat;->imageOriginal:Landroid/graphics/drawable/Drawable;
 
-    # Built-in themes retain the pre-image-experiment keyboard-area fallback.
+    # Built-in themes extend only the normal native key-body surface. Do not
+    # follow candidate expansion or any candidate/header container.
+    const v3, 0x7f0f0156
+    invoke-virtual {v0, v3}, Landroid/view/View;->findViewById(I)Landroid/view/View;
+    move-result-object v3
+    instance-of v4, v3, Lcom/google/android/apps/inputmethod/libs/framework/core/KeyboardViewHolder;
+    if-eqz v4, :fallback_area
+    check-cast v3, Lcom/google/android/apps/inputmethod/libs/framework/core/KeyboardViewHolder;
+    iget-object v3, v3, Lcom/google/android/apps/inputmethod/libs/framework/core/KeyboardViewHolder;->a:Landroid/view/View;
+    if-eqz v3, :fallback_area
+    invoke-virtual {v3}, Landroid/view/View;->getBackground()Landroid/graphics/drawable/Drawable;
+    move-result-object v4
+    if-nez v4, :set_builtin
+
+    :fallback_area
     const v3, 0x7f0f0153
     invoke-virtual {v0, v3}, Landroid/view/View;->findViewById(I)Landroid/view/View;
     move-result-object v3
@@ -171,6 +185,8 @@
     invoke-virtual {v3}, Landroid/view/View;->getBackground()Landroid/graphics/drawable/Drawable;
     move-result-object v4
     if-eqz v4, :platform
+
+    :set_builtin
     invoke-virtual {v1}, Landroid/view/View;->getResources()Landroid/content/res/Resources;
     move-result-object v5
     invoke-static {v4, v5}, Lcom/google/android/inputmethod/pinyin/ImeSurfaceRendererCompat;->cloneDrawable(Landroid/graphics/drawable/Drawable;Landroid/content/res/Resources;)Landroid/graphics/drawable/Drawable;

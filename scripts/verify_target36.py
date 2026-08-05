@@ -123,6 +123,8 @@ def main() -> None:
         "ImeSurfaceSliceDrawable;-><init>",
         "Drawable;->getState()[I",
         "Lcom/google/android/apps/inputmethod/libs/framework/core/KeyboardViewHolder;->a:Landroid/view/View;",
+        ":fallback_area",
+        ":set_builtin",
         "add-int v6, v4, v2",
         "ImeNavigationColorCompat;->schedule",
     )
