@@ -602,7 +602,11 @@ V1 的首次引导、首次展开、核心输入、主题、高度和双导航�
 
 V2 为 bottom-margin coordinator 加入与已验收导航颜色同步器同类的公开稳定几何守卫：根与候选无待处理布局、候选已布局、候选高度等于公开 WindowMetrics `navigationBars` bottom inset、候选位于根底部且全宽。过渡候选被拒绝时仅采用公开导航 Insets 作为 margin 安全回退，不创建或迁移主题 frame；不使用固定尺寸、隐藏 ID、内部类名或反射。V2 多轮语音往返不再出现白框，但三按钮导航不能跟随主题色：`onApplyWindowInsets()` 本身可能发生在布局请求期间，`isLayoutRequested()` 条件会持续拒绝已具有正确最终几何的稳定导航容器，导致主题 frame 无法进入真实导航容器。
 
-V3 从 bottom-margin/frame-parent 判定中移除 `isLayoutRequested()`，保留候选已布局、高度严格等于公开 `navigationBars.bottom`、底部对齐和全宽守卫。这里即使候选保留旧的正确导航高度，写入的 margin 仍是公开安全值；真正危险的全屏过渡高度会被严格高度比较拒绝。导航颜色 Drawable 的同步仍保留 V40 的完整 `isLayoutRequested()` 守卫，因此不放宽平台颜色 View 的过渡写入条件。`scripts/verify_target36.py` 锁定 V3 的几何条件。
+V3 从 bottom-margin/frame-parent 判定中移除 `isLayoutRequested()`，保留候选已布局、高度严格等于公开 `navigationBars.bottom`、底部对齐和全宽守卫。这里即使候选保留旧的正确导航高度，写入的 margin 仍是公开安全值；真正危险的全屏过渡高度会被严格高度比较拒绝。导航颜色 Drawable 的同步仍保留 V40 的完整 `isLayoutRequested()` 守卫，因此不放宽平台颜色 View 的过渡写入条件。V3 仍未恢复三按钮主题跟随，因此转入 Debug 结构诊断。
+
+Debug 现场证明稳定三按钮 DecorView 只有两个直属子项：`child0=LinearLayout`（全高、无背景）和 `child1=View`（`126 px`、底部全宽、`ColorDrawable`）；`themeFrame=null`。颜色同步器虽然多次达到 `sync-applied`，但因首子项背景为空，只能保持平台 View 可见，无法复制当前键盘主题。V2/V3 的共同问题是把“候选必须为 ViewGroup”作为稳定条件，因而从未在这个稳定的非 ViewGroup 平台导航 View 结构下创建直属 theme frame。V1 之所以能跟随，是旧逻辑在非 ViewGroup 分支保留 DecorView 作为 frame parent，但它同时会错误接受语音切换时的全屏 ViewGroup。
+
+V4 Debug 将候选类型与几何稳定性分开：所有候选都必须已布局、高度严格等于公开 `navigationBars.bottom`、底部对齐且全宽；稳定非 ViewGroup 候选使用 DecorView 作为 theme-frame parent，稳定 ViewGroup 候选继续使用候选容器，任何全屏过渡候选仍被拒绝。这样三按钮结构会恢复 `themeFrame` 直属首子项，颜色同步器可从其键盘主题 Drawable 更新最后的平台颜色 View，同时不会恢复 V1 的全屏 margin 缺陷。
 
 目标正式里程碑。重点：
 

@@ -56,10 +56,6 @@
 
     move-result-object v4
 
-    instance-of v2, v4, Landroid/view/ViewGroup;
-
-    if-eqz v2, :no_stable_frame_parent
-
     invoke-virtual {v4}, Landroid/view/View;->isLaidOut()Z
 
     move-result v2
@@ -93,6 +89,10 @@
     move-result v6
 
     if-ne v5, v6, :no_stable_frame_parent
+
+    instance-of v2, v4, Landroid/view/ViewGroup;
+
+    if-eqz v2, :apply_margin
 
     move-object v3, v4
 
