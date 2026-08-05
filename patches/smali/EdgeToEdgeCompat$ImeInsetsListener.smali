@@ -140,22 +140,9 @@
     invoke-virtual {v4, v3}, Landroid/view/View;->setLayoutParams(Landroid/view/ViewGroup$LayoutParams;)V
 
     :background
-    invoke-virtual {v2}, Landroid/view/View;->getBackground()Landroid/graphics/drawable/Drawable;
-    move-result-object v2
-    if-eqz v2, :done
-
-    invoke-virtual {v2}, Landroid/graphics/drawable/Drawable;->getConstantState()Landroid/graphics/drawable/Drawable$ConstantState;
-    move-result-object v3
-    if-eqz v3, :shared_background
-    invoke-virtual {v1}, Landroid/view/View;->getResources()Landroid/content/res/Resources;
-    move-result-object v1
-    invoke-virtual {v3, v1}, Landroid/graphics/drawable/Drawable$ConstantState;->newDrawable(Landroid/content/res/Resources;)Landroid/graphics/drawable/Drawable;
-    move-result-object v2
-    invoke-virtual {v2}, Landroid/graphics/drawable/Drawable;->mutate()Landroid/graphics/drawable/Drawable;
-    move-result-object v2
-
-    :shared_background
-    invoke-virtual {v4, v2}, Landroid/view/View;->setBackground(Landroid/graphics/drawable/Drawable;)V
+    # Resolve normal, expanded-candidate and image surfaces only after both
+    # keyboard-area and owned bottom-frame geometry are stable.
+    invoke-static {v1}, Lcom/google/android/inputmethod/pinyin/ImeSurfaceRendererCompat;->syncNow(Landroid/view/View;)V
 
     :done
     invoke-static {}, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->refreshNavigationBarTheme()V

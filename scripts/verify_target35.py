@@ -258,7 +258,7 @@ def main() -> None:
         "Landroid/widget/FrameLayout$LayoutParams;-><init>(III)V",
         "Landroid/view/ViewGroup$LayoutParams;->height:I",
         "const v2, 0x7f0f0153",
-        "Landroid/graphics/drawable/Drawable$ConstantState;->newDrawable",
+        "ImeSurfaceRendererCompat;->syncNow(Landroid/view/View;)V",
         "ImeNavigationColorCompat;->schedule(Landroid/view/View;)V",
     )
     missing = [item for item in required_ime_listener if item not in ime_listener_text]
@@ -279,7 +279,7 @@ def main() -> None:
         "Landroid/view/View;->isLaidOut()Z",
         "Landroid/view/View;->getBottom()I",
         "Landroid/view/View;->getWidth()I",
-        "Landroid/graphics/drawable/Drawable$ConstantState;->newDrawable",
+        "ImeSurfaceRendererCompat;->copyForPlatform",
         "Landroid/view/View;->setBackground(Landroid/graphics/drawable/Drawable;)V",
         "Landroid/view/View;->setVisibility(I)V",
         "Landroid/view/View;->invalidate()V",

@@ -142,6 +142,11 @@
 .method public static refreshNavigationBarTheme()V
     .locals 2
 
+    sget-object v0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->inputView:Landroid/view/View;
+    if-eqz v0, :service
+    invoke-static {v0}, Lcom/google/android/inputmethod/pinyin/ImeSurfaceRendererCompat;->schedule(Landroid/view/View;)V
+
+    :service
     sget-object v0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->imeService:Landroid/inputmethodservice/InputMethodService;
 
     instance-of v1, v0, Lcom/google/android/apps/inputmethod/libs/framework/core/GoogleInputMethodService;

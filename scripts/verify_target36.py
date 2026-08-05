@@ -101,8 +101,58 @@ def main() -> None:
         or "findViewWithTag(Ljava/lang/Object;)Landroid/view/View;" not in nav_color
         or ":candidate_loop" not in nav_color
         or "if-ne v5, v4, :next_candidate" not in nav_color
+        or "ImeSurfaceRendererCompat;->copyForPlatform" not in nav_color
     ):
         raise RuntimeError("Platform navigation color must source the owned theme frame")
+
+    renderer_path = decoded / (
+        "smali/com/google/android/inputmethod/pinyin/ImeSurfaceRendererCompat.smali"
+    )
+    slice_path = decoded / (
+        "smali/com/google/android/inputmethod/pinyin/ImeSurfaceSliceDrawable.smali"
+    )
+    if not renderer_path.is_file() or not slice_path.is_file():
+        raise RuntimeError("Missing active-surface navigation renderer")
+    renderer = renderer_path.read_text(encoding="utf-8")
+    slice_drawable = slice_path.read_text(encoding="utf-8")
+    renderer_tokens = (
+        "const v3, 0x7f0f01a2",
+        "Landroid/view/View;->isShown()Z",
+        "const v3, 0x7f0f0154",
+        "const v3, 0x7f0f0156",
+        "ImeSurfaceSliceDrawable;-><init>",
+        "add-int v6, v4, v2",
+        "ImeNavigationColorCompat;->schedule",
+    )
+    missing = [token for token in renderer_tokens if token not in renderer]
+    if missing:
+        raise RuntimeError(f"Incomplete active-surface renderer: {missing}")
+    slice_tokens = (
+        "Landroid/graphics/drawable/Drawable;",
+        "Landroid/graphics/Canvas;->clipRect(IIII)Z",
+        "Landroid/graphics/Canvas;->translate(FF)V",
+        "offsetY:I",
+        "totalHeight:I",
+    )
+    missing = [token for token in slice_tokens if token not in slice_drawable]
+    if missing:
+        raise RuntimeError(f"Incomplete shared-coordinate image slice: {missing}")
+
+    candidate_controller = (decoded / "smali/asq.smali").read_text(encoding="utf-8")
+    if "ImeSurfaceRendererCompat;->schedule(Landroid/view/View;)V" not in candidate_controller:
+        raise RuntimeError("Candidate expansion must refresh the active visual surface")
+
+    crop_page = (decoded / "smali/bcp.smali").read_text(encoding="utf-8")
+    crop_tokens = (
+        "EdgeToEdgeCompat;->getNavigationBarBottomInset(Landroid/view/View;)I",
+        "EdgeToEdgeCompat;->stableNavigationHeightOr(I)I",
+        "add-int/2addr v4, v5",
+    )
+    missing = [token for token in crop_tokens if token not in crop_page]
+    if missing:
+        raise RuntimeError(
+            f"Image crop viewport does not include dynamic navigation geometry: {missing}"
+        )
 
     print(
         "Android 16 baseline verified: targetSdkVersion 36, accepted edge-to-edge "

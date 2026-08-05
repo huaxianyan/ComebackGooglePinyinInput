@@ -1852,6 +1852,9 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
         "EdgeToEdgeCompat$ImeInsetsListener.smali",
         "ImeNavigationColorCompat.smali",
         "ImeNavigationColorCompat$SyncRunnable.smali",
+        "ImeSurfaceRendererCompat.smali",
+        "ImeSurfaceRendererCompat$SyncRunnable.smali",
+        "ImeSurfaceSliceDrawable.smali",
     ):
         helper_src = ROOT / "patches/smali" / helper_name
         helper_dst = decoded / "smali/com/google/android/inputmethod/pinyin" / helper_name
@@ -1864,6 +1867,49 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
         "smali/com/google/android/inputmethod/pinyin/"
         "EdgeToEdgeCompat$ImeInsetsListener.smali"
     )
+
+    # Candidate expansion changes the active visual surface without producing
+    # WindowInsets. Schedule the owned renderer at the native toggle boundary.
+    candidates_controller = decoded / "smali/asq.smali"
+    replace_once(
+        candidates_controller,
+        "    :goto_4\n"
+        "    invoke-direct {p0, v0}, Lasq;->a(Z)V\n\n"
+        "    :cond_6\n"
+        "    :goto_5",
+        "    :goto_4\n"
+        "    invoke-direct {p0, v0}, Lasq;->a(Z)V\n\n"
+        "    iget-object v0, p0, Lasq;->d:Landroid/view/View;\n"
+        "    invoke-static {v0}, Lcom/google/android/inputmethod/pinyin/"
+        "ImeSurfaceRendererCompat;->schedule(Landroid/view/View;)V\n\n"
+        "    :cond_6\n"
+        "    :goto_5",
+    )
+
+    # The user-image crop viewport must match the complete visual surface,
+    # including the dynamically measured IME-owned navigation extension.
+    crop_page = decoded / "smali/bcp.smali"
+    replace_once(
+        crop_page,
+        "    invoke-static {v0, v4}, Lats;->b(Landroid/content/Context;"
+        "[Lcom/google/android/apps/inputmethod/libs/framework/core/metadata/"
+        "KeyboardViewDef$Type;)I\n\n"
+        "    move-result v4\n\n"
+        "    int-to-float v4, v4",
+        "    invoke-static {v0, v4}, Lats;->b(Landroid/content/Context;"
+        "[Lcom/google/android/apps/inputmethod/libs/framework/core/metadata/"
+        "KeyboardViewDef$Type;)I\n\n"
+        "    move-result v4\n\n"
+        "    invoke-static {v1}, Lcom/google/android/inputmethod/pinyin/"
+        "EdgeToEdgeCompat;->getNavigationBarBottomInset(Landroid/view/View;)I\n\n"
+        "    move-result v5\n\n"
+        "    invoke-static {v5}, Lcom/google/android/inputmethod/pinyin/"
+        "EdgeToEdgeCompat;->stableNavigationHeightOr(I)I\n\n"
+        "    move-result v5\n\n"
+        "    add-int/2addr v4, v5\n\n"
+        "    int-to-float v4, v4",
+    )
+
     if debuggable:
         for diagnostics_name in (
             "ImeThemeDiagnosticsCompat.smali",
@@ -1915,12 +1961,12 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
         candidates_debug = decoded / "smali/asq.smali"
         replace_once(
             candidates_debug,
-            "    :goto_4\n"
-            "    invoke-direct {p0, v0}, Lasq;->a(Z)V\n\n"
+            "    invoke-static {v0}, Lcom/google/android/inputmethod/pinyin/"
+            "ImeSurfaceRendererCompat;->schedule(Landroid/view/View;)V\n\n"
             "    :cond_6\n"
             "    :goto_5",
-            "    :goto_4\n"
-            "    invoke-direct {p0, v0}, Lasq;->a(Z)V\n\n"
+            "    invoke-static {v0}, Lcom/google/android/inputmethod/pinyin/"
+            "ImeSurfaceRendererCompat;->schedule(Landroid/view/View;)V\n\n"
             "    iget-object v0, p0, Lasq;->d:Landroid/view/View;\n"
             "    invoke-static {v0}, Lcom/google/android/inputmethod/pinyin/"
             "ImeThemeDiagnosticsCompat;->scheduleCandidateDump(Landroid/view/View;)V\n\n"
