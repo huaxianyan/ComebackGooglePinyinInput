@@ -598,6 +598,10 @@ V4 复测与 V5 架构修正：
 
 V1 保留 target 35 已验收的 covering IME Window、双导航主题同步、首次引导和所有功能实现，不加入预测返回回调或 MD3 重写。Manifest 显式设置应用级 `android:enableOnBackInvokedCallback="false"`，先冻结普通 `onBackPressed()` 语义；新增 `scripts/verify_target36.py`，要求 target 36、真实 edge-to-edge、显式 legacy Back opt-out，并拒绝在首个 target-only 候选中混入 `OnBackInvokedCallback`。
 
+V1 的首次引导、首次展开、核心输入、主题、高度和双导航均通过，但在“Google 语音输入 → `switchToLastInputMethod()` → Google 拼音”首次暴露了持久白框。现场无崩溃，IME Window 仍为 drawn/showing，Surface 覆盖 `y=172..2410`，但 IME Insets 在短暂正确报告 `top=1481` 后 3 ms 内变为 `[0,2410][1080,2410]`（0 高度）。根因是 `ImeInsetsListener` 在输入法切换过渡中可把临时全屏 ViewGroup 当作稳定导航容器，并将其高度写入 InputView bottom margin，从而压缩全部键盘内容。
+
+V2 为 bottom-margin coordinator 加入与已验收导航颜色同步器同类的公开稳定几何守卫：根与候选无待处理布局、候选已布局、候选高度等于公开 WindowMetrics `navigationBars` bottom inset、候选位于根底部且全宽。过渡候选被拒绝时仅采用公开导航 Insets 作为 margin 安全回退，不创建或迁移主题 frame；不使用固定尺寸、隐藏 ID、内部类名或反射。`scripts/verify_target36.py` 同时锁定这些守卫。
+
 目标正式里程碑。重点：
 
 - edge-to-edge opt-out 在 Android 16 上失效，必须完成真正的 Insets 适配；

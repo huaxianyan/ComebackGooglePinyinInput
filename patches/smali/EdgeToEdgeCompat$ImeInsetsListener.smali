@@ -40,15 +40,21 @@
 
     instance-of v2, v3, Landroid/view/ViewGroup;
 
-    if-eqz v2, :apply_margin
+    if-eqz v2, :no_stable_frame_parent
 
     check-cast v3, Landroid/view/ViewGroup;
+
+    invoke-virtual {v3}, Landroid/view/View;->isLayoutRequested()Z
+
+    move-result v2
+
+    if-nez v2, :no_stable_frame_parent
 
     invoke-virtual {v3}, Landroid/view/ViewGroup;->getChildCount()I
 
     move-result v2
 
-    if-lez v2, :apply_margin
+    if-lez v2, :no_stable_frame_parent
 
     add-int/lit8 v2, v2, -0x1
 
@@ -58,17 +64,54 @@
 
     instance-of v2, v4, Landroid/view/ViewGroup;
 
-    if-eqz v2, :apply_margin
+    if-eqz v2, :no_stable_frame_parent
+
+    invoke-virtual {v4}, Landroid/view/View;->isLayoutRequested()Z
+
+    move-result v2
+
+    if-nez v2, :no_stable_frame_parent
+
+    invoke-virtual {v4}, Landroid/view/View;->isLaidOut()Z
+
+    move-result v2
+
+    if-eqz v2, :no_stable_frame_parent
 
     invoke-virtual {v4}, Landroid/view/View;->getHeight()I
 
     move-result v2
 
-    if-lez v2, :apply_margin
+    if-lez v2, :no_stable_frame_parent
 
-    move v0, v2
+    if-ne v2, v0, :no_stable_frame_parent
+
+    invoke-virtual {v4}, Landroid/view/View;->getBottom()I
+
+    move-result v5
+
+    invoke-virtual {v3}, Landroid/view/View;->getHeight()I
+
+    move-result v6
+
+    if-ne v5, v6, :no_stable_frame_parent
+
+    invoke-virtual {v4}, Landroid/view/View;->getWidth()I
+
+    move-result v5
+
+    invoke-virtual {v3}, Landroid/view/View;->getWidth()I
+
+    move-result v6
+
+    if-ne v5, v6, :no_stable_frame_parent
 
     move-object v3, v4
+
+    goto :apply_margin
+
+    :no_stable_frame_parent
+    const/4 v3, 0x0
 
     :apply_margin
     invoke-virtual {v1}, Landroid/view/View;->getLayoutParams()Landroid/view/ViewGroup$LayoutParams;

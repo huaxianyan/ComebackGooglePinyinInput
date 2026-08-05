@@ -61,9 +61,33 @@ def main() -> None:
     if "onBackPressed()V" not in first_run or "exitGuide()V" not in first_run:
         raise RuntimeError("Accepted first-run Back semantics are missing")
 
+    ime_listener_path = decoded / (
+        "smali/com/google/android/inputmethod/pinyin/"
+        "EdgeToEdgeCompat$ImeInsetsListener.smali"
+    )
+    if not ime_listener_path.is_file():
+        raise RuntimeError("Missing IME Insets listener")
+    ime_listener = ime_listener_path.read_text(encoding="utf-8")
+    stable_navigation_geometry = (
+        "Landroid/view/View;->isLayoutRequested()Z",
+        "Landroid/view/View;->isLaidOut()Z",
+        "Landroid/view/View;->getBottom()I",
+        "Landroid/view/View;->getWidth()I",
+        ":no_stable_frame_parent",
+    )
+    missing = [
+        token for token in stable_navigation_geometry if token not in ime_listener
+    ]
+    if missing:
+        raise RuntimeError(
+            "IME margin coordinator can accept transitional navigation geometry: "
+            f"{missing}"
+        )
+
     print(
         "Android 16 baseline verified: targetSdkVersion 36, accepted edge-to-edge "
-        "implementation retained, and legacy Back dispatch explicitly frozen"
+        "implementation retained, legacy Back dispatch explicitly frozen, and "
+        "transitional navigation geometry rejected"
     )
 
 
