@@ -600,7 +600,9 @@ V1 保留 target 35 已验收的 covering IME Window、双导航主题同步、�
 
 V1 的首次引导、首次展开、核心输入、主题、高度和双导航均通过，但在“Google 语音输入 → `switchToLastInputMethod()` → Google 拼音”首次暴露了持久白框。现场无崩溃，IME Window 仍为 drawn/showing，Surface 覆盖 `y=172..2410`，但 IME Insets 在短暂正确报告 `top=1481` 后 3 ms 内变为 `[0,2410][1080,2410]`（0 高度）。根因是 `ImeInsetsListener` 在输入法切换过渡中可把临时全屏 ViewGroup 当作稳定导航容器，并将其高度写入 InputView bottom margin，从而压缩全部键盘内容。
 
-V2 为 bottom-margin coordinator 加入与已验收导航颜色同步器同类的公开稳定几何守卫：根与候选无待处理布局、候选已布局、候选高度等于公开 WindowMetrics `navigationBars` bottom inset、候选位于根底部且全宽。过渡候选被拒绝时仅采用公开导航 Insets 作为 margin 安全回退，不创建或迁移主题 frame；不使用固定尺寸、隐藏 ID、内部类名或反射。`scripts/verify_target36.py` 同时锁定这些守卫。
+V2 为 bottom-margin coordinator 加入与已验收导航颜色同步器同类的公开稳定几何守卫：根与候选无待处理布局、候选已布局、候选高度等于公开 WindowMetrics `navigationBars` bottom inset、候选位于根底部且全宽。过渡候选被拒绝时仅采用公开导航 Insets 作为 margin 安全回退，不创建或迁移主题 frame；不使用固定尺寸、隐藏 ID、内部类名或反射。V2 多轮语音往返不再出现白框，但三按钮导航不能跟随主题色：`onApplyWindowInsets()` 本身可能发生在布局请求期间，`isLayoutRequested()` 条件会持续拒绝已具有正确最终几何的稳定导航容器，导致主题 frame 无法进入真实导航容器。
+
+V3 从 bottom-margin/frame-parent 判定中移除 `isLayoutRequested()`，保留候选已布局、高度严格等于公开 `navigationBars.bottom`、底部对齐和全宽守卫。这里即使候选保留旧的正确导航高度，写入的 margin 仍是公开安全值；真正危险的全屏过渡高度会被严格高度比较拒绝。导航颜色 Drawable 的同步仍保留 V40 的完整 `isLayoutRequested()` 守卫，因此不放宽平台颜色 View 的过渡写入条件。`scripts/verify_target36.py` 锁定 V3 的几何条件。
 
 目标正式里程碑。重点：
 

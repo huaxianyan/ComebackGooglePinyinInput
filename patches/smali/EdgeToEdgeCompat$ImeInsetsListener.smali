@@ -44,12 +44,6 @@
 
     check-cast v3, Landroid/view/ViewGroup;
 
-    invoke-virtual {v3}, Landroid/view/View;->isLayoutRequested()Z
-
-    move-result v2
-
-    if-nez v2, :no_stable_frame_parent
-
     invoke-virtual {v3}, Landroid/view/ViewGroup;->getChildCount()I
 
     move-result v2
@@ -65,12 +59,6 @@
     instance-of v2, v4, Landroid/view/ViewGroup;
 
     if-eqz v2, :no_stable_frame_parent
-
-    invoke-virtual {v4}, Landroid/view/View;->isLayoutRequested()Z
-
-    move-result v2
-
-    if-nez v2, :no_stable_frame_parent
 
     invoke-virtual {v4}, Landroid/view/View;->isLaidOut()Z
 

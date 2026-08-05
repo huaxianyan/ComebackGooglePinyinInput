@@ -69,7 +69,6 @@ def main() -> None:
         raise RuntimeError("Missing IME Insets listener")
     ime_listener = ime_listener_path.read_text(encoding="utf-8")
     stable_navigation_geometry = (
-        "Landroid/view/View;->isLayoutRequested()Z",
         "Landroid/view/View;->isLaidOut()Z",
         "Landroid/view/View;->getBottom()I",
         "Landroid/view/View;->getWidth()I",
