@@ -1865,12 +1865,15 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
         "EdgeToEdgeCompat$ImeInsetsListener.smali"
     )
     if debuggable:
-        diagnostics_src = ROOT / "patches/smali/ImeThemeDiagnosticsCompat.smali"
-        diagnostics_dst = decoded / (
-            "smali/com/google/android/inputmethod/pinyin/"
-            "ImeThemeDiagnosticsCompat.smali"
-        )
-        shutil.copyfile(diagnostics_src, diagnostics_dst)
+        for diagnostics_name in (
+            "ImeThemeDiagnosticsCompat.smali",
+            "ImeThemeDiagnosticsCompat$DumpRunnable.smali",
+        ):
+            diagnostics_src = ROOT / "patches/smali" / diagnostics_name
+            diagnostics_dst = decoded / (
+                "smali/com/google/android/inputmethod/pinyin/" + diagnostics_name
+            )
+            shutil.copyfile(diagnostics_src, diagnostics_dst)
         replace_once(
             ime_insets_listener,
             "    iget-object v1, p0, Lcom/google/android/inputmethod/pinyin/"
@@ -1908,6 +1911,21 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
             "    invoke-static {v3, v1}, Lcom/google/android/inputmethod/pinyin/"
             "ImeThemeDiagnosticsCompat;->dump(Landroid/view/View;Ljava/lang/String;)V\n\n"
             "    return-void",
+        )
+        candidates_debug = decoded / "smali/asq.smali"
+        replace_once(
+            candidates_debug,
+            "    :goto_4\n"
+            "    invoke-direct {p0, v0}, Lasq;->a(Z)V\n\n"
+            "    :cond_6\n"
+            "    :goto_5",
+            "    :goto_4\n"
+            "    invoke-direct {p0, v0}, Lasq;->a(Z)V\n\n"
+            "    iget-object v0, p0, Lasq;->d:Landroid/view/View;\n"
+            "    invoke-static {v0}, Lcom/google/android/inputmethod/pinyin/"
+            "ImeThemeDiagnosticsCompat;->scheduleCandidateDump(Landroid/view/View;)V\n\n"
+            "    :cond_6\n"
+            "    :goto_5",
         )
         navigation_debug = decoded / (
             "smali/com/google/android/inputmethod/pinyin/NavigationBarCompat.smali"
