@@ -121,6 +121,8 @@ def main() -> None:
         "const v3, 0x7f0f0154",
         "const v3, 0x7f0f0156",
         "ImeSurfaceSliceDrawable;-><init>",
+        "imageBottomWithOverlay",
+        "Lcom/google/android/apps/inputmethod/libs/framework/core/KeyboardViewHolder;->a:Landroid/view/View;",
         "add-int v6, v4, v2",
         "ImeNavigationColorCompat;->schedule",
     )
@@ -132,6 +134,7 @@ def main() -> None:
         "Landroid/graphics/Canvas;->clipRect(IIII)Z",
         "Landroid/graphics/Canvas;->translate(FF)V",
         "offsetY:I",
+        "overlay:Landroid/graphics/drawable/Drawable;",
         "totalHeight:I",
     )
     missing = [token for token in slice_tokens if token not in slice_drawable]

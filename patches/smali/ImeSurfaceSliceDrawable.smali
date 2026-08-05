@@ -7,17 +7,30 @@
 .implements Landroid/graphics/drawable/Drawable$Callback;
 
 .field public final offsetY:I
+.field public final overlay:Landroid/graphics/drawable/Drawable;
 .field public final source:Landroid/graphics/drawable/Drawable;
 .field public final totalHeight:I
 
 .method public constructor <init>(Landroid/graphics/drawable/Drawable;II)V
+    .locals 1
+
+    const/4 v0, 0x0
+    invoke-direct {p0, p1, v0, p2, p3}, Lcom/google/android/inputmethod/pinyin/ImeSurfaceSliceDrawable;-><init>(Landroid/graphics/drawable/Drawable;Landroid/graphics/drawable/Drawable;II)V
+    return-void
+.end method
+
+.method public constructor <init>(Landroid/graphics/drawable/Drawable;Landroid/graphics/drawable/Drawable;II)V
     .locals 0
 
     invoke-direct {p0}, Landroid/graphics/drawable/Drawable;-><init>()V
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/ImeSurfaceSliceDrawable;->source:Landroid/graphics/drawable/Drawable;
-    iput p2, p0, Lcom/google/android/inputmethod/pinyin/ImeSurfaceSliceDrawable;->offsetY:I
-    iput p3, p0, Lcom/google/android/inputmethod/pinyin/ImeSurfaceSliceDrawable;->totalHeight:I
+    iput-object p2, p0, Lcom/google/android/inputmethod/pinyin/ImeSurfaceSliceDrawable;->overlay:Landroid/graphics/drawable/Drawable;
+    iput p3, p0, Lcom/google/android/inputmethod/pinyin/ImeSurfaceSliceDrawable;->offsetY:I
+    iput p4, p0, Lcom/google/android/inputmethod/pinyin/ImeSurfaceSliceDrawable;->totalHeight:I
     invoke-virtual {p1, p0}, Landroid/graphics/drawable/Drawable;->setCallback(Landroid/graphics/drawable/Drawable$Callback;)V
+    if-eqz p2, :done
+    invoke-virtual {p2, p0}, Landroid/graphics/drawable/Drawable;->setCallback(Landroid/graphics/drawable/Drawable$Callback;)V
+    :done
     return-void
 .end method
 
@@ -49,6 +62,13 @@
     invoke-virtual {v5, v4, v4, v1, v6}, Landroid/graphics/drawable/Drawable;->setBounds(IIII)V
     invoke-virtual {v5, p1}, Landroid/graphics/drawable/Drawable;->draw(Landroid/graphics/Canvas;)V
     invoke-virtual {p1, v3}, Landroid/graphics/Canvas;->restoreToCount(I)V
+
+    # Image themes apply their user-selected shadow as a separate native body
+    # surface. Composite that overlay locally after drawing the shared image.
+    iget-object v5, p0, Lcom/google/android/inputmethod/pinyin/ImeSurfaceSliceDrawable;->overlay:Landroid/graphics/drawable/Drawable;
+    if-eqz v5, :done
+    invoke-virtual {v5, v4, v4, v1, v2}, Landroid/graphics/drawable/Drawable;->setBounds(IIII)V
+    invoke-virtual {v5, p1}, Landroid/graphics/drawable/Drawable;->draw(Landroid/graphics/Canvas;)V
 
     :done
     return-void
@@ -90,6 +110,10 @@
     .locals 1
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/ImeSurfaceSliceDrawable;->source:Landroid/graphics/drawable/Drawable;
     invoke-virtual {v0, p1}, Landroid/graphics/drawable/Drawable;->setAlpha(I)V
+    iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/ImeSurfaceSliceDrawable;->overlay:Landroid/graphics/drawable/Drawable;
+    if-eqz v0, :done
+    invoke-virtual {v0, p1}, Landroid/graphics/drawable/Drawable;->setAlpha(I)V
+    :done
     return-void
 .end method
 
@@ -97,6 +121,10 @@
     .locals 1
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/ImeSurfaceSliceDrawable;->source:Landroid/graphics/drawable/Drawable;
     invoke-virtual {v0, p1}, Landroid/graphics/drawable/Drawable;->setColorFilter(Landroid/graphics/ColorFilter;)V
+    iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/ImeSurfaceSliceDrawable;->overlay:Landroid/graphics/drawable/Drawable;
+    if-eqz v0, :done
+    invoke-virtual {v0, p1}, Landroid/graphics/drawable/Drawable;->setColorFilter(Landroid/graphics/ColorFilter;)V
+    :done
     return-void
 .end method
 
