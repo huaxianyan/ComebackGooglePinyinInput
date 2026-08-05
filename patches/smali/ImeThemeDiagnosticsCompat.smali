@@ -225,30 +225,33 @@
     const-string v1, "keyboardArea"
     invoke-static {v0, v1, v3}, Lcom/google/android/inputmethod/pinyin/ImeThemeDiagnosticsCompat;->appendView(Ljava/lang/StringBuilder;Ljava/lang/String;Landroid/view/View;)V
 
-    const v1, 0x7f0f0156
-    invoke-virtual {p0, v1}, Landroid/view/View;->findViewById(I)Landroid/view/View;
-    move-result-object v4
-    const-string v1, "bodyHolder"
-    invoke-static {v0, v1, v4}, Lcom/google/android/inputmethod/pinyin/ImeThemeDiagnosticsCompat;->appendView(Ljava/lang/StringBuilder;Ljava/lang/String;Landroid/view/View;)V
-    instance-of v1, v4, Lcom/google/android/apps/inputmethod/libs/framework/core/KeyboardViewHolder;
-    if-eqz v1, :more_area
-    check-cast v4, Lcom/google/android/apps/inputmethod/libs/framework/core/KeyboardViewHolder;
-    iget-object v4, v4, Lcom/google/android/apps/inputmethod/libs/framework/core/KeyboardViewHolder;->a:Landroid/view/View;
-    const-string v1, "bodyActive"
-    invoke-static {v0, v1, v4}, Lcom/google/android/inputmethod/pinyin/ImeThemeDiagnosticsCompat;->appendView(Ljava/lang/StringBuilder;Ljava/lang/String;Landroid/view/View;)V
-    const-string v1, "bodyChild"
-    const/4 v5, 0x3
-    invoke-static {v0, v1, v4, v5}, Lcom/google/android/inputmethod/pinyin/ImeThemeDiagnosticsCompat;->appendTree(Ljava/lang/StringBuilder;Ljava/lang/String;Landroid/view/View;I)V
-
-    :more_area
+    # Put the expanded-candidate surface before deeper body metadata so it
+    # remains present even on platforms with conservative log-line limits.
     const v1, 0x7f0f01a2
     invoke-virtual {p0, v1}, Landroid/view/View;->findViewById(I)Landroid/view/View;
     move-result-object v4
     const-string v1, "moreArea"
     invoke-static {v0, v1, v4}, Lcom/google/android/inputmethod/pinyin/ImeThemeDiagnosticsCompat;->appendView(Ljava/lang/StringBuilder;Ljava/lang/String;Landroid/view/View;)V
     const-string v1, "moreChild"
-    const/4 v5, 0x3
+    const/4 v5, 0x1
     invoke-static {v0, v1, v4, v5}, Lcom/google/android/inputmethod/pinyin/ImeThemeDiagnosticsCompat;->appendTree(Ljava/lang/StringBuilder;Ljava/lang/String;Landroid/view/View;I)V
+
+    const v1, 0x7f0f0156
+    invoke-virtual {p0, v1}, Landroid/view/View;->findViewById(I)Landroid/view/View;
+    move-result-object v4
+    const-string v1, "bodyHolder"
+    invoke-static {v0, v1, v4}, Lcom/google/android/inputmethod/pinyin/ImeThemeDiagnosticsCompat;->appendView(Ljava/lang/StringBuilder;Ljava/lang/String;Landroid/view/View;)V
+    instance-of v1, v4, Lcom/google/android/apps/inputmethod/libs/framework/core/KeyboardViewHolder;
+    if-eqz v1, :area_children
+    check-cast v4, Lcom/google/android/apps/inputmethod/libs/framework/core/KeyboardViewHolder;
+    iget-object v4, v4, Lcom/google/android/apps/inputmethod/libs/framework/core/KeyboardViewHolder;->a:Landroid/view/View;
+    const-string v1, "bodyActive"
+    invoke-static {v0, v1, v4}, Lcom/google/android/inputmethod/pinyin/ImeThemeDiagnosticsCompat;->appendView(Ljava/lang/StringBuilder;Ljava/lang/String;Landroid/view/View;)V
+    const-string v1, "bodyChild"
+    const/4 v5, 0x1
+    invoke-static {v0, v1, v4, v5}, Lcom/google/android/inputmethod/pinyin/ImeThemeDiagnosticsCompat;->appendTree(Ljava/lang/StringBuilder;Ljava/lang/String;Landroid/view/View;I)V
+
+    :area_children
 
     instance-of v1, v3, Landroid/view/ViewGroup;
     if-eqz v1, :emit
