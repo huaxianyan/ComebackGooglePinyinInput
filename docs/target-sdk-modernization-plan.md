@@ -594,7 +594,7 @@ V4 复测与 V5 架构修正：
 
 ### target 36 / Android 16
 
-状态：已从 target 35 验收提交 `c749727` 创建 `feat/target-sdk-36`；V1 仅提升 `targetSdkVersion: 35 → 36`，等待 release-like 构建与真机基线。
+状态：**V19 release-like 已完成并验收**。分支 `feat/target-sdk-36`，验收实现提交 `7581f42`，最终验收准备和门禁修正提交以后续分支 HEAD 为准。
 
 V1 保留 target 35 已验收的 covering IME Window、双导航主题同步、首次引导和所有功能实现，不加入预测返回回调或 MD3 重写。Manifest 显式设置应用级 `android:enableOnBackInvokedCallback="false"`，先冻结普通 `onBackPressed()` 语义；新增 `scripts/verify_target36.py`，要求 target 36、真实 edge-to-edge、显式 legacy Back opt-out，并拒绝在首个 target-only 候选中混入 `OnBackInvokedCallback`。
 
@@ -619,6 +619,26 @@ V6 Debug 在“无稳定末候选但公开 fallback inset 为正”时使用 Dec
 V7 Debug 停止 DecorView add/remove/reparent 路线，完整采用 InputView-owned covering model：theme frame 永久作为 InputView 内部、不可点击且不可聚焦的底部 sibling；只给现有 keyboard area 写 bottom margin，保留其原生测量高度，不修改 InputView padding 或 `onMeasure()`。稳定 framework bottom candidate 只作为只读几何传感器：已布局、正高度、小于根高度、底部对齐且全宽时记录进程级 `lastStableNavigationHeight`；候选暂时消失或进入全根过渡时继续使用最后稳定值，公开 `navigationBars.bottom` 只作冷启动 fallback。V7 现场几何达到 `IME top=1481`，InputView 为 `2238 px`，内部 theme frame 和 keyboard area 分别为 `2112..2238` 与 `1309..2112`，两者 Drawable 均为当前 `bam`；但手势下 DecorView 同时存在位于 theme frame 上方的稳定普通 View 和最后的导航控件 ViewGroup。旧颜色同步器只检查最后一个 child，因其为 ViewGroup 而退出，前一个普通平台颜色 View 保留旧 tint，遮住正确的自有 frame。
 
 V8 Debug 保持 V7 自有布局不变，仅重写平台颜色同步器：主题来源永远是 InputView 自有 tagged frame；从 DecorView 顶层末尾向前扫描，跳过所有 ViewGroup，只接受无 pending layout、已布局、高度严格等于自有 frame、底部对齐且全宽的普通 View。这样可更新位于尾部导航控件 ViewGroup 之前的平台颜色层，同时全屏/旧尺寸过渡层不能通过高度和稳定布局守卫。
+
+V9–V17 以隐私受限 Debug 元数据继续识别正常键盘、图片主题和展开候选的实际 View/Drawable 层次。最终决定不让展开候选拥有导航视觉，也不复制候选页、候选行或候选按键背景。相关候选 toggle 注入、`PageableCandidatesHolderView`/`avs`/`avu` 访问、多余 overlay 和 `GooglePinyinImeSync` 诊断均已删除。V18 将 renderer 收窄为图片主题普通状态的共享坐标切片；V19 将内置主题来源修正为 `KeyboardViewHolder.a → SoftKeyboardView.background`，避免错误使用候选栏颜色。图片主题保留原生 body 阴影和动态导航高度裁剪；展开候选保持最后一个稳定普通状态视觉，不改变交互边界。
+
+V19 release-like 验收包：
+
+- 提交：`7581f42`；
+- workflow：`31014197049`；
+- artifact：`8933765304`；
+- APK SHA-256：`668d36d3c671b9e1a18145d3baddfb6622ccd2a280a4cc9be8440c2ff893223d`；
+- 证书 SHA-256：`985CBF843A362169B129AEAC5E153D13095F0923231936D1486A20C8332CDE2F`；
+- 设备安装 APK 与 Actions artifact 逐字节一致；
+- `PACKAGE_CRASHES=0`、`DROPBOX_PACKAGE_MATCHES=0`、`VERIFY_ERRORS=0`；
+- release-like Manifest 无 debuggable 标记，包内无临时主题/候选诊断。
+
+Pixel 10 Pro / Android 16 最终几何：
+
+- 三按钮：IME Insets `[0,1481][1080,2410]`，navigationBars `[0,2284][1080,2410]`，IME touchable region `[0,1481][1080,2284]`，`mImeShowing=true`、`mLastDrawn=true`；
+- 手势：IME Insets `[0,1481][1080,2410]`，navigationBars `[0,2347][1080,2410]`，mandatorySystemGestures `[0,2326][1080,2410]`，`mImeShowing=true`、`mLastDrawn=true`；
+- 两种模式下 IME Window 均为 `[0,172][1080,2410]`、requested size `1080×2238`、`fitSides=LEFT|TOP|RIGHT`、Surface `shown/HAS_DRAWN`；
+- 用户确认首次引导、核心输入、候选/剪贴板、手写、内置主题、图片主题、动态裁剪、键盘高度、备份/导入、锁屏、语音 IME 往返和双导航视觉正常。展开候选背景不延伸到导航区是最终明确边界，不再设计。
 
 目标正式里程碑。重点：
 

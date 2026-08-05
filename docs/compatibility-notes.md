@@ -81,6 +81,21 @@ Compatibility v20 为可变词库文件增加恢复层。原版持久化按 `主
 
 废弃账号同步、Firebase、反馈上传和在线词典更新已在 target 现代化前清理。
 
+## Android 16 / target 36 验收边界
+
+`feat/target-sdk-36` 的 V19 release-like 已在 Pixel 10 Pro / Android 16 上验收。IME Window 覆盖到显示底部，应用收到完整 IME Insets；InputView 内部保留动态测量的非交互底部视觉面，系统导航和手势仍由 SystemUI 控制。
+
+最终视觉规则有意保持狭窄：
+
+- 图片主题普通状态用一个共享逻辑高度绘制上部和导航下方切片，并叠加用户选择的原生 body 阴影；
+- 新图片裁剪尺寸包含动态稳定导航高度，不重写已有裁剪文件；
+- 内置主题使用实际 `SoftKeyboardView.background` 延伸键盘主体颜色；
+- 展开候选不切换导航视觉，不复制候选页、候选行、候选按键或任何候选内容；
+- 不使用固定导航高度、隐藏 ID、framework 内部类名、反射或 DecorView reparent；
+- 临时候选/主题诊断已从 release-like artifact 删除。
+
+V19 三按钮和手势模式均保持 IME Insets `[0,1481][1080,2410]`、IME Window `[0,172][1080,2410]`、Surface `shown/HAS_DRAWN`。三按钮 navigationBars 为 `[0,2284][1080,2410]`，手势 navigationBars 为 `[0,2347][1080,2410]`、mandatorySystemGestures 为 `[0,2326][1080,2410]`。这些是动态现场值，不得作为代码常量。
+
 ## 手写崩溃
 
 Android 16 真机日志确认，首次落笔时崩溃并非原生库或页面大小问题，而是 Java 异常：

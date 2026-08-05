@@ -72,7 +72,7 @@ def main() -> None:
         "Landroid/view/View;->isLaidOut()Z",
         "Landroid/view/View;->getBottom()I",
         "Landroid/view/View;->getWidth()I",
-        "if-ge v2, v6, :use_remembered_height",
+        "if-ge v2, v6,",
         "EdgeToEdgeCompat;->rememberStableNavigationHeight(I)V",
         "EdgeToEdgeCompat;->stableNavigationHeightOr(I)I",
         "Landroid/view/ViewGroup$MarginLayoutParams;->bottomMargin:I",
@@ -99,8 +99,8 @@ def main() -> None:
     if (
         'const-string v2, "ime-navigation-frame"' not in nav_color
         or "findViewWithTag(Ljava/lang/Object;)Landroid/view/View;" not in nav_color
-        or ":candidate_loop" not in nav_color
-        or "if-ne v5, v4, :next_candidate" not in nav_color
+        or "if-ne v5, v4," not in nav_color
+        or "add-int/lit8 v1, v1, -0x1" not in nav_color
         or "ImeSurfaceRendererCompat;->copyForPlatform" not in nav_color
     ):
         raise RuntimeError("Platform navigation color must source the owned theme frame")
@@ -117,14 +117,13 @@ def main() -> None:
     slice_drawable = slice_path.read_text(encoding="utf-8")
     renderer_tokens = (
         "const v3, 0x7f0f01a2",
-        "if-nez v4, :platform",
+        "if-nez v4,",
         "const v3, 0x7f0f0154",
         "0x7f0f0156",
         "ImeSurfaceSliceDrawable;-><init>",
         "Drawable;->getState()[I",
         "Lcom/google/android/apps/inputmethod/libs/framework/core/KeyboardViewHolder;->a:Landroid/view/View;",
-        ":fallback_area",
-        ":set_builtin",
+        "0x7f0f0153",
         "add-int v6, v4, v2",
         "ImeNavigationColorCompat;->schedule",
     )

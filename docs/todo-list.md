@@ -89,9 +89,11 @@
 - [x] `feat/target-sdk-32`：release-like 构建、首次引导、ART/Root、核心输入、手写、主题、词典、联系人和 SAF 本地备份回归通过
 - [x] `feat/target-sdk-33`：release-like 构建、Android 12/13 静态门禁、首次引导、ART/Root、核心输入、主题选择器、联系人、词典和 Google Drive SAF 回归通过
 - [x] `feat/target-sdk-34`：release-like 构建、Android 12/13/14 静态门禁、动态 receiver、首次引导、ART/Root、核心输入、手写、主题、联系人、词典和 Google Drive SAF 回归通过
-- [ ] `feat/target-sdk-35`：V3 navigationBars inset 会在键盘高度调整触发的系统栏过渡中归零；V4 已改用 `getInsetsIgnoringVisibility(Type.navigationBars())` 并覆盖安装，等待反复调整默认/最高键盘高度复测
+- [x] `feat/target-sdk-35`：covering IME Window、InputView-owned 非交互底部 frame、双导航、语音往返、主题、高度、Insets 和核心功能验收通过
+- [x] `feat/target-sdk-36`：V19 release-like 的首次引导、核心功能、双导航、内置/图片主题、动态图片裁剪、候选边界、ART/Crash/DropBox 和最终 Window/Insets 几何验收通过
 - [x] 非正式 application ID 的审计包统一显示为“Google 拼音输入法（测试版）”，正式包名称保持不变
-- [ ] 在真正的 16 KiB page-size 设备上验证原生库
+- [ ] 解决 `libhmm_gesture_hwr_zh.so` 的 `PT_LOAD Align 0x1000`，产出可审计的 16 KiB 兼容重链接或替代库
+- [ ] 在真正的 16 KiB page-size 设备/模拟器上验证全部原生库、拼音、滑行输入和中文手写
 - [ ] 调查并消除 `MetricsProcessorHelper` 的反射参数错误日志
 
 ## 测试约定
