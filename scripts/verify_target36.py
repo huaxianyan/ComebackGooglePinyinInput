@@ -117,15 +117,11 @@ def main() -> None:
     slice_drawable = slice_path.read_text(encoding="utf-8")
     renderer_tokens = (
         "const v3, 0x7f0f01a2",
-        "Landroid/view/View;->isShown()Z",
+        "if-nez v4, :platform",
         "const v3, 0x7f0f0154",
-        "const v3, 0x7f0f0156",
+        "0x7f0f0156",
         "ImeSurfaceSliceDrawable;-><init>",
-        "imageBottomWithOverlay",
         "Drawable;->getState()[I",
-        "overlay2:Landroid/graphics/drawable/Drawable;",
-        "overlay3:Landroid/graphics/drawable/Drawable;",
-        "const v6, 0x7f0f02bd",
         "Lcom/google/android/apps/inputmethod/libs/framework/core/KeyboardViewHolder;->a:Landroid/view/View;",
         "add-int v6, v4, v2",
         "ImeNavigationColorCompat;->schedule",
@@ -133,14 +129,28 @@ def main() -> None:
     missing = [token for token in renderer_tokens if token not in renderer]
     if missing:
         raise RuntimeError(f"Incomplete active-surface renderer: {missing}")
+    forbidden_renderer_tokens = (
+        "imageBottomWithOverlay",
+        "PageableCandidatesHolderView",
+        "Lavs;",
+        "0x7f0f02bd",
+        "overlay2:Landroid/graphics/drawable/Drawable;",
+        "overlay3:Landroid/graphics/drawable/Drawable;",
+    )
+    present = [
+        token
+        for token in forbidden_renderer_tokens
+        if token in renderer or token in slice_drawable
+    ]
+    if present:
+        raise RuntimeError(f"Expanded-candidate renderer experiments remain: {present}")
+
     slice_tokens = (
         "Landroid/graphics/drawable/Drawable;",
         "Landroid/graphics/Canvas;->clipRect(IIII)Z",
         "Landroid/graphics/Canvas;->translate(FF)V",
         "offsetY:I",
         "overlay:Landroid/graphics/drawable/Drawable;",
-        "overlay2:Landroid/graphics/drawable/Drawable;",
-        "overlay3:Landroid/graphics/drawable/Drawable;",
         "totalHeight:I",
     )
     missing = [token for token in slice_tokens if token not in slice_drawable]
@@ -148,8 +158,15 @@ def main() -> None:
         raise RuntimeError(f"Incomplete shared-coordinate image slice: {missing}")
 
     candidate_controller = (decoded / "smali/asq.smali").read_text(encoding="utf-8")
-    if "ImeSurfaceRendererCompat;->schedule(Landroid/view/View;)V" not in candidate_controller:
-        raise RuntimeError("Candidate expansion must refresh the active visual surface")
+    if "ImeSurfaceRendererCompat" in candidate_controller or "ImeThemeDiagnosticsCompat" in candidate_controller:
+        raise RuntimeError("Candidate expansion must remain native and must not refresh navigation visuals")
+
+    diagnostic_helpers = (
+        decoded / "smali/com/google/android/inputmethod/pinyin/ImeThemeDiagnosticsCompat.smali",
+        decoded / "smali/com/google/android/inputmethod/pinyin/ImeThemeDiagnosticsCompat$DumpRunnable.smali",
+    )
+    if any(path.exists() for path in diagnostic_helpers):
+        raise RuntimeError("Temporary active-surface diagnostics remain in the artifact")
 
     crop_page = (decoded / "smali/bcp.smali").read_text(encoding="utf-8")
     crop_tokens = (
