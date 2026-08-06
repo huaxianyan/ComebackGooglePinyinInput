@@ -94,6 +94,7 @@
 - [x] 非正式 application ID 的审计包统一显示为“Google 拼音输入法（测试版）”，正式包名称保持不变
 - [x] 对四个旧 ELF 实施输入/输出哈希固定的可复现布局重写，修复 HMM LOAD 不同余及 RELRO/可写数据页冲突，并加入 16 KiB 静态门禁
 - [x] 在 `getconf PAGESIZE=16384` 的 API 36 x86_64 模拟器上通过 ARM64 translation bridge 验证加载、拼音输入提交及显式手写库加载，并完成 4 KiB 模拟器回归
+- [x] 在 Pixel 10 Pro 的原生 AArch64 4 KiB 环境完成转换后审计 APK 的广泛功能回归；APK 字节一致、无 native bridge、进程正常且未发现 crash/linker/native signal
 - [ ] 在原生 AArch64 16 KiB 运行环境验证拼音、候选、滑行输入、中文手写、词典保存和进程重启；当前 x86_64 host 无法启动 ARM64 AVD
 - [ ] 调查并消除 `MetricsProcessorHelper` 的反射参数错误日志
 

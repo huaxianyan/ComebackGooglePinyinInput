@@ -216,8 +216,27 @@ VerifyError=0
 
 The same transformed payload passed the equivalent synthetic IME sequence on
 an API 36 4 KiB x86_64 guest, and the temporary probe loaded `libhwrword.so`
-there as well. This is a 4 KiB emulator regression check, not a replacement for
-the Pixel 10 Pro production regression pass.
+there as well.
+
+The Actions audit APK was subsequently installed on the physical Pixel 10 Pro
+without replacing the formal package. The installed `base.apk` matched the
+Actions APK byte-for-byte (`SHA-256
+1234e674165601ffc4ddd4412394e321d52b237f498cdfab851d6f39f9cffdef`). The
+runtime reported:
+
+```text
+getconf PAGESIZE=4096
+ro.product.cpu.abi=arm64-v8a
+ro.dalvik.vm.native.bridge=0
+```
+
+The project maintainer completed a broad manual pass covering nearly all
+available functions and reported no defect. A post-test objective check found
+the audit IME selected and its process alive, with no package match in the
+crash buffer and no `FATAL EXCEPTION`, `UnsatisfiedLinkError`, `SIGSEGV`,
+`SIGABRT`, `VerifyError`, `SEGV_ACCERR`, or program-alignment error. This is the
+required native AArch64 4 KiB backward-compatibility evidence; it does not
+replace native AArch64 16 KiB acceptance.
 
 ## Runtime acceptance boundary
 
