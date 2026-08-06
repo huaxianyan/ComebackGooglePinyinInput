@@ -125,6 +125,13 @@ def main() -> None:
     )
     if 'android:focusable="false"' not in preference_layout:
         raise RuntimeError("MD3 Preference rows must delegate row clicks to ListView")
+    row_background = (
+        decoded / "res/drawable-v35/bg_settings_md3_preference_row.xml"
+    ).read_text(encoding="utf-8")
+    if 'android:color="@color/settings_md3_state_layer"' not in row_background:
+        raise RuntimeError("MD3 Preference ripple must use the neutral state layer")
+    if "settings_md3_primary_container" in row_background:
+        raise RuntimeError("MD3 Preference ripple must not retain the blue container")
 
     for relative in (
         "res/layout-v35/md3_preference.xml",

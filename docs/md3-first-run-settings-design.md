@@ -138,6 +138,9 @@ fallback; it is not a prerequisite for a valid MD3 layout.
    framework `Preference` recycling. Shared row/widget layouts make that reuse
    type-safe and preserve the visible switch long enough to render the
    transition without delaying persistence or taking over click handling.
+   Preference row Ripple feedback uses a neutral `onSurfaceVariant` state layer
+   (12% in day mode, 16% in night mode), not the blue `primaryContainer`; this
+   keeps pressed feedback consistent with the neutral header icons and switches.
    Framework, auto-synced list and
    custom `DialogPreference` rows share the modern row layout without changing
    their dialog handlers. This keeps ordinary, converted switch, slider,
