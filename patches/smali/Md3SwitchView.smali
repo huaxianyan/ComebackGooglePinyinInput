@@ -96,6 +96,46 @@
     return p1
 .end method
 
+.method private logState(Ljava/lang/String;)V
+    .locals 3
+
+    new-instance v0, Ljava/lang/StringBuilder;
+    invoke-direct {v0, p1}, Ljava/lang/StringBuilder;-><init>(Ljava/lang/String;)V
+    const-string p1, " id="
+    invoke-virtual {v0, p1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+    invoke-static {p0}, Ljava/lang/System;->identityHashCode(Ljava/lang/Object;)I
+    move-result p1
+    invoke-virtual {v0, p1}, Ljava/lang/StringBuilder;->append(I)Ljava/lang/StringBuilder;
+    const-string p1, " laid="
+    invoke-virtual {v0, p1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+    invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/Md3SwitchView;->isLaidOut()Z
+    move-result p1
+    invoke-virtual {v0, p1}, Ljava/lang/StringBuilder;->append(Z)Ljava/lang/StringBuilder;
+    const-string p1, " attached="
+    invoke-virtual {v0, p1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+    invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/Md3SwitchView;->isAttachedToWindow()Z
+    move-result p1
+    invoke-virtual {v0, p1}, Ljava/lang/StringBuilder;->append(Z)Ljava/lang/StringBuilder;
+    const-string p1, " shown="
+    invoke-virtual {v0, p1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+    invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/Md3SwitchView;->isShown()Z
+    move-result p1
+    invoke-virtual {v0, p1}, Ljava/lang/StringBuilder;->append(Z)Ljava/lang/StringBuilder;
+    const-string p1, " checked="
+    invoke-virtual {v0, p1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+    iget-boolean p1, p0, Lcom/google/android/inputmethod/pinyin/Md3SwitchView;->checked:Z
+    invoke-virtual {v0, p1}, Ljava/lang/StringBuilder;->append(Z)Ljava/lang/StringBuilder;
+    const-string p1, " position="
+    invoke-virtual {v0, p1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+    iget p1, p0, Lcom/google/android/inputmethod/pinyin/Md3SwitchView;->position:F
+    invoke-virtual {v0, p1}, Ljava/lang/StringBuilder;->append(F)Ljava/lang/StringBuilder;
+    invoke-virtual {v0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
+    move-result-object v0
+    const-string v1, "GooglePinyinMd3Switch"
+    invoke-static {v1, v0}, Landroid/util/Log;->d(Ljava/lang/String;Ljava/lang/String;)I
+    return-void
+.end method
+
 .method private loadColors()V
     .locals 1
 
@@ -137,8 +177,10 @@
 .method public setChecked(Z)V
     .locals 6
 
+    const-string v0, "setChecked"
+    invoke-direct {p0, v0}, Lcom/google/android/inputmethod/pinyin/Md3SwitchView;->logState(Ljava/lang/String;)V
     iget-boolean v0, p0, Lcom/google/android/inputmethod/pinyin/Md3SwitchView;->checked:Z
-    if-eq v0, p1, :done
+    if-eq v0, p1, :same
     iput-boolean p1, p0, Lcom/google/android/inputmethod/pinyin/Md3SwitchView;->checked:Z
 
     if-eqz p1, :off
@@ -183,12 +225,21 @@
     new-instance v2, Lcom/google/android/inputmethod/pinyin/Md3SwitchView$AnimatorUpdateListener;
     invoke-direct {v2, p0}, Lcom/google/android/inputmethod/pinyin/Md3SwitchView$AnimatorUpdateListener;-><init>(Lcom/google/android/inputmethod/pinyin/Md3SwitchView;)V
     invoke-virtual {v1, v2}, Landroid/animation/ValueAnimator;->addUpdateListener(Landroid/animation/ValueAnimator$AnimatorUpdateListener;)V
+    const-string v2, "animate"
+    invoke-direct {p0, v2}, Lcom/google/android/inputmethod/pinyin/Md3SwitchView;->logState(Ljava/lang/String;)V
     invoke-virtual {v1}, Landroid/animation/ValueAnimator;->start()V
     goto :done
 
     :snap
     iput v0, p0, Lcom/google/android/inputmethod/pinyin/Md3SwitchView;->position:F
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/Md3SwitchView;->invalidate()V
+    const-string v1, "snap"
+    invoke-direct {p0, v1}, Lcom/google/android/inputmethod/pinyin/Md3SwitchView;->logState(Ljava/lang/String;)V
+    goto :done
+
+    :same
+    const-string v0, "same"
+    invoke-direct {p0, v0}, Lcom/google/android/inputmethod/pinyin/Md3SwitchView;->logState(Ljava/lang/String;)V
 
     :done
     return-void
@@ -198,11 +249,23 @@
     .locals 0
     iput p1, p0, Lcom/google/android/inputmethod/pinyin/Md3SwitchView;->position:F
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/Md3SwitchView;->invalidate()V
+    const-string p1, "frame"
+    invoke-direct {p0, p1}, Lcom/google/android/inputmethod/pinyin/Md3SwitchView;->logState(Ljava/lang/String;)V
+    return-void
+.end method
+
+.method protected onAttachedToWindow()V
+    .locals 1
+    invoke-super {p0}, Landroid/view/View;->onAttachedToWindow()V
+    const-string v0, "attached"
+    invoke-direct {p0, v0}, Lcom/google/android/inputmethod/pinyin/Md3SwitchView;->logState(Ljava/lang/String;)V
     return-void
 .end method
 
 .method protected onDetachedFromWindow()V
     .locals 1
+    const-string v0, "detached"
+    invoke-direct {p0, v0}, Lcom/google/android/inputmethod/pinyin/Md3SwitchView;->logState(Ljava/lang/String;)V
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/Md3SwitchView;->animator:Landroid/animation/ValueAnimator;
     if-eqz v0, :super_call
     invoke-virtual {v0}, Landroid/animation/ValueAnimator;->cancel()V
