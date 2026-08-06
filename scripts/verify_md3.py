@@ -70,6 +70,8 @@ def main() -> None:
     require(
         insets,
         (
+            ".class public final Lcom/google/android/inputmethod/pinyin/firstrun/FirstRunInsetsListener;",
+            ".method public constructor <init>(Landroid/view/View;)V",
             "WindowInsets$Type;->systemBars()I",
             "WindowInsets$Type;->displayCutout()I",
             "Landroid/view/View;->setPadding(IIII)V",

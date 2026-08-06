@@ -1,4 +1,4 @@
-.class final Lcom/google/android/inputmethod/pinyin/firstrun/FirstRunInsetsListener;
+.class public final Lcom/google/android/inputmethod/pinyin/firstrun/FirstRunInsetsListener;
 .super Ljava/lang/Object;
 .source "FirstRunInsetsListener.java"
 
@@ -13,7 +13,7 @@
 .field private final baseBottom:I
 
 # direct methods
-.method constructor <init>(Landroid/view/View;)V
+.method public constructor <init>(Landroid/view/View;)V
     .locals 1
 
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
