@@ -152,8 +152,10 @@ fallback; it is not a prerequisite for a valid MD3 layout.
    state layer, live value label and endpoint labels replace the modal dialog.
    Values commit when tracking stops through each original Preference's value
    conversion, `callChangeListener()` and persistence type; volume and vibration
-   retain their original release-time previews. Below API 35 the original
-   dialog behavior remains intact.
+   retain their original release-time previews. Volume, vibration and long-press
+   rows also expose the original “默认” action inline, while list-backed sliders
+   retain their original no-reset contract. Below API 35 the original dialog
+   behavior remains intact.
 4. **Dictionary/backup:** health, directory, immediate backup and import lists.
 5. **Theme tools:** selector, builder, crop and editor shells without changing
    image data semantics.

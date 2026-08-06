@@ -143,6 +143,8 @@ def main() -> None:
         "res/layout-v35/md3_inline_slider_preference.xml",
         "smali/com/google/android/inputmethod/pinyin/Md3SwitchView.smali",
         "smali/com/google/android/inputmethod/pinyin/Md3SliderView.smali",
+        "smali/com/google/android/inputmethod/pinyin/Md3InlineSliderCompat.smali",
+        "smali/com/google/android/inputmethod/pinyin/Md3InlineSliderResetClickListener.smali",
         "smali/com/google/android/inputmethod/pinyin/Md3SwitchView$AnimatorUpdateListener.smali",
         "res/values-v35/md3_settings.xml",
         "res/values-night-v35/md3_settings.xml",
@@ -211,6 +213,8 @@ def main() -> None:
             'android:id="@id/seek_bar_text_left"',
             'android:id="@id/seek_bar_text_right"',
             'android:labelFor="@id/seek_bar"',
+            'android:id="@id/md3_slider_reset"',
+            'android:text="@string/button_default"',
         ),
         "inline MD3 slider row",
     )
@@ -236,13 +240,27 @@ def main() -> None:
             ".method protected onBindView(Landroid/view/View;)V",
             ".method protected onClick()V",
             ".method public c(I)V",
+            ".method public d()V",
             "const/16 v1, 0x23",
             "onBindDialogView(Landroid/view/View;)V",
+            "Md3InlineSliderCompat;->bindReset",
         ),
         "API-35 inline slider lifecycle",
     )
     slider_listener = (decoded / "smali/axg.smali").read_text(encoding="utf-8")
     require(slider_listener, ("Laxf;->b(I)V", "Laxf;->c(I)V"), "inline slider preview and commit")
+    reset_compat = (
+        decoded / "smali/com/google/android/inputmethod/pinyin/Md3InlineSliderCompat.smali"
+    ).read_text(encoding="utf-8")
+    require(
+        reset_compat,
+        (
+            "instance-of v1, p0, Laxh;",
+            'const-string v1, "md3_slider_reset"',
+            "Md3InlineSliderResetClickListener;",
+        ),
+        "inline slider default action",
+    )
     for relative in (
         "smali/com/google/android/apps/inputmethod/libs/framework/preference/widget/SeekBarListPreference.smali",
         "smali/com/google/android/apps/inputmethod/libs/framework/preference/widget/VolumePreference.smali",

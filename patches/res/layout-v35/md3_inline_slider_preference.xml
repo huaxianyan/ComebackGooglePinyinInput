@@ -30,6 +30,20 @@
             android:maxLines="2"
             android:ellipsize="end" />
         <TextView
+            android:id="@id/md3_slider_reset"
+            android:visibility="gone"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:gravity="center"
+            android:minWidth="48dp"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:fontFamily="sans-serif-medium"
+            android:textSize="14sp"
+            android:textColor="@color/settings_md3_primary"
+            android:text="@string/button_default" />
+        <TextView
             android:id="@id/seek_bar_text_top"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

@@ -2020,13 +2020,22 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
         "    .locals 0\n\n"
         "    return-void\n"
         ".end method\n\n"
+        ".method public d()V\n"
+        "    .locals 2\n\n"
+        "    const/4 v0, 0x0\n"
+        "    const/4 v1, -0x3\n"
+        "    invoke-virtual {p0, v0, v1}, Laxf;->onClick(Landroid/content/DialogInterface;I)V\n"
+        "    invoke-virtual {p0}, Laxf;->notifyChanged()V\n"
+        "    return-void\n"
+        ".end method\n\n"
         ".method protected onBindView(Landroid/view/View;)V\n"
         "    .locals 2\n\n"
         "    invoke-super {p0, p1}, Landroid/preference/DialogPreference;->onBindView(Landroid/view/View;)V\n\n"
         "    sget v0, Landroid/os/Build$VERSION;->SDK_INT:I\n"
         "    const/16 v1, 0x23\n"
         "    if-lt v0, v1, :done\n"
-        "    invoke-virtual {p0, p1}, Laxf;->onBindDialogView(Landroid/view/View;)V\n\n"
+        "    invoke-virtual {p0, p1}, Laxf;->onBindDialogView(Landroid/view/View;)V\n"
+        "    invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/Md3InlineSliderCompat;->bindReset(Laxf;Landroid/view/View;)V\n\n"
         "    :done\n"
         "    return-void\n"
         ".end method\n\n"
@@ -2174,6 +2183,14 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
         (
             "Md3SliderView.smali",
             "smali/com/google/android/inputmethod/pinyin/Md3SliderView.smali",
+        ),
+        (
+            "Md3InlineSliderCompat.smali",
+            "smali/com/google/android/inputmethod/pinyin/Md3InlineSliderCompat.smali",
+        ),
+        (
+            "Md3InlineSliderResetClickListener.smali",
+            "smali/com/google/android/inputmethod/pinyin/Md3InlineSliderResetClickListener.smali",
         ),
         (
             "Md3SwitchView$AnimatorUpdateListener.smali",
