@@ -120,5 +120,6 @@ java.lang.IllegalArgumentException: Invalid Region.Op - only INTERSECT and DIFFE
 - `WordRecognizerJNI.decode`
 
 已在 Pixel 10 Pro / Android 16（系统报告 4 KiB page size）上验证笔迹显示、
-中文识别和候选上屏均正常，未发现后续 JNI 或模型兼容问题。16 KiB page-size
-设备仍需单独验证。
+中文识别和候选上屏均正常，未发现后续 JNI 或模型兼容问题。重写后的
+`libhwrword.so` 已在 16 KiB x86_64 模拟器通过 ARM64 translation bridge 显式加载，
+但完整手写流程和原生 AArch64 16 KiB 执行仍需单独验证。

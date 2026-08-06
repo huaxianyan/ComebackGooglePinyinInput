@@ -92,8 +92,9 @@
 - [x] `feat/target-sdk-35`：covering IME Window、InputView-owned 非交互底部 frame、双导航、语音往返、主题、高度、Insets 和核心功能验收通过
 - [x] `feat/target-sdk-36`：V19 release-like 的首次引导、核心功能、双导航、内置/图片主题、动态图片裁剪、候选边界、ART/Crash/DropBox 和最终 Window/Insets 几何验收通过
 - [x] 非正式 application ID 的审计包统一显示为“Google 拼音输入法（测试版）”，正式包名称保持不变
-- [ ] 解决 `libhmm_gesture_hwr_zh.so` 的 `PT_LOAD Align 0x1000`，产出可审计的 16 KiB 兼容重链接或替代库
-- [ ] 在真正的 16 KiB page-size 设备/模拟器上验证全部原生库、拼音、滑行输入和中文手写
+- [x] 对四个旧 ELF 实施输入/输出哈希固定的可复现布局重写，修复 HMM LOAD 不同余及 RELRO/可写数据页冲突，并加入 16 KiB 静态门禁
+- [x] 在 `getconf PAGESIZE=16384` 的 API 36 x86_64 模拟器上通过 ARM64 translation bridge 验证加载、拼音输入提交及显式手写库加载，并完成 4 KiB 模拟器回归
+- [ ] 在原生 AArch64 16 KiB 运行环境验证拼音、候选、滑行输入、中文手写、词典保存和进程重启；当前 x86_64 host 无法启动 ARM64 AVD
 - [ ] 调查并消除 `MetricsProcessorHelper` 的反射参数错误日志
 
 ## 测试约定

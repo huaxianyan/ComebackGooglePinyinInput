@@ -12,6 +12,8 @@ import argparse
 import shutil
 from pathlib import Path
 
+from rewrite_elf_16kb import rewrite_native_libraries
+
 
 ROOT = Path(__file__).resolve().parents[1]
 FORMAL_APPLICATION_ID = "com.google.android.inputmethod.pinyin.compat"
@@ -38,6 +40,12 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
         raise RuntimeError(f"Not an apktool output directory: {decoded}")
     if debuggable and application_id == FORMAL_APPLICATION_ID:
         raise RuntimeError("Refusing to make the formal application ID debuggable")
+
+    # Re-layout the exact, hash-pinned legacy native binaries before rebuilding.
+    # One has non-congruent 4 KiB PT_LOAD offsets; four place post-RELRO data on
+    # pages that are unsafe when RELRO protection rounds to 16 KiB. Preserve the
+    # original RELRO ranges and fail closed for every unknown input binary.
+    rewrite_native_libraries(decoded / "lib/arm64-v8a")
 
     # Target SDK modernization is deliberately staged one API level at a time.
     # API 35 has passed its isolated audit; this branch isolates Android 16 /

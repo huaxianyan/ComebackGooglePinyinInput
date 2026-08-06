@@ -15,6 +15,9 @@ from dataclasses import dataclass
 from pathlib import Path
 
 PT_LOAD = 1
+PT_GNU_RELRO = 0x6474E552
+SHF_WRITE = 0x1
+SHF_ALLOC = 0x2
 ELFCLASS64 = 2
 ELFDATA2LSB = 1
 EM_AARCH64 = 183
@@ -62,6 +65,64 @@ def parse_load_segments(data: bytes, name: str) -> tuple[int, list[LoadSegment]]
     return machine, loads
 
 
+def audit_relro_layout(data: bytes, name: str) -> tuple[bool, list[str]]:
+    """Check that 16 KiB RELRO rounding neither covers writable data nor
+    abandons a section explicitly linked as .data.rel.ro.
+    """
+    phoff = struct.unpack_from("<Q", data, 32)[0]
+    shoff = struct.unpack_from("<Q", data, 40)[0]
+    phentsize, phnum = struct.unpack_from("<HH", data, 54)
+    shentsize, shnum, shstrndx = struct.unpack_from("<HHH", data, 58)
+    if shentsize < 64 or shoff + shentsize * shnum > len(data):
+        raise ValueError(f"{name}: invalid section-header table")
+
+    relros: list[tuple[int, int]] = []
+    for index in range(phnum):
+        values = struct.unpack_from("<IIQQQQQQ", data, phoff + index * phentsize)
+        if values[0] == PT_GNU_RELRO:
+            relros.append((values[3], values[3] + values[6]))
+
+    if not relros:
+        return True, ["no PT_GNU_RELRO"]
+    if shstrndx >= shnum:
+        raise ValueError(f"{name}: invalid shstrndx")
+    shstr = struct.unpack_from("<IIQQQQIIQQ", data, shoff + shstrndx * shentsize)
+    shstr_data = data[shstr[4] : shstr[4] + shstr[5]]
+
+    sections: list[tuple[str, int, int, int, int]] = []
+    for index in range(shnum):
+        section = struct.unpack_from("<IIQQQQIIQQ", data, shoff + index * shentsize)
+        name_offset = section[0]
+        end = shstr_data.find(b"\0", name_offset)
+        section_name = (
+            shstr_data[name_offset:end].decode("utf-8", "replace")
+            if 0 <= name_offset < len(shstr_data) and end >= 0
+            else f"<section-{index}>"
+        )
+        sections.append((section_name, section[3], section[3] + section[5], section[2], section[1]))
+
+    problems: list[str] = []
+    for start, end in relros:
+        rounded_end = (end + PAGE_16K - 1) // PAGE_16K * PAGE_16K
+        for section_name, section_start, section_end, flags, _section_type in sections:
+            if section_end <= section_start or not (flags & SHF_ALLOC and flags & SHF_WRITE):
+                continue
+            if section_start < rounded_end and section_end > end:
+                problems.append(
+                    f"16 KiB RELRO rounding [{end:#x},{rounded_end:#x}) overlaps "
+                    f"{section_name} [{section_start:#x},{section_end:#x})"
+                )
+
+    for section_name, section_start, section_end, flags, _section_type in sections:
+        if section_name != ".data.rel.ro" or not (flags & SHF_ALLOC):
+            continue
+        if not any(start <= section_start and section_end <= end for start, end in relros):
+            problems.append(
+                f".data.rel.ro [{section_start:#x},{section_end:#x}) is not fully protected by PT_GNU_RELRO"
+            )
+    return not problems, problems or ["16 KiB RELRO rounding is safe"]
+
+
 def zip_data_offset(apk_bytes: bytes, info: zipfile.ZipInfo) -> int:
     # Local header: signature + fixed 26 bytes followed by name and extra.
     pos = info.header_offset
@@ -99,12 +160,14 @@ def audit(apk: Path) -> int:
             page_16k_congruent = all(
                 seg.offset % PAGE_16K == seg.vaddr % PAGE_16K for seg in loads
             )
+            relro_ready, relro_details = audit_relro_layout(data, info.filename)
             zip_ready = (not stored) or data_offset % PAGE_16K == 0
             ready = (
                 machine == EM_AARCH64
                 and elf_ready
                 and header_congruent
                 and page_16k_congruent
+                and relro_ready
                 and zip_ready
             )
             if not ready:
@@ -131,9 +194,12 @@ def audit(apk: Path) -> int:
                     f"align=0x{seg.align:x} header_congruent={header_match} "
                     f"congruent_16k={page_16k_match}"
                 )
+            for detail in relro_details:
+                print(f"  RELRO: {detail}")
+            print(f"  RELRO_16K_SAFE={relro_ready}")
             print(
                 f"  ELF_16K_READY="
-                f"{elf_ready and header_congruent and page_16k_congruent}"
+                f"{elf_ready and header_congruent and page_16k_congruent and relro_ready}"
             )
             print(f"  OVERALL_STATIC_READY={ready}")
 
