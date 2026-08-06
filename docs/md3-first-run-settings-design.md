@@ -96,10 +96,13 @@ fallback; it is not a prerequisite for a valid MD3 layout.
 
 ## Delivery stages
 
-1. **Theme foundation:** shared day/night tokens, modern system bars, action
-   bars, dialogs and first-run shell.
-2. **Preference rows:** categories, ordinary rows, switch/check widgets, list
-   rows, disabled state, section spacing and main header rows.
+1. **Theme foundation (implemented):** shared day/night tokens, modern system
+   bars, action bars, dialogs and first-run shell.
+2. **Preference rows (in progress):** categories, ordinary rows, switch/check
+   widgets, list rows, disabled state, section spacing and main header rows.
+   The API 35+ header screen keeps the original five routes and adds distinct,
+   tint-aware icons through `res/xml-v35/settings.xml`; older Android versions
+   retain the original header resource and behavior.
 3. **Custom controls:** seek bars, vibration/volume/long-press choices and all
    custom dialogs.
 4. **Dictionary/backup:** health, directory, immediate backup and import lists.

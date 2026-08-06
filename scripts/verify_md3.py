@@ -109,13 +109,42 @@ def main() -> None:
         "res/layout-v35/md3_preference_category.xml",
         "res/values-v35/md3_settings.xml",
         "res/values-night-v35/md3_settings.xml",
+        "res/xml-v35/settings.xml",
     ):
         if not (decoded / relative).is_file():
             raise RuntimeError(f"Missing MD3 settings resource: {relative}")
 
+    android = "{http://schemas.android.com/apk/res/android}"
+    header_root = ET.parse(decoded / "res/xml-v35/settings.xml").getroot()
+    expected_headers = (
+        ("@string/setting_input", "@drawable/ic_settings_md3_input", "setting_input", "com.google.android.apps.inputmethod.libs.framework.preference.CommonPreferenceFragment"),
+        ("@string/setting_keyboard", "@drawable/ic_settings_md3_keyboard", "setting_keyboard", "com.google.android.apps.inputmethod.libs.framework.preference.CommonPreferenceFragment"),
+        ("@string/setting_handwriting_input", "@drawable/ic_settings_md3_handwriting", "setting_handwriting_input", "com.google.android.apps.inputmethod.libs.framework.preference.CommonPreferenceFragment"),
+        ("@string/setting_dictionary", "@drawable/ic_settings_md3_dictionary", "setting_dictionary", "com.google.android.apps.inputmethod.pinyin.preference.DictionarySettingsFragment"),
+        ("@string/setting_other", "@drawable/ic_settings_md3_other", "setting_other", "com.google.android.apps.inputmethod.libs.framework.preference.CommonPreferenceFragment"),
+    )
+    headers = header_root.findall("header")
+    if len(headers) != len(expected_headers):
+        raise RuntimeError(f"MD3 settings header count changed: {len(headers)}")
+    for header, (title, icon, value, fragment) in zip(headers, expected_headers):
+        extras = header.findall("extra")
+        actual = (
+            header.get(android + "title"),
+            header.get(android + "icon"),
+            extras[0].get(android + "value") if len(extras) == 1 else None,
+            header.get(android + "fragment"),
+            extras[0].get(android + "name") if len(extras) == 1 else None,
+        )
+        expected_header = (title, icon, value, fragment, "PREFERENCE_FRAGMENT")
+        if actual != expected_header:
+            raise RuntimeError(f"MD3 settings header routing changed: {actual!r}")
+        drawable = icon.removeprefix("@drawable/") + ".xml"
+        if not (decoded / "res/drawable-v35" / drawable).is_file():
+            raise RuntimeError(f"Missing MD3 settings header icon: {drawable}")
+
     print(
-        "MD3 foundation verified: single-page enable/select setup, gated finish, "
-        "atomic completion path and framework Preference presentation retained"
+        "MD3 foundation verified: single-page setup, framework Preference "
+        "semantics and five icon-bearing settings header routes retained"
     )
 
 

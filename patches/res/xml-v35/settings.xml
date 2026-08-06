@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<preference-headers xmlns:android="http://schemas.android.com/apk/res/android">
+    <header
+        android:title="@string/setting_input"
+        android:icon="@drawable/ic_settings_md3_input"
+        android:fragment="com.google.android.apps.inputmethod.libs.framework.preference.CommonPreferenceFragment">
+        <extra android:name="PREFERENCE_FRAGMENT" android:value="setting_input" />
+    </header>
+    <header
+        android:title="@string/setting_keyboard"
+        android:icon="@drawable/ic_settings_md3_keyboard"
+        android:fragment="com.google.android.apps.inputmethod.libs.framework.preference.CommonPreferenceFragment">
+        <extra android:name="PREFERENCE_FRAGMENT" android:value="setting_keyboard" />
+    </header>
+    <header
+        android:title="@string/setting_handwriting_input"
+        android:icon="@drawable/ic_settings_md3_handwriting"
+        android:fragment="com.google.android.apps.inputmethod.libs.framework.preference.CommonPreferenceFragment">
+        <extra android:name="PREFERENCE_FRAGMENT" android:value="setting_handwriting_input" />
+    </header>
+    <header
+        android:title="@string/setting_dictionary"
+        android:icon="@drawable/ic_settings_md3_dictionary"
+        android:fragment="com.google.android.apps.inputmethod.pinyin.preference.DictionarySettingsFragment">
+        <extra android:name="PREFERENCE_FRAGMENT" android:value="setting_dictionary" />
+    </header>
+    <header
+        android:title="@string/setting_other"
+        android:icon="@drawable/ic_settings_md3_other"
+        android:fragment="com.google.android.apps.inputmethod.libs.framework.preference.CommonPreferenceFragment">
+        <extra android:name="PREFERENCE_FRAGMENT" android:value="setting_other" />
+    </header>
+</preference-headers>
