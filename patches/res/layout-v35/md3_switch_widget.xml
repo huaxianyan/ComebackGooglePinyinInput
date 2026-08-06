@@ -1,16 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Switch xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.inputmethod.pinyin.Md3SwitchView xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@android:id/checkbox"
     android:layout_width="52dp"
     android:layout_height="48dp"
-    android:switchMinWidth="52dp"
-    android:gravity="center"
-    android:showText="false"
-    android:splitTrack="false"
-    android:switchPadding="0dp"
-    android:thumbTextPadding="0dp"
     android:clickable="false"
     android:focusable="false"
-    android:duplicateParentState="true"
-    android:thumb="@drawable/bg_settings_md3_switch_thumb"
-    android:track="@drawable/bg_settings_md3_switch_track" />
+    android:importantForAccessibility="no"
+    android:duplicateParentState="true" />

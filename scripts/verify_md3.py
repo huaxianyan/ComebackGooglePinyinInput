@@ -130,8 +130,7 @@ def main() -> None:
         "res/layout-v35/md3_preference_category.xml",
         "res/layout-v35/md3_switch_widget.xml",
         "res/layout-v35/md3_switch_preference_widget.xml",
-        "res/drawable-v35/bg_settings_md3_switch_thumb.xml",
-        "res/drawable-v35/bg_settings_md3_switch_track.xml",
+        "smali/com/google/android/inputmethod/pinyin/Md3SwitchView.smali",
         "res/values-v35/md3_settings.xml",
         "res/values-night-v35/md3_settings.xml",
         "res/xml-v35/settings.xml",
@@ -145,50 +144,40 @@ def main() -> None:
     switch_widget = (
         decoded / "res/layout-v35/md3_switch_preference_widget.xml"
     ).read_text(encoding="utf-8")
-    require(
-        checkbox_widget,
-        ('android:id="@android:id/checkbox"',),
-        "CheckBoxPreference MD3 widget binding",
-    )
-    require(
-        switch_widget,
-        (
-            'android:id="@android:id/switch_widget"',
-            'android:clickable="false"',
-            'android:focusable="false"',
-            'android:layout_width="52dp"',
-            'android:splitTrack="false"',
-            'android:thumb="@drawable/bg_settings_md3_switch_thumb"',
-            'android:track="@drawable/bg_settings_md3_switch_track"',
-        ),
-        "row-owned MD3 switch widget",
-    )
-    switch_track = (
-        decoded / "res/drawable-v35/bg_settings_md3_switch_track.xml"
-    ).read_text(encoding="utf-8")
-    switch_thumb = (
-        decoded / "res/drawable-v35/bg_settings_md3_switch_thumb.xml"
+    for widget, binding_id in (
+        (checkbox_widget, "@android:id/checkbox"),
+        (switch_widget, "@android:id/switch_widget"),
+    ):
+        require(
+            widget,
+            (
+                "com.google.android.inputmethod.pinyin.Md3SwitchView",
+                f'android:id="{binding_id}"',
+                'android:clickable="false"',
+                'android:focusable="false"',
+                'android:importantForAccessibility="no"',
+                'android:layout_width="52dp"',
+                'android:layout_height="48dp"',
+            ),
+            f"row-owned MD3 switch widget {binding_id}",
+        )
+    switch_view = (
+        decoded / "smali/com/google/android/inputmethod/pinyin/Md3SwitchView.smali"
     ).read_text(encoding="utf-8")
     require(
-        switch_track,
+        switch_view,
         (
-            'android:width="52dp"',
-            'android:height="32dp"',
-            'android:radius="16dp"',
-            "settings_md3_primary",
-            "settings_md3_outline",
+            ".implements Landroid/widget/Checkable;",
+            "Landroid/graphics/Canvas;->drawRoundRect(Landroid/graphics/RectF;FFLandroid/graphics/Paint;)V",
+            "Landroid/graphics/Canvas;->drawCircle(FFFLandroid/graphics/Paint;)V",
+            'const/high16 v3, 0x42000000    # 32.0f',
+            'const/high16 v7, 0x41800000    # 16.0f',
+            'const/high16 v7, 0x41400000    # 12.0f',
+            'const/high16 v7, 0x41000000    # 8.0f',
+            'const-string v0, "settings_md3_primary"',
+            'const-string v0, "settings_md3_outline"',
         ),
-        "MD3 switch track geometry",
-    )
-    require(
-        switch_thumb,
-        (
-            'android:shape="oval"',
-            'android:width="20dp"',
-            'android:height="20dp"',
-            "settings_md3_on_primary",
-        ),
-        "MD3 switch thumb geometry",
+        "platform-independent MD3 switch rendering",
     )
 
     android = "{http://schemas.android.com/apk/res/android}"

@@ -118,7 +118,12 @@ fallback; it is not a prerequisite for a valid MD3 layout.
    must target both widget families and use their distinct binding IDs:
    `@android:id/checkbox` and `@android:id/switch_widget`. Missing the converted
    family leaves the platform's legacy switch visible and also explains the
-   remaining custom-row alignment differences. Framework, auto-synced list and
+   remaining custom-row alignment differences. Supplying custom thumb/track
+   drawables to `android.widget.Switch` is also insufficient because the
+   platform still imposes legacy measurement, padding and thumb-offset rules.
+   Both binding layouts therefore use a non-interactive `Checkable` custom View
+   that draws the 52×32 dp track and MD3 handle itself; Preference remains the
+   only state, interaction and persistence owner. Framework, auto-synced list and
    custom `DialogPreference` rows share the modern row layout without changing
    their dialog handlers. This keeps ordinary, converted switch, slider,
    volume, vibration and long-press rows on the same 24 dp leading alignment.
