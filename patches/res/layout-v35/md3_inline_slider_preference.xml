@@ -38,10 +38,10 @@
             android:minWidth="48dp"
             android:paddingLeft="8dp"
             android:paddingRight="8dp"
-            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:background="@drawable/bg_settings_md3_inline_action"
             android:fontFamily="sans-serif-medium"
             android:textSize="14sp"
-            android:textColor="@color/settings_md3_primary"
+            android:textColor="@color/settings_md3_on_surface_variant"
             android:text="@string/button_default" />
         <TextView
             android:id="@id/seek_bar_text_top"
@@ -50,7 +50,7 @@
             android:layout_marginLeft="16dp"
             android:fontFamily="sans-serif-medium"
             android:textSize="14sp"
-            android:textColor="@color/settings_md3_primary"
+            android:textColor="@color/settings_md3_on_surface_variant"
             android:maxLines="1" />
     </LinearLayout>
 

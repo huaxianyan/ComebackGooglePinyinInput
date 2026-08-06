@@ -141,8 +141,10 @@ def main() -> None:
         "res/layout-v35/md3_switch_widget.xml",
         "res/layout-v35/md3_switch_preference_widget.xml",
         "res/layout-v35/md3_inline_slider_preference.xml",
+        "res/drawable-v35/bg_settings_md3_inline_action.xml",
         "smali/com/google/android/inputmethod/pinyin/Md3SwitchView.smali",
         "smali/com/google/android/inputmethod/pinyin/Md3SliderView.smali",
+        "smali/com/google/android/inputmethod/pinyin/Md3SliderView$InteractionUpdateListener.smali",
         "smali/com/google/android/inputmethod/pinyin/Md3InlineSliderCompat.smali",
         "smali/com/google/android/inputmethod/pinyin/Md3InlineSliderResetClickListener.smali",
         "smali/com/google/android/inputmethod/pinyin/Md3SwitchView$AnimatorUpdateListener.smali",
@@ -215,6 +217,8 @@ def main() -> None:
             'android:labelFor="@id/seek_bar"',
             'android:id="@id/md3_slider_reset"',
             'android:text="@string/button_default"',
+            'android:textColor="@color/settings_md3_on_surface_variant"',
+            'android:background="@drawable/bg_settings_md3_inline_action"',
         ),
         "inline MD3 slider row",
     )
@@ -225,14 +229,19 @@ def main() -> None:
         slider_view,
         (
             ".super Landroid/widget/SeekBar;",
-            'const-string v0, "settings_md3_primary"',
+            'const-string v0, "settings_md3_on_surface_variant"',
             'const-string v0, "settings_md3_outline_variant"',
-            'const-string v0, "settings_md3_slider_state_layer"',
+            'const/high16 v4, 0x41000000    # 8.0f',
+            'const/high16 v4, 0x41b00000    # 22.0f',
             "Landroid/graphics/Canvas;->drawRoundRect(Landroid/graphics/RectF;FFLandroid/graphics/Paint;)V",
-            "Landroid/graphics/Canvas;->drawCircle(FFFLandroid/graphics/Paint;)V",
+            "Landroid/animation/ValueAnimator;->ofFloat([F)Landroid/animation/ValueAnimator;",
+            "const-wide/16 v1, 0x96",
+            "Md3SliderView$InteractionUpdateListener;",
         ),
         "platform-independent MD3 slider rendering",
     )
+    if "settings_md3_primary" in slider_view:
+        raise RuntimeError("Inline MD3 sliders must use the accepted neutral palette")
     slider_base = (decoded / "smali/axf.smali").read_text(encoding="utf-8")
     require(
         slider_base,
@@ -241,6 +250,7 @@ def main() -> None:
             ".method protected onClick()V",
             ".method public c(I)V",
             ".method public d()V",
+            ".method public e(Landroid/view/View;)V",
             "const/16 v1, 0x23",
             "onBindDialogView(Landroid/view/View;)V",
             "Md3InlineSliderCompat;->bindReset",

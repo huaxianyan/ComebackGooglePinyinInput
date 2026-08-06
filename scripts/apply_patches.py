@@ -2028,6 +2028,11 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
         "    invoke-virtual {p0}, Laxf;->notifyChanged()V\n"
         "    return-void\n"
         ".end method\n\n"
+        ".method public e(Landroid/view/View;)V\n"
+        "    .locals 0\n\n"
+        "    invoke-virtual {p0, p1}, Laxf;->onBindDialogView(Landroid/view/View;)V\n"
+        "    return-void\n"
+        ".end method\n\n"
         ".method protected onBindView(Landroid/view/View;)V\n"
         "    .locals 2\n\n"
         "    invoke-super {p0, p1}, Landroid/preference/DialogPreference;->onBindView(Landroid/view/View;)V\n\n"
@@ -2183,6 +2188,11 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
         (
             "Md3SliderView.smali",
             "smali/com/google/android/inputmethod/pinyin/Md3SliderView.smali",
+        ),
+        (
+            "Md3SliderView$InteractionUpdateListener.smali",
+            "smali/com/google/android/inputmethod/pinyin/"
+            "Md3SliderView$InteractionUpdateListener.smali",
         ),
         (
             "Md3InlineSliderCompat.smali",

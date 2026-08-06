@@ -148,13 +148,17 @@ fallback; it is not a prerequisite for a valid MD3 layout.
 3. **Custom controls:** on API 35+, all seven legacy dialog-backed seek
    preferences render as inline MD3 sliders: sound volume, vibration duration,
    keyboard height, slide sensitivity, long-press delay, handwriting timeout
-   and handwriting stroke width. A 4 dp rounded track, 20 dp handle, pressed
-   state layer, live value label and endpoint labels replace the modal dialog.
+   and handwriting stroke width. The current MD3 geometry uses a 16 dp rounded
+   segmented track, a 4×44 dp vertical pill handle, a 6 dp handle gap, an
+   animated 150 ms pressed state layer/handle transition, a live value label and
+   endpoint labels. Active parts use the accepted neutral `onSurfaceVariant`
+   palette rather than a blue `primary` accent.
    Values commit when tracking stops through each original Preference's value
    conversion, `callChangeListener()` and persistence type; volume and vibration
    retain their original release-time previews. Volume, vibration and long-press
-   rows also expose the original “默认” action inline, while list-backed sliders
-   retain their original no-reset contract. Below API 35 the original dialog
+   rows also expose the original “默认” action inline and immediately rebind the
+   current Slider after reset, while list-backed sliders retain their original
+   no-reset contract. Below API 35 the original dialog
    behavior remains intact.
 4. **Dictionary/backup:** health, directory, immediate backup and import lists.
 5. **Theme tools:** selector, builder, crop and editor shells without changing

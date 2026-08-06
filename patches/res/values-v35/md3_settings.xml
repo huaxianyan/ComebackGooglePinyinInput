@@ -12,7 +12,6 @@
     <color name="settings_md3_outline">#FF74777F</color>
     <color name="settings_md3_outline_variant">#FFC4C6D0</color>
     <color name="settings_md3_state_layer">#1F44474F</color>
-    <color name="settings_md3_slider_state_layer">#1F0B57D0</color>
     <color name="settings_md3_error">#FFBA1A1A</color>
     <color name="settings_md3_on_error">#FFFFFFFF</color>
 

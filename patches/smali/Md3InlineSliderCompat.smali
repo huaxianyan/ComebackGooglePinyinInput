@@ -35,7 +35,7 @@
     invoke-virtual {v0, v1}, Landroid/view/View;->setClickable(Z)V
     invoke-virtual {v0, v1}, Landroid/view/View;->setFocusable(Z)V
     new-instance v1, Lcom/google/android/inputmethod/pinyin/Md3InlineSliderResetClickListener;
-    invoke-direct {v1, p0}, Lcom/google/android/inputmethod/pinyin/Md3InlineSliderResetClickListener;-><init>(Laxf;)V
+    invoke-direct {v1, p0, p1}, Lcom/google/android/inputmethod/pinyin/Md3InlineSliderResetClickListener;-><init>(Laxf;Landroid/view/View;)V
     invoke-virtual {v0, v1}, Landroid/view/View;->setOnClickListener(Landroid/view/View$OnClickListener;)V
     goto :done
 
