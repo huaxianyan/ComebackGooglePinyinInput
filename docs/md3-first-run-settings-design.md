@@ -102,7 +102,11 @@ fallback; it is not a prerequisite for a valid MD3 layout.
    widgets, list rows, disabled state, section spacing and main header rows.
    The API 35+ header screen keeps the original five routes and adds distinct,
    tint-aware icons through `res/xml-v35/settings.xml`; older Android versions
-   retain the original header resource and behavior.
+   retain the original header resource and behavior. Gboard's decoded header
+   resources use theme-attribute tinting and outline geometry rather than a
+   fixed accent fill. Accordingly, these icons use the neutral semantic
+   `onSurfaceVariant` token in both day and night modes and 1.8 dp rounded
+   outlines; blue `primary` remains reserved for active controls and emphasis.
 3. **Custom controls:** seek bars, vibration/volume/long-press choices and all
    custom dialogs.
 4. **Dictionary/backup:** health, directory, immediate backup and import lists.

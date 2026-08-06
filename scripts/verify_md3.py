@@ -139,8 +139,20 @@ def main() -> None:
         if actual != expected_header:
             raise RuntimeError(f"MD3 settings header routing changed: {actual!r}")
         drawable = icon.removeprefix("@drawable/") + ".xml"
-        if not (decoded / "res/drawable-v35" / drawable).is_file():
+        drawable_path = decoded / "res/drawable-v35" / drawable
+        if not drawable_path.is_file():
             raise RuntimeError(f"Missing MD3 settings header icon: {drawable}")
+        drawable_text = drawable_path.read_text(encoding="utf-8")
+        require(
+            drawable_text,
+            (
+                'android:tint="@color/settings_md3_on_surface_variant"',
+                'android:fillColor="#00000000"',
+                'android:strokeColor="#FFFFFFFF"',
+                'android:strokeWidth="1.8"',
+            ),
+            f"neutral outline settings header icon {drawable}",
+        )
 
     print(
         "MD3 foundation verified: single-page setup, framework Preference "

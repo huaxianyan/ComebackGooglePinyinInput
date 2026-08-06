@@ -1,4 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24" android:tint="@color/settings_md3_primary">
-    <path android:fillColor="#FFFFFFFF" android:pathData="M19.43,12.98c0.04,-0.32 0.07,-0.65 0.07,-0.98s-0.03,-0.66 -0.08,-0.98l2.11,-1.65 -2,-3.46 -2.49,1c-0.51,-0.4 -1.08,-0.73 -1.69,-0.98L15,3.27h-4l-0.4,2.65c-0.61,0.25 -1.17,0.59 -1.68,0.99l-2.49,-1 -2,3.46 2.11,1.65c-0.05,0.32 -0.08,0.66 -0.08,0.99s0.03,0.65 0.08,0.97l-2.11,1.65 2,3.46 2.49,-1c0.51,0.4 1.08,0.73 1.69,0.98L11,20.73h4l0.4,-2.65c0.61,-0.25 1.17,-0.59 1.68,-0.99l2.49,1 2,-3.46zM13,15.5c-1.93,0 -3.5,-1.57 -3.5,-3.5s1.57,-3.5 3.5,-3.5 3.5,1.57 3.5,3.5 -1.57,3.5 -3.5,3.5z" />
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="@color/settings_md3_on_surface_variant">
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M4,7h3 M11,7h9 M9,5v4 M4,12h9 M17,12h3 M15,10v4 M4,17h5 M13,17h7 M11,15v4" />
 </vector>
