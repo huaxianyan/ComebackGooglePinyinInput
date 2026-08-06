@@ -3,7 +3,7 @@
     android:orientation="horizontal"
     android:gravity="center_vertical"
     android:background="@drawable/bg_settings_md3_preference_row"
-    android:focusable="true"
+    android:focusable="false"
     android:clickable="false"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"

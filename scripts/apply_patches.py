@@ -2015,6 +2015,11 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
             "FirstRunSinglePage.smali",
         ),
         (
+            "FirstRunInsetsListener.smali",
+            "smali/com/google/android/inputmethod/pinyin/firstrun/"
+            "FirstRunInsetsListener.smali",
+        ),
+        (
             "NonSwipeableFirstRunViewPager.smali",
             "smali/com/google/android/apps/inputmethod/libs/framework/firstrun/"
             "NonSwipeableFirstRunViewPager.smali",

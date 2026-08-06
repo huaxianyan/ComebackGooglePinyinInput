@@ -63,6 +63,20 @@ def main() -> None:
         "single first-run page logic",
     )
 
+    insets = (
+        decoded
+        / "smali/com/google/android/inputmethod/pinyin/firstrun/FirstRunInsetsListener.smali"
+    ).read_text(encoding="utf-8")
+    require(
+        insets,
+        (
+            "WindowInsets$Type;->systemBars()I",
+            "WindowInsets$Type;->displayCutout()I",
+            "Landroid/view/View;->setPadding(IIII)V",
+        ),
+        "single first-run system-bar insets",
+    )
+
     state = (
         decoded
         / "smali/com/google/android/inputmethod/pinyin/firstrun/FirstRunStateCompat.smali"
@@ -82,6 +96,12 @@ def main() -> None:
         ),
         "MD3 settings decorator",
     )
+    preference_layout = (decoded / "res/layout-v35/md3_preference.xml").read_text(
+        encoding="utf-8"
+    )
+    if 'android:focusable="false"' not in preference_layout:
+        raise RuntimeError("MD3 Preference rows must delegate row clicks to ListView")
+
     for relative in (
         "res/layout-v35/md3_preference.xml",
         "res/layout-v35/md3_preference_category.xml",

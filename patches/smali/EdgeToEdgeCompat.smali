@@ -64,9 +64,15 @@
 
     move-result-object v0
 
-    const/4 v2, 0x0
+    if-eqz v0, :cond_0
 
-    invoke-static {v0, v2}, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat;->attach(Landroid/view/View;Z)V
+    new-instance v1, Lcom/google/android/inputmethod/pinyin/firstrun/FirstRunInsetsListener;
+
+    invoke-direct {v1, v0}, Lcom/google/android/inputmethod/pinyin/firstrun/FirstRunInsetsListener;-><init>(Landroid/view/View;)V
+
+    invoke-virtual {v0, v1}, Landroid/view/View;->setOnApplyWindowInsetsListener(Landroid/view/View$OnApplyWindowInsetsListener;)V
+
+    invoke-virtual {v0}, Landroid/view/View;->requestApplyInsets()V
 
     :cond_0
     return-void
