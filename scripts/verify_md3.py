@@ -102,6 +102,7 @@ def main() -> None:
             "instance-of v4, v2, Landroid/preference/DialogPreference;",
             "Preference;->setLayoutResource(I)V",
             "Preference;->setWidgetLayoutResource(I)V",
+            "Preference;->setRecycleEnabled(Z)V",
             "decorateGroup(Landroid/preference/PreferenceGroup;IIII)V",
         ),
         "MD3 settings decorator",

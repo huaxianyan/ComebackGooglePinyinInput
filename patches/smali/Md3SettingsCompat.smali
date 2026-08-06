@@ -166,6 +166,10 @@
 
     move-result-object v2
 
+    const/4 v4, 0x1
+
+    invoke-virtual {v2, v4}, Landroid/preference/Preference;->setRecycleEnabled(Z)V
+
     invoke-virtual {v2}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
 
     move-result-object v3

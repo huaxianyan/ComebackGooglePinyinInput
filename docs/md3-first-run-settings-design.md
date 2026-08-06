@@ -133,7 +133,12 @@ fallback; it is not a prerequisite for a valid MD3 layout.
    `notifyDataSetChanged()`, which would incorrectly suppress every user
    animation. Initial and off-screen bindings remain unattached and snap
    directly to persisted state, so rows do not animate while entering or
-   scrolling the screen. Framework, auto-synced list and
+   scrolling the screen. The legacy adapter otherwise discards every row after
+   `notifyDataSetChanged()`; all decorated rows therefore explicitly enable
+   framework `Preference` recycling. Shared row/widget layouts make that reuse
+   type-safe and preserve the visible switch long enough to render the
+   transition without delaying persistence or taking over click handling.
+   Framework, auto-synced list and
    custom `DialogPreference` rows share the modern row layout without changing
    their dialog handlers. This keeps ordinary, converted switch, slider,
    volume, vibration and long-press rows on the same 24 dp leading alignment.
