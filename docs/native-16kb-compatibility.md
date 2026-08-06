@@ -171,7 +171,24 @@ the implementation.
 
 `scripts/audit_elf_page_size.py` now checks LOAD alignment and congruence as
 well as RELRO rounding against writable sections. The integrated audit APK
-passes all five libraries.
+passes all five libraries. The same gate is part of the release workflow and
+passed on branch commit `c666f79`:
+
+```text
+Actions run=31073195893
+Artifact=8956430162 (ComebackGooglePinyinInput-native16kbaudit-c666f79)
+APK SHA-256=1234e674165601ffc4ddd4412394e321d52b237f498cdfab851d6f39f9cffdef
+package=com.google.android.inputmethod.pinyin.native16kbaudit
+versionName=2.0.0
+versionCode=4520385
+targetSdkVersion=36
+debuggable=false
+certificate SHA-256=985CBF843A362169B129AEAC5E153D13095F0923231936D1486A20C8332CDE2F
+```
+
+The downloaded Actions APK independently passed the five-library audit, and
+all transformed library hashes matched the pinned outputs above. This branch
+run uploaded only an Actions Artifact; it did not create a GitHub Release.
 
 ## Current runtime evidence
 
