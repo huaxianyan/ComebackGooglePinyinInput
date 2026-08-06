@@ -123,7 +123,12 @@ fallback; it is not a prerequisite for a valid MD3 layout.
    platform still imposes legacy measurement, padding and thumb-offset rules.
    Both binding layouts therefore use a non-interactive `Checkable` custom View
    that draws the 52×32 dp track and MD3 handle itself; Preference remains the
-   only state, interaction and persistence owner. Framework, auto-synced list and
+   only state, interaction and persistence owner. The checked state uses neutral
+   `onSurfaceVariant`/`surface` colors rather than a fixed blue accent, matching
+   the header icon treatment in both day and night themes. Once laid out and
+   visible, state changes animate handle position and size for 200 ms with a
+   decelerating curve; initial list binding snaps directly to its persisted
+   state so rows do not animate while entering the screen. Framework, auto-synced list and
    custom `DialogPreference` rows share the modern row layout without changing
    their dialog handlers. This keeps ordinary, converted switch, slider,
    volume, vibration and long-press rows on the same 24 dp leading alignment.

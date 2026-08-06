@@ -131,6 +131,7 @@ def main() -> None:
         "res/layout-v35/md3_switch_widget.xml",
         "res/layout-v35/md3_switch_preference_widget.xml",
         "smali/com/google/android/inputmethod/pinyin/Md3SwitchView.smali",
+        "smali/com/google/android/inputmethod/pinyin/Md3SwitchView$AnimatorUpdateListener.smali",
         "res/values-v35/md3_settings.xml",
         "res/values-night-v35/md3_settings.xml",
         "res/xml-v35/settings.xml",
@@ -172,12 +173,33 @@ def main() -> None:
             "Landroid/graphics/Canvas;->drawCircle(FFFLandroid/graphics/Paint;)V",
             'const/high16 v3, 0x42000000    # 32.0f',
             'const/high16 v7, 0x41800000    # 16.0f',
-            'const/high16 v7, 0x41400000    # 12.0f',
             'const/high16 v7, 0x41000000    # 8.0f',
-            'const-string v0, "settings_md3_primary"',
+            'const/high16 v10, 0x40800000    # 4.0f',
+            'const-string v0, "settings_md3_on_surface_variant"',
+            'const-string v0, "settings_md3_surface"',
             'const-string v0, "settings_md3_outline"',
+            "Landroid/animation/ValueAnimator;->ofFloat([F)Landroid/animation/ValueAnimator;",
+            "const-wide/16 v2, 0xc8",
+            "Landroid/view/animation/DecelerateInterpolator;",
+            "Md3SwitchView$AnimatorUpdateListener;",
+            "isLaidOut()Z",
+            "isShown()Z",
         ),
         "platform-independent MD3 switch rendering",
+    )
+    switch_listener = (
+        decoded
+        / "smali/com/google/android/inputmethod/pinyin/"
+        "Md3SwitchView$AnimatorUpdateListener.smali"
+    ).read_text(encoding="utf-8")
+    require(
+        switch_listener,
+        (
+            "ValueAnimator$AnimatorUpdateListener;",
+            "ValueAnimator;->getAnimatedValue()Ljava/lang/Object;",
+            "Md3SwitchView;->updatePosition",
+        ),
+        "MD3 switch animation listener",
     )
 
     android = "{http://schemas.android.com/apk/res/android}"

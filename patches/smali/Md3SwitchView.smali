@@ -7,6 +7,8 @@
 
 # instance fields
 .field private checked:Z
+.field private position:F
+.field private animator:Landroid/animation/ValueAnimator;
 .field private final trackPaint:Landroid/graphics/Paint;
 .field private final thumbPaint:Landroid/graphics/Paint;
 .field private primary:I
@@ -97,12 +99,12 @@
 .method private loadColors()V
     .locals 1
 
-    const-string v0, "settings_md3_primary"
+    const-string v0, "settings_md3_on_surface_variant"
     invoke-direct {p0, v0}, Lcom/google/android/inputmethod/pinyin/Md3SwitchView;->resolveColor(Ljava/lang/String;)I
     move-result v0
     iput v0, p0, Lcom/google/android/inputmethod/pinyin/Md3SwitchView;->primary:I
 
-    const-string v0, "settings_md3_on_primary"
+    const-string v0, "settings_md3_surface"
     invoke-direct {p0, v0}, Lcom/google/android/inputmethod/pinyin/Md3SwitchView;->resolveColor(Ljava/lang/String;)I
     move-result v0
     iput v0, p0, Lcom/google/android/inputmethod/pinyin/Md3SwitchView;->onPrimary:I
@@ -133,12 +135,81 @@
 .end method
 
 .method public setChecked(Z)V
-    .locals 1
+    .locals 6
+
     iget-boolean v0, p0, Lcom/google/android/inputmethod/pinyin/Md3SwitchView;->checked:Z
     if-eq v0, p1, :done
     iput-boolean p1, p0, Lcom/google/android/inputmethod/pinyin/Md3SwitchView;->checked:Z
+
+    if-eqz p1, :off
+    const/high16 v0, 0x3f800000    # 1.0f
+    goto :target
+    :off
+    const/4 v0, 0x0
+    int-to-float v0, v0
+
+    :target
+    invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/Md3SwitchView;->isLaidOut()Z
+    move-result v1
+    if-eqz v1, :snap
+    invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/Md3SwitchView;->isShown()Z
+    move-result v1
+    if-eqz v1, :snap
+
+    iget-object v1, p0, Lcom/google/android/inputmethod/pinyin/Md3SwitchView;->animator:Landroid/animation/ValueAnimator;
+    if-eqz v1, :new_animator
+    invoke-virtual {v1}, Landroid/animation/ValueAnimator;->cancel()V
+
+    :new_animator
+    const/4 v1, 0x2
+    new-array v1, v1, [F
+    const/4 v2, 0x0
+    iget v3, p0, Lcom/google/android/inputmethod/pinyin/Md3SwitchView;->position:F
+    aput v3, v1, v2
+    const/4 v2, 0x1
+    aput v0, v1, v2
+    invoke-static {v1}, Landroid/animation/ValueAnimator;->ofFloat([F)Landroid/animation/ValueAnimator;
+    move-result-object v1
+    iput-object v1, p0, Lcom/google/android/inputmethod/pinyin/Md3SwitchView;->animator:Landroid/animation/ValueAnimator;
+
+    const-wide/16 v2, 0xc8
+    invoke-virtual {v1, v2, v3}, Landroid/animation/ValueAnimator;->setDuration(J)Landroid/animation/ValueAnimator;
+    move-result-object v2
+
+    new-instance v2, Landroid/view/animation/DecelerateInterpolator;
+    invoke-direct {v2}, Landroid/view/animation/DecelerateInterpolator;-><init>()V
+    invoke-virtual {v1, v2}, Landroid/animation/ValueAnimator;->setInterpolator(Landroid/animation/TimeInterpolator;)V
+
+    new-instance v2, Lcom/google/android/inputmethod/pinyin/Md3SwitchView$AnimatorUpdateListener;
+    invoke-direct {v2, p0}, Lcom/google/android/inputmethod/pinyin/Md3SwitchView$AnimatorUpdateListener;-><init>(Lcom/google/android/inputmethod/pinyin/Md3SwitchView;)V
+    invoke-virtual {v1, v2}, Landroid/animation/ValueAnimator;->addUpdateListener(Landroid/animation/ValueAnimator$AnimatorUpdateListener;)V
+    invoke-virtual {v1}, Landroid/animation/ValueAnimator;->start()V
+    goto :done
+
+    :snap
+    iput v0, p0, Lcom/google/android/inputmethod/pinyin/Md3SwitchView;->position:F
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/Md3SwitchView;->invalidate()V
+
     :done
+    return-void
+.end method
+
+.method static synthetic updatePosition(Lcom/google/android/inputmethod/pinyin/Md3SwitchView;F)V
+    .locals 0
+    iput p1, p0, Lcom/google/android/inputmethod/pinyin/Md3SwitchView;->position:F
+    invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/Md3SwitchView;->invalidate()V
+    return-void
+.end method
+
+.method protected onDetachedFromWindow()V
+    .locals 1
+    iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/Md3SwitchView;->animator:Landroid/animation/ValueAnimator;
+    if-eqz v0, :super_call
+    invoke-virtual {v0}, Landroid/animation/ValueAnimator;->cancel()V
+    const/4 v0, 0x0
+    iput-object v0, p0, Lcom/google/android/inputmethod/pinyin/Md3SwitchView;->animator:Landroid/animation/ValueAnimator;
+    :super_call
+    invoke-super {p0}, Landroid/view/View;->onDetachedFromWindow()V
     return-void
 .end method
 
@@ -235,21 +306,27 @@
     sget-object v5, Landroid/graphics/Paint$Style;->FILL:Landroid/graphics/Paint$Style;
     invoke-virtual {v4, v5}, Landroid/graphics/Paint;->setStyle(Landroid/graphics/Paint$Style;)V
 
-    iget-boolean v5, p0, Lcom/google/android/inputmethod/pinyin/Md3SwitchView;->checked:Z
-    if-eqz v5, :thumb_off
     const/high16 v6, 0x41800000    # 16.0f
     mul-float v6, v6, v0
-    sub-float v6, v1, v6
-    const/high16 v7, 0x41400000    # 12.0f
+    const/high16 v7, 0x42000000    # 32.0f
     mul-float v7, v7, v0
+    sub-float v7, v1, v7
+    iget v8, p0, Lcom/google/android/inputmethod/pinyin/Md3SwitchView;->position:F
+    mul-float v7, v7, v8
+    add-float/2addr v6, v7
+
+    const/high16 v7, 0x41000000    # 8.0f
+    const/high16 v10, 0x40800000    # 4.0f
+    mul-float v10, v10, v8
+    add-float/2addr v7, v10
+    mul-float v7, v7, v0
+
+    iget-boolean v5, p0, Lcom/google/android/inputmethod/pinyin/Md3SwitchView;->checked:Z
+    if-eqz v5, :thumb_off
     iget v8, p0, Lcom/google/android/inputmethod/pinyin/Md3SwitchView;->onPrimary:I
     goto :draw_thumb
 
     :thumb_off
-    const/high16 v6, 0x41800000    # 16.0f
-    mul-float v6, v6, v0
-    const/high16 v7, 0x41000000    # 8.0f
-    mul-float v7, v7, v0
     if-eqz v9, :thumb_disabled
     iget v8, p0, Lcom/google/android/inputmethod/pinyin/Md3SwitchView;->outline:I
     goto :draw_thumb

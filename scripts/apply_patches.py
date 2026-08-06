@@ -2037,6 +2037,11 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
             "Md3SwitchView.smali",
             "smali/com/google/android/inputmethod/pinyin/Md3SwitchView.smali",
         ),
+        (
+            "Md3SwitchView$AnimatorUpdateListener.smali",
+            "smali/com/google/android/inputmethod/pinyin/"
+            "Md3SwitchView$AnimatorUpdateListener.smali",
+        ),
     )
     for helper_name, relative_destination in first_run_helpers:
         helper_src = ROOT / "patches/smali" / helper_name
