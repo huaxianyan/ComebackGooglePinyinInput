@@ -127,8 +127,13 @@ fallback; it is not a prerequisite for a valid MD3 layout.
    `onSurfaceVariant`/`surface` colors rather than a fixed blue accent, matching
    the header icon treatment in both day and night themes. Once laid out and
    visible, state changes animate handle position and size for 200 ms with a
-   decelerating curve; initial list binding snaps directly to its persisted
-   state so rows do not animate while entering the screen. Framework, auto-synced list and
+   decelerating curve. The trigger checks `isLaidOut()` and
+   `isAttachedToWindow()`, not `isShown()`: framework Preference rebinding can
+   temporarily report an on-screen row as not shown after
+   `notifyDataSetChanged()`, which would incorrectly suppress every user
+   animation. Initial and off-screen bindings remain unattached and snap
+   directly to persisted state, so rows do not animate while entering or
+   scrolling the screen. Framework, auto-synced list and
    custom `DialogPreference` rows share the modern row layout without changing
    their dialog handlers. This keeps ordinary, converted switch, slider,
    volume, vibration and long-press rows on the same 24 dp leading alignment.

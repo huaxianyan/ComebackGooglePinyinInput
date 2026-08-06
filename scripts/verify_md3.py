@@ -183,7 +183,7 @@ def main() -> None:
             "Landroid/view/animation/DecelerateInterpolator;",
             "Md3SwitchView$AnimatorUpdateListener;",
             "isLaidOut()Z",
-            "isShown()Z",
+            "isAttachedToWindow()Z",
         ),
         "platform-independent MD3 switch rendering",
     )

@@ -152,7 +152,7 @@
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/Md3SwitchView;->isLaidOut()Z
     move-result v1
     if-eqz v1, :snap
-    invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/Md3SwitchView;->isShown()Z
+    invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/Md3SwitchView;->isAttachedToWindow()Z
     move-result v1
     if-eqz v1, :snap
 
