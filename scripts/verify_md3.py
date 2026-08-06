@@ -97,6 +97,7 @@ def main() -> None:
             'const-string v4, "md3_switch_widget"',
             "instance-of v4, v2, Landroid/preference/CheckBoxPreference;",
             "instance-of v4, v2, Landroid/preference/ListPreference;",
+            "instance-of v4, v2, Landroid/preference/DialogPreference;",
             "Preference;->setLayoutResource(I)V",
             "Preference;->setWidgetLayoutResource(I)V",
             "decorateGroup(Landroid/preference/PreferenceGroup;III)V",
@@ -113,8 +114,8 @@ def main() -> None:
         "res/layout-v35/md3_preference.xml",
         "res/layout-v35/md3_preference_category.xml",
         "res/layout-v35/md3_switch_widget.xml",
-        "res/color-v35/settings_md3_switch_thumb.xml",
-        "res/color-v35/settings_md3_switch_track.xml",
+        "res/drawable-v35/bg_settings_md3_switch_thumb.xml",
+        "res/drawable-v35/bg_settings_md3_switch_track.xml",
         "res/values-v35/md3_settings.xml",
         "res/values-night-v35/md3_settings.xml",
         "res/xml-v35/settings.xml",
@@ -131,10 +132,39 @@ def main() -> None:
             'android:id="@android:id/checkbox"',
             'android:clickable="false"',
             'android:focusable="false"',
-            'android:thumbTint="@color/settings_md3_switch_thumb"',
-            'android:trackTint="@color/settings_md3_switch_track"',
+            'android:layout_width="52dp"',
+            'android:splitTrack="false"',
+            'android:thumb="@drawable/bg_settings_md3_switch_thumb"',
+            'android:track="@drawable/bg_settings_md3_switch_track"',
         ),
         "row-owned MD3 switch widget",
+    )
+    switch_track = (
+        decoded / "res/drawable-v35/bg_settings_md3_switch_track.xml"
+    ).read_text(encoding="utf-8")
+    switch_thumb = (
+        decoded / "res/drawable-v35/bg_settings_md3_switch_thumb.xml"
+    ).read_text(encoding="utf-8")
+    require(
+        switch_track,
+        (
+            'android:width="52dp"',
+            'android:height="32dp"',
+            'android:radius="16dp"',
+            "settings_md3_primary",
+            "settings_md3_outline",
+        ),
+        "MD3 switch track geometry",
+    )
+    require(
+        switch_thumb,
+        (
+            'android:shape="oval"',
+            'android:width="20dp"',
+            'android:height="20dp"',
+            "settings_md3_on_primary",
+        ),
+        "MD3 switch thumb geometry",
     )
 
     android = "{http://schemas.android.com/apk/res/android}"

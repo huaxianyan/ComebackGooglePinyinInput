@@ -186,8 +186,13 @@
     :list
     instance-of v4, v2, Landroid/preference/ListPreference;
 
+    if-nez v4, :dialog_row
+
+    instance-of v4, v2, Landroid/preference/DialogPreference;
+
     if-eqz v4, :ordinary
 
+    :dialog_row
     invoke-virtual {v2, p1}, Landroid/preference/Preference;->setLayoutResource(I)V
 
     goto :recurse

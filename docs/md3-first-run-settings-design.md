@@ -107,11 +107,15 @@ fallback; it is not a prerequisite for a valid MD3 layout.
    fixed accent fill. Accordingly, these icons use the neutral semantic
    `onSurfaceVariant` token in both day and night modes and 1.8 dp rounded
    outlines; blue `primary` remains reserved for active controls and emphasis.
-   Framework and behavior-compatible custom `CheckBoxPreference` rows are now
-   presented as Gboard-style trailing switches. The switch itself is
-   non-clickable and non-focusable so the existing Preference row remains the
-   single interaction and persistence owner. Framework and auto-synced list
-   rows share the modern row layout without changing their dialog handlers.
+   Framework and behavior-compatible custom `CheckBoxPreference` rows use a
+   trailing switch with an explicit 52×32 dp rounded track and 20 dp handle;
+   recoloring the platform's legacy switch alone is not considered an MD3
+   implementation. The switch itself is non-clickable and non-focusable so the
+   existing Preference row remains the single interaction and persistence
+   owner. Framework, auto-synced list and custom `DialogPreference` rows share
+   the modern row layout without changing their dialog handlers. This keeps
+   ordinary, slider, volume, vibration and long-press rows on the same 24 dp
+   leading alignment.
 3. **Custom controls:** seek bars, vibration/volume/long-press choices and all
    custom dialogs.
 4. **Dictionary/backup:** health, directory, immediate backup and import lists.
