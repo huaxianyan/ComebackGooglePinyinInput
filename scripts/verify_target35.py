@@ -75,6 +75,7 @@ def main() -> None:
     allowed_settings_layouts = {
         "md3_preference.xml",
         "md3_preference_category.xml",
+        "md3_switch_widget.xml",
     }
     unexpected_layouts = {
         path.name

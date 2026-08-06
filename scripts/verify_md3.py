@@ -94,7 +94,12 @@ def main() -> None:
             'const-string v3, "md3_preference"',
             'const-string v4, "md3_preference_category"',
             'const-string v4, "android.preference."',
+            'const-string v4, "md3_switch_widget"',
+            "instance-of v4, v2, Landroid/preference/CheckBoxPreference;",
+            "instance-of v4, v2, Landroid/preference/ListPreference;",
             "Preference;->setLayoutResource(I)V",
+            "Preference;->setWidgetLayoutResource(I)V",
+            "decorateGroup(Landroid/preference/PreferenceGroup;III)V",
         ),
         "MD3 settings decorator",
     )
@@ -107,12 +112,30 @@ def main() -> None:
     for relative in (
         "res/layout-v35/md3_preference.xml",
         "res/layout-v35/md3_preference_category.xml",
+        "res/layout-v35/md3_switch_widget.xml",
+        "res/color-v35/settings_md3_switch_thumb.xml",
+        "res/color-v35/settings_md3_switch_track.xml",
         "res/values-v35/md3_settings.xml",
         "res/values-night-v35/md3_settings.xml",
         "res/xml-v35/settings.xml",
     ):
         if not (decoded / relative).is_file():
             raise RuntimeError(f"Missing MD3 settings resource: {relative}")
+
+    switch_widget = (decoded / "res/layout-v35/md3_switch_widget.xml").read_text(
+        encoding="utf-8"
+    )
+    require(
+        switch_widget,
+        (
+            'android:id="@android:id/checkbox"',
+            'android:clickable="false"',
+            'android:focusable="false"',
+            'android:thumbTint="@color/settings_md3_switch_thumb"',
+            'android:trackTint="@color/settings_md3_switch_track"',
+        ),
+        "row-owned MD3 switch widget",
+    )
 
     android = "{http://schemas.android.com/apk/res/android}"
     header_root = ET.parse(decoded / "res/xml-v35/settings.xml").getroot()

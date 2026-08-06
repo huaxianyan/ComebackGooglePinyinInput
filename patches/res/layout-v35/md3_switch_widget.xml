@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Switch xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/checkbox"
+    android:layout_width="wrap_content"
+    android:layout_height="48dp"
+    android:minWidth="52dp"
+    android:gravity="center"
+    android:showText="false"
+    android:clickable="false"
+    android:focusable="false"
+    android:duplicateParentState="true"
+    android:thumbTint="@color/settings_md3_switch_thumb"
+    android:trackTint="@color/settings_md3_switch_track" />
