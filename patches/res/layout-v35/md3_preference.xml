@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:background="@drawable/bg_settings_md3_preference_row"
+    android:focusable="true"
+    android:clickable="false"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:minHeight="@dimen/settings_md3_row_min_height"
+    android:paddingLeft="@dimen/settings_md3_row_horizontal_padding"
+    android:paddingTop="@dimen/settings_md3_row_vertical_padding"
+    android:paddingRight="@dimen/settings_md3_row_horizontal_padding"
+    android:paddingBottom="@dimen/settings_md3_row_vertical_padding">
+
+    <FrameLayout
+        android:id="@android:id/icon_frame"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="16dp">
+        <ImageView
+            android:id="@android:id/icon"
+            android:layout_gravity="center"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:tint="@color/settings_md3_on_surface_variant"
+            android:scaleType="centerInside" />
+    </FrameLayout>
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:gravity="center_vertical"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1">
+        <TextView
+            android:id="@android:id/title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-medium"
+            android:textSize="16sp"
+            android:textColor="@color/settings_md3_on_surface"
+            android:maxLines="2"
+            android:ellipsize="end" />
+        <TextView
+            android:id="@android:id/summary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:fontFamily="sans-serif"
+            android:textSize="14sp"
+            android:textColor="@color/settings_md3_on_surface_variant"
+            android:maxLines="4"
+            android:ellipsize="end" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@android:id/widget_frame"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:minWidth="48dp"
+        android:layout_marginLeft="12dp" />
+</LinearLayout>

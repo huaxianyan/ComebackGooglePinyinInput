@@ -72,10 +72,19 @@ def main() -> None:
             )
 
     layout_v35 = decoded / "res/layout-v35"
-    if layout_v35.exists() and any(layout_v35.rglob("*")):
+    allowed_settings_layouts = {
+        "md3_preference.xml",
+        "md3_preference_category.xml",
+    }
+    unexpected_layouts = {
+        path.name
+        for path in layout_v35.glob("*.xml")
+        if path.name not in allowed_settings_layouts
+    }
+    if unexpected_layouts:
         raise RuntimeError(
             "Unexpected target-35 layout override; native keyboard, candidate and "
-            "pager geometry must remain unchanged"
+            f"pager geometry must remain unchanged: {sorted(unexpected_layouts)}"
         )
 
     helper = decoded / (

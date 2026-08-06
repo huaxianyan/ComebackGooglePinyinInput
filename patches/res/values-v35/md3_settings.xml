@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="settings_md3_primary">#FF0B57D0</color>
+    <color name="settings_md3_on_primary">#FFFFFFFF</color>
+    <color name="settings_md3_primary_container">#FFD7E3FF</color>
+    <color name="settings_md3_on_primary_container">#FF001B3F</color>
+    <color name="settings_md3_surface">#FFF9F9FF</color>
+    <color name="settings_md3_surface_container">#FFEEEEF4</color>
+    <color name="settings_md3_surface_container_high">#FFE8E8EE</color>
+    <color name="settings_md3_on_surface">#FF1A1B20</color>
+    <color name="settings_md3_on_surface_variant">#FF44474F</color>
+    <color name="settings_md3_outline">#FF74777F</color>
+    <color name="settings_md3_outline_variant">#FFC4C6D0</color>
+    <color name="settings_md3_error">#FFBA1A1A</color>
+    <color name="settings_md3_on_error">#FFFFFFFF</color>
+
+    <dimen name="settings_md3_top_bar_height">64dp</dimen>
+    <dimen name="settings_md3_row_min_height">64dp</dimen>
+    <dimen name="settings_md3_row_horizontal_padding">24dp</dimen>
+    <dimen name="settings_md3_row_vertical_padding">12dp</dimen>
+    <dimen name="settings_md3_section_spacing">12dp</dimen>
+    <dimen name="settings_md3_corner_large">28dp</dimen>
+    <dimen name="settings_md3_corner_medium">20dp</dimen>
+
+    <style name="SettingsTheme" parent="@android:style/Theme.Material.Light">
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:windowActionModeOverlay">false</item>
+        <item name="android:windowBackground">@color/settings_md3_surface</item>
+        <item name="android:colorAccent">@color/settings_md3_primary</item>
+        <item name="android:colorControlActivated">@color/settings_md3_primary</item>
+        <item name="android:colorControlHighlight">@color/settings_md3_primary_container</item>
+        <item name="android:colorControlNormal">@color/settings_md3_on_surface_variant</item>
+        <item name="android:textColorPrimary">@color/settings_md3_on_surface</item>
+        <item name="android:textColorSecondary">@color/settings_md3_on_surface_variant</item>
+        <item name="android:statusBarColor">@color/settings_md3_surface</item>
+        <item name="android:navigationBarColor">@color/settings_md3_surface</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:navigationBarDividerColor">@color/settings_md3_outline_variant</item>
+        <item name="android:actionBarStyle">@style/Md3SettingsActionBar</item>
+        <item name="android:actionMenuTextColor">@color/settings_md3_primary</item>
+        <item name="android:alertDialogTheme">@style/Md3SettingsDialogTheme</item>
+    </style>
+
+    <style name="ThemeSettingsTheme" parent="@android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:windowBackground">@color/settings_md3_surface</item>
+        <item name="android:colorAccent">@color/settings_md3_primary</item>
+        <item name="android:colorControlActivated">@color/settings_md3_primary</item>
+        <item name="android:colorControlHighlight">@color/settings_md3_primary_container</item>
+        <item name="android:colorControlNormal">@color/settings_md3_on_surface_variant</item>
+        <item name="android:textColorPrimary">@color/settings_md3_on_surface</item>
+        <item name="android:textColorSecondary">@color/settings_md3_on_surface_variant</item>
+        <item name="android:statusBarColor">@color/settings_md3_surface</item>
+        <item name="android:navigationBarColor">@color/settings_md3_surface</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:navigationBarDividerColor">@color/settings_md3_outline_variant</item>
+        <item name="android:alertDialogTheme">@style/Md3SettingsDialogTheme</item>
+    </style>
+
+    <style name="Md3SettingsActionBar" parent="@android:style/Widget.Material.ActionBar.Solid">
+        <item name="android:background">@color/settings_md3_surface</item>
+        <item name="android:elevation">0dp</item>
+        <item name="android:height">@dimen/settings_md3_top_bar_height</item>
+        <item name="android:titleTextStyle">@style/Md3SettingsActionBarTitle</item>
+        <item name="android:subtitleTextStyle">@style/Md3SettingsActionBarSubtitle</item>
+    </style>
+
+    <style name="Md3SettingsActionBarTitle" parent="@android:style/TextAppearance.Material.Widget.ActionBar.Title">
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textSize">22sp</item>
+        <item name="android:textColor">@color/settings_md3_on_surface</item>
+    </style>
+
+    <style name="Md3SettingsActionBarSubtitle" parent="@android:style/TextAppearance.Material.Widget.ActionBar.Subtitle">
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/settings_md3_on_surface_variant</item>
+    </style>
+
+    <style name="Md3SettingsDialogTheme" parent="@android:style/Theme.Material.Light.Dialog.Alert">
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:colorAccent">@color/settings_md3_primary</item>
+        <item name="android:colorControlActivated">@color/settings_md3_primary</item>
+        <item name="android:textColorPrimary">@color/settings_md3_on_surface</item>
+        <item name="android:textColorSecondary">@color/settings_md3_on_surface_variant</item>
+        <item name="android:windowBackground">@drawable/bg_settings_md3_dialog</item>
+    </style>
+</resources>

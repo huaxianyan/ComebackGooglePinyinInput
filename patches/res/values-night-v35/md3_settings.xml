@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="settings_md3_primary">#FFA8C7FA</color>
+    <color name="settings_md3_on_primary">#FF062E6F</color>
+    <color name="settings_md3_primary_container">#FF0842A0</color>
+    <color name="settings_md3_on_primary_container">#FFD7E3FF</color>
+    <color name="settings_md3_surface">#FF111318</color>
+    <color name="settings_md3_surface_container">#FF1D2024</color>
+    <color name="settings_md3_surface_container_high">#FF282A2F</color>
+    <color name="settings_md3_on_surface">#FFE2E2E9</color>
+    <color name="settings_md3_on_surface_variant">#FFC4C6D0</color>
+    <color name="settings_md3_outline">#FF8E9099</color>
+    <color name="settings_md3_outline_variant">#FF44474F</color>
+    <color name="settings_md3_error">#FFFFB4AB</color>
+    <color name="settings_md3_on_error">#FF690005</color>
+
+    <style name="SettingsTheme" parent="@android:style/Theme.Material">
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:windowActionModeOverlay">false</item>
+        <item name="android:windowBackground">@color/settings_md3_surface</item>
+        <item name="android:colorAccent">@color/settings_md3_primary</item>
+        <item name="android:colorControlActivated">@color/settings_md3_primary</item>
+        <item name="android:colorControlHighlight">@color/settings_md3_primary_container</item>
+        <item name="android:colorControlNormal">@color/settings_md3_on_surface_variant</item>
+        <item name="android:textColorPrimary">@color/settings_md3_on_surface</item>
+        <item name="android:textColorSecondary">@color/settings_md3_on_surface_variant</item>
+        <item name="android:statusBarColor">@color/settings_md3_surface</item>
+        <item name="android:navigationBarColor">@color/settings_md3_surface</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:navigationBarDividerColor">@color/settings_md3_outline_variant</item>
+        <item name="android:actionBarStyle">@style/Md3SettingsActionBar</item>
+        <item name="android:actionMenuTextColor">@color/settings_md3_primary</item>
+        <item name="android:alertDialogTheme">@style/Md3SettingsDialogTheme</item>
+    </style>
+
+    <style name="ThemeSettingsTheme" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:windowBackground">@color/settings_md3_surface</item>
+        <item name="android:colorAccent">@color/settings_md3_primary</item>
+        <item name="android:colorControlActivated">@color/settings_md3_primary</item>
+        <item name="android:colorControlHighlight">@color/settings_md3_primary_container</item>
+        <item name="android:colorControlNormal">@color/settings_md3_on_surface_variant</item>
+        <item name="android:textColorPrimary">@color/settings_md3_on_surface</item>
+        <item name="android:textColorSecondary">@color/settings_md3_on_surface_variant</item>
+        <item name="android:statusBarColor">@color/settings_md3_surface</item>
+        <item name="android:navigationBarColor">@color/settings_md3_surface</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:navigationBarDividerColor">@color/settings_md3_outline_variant</item>
+        <item name="android:alertDialogTheme">@style/Md3SettingsDialogTheme</item>
+    </style>
+
+    <style name="Md3SettingsDialogTheme" parent="@android:style/Theme.Material.Dialog.Alert">
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:colorAccent">@color/settings_md3_primary</item>
+        <item name="android:colorControlActivated">@color/settings_md3_primary</item>
+        <item name="android:textColorPrimary">@color/settings_md3_on_surface</item>
+        <item name="android:textColorSecondary">@color/settings_md3_on_surface_variant</item>
+        <item name="android:windowBackground">@drawable/bg_settings_md3_dialog</item>
+    </style>
+</resources>

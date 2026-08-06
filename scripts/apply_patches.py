@@ -207,6 +207,27 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
         "        <item>@layout/first_run_page_select_input_method</item>\n"
         "        <item>@layout/first_run_page_done</item>",
     )
+    # The setup now has one stateful page with both system actions. Keep every
+    # first-run array consistent so activation-page intents cannot resurrect a
+    # legacy pager path.
+    replace_once(
+        arrays,
+        "        <item>@layout/first_run_page_enable</item>\n"
+        "        <item>@layout/first_run_page_select_input_method</item>\n"
+        "    </array>\n"
+        "    <string-array name=\"builtin_theme_package_name_to_theme_name_map\">",
+        "        <item>@layout/first_run_single_page</item>\n"
+        "    </array>\n"
+        "    <string-array name=\"builtin_theme_package_name_to_theme_name_map\">",
+    )
+    replace_exactly(
+        arrays,
+        "        <item>@layout/first_run_page_enable</item>\n"
+        "        <item>@layout/first_run_page_select_input_method</item>\n"
+        "        <item>@layout/first_run_page_done</item>",
+        "        <item>@layout/first_run_single_page</item>",
+        2,
+    )
 
     # API 35+ receives an MD3-inspired first-run surface with day/night colors,
     # rounded filled buttons, current typography and a finish-only final action.
@@ -227,6 +248,57 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
         if destination.exists() and source.name not in overwritten_layouts:
             raise RuntimeError(f"Refusing to overwrite resource: {destination}")
         shutil.copyfile(source, destination)
+
+    # Preserve the framework Preference persistence/callback graph while
+    # applying the API 35+ MD3 presentation layer to every generated fragment
+    # and to the PreferenceActivity header list. This mirrors Gboard's
+    # separation between Preference state and custom row presentation without
+    # importing AndroidX or replacing legacy preference subclasses.
+    common_preference_fragment = decoded / (
+        "smali/com/google/android/apps/inputmethod/libs/framework/preference/"
+        "CommonPreferenceFragment.smali"
+    )
+    replace_once(
+        common_preference_fragment,
+        "    invoke-static {v0}, Lgc;->a(Landroid/preference/PreferenceGroup;)V\n\n"
+        "    .line 40\n"
+        "    :cond_0\n"
+        "    return-void",
+        "    invoke-static {v0}, Lgc;->a(Landroid/preference/PreferenceGroup;)V\n\n"
+        "    .line 40\n"
+        "    :cond_0\n"
+        "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/"
+        "Md3SettingsCompat;->apply(Landroid/preference/PreferenceFragment;)V\n\n"
+        "    return-void",
+    )
+    replace_once(
+        common_preference_fragment,
+        ".method public onCreateOptionsMenu(Landroid/view/Menu;Landroid/view/MenuInflater;)V",
+        ".method public onViewCreated(Landroid/view/View;Landroid/os/Bundle;)V\n"
+        "    .locals 0\n\n"
+        "    invoke-super {p0, p1, p2}, Landroid/preference/PreferenceFragment;"
+        "->onViewCreated(Landroid/view/View;Landroid/os/Bundle;)V\n\n"
+        "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/"
+        "Md3SettingsCompat;->apply(Landroid/preference/PreferenceFragment;)V\n\n"
+        "    return-void\n"
+        ".end method\n\n"
+        ".method public onCreateOptionsMenu(Landroid/view/Menu;Landroid/view/MenuInflater;)V",
+    )
+    abstract_settings = decoded / (
+        "smali/com/google/android/apps/inputmethod/libs/framework/preference/"
+        "AbstractSettingsActivity.smali"
+    )
+    replace_once(
+        abstract_settings,
+        "    invoke-super {p0, p1}, Landroid/preference/PreferenceActivity;->onCreate("
+        "Landroid/os/Bundle;)V\n\n"
+        "    .line 7",
+        "    invoke-super {p0, p1}, Landroid/preference/PreferenceActivity;->onCreate("
+        "Landroid/os/Bundle;)V\n\n"
+        "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/"
+        "Md3SettingsCompat;->apply(Landroid/app/Activity;)V\n\n"
+        "    .line 7",
+    )
 
     # Do not launch a transparent permission Activity from the IME service.
     # Runtime permission requests made from a real settings Activity continue
@@ -1610,7 +1682,8 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
         '    </application>\n</manifest>',
         '        <activity android:exported="true" '
         'android:label="@string/dictionary_auto_backup_import_title" '
-        'android:name="com.google.android.inputmethod.pinyin.LocalBackupImportActivity">\n'
+        'android:name="com.google.android.inputmethod.pinyin.LocalBackupImportActivity" '
+        'android:theme="@style/SettingsTheme">\n'
         '            <intent-filter>\n'
         '                <action android:name="android.intent.action.VIEW"/>\n'
         '                <category android:name="android.intent.category.DEFAULT"/>\n'
@@ -1937,6 +2010,11 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
             "FirstRunNavigationCompat.smali",
         ),
         (
+            "FirstRunSinglePage.smali",
+            "smali/com/google/android/apps/inputmethod/pinyin/firstrun/"
+            "FirstRunSinglePage.smali",
+        ),
+        (
             "NonSwipeableFirstRunViewPager.smali",
             "smali/com/google/android/apps/inputmethod/libs/framework/firstrun/"
             "NonSwipeableFirstRunViewPager.smali",
@@ -1945,6 +2023,10 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
             "FirstRunStateCompat.smali",
             "smali/com/google/android/inputmethod/pinyin/firstrun/"
             "FirstRunStateCompat.smali",
+        ),
+        (
+            "Md3SettingsCompat.smali",
+            "smali/com/google/android/inputmethod/pinyin/Md3SettingsCompat.smali",
         ),
     )
     for helper_name, relative_destination in first_run_helpers:

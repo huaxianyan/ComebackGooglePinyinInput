@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Default values keep the single-page flow usable below API 35. API 35+
+         receives the matching day/night token overrides. -->
+    <color name="first_run_md3_primary">#FF0B57D0</color>
+    <color name="first_run_md3_on_primary">#FFFFFFFF</color>
+    <color name="first_run_md3_primary_container">#FFD7E3FF</color>
+    <color name="first_run_md3_on_primary_container">#FF001B3F</color>
+    <color name="first_run_md3_surface">#FFF9F9FF</color>
+    <color name="first_run_md3_surface_container">#FFEEEEF4</color>
+    <color name="first_run_md3_on_surface">#FF1A1B20</color>
+    <color name="first_run_md3_on_surface_variant">#FF44474F</color>
+    <color name="first_run_md3_outline">#FF74777F</color>
+
+    <string name="first_run_single_page_title">设置 Google 拼音输入法</string>
+    <string name="first_run_single_page_description">完成以下两项即可开始使用</string>
+    <string name="first_run_single_enable_step">第 1 项</string>
+    <string name="first_run_single_enable_title">启用输入法</string>
+    <string name="first_run_single_enable_summary">在系统设置中启用 Google 拼音输入法</string>
+    <string name="first_run_single_select_step">第 2 项</string>
+    <string name="first_run_single_select_title">选择输入法</string>
+    <string name="first_run_single_select_summary">将 Google 拼音输入法设为当前输入法</string>
+    <string name="first_run_single_finish">完成</string>
+
+    <style name="FirstRunSinglePageTitle">
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:textSize">28sp</item>
+        <item name="android:textColor">@color/first_run_md3_on_surface</item>
+        <item name="android:gravity">center</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">24dp</item>
+    </style>
+    <style name="FirstRunSinglePageDescription">
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/first_run_md3_on_surface_variant</item>
+        <item name="android:gravity">center</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">12dp</item>
+    </style>
+    <style name="FirstRunSinglePageStepNumber">
+        <item name="android:background">@drawable/bg_first_run_md3_step_number</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/first_run_md3_on_primary_container</item>
+        <item name="android:gravity">center</item>
+        <item name="android:layout_width">40dp</item>
+        <item name="android:layout_height">40dp</item>
+    </style>
+    <style name="FirstRunSinglePageStepTitle">
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:textColor">@color/first_run_md3_on_surface</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+    </style>
+    <style name="FirstRunSinglePageStepSummary">
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/first_run_md3_on_surface_variant</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">4dp</item>
+        <item name="android:lineSpacingExtra">2dp</item>
+    </style>
+    <style name="FirstRunSinglePageStepButton" parent="@style/FirstRunPageButton">
+        <item name="android:layout_gravity">right</item>
+        <item name="android:layout_marginTop">16dp</item>
+        <item name="android:minWidth">112dp</item>
+    </style>
+    <style name="FirstRunSinglePageDone" parent="@style/FirstRunPageSettingsDone">
+        <item name="android:layout_gravity">right</item>
+        <item name="android:layout_marginTop">16dp</item>
+    </style>
+    <style name="FirstRunSinglePageFinishButton" parent="@style/FirstRunPageButton">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_gravity">center_horizontal</item>
+        <item name="android:layout_marginTop">24dp</item>
+    </style>
+</resources>

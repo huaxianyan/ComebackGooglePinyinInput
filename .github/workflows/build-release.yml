@@ -192,6 +192,10 @@ jobs:
         shell: pwsh
         run: python scripts/verify_target36.py work/decoded
 
+      - name: Verify single-page first run and MD3 settings foundation
+        shell: pwsh
+        run: python scripts/verify_md3.py work/decoded
+
       - name: Prepare release artifact
         id: artifact
         shell: pwsh

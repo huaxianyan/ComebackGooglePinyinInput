@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/title"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:minHeight="48dp"
+    android:gravity="bottom"
+    android:paddingLeft="@dimen/settings_md3_row_horizontal_padding"
+    android:paddingTop="@dimen/settings_md3_section_spacing"
+    android:paddingRight="@dimen/settings_md3_row_horizontal_padding"
+    android:paddingBottom="8dp"
+    android:fontFamily="sans-serif-medium"
+    android:textSize="14sp"
+    android:textColor="@color/settings_md3_primary" />
