@@ -95,15 +95,30 @@ def main() -> None:
             'const-string v4, "md3_preference_category"',
             'const-string v4, "android.preference."',
             'const-string v4, "md3_switch_widget"',
+            'const-string v5, "md3_switch_preference_widget"',
+            "instance-of v4, v2, Landroid/preference/SwitchPreference;",
             "instance-of v4, v2, Landroid/preference/CheckBoxPreference;",
             "instance-of v4, v2, Landroid/preference/ListPreference;",
             "instance-of v4, v2, Landroid/preference/DialogPreference;",
             "Preference;->setLayoutResource(I)V",
             "Preference;->setWidgetLayoutResource(I)V",
-            "decorateGroup(Landroid/preference/PreferenceGroup;III)V",
+            "decorateGroup(Landroid/preference/PreferenceGroup;IIII)V",
         ),
         "MD3 settings decorator",
     )
+    legacy_switch_conversion = (decoded / "smali/gc.smali").read_text(
+        encoding="utf-8"
+    )
+    require(
+        legacy_switch_conversion,
+        (
+            "a(Landroid/preference/PreferenceGroup;)V",
+            "instance-of v1, v0, Landroid/preference/CheckBoxPreference;",
+            "new-instance v1, Landroid/preference/SwitchPreference;",
+        ),
+        "legacy CheckBoxPreference-to-SwitchPreference conversion",
+    )
+
     preference_layout = (decoded / "res/layout-v35/md3_preference.xml").read_text(
         encoding="utf-8"
     )
@@ -114,6 +129,7 @@ def main() -> None:
         "res/layout-v35/md3_preference.xml",
         "res/layout-v35/md3_preference_category.xml",
         "res/layout-v35/md3_switch_widget.xml",
+        "res/layout-v35/md3_switch_preference_widget.xml",
         "res/drawable-v35/bg_settings_md3_switch_thumb.xml",
         "res/drawable-v35/bg_settings_md3_switch_track.xml",
         "res/values-v35/md3_settings.xml",
@@ -123,13 +139,21 @@ def main() -> None:
         if not (decoded / relative).is_file():
             raise RuntimeError(f"Missing MD3 settings resource: {relative}")
 
-    switch_widget = (decoded / "res/layout-v35/md3_switch_widget.xml").read_text(
+    checkbox_widget = (decoded / "res/layout-v35/md3_switch_widget.xml").read_text(
         encoding="utf-8"
+    )
+    switch_widget = (
+        decoded / "res/layout-v35/md3_switch_preference_widget.xml"
+    ).read_text(encoding="utf-8")
+    require(
+        checkbox_widget,
+        ('android:id="@android:id/checkbox"',),
+        "CheckBoxPreference MD3 widget binding",
     )
     require(
         switch_widget,
         (
-            'android:id="@android:id/checkbox"',
+            'android:id="@android:id/switch_widget"',
             'android:clickable="false"',
             'android:focusable="false"',
             'android:layout_width="52dp"',

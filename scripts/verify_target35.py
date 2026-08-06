@@ -76,6 +76,7 @@ def main() -> None:
         "md3_preference.xml",
         "md3_preference_category.xml",
         "md3_switch_widget.xml",
+        "md3_switch_preference_widget.xml",
     }
     unexpected_layouts = {
         path.name

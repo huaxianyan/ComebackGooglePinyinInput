@@ -12,7 +12,7 @@
 .end method
 
 .method public static apply(Landroid/preference/PreferenceFragment;)V
-    .locals 7
+    .locals 8
 
     sget v0, Landroid/os/Build$VERSION;->SDK_INT:I
 
@@ -84,7 +84,25 @@
 
     if-eqz v4, :style_list
 
-    invoke-static {v1, v3, v0, v4}, Lcom/google/android/inputmethod/pinyin/Md3SettingsCompat;->decorateGroup(Landroid/preference/PreferenceGroup;III)V
+    const-string v5, "md3_switch_preference_widget"
+
+    const-string v6, "layout"
+
+    invoke-virtual {v1}, Landroid/preference/Preference;->getContext()Landroid/content/Context;
+
+    move-result-object v7
+
+    invoke-virtual {v7}, Landroid/content/Context;->getPackageName()Ljava/lang/String;
+
+    move-result-object v7
+
+    invoke-virtual {v2, v5, v6, v7}, Landroid/content/res/Resources;->getIdentifier(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I
+
+    move-result v5
+
+    if-eqz v5, :style_list
+
+    invoke-static {v1, v3, v0, v4, v5}, Lcom/google/android/inputmethod/pinyin/Md3SettingsCompat;->decorateGroup(Landroid/preference/PreferenceGroup;IIII)V
 
     :style_list
     invoke-virtual {p0}, Landroid/preference/PreferenceFragment;->getView()Landroid/view/View;
@@ -132,7 +150,7 @@
     return-void
 .end method
 
-.method private static decorateGroup(Landroid/preference/PreferenceGroup;III)V
+.method private static decorateGroup(Landroid/preference/PreferenceGroup;IIII)V
     .locals 5
 
     invoke-virtual {p0}, Landroid/preference/PreferenceGroup;->getPreferenceCount()I
@@ -164,11 +182,22 @@
 
     instance-of v4, v2, Landroid/preference/PreferenceCategory;
 
-    if-eqz v4, :checkbox
+    if-eqz v4, :switch
 
     if-eqz v3, :recurse
 
     invoke-virtual {v2, p2}, Landroid/preference/Preference;->setLayoutResource(I)V
+
+    goto :recurse
+
+    :switch
+    instance-of v4, v2, Landroid/preference/SwitchPreference;
+
+    if-eqz v4, :checkbox
+
+    invoke-virtual {v2, p1}, Landroid/preference/Preference;->setLayoutResource(I)V
+
+    invoke-virtual {v2, p4}, Landroid/preference/Preference;->setWidgetLayoutResource(I)V
 
     goto :recurse
 
@@ -209,7 +238,7 @@
 
     check-cast v2, Landroid/preference/PreferenceGroup;
 
-    invoke-static {v2, p1, p2, p3}, Lcom/google/android/inputmethod/pinyin/Md3SettingsCompat;->decorateGroup(Landroid/preference/PreferenceGroup;III)V
+    invoke-static {v2, p1, p2, p3, p4}, Lcom/google/android/inputmethod/pinyin/Md3SettingsCompat;->decorateGroup(Landroid/preference/PreferenceGroup;IIII)V
 
     :next
     add-int/lit8 v1, v1, 0x1

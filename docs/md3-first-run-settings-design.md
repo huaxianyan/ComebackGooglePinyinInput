@@ -112,10 +112,16 @@ fallback; it is not a prerequisite for a valid MD3 layout.
    recoloring the platform's legacy switch alone is not considered an MD3
    implementation. The switch itself is non-clickable and non-focusable so the
    existing Preference row remains the single interaction and persistence
-   owner. Framework, auto-synced list and custom `DialogPreference` rows share
-   the modern row layout without changing their dialog handlers. This keeps
-   ordinary, slider, volume, vibration and long-press rows on the same 24 dp
-   leading alignment.
+   owner. On API 20+, the legacy application rewrites every XML
+   `CheckBoxPreference` into an `android.preference.SwitchPreference` or one of
+   its custom subclasses in `gc.a(PreferenceGroup)`. Therefore MD3 decoration
+   must target both widget families and use their distinct binding IDs:
+   `@android:id/checkbox` and `@android:id/switch_widget`. Missing the converted
+   family leaves the platform's legacy switch visible and also explains the
+   remaining custom-row alignment differences. Framework, auto-synced list and
+   custom `DialogPreference` rows share the modern row layout without changing
+   their dialog handlers. This keeps ordinary, converted switch, slider,
+   volume, vibration and long-press rows on the same 24 dp leading alignment.
 3. **Custom controls:** seek bars, vibration/volume/long-press choices and all
    custom dialogs.
 4. **Dictionary/backup:** health, directory, immediate backup and import lists.
