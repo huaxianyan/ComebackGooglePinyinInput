@@ -1,8 +1,8 @@
 # Changelog
 
-## [2.0.0 - Unreleased]
+## [2.0.0] - 2026-08-06
 
-Android 16 大版本开发基线。已验收的 target SDK 29–36 分支合并到 `master`；后续 Material You/MD3、16 KiB、预测返回和其他开发均以该基线为起点。除非明确创建并推送 `v2.0.0` 标签，否则这里只产生构建 Artifact，不发布 GitHub Release。
+Android 16 大版本正式基线。已验收的 target SDK 29–36 分支合并到 `master`；后续 Material You/MD3、16 KiB、预测返回和其他开发均以该基线为起点。
 
 ### Changed
 

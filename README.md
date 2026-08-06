@@ -29,36 +29,22 @@
 
 Google 拼音输入法最初由 Google 发布并通过 Google Play 等官方 Android 分发渠道提供。本仓库中的原始 APK 用于软件保存、兼容性研究和可复现构建，其文件哈希与签名信息列于上表，便于独立校验来源和完整性。
 
-### 当前主分支开发基线
-
-| 项目 | 内容 |
-| --- | --- |
-| 开发版本 | `2.0.0` |
-| Android versionName | `2.0.0` |
-| Android versionCode | `4520385` |
-| 正式包名 | `com.google.android.inputmethod.pinyin.compat` |
-| 架构 | `arm64-v8a` |
-| target SDK | 36 |
-| 基线 | 已验收 target 36 V19（Android 16） |
-
-`master` 已合并逐 API 29–36 的验收成果，后续 Material You/MD3、16 KiB、预测返回和其他开发均从这个 Android 16 基线分支，不再从 target 28 开始。`2.0.0` 当前是开发版本；在明确创建版本标签前不会自动发布 GitHub Release。
-
 ### 最新正式版本
 
 | 项目 | 内容 |
 | --- | --- |
 | 项目中文名称 | Google 拼音输入法 创造性 AI 版 |
 | English project name | Comeback Google Pinyin Input |
-| 项目版本 | `1.0.3` |
-| Android versionName | `1.0.3` |
-| Android versionCode | `4520384` |
+| 项目版本 | `2.0.0` |
+| Android versionName | `2.0.0` |
+| Android versionCode | `4520385` |
 | 正式包名 | `com.google.android.inputmethod.pinyin.compat` |
 | 架构 | `arm64-v8a` |
-| 正式 APK | `ComebackGooglePinyinInput-arm64-v8a-1.0.3.apk` |
-| target SDK | 28 |
+| 正式 APK | `ComebackGooglePinyinInput-arm64-v8a-2.0.0.apk` |
+| target SDK | 36 |
 | 主要测试设备 | Pixel 10 Pro / Android 16 |
 
-上表对应正式 Release `v1.0.3`：备份和导入位置继续支持内部存储、SD 卡及 Google Drive 等 DocumentsProvider，同时移除失效的 Google 账户词典同步请求，并保留本地“清除用户字典”功能。后续 `master` 仍可能包含尚未发布的研究或兼容修复；是否发布以 GitHub Release 和 `CHANGELOG.md` 为准。
+上表对应正式 Release [`v2.0.0`](https://github.com/huaxianyan/comeback-google-pinyin-input/releases/tag/v2.0.0)。该版本将逐 API 29–36 的验收成果合并为正式 Android 16 基线；后续 Material You/MD3、16 KiB、预测返回和其他开发均从这个基线开始。此前 `v1.0.3` 保留为最后一个 target 28 正式版本。
 
 `targetSdkVersion` 29–36 的提升已经按逐 API、逐分支、逐项验收策略完成并合并到 `master`。历史分支、已知行为边界和测试门槛见 [`docs/target-sdk-modernization-plan.md`](docs/target-sdk-modernization-plan.md)。Android 17 继续作为独立调查阶段；中间审计包使用隔离 application ID，不覆盖正式包，也不发布正式 Release。
 
