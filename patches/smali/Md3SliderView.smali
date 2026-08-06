@@ -134,15 +134,15 @@
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->isEnabled()Z
     move-result v8
     if-eqz v8, :disabled
-    const/16 v8, 0xff
+    const/16 v13, 0xff
     goto :alpha
     :disabled
-    const/16 v8, 0x61
+    const/16 v13, 0x61
     :alpha
-    invoke-virtual {v7, v8}, Landroid/graphics/Paint;->setAlpha(I)V
 
     iget v8, p0, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->inactiveColor:I
     invoke-virtual {v7, v8}, Landroid/graphics/Paint;->setColor(I)V
+    invoke-virtual {v7, v13}, Landroid/graphics/Paint;->setAlpha(I)V
     sub-float v10, v2, v5
     add-float v11, v2, v5
     new-instance v12, Landroid/graphics/RectF;
@@ -151,6 +151,7 @@
 
     iget v8, p0, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->activeColor:I
     invoke-virtual {v7, v8}, Landroid/graphics/Paint;->setColor(I)V
+    invoke-virtual {v7, v13}, Landroid/graphics/Paint;->setAlpha(I)V
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->getLayoutDirection()I
     move-result v8
     const/4 v9, 0x1
@@ -177,6 +178,7 @@
     :thumb
     iget v0, p0, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->activeColor:I
     invoke-virtual {v7, v0}, Landroid/graphics/Paint;->setColor(I)V
+    invoke-virtual {v7, v13}, Landroid/graphics/Paint;->setAlpha(I)V
     const/high16 v0, 0x41200000    # 10.0f
     mul-float/2addr v0, v4
     invoke-virtual {p1, v6, v2, v0, v7}, Landroid/graphics/Canvas;->drawCircle(FFFLandroid/graphics/Paint;)V
