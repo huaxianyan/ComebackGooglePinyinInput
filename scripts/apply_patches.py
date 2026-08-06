@@ -33,6 +33,13 @@ def replace_exactly(path: Path, old: str, new: str, expected: int) -> None:
     path.write_text(text.replace(old, new), encoding="utf-8", newline="\n")
 
 
+def append_smali_methods(path: Path, marker: str, methods: str) -> None:
+    text = path.read_text(encoding="utf-8")
+    if marker in text:
+        raise RuntimeError(f"Refusing to append duplicate Smali method to {path}: {marker}")
+    path.write_text(text.rstrip() + "\n\n" + methods.strip() + "\n", encoding="utf-8", newline="\n")
+
+
 def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
     if not (decoded / "apktool.yml").is_file():
         raise RuntimeError(f"Not an apktool output directory: {decoded}")
@@ -2003,6 +2010,133 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
         raise RuntimeError(f"Missing dictionary settings fragment: {dictionary_fragment_dst}")
     shutil.copyfile(dictionary_fragment_src, dictionary_fragment_dst)
 
+    # API 35+ renders the legacy dialog-backed seek preferences inline. Keep the
+    # existing value conversions, persistence types, change listeners and
+    # sound/vibration previews; only move binding and commit into the row.
+    append_smali_methods(
+        decoded / "smali/axf.smali",
+        ".method public c(I)V",
+        "\n.method public c(I)V\n"
+        "    .locals 0\n\n"
+        "    return-void\n"
+        ".end method\n\n"
+        ".method protected onBindView(Landroid/view/View;)V\n"
+        "    .locals 2\n\n"
+        "    invoke-super {p0, p1}, Landroid/preference/DialogPreference;->onBindView(Landroid/view/View;)V\n\n"
+        "    sget v0, Landroid/os/Build$VERSION;->SDK_INT:I\n"
+        "    const/16 v1, 0x23\n"
+        "    if-lt v0, v1, :done\n"
+        "    invoke-virtual {p0, p1}, Laxf;->onBindDialogView(Landroid/view/View;)V\n\n"
+        "    :done\n"
+        "    return-void\n"
+        ".end method\n\n"
+        ".method protected onClick()V\n"
+        "    .locals 2\n\n"
+        "    sget v0, Landroid/os/Build$VERSION;->SDK_INT:I\n"
+        "    const/16 v1, 0x23\n"
+        "    if-lt v0, v1, :inline\n"
+        "    invoke-super {p0}, Landroid/preference/DialogPreference;->onClick()V\n"
+        "    :inline\n"
+        "    return-void\n"
+        ".end method\n",
+    )
+    replace_once(
+        decoded / "smali/axg.smali",
+        "    invoke-virtual {v0, v1}, Laxf;->b(I)V\n\n"
+        "    .line 16\n"
+        "    return-void",
+        "    invoke-virtual {v0, v1}, Laxf;->b(I)V\n\n"
+        "    iget-object v0, p0, Laxg;->a:Laxf;\n\n"
+        "    invoke-virtual {v0, v1}, Laxf;->c(I)V\n\n"
+        "    .line 16\n"
+        "    return-void",
+    )
+    append_smali_methods(
+        decoded / "smali/com/google/android/apps/inputmethod/libs/framework/preference/widget/SeekBarListPreference.smali",
+        ".method public c(I)V",
+        "\n.method public c(I)V\n"
+        "    .locals 2\n\n"
+        "    invoke-virtual {p0, p1}, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/SeekBarListPreference;->a(I)Ljava/lang/Object;\n"
+        "    move-result-object v0\n"
+        "    check-cast v0, Ljava/lang/String;\n"
+        "    if-eqz v0, :done\n"
+        "    invoke-virtual {p0, v0}, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/SeekBarListPreference;->callChangeListener(Ljava/lang/Object;)Z\n"
+        "    move-result v1\n"
+        "    if-eqz v1, :done\n"
+        "    invoke-direct {p0, v0}, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/SeekBarListPreference;->a(Ljava/lang/String;)V\n"
+        "    :done\n"
+        "    return-void\n"
+        ".end method\n",
+    )
+    append_smali_methods(
+        decoded / "smali/com/google/android/apps/inputmethod/libs/framework/preference/widget/VolumePreference.smali",
+        ".method public c(I)V",
+        "\n.method public c(I)V\n"
+        "    .locals 2\n\n"
+        "    invoke-virtual {p0, p1}, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/VolumePreference;->a(I)Ljava/lang/Object;\n"
+        "    move-result-object v0\n"
+        "    check-cast v0, Ljava/lang/Float;\n"
+        "    invoke-virtual {p0, v0}, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/VolumePreference;->callChangeListener(Ljava/lang/Object;)Z\n"
+        "    move-result v1\n"
+        "    if-eqz v1, :done\n"
+        "    invoke-virtual {v0}, Ljava/lang/Float;->floatValue()F\n"
+        "    move-result v0\n"
+        "    invoke-virtual {p0, v0}, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/VolumePreference;->persistFloat(F)Z\n"
+        "    invoke-direct {p0, v0}, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/VolumePreference;->a(F)Ljava/lang/String;\n"
+        "    move-result-object v0\n"
+        "    invoke-virtual {p0, v0}, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/VolumePreference;->setSummary(Ljava/lang/CharSequence;)V\n"
+        "    :done\n"
+        "    return-void\n"
+        ".end method\n",
+    )
+    append_smali_methods(
+        decoded / "smali/com/google/android/apps/inputmethod/libs/framework/preference/widget/VibrationDurationPreference.smali",
+        ".method public c(I)V",
+        "\n.method public c(I)V\n"
+        "    .locals 2\n\n"
+        "    invoke-static {p1}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;\n"
+        "    move-result-object v0\n"
+        "    invoke-virtual {p0, v0}, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/VibrationDurationPreference;->callChangeListener(Ljava/lang/Object;)Z\n"
+        "    move-result v0\n"
+        "    if-eqz v0, :done\n"
+        "    move v0, p1\n"
+        "    if-eqz p1, :encoded\n"
+        "    add-int/lit8 v0, p1, 0x1\n"
+        "    :encoded\n"
+        "    invoke-static {v0}, Ljava/lang/Integer;->toString(I)Ljava/lang/String;\n"
+        "    move-result-object v0\n"
+        "    invoke-virtual {p0, v0}, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/VibrationDurationPreference;->persistString(Ljava/lang/String;)Z\n"
+        "    invoke-direct {p0, p1}, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/VibrationDurationPreference;->b(I)Ljava/lang/String;\n"
+        "    move-result-object v0\n"
+        "    invoke-virtual {p0, v0}, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/VibrationDurationPreference;->setSummary(Ljava/lang/CharSequence;)V\n"
+        "    :done\n"
+        "    return-void\n"
+        ".end method\n",
+    )
+    append_smali_methods(
+        decoded / "smali/com/google/android/apps/inputmethod/libs/framework/preference/widget/LongPressDelayPreference.smali",
+        ".method public c(I)V",
+        "\n.method public c(I)V\n"
+        "    .locals 2\n\n"
+        "    invoke-virtual {p0, p1}, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/LongPressDelayPreference;->a(I)Ljava/lang/Object;\n"
+        "    move-result-object v0\n"
+        "    invoke-virtual {p0, v0}, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/LongPressDelayPreference;->callChangeListener(Ljava/lang/Object;)Z\n"
+        "    move-result v1\n"
+        "    if-eqz v1, :done\n"
+        "    check-cast v0, Ljava/lang/Integer;\n"
+        "    invoke-virtual {v0}, Ljava/lang/Integer;->intValue()I\n"
+        "    move-result v0\n"
+        "    invoke-static {v0}, Ljava/lang/String;->valueOf(I)Ljava/lang/String;\n"
+        "    move-result-object v1\n"
+        "    invoke-virtual {p0, v1}, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/LongPressDelayPreference;->persistString(Ljava/lang/String;)Z\n"
+        "    invoke-direct {p0, v0}, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/LongPressDelayPreference;->b(I)Ljava/lang/String;\n"
+        "    move-result-object v0\n"
+        "    invoke-virtual {p0, v0}, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/LongPressDelayPreference;->setSummary(Ljava/lang/CharSequence;)V\n"
+        "    :done\n"
+        "    return-void\n"
+        ".end method\n",
+    )
+
     first_run_helpers = (
         (
             "FirstRunNavigationCompat.smali",
@@ -2036,6 +2170,10 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
         (
             "Md3SwitchView.smali",
             "smali/com/google/android/inputmethod/pinyin/Md3SwitchView.smali",
+        ),
+        (
+            "Md3SliderView.smali",
+            "smali/com/google/android/inputmethod/pinyin/Md3SliderView.smali",
         ),
         (
             "Md3SwitchView$AnimatorUpdateListener.smali",

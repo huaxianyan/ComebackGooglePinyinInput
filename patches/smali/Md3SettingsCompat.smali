@@ -217,6 +217,15 @@
     goto :recurse
 
     :list
+    instance-of v4, v2, Laxf;
+
+    if-eqz v4, :list_preference
+
+    invoke-static {v2}, Lcom/google/android/inputmethod/pinyin/Md3SettingsCompat;->decorateInlineSlider(Landroid/preference/Preference;)V
+
+    goto :recurse
+
+    :list_preference
     instance-of v4, v2, Landroid/preference/ListPreference;
 
     if-nez v4, :dialog_row
@@ -249,6 +258,27 @@
 
     goto :loop
 
+    :done
+    return-void
+.end method
+
+.method private static decorateInlineSlider(Landroid/preference/Preference;)V
+    .locals 4
+
+    invoke-virtual {p0}, Landroid/preference/Preference;->getContext()Landroid/content/Context;
+    move-result-object v0
+    invoke-virtual {v0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
+    move-result-object v1
+    const-string v2, "md3_inline_slider_preference"
+    const-string v3, "layout"
+    invoke-virtual {v0}, Landroid/content/Context;->getPackageName()Ljava/lang/String;
+    move-result-object v0
+    invoke-virtual {v1, v2, v3, v0}, Landroid/content/res/Resources;->getIdentifier(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I
+    move-result v0
+    if-eqz v0, :done
+    invoke-virtual {p0, v0}, Landroid/preference/Preference;->setLayoutResource(I)V
+    const/4 v0, 0x0
+    invoke-virtual {p0, v0}, Landroid/preference/Preference;->setWidgetLayoutResource(I)V
     :done
     return-void
 .end method

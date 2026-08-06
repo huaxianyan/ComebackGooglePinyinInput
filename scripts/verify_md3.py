@@ -98,6 +98,8 @@ def main() -> None:
             'const-string v5, "md3_switch_preference_widget"',
             "instance-of v4, v2, Landroid/preference/SwitchPreference;",
             "instance-of v4, v2, Landroid/preference/CheckBoxPreference;",
+            "instance-of v4, v2, Laxf;",
+            'const-string v2, "md3_inline_slider_preference"',
             "instance-of v4, v2, Landroid/preference/ListPreference;",
             "instance-of v4, v2, Landroid/preference/DialogPreference;",
             "Preference;->setLayoutResource(I)V",
@@ -138,7 +140,9 @@ def main() -> None:
         "res/layout-v35/md3_preference_category.xml",
         "res/layout-v35/md3_switch_widget.xml",
         "res/layout-v35/md3_switch_preference_widget.xml",
+        "res/layout-v35/md3_inline_slider_preference.xml",
         "smali/com/google/android/inputmethod/pinyin/Md3SwitchView.smali",
+        "smali/com/google/android/inputmethod/pinyin/Md3SliderView.smali",
         "smali/com/google/android/inputmethod/pinyin/Md3SwitchView$AnimatorUpdateListener.smali",
         "res/values-v35/md3_settings.xml",
         "res/values-night-v35/md3_settings.xml",
@@ -195,6 +199,74 @@ def main() -> None:
         ),
         "platform-independent MD3 switch rendering",
     )
+    slider_layout = (
+        decoded / "res/layout-v35/md3_inline_slider_preference.xml"
+    ).read_text(encoding="utf-8")
+    require(
+        slider_layout,
+        (
+            "com.google.android.inputmethod.pinyin.Md3SliderView",
+            'android:id="@id/seek_bar"',
+            'android:id="@id/seek_bar_text_top"',
+            'android:id="@id/seek_bar_text_left"',
+            'android:id="@id/seek_bar_text_right"',
+            'android:labelFor="@id/seek_bar"',
+        ),
+        "inline MD3 slider row",
+    )
+    slider_view = (
+        decoded / "smali/com/google/android/inputmethod/pinyin/Md3SliderView.smali"
+    ).read_text(encoding="utf-8")
+    require(
+        slider_view,
+        (
+            ".super Landroid/widget/SeekBar;",
+            'const-string v0, "settings_md3_primary"',
+            'const-string v0, "settings_md3_outline_variant"',
+            'const-string v0, "settings_md3_slider_state_layer"',
+            "Landroid/graphics/Canvas;->drawRoundRect(Landroid/graphics/RectF;FFLandroid/graphics/Paint;)V",
+            "Landroid/graphics/Canvas;->drawCircle(FFFLandroid/graphics/Paint;)V",
+        ),
+        "platform-independent MD3 slider rendering",
+    )
+    slider_base = (decoded / "smali/axf.smali").read_text(encoding="utf-8")
+    require(
+        slider_base,
+        (
+            ".method protected onBindView(Landroid/view/View;)V",
+            ".method protected onClick()V",
+            ".method public c(I)V",
+            "const/16 v1, 0x23",
+            "onBindDialogView(Landroid/view/View;)V",
+        ),
+        "API-35 inline slider lifecycle",
+    )
+    slider_listener = (decoded / "smali/axg.smali").read_text(encoding="utf-8")
+    require(slider_listener, ("Laxf;->b(I)V", "Laxf;->c(I)V"), "inline slider preview and commit")
+    for relative in (
+        "smali/com/google/android/apps/inputmethod/libs/framework/preference/widget/SeekBarListPreference.smali",
+        "smali/com/google/android/apps/inputmethod/libs/framework/preference/widget/VolumePreference.smali",
+        "smali/com/google/android/apps/inputmethod/libs/framework/preference/widget/VibrationDurationPreference.smali",
+        "smali/com/google/android/apps/inputmethod/libs/framework/preference/widget/LongPressDelayPreference.smali",
+    ):
+        text = (decoded / relative).read_text(encoding="utf-8")
+        if ".method public c(I)V" not in text:
+            raise RuntimeError(f"Inline slider persistence missing from {relative}")
+
+    slider_xml = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in (decoded / "res/xml").glob("*.xml")
+    )
+    slider_types = (
+        "SeekBarListPreference",
+        "VolumePreference",
+        "VibrationDurationPreference",
+        "LongPressDelayPreference",
+    )
+    slider_count = sum(slider_xml.count(name) for name in slider_types)
+    if slider_count != 7:
+        raise RuntimeError(f"Expected seven dialog-backed slider preferences, found {slider_count}")
+
     switch_listener = (
         decoded
         / "smali/com/google/android/inputmethod/pinyin/"

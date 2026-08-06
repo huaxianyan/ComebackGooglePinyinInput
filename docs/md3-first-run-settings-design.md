@@ -145,8 +145,15 @@ fallback; it is not a prerequisite for a valid MD3 layout.
    custom `DialogPreference` rows share the modern row layout without changing
    their dialog handlers. This keeps ordinary, converted switch, slider,
    volume, vibration and long-press rows on the same 24 dp leading alignment.
-3. **Custom controls:** seek bars, vibration/volume/long-press choices and all
-   custom dialogs.
+3. **Custom controls:** on API 35+, all seven legacy dialog-backed seek
+   preferences render as inline MD3 sliders: sound volume, vibration duration,
+   keyboard height, slide sensitivity, long-press delay, handwriting timeout
+   and handwriting stroke width. A 4 dp rounded track, 20 dp handle, pressed
+   state layer, live value label and endpoint labels replace the modal dialog.
+   Values commit when tracking stops through each original Preference's value
+   conversion, `callChangeListener()` and persistence type; volume and vibration
+   retain their original release-time previews. Below API 35 the original
+   dialog behavior remains intact.
 4. **Dictionary/backup:** health, directory, immediate backup and import lists.
 5. **Theme tools:** selector, builder, crop and editor shells without changing
    image data semantics.
