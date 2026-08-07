@@ -59,10 +59,14 @@ class LegacySettingsRepository(context: Context) {
                 "entries_keyboard_height_ratio",
                 keyboardHeightIndex,
             ),
+            keyboardHeightLabels = readEntryLabels("entries_keyboard_height_ratio"),
             slideSensitivityIndex = slideSensitivityIndex,
             slideSensitivityLabel = readEntryLabel(
                 "entries_keyboard_slide_sensitivity_ratio",
                 slideSensitivityIndex,
+            ),
+            slideSensitivityLabels = readEntryLabels(
+                "entries_keyboard_slide_sensitivity_ratio",
             ),
             longPressDelayMs = preferences.getString(
                 SliderSettingContracts.LONG_PRESS_DELAY_KEY,
@@ -98,10 +102,13 @@ class LegacySettingsRepository(context: Context) {
     private fun readEnumeratedIndex(contract: EnumeratedSliderContract): Int =
         contract.indexOf(preferences.getString(contract.key, contract.defaultValue))
 
-    private fun readEntryLabel(arrayName: String, index: Int): String {
+    private fun readEntryLabel(arrayName: String, index: Int): String =
+        readEntryLabels(arrayName)[index]
+
+    private fun readEntryLabels(arrayName: String): List<String> {
         val id = resources.getIdentifier(arrayName, "array", applicationContext.packageName)
         require(id != 0) { "Missing legacy entries array: $arrayName" }
-        return resources.getStringArray(id)[index]
+        return resources.getStringArray(id).toList()
     }
 
     private fun deviceDefault(arrayName: String, fallback: String): String {
@@ -160,8 +167,10 @@ data class SliderSettingsSnapshot(
     val vibration: ResolvedSetting<Int>,
     val keyboardHeightIndex: Int,
     val keyboardHeightLabel: String,
+    val keyboardHeightLabels: List<String>,
     val slideSensitivityIndex: Int,
     val slideSensitivityLabel: String,
+    val slideSensitivityLabels: List<String>,
     val longPressDelayMs: Int,
     val handwritingTimeoutIndex: Int,
     val handwritingTimeoutLabel: String,

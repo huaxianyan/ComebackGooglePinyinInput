@@ -138,8 +138,14 @@ explicit zero.
 The first narrowly scoped write stage enables only keyboard height and slide
 sensitivity. Both use the same typed enumerated write path, persist the exact
 legacy String from the audited ordered value arrays, reject out-of-range indices,
-and publish one SharedPreferences update only when a drag finishes. Sound,
-vibration, long-press, and handwriting controls remain read-only. This stage has
+and publish one SharedPreferences update only when a drag finishes. During the
+drag, the visible localized label is derived from the transient snapped index,
+so UI feedback is immediate without increasing persistence frequency. Slider
+endpoints apply Compose `WindowInsets.safeGestures` horizontal padding in
+addition to the page margin; this keeps the official Slider gesture target out
+of gesture-navigation Back edges without hard-coding a device inset or replacing
+Material 3 pointer handling. Sound, vibration, long-press, and handwriting
+controls remain read-only. This stage has
 no Boolean, Float, integer, remove, clear, reset, or preview write path.
 
 For device testing, `build_modern_settings_host.py --audit-launcher` can add a

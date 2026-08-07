@@ -8,9 +8,14 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeGestures
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -143,6 +148,7 @@ private fun StagedSettingsScreen(
                     title = "键盘高度",
                     value = snapshot.keyboardHeightIndex.toFloat(),
                     valueText = snapshot.keyboardHeightLabel,
+                    valueTextForIndex = snapshot.keyboardHeightLabels::get,
                     maximumIndex = SliderSettingContracts.keyboardHeight.values.lastIndex,
                     editable = true,
                     onValueCommit = onKeyboardHeightChange,
@@ -153,6 +159,7 @@ private fun StagedSettingsScreen(
                     title = "滑动灵敏度",
                     value = snapshot.slideSensitivityIndex.toFloat(),
                     valueText = snapshot.slideSensitivityLabel,
+                    valueTextForIndex = snapshot.slideSensitivityLabels::get,
                     maximumIndex = SliderSettingContracts.slideSensitivity.values.lastIndex,
                     editable = true,
                     onValueCommit = onSlideSensitivityChange,
@@ -321,6 +328,7 @@ private fun DiscreteReadOnlySlider(
     title: String,
     value: Float,
     valueText: String,
+    valueTextForIndex: ((Int) -> String)? = null,
     maximumIndex: Int,
     dependencyEnabled: Boolean = true,
     editable: Boolean = false,
@@ -328,6 +336,8 @@ private fun DiscreteReadOnlySlider(
 ) {
     var displayedValue by remember(value) { mutableFloatStateOf(value) }
     val interactionEnabled = editable && dependencyEnabled
+    val displayedIndex = displayedValue.roundToInt().coerceIn(0, maximumIndex)
+    val displayedValueText = valueTextForIndex?.invoke(displayedIndex) ?: valueText
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -344,7 +354,7 @@ private fun DiscreteReadOnlySlider(
                 style = MaterialTheme.typography.bodyLarge,
             )
             Text(
-                valueText,
+                displayedValueText,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.labelLarge,
             )
@@ -360,8 +370,9 @@ private fun DiscreteReadOnlySlider(
             enabled = interactionEnabled,
             modifier = Modifier
                 .fillMaxWidth()
+                .windowInsetsPadding(WindowInsets.safeGestures.only(WindowInsetsSides.Horizontal))
                 .semantics {
-                    contentDescription = "$title，$valueText，" +
+                    contentDescription = "$title，$displayedValueText，" +
                         if (interactionEnabled) "可调整" else "只读"
                 },
         )
