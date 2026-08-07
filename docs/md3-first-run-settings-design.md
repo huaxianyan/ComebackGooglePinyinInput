@@ -156,7 +156,15 @@ fallback; it is not a prerequisite for a valid MD3 layout.
    the MD3 terminal stop indicator rather than an unreadable field of 60–101
    dots. A live value label and endpoint labels remain visible. Active parts use
    the accepted neutral `onSurfaceVariant`
-   palette rather than a blue `primary` accent.
+   palette rather than a blue `primary` accent. The implementation follows the
+   current Material Components `Widget.Material3.Slider` contract: the M3 style
+   makes the halo transparent, owns touch-to-value mapping, invalidates after
+   every snapped value, suppresses indicators beneath the handle, and extends
+   the outer track corner beyond the endpoint handle center. The legacy
+   `android.widget.SeekBar` remains only as the type required by the old
+   Preference classes; `Md3SliderView` owns listener dispatch, touch tracking,
+   progress invalidation and rendering, with platform background, foreground
+   and state animator explicitly removed.
    Values commit when tracking stops through each original Preference's value
    conversion, `callChangeListener()` and persistence type; volume and vibration
    retain their original release-time previews. Volume, vibration and long-press

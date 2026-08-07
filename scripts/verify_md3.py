@@ -224,6 +224,9 @@ def main() -> None:
             'android:textColor="@color/settings_md3_slider_supporting"',
             'android:textColor="@color/settings_md3_slider_title"',
             'android:background="@drawable/bg_settings_md3_inline_action"',
+            'android:background="@null"',
+            'android:foreground="@null"',
+            'android:stateListAnimator="@null"',
         ),
         "inline MD3 slider row",
     )
@@ -246,12 +249,17 @@ def main() -> None:
             "Canvas;->drawRect(Landroid/graphics/RectF;Landroid/graphics/Paint;)V",
             "drawIndicators(Landroid/graphics/Canvas;FFF)V",
             "requestDisallowInterceptTouchEvent(Z)V",
+            ".method public setOnSeekBarChangeListener(Landroid/widget/SeekBar$OnSeekBarChangeListener;)V",
+            ".method public declared-synchronized setProgress(I)V",
+            ".method private updateFromTouch(Landroid/view/MotionEvent;)V",
             ".method public setEnabled(Z)V",
         ),
         "platform-independent MD3 slider rendering",
     )
     if "settings_md3_primary" in slider_view:
         raise RuntimeError("Inline MD3 sliders must use the accepted neutral palette")
+    if "SeekBar;->onTouchEvent" in slider_view:
+        raise RuntimeError("Inline MD3 sliders must not reuse the legacy SeekBar touch state machine")
     slider_base = (decoded / "smali/axf.smali").read_text(encoding="utf-8")
     require(
         slider_base,

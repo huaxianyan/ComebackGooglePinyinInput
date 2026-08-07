@@ -58,7 +58,10 @@
         android:id="@id/seek_bar"
         android:layout_width="match_parent"
         android:layout_height="48dp"
-        android:layout_marginTop="2dp" />
+        android:layout_marginTop="2dp"
+        android:background="@null"
+        android:foreground="@null"
+        android:stateListAnimator="@null" />
 
     <LinearLayout
         android:orientation="horizontal"

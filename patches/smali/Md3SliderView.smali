@@ -8,6 +8,7 @@
 .field private surfaceColor:I
 .field private interaction:F
 .field private animator:Landroid/animation/ValueAnimator;
+.field private listener:Landroid/widget/SeekBar$OnSeekBarChangeListener;
 
 .method public constructor <init>(Landroid/content/Context;Landroid/util/AttributeSet;)V
     .locals 2
@@ -51,6 +52,11 @@
     const/4 v1, 0x0
     invoke-direct {v0, v1}, Landroid/graphics/drawable/ColorDrawable;-><init>(I)V
     invoke-virtual {p0, v0}, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->setProgressDrawable(Landroid/graphics/drawable/Drawable;)V
+
+    const/4 v0, 0x0
+    invoke-virtual {p0, v0}, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->setBackground(Landroid/graphics/drawable/Drawable;)V
+    invoke-virtual {p0, v0}, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->setForeground(Landroid/graphics/drawable/Drawable;)V
+    invoke-virtual {p0, v0}, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->setStateListAnimator(Landroid/animation/StateListAnimator;)V
 
     iget v0, p0, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->density:F
     const/high16 v1, 0x41a00000    # 20.0f
@@ -117,47 +123,126 @@
     return-void
 .end method
 
-.method public onTouchEvent(Landroid/view/MotionEvent;)Z
-    .locals 3
+.method public setOnSeekBarChangeListener(Landroid/widget/SeekBar$OnSeekBarChangeListener;)V
+    .locals 0
+    iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->listener:Landroid/widget/SeekBar$OnSeekBarChangeListener;
+    return-void
+.end method
 
+.method public declared-synchronized setProgress(I)V
+    .locals 2
+    invoke-super {p0, p1}, Landroid/widget/SeekBar;->setProgress(I)V
+    invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->getProgress()I
+    move-result v0
+    iget-object v1, p0, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->listener:Landroid/widget/SeekBar$OnSeekBarChangeListener;
+    if-eqz v1, :redraw
+    const/4 p1, 0x0
+    invoke-interface {v1, p0, v0, p1}, Landroid/widget/SeekBar$OnSeekBarChangeListener;->onProgressChanged(Landroid/widget/SeekBar;IZ)V
+    :redraw
+    invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->invalidate()V
+    return-void
+.end method
+
+.method private updateFromTouch(Landroid/view/MotionEvent;)V
+    .locals 8
+    invoke-virtual {p1}, Landroid/view/MotionEvent;->getX()F
+    move-result v0
+    invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->getPaddingLeft()I
+    move-result v1
+    int-to-float v1, v1
+    invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->getWidth()I
+    move-result v2
+    invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->getPaddingRight()I
+    move-result v3
+    sub-int/2addr v2, v3
+    int-to-float v2, v2
+    invoke-static {v0, v1}, Ljava/lang/Math;->max(FF)F
+    move-result v0
+    invoke-static {v0, v2}, Ljava/lang/Math;->min(FF)F
+    move-result v0
+    sub-float/2addr v0, v1
+    sub-float v3, v2, v1
+    div-float/2addr v0, v3
+    invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->getLayoutDirection()I
+    move-result v3
+    const/4 v4, 0x1
+    if-ne v3, v4, :scale
+    const/high16 v3, 0x3f800000    # 1.0f
+    sub-float v0, v3, v0
+    :scale
+    invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->getMax()I
+    move-result v3
+    int-to-float v4, v3
+    mul-float/2addr v0, v4
+    invoke-static {v0}, Ljava/lang/Math;->round(F)I
+    move-result v3
+    invoke-super {p0, v3}, Landroid/widget/SeekBar;->setProgress(I)V
+    invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->getProgress()I
+    move-result v3
+    iget-object v4, p0, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->listener:Landroid/widget/SeekBar$OnSeekBarChangeListener;
+    if-eqz v4, :redraw
+    const/4 v5, 0x1
+    invoke-interface {v4, p0, v3, v5}, Landroid/widget/SeekBar$OnSeekBarChangeListener;->onProgressChanged(Landroid/widget/SeekBar;IZ)V
+    :redraw
+    invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->invalidate()V
+    return-void
+.end method
+
+.method public onTouchEvent(Landroid/view/MotionEvent;)Z
+    .locals 4
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->isEnabled()Z
     move-result v0
     if-nez v0, :enabled
     const/4 v0, 0x0
     return v0
-
     :enabled
     invoke-virtual {p1}, Landroid/view/MotionEvent;->getActionMasked()I
     move-result v0
-    if-nez v0, :release
+    if-nez v0, :move
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->getParent()Landroid/view/ViewParent;
     move-result-object v1
-    if-eqz v1, :press
+    if-eqz v1, :start
     const/4 v2, 0x1
     invoke-interface {v1, v2}, Landroid/view/ViewParent;->requestDisallowInterceptTouchEvent(Z)V
-    :press
+    :start
+    iget-object v1, p0, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->listener:Landroid/widget/SeekBar$OnSeekBarChangeListener;
+    if-eqz v1, :animate_press
+    invoke-interface {v1, p0}, Landroid/widget/SeekBar$OnSeekBarChangeListener;->onStartTrackingTouch(Landroid/widget/SeekBar;)V
+    :animate_press
     const/high16 v1, 0x3f800000    # 1.0f
     invoke-direct {p0, v1}, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->animateInteraction(F)V
-    goto :dispatch
-
+    invoke-direct {p0, p1}, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->updateFromTouch(Landroid/view/MotionEvent;)V
+    const/4 v0, 0x1
+    return v0
+    :move
+    const/4 v1, 0x2
+    if-ne v0, v1, :release
+    invoke-direct {p0, p1}, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->updateFromTouch(Landroid/view/MotionEvent;)V
+    const/4 v0, 0x1
+    return v0
     :release
     const/4 v1, 0x1
-    if-eq v0, v1, :animate_release
+    if-eq v0, v1, :finish_with_value
     const/4 v1, 0x3
-    if-ne v0, v1, :dispatch
-    :animate_release
+    if-ne v0, v1, :handled
+    goto :finish
+    :finish_with_value
+    invoke-direct {p0, p1}, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->updateFromTouch(Landroid/view/MotionEvent;)V
+    :finish
     const/4 v1, 0x0
     int-to-float v1, v1
     invoke-direct {p0, v1}, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->animateInteraction(F)V
+    iget-object v1, p0, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->listener:Landroid/widget/SeekBar$OnSeekBarChangeListener;
+    if-eqz v1, :allow_parent
+    invoke-interface {v1, p0}, Landroid/widget/SeekBar$OnSeekBarChangeListener;->onStopTrackingTouch(Landroid/widget/SeekBar;)V
+    :allow_parent
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->getParent()Landroid/view/ViewParent;
     move-result-object v1
-    if-eqz v1, :dispatch
+    if-eqz v1, :handled
     const/4 v2, 0x0
     invoke-interface {v1, v2}, Landroid/view/ViewParent;->requestDisallowInterceptTouchEvent(Z)V
-
-    :dispatch
-    invoke-super {p0, p1}, Landroid/widget/SeekBar;->onTouchEvent(Landroid/view/MotionEvent;)Z
-    move-result v0
+    :handled
+    const/4 v0, 0x1
     return v0
 .end method
 
@@ -333,10 +418,11 @@
     move-result v9
     const/4 v7, 0x1
     if-ne v9, v7, :inactive_ltr
-    cmpg-float v9, v1, v10
-    if-gez v9, :active
+    sub-float v9, v1, v4
+    cmpg-float v7, v9, v10
+    if-gez v7, :active
     new-instance v7, Landroid/graphics/RectF;
-    invoke-direct {v7, v1, v12, v10, v13}, Landroid/graphics/RectF;-><init>(FFFF)V
+    invoke-direct {v7, v9, v12, v10, v13}, Landroid/graphics/RectF;-><init>(FFFF)V
     invoke-virtual {p1, v7, v4, v4, v5}, Landroid/graphics/Canvas;->drawRoundRect(Landroid/graphics/RectF;FFLandroid/graphics/Paint;)V
     sub-float v9, v10, v4
     new-instance v7, Landroid/graphics/RectF;
@@ -344,10 +430,11 @@
     invoke-virtual {p1, v7, v5}, Landroid/graphics/Canvas;->drawRect(Landroid/graphics/RectF;Landroid/graphics/Paint;)V
     goto :active
     :inactive_ltr
-    cmpg-float v9, v11, v0
-    if-gez v9, :active
+    add-float v9, v0, v4
+    cmpg-float v7, v11, v9
+    if-gez v7, :active
     new-instance v7, Landroid/graphics/RectF;
-    invoke-direct {v7, v11, v12, v0, v13}, Landroid/graphics/RectF;-><init>(FFFF)V
+    invoke-direct {v7, v11, v12, v9, v13}, Landroid/graphics/RectF;-><init>(FFFF)V
     invoke-virtual {p1, v7, v4, v4, v5}, Landroid/graphics/Canvas;->drawRoundRect(Landroid/graphics/RectF;FFLandroid/graphics/Paint;)V
     add-float v9, v11, v4
     new-instance v7, Landroid/graphics/RectF;
@@ -361,10 +448,11 @@
     move-result v9
     const/4 v7, 0x1
     if-ne v9, v7, :active_ltr
-    cmpg-float v9, v11, v0
-    if-gez v9, :state
+    add-float v9, v0, v4
+    cmpg-float v7, v11, v9
+    if-gez v7, :state
     new-instance v7, Landroid/graphics/RectF;
-    invoke-direct {v7, v11, v12, v0, v13}, Landroid/graphics/RectF;-><init>(FFFF)V
+    invoke-direct {v7, v11, v12, v9, v13}, Landroid/graphics/RectF;-><init>(FFFF)V
     invoke-virtual {p1, v7, v4, v4, v5}, Landroid/graphics/Canvas;->drawRoundRect(Landroid/graphics/RectF;FFLandroid/graphics/Paint;)V
     add-float v9, v11, v4
     new-instance v7, Landroid/graphics/RectF;
@@ -372,10 +460,11 @@
     invoke-virtual {p1, v7, v5}, Landroid/graphics/Canvas;->drawRect(Landroid/graphics/RectF;Landroid/graphics/Paint;)V
     goto :state
     :active_ltr
-    cmpg-float v9, v1, v10
-    if-gez v9, :state
+    sub-float v9, v1, v4
+    cmpg-float v7, v9, v10
+    if-gez v7, :state
     new-instance v7, Landroid/graphics/RectF;
-    invoke-direct {v7, v1, v12, v10, v13}, Landroid/graphics/RectF;-><init>(FFFF)V
+    invoke-direct {v7, v9, v12, v10, v13}, Landroid/graphics/RectF;-><init>(FFFF)V
     invoke-virtual {p1, v7, v4, v4, v5}, Landroid/graphics/Canvas;->drawRoundRect(Landroid/graphics/RectF;FFLandroid/graphics/Paint;)V
     sub-float v9, v10, v4
     new-instance v7, Landroid/graphics/RectF;
