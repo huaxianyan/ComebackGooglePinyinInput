@@ -83,6 +83,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("decoded", type=Path)
     parser.add_argument("--package", required=True, dest="package_name")
+    parser.add_argument("--audit-launcher", action="store_true")
     args = parser.parse_args()
 
     manifest = args.decoded / "AndroidManifest.xml"
@@ -114,7 +115,30 @@ def main() -> int:
     activity = ET.SubElement(application, "activity")
     activity.set(A + "name", ACTIVITY)
     activity.set(A + "exported", "true")
+    activity.set(A + "enabled", "@bool/modern_settings_runtime_enabled")
     activity.set(A + "theme", "@android:style/Theme.Material.Light.NoActionBar")
+    if args.audit_launcher:
+        activity.set(A + "label", "Material 3 设置审计")
+        intent_filter = ET.SubElement(activity, "intent-filter")
+        action = ET.SubElement(intent_filter, "action")
+        action.set(A + "name", "android.intent.action.MAIN")
+        category = ET.SubElement(intent_filter, "category")
+        category.set(A + "name", "android.intent.category.LAUNCHER")
+
+    values = args.decoded / "res/values"
+    values_v35 = args.decoded / "res/values-v35"
+    values.mkdir(parents=True, exist_ok=True)
+    values_v35.mkdir(parents=True, exist_ok=True)
+    (values / "modern_settings_runtime.xml").write_text(
+        '<?xml version="1.0" encoding="utf-8"?>\n'
+        '<resources><bool name="modern_settings_runtime_enabled">false</bool></resources>\n',
+        encoding="utf-8",
+    )
+    (values_v35 / "modern_settings_runtime.xml").write_text(
+        '<?xml version="1.0" encoding="utf-8"?>\n'
+        '<resources><bool name="modern_settings_runtime_enabled">true</bool></resources>\n',
+        encoding="utf-8",
+    )
 
     remove_component(application, "provider", "androidx.startup.InitializationProvider")
     remove_component(application, "receiver", "androidx.profileinstaller.ProfileInstallReceiver")

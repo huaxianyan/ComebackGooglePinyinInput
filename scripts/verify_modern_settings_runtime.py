@@ -125,6 +125,8 @@ def main() -> int:
             "androidx.startup.InitializationProvider",
             "androidx.profileinstaller.ProfileInstallReceiver",
             'application.set(T + "remove", "android:appComponentFactory")',
+            'activity.set(A + "enabled", "@bool/modern_settings_runtime_enabled")',
+            'values_v35 / "modern_settings_runtime.xml"',
             'uses_sdk.set(T + "overrideLibrary"',
         ),
         "guarded legacy manifest",
@@ -139,8 +141,21 @@ def main() -> int:
                 "com.google.android.apps.inputmethod.pinyin.PinyinApp",
                 "com.google.android.inputmethod.pinyin.PinyinIME",
                 "ComposeSettingsPrototypeActivity",
+                'android:enabled="@bool/modern_settings_runtime_enabled"',
             ),
             "combined host manifest",
+        )
+        values_text = "\n".join(
+            path.read_text(encoding="utf-8")
+            for path in decoded.glob("res/values*/**/*.xml")
+        )
+        require(
+            values_text,
+            (
+                '<bool name="modern_settings_runtime_enabled">false</bool>',
+                '<bool name="modern_settings_runtime_enabled">true</bool>',
+            ),
+            "API-35 modern activity gate",
         )
         apktool_yml = (decoded / "apktool.yml").read_text(encoding="utf-8")
         require(

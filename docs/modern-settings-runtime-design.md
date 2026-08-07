@@ -141,6 +141,13 @@ legacy String from the audited ordered value arrays, reject out-of-range indices
 and publish one SharedPreferences update only when a drag finishes. Sound,
 vibration, long-press, and handwriting controls remain read-only. This stage has
 no Boolean, Float, integer, remove, clear, reset, or preview write path.
+
+For device testing, `build_modern_settings_host.py --audit-launcher` can add a
+launcher entry labelled “Material 3 设置审计” to an isolated audit package. The
+activity is always guarded by `@bool/modern_settings_runtime_enabled`: false in
+base resources and true only in `values-v35`, so API 17–34 cannot launch or load
+the Compose activity. Formal host builds omit the audit launcher and will route
+from the legacy settings entry point instead.
 Section and title strings are still prototype-only, but enum value labels now
 come from the original localized `entries_*` arrays (for example low, normal,
 high) while their exact stored values remain separate in the contract. A

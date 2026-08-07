@@ -40,6 +40,11 @@ def main() -> int:
     parser.add_argument("--key-alias", required=True)
     parser.add_argument("--ks-pass-env", default="MODERN_SETTINGS_KS_PASS")
     parser.add_argument("--key-pass-env", default="MODERN_SETTINGS_KEY_PASS")
+    parser.add_argument(
+        "--audit-launcher",
+        action="store_true",
+        help="add an API-35+-guarded launcher entry to an isolated audit package",
+    )
     args = parser.parse_args()
 
     for path in (args.original, args.apktool, args.gradle, args.keystore):
@@ -92,15 +97,16 @@ def main() -> int:
             args.application_id,
         ]
     )
-    run(
-        [
-            python,
-            str(ROOT / "scripts/prepare_compose_host_manifest.py"),
-            str(decoded),
-            "--package",
-            args.application_id,
-        ]
-    )
+    manifest_command = [
+        python,
+        str(ROOT / "scripts/prepare_compose_host_manifest.py"),
+        str(decoded),
+        "--package",
+        args.application_id,
+    ]
+    if args.audit_launcher:
+        manifest_command.append("--audit-launcher")
+    run(manifest_command)
 
     gradle_home = ROOT / "work/modern-settings-gradle-home"
     gradle_home.mkdir(parents=True, exist_ok=True)
