@@ -28,8 +28,14 @@ def main() -> None:
         if items != [expected]:
             raise RuntimeError(f"{name} must contain only {expected}, found {items}")
 
-    shell = (decoded / "res/layout/first_run.xml").read_text(encoding="utf-8")
-    require(shell, ("NonSwipeableFirstRunViewPager", 'android:paddingBottom="0dp"'), "first-run shell")
+    shell_path = decoded / "res/layout/first_run.xml"
+    shell = shell_path.read_text(encoding="utf-8")
+    require(shell, ("NonSwipeableFirstRunViewPager",), "first-run shell")
+    shell_root = ET.parse(shell_path).getroot()
+    pager = next((node for node in shell_root.iter() if node.tag.endswith("NonSwipeableFirstRunViewPager")), None)
+    padding_bottom = None if pager is None else pager.attrib.get("{http://schemas.android.com/apk/res/android}paddingBottom")
+    if padding_bottom not in ("0dp", "0.0dip"):
+        raise RuntimeError(f"first-run shell bottom padding must be zero, found {padding_bottom!r}")
     if "first_run_page_footer" in shell or "navi_next" in shell or "navi_skip" in shell:
         raise RuntimeError("Single-page first run must not retain pager navigation controls")
 
@@ -140,12 +146,17 @@ def main() -> None:
         "res/layout-v35/md3_switch_preference_widget.xml",
         "smali/com/google/android/inputmethod/pinyin/Md3SwitchView.smali",
         "smali/com/google/android/inputmethod/pinyin/Md3SwitchView$AnimatorUpdateListener.smali",
-        "res/values-v35/md3_settings.xml",
-        "res/values-night-v35/md3_settings.xml",
         "res/xml-v35/settings.xml",
     ):
         if not (decoded / relative).is_file():
             raise RuntimeError(f"Missing MD3 settings resource: {relative}")
+    for directory in ("res/values-v35", "res/values-night-v35"):
+        values_dir = decoded / directory
+        values_text = "\n".join(
+            path.read_text(encoding="utf-8") for path in values_dir.glob("*.xml")
+        )
+        if "settings_md3_on_surface_variant" not in values_text:
+            raise RuntimeError(f"Missing MD3 settings values in {directory}")
 
     checkbox_widget = (decoded / "res/layout-v35/md3_switch_widget.xml").read_text(
         encoding="utf-8"
@@ -165,11 +176,14 @@ def main() -> None:
                 'android:clickable="false"',
                 'android:focusable="false"',
                 'android:importantForAccessibility="no"',
-                'android:layout_width="52dp"',
-                'android:layout_height="48dp"',
             ),
             f"row-owned MD3 switch widget {binding_id}",
         )
+        widget_root = ET.fromstring(widget)
+        width = widget_root.attrib.get("{http://schemas.android.com/apk/res/android}layout_width")
+        height = widget_root.attrib.get("{http://schemas.android.com/apk/res/android}layout_height")
+        if width not in ("52dp", "52.0dip") or height not in ("48dp", "48.0dip"):
+            raise RuntimeError(f"MD3 switch geometry changed: {width} x {height}")
     switch_view = (
         decoded / "smali/com/google/android/inputmethod/pinyin/Md3SwitchView.smali"
     ).read_text(encoding="utf-8")
@@ -235,10 +249,14 @@ def main() -> None:
         if actual != expected_header:
             raise RuntimeError(f"MD3 settings header routing changed: {actual!r}")
         drawable = icon.removeprefix("@drawable/") + ".xml"
-        drawable_path = decoded / "res/drawable-v35" / drawable
-        if not drawable_path.is_file():
+        drawable_candidates = (
+            decoded / "res/drawable-v35" / drawable,
+            decoded / "res/drawable-anydpi-v35" / drawable,
+        )
+        drawable_path = next((path for path in drawable_candidates if path.is_file()), None)
+        if drawable_path is None:
             raise RuntimeError(f"Missing MD3 settings header icon: {drawable}")
-        drawable_text = drawable_path.read_text(encoding="utf-8")
+        drawable_text = drawable_path.read_text(encoding="utf-8").replace("#ffffffff", "#FFFFFFFF")
         require(
             drawable_text,
             (

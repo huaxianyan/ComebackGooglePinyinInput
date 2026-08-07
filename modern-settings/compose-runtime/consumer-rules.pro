@@ -1,0 +1,1 @@
+-keep public class com.google.android.inputmethod.pinyin.modernsettings.compose.** { public protected *; }
