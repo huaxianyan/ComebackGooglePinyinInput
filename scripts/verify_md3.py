@@ -142,6 +142,10 @@ def main() -> None:
         "res/layout-v35/md3_switch_preference_widget.xml",
         "res/layout-v35/md3_inline_slider_preference.xml",
         "res/drawable-v35/bg_settings_md3_inline_action.xml",
+        "res/color-v35/settings_md3_slider_title.xml",
+        "res/color-v35/settings_md3_slider_supporting.xml",
+        "res/color-night-v35/settings_md3_slider_title.xml",
+        "res/color-night-v35/settings_md3_slider_supporting.xml",
         "smali/com/google/android/inputmethod/pinyin/Md3SwitchView.smali",
         "smali/com/google/android/inputmethod/pinyin/Md3SliderView.smali",
         "smali/com/google/android/inputmethod/pinyin/Md3SliderView$InteractionUpdateListener.smali",
@@ -217,7 +221,8 @@ def main() -> None:
             'android:labelFor="@id/seek_bar"',
             'android:id="@id/md3_slider_reset"',
             'android:text="@string/button_default"',
-            'android:textColor="@color/settings_md3_on_surface_variant"',
+            'android:textColor="@color/settings_md3_slider_supporting"',
+            'android:textColor="@color/settings_md3_slider_title"',
             'android:background="@drawable/bg_settings_md3_inline_action"',
         ),
         "inline MD3 slider row",
@@ -231,12 +236,17 @@ def main() -> None:
             ".super Landroid/widget/SeekBar;",
             'const-string v0, "settings_md3_on_surface_variant"',
             'const-string v0, "settings_md3_outline_variant"',
+            'const-string v0, "settings_md3_surface"',
             'const/high16 v4, 0x41000000    # 8.0f',
             'const/high16 v4, 0x41b00000    # 22.0f',
             "Landroid/graphics/Canvas;->drawRoundRect(Landroid/graphics/RectF;FFLandroid/graphics/Paint;)V",
             "Landroid/animation/ValueAnimator;->ofFloat([F)Landroid/animation/ValueAnimator;",
             "const-wide/16 v1, 0x96",
             "Md3SliderView$InteractionUpdateListener;",
+            "Canvas;->drawRect(Landroid/graphics/RectF;Landroid/graphics/Paint;)V",
+            "drawIndicators(Landroid/graphics/Canvas;FFF)V",
+            "requestDisallowInterceptTouchEvent(Z)V",
+            ".method public setEnabled(Z)V",
         ),
         "platform-independent MD3 slider rendering",
     )
@@ -249,6 +259,7 @@ def main() -> None:
             ".method protected onBindView(Landroid/view/View;)V",
             ".method protected onClick()V",
             ".method public c(I)V",
+            ".method public h(I)I",
             ".method public d()V",
             ".method public e(Landroid/view/View;)V",
             "const/16 v1, 0x23",
@@ -258,7 +269,11 @@ def main() -> None:
         "API-35 inline slider lifecycle",
     )
     slider_listener = (decoded / "smali/axg.smali").read_text(encoding="utf-8")
-    require(slider_listener, ("Laxf;->b(I)V", "Laxf;->c(I)V"), "inline slider preview and commit")
+    require(
+        slider_listener,
+        ("Laxf;->h(I)I", "Laxf;->b(I)V", "Laxf;->c(I)V"),
+        "inline slider mapping, preview and commit",
+    )
     reset_compat = (
         decoded / "smali/com/google/android/inputmethod/pinyin/Md3InlineSliderCompat.smali"
     ).read_text(encoding="utf-8")
@@ -280,6 +295,27 @@ def main() -> None:
         text = (decoded / relative).read_text(encoding="utf-8")
         if ".method public c(I)V" not in text:
             raise RuntimeError(f"Inline slider persistence missing from {relative}")
+
+    volume_slider = (
+        decoded / "smali/com/google/android/apps/inputmethod/libs/framework/preference/widget/VolumePreference.smali"
+    ).read_text(encoding="utf-8")
+    vibration_slider = (
+        decoded / "smali/com/google/android/apps/inputmethod/libs/framework/preference/widget/VibrationDurationPreference.smali"
+    ).read_text(encoding="utf-8")
+    for text, label, default_marker in (
+        (volume_slider, "volume", "inline_system_default"),
+        (vibration_slider, "vibration", "inline_vibration_default"),
+    ):
+        require(
+            text,
+            (
+                ".method public h(I)I",
+                "add-int/lit8 v0, p1, -0x1",
+                "add-int/lit8 v1, v1, 0x1",
+                default_marker,
+            ),
+            f"inline {label} system-default slot",
+        )
 
     slider_xml = "\n".join(
         path.read_text(encoding="utf-8")

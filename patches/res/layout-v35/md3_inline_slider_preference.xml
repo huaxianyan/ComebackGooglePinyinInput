@@ -25,7 +25,7 @@
             android:layout_weight="1"
             android:fontFamily="sans-serif-medium"
             android:textSize="16sp"
-            android:textColor="@color/settings_md3_on_surface"
+            android:textColor="@color/settings_md3_slider_title"
             android:labelFor="@id/seek_bar"
             android:maxLines="2"
             android:ellipsize="end" />
@@ -41,7 +41,7 @@
             android:background="@drawable/bg_settings_md3_inline_action"
             android:fontFamily="sans-serif-medium"
             android:textSize="14sp"
-            android:textColor="@color/settings_md3_on_surface_variant"
+            android:textColor="@color/settings_md3_slider_supporting"
             android:text="@string/button_default" />
         <TextView
             android:id="@id/seek_bar_text_top"
@@ -50,7 +50,7 @@
             android:layout_marginLeft="16dp"
             android:fontFamily="sans-serif-medium"
             android:textSize="14sp"
-            android:textColor="@color/settings_md3_on_surface_variant"
+            android:textColor="@color/settings_md3_slider_supporting"
             android:maxLines="1" />
     </LinearLayout>
 
@@ -73,7 +73,7 @@
             android:layout_weight="1"
             android:fontFamily="sans-serif"
             android:textSize="12sp"
-            android:textColor="@color/settings_md3_on_surface_variant" />
+            android:textColor="@color/settings_md3_slider_supporting" />
         <TextView
             android:id="@id/seek_bar_text_right"
             android:visibility="gone"
@@ -83,7 +83,7 @@
             android:layout_weight="1"
             android:fontFamily="sans-serif"
             android:textSize="12sp"
-            android:textColor="@color/settings_md3_on_surface_variant" />
+            android:textColor="@color/settings_md3_slider_supporting" />
     </LinearLayout>
 
     <TextView

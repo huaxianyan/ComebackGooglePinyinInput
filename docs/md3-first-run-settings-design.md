@@ -149,15 +149,22 @@ fallback; it is not a prerequisite for a valid MD3 layout.
    preferences render as inline MD3 sliders: sound volume, vibration duration,
    keyboard height, slide sensitivity, long-press delay, handwriting timeout
    and handwriting stroke width. The current MD3 geometry uses a 16 dp rounded
-   segmented track, a 4×44 dp vertical pill handle, a 6 dp handle gap, an
-   animated 150 ms pressed state layer/handle transition, a live value label and
-   endpoint labels. Active parts use the accepted neutral `onSurfaceVariant`
+   segmented track with square inner cuts and rounded outer ends, a 4×44 dp
+   vertical pill handle, a 6 dp handle gap, and an animated 150 ms handle-width
+   transition without a circular halo. Five- and seven-value sliders render one
+   stop indicator per selectable value; continuous/high-cardinality sliders use
+   the MD3 terminal stop indicator rather than an unreadable field of 60–101
+   dots. A live value label and endpoint labels remain visible. Active parts use
+   the accepted neutral `onSurfaceVariant`
    palette rather than a blue `primary` accent.
    Values commit when tracking stops through each original Preference's value
    conversion, `callChangeListener()` and persistence type; volume and vibration
    retain their original release-time previews. Volume, vibration and long-press
    rows also expose the original “默认” action inline and immediately rebind the
-   current Slider after reset, while list-backed sliders retain their original
+   current Slider after reset. Volume and vibration reserve a dedicated first
+   stop for the unset/system-default state, so manually selecting the first stop
+   and pressing “默认” share the same label and persistence semantics instead of
+   collapsing system default into numeric zero. List-backed sliders retain their original
    no-reset contract. Below API 35 the original dialog
    behavior remains intact.
 4. **Dictionary/backup:** health, directory, immediate backup and import lists.

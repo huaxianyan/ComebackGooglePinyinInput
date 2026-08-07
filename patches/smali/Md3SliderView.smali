@@ -5,6 +5,7 @@
 .field private density:F
 .field private activeColor:I
 .field private inactiveColor:I
+.field private surfaceColor:I
 .field private interaction:F
 .field private animator:Landroid/animation/ValueAnimator;
 
@@ -36,6 +37,12 @@
     invoke-static {p1, v0, v1}, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->resolveColor(Landroid/content/Context;Ljava/lang/String;I)I
     move-result v0
     iput v0, p0, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->inactiveColor:I
+
+    const-string v0, "settings_md3_surface"
+    const v1, -0x60601
+    invoke-static {p1, v0, v1}, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->resolveColor(Landroid/content/Context;Ljava/lang/String;I)I
+    move-result v0
+    iput v0, p0, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->surfaceColor:I
 
     const/4 v0, 0x0
     invoke-virtual {p0, v0}, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->setThumb(Landroid/graphics/drawable/Drawable;)V
@@ -113,9 +120,22 @@
 .method public onTouchEvent(Landroid/view/MotionEvent;)Z
     .locals 3
 
+    invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->isEnabled()Z
+    move-result v0
+    if-nez v0, :enabled
+    const/4 v0, 0x0
+    return v0
+
+    :enabled
     invoke-virtual {p1}, Landroid/view/MotionEvent;->getActionMasked()I
     move-result v0
     if-nez v0, :release
+    invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->getParent()Landroid/view/ViewParent;
+    move-result-object v1
+    if-eqz v1, :press
+    const/4 v2, 0x1
+    invoke-interface {v1, v2}, Landroid/view/ViewParent;->requestDisallowInterceptTouchEvent(Z)V
+    :press
     const/high16 v1, 0x3f800000    # 1.0f
     invoke-direct {p0, v1}, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->animateInteraction(F)V
     goto :dispatch
@@ -129,11 +149,32 @@
     const/4 v1, 0x0
     int-to-float v1, v1
     invoke-direct {p0, v1}, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->animateInteraction(F)V
+    invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->getParent()Landroid/view/ViewParent;
+    move-result-object v1
+    if-eqz v1, :dispatch
+    const/4 v2, 0x0
+    invoke-interface {v1, v2}, Landroid/view/ViewParent;->requestDisallowInterceptTouchEvent(Z)V
 
     :dispatch
     invoke-super {p0, p1}, Landroid/widget/SeekBar;->onTouchEvent(Landroid/view/MotionEvent;)Z
     move-result v0
     return v0
+.end method
+
+.method public setEnabled(Z)V
+    .locals 2
+    invoke-super {p0, p1}, Landroid/widget/SeekBar;->setEnabled(Z)V
+    if-nez p1, :done
+    iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->animator:Landroid/animation/ValueAnimator;
+    if-eqz v0, :clear
+    invoke-virtual {v0}, Landroid/animation/ValueAnimator;->cancel()V
+    :clear
+    const/4 v0, 0x0
+    int-to-float v0, v0
+    iput v0, p0, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->interaction:F
+    invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->invalidate()V
+    :done
+    return-void
 .end method
 
 .method protected onDetachedFromWindow()V
@@ -158,6 +199,64 @@
     const/16 v0, 0x61
     :apply
     invoke-virtual {p1, v0}, Landroid/graphics/Paint;->setAlpha(I)V
+    return-void
+.end method
+
+.method private drawIndicators(Landroid/graphics/Canvas;FFF)V
+    .locals 8
+
+    invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->getMax()I
+    move-result v0
+    if-lez v0, :done
+    iget-object v1, p0, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->paint:Landroid/graphics/Paint;
+    iget v2, p0, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->density:F
+    const/high16 v3, 0x40000000    # 2.0f
+    mul-float/2addr v2, v3
+    const/16 v3, 0xa
+    if-gt v0, v3, :continuous
+
+    invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->getProgress()I
+    move-result v4
+    const/4 v3, 0x0
+    :tick_loop
+    if-gt v3, v0, :done
+    int-to-float v5, v3
+    int-to-float v6, v0
+    div-float/2addr v5, v6
+    sub-float v6, p3, p2
+    mul-float/2addr v5, v6
+    add-float/2addr v5, p2
+    invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->getLayoutDirection()I
+    move-result v6
+    const/4 v7, 0x1
+    if-ne v6, v7, :tick_color
+    add-float v6, p2, p3
+    sub-float v5, v6, v5
+    :tick_color
+    if-le v3, v4, :active_tick
+    iget v6, p0, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->activeColor:I
+    goto :paint_tick
+    :active_tick
+    iget v6, p0, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->surfaceColor:I
+    :paint_tick
+    invoke-direct {p0, v1, v6}, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->setEnabledColor(Landroid/graphics/Paint;I)V
+    invoke-virtual {p1, v5, p4, v2, v1}, Landroid/graphics/Canvas;->drawCircle(FFFLandroid/graphics/Paint;)V
+    add-int/lit8 v3, v3, 0x1
+    goto :tick_loop
+
+    :continuous
+    iget v3, p0, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->activeColor:I
+    invoke-direct {p0, v1, v3}, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->setEnabledColor(Landroid/graphics/Paint;I)V
+    move v5, p3
+    invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->getLayoutDirection()I
+    move-result v3
+    const/4 v4, 0x1
+    if-ne v3, v4, :draw_stop
+    move v5, p2
+    :draw_stop
+    invoke-virtual {p1, v5, p4, v2, v1}, Landroid/graphics/Canvas;->drawCircle(FFFLandroid/graphics/Paint;)V
+
+    :done
     return-void
 .end method
 
@@ -239,6 +338,10 @@
     new-instance v7, Landroid/graphics/RectF;
     invoke-direct {v7, v1, v12, v10, v13}, Landroid/graphics/RectF;-><init>(FFFF)V
     invoke-virtual {p1, v7, v4, v4, v5}, Landroid/graphics/Canvas;->drawRoundRect(Landroid/graphics/RectF;FFLandroid/graphics/Paint;)V
+    sub-float v9, v10, v4
+    new-instance v7, Landroid/graphics/RectF;
+    invoke-direct {v7, v9, v12, v10, v13}, Landroid/graphics/RectF;-><init>(FFFF)V
+    invoke-virtual {p1, v7, v5}, Landroid/graphics/Canvas;->drawRect(Landroid/graphics/RectF;Landroid/graphics/Paint;)V
     goto :active
     :inactive_ltr
     cmpg-float v9, v11, v0
@@ -246,6 +349,10 @@
     new-instance v7, Landroid/graphics/RectF;
     invoke-direct {v7, v11, v12, v0, v13}, Landroid/graphics/RectF;-><init>(FFFF)V
     invoke-virtual {p1, v7, v4, v4, v5}, Landroid/graphics/Canvas;->drawRoundRect(Landroid/graphics/RectF;FFLandroid/graphics/Paint;)V
+    add-float v9, v11, v4
+    new-instance v7, Landroid/graphics/RectF;
+    invoke-direct {v7, v11, v12, v9, v13}, Landroid/graphics/RectF;-><init>(FFFF)V
+    invoke-virtual {p1, v7, v5}, Landroid/graphics/Canvas;->drawRect(Landroid/graphics/RectF;Landroid/graphics/Paint;)V
 
     :active
     iget v9, p0, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->activeColor:I
@@ -259,6 +366,10 @@
     new-instance v7, Landroid/graphics/RectF;
     invoke-direct {v7, v11, v12, v0, v13}, Landroid/graphics/RectF;-><init>(FFFF)V
     invoke-virtual {p1, v7, v4, v4, v5}, Landroid/graphics/Canvas;->drawRoundRect(Landroid/graphics/RectF;FFLandroid/graphics/Paint;)V
+    add-float v9, v11, v4
+    new-instance v7, Landroid/graphics/RectF;
+    invoke-direct {v7, v11, v12, v9, v13}, Landroid/graphics/RectF;-><init>(FFFF)V
+    invoke-virtual {p1, v7, v5}, Landroid/graphics/Canvas;->drawRect(Landroid/graphics/RectF;Landroid/graphics/Paint;)V
     goto :state
     :active_ltr
     cmpg-float v9, v1, v10
@@ -266,22 +377,13 @@
     new-instance v7, Landroid/graphics/RectF;
     invoke-direct {v7, v1, v12, v10, v13}, Landroid/graphics/RectF;-><init>(FFFF)V
     invoke-virtual {p1, v7, v4, v4, v5}, Landroid/graphics/Canvas;->drawRoundRect(Landroid/graphics/RectF;FFLandroid/graphics/Paint;)V
+    sub-float v9, v10, v4
+    new-instance v7, Landroid/graphics/RectF;
+    invoke-direct {v7, v9, v12, v10, v13}, Landroid/graphics/RectF;-><init>(FFFF)V
+    invoke-virtual {p1, v7, v5}, Landroid/graphics/Canvas;->drawRect(Landroid/graphics/RectF;Landroid/graphics/Paint;)V
 
     :state
-    iget v9, p0, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->interaction:F
-    const/4 v7, 0x0
-    int-to-float v7, v7
-    cmpl-float v7, v9, v7
-    if-lez v7, :handle
-    iget v7, p0, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->activeColor:I
-    invoke-virtual {v5, v7}, Landroid/graphics/Paint;->setColor(I)V
-    const/high16 v7, 0x41f80000    # 31.0f
-    mul-float/2addr v9, v7
-    float-to-int v9, v9
-    invoke-virtual {v5, v9}, Landroid/graphics/Paint;->setAlpha(I)V
-    const/high16 v9, 0x41a00000    # 20.0f
-    mul-float/2addr v9, v3
-    invoke-virtual {p1, v6, v2, v9, v5}, Landroid/graphics/Canvas;->drawCircle(FFFLandroid/graphics/Paint;)V
+    invoke-direct {p0, p1, v1, v0, v2}, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->drawIndicators(Landroid/graphics/Canvas;FFF)V
 
     :handle
     iget v9, p0, Lcom/google/android/inputmethod/pinyin/Md3SliderView;->activeColor:I

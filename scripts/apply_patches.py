@@ -2020,6 +2020,10 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
         "    .locals 0\n\n"
         "    return-void\n"
         ".end method\n\n"
+        ".method public h(I)I\n"
+        "    .locals 0\n\n"
+        "    return p1\n"
+        ".end method\n\n"
         ".method public d()V\n"
         "    .locals 2\n\n"
         "    const/4 v0, 0x0\n"
@@ -2056,15 +2060,179 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
     )
     replace_once(
         decoded / "smali/axg.smali",
+        "    invoke-virtual {v0, p2}, Laxf;->a(I)Ljava/lang/String;",
+        "    invoke-virtual {v0, p2}, Laxf;->h(I)I\n\n"
+        "    move-result p2\n\n"
+        "    invoke-virtual {v0, p2}, Laxf;->a(I)Ljava/lang/String;",
+    )
+    replace_once(
+        decoded / "smali/axg.smali",
         "    invoke-virtual {v0, v1}, Laxf;->b(I)V\n\n"
         "    .line 16\n"
         "    return-void",
+        "    invoke-virtual {v0, v1}, Laxf;->h(I)I\n\n"
+        "    move-result v1\n\n"
         "    invoke-virtual {v0, v1}, Laxf;->b(I)V\n\n"
         "    iget-object v0, p0, Laxg;->a:Laxf;\n\n"
         "    invoke-virtual {v0, v1}, Laxf;->c(I)V\n\n"
         "    .line 16\n"
         "    return-void",
     )
+    volume_preference = decoded / "smali/com/google/android/apps/inputmethod/libs/framework/preference/widget/VolumePreference.smali"
+    replace_once(
+        volume_preference,
+        "    invoke-super {p0, p1}, Laxh;->b(I)V\n\n"
+        "    .line 53\n"
+        "    iget-object v1, p0, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/VolumePreference;->a:Landroid/media/AudioManager;",
+        "    invoke-super {p0, p1}, Laxh;->b(I)V\n\n"
+        "    if-gez p1, :inline_no_volume_preview\n\n"
+        "    .line 53\n"
+        "    iget-object v1, p0, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/VolumePreference;->a:Landroid/media/AudioManager;",
+    )
+    replace_once(
+        volume_preference,
+        "    invoke-virtual {v1, v2, v0}, Landroid/media/AudioManager;->playSoundEffect(IF)V\n\n"
+        "    .line 56\n"
+        "    return-void\n"
+        ".end method\n\n.method protected onBindDialogView",
+        "    invoke-virtual {v1, v2, v0}, Landroid/media/AudioManager;->playSoundEffect(IF)V\n\n"
+        "    :inline_no_volume_preview\n"
+        "    .line 56\n"
+        "    return-void\n"
+        ".end method\n\n.method protected onBindDialogView",
+    )
+    replace_once(
+        volume_preference,
+        "    .line 24\n    mul-int/lit8 v0, p1, 0x64",
+        "    .line 24\n    if-gez p1, :inline_system_default\n\n"
+        "    mul-int/lit8 v0, p1, 0x64",
+    )
+    replace_once(
+        volume_preference,
+        "    const-string v1, \"%\"\n\n"
+        "    invoke-virtual {v0, v1}, Ljava/lang/String;->concat(Ljava/lang/String;)Ljava/lang/String;\n\n"
+        "    move-result-object v0\n\n"
+        "    return-object v0\n.end method\n\n.method public final b(I)V",
+        "    const-string v1, \"%\"\n\n"
+        "    invoke-virtual {v0, v1}, Ljava/lang/String;->concat(Ljava/lang/String;)Ljava/lang/String;\n\n"
+        "    move-result-object v0\n\n"
+        "    return-object v0\n\n"
+        "    :inline_system_default\n"
+        "    iget v0, p0, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/VolumePreference;->a:F\n"
+        "    invoke-direct {p0, v0}, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/VolumePreference;->a(F)Ljava/lang/String;\n"
+        "    move-result-object v0\n"
+        "    return-object v0\n"
+        ".end method\n\n.method public final b(I)V",
+    )
+
+    vibration_preference = decoded / "smali/com/google/android/apps/inputmethod/libs/framework/preference/widget/VibrationDurationPreference.smali"
+    replace_once(
+        vibration_preference,
+        "    .line 17\n    iget-object v0, p0, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/VibrationDurationPreference;->a:Landroid/content/Context;",
+        "    .line 17\n    if-gez p1, :inline_vibration_default\n\n"
+        "    iget-object v0, p0, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/VibrationDurationPreference;->a:Landroid/content/Context;",
+    )
+    replace_once(
+        vibration_preference,
+        "    move-result-object v0\n\n"
+        "    return-object v0\n.end method\n\n.method public final b(I)V",
+        "    move-result-object v0\n\n"
+        "    return-object v0\n\n"
+        "    :inline_vibration_default\n"
+        "    iget v0, p0, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/VibrationDurationPreference;->b:I\n"
+        "    invoke-direct {p0, v0}, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/VibrationDurationPreference;->b(I)Ljava/lang/String;\n"
+        "    move-result-object v0\n"
+        "    return-object v0\n"
+        ".end method\n\n.method public final b(I)V",
+    )
+
+    replace_once(
+        volume_preference,
+        ".method protected onBindDialogView(Landroid/view/View;)V\n"
+        "    .locals 1\n\n"
+        "    .prologue\n"
+        "    .line 33\n"
+        "    invoke-super {p0, p1}, Laxh;->onBindDialogView(Landroid/view/View;)V\n\n"
+        "    .line 34\n"
+        "    iget v0, p0, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/VolumePreference;->a:F\n\n"
+        "    invoke-virtual {p0, v0}, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/VolumePreference;->getPersistedFloat(F)F\n\n"
+        "    move-result v0\n\n"
+        "    invoke-static {v0}, Ljava/lang/Float;->valueOf(F)Ljava/lang/Float;\n\n"
+        "    move-result-object v0\n\n"
+        "    invoke-direct {p0, v0}, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/VolumePreference;->a(Ljava/lang/Object;)I\n\n"
+        "    move-result v0\n\n"
+        "    invoke-virtual {p0, v0}, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/VolumePreference;->a(I)V\n\n"
+        "    .line 35\n"
+        "    return-void\n"
+        ".end method",
+        ".method protected onBindDialogView(Landroid/view/View;)V\n"
+        "    .locals 2\n\n"
+        "    invoke-super {p0, p1}, Laxh;->onBindDialogView(Landroid/view/View;)V\n"
+        "    iget-object v0, p0, Laxf;->a:Landroid/widget/SeekBar;\n"
+        "    iget v1, p0, Laxf;->a:I\n"
+        "    add-int/lit8 v1, v1, 0x1\n"
+        "    invoke-virtual {v0, v1}, Landroid/widget/SeekBar;->setMax(I)V\n"
+        "    iget v0, p0, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/VolumePreference;->a:F\n"
+        "    invoke-virtual {p0, v0}, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/VolumePreference;->getPersistedFloat(F)F\n"
+        "    move-result v0\n"
+        "    const/4 v1, 0x0\n"
+        "    int-to-float v1, v1\n"
+        "    cmpg-float v1, v0, v1\n"
+        "    if-ltz v1, :numeric_volume\n"
+        "    const/4 v0, 0x0\n"
+        "    goto :set_volume_progress\n"
+        "    :numeric_volume\n"
+        "    invoke-static {v0}, Ljava/lang/Float;->valueOf(F)Ljava/lang/Float;\n"
+        "    move-result-object v0\n"
+        "    invoke-direct {p0, v0}, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/VolumePreference;->a(Ljava/lang/Object;)I\n"
+        "    move-result v0\n"
+        "    add-int/lit8 v0, v0, 0x1\n"
+        "    :set_volume_progress\n"
+        "    invoke-virtual {p0, v0}, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/VolumePreference;->a(I)V\n"
+        "    return-void\n"
+        ".end method",
+    )
+    replace_once(
+        vibration_preference,
+        ".method protected onBindDialogView(Landroid/view/View;)V\n"
+        "    .locals 1\n\n"
+        "    .prologue\n"
+        "    .line 24\n"
+        "    invoke-super {p0, p1}, Laxh;->onBindDialogView(Landroid/view/View;)V\n\n"
+        "    .line 25\n"
+        "    invoke-direct {p0}, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/VibrationDurationPreference;->b()I\n\n"
+        "    move-result v0\n\n"
+        "    invoke-virtual {p0, v0}, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/VibrationDurationPreference;->a(I)V\n\n"
+        "    .line 26\n"
+        "    return-void\n"
+        ".end method",
+        ".method protected onBindDialogView(Landroid/view/View;)V\n"
+        "    .locals 2\n\n"
+        "    invoke-super {p0, p1}, Laxh;->onBindDialogView(Landroid/view/View;)V\n"
+        "    iget-object v0, p0, Laxf;->a:Landroid/widget/SeekBar;\n"
+        "    iget v1, p0, Laxf;->a:I\n"
+        "    add-int/lit8 v1, v1, 0x1\n"
+        "    invoke-virtual {v0, v1}, Landroid/widget/SeekBar;->setMax(I)V\n"
+        "    iget-object v0, p0, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/VibrationDurationPreference;->a:Landroid/content/Context;\n"
+        "    invoke-static {v0}, Lamx;->a(Landroid/content/Context;)Lamx;\n"
+        "    move-result-object v0\n"
+        "    invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/VibrationDurationPreference;->getKey()Ljava/lang/String;\n"
+        "    move-result-object v1\n"
+        "    invoke-virtual {v0, v1}, Lamx;->b(Ljava/lang/String;)Z\n"
+        "    move-result v0\n"
+        "    if-eqz v0, :default_vibration\n"
+        "    invoke-direct {p0}, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/VibrationDurationPreference;->b()I\n"
+        "    move-result v0\n"
+        "    add-int/lit8 v0, v0, 0x1\n"
+        "    goto :set_vibration_progress\n"
+        "    :default_vibration\n"
+        "    const/4 v0, 0x0\n"
+        "    :set_vibration_progress\n"
+        "    invoke-virtual {p0, v0}, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/VibrationDurationPreference;->a(I)V\n"
+        "    return-void\n"
+        ".end method",
+    )
+
     append_smali_methods(
         decoded / "smali/com/google/android/apps/inputmethod/libs/framework/preference/widget/SeekBarListPreference.smali",
         ".method public c(I)V",
@@ -2085,8 +2253,24 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
     append_smali_methods(
         decoded / "smali/com/google/android/apps/inputmethod/libs/framework/preference/widget/VolumePreference.smali",
         ".method public c(I)V",
-        "\n.method public c(I)V\n"
+        "\n.method public h(I)I\n"
+        "    .locals 1\n\n"
+        "    add-int/lit8 v0, p1, -0x1\n"
+        "    return v0\n"
+        ".end method\n\n"
+        ".method public c(I)V\n"
         "    .locals 2\n\n"
+        "    if-gez p1, :numeric\n"
+        "    iget-object v0, p0, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/VolumePreference;->a:Lamx;\n"
+        "    invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/VolumePreference;->getKey()Ljava/lang/String;\n"
+        "    move-result-object v1\n"
+        "    invoke-virtual {v0, v1}, Lamx;->a(Ljava/lang/String;)V\n"
+        "    iget v0, p0, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/VolumePreference;->a:F\n"
+        "    invoke-direct {p0, v0}, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/VolumePreference;->a(F)Ljava/lang/String;\n"
+        "    move-result-object v0\n"
+        "    invoke-virtual {p0, v0}, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/VolumePreference;->setSummary(Ljava/lang/CharSequence;)V\n"
+        "    return-void\n"
+        "    :numeric\n"
         "    invoke-virtual {p0, p1}, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/VolumePreference;->a(I)Ljava/lang/Object;\n"
         "    move-result-object v0\n"
         "    check-cast v0, Ljava/lang/Float;\n"
@@ -2106,8 +2290,26 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
     append_smali_methods(
         decoded / "smali/com/google/android/apps/inputmethod/libs/framework/preference/widget/VibrationDurationPreference.smali",
         ".method public c(I)V",
-        "\n.method public c(I)V\n"
+        "\n.method public h(I)I\n"
+        "    .locals 1\n\n"
+        "    add-int/lit8 v0, p1, -0x1\n"
+        "    return v0\n"
+        ".end method\n\n"
+        ".method public c(I)V\n"
         "    .locals 2\n\n"
+        "    if-gez p1, :numeric\n"
+        "    iget-object v0, p0, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/VibrationDurationPreference;->a:Landroid/content/Context;\n"
+        "    invoke-static {v0}, Lamx;->a(Landroid/content/Context;)Lamx;\n"
+        "    move-result-object v0\n"
+        "    invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/VibrationDurationPreference;->getKey()Ljava/lang/String;\n"
+        "    move-result-object v1\n"
+        "    invoke-virtual {v0, v1}, Lamx;->a(Ljava/lang/String;)V\n"
+        "    iget v0, p0, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/VibrationDurationPreference;->b:I\n"
+        "    invoke-direct {p0, v0}, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/VibrationDurationPreference;->b(I)Ljava/lang/String;\n"
+        "    move-result-object v0\n"
+        "    invoke-virtual {p0, v0}, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/VibrationDurationPreference;->setSummary(Ljava/lang/CharSequence;)V\n"
+        "    return-void\n"
+        "    :numeric\n"
         "    invoke-static {p1}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;\n"
         "    move-result-object v0\n"
         "    invoke-virtual {p0, v0}, Lcom/google/android/apps/inputmethod/libs/framework/preference/widget/VibrationDurationPreference;->callChangeListener(Ljava/lang/Object;)Z\n"
