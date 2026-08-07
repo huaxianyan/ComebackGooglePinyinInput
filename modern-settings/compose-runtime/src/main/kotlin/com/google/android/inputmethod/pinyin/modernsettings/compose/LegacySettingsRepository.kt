@@ -85,6 +85,42 @@ class LegacySettingsRepository(context: Context) {
         )
     }
 
+    fun setSoundEnabled(enabled: Boolean): SliderSettingsSnapshot {
+        preferences.edit().putBoolean(SliderSettingContracts.SOUND_ENABLED_KEY, enabled).apply()
+        return readSliderSnapshot()
+    }
+
+    fun setVibrationEnabled(enabled: Boolean): SliderSettingsSnapshot {
+        preferences.edit().putBoolean(SliderSettingContracts.VIBRATION_ENABLED_KEY, enabled).apply()
+        return readSliderSnapshot()
+    }
+
+    fun setVolumePercent(percent: Int): SliderSettingsSnapshot {
+        preferences.edit().putFloat(
+            SliderSettingContracts.SOUND_VOLUME_KEY,
+            SliderSettingContracts.encodeVolumePercent(percent),
+        ).apply()
+        return readSliderSnapshot()
+    }
+
+    fun restoreVolumeDefault(): SliderSettingsSnapshot {
+        preferences.edit().remove(SliderSettingContracts.SOUND_VOLUME_KEY).apply()
+        return readSliderSnapshot()
+    }
+
+    fun setVibrationDuration(milliseconds: Int): SliderSettingsSnapshot {
+        preferences.edit().putString(
+            SliderSettingContracts.VIBRATION_DURATION_KEY,
+            SliderSettingContracts.encodeVibration(milliseconds),
+        ).apply()
+        return readSliderSnapshot()
+    }
+
+    fun restoreVibrationDefault(): SliderSettingsSnapshot {
+        preferences.edit().remove(SliderSettingContracts.VIBRATION_DURATION_KEY).apply()
+        return readSliderSnapshot()
+    }
+
     fun setKeyboardHeightIndex(index: Int): SliderSettingsSnapshot {
         writeEnumerated(SliderSettingContracts.keyboardHeight, index)
         return readSliderSnapshot()

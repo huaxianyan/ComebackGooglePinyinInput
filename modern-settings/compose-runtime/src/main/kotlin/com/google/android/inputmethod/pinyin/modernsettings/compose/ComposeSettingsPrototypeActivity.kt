@@ -1,7 +1,10 @@
 package com.google.android.inputmethod.pinyin.modernsettings.compose
 
+import android.media.AudioManager
 import android.os.Build
 import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.Vibrator
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -18,8 +21,11 @@ import androidx.compose.foundation.layout.safeGestures
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
@@ -35,6 +41,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,17 +55,41 @@ import kotlin.math.roundToInt
 /** Staged proof that official Compose Material 3 can preserve legacy setting contracts. */
 class ComposeSettingsPrototypeActivity : ComponentActivity() {
     private lateinit var repository: LegacySettingsRepository
+    private lateinit var audioManager: AudioManager
+    private lateinit var vibrator: Vibrator
     private var snapshot by mutableStateOf<SliderSettingsSnapshot?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         repository = LegacySettingsRepository(this)
+        audioManager = getSystemService(AudioManager::class.java)
+        vibrator = getSystemService(Vibrator::class.java)
         setContent {
             PrototypeTheme {
                 snapshot?.let {
                     StagedSettingsScreen(
                         snapshot = it,
+                        onSoundEnabledChange = { enabled ->
+                            snapshot = repository.setSoundEnabled(enabled)
+                        },
+                        onVolumeCommit = { percent ->
+                            snapshot = repository.setVolumePercent(percent)
+                            audioManager.playSoundEffect(5, percent / 100f)
+                        },
+                        onVolumeDefault = {
+                            snapshot = repository.restoreVolumeDefault()
+                        },
+                        onVibrationEnabledChange = { enabled ->
+                            snapshot = repository.setVibrationEnabled(enabled)
+                        },
+                        onVibrationCommit = { milliseconds ->
+                            snapshot = repository.setVibrationDuration(milliseconds)
+                            previewVibration(milliseconds)
+                        },
+                        onVibrationDefault = {
+                            snapshot = repository.restoreVibrationDefault()
+                        },
                         onKeyboardHeightChange = { index ->
                             snapshot = repository.setKeyboardHeightIndex(index)
                         },
@@ -74,6 +105,16 @@ class ComposeSettingsPrototypeActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         snapshot = repository.readSliderSnapshot()
+    }
+
+    private fun previewVibration(milliseconds: Int) {
+        if (milliseconds <= 0 || !vibrator.hasVibrator()) return
+        vibrator.vibrate(
+            VibrationEffect.createOneShot(
+                milliseconds.toLong(),
+                VibrationEffect.DEFAULT_AMPLITUDE,
+            )
+        )
     }
 }
 
@@ -94,6 +135,12 @@ private fun PrototypeTheme(content: @Composable () -> Unit) {
 @Composable
 private fun StagedSettingsScreen(
     snapshot: SliderSettingsSnapshot,
+    onSoundEnabledChange: (Boolean) -> Unit,
+    onVolumeCommit: (Int) -> Unit,
+    onVolumeDefault: () -> Unit,
+    onVibrationEnabledChange: (Boolean) -> Unit,
+    onVibrationCommit: (Int) -> Unit,
+    onVibrationDefault: () -> Unit,
     onKeyboardHeightChange: (Int) -> Unit,
     onSlideSensitivityChange: (Int) -> Unit,
 ) {
@@ -115,30 +162,43 @@ private fun StagedSettingsScreen(
             }
             item { SectionTitle("按键反馈") }
             item {
-                ReadOnlySwitchRow(
+                SettingsSwitchRow(
                     title = "按键音",
                     supporting = if (snapshot.soundEnabled) "已开启" else "已关闭",
                     checked = snapshot.soundEnabled,
+                    onCheckedChange = onSoundEnabledChange,
                 )
             }
             item {
-                DefaultAwareFloatSlider(
+                DefaultAwareAdjustment(
                     title = "按键音量",
-                    state = snapshot.volume,
+                    state = snapshot.volume.toVolumeProgress(),
+                    valueText = { "$it%" },
                     enabledByDependency = snapshot.soundEnabled,
+                    decreaseDescription = "降低按键音量",
+                    increaseDescription = "提高按键音量",
+                    onCommit = onVolumeCommit,
+                    onRestoreDefault = onVolumeDefault,
                 )
             }
             item {
-                ReadOnlySwitchRow(
+                SettingsSwitchRow(
                     title = "按键振动",
                     supporting = if (snapshot.vibrationEnabled) "已开启" else "已关闭",
                     checked = snapshot.vibrationEnabled,
+                    onCheckedChange = onVibrationEnabledChange,
                 )
             }
             item {
-                DefaultAwareVibrationSlider(
+                DefaultAwareAdjustment(
+                    title = "振动时长",
                     state = snapshot.vibration,
+                    valueText = { "$it ms" },
                     enabledByDependency = snapshot.vibrationEnabled,
+                    decreaseDescription = "缩短振动时长",
+                    increaseDescription = "延长振动时长",
+                    onCommit = onVibrationCommit,
+                    onRestoreDefault = onVibrationDefault,
                 )
             }
             item { HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp)) }
@@ -215,7 +275,12 @@ private fun SectionTitle(title: String) {
 }
 
 @Composable
-private fun ReadOnlySwitchRow(title: String, supporting: String, checked: Boolean) {
+private fun SettingsSwitchRow(
+    title: String,
+    supporting: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -231,95 +296,244 @@ private fun ReadOnlySwitchRow(title: String, supporting: String, checked: Boolea
                 style = MaterialTheme.typography.bodyMedium,
             )
         }
-        Switch(checked = checked, onCheckedChange = null, enabled = false)
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+        )
     }
 }
 
+private fun ResolvedSetting<Float>.toVolumeProgress(): ResolvedSetting<Int> = when (this) {
+    is ResolvedSetting.Explicit -> ResolvedSetting.Explicit(
+        SliderSettingContracts.volumePercent(value),
+    )
+    is ResolvedSetting.SystemDefault -> ResolvedSetting.SystemDefault(
+        if (effectiveValue < 0f) -1 else SliderSettingContracts.volumePercent(effectiveValue),
+    )
+}
+
 @Composable
-private fun DefaultAwareFloatSlider(
+private fun DefaultAwareAdjustment(
     title: String,
-    state: ResolvedSetting<Float>,
-    enabledByDependency: Boolean,
-) {
-    val value = when (state) {
-        is ResolvedSetting.Explicit -> state.value
-        is ResolvedSetting.SystemDefault -> state.effectiveValue
-    }
-    if (value < 0f) {
-        SystemDefaultRow(
-            title = title,
-            dependencyEnabled = enabledByDependency,
-            disabledDescription = "按键音已关闭，启用后使用系统默认音量",
-        )
-    } else {
-        DiscreteReadOnlySlider(
-            title = title,
-            value = (value * 100f).coerceIn(0f, 100f),
-            valueText = "${(value * 100f).toInt()}%",
-            maximumIndex = 100,
-            dependencyEnabled = enabledByDependency,
-        )
-    }
-}
-
-@Composable
-private fun DefaultAwareVibrationSlider(
     state: ResolvedSetting<Int>,
+    valueText: (Int) -> String,
     enabledByDependency: Boolean,
+    decreaseDescription: String,
+    increaseDescription: String,
+    onCommit: (Int) -> Unit,
+    onRestoreDefault: () -> Unit,
 ) {
-    val value = when (state) {
-        is ResolvedSetting.Explicit -> state.value
-        is ResolvedSetting.SystemDefault -> state.effectiveValue
-    }
-    if (value < 0) {
-        SystemDefaultRow(
-            title = "振动时长",
-            dependencyEnabled = enabledByDependency,
-            disabledDescription = "按键振动已关闭，启用后使用系统默认时长",
-        )
-    } else {
-        DiscreteReadOnlySlider(
-            title = "振动时长",
-            value = value.coerceIn(0, 100).toFloat(),
-            valueText = "$value ms",
-            maximumIndex = 100,
-            dependencyEnabled = enabledByDependency,
-        )
+    var drafting by rememberSaveable(title) { mutableStateOf(false) }
+    var draftValue by rememberSaveable(title) { mutableStateOf(0) }
+    var draftTouched by rememberSaveable(title) { mutableStateOf(false) }
+
+    when {
+        state is ResolvedSetting.Explicit -> {
+            AdjustmentControlGroup(
+                title = title,
+                value = state.value.coerceIn(0, 100),
+                summary = valueText(state.value.coerceIn(0, 100)),
+                valueText = valueText,
+                enabled = enabledByDependency,
+                decreaseDescription = decreaseDescription,
+                increaseDescription = increaseDescription,
+                onCommit = onCommit,
+                footer = {
+                    OutlinedButton(
+                        onClick = onRestoreDefault,
+                        enabled = enabledByDependency,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text("使用系统默认")
+                    }
+                },
+            )
+        }
+        drafting -> {
+            AdjustmentControlGroup(
+                title = title,
+                value = draftValue,
+                summary = if (draftTouched) valueText(draftValue) else "选择自定义值（尚未保存）",
+                valueText = valueText,
+                enabled = enabledByDependency,
+                decreaseDescription = decreaseDescription,
+                increaseDescription = increaseDescription,
+                onValueChange = {
+                    draftValue = it
+                    draftTouched = true
+                },
+                footer = {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End,
+                    ) {
+                        TextButton(
+                            onClick = {
+                                drafting = false
+                                draftTouched = false
+                            },
+                        ) {
+                            Text("取消")
+                        }
+                        Button(
+                            onClick = {
+                                onCommit(draftValue)
+                                drafting = false
+                                draftTouched = false
+                            },
+                            enabled = enabledByDependency && draftTouched,
+                        ) {
+                            Text("应用")
+                        }
+                    }
+                },
+            )
+        }
+        else -> {
+            SystemDefaultAdjustment(
+                title = title,
+                dependencyEnabled = enabledByDependency,
+                onCustomize = {
+                    draftValue = 0
+                    draftTouched = false
+                    drafting = true
+                },
+            )
+        }
     }
 }
 
 @Composable
-private fun SystemDefaultRow(
+private fun SystemDefaultAdjustment(
     title: String,
     dependencyEnabled: Boolean,
-    disabledDescription: String,
+    onCustomize: () -> Unit,
 ) {
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 24.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                title,
-                color = if (dependencyEnabled) MaterialTheme.colorScheme.onSurface
-                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
-                style = MaterialTheme.typography.bodyLarge,
-            )
-            Text(
-                if (dependencyEnabled) "由系统决定，不对应数值零" else disabledDescription,
-                color = if (dependencyEnabled) MaterialTheme.colorScheme.onSurfaceVariant
-                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
-                style = MaterialTheme.typography.bodyMedium,
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    title,
+                    color = if (dependencyEnabled) MaterialTheme.colorScheme.onSurface
+                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+                    style = MaterialTheme.typography.bodyLarge,
+                )
+                Text(
+                    if (dependencyEnabled) "由系统决定，不对应数值零"
+                    else "父开关已关闭，启用后可设置自定义值",
+                    color = if (dependencyEnabled) MaterialTheme.colorScheme.onSurfaceVariant
+                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+            AssistChip(
+                onClick = {},
+                label = { Text("系统默认") },
+                enabled = false,
             )
         }
-        AssistChip(
-            onClick = {},
-            label = { Text("系统默认") },
-            enabled = false,
+        OutlinedButton(
+            onClick = onCustomize,
+            enabled = dependencyEnabled,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp),
+        ) {
+            Text("设置自定义值")
+        }
+    }
+}
+
+@Composable
+private fun AdjustmentControlGroup(
+    title: String,
+    value: Int,
+    summary: String,
+    valueText: (Int) -> String,
+    enabled: Boolean,
+    decreaseDescription: String,
+    increaseDescription: String,
+    onCommit: ((Int) -> Unit)? = null,
+    onValueChange: ((Int) -> Unit)? = null,
+    footer: @Composable () -> Unit,
+) {
+    var displayedValue by remember(value) { mutableFloatStateOf(value.toFloat()) }
+    val displayedProgress = displayedValue.roundToInt().coerceIn(0, 100)
+    val displayedSummary = if (onCommit != null) valueText(displayedProgress) else summary
+    val updateValue: (Int) -> Unit = {
+        displayedValue = it.coerceIn(0, 100).toFloat()
+        onValueChange?.invoke(it.coerceIn(0, 100))
+    }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 10.dp),
+    ) {
+        Text(
+            title,
+            color = if (enabled) MaterialTheme.colorScheme.onSurface
+            else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+            style = MaterialTheme.typography.bodyLarge,
         )
+        Text(
+            displayedSummary,
+            color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant
+            else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .windowInsetsPadding(WindowInsets.safeGestures.only(WindowInsetsSides.Horizontal)),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            TextButton(
+                onClick = {
+                    val next = (displayedProgress - 1).coerceAtLeast(0)
+                    updateValue(next)
+                    onCommit?.invoke(next)
+                },
+                enabled = enabled,
+                modifier = Modifier.semantics { contentDescription = decreaseDescription },
+            ) {
+                Text("−")
+            }
+            Slider(
+                value = displayedValue.coerceIn(0f, 100f),
+                onValueChange = { updateValue(it.roundToInt()) },
+                onValueChangeFinished = {
+                    onCommit?.invoke(displayedValue.roundToInt().coerceIn(0, 100))
+                },
+                valueRange = 0f..100f,
+                steps = 99,
+                enabled = enabled,
+                modifier = Modifier
+                    .weight(1f)
+                    .semantics {
+                        contentDescription = "$title，${valueText(displayedProgress)}"
+                    },
+            )
+            TextButton(
+                onClick = {
+                    val next = (displayedProgress + 1).coerceAtMost(100)
+                    updateValue(next)
+                    onCommit?.invoke(next)
+                },
+                enabled = enabled,
+                modifier = Modifier.semantics { contentDescription = increaseDescription },
+            ) {
+                Text("+")
+            }
+        }
+        footer()
     }
 }
 

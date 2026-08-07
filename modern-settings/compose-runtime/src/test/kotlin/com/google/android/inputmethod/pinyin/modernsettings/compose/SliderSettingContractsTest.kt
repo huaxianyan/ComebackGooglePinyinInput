@@ -16,6 +16,22 @@ class SliderSettingContractsTest {
     }
 
     @Test
+    fun volumeProgressRetainsExactLegacyHundredStepMapping() {
+        assertEquals(0f, SliderSettingContracts.encodeVolumePercent(0))
+        assertEquals(0.37f, SliderSettingContracts.encodeVolumePercent(37))
+        assertEquals(1f, SliderSettingContracts.encodeVolumePercent(100))
+        assertEquals(0, SliderSettingContracts.volumePercent(0f))
+        assertEquals(37, SliderSettingContracts.volumePercent(0.37f))
+        assertEquals(100, SliderSettingContracts.volumePercent(1f))
+        assertFailsWith<IllegalArgumentException> {
+            SliderSettingContracts.encodeVolumePercent(-1)
+        }
+        assertFailsWith<IllegalArgumentException> {
+            SliderSettingContracts.encodeVolumePercent(101)
+        }
+    }
+
+    @Test
     fun absentVibrationIsDistinctFromEncodedZero() {
         val absent = SliderSettingContracts.resolveVibration(false, null, -1)
         val zero = SliderSettingContracts.resolveVibration(true, "0", -1)

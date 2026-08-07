@@ -46,18 +46,31 @@ def main() -> int:
             "StagedSettingsScreen(",
             "repository.setKeyboardHeightIndex(index)",
             "repository.setSlideSensitivityIndex(index)",
+            "repository.setSoundEnabled(enabled)",
+            "repository.setVolumePercent(percent)",
+            "repository.restoreVolumeDefault()",
+            "repository.setVibrationEnabled(enabled)",
+            "repository.setVibrationDuration(milliseconds)",
+            "repository.restoreVibrationDefault()",
             "override fun onResume()",
-            "SystemDefaultRow",
+            "DefaultAwareAdjustment",
+            "SystemDefaultAdjustment",
             'label = { Text("系统默认") }',
+            'Text("设置自定义值")',
+            'Text("使用系统默认")',
+            "draftTouched",
+            "VibrationEffect.createOneShot",
+            "audioManager.playSoundEffect(5, percent / 100f)",
             "snapshot.keyboardHeightLabel",
             "snapshot.slideSensitivityLabel",
             "snapshot.keyboardHeightLabels::get",
             "snapshot.slideSensitivityLabels::get",
             "WindowInsets.safeGestures.only(WindowInsetsSides.Horizontal)",
             "displayedValue.roundToInt()",
-            "按键音已关闭，启用后使用系统默认音量",
-            "按键振动已关闭，启用后使用系统默认时长",
-            "enabled = false",
+            "降低按键音量",
+            "提高按键音量",
+            "缩短振动时长",
+            "延长振动时长",
             "setContent {",
         ),
         "official Compose Material 3 prototype",
@@ -78,6 +91,8 @@ def main() -> int:
             'values = listOf("0.9", "0.95", "1.0", "1.05", "1.1")',
             'values = listOf("3000", "2000", "1500", "1000", "700", "400", "100")',
             "progress * 10 + 100",
+            "fun encodeVolumePercent(percent: Int)",
+            "percent / 100f",
         ),
         "audited Slider persistence contracts",
     )
@@ -98,15 +113,32 @@ def main() -> int:
             "keyboardHeightLabels: List<String>",
             "slideSensitivityLabels: List<String>",
             "fun readSliderSnapshot()",
+            "fun setSoundEnabled(enabled: Boolean)",
+            "fun setVibrationEnabled(enabled: Boolean)",
+            "fun setVolumePercent(percent: Int)",
+            "fun restoreVolumeDefault()",
+            "fun setVibrationDuration(milliseconds: Int)",
+            "fun restoreVibrationDefault()",
             "fun setKeyboardHeightIndex(index: Int)",
             "fun setSlideSensitivityIndex(index: Int)",
             "preferences.edit().putString(contract.key, contract.valueAt(index)).apply()",
         ),
         "staged legacy settings repository",
     )
-    if repository_text.count("putString(") != 1:
-        raise RuntimeError("staged repository must have one typed enumerated write path")
-    for forbidden_write in ("putBoolean(", "putFloat(", "putInt(", ".remove(", ".clear("):
+    expected_write_counts = {
+        "putBoolean(": 2,
+        "putFloat(": 1,
+        "putString(": 2,
+        ".remove(": 2,
+    }
+    for operation, expected_count in expected_write_counts.items():
+        actual_count = repository_text.count(operation)
+        if actual_count != expected_count:
+            raise RuntimeError(
+                f"audited settings write count changed for {operation}: "
+                f"expected {expected_count}, found {actual_count}"
+            )
+    for forbidden_write in ("putInt(", ".clear("):
         if forbidden_write in repository_text:
             raise RuntimeError(f"unaudited settings write path: {forbidden_write}")
 

@@ -148,11 +148,21 @@ Material 3 pointer handling. Sound, vibration, long-press, and handwriting
 controls remain read-only. This stage has
 no Boolean, Float, integer, remove, clear, reset, or preview write path.
 
-The planned volume and vibration control group follows the information hierarchy
+The staged volume and vibration control group follows the information hierarchy
 confirmed in Gboard's current `FontSizeSliderPreference`—title, live summary,
 decrease/Slider/increase controls, and a full-width system-default action—while
 retaining this project's accepted rule that an unknown negative system sentinel
 has no truthful Slider position. See `docs/gboard-font-size-slider-research.md`.
+
+This stage also enables the two parent Boolean switches. In system-default state,
+“设置自定义值” opens a process/configuration-safe draft at zero without writing;
+Apply remains disabled until the user explicitly operates the Slider or a step
+button. Cancel discards the draft. Explicit volume uses the original Float
+`percent / 100f`; explicit vibration uses the original zero/`N + 1` String
+encoding. “使用系统默认” removes the corresponding key. Slider release and step
+buttons commit once and invoke the original sound-effect or positive-duration
+vibration preview semantics. Dependency-off state retains explicit values while
+disabling the complete adjustment group.
 
 For device testing, `build_modern_settings_host.py --audit-launcher` can add a
 launcher entry labelled “Material 3 设置审计” to an isolated audit package. The

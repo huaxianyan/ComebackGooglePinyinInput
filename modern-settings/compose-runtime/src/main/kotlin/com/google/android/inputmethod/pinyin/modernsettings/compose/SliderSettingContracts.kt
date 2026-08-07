@@ -1,5 +1,7 @@
 package com.google.android.inputmethod.pinyin.modernsettings.compose
 
+import kotlin.math.roundToInt
+
 /** Whether a value came from an explicitly stored preference or the absent-key default. */
 sealed interface ResolvedSetting<out T> {
     data class SystemDefault<T>(val effectiveValue: T) : ResolvedSetting<T>
@@ -59,6 +61,13 @@ object SliderSettingContracts {
     fun resolveVolume(hasStoredValue: Boolean, storedValue: Float, deviceDefault: Float): ResolvedSetting<Float> =
         if (hasStoredValue) ResolvedSetting.Explicit(storedValue)
         else ResolvedSetting.SystemDefault(deviceDefault)
+
+    fun encodeVolumePercent(percent: Int): Float {
+        require(percent in 0..100)
+        return percent / 100f
+    }
+
+    fun volumePercent(value: Float): Int = (value * 100f).roundToInt().coerceIn(0, 100)
 
     /**
      * The original VibrationDurationPreference stores zero milliseconds as "0"
