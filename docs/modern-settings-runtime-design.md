@@ -134,8 +134,15 @@ The first read-only Compose screen binds this snapshot to official Material 3
 components. Every control is non-interactive in this stage. Volume and vibration
 with a negative device default render a separate “system default” chip and no
 numeric Slider, so the UI cannot conflate system default with explicit zero.
-The current Chinese labels are prototype-only; production routing requires
-legacy resource-backed localization before writes are enabled.
+Section and title strings are still prototype-only, but enum value labels now
+come from the original localized `entries_*` arrays (for example low, normal,
+high) while their exact stored values remain separate in the contract. A
+negative system-default value still has no Slider because it has no truthful
+numeric position. If its parent switch is off, the supporting text now explains
+that dependency rather than repeating the enabled-state description. The
+activity refreshes its read-only snapshot in `onResume()` so returning from a
+legacy settings surface cannot leave stale state. Production routing still
+requires all remaining labels to be resource-backed before writes are enabled.
 
 ## Next implementation stage
 

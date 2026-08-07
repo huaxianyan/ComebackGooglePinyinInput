@@ -26,7 +26,9 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -37,18 +39,23 @@ import androidx.compose.ui.unit.dp
 
 /** Read-only proof that real legacy settings can drive official Compose Material 3. */
 class ComposeSettingsPrototypeActivity : ComponentActivity() {
+    private lateinit var repository: LegacySettingsRepository
+    private var snapshot by mutableStateOf<SliderSettingsSnapshot?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        repository = LegacySettingsRepository(this)
         setContent {
             PrototypeTheme {
-                val context = LocalContext.current
-                val snapshot = remember {
-                    LegacySettingsRepository(context).readSliderSnapshot()
-                }
-                ReadOnlySettingsScreen(snapshot)
+                snapshot?.let { ReadOnlySettingsScreen(it) }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        snapshot = repository.readSliderSnapshot()
     }
 }
 
@@ -118,9 +125,7 @@ private fun ReadOnlySettingsScreen(snapshot: SliderSettingsSnapshot) {
                 DiscreteReadOnlySlider(
                     title = "键盘高度",
                     value = snapshot.keyboardHeightIndex.toFloat(),
-                    valueText = SliderSettingContracts.keyboardHeight.valueAt(
-                        snapshot.keyboardHeightIndex,
-                    ),
+                    valueText = snapshot.keyboardHeightLabel,
                     maximumIndex = SliderSettingContracts.keyboardHeight.values.lastIndex,
                 )
             }
@@ -128,9 +133,7 @@ private fun ReadOnlySettingsScreen(snapshot: SliderSettingsSnapshot) {
                 DiscreteReadOnlySlider(
                     title = "滑动灵敏度",
                     value = snapshot.slideSensitivityIndex.toFloat(),
-                    valueText = SliderSettingContracts.slideSensitivity.valueAt(
-                        snapshot.slideSensitivityIndex,
-                    ),
+                    valueText = snapshot.slideSensitivityLabel,
                     maximumIndex = SliderSettingContracts.slideSensitivity.values.lastIndex,
                 )
             }
@@ -150,9 +153,10 @@ private fun ReadOnlySettingsScreen(snapshot: SliderSettingsSnapshot) {
                 DiscreteReadOnlySlider(
                     title = "识别等待时间",
                     value = snapshot.handwritingTimeoutIndex.toFloat(),
-                    valueText = SliderSettingContracts.handwritingTimeout.valueAt(
-                        snapshot.handwritingTimeoutIndex,
-                    ) + " ms",
+                    valueText = snapshot.handwritingTimeoutLabel + " · " +
+                        SliderSettingContracts.handwritingTimeout.valueAt(
+                            snapshot.handwritingTimeoutIndex,
+                        ) + " ms",
                     maximumIndex = SliderSettingContracts.handwritingTimeout.values.lastIndex,
                 )
             }
@@ -160,9 +164,10 @@ private fun ReadOnlySettingsScreen(snapshot: SliderSettingsSnapshot) {
                 DiscreteReadOnlySlider(
                     title = "笔画宽度",
                     value = snapshot.handwritingStrokeWidthIndex.toFloat(),
-                    valueText = SliderSettingContracts.handwritingStrokeWidth.valueAt(
-                        snapshot.handwritingStrokeWidthIndex,
-                    ),
+                    valueText = snapshot.handwritingStrokeWidthLabel + " · " +
+                        SliderSettingContracts.handwritingStrokeWidth.valueAt(
+                            snapshot.handwritingStrokeWidthIndex,
+                        ),
                     maximumIndex = SliderSettingContracts.handwritingStrokeWidth.values.lastIndex,
                 )
             }
@@ -213,7 +218,11 @@ private fun DefaultAwareFloatSlider(
         is ResolvedSetting.SystemDefault -> state.effectiveValue
     }
     if (value < 0f) {
-        SystemDefaultRow(title, enabledByDependency)
+        SystemDefaultRow(
+            title = title,
+            dependencyEnabled = enabledByDependency,
+            disabledDescription = "按键音已关闭，启用后使用系统默认音量",
+        )
     } else {
         DiscreteReadOnlySlider(
             title = title,
@@ -235,7 +244,11 @@ private fun DefaultAwareVibrationSlider(
         is ResolvedSetting.SystemDefault -> state.effectiveValue
     }
     if (value < 0) {
-        SystemDefaultRow("振动时长", enabledByDependency)
+        SystemDefaultRow(
+            title = "振动时长",
+            dependencyEnabled = enabledByDependency,
+            disabledDescription = "按键振动已关闭，启用后使用系统默认时长",
+        )
     } else {
         DiscreteReadOnlySlider(
             title = "振动时长",
@@ -248,7 +261,11 @@ private fun DefaultAwareVibrationSlider(
 }
 
 @Composable
-private fun SystemDefaultRow(title: String, dependencyEnabled: Boolean) {
+private fun SystemDefaultRow(
+    title: String,
+    dependencyEnabled: Boolean,
+    disabledDescription: String,
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -264,8 +281,9 @@ private fun SystemDefaultRow(title: String, dependencyEnabled: Boolean) {
                 style = MaterialTheme.typography.bodyLarge,
             )
             Text(
-                "由系统决定，不对应数值零",
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                if (dependencyEnabled) "由系统决定，不对应数值零" else disabledDescription,
+                color = if (dependencyEnabled) MaterialTheme.colorScheme.onSurfaceVariant
+                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
                 style = MaterialTheme.typography.bodyMedium,
             )
         }

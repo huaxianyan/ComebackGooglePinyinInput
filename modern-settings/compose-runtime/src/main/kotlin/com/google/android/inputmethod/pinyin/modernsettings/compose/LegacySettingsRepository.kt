@@ -39,6 +39,13 @@ class LegacySettingsRepository(context: Context) {
             vibrationDefault,
         )
 
+        val keyboardHeightIndex = readEnumeratedIndex(SliderSettingContracts.keyboardHeight)
+        val slideSensitivityIndex = readEnumeratedIndex(SliderSettingContracts.slideSensitivity)
+        val handwritingTimeoutIndex = readEnumeratedIndex(SliderSettingContracts.handwritingTimeout)
+        val handwritingStrokeWidthIndex = readEnumeratedIndex(
+            SliderSettingContracts.handwritingStrokeWidth,
+        )
+
         return SliderSettingsSnapshot(
             soundEnabled = preferences.getBoolean(SliderSettingContracts.SOUND_ENABLED_KEY, false),
             volume = volume,
@@ -47,23 +54,41 @@ class LegacySettingsRepository(context: Context) {
                 true,
             ),
             vibration = vibration,
-            keyboardHeightIndex = readEnumeratedIndex(SliderSettingContracts.keyboardHeight),
-            slideSensitivityIndex = readEnumeratedIndex(SliderSettingContracts.slideSensitivity),
+            keyboardHeightIndex = keyboardHeightIndex,
+            keyboardHeightLabel = readEntryLabel(
+                "entries_keyboard_height_ratio",
+                keyboardHeightIndex,
+            ),
+            slideSensitivityIndex = slideSensitivityIndex,
+            slideSensitivityLabel = readEntryLabel(
+                "entries_keyboard_slide_sensitivity_ratio",
+                slideSensitivityIndex,
+            ),
             longPressDelayMs = preferences.getString(
                 SliderSettingContracts.LONG_PRESS_DELAY_KEY,
                 "300",
             )!!.toInt(),
-            handwritingTimeoutIndex = readEnumeratedIndex(
-                SliderSettingContracts.handwritingTimeout,
+            handwritingTimeoutIndex = handwritingTimeoutIndex,
+            handwritingTimeoutLabel = readEntryLabel(
+                "entries_handwriting_timeout_ms",
+                handwritingTimeoutIndex,
             ),
-            handwritingStrokeWidthIndex = readEnumeratedIndex(
-                SliderSettingContracts.handwritingStrokeWidth,
+            handwritingStrokeWidthIndex = handwritingStrokeWidthIndex,
+            handwritingStrokeWidthLabel = readEntryLabel(
+                "entries_handwriting_stroke_width_scale",
+                handwritingStrokeWidthIndex,
             ),
         )
     }
 
     private fun readEnumeratedIndex(contract: EnumeratedSliderContract): Int =
         contract.indexOf(preferences.getString(contract.key, contract.defaultValue))
+
+    private fun readEntryLabel(arrayName: String, index: Int): String {
+        val id = resources.getIdentifier(arrayName, "array", applicationContext.packageName)
+        require(id != 0) { "Missing legacy entries array: $arrayName" }
+        return resources.getStringArray(id)[index]
+    }
 
     private fun deviceDefault(arrayName: String, fallback: String): String {
         val id = resources.getIdentifier(arrayName, "array", applicationContext.packageName)
@@ -120,8 +145,12 @@ data class SliderSettingsSnapshot(
     val vibrationEnabled: Boolean,
     val vibration: ResolvedSetting<Int>,
     val keyboardHeightIndex: Int,
+    val keyboardHeightLabel: String,
     val slideSensitivityIndex: Int,
+    val slideSensitivityLabel: String,
     val longPressDelayMs: Int,
     val handwritingTimeoutIndex: Int,
+    val handwritingTimeoutLabel: String,
     val handwritingStrokeWidthIndex: Int,
+    val handwritingStrokeWidthLabel: String,
 )
