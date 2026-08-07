@@ -98,6 +98,30 @@ In particular, system default and numeric zero are separate domain states. They
 must never be represented by passing a negative persistence sentinel directly to
 a Slider.
 
+### Confirmed Slider contracts
+
+The first source audit recovered these exact contracts from the original
+Preference subclasses and resources:
+
+- sound volume key `sound_volume` stores a `float`; an absent key selects the
+  per-device default, whose unmatched fallback is `-1.0` (system default), while
+  an explicitly stored `0.0` is numeric zero;
+- vibration key `vibration_duration` stores a string; absent selects the
+  per-device default (unmatched fallback `-1`), explicit zero milliseconds is
+  encoded as `"0"`, and positive `N` milliseconds is encoded as `N + 1`;
+- keyboard height values are `0.9, 0.95, 1.0, 1.05, 1.1`, default `1.0`;
+- slide sensitivity values are `3.0, 1.5, 1.0, 0.8, 0.5`, default `1.0`;
+- handwriting timeout values are `3000, 2000, 1500, 1000, 700, 400, 100`,
+  default `1000`;
+- handwriting stroke width values are `0.4, 0.6, 0.8, 1.0, 1.2, 1.5, 2`,
+  default `1.0`;
+- long-press delay is a stored millisecond string from 100 through 700 in 10 ms
+  increments, default 300.
+
+`SliderSettingContracts` models absent and explicit values separately. Unit tests
+specifically prohibit collapsing absent/system-default volume or vibration into
+explicit numeric zero.
+
 ## Next implementation stage
 
 1. Make the host assembly a single reproducible build command from the original

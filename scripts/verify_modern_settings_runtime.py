@@ -49,6 +49,22 @@ def main() -> int:
         if forbidden in screen_text:
             raise RuntimeError(f"modern settings must not simulate Slider: {forbidden}")
 
+    contracts = next((project / "compose-runtime/src/main/kotlin").rglob("SliderSettingContracts.kt"))
+    contract_text = contracts.read_text(encoding="utf-8")
+    require(
+        contract_text,
+        (
+            'SOUND_VOLUME_KEY = "sound_volume"',
+            'VIBRATION_DURATION_KEY = "vibration_duration"',
+            "ResolvedSetting.SystemDefault",
+            "if (encoded == 0) 0 else encoded - 1",
+            'values = listOf("0.9", "0.95", "1.0", "1.05", "1.1")',
+            'values = listOf("3000", "2000", "1500", "1000", "700", "400", "100")',
+            "progress * 10 + 100",
+        ),
+        "audited Slider persistence contracts",
+    )
+
     host_build = (project / "reconstructed-host-prototype/build.gradle.kts").read_text(
         encoding="utf-8"
     )
