@@ -129,6 +129,14 @@ the original first-match device override parser over `Build.HARDWARE`, `MODEL`,
 `BRAND`, and `MANUFACTURER`. This stage contains no `SharedPreferences.Editor`
 and cannot mutate settings.
 
+The first read-only Compose screen binds this snapshot to official Material 3
+`Switch`, `Slider`, `AssistChip`, `TopAppBar`, `LazyColumn`, and section
+components. Every control is non-interactive in this stage. Volume and vibration
+with a negative device default render a separate “system default” chip and no
+numeric Slider, so the UI cannot conflate system default with explicit zero.
+The current Chinese labels are prototype-only; production routing requires
+legacy resource-backed localization before writes are enabled.
+
 ## Next implementation stage
 
 1. Make the host assembly a single reproducible build command from the original
