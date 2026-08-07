@@ -58,6 +58,12 @@ class ComposeSettingsPrototypeActivity : ComponentActivity() {
                             onSlideSensitivityChange = { index ->
                                 snapshot = controller.setSlideSensitivityIndex(index)
                             },
+                            onHandwritingTimeoutChange = { index ->
+                                snapshot = controller.setHandwritingTimeoutIndex(index)
+                            },
+                            onHandwritingStrokeWidthChange = { index ->
+                                snapshot = controller.setHandwritingStrokeWidthIndex(index)
+                            },
                         ),
                     )
                 }

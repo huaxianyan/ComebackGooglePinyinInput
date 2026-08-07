@@ -71,11 +71,21 @@ class SliderSettingContractsTest {
         assertEquals("1.1", SliderSettingContracts.keyboardHeight.valueAt(4))
         assertEquals("3.0", SliderSettingContracts.slideSensitivity.valueAt(0))
         assertEquals("0.5", SliderSettingContracts.slideSensitivity.valueAt(4))
+        assertEquals("3000", SliderSettingContracts.handwritingTimeout.valueAt(0))
+        assertEquals("100", SliderSettingContracts.handwritingTimeout.valueAt(6))
+        assertEquals("0.4", SliderSettingContracts.handwritingStrokeWidth.valueAt(0))
+        assertEquals("2", SliderSettingContracts.handwritingStrokeWidth.valueAt(6))
         assertFailsWith<IndexOutOfBoundsException> {
             SliderSettingContracts.keyboardHeight.valueAt(-1)
         }
         assertFailsWith<IndexOutOfBoundsException> {
             SliderSettingContracts.slideSensitivity.valueAt(5)
+        }
+        assertFailsWith<IndexOutOfBoundsException> {
+            SliderSettingContracts.handwritingTimeout.valueAt(7)
+        }
+        assertFailsWith<IndexOutOfBoundsException> {
+            SliderSettingContracts.handwritingStrokeWidth.valueAt(7)
         }
     }
 

@@ -77,10 +77,14 @@ class LegacySettingsRepository(context: Context) {
                 "entries_handwriting_timeout_ms",
                 handwritingTimeoutIndex,
             ),
+            handwritingTimeoutLabels = readEntryLabels("entries_handwriting_timeout_ms"),
             handwritingStrokeWidthIndex = handwritingStrokeWidthIndex,
             handwritingStrokeWidthLabel = readEntryLabel(
                 "entries_handwriting_stroke_width_scale",
                 handwritingStrokeWidthIndex,
+            ),
+            handwritingStrokeWidthLabels = readEntryLabels(
+                "entries_handwriting_stroke_width_scale",
             ),
         )
     }
@@ -128,6 +132,16 @@ class LegacySettingsRepository(context: Context) {
 
     fun setSlideSensitivityIndex(index: Int): SliderSettingsSnapshot {
         writeEnumerated(SliderSettingContracts.slideSensitivity, index)
+        return readSliderSnapshot()
+    }
+
+    fun setHandwritingTimeoutIndex(index: Int): SliderSettingsSnapshot {
+        writeEnumerated(SliderSettingContracts.handwritingTimeout, index)
+        return readSliderSnapshot()
+    }
+
+    fun setHandwritingStrokeWidthIndex(index: Int): SliderSettingsSnapshot {
+        writeEnumerated(SliderSettingContracts.handwritingStrokeWidth, index)
         return readSliderSnapshot()
     }
 
@@ -210,6 +224,8 @@ data class SliderSettingsSnapshot(
     val longPressDelayMs: Int,
     val handwritingTimeoutIndex: Int,
     val handwritingTimeoutLabel: String,
+    val handwritingTimeoutLabels: List<String>,
     val handwritingStrokeWidthIndex: Int,
     val handwritingStrokeWidthLabel: String,
+    val handwritingStrokeWidthLabels: List<String>,
 )

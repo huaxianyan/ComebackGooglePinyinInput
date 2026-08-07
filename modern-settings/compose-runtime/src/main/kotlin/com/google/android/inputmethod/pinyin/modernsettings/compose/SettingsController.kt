@@ -35,4 +35,10 @@ class SettingsController(
 
     fun setSlideSensitivityIndex(index: Int): SliderSettingsSnapshot =
         repository.setSlideSensitivityIndex(index)
+
+    fun setHandwritingTimeoutIndex(index: Int): SliderSettingsSnapshot =
+        repository.setHandwritingTimeoutIndex(index)
+
+    fun setHandwritingStrokeWidthIndex(index: Int): SliderSettingsSnapshot =
+        repository.setHandwritingStrokeWidthIndex(index)
 }

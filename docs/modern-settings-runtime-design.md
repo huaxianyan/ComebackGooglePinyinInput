@@ -167,6 +167,14 @@ fix invalid-transition, explicit-zero, cancel, restore, range, and dependency-of
 semantics. Compose saves this state with an explicit Saver, while persistence and
 one-shot previews remain outside the reducer and composition.
 
+The first handwriting write stage enables the original timeout and stroke-width
+`SeekBarListPreference` contracts through the existing typed enumerated String
+path. Their localized labels and exact values update while dragging; only the
+snapped final index is written on release. There is no reset button, preview,
+new storage type, or additional persistence implementation, matching the legacy
+controls. Long-press delay remains read-only for its separate absent/default and
+reset stage.
+
 This stage also enables the two parent Boolean switches. In system-default state,
 “设置自定义值” opens a process/configuration-safe draft at zero without writing;
 Apply remains disabled until the user explicitly operates the Slider or a step

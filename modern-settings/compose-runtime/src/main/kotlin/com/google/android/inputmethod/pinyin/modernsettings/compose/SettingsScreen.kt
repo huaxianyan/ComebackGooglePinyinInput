@@ -45,6 +45,8 @@ data class SettingsActions(
     val onVibrationDefault: () -> Unit,
     val onKeyboardHeightChange: (Int) -> Unit,
     val onSlideSensitivityChange: (Int) -> Unit,
+    val onHandwritingTimeoutChange: (Int) -> Unit,
+    val onHandwritingStrokeWidthChange: (Int) -> Unit,
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -188,12 +190,21 @@ fun SettingsScreen(snapshot: SliderSettingsSnapshot, actions: SettingsActions) {
                         R.string.modern_settings_handwriting_timeout_title,
                     ),
                     value = snapshot.handwritingTimeoutIndex.toFloat(),
-                    valueText = snapshot.handwritingTimeoutLabel + " · " + millisecondsText(
-                        SliderSettingContracts.handwritingTimeout.valueAt(
-                            snapshot.handwritingTimeoutIndex,
-                        ).toInt()
+                    valueText = handwritingTimeoutText(
+                        snapshot.handwritingTimeoutIndex,
+                        snapshot.handwritingTimeoutLabels,
+                        millisecondsText,
                     ),
+                    valueTextForIndex = { index ->
+                        handwritingTimeoutText(
+                            index,
+                            snapshot.handwritingTimeoutLabels,
+                            millisecondsText,
+                        )
+                    },
                     maximumIndex = SliderSettingContracts.handwritingTimeout.values.lastIndex,
+                    editable = true,
+                    onValueCommit = actions.onHandwritingTimeoutChange,
                 )
             }
             item {
@@ -203,16 +214,35 @@ fun SettingsScreen(snapshot: SliderSettingsSnapshot, actions: SettingsActions) {
                         R.string.modern_settings_handwriting_stroke_width_title,
                     ),
                     value = snapshot.handwritingStrokeWidthIndex.toFloat(),
-                    valueText = snapshot.handwritingStrokeWidthLabel + " · " +
-                        SliderSettingContracts.handwritingStrokeWidth.valueAt(
-                            snapshot.handwritingStrokeWidthIndex,
-                        ),
+                    valueText = handwritingStrokeWidthText(
+                        snapshot.handwritingStrokeWidthIndex,
+                        snapshot.handwritingStrokeWidthLabels,
+                    ),
+                    valueTextForIndex = { index ->
+                        handwritingStrokeWidthText(
+                            index,
+                            snapshot.handwritingStrokeWidthLabels,
+                        )
+                    },
                     maximumIndex = SliderSettingContracts.handwritingStrokeWidth.values.lastIndex,
+                    editable = true,
+                    onValueCommit = actions.onHandwritingStrokeWidthChange,
                 )
             }
         }
     }
 }
+
+private fun handwritingTimeoutText(
+    index: Int,
+    labels: List<String>,
+    millisecondsText: (Int) -> String,
+): String = labels[index] + " · " + millisecondsText(
+    SliderSettingContracts.handwritingTimeout.valueAt(index).toInt()
+)
+
+private fun handwritingStrokeWidthText(index: Int, labels: List<String>): String =
+    labels[index] + " · " + SliderSettingContracts.handwritingStrokeWidth.valueAt(index)
 
 @Composable
 private fun legacyString(name: String, @StringRes fallback: Int): String {
