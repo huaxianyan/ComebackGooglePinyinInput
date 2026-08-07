@@ -1,0 +1,318 @@
+package com.google.android.inputmethod.pinyin.modernsettings.compose
+
+import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeGestures
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import kotlin.math.roundToInt
+
+data class SettingsActions(
+    val onSoundEnabledChange: (Boolean) -> Unit,
+    val onVolumeCommit: (Int) -> Unit,
+    val onVolumeDefault: () -> Unit,
+    val onVibrationEnabledChange: (Boolean) -> Unit,
+    val onVibrationCommit: (Int) -> Unit,
+    val onVibrationDefault: () -> Unit,
+    val onKeyboardHeightChange: (Int) -> Unit,
+    val onSlideSensitivityChange: (Int) -> Unit,
+)
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SettingsScreen(snapshot: SliderSettingsSnapshot, actions: SettingsActions) {
+    val context = LocalContext.current
+    val percentText: (Int) -> String = {
+        context.getString(R.string.modern_settings_percent_format, it)
+    }
+    val millisecondsText: (Int) -> String = {
+        context.getString(R.string.modern_settings_milliseconds_format, it)
+    }
+    Scaffold(
+        topBar = { TopAppBar(title = { Text(stringResource(R.string.modern_settings_title)) }) },
+        modifier = Modifier.fillMaxSize(),
+    ) { innerPadding ->
+        LazyColumn(
+            modifier = Modifier.padding(innerPadding),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            item {
+                Text(
+                    text = stringResource(R.string.modern_settings_stage_summary),
+                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+            item { SectionTitle(stringResource(R.string.modern_settings_section_key_feedback)) }
+            item {
+                SettingsSwitchRow(
+                    title = legacyString(
+                        "setting_sound_on_keypress_title",
+                        R.string.modern_settings_sound_title,
+                    ),
+                    supporting = stringResource(
+                        if (snapshot.soundEnabled) R.string.modern_settings_enabled
+                        else R.string.modern_settings_disabled
+                    ),
+                    checked = snapshot.soundEnabled,
+                    onCheckedChange = actions.onSoundEnabledChange,
+                )
+            }
+            item {
+                DefaultAwareAdjustment(
+                    title = legacyString(
+                        "setting_sound_volume_of_keypress",
+                        R.string.modern_settings_volume_title,
+                    ),
+                    state = snapshot.volume.toVolumeProgress(),
+                    valueText = percentText,
+                    enabledByDependency = snapshot.soundEnabled,
+                    decreaseDescription = stringResource(R.string.modern_settings_decrease_volume),
+                    increaseDescription = stringResource(R.string.modern_settings_increase_volume),
+                    onCommit = actions.onVolumeCommit,
+                    onRestoreDefault = actions.onVolumeDefault,
+                )
+            }
+            item {
+                SettingsSwitchRow(
+                    title = legacyString(
+                        "setting_vibrate_on_keypress_title",
+                        R.string.modern_settings_vibration_title,
+                    ),
+                    supporting = stringResource(
+                        if (snapshot.vibrationEnabled) R.string.modern_settings_enabled
+                        else R.string.modern_settings_disabled
+                    ),
+                    checked = snapshot.vibrationEnabled,
+                    onCheckedChange = actions.onVibrationEnabledChange,
+                )
+            }
+            item {
+                DefaultAwareAdjustment(
+                    title = legacyString(
+                        "setting_vibration_strength_on_keypress_title",
+                        R.string.modern_settings_vibration_duration_title,
+                    ),
+                    state = snapshot.vibration,
+                    valueText = millisecondsText,
+                    enabledByDependency = snapshot.vibrationEnabled,
+                    decreaseDescription = stringResource(
+                        R.string.modern_settings_decrease_vibration
+                    ),
+                    increaseDescription = stringResource(
+                        R.string.modern_settings_increase_vibration
+                    ),
+                    onCommit = actions.onVibrationCommit,
+                    onRestoreDefault = actions.onVibrationDefault,
+                )
+            }
+            item { HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp)) }
+            item { SectionTitle(stringResource(R.string.modern_settings_section_layout_gestures)) }
+            item {
+                DiscreteSettingsSlider(
+                    title = legacyString(
+                        "setting_keyboard_height_ratio_title",
+                        R.string.modern_settings_keyboard_height_title,
+                    ),
+                    value = snapshot.keyboardHeightIndex.toFloat(),
+                    valueText = snapshot.keyboardHeightLabel,
+                    valueTextForIndex = snapshot.keyboardHeightLabels::get,
+                    maximumIndex = SliderSettingContracts.keyboardHeight.values.lastIndex,
+                    editable = true,
+                    onValueCommit = actions.onKeyboardHeightChange,
+                )
+            }
+            item {
+                DiscreteSettingsSlider(
+                    title = legacyString(
+                        "setting_keyboard_slide_sensitivity_ratio_title",
+                        R.string.modern_settings_slide_sensitivity_title,
+                    ),
+                    value = snapshot.slideSensitivityIndex.toFloat(),
+                    valueText = snapshot.slideSensitivityLabel,
+                    valueTextForIndex = snapshot.slideSensitivityLabels::get,
+                    maximumIndex = SliderSettingContracts.slideSensitivity.values.lastIndex,
+                    editable = true,
+                    onValueCommit = actions.onSlideSensitivityChange,
+                )
+            }
+            item {
+                DiscreteSettingsSlider(
+                    title = legacyString(
+                        "setting_key_long_press_delay_title",
+                        R.string.modern_settings_long_press_title,
+                    ),
+                    value = SliderSettingContracts.longPressProgress(
+                        snapshot.longPressDelayMs,
+                    ).coerceIn(0, 60).toFloat(),
+                    valueText = millisecondsText(snapshot.longPressDelayMs),
+                    maximumIndex = 60,
+                )
+            }
+            item { HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp)) }
+            item { SectionTitle(stringResource(R.string.modern_settings_section_handwriting)) }
+            item {
+                DiscreteSettingsSlider(
+                    title = legacyString(
+                        "setting_handwriting_timeout_title",
+                        R.string.modern_settings_handwriting_timeout_title,
+                    ),
+                    value = snapshot.handwritingTimeoutIndex.toFloat(),
+                    valueText = snapshot.handwritingTimeoutLabel + " · " + millisecondsText(
+                        SliderSettingContracts.handwritingTimeout.valueAt(
+                            snapshot.handwritingTimeoutIndex,
+                        ).toInt()
+                    ),
+                    maximumIndex = SliderSettingContracts.handwritingTimeout.values.lastIndex,
+                )
+            }
+            item {
+                DiscreteSettingsSlider(
+                    title = legacyString(
+                        "setting_handwriting_stroke_width_title",
+                        R.string.modern_settings_handwriting_stroke_width_title,
+                    ),
+                    value = snapshot.handwritingStrokeWidthIndex.toFloat(),
+                    valueText = snapshot.handwritingStrokeWidthLabel + " · " +
+                        SliderSettingContracts.handwritingStrokeWidth.valueAt(
+                            snapshot.handwritingStrokeWidthIndex,
+                        ),
+                    maximumIndex = SliderSettingContracts.handwritingStrokeWidth.values.lastIndex,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun legacyString(name: String, @StringRes fallback: Int): String {
+    val context = LocalContext.current
+    val id = context.resources.getIdentifier(name, "string", context.packageName)
+    return if (id != 0) context.getString(id) else stringResource(fallback)
+}
+
+@Composable
+private fun SectionTitle(title: String) {
+    Text(
+        text = title,
+        modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+        color = MaterialTheme.colorScheme.primary,
+        fontWeight = FontWeight.Medium,
+        style = MaterialTheme.typography.labelLarge,
+    )
+}
+
+@Composable
+private fun SettingsSwitchRow(
+    title: String,
+    supporting: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.bodyLarge)
+            Text(
+                supporting,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
+        Switch(checked = checked, onCheckedChange = onCheckedChange)
+    }
+}
+
+@Composable
+private fun DiscreteSettingsSlider(
+    title: String,
+    value: Float,
+    valueText: String,
+    valueTextForIndex: ((Int) -> String)? = null,
+    maximumIndex: Int,
+    dependencyEnabled: Boolean = true,
+    editable: Boolean = false,
+    onValueCommit: (Int) -> Unit = {},
+) {
+    var displayedValue by remember(value) { mutableFloatStateOf(value) }
+    val interactionEnabled = editable && dependencyEnabled
+    val displayedIndex = displayedValue.roundToInt().coerceIn(0, maximumIndex)
+    val displayedValueText = valueTextForIndex?.invoke(displayedIndex) ?: valueText
+    val semanticsText = stringResource(
+        if (interactionEnabled) R.string.modern_settings_value_adjustable
+        else R.string.modern_settings_value_read_only,
+        title,
+        displayedValueText,
+    )
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 10.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(
+                title,
+                color = if (dependencyEnabled) MaterialTheme.colorScheme.onSurface
+                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+                style = MaterialTheme.typography.bodyLarge,
+            )
+            Text(
+                displayedValueText,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.labelLarge,
+            )
+        }
+        Slider(
+            value = displayedValue.coerceIn(0f, maximumIndex.toFloat()),
+            onValueChange = { if (interactionEnabled) displayedValue = it },
+            onValueChangeFinished = {
+                if (interactionEnabled) onValueCommit(displayedValue.roundToInt())
+            },
+            valueRange = 0f..maximumIndex.toFloat(),
+            steps = (maximumIndex - 1).coerceAtLeast(0),
+            enabled = interactionEnabled,
+            modifier = Modifier
+                .fillMaxWidth()
+                .windowInsetsPadding(WindowInsets.safeGestures.only(WindowInsetsSides.Horizontal))
+                .semantics { contentDescription = semanticsText },
+        )
+    }
+}

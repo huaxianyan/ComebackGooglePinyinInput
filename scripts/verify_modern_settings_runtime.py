@@ -32,52 +32,74 @@ def main() -> int:
         ),
         "Compose runtime dependencies",
     )
-    screen = next((project / "compose-runtime/src/main/kotlin").rglob("ComposeSettingsPrototypeActivity.kt"))
-    screen_text = screen.read_text(encoding="utf-8")
+    kotlin_root = project / "compose-runtime/src/main/kotlin"
+    kotlin_files = tuple(kotlin_root.rglob("*.kt"))
+    kotlin_text = "\n".join(path.read_text(encoding="utf-8") for path in kotlin_files)
+    activity_text = next(
+        kotlin_root.rglob("ComposeSettingsPrototypeActivity.kt")
+    ).read_text(encoding="utf-8")
     require(
-        screen_text,
+        activity_text,
+        (
+            "class ComposeSettingsPrototypeActivity : ComponentActivity()",
+            "SettingsController(",
+            "SettingsPreviewEffects(this)",
+            "SettingsScreen(",
+            "override fun onResume()",
+            "snapshot = controller.read()",
+            "setContent {",
+        ),
+        "guarded Compose settings activity",
+    )
+    require(
+        kotlin_text,
         (
             "import androidx.compose.material3.Slider",
             "import androidx.compose.material3.Switch",
             "import androidx.compose.material3.TopAppBar",
-            "class ComposeSettingsPrototypeActivity : ComponentActivity()",
-            "repository = LegacySettingsRepository(this)",
-            "snapshot = repository.readSliderSnapshot()",
-            "StagedSettingsScreen(",
-            "repository.setKeyboardHeightIndex(index)",
-            "repository.setSlideSensitivityIndex(index)",
-            "repository.setSoundEnabled(enabled)",
-            "repository.setVolumePercent(percent)",
-            "repository.restoreVolumeDefault()",
-            "repository.setVibrationEnabled(enabled)",
-            "repository.setVibrationDuration(milliseconds)",
-            "repository.restoreVibrationDefault()",
-            "override fun onResume()",
-            "DefaultAwareAdjustment",
-            "SystemDefaultAdjustment",
-            'label = { Text("系统默认") }',
-            'Text("设置自定义值")',
-            'Text("使用系统默认")',
-            "draftTouched",
-            "VibrationEffect.createOneShot",
-            "audioManager.playSoundEffect(5, percent / 100f)",
-            "snapshot.keyboardHeightLabel",
-            "snapshot.slideSensitivityLabel",
+            "data class SettingsActions(",
+            "fun SettingsScreen(",
+            "fun DefaultAwareAdjustment(",
+            "SystemDefaultAdjustment(",
+            "AdjustmentStateReducer.startCustom",
+            "AdjustmentStateReducer.applyDraft",
+            "AdjustmentStateReducer.cancelDraft",
+            "AdjustmentStateReducer.restoreDefault",
+            "rememberSaveable(title, resolvedKey, stateSaver = adjustmentStateSaver)",
+            "previewEffects.previewVolume(percent)",
+            "previewEffects.previewVibration(milliseconds)",
             "snapshot.keyboardHeightLabels::get",
             "snapshot.slideSensitivityLabels::get",
             "WindowInsets.safeGestures.only(WindowInsetsSides.Horizontal)",
             "displayedValue.roundToInt()",
-            "降低按键音量",
-            "提高按键音量",
-            "缩短振动时长",
-            "延长振动时长",
-            "setContent {",
+            "stringResource(R.string.modern_settings_set_custom)",
+            "stringResource(R.string.modern_settings_use_system_default)",
         ),
-        "official Compose Material 3 prototype",
+        "official Compose Material 3 settings modules",
     )
     for forbidden in ("android.widget.SeekBar", "onDraw(", "Md3SliderView"):
-        if forbidden in screen_text:
+        if forbidden in kotlin_text:
             raise RuntimeError(f"modern settings must not simulate Slider: {forbidden}")
+    if any("\u4e00" <= character <= "\u9fff" for character in kotlin_text):
+        raise RuntimeError("modern settings Kotlin must not hard-code Chinese UI text")
+
+    values = (project / "compose-runtime/src/main/res/values/strings.xml").read_text(
+        encoding="utf-8"
+    )
+    values_zh = (project / "compose-runtime/src/main/res/values-zh/strings.xml").read_text(
+        encoding="utf-8"
+    )
+    for localized_text, label in ((values, "English"), (values_zh, "Simplified Chinese")):
+        require(
+            localized_text,
+            (
+                'name="modern_settings_set_custom"',
+                'name="modern_settings_choose_custom_unsaved"',
+                'name="modern_settings_use_system_default"',
+                'name="modern_settings_value_adjustable"',
+            ),
+            f"{label} modern settings resources",
+        )
 
     contracts = next((project / "compose-runtime/src/main/kotlin").rglob("SliderSettingContracts.kt"))
     contract_text = contracts.read_text(encoding="utf-8")
@@ -95,6 +117,32 @@ def main() -> int:
             "percent / 100f",
         ),
         "audited Slider persistence contracts",
+    )
+
+    require(
+        kotlin_text,
+        (
+            "sealed interface AdjustmentEditorState",
+            "data object SystemDefault",
+            "data class EditingDraft(val value: Int, val touched: Boolean)",
+            "data class Explicit(val value: Int)",
+            "require(state is AdjustmentEditorState.EditingDraft && state.touched)",
+            "dependencyEnabled && state !is AdjustmentEditorState.SystemDefault",
+        ),
+        "pure adjustment state reducer",
+    )
+    adjustment_test = next(
+        (project / "compose-runtime/src/test/kotlin").rglob("AdjustmentStateTest.kt")
+    ).read_text(encoding="utf-8")
+    require(
+        adjustment_test,
+        (
+            "untouchedDraftCannotBecomeExplicitZero",
+            "touchedDraftCanApplyExplicitZeroWithoutCollapsingToDefault",
+            "cancelDiscardsDraftAndRestoreReturnsToDefault",
+            "dependencyDisableRetainsExplicitValueButBlocksInteraction",
+        ),
+        "adjustment reducer tests",
     )
 
     repository = next((project / "compose-runtime/src/main/kotlin").rglob("LegacySettingsRepository.kt"))

@@ -154,6 +154,19 @@ decrease/Slider/increase controls, and a full-width system-default action—whil
 retaining this project's accepted rule that an unknown negative system sentinel
 has no truthful Slider position. See `docs/gboard-font-size-slider-research.md`.
 
+The prototype has been split into lifecycle, screen, adjustment-control, pure
+state, persistence, controller, and platform-preview modules. All modern-only UI
+text now uses prefixed Android resources with English and Simplified Chinese
+translations; existing setting titles are resolved from the legacy localized
+resources with modern fallbacks. A static gate rejects hard-coded Chinese text in
+Kotlin and verifies translation-key parity.
+
+The nullable adjustment flow is defined by a pure `AdjustmentStateReducer` over
+`SystemDefault`, `EditingDraft(value, touched)`, and `Explicit(value)`. Unit tests
+fix invalid-transition, explicit-zero, cancel, restore, range, and dependency-off
+semantics. Compose saves this state with an explicit Saver, while persistence and
+one-shot previews remain outside the reducer and composition.
+
 This stage also enables the two parent Boolean switches. In system-default state,
 “设置自定义值” opens a process/configuration-safe draft at zero without writing;
 Apply remains disabled until the user explicitly operates the Slider or a step

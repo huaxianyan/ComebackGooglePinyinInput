@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="modern_settings_title">键盘设置</string>
+    <string name="modern_settings_stage_summary">官方 Compose Material 3 · 分阶段写入验证</string>
+    <string name="modern_settings_section_key_feedback">按键反馈</string>
+    <string name="modern_settings_section_layout_gestures">布局和手势</string>
+    <string name="modern_settings_section_handwriting">手写</string>
+    <string name="modern_settings_sound_title">按键音</string>
+    <string name="modern_settings_volume_title">按键音量</string>
+    <string name="modern_settings_vibration_title">按键振动</string>
+    <string name="modern_settings_vibration_duration_title">振动时长</string>
+    <string name="modern_settings_keyboard_height_title">键盘高度</string>
+    <string name="modern_settings_slide_sensitivity_title">滑动灵敏度</string>
+    <string name="modern_settings_long_press_title">长按延迟</string>
+    <string name="modern_settings_handwriting_timeout_title">识别等待时间</string>
+    <string name="modern_settings_handwriting_stroke_width_title">笔画宽度</string>
+    <string name="modern_settings_enabled">已开启</string>
+    <string name="modern_settings_disabled">已关闭</string>
+    <string name="modern_settings_system_default">系统默认</string>
+    <string name="modern_settings_system_default_explanation">由系统决定，不对应数值零</string>
+    <string name="modern_settings_dependency_disabled">父开关已关闭，启用后可设置自定义值</string>
+    <string name="modern_settings_set_custom">设置自定义值</string>
+    <string name="modern_settings_choose_custom_unsaved">选择自定义值（尚未保存）</string>
+    <string name="modern_settings_cancel">取消</string>
+    <string name="modern_settings_apply">应用</string>
+    <string name="modern_settings_use_system_default">使用系统默认</string>
+    <string name="modern_settings_decrease_volume">降低按键音量</string>
+    <string name="modern_settings_increase_volume">提高按键音量</string>
+    <string name="modern_settings_decrease_vibration">缩短振动时长</string>
+    <string name="modern_settings_increase_vibration">延长振动时长</string>
+    <string name="modern_settings_percent_format">%1$d%%</string>
+    <string name="modern_settings_milliseconds_format">%1$d ms</string>
+    <string name="modern_settings_value_read_only">%1$s，%2$s，只读</string>
+    <string name="modern_settings_value_adjustable">%1$s，%2$s，可调整</string>
+</resources>
