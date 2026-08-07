@@ -49,6 +49,35 @@ class SliderSettingContractsTest {
     }
 
     @Test
+    fun deviceDefaultsUseOriginalRegexAndFirstMatchSemantics() {
+        val entries = arrayOf(
+            "MODEL=Pixel.*:BRAND=google,8",
+            "MODEL=Pixel 10 Pro,9",
+            ",5",
+        )
+        val device = mapOf(
+            "MODEL" to "Pixel 10 Pro",
+            "BRAND" to "google",
+            "HARDWARE" to "blazer",
+            "MANUFACTURER" to "Google",
+        )
+
+        assertEquals("8", LegacySettingsRepository.selectDeviceOverride(entries, device, "-1"))
+        assertEquals(
+            "5",
+            LegacySettingsRepository.selectDeviceOverride(
+                entries,
+                device + ("MODEL" to "Other"),
+                "-1",
+            ),
+        )
+        assertEquals(
+            "-1",
+            LegacySettingsRepository.selectDeviceOverride(emptyArray(), device, "-1"),
+        )
+    }
+
+    @Test
     fun longPressMappingIsExactly100To700InTenMillisecondSteps() {
         assertEquals(0, SliderSettingContracts.longPressProgress(100))
         assertEquals(20, SliderSettingContracts.longPressProgress(300))

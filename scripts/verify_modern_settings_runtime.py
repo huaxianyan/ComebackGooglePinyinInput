@@ -65,6 +65,24 @@ def main() -> int:
         "audited Slider persistence contracts",
     )
 
+    repository = next((project / "compose-runtime/src/main/kotlin").rglob("LegacySettingsRepository.kt"))
+    repository_text = repository.read_text(encoding="utf-8")
+    require(
+        repository_text,
+        (
+            '"${applicationContext.packageName}_preferences"',
+            "preferences.contains(SliderSettingContracts.SOUND_VOLUME_KEY)",
+            "preferences.contains(SliderSettingContracts.VIBRATION_DURATION_KEY)",
+            '"pref_def_value_sound_volume_on_keypress"',
+            '"pref_def_value_per_device_vibration_duration_on_keypress"',
+            '"HARDWARE" to Build.HARDWARE',
+            "fun readSliderSnapshot()",
+        ),
+        "read-only legacy settings repository",
+    )
+    if ".edit()" in repository_text or "SharedPreferences.Editor" in repository_text:
+        raise RuntimeError("initial settings repository stage must remain read-only")
+
     host_build = (project / "reconstructed-host-prototype/build.gradle.kts").read_text(
         encoding="utf-8"
     )

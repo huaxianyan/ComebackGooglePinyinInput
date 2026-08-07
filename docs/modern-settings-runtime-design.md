@@ -122,6 +122,13 @@ Preference subclasses and resources:
 specifically prohibit collapsing absent/system-default volume or vibration into
 explicit numeric zero.
 
+`LegacySettingsRepository` now implements the first read-only bridge. It opens
+the same `${packageName}_preferences` file selected by the platform
+`PreferenceManager`, distinguishes key absence with `contains()`, and reproduces
+the original first-match device override parser over `Build.HARDWARE`, `MODEL`,
+`BRAND`, and `MANUFACTURER`. This stage contains no `SharedPreferences.Editor`
+and cannot mutate settings.
+
 ## Next implementation stage
 
 1. Make the host assembly a single reproducible build command from the original
