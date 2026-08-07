@@ -129,11 +129,18 @@ the original first-match device override parser over `Build.HARDWARE`, `MODEL`,
 `BRAND`, and `MANUFACTURER`. This stage contains no `SharedPreferences.Editor`
 and cannot mutate settings.
 
-The first read-only Compose screen binds this snapshot to official Material 3
-`Switch`, `Slider`, `AssistChip`, `TopAppBar`, `LazyColumn`, and section
-components. Every control is non-interactive in this stage. Volume and vibration
-with a negative device default render a separate “system default” chip and no
-numeric Slider, so the UI cannot conflate system default with explicit zero.
+The first Compose screen binds this snapshot to official Material 3 `Switch`,
+`Slider`, `AssistChip`, `TopAppBar`, `LazyColumn`, and section components. Volume
+and vibration with a negative device default render a separate “system default”
+chip and no numeric Slider, so the UI cannot conflate system default with
+explicit zero.
+
+The first narrowly scoped write stage enables only keyboard height and slide
+sensitivity. Both use the same typed enumerated write path, persist the exact
+legacy String from the audited ordered value arrays, reject out-of-range indices,
+and publish one SharedPreferences update only when a drag finishes. Sound,
+vibration, long-press, and handwriting controls remain read-only. This stage has
+no Boolean, Float, integer, remove, clear, reset, or preview write path.
 Section and title strings are still prototype-only, but enum value labels now
 come from the original localized `entries_*` arrays (for example low, normal,
 high) while their exact stored values remain separate in the contract. A

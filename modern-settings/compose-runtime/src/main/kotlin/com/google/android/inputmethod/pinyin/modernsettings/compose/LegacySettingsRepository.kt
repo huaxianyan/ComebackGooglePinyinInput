@@ -81,6 +81,20 @@ class LegacySettingsRepository(context: Context) {
         )
     }
 
+    fun setKeyboardHeightIndex(index: Int): SliderSettingsSnapshot {
+        writeEnumerated(SliderSettingContracts.keyboardHeight, index)
+        return readSliderSnapshot()
+    }
+
+    fun setSlideSensitivityIndex(index: Int): SliderSettingsSnapshot {
+        writeEnumerated(SliderSettingContracts.slideSensitivity, index)
+        return readSliderSnapshot()
+    }
+
+    private fun writeEnumerated(contract: EnumeratedSliderContract, index: Int) {
+        preferences.edit().putString(contract.key, contract.valueAt(index)).apply()
+    }
+
     private fun readEnumeratedIndex(contract: EnumeratedSliderContract): Int =
         contract.indexOf(preferences.getString(contract.key, contract.defaultValue))
 

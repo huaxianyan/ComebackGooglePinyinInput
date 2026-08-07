@@ -2,6 +2,7 @@ package com.google.android.inputmethod.pinyin.modernsettings.compose
 
 import org.junit.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 
 class SliderSettingContractsTest {
@@ -46,6 +47,20 @@ class SliderSettingContractsTest {
 
         assertEquals(3, SliderSettingContracts.handwritingStrokeWidth.indexOf(null))
         assertEquals("2", SliderSettingContracts.handwritingStrokeWidth.valueAt(6))
+    }
+
+    @Test
+    fun stagedEnumeratedWritesAcceptOnlyExactInRangeValues() {
+        assertEquals("0.9", SliderSettingContracts.keyboardHeight.valueAt(0))
+        assertEquals("1.1", SliderSettingContracts.keyboardHeight.valueAt(4))
+        assertEquals("3.0", SliderSettingContracts.slideSensitivity.valueAt(0))
+        assertEquals("0.5", SliderSettingContracts.slideSensitivity.valueAt(4))
+        assertFailsWith<IndexOutOfBoundsException> {
+            SliderSettingContracts.keyboardHeight.valueAt(-1)
+        }
+        assertFailsWith<IndexOutOfBoundsException> {
+            SliderSettingContracts.slideSensitivity.valueAt(5)
+        }
     }
 
     @Test

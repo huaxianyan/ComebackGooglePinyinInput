@@ -43,7 +43,9 @@ def main() -> int:
             "class ComposeSettingsPrototypeActivity : ComponentActivity()",
             "repository = LegacySettingsRepository(this)",
             "snapshot = repository.readSliderSnapshot()",
-            "ReadOnlySettingsScreen(it)",
+            "StagedSettingsScreen(",
+            "repository.setKeyboardHeightIndex(index)",
+            "repository.setSlideSensitivityIndex(index)",
             "override fun onResume()",
             "SystemDefaultRow",
             'label = { Text("系统默认") }',
@@ -90,11 +92,17 @@ def main() -> int:
             '"entries_keyboard_height_ratio"',
             '"entries_keyboard_slide_sensitivity_ratio"',
             "fun readSliderSnapshot()",
+            "fun setKeyboardHeightIndex(index: Int)",
+            "fun setSlideSensitivityIndex(index: Int)",
+            "preferences.edit().putString(contract.key, contract.valueAt(index)).apply()",
         ),
-        "read-only legacy settings repository",
+        "staged legacy settings repository",
     )
-    if ".edit()" in repository_text or "SharedPreferences.Editor" in repository_text:
-        raise RuntimeError("initial settings repository stage must remain read-only")
+    if repository_text.count("putString(") != 1:
+        raise RuntimeError("staged repository must have one typed enumerated write path")
+    for forbidden_write in ("putBoolean(", "putFloat(", "putInt(", ".remove(", ".clear("):
+        if forbidden_write in repository_text:
+            raise RuntimeError(f"unaudited settings write path: {forbidden_write}")
 
     host_build = (project / "reconstructed-host-prototype/build.gradle.kts").read_text(
         encoding="utf-8"

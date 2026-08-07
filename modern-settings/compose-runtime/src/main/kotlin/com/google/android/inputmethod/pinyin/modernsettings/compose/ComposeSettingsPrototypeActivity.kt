@@ -27,7 +27,9 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,8 +38,9 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import kotlin.math.roundToInt
 
-/** Read-only proof that real legacy settings can drive official Compose Material 3. */
+/** Staged proof that official Compose Material 3 can preserve legacy setting contracts. */
 class ComposeSettingsPrototypeActivity : ComponentActivity() {
     private lateinit var repository: LegacySettingsRepository
     private var snapshot by mutableStateOf<SliderSettingsSnapshot?>(null)
@@ -48,7 +51,17 @@ class ComposeSettingsPrototypeActivity : ComponentActivity() {
         repository = LegacySettingsRepository(this)
         setContent {
             PrototypeTheme {
-                snapshot?.let { ReadOnlySettingsScreen(it) }
+                snapshot?.let {
+                    StagedSettingsScreen(
+                        snapshot = it,
+                        onKeyboardHeightChange = { index ->
+                            snapshot = repository.setKeyboardHeightIndex(index)
+                        },
+                        onSlideSensitivityChange = { index ->
+                            snapshot = repository.setSlideSensitivityIndex(index)
+                        },
+                    )
+                }
             }
         }
     }
@@ -74,7 +87,11 @@ private fun PrototypeTheme(content: @Composable () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ReadOnlySettingsScreen(snapshot: SliderSettingsSnapshot) {
+private fun StagedSettingsScreen(
+    snapshot: SliderSettingsSnapshot,
+    onKeyboardHeightChange: (Int) -> Unit,
+    onSlideSensitivityChange: (Int) -> Unit,
+) {
     Scaffold(
         topBar = { TopAppBar(title = { Text("键盘设置") }) },
         modifier = Modifier.fillMaxSize(),
@@ -85,7 +102,7 @@ private fun ReadOnlySettingsScreen(snapshot: SliderSettingsSnapshot) {
         ) {
             item {
                 Text(
-                    text = "官方 Compose Material 3 · 只读状态验证",
+                    text = "官方 Compose Material 3 · 分阶段写入验证",
                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodyMedium,
@@ -127,6 +144,8 @@ private fun ReadOnlySettingsScreen(snapshot: SliderSettingsSnapshot) {
                     value = snapshot.keyboardHeightIndex.toFloat(),
                     valueText = snapshot.keyboardHeightLabel,
                     maximumIndex = SliderSettingContracts.keyboardHeight.values.lastIndex,
+                    editable = true,
+                    onValueCommit = onKeyboardHeightChange,
                 )
             }
             item {
@@ -135,6 +154,8 @@ private fun ReadOnlySettingsScreen(snapshot: SliderSettingsSnapshot) {
                     value = snapshot.slideSensitivityIndex.toFloat(),
                     valueText = snapshot.slideSensitivityLabel,
                     maximumIndex = SliderSettingContracts.slideSensitivity.values.lastIndex,
+                    editable = true,
+                    onValueCommit = onSlideSensitivityChange,
                 )
             }
             item {
@@ -302,7 +323,11 @@ private fun DiscreteReadOnlySlider(
     valueText: String,
     maximumIndex: Int,
     dependencyEnabled: Boolean = true,
+    editable: Boolean = false,
+    onValueCommit: (Int) -> Unit = {},
 ) {
+    var displayedValue by remember(value) { mutableFloatStateOf(value) }
+    val interactionEnabled = editable && dependencyEnabled
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -325,14 +350,20 @@ private fun DiscreteReadOnlySlider(
             )
         }
         Slider(
-            value = value.coerceIn(0f, maximumIndex.toFloat()),
-            onValueChange = {},
+            value = displayedValue.coerceIn(0f, maximumIndex.toFloat()),
+            onValueChange = { if (interactionEnabled) displayedValue = it },
+            onValueChangeFinished = {
+                if (interactionEnabled) onValueCommit(displayedValue.roundToInt())
+            },
             valueRange = 0f..maximumIndex.toFloat(),
             steps = (maximumIndex - 1).coerceAtLeast(0),
-            enabled = false,
+            enabled = interactionEnabled,
             modifier = Modifier
                 .fillMaxWidth()
-                .semantics { contentDescription = "$title，$valueText，只读" },
+                .semantics {
+                    contentDescription = "$title，$valueText，" +
+                        if (interactionEnabled) "可调整" else "只读"
+                },
         )
     }
 }
