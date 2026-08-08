@@ -70,6 +70,11 @@ def main() -> int:
             "previewEffects.previewVibration(milliseconds)",
             "snapshot.keyboardHeightLabels::get",
             "snapshot.slideSensitivityLabels::get",
+            "actions.onBooleanChange",
+            "BooleanSettingContracts.doubleSpacePeriod",
+            "BooleanSettingContracts.scrubMove",
+            "BooleanSettingContracts.showEnglishKeyboard",
+            "BooleanSettingContracts.emojiAltPhysicalKey",
             "actions.onLongPressDelayChange",
             "actions.onLongPressDefault",
             "LongPressDelaySetting(",
@@ -104,6 +109,11 @@ def main() -> int:
                 'name="modern_settings_choose_custom_unsaved"',
                 'name="modern_settings_use_system_default"',
                 'name="modern_settings_use_default"',
+                'name="modern_settings_section_input"',
+                'name="modern_settings_double_space_title"',
+                'name="modern_settings_scrub_move_title"',
+                'name="modern_settings_show_english_keyboard_title"',
+                'name="modern_settings_physical_alt_title"',
                 'name="modern_settings_value_adjustable"',
             ),
             f"{label} modern settings resources",
@@ -128,6 +138,33 @@ def main() -> int:
             "fun encodeLongPress(milliseconds: Int)",
         ),
         "audited Slider persistence contracts",
+    )
+
+    boolean_contracts = next(
+        (project / "compose-runtime/src/main/kotlin").rglob("BooleanSettingContracts.kt")
+    ).read_text(encoding="utf-8")
+    require(
+        boolean_contracts,
+        (
+            'key = "enable_double_space_period"',
+            'key = "enable_scrub_move"',
+            'key = "show_english_keyboard"',
+            'key = "enable_emoji_alt_physical_key"',
+            "defaultValue = true",
+            "val firstPlainBatch = listOf(",
+        ),
+        "audited Boolean persistence contracts",
+    )
+    boolean_test = next(
+        (project / "compose-runtime/src/test/kotlin").rglob("BooleanSettingContractsTest.kt")
+    ).read_text(encoding="utf-8")
+    require(
+        boolean_test,
+        (
+            "firstPlainBatchPreservesExactLegacyKeysAndDefaults",
+            "firstPlainBatchHasNoDuplicateKeys",
+        ),
+        "Boolean contract tests",
     )
 
     require(
@@ -173,9 +210,13 @@ def main() -> int:
             "slideSensitivityLabels: List<String>",
             "handwritingTimeoutLabels: List<String>",
             "handwritingStrokeWidthLabels: List<String>",
-            "fun readSliderSnapshot()",
+            "fun readSnapshot()",
+            "data class SettingsSnapshot(",
             "fun setSoundEnabled(enabled: Boolean)",
             "fun setVibrationEnabled(enabled: Boolean)",
+            "fun setBoolean(",
+            "require(contract in BooleanSettingContracts.firstPlainBatch)",
+            "isExplicit = preferences.contains(contract.key)",
             "fun setVolumePercent(percent: Int)",
             "fun restoreVolumeDefault()",
             "fun setVibrationDuration(milliseconds: Int)",
@@ -191,7 +232,7 @@ def main() -> int:
         "staged legacy settings repository",
     )
     expected_write_counts = {
-        "putBoolean(": 2,
+        "putBoolean(": 3,
         "putFloat(": 1,
         "putString(": 3,
         ".remove(": 3,

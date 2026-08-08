@@ -2,6 +2,7 @@
 <resources>
     <string name="modern_settings_title">键盘设置</string>
     <string name="modern_settings_stage_summary">官方 Compose Material 3 · 分阶段写入验证</string>
+    <string name="modern_settings_section_input">输入</string>
     <string name="modern_settings_section_key_feedback">按键反馈</string>
     <string name="modern_settings_section_layout_gestures">布局和手势</string>
     <string name="modern_settings_section_handwriting">手写</string>
@@ -14,6 +15,13 @@
     <string name="modern_settings_long_press_title">长按延迟</string>
     <string name="modern_settings_handwriting_timeout_title">识别等待时间</string>
     <string name="modern_settings_handwriting_stroke_width_title">笔画宽度</string>
+    <string name="modern_settings_double_space_title">双空格句号</string>
+    <string name="modern_settings_double_space_summary">点按两次空格键可插入句号和空格</string>
+    <string name="modern_settings_scrub_move_title">滑动空格键移动光标</string>
+    <string name="modern_settings_scrub_move_summary">在空格键上左右滑动以移动光标</string>
+    <string name="modern_settings_show_english_keyboard_title">显示英文键盘</string>
+    <string name="modern_settings_physical_alt_title">使用实体键盘 Alt 键输入符号</string>
+    <string name="modern_settings_physical_alt_summary">连接实体键盘时使用 Alt 键输入符号</string>
     <string name="modern_settings_enabled">已开启</string>
     <string name="modern_settings_disabled">已关闭</string>
     <string name="modern_settings_system_default">系统默认</string>

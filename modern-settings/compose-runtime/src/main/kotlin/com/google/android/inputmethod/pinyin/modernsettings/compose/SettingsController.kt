@@ -5,46 +5,51 @@ class SettingsController(
     private val repository: LegacySettingsRepository,
     private val previewEffects: SettingsPreviewEffects,
 ) {
-    fun read(): SliderSettingsSnapshot = repository.readSliderSnapshot()
+    fun read(): SettingsSnapshot = repository.readSnapshot()
 
-    fun setSoundEnabled(enabled: Boolean): SliderSettingsSnapshot =
+    fun setSoundEnabled(enabled: Boolean): SettingsSnapshot =
         repository.setSoundEnabled(enabled)
 
-    fun setVolumePercent(percent: Int): SliderSettingsSnapshot {
+    fun setVolumePercent(percent: Int): SettingsSnapshot {
         val snapshot = repository.setVolumePercent(percent)
         previewEffects.previewVolume(percent)
         return snapshot
     }
 
-    fun restoreVolumeDefault(): SliderSettingsSnapshot = repository.restoreVolumeDefault()
+    fun restoreVolumeDefault(): SettingsSnapshot = repository.restoreVolumeDefault()
 
-    fun setVibrationEnabled(enabled: Boolean): SliderSettingsSnapshot =
+    fun setVibrationEnabled(enabled: Boolean): SettingsSnapshot =
         repository.setVibrationEnabled(enabled)
 
-    fun setVibrationDuration(milliseconds: Int): SliderSettingsSnapshot {
+    fun setBoolean(
+        contract: BooleanSettingContract,
+        enabled: Boolean,
+    ): SettingsSnapshot = repository.setBoolean(contract, enabled)
+
+    fun setVibrationDuration(milliseconds: Int): SettingsSnapshot {
         val snapshot = repository.setVibrationDuration(milliseconds)
         previewEffects.previewVibration(milliseconds)
         return snapshot
     }
 
-    fun restoreVibrationDefault(): SliderSettingsSnapshot =
+    fun restoreVibrationDefault(): SettingsSnapshot =
         repository.restoreVibrationDefault()
 
-    fun setKeyboardHeightIndex(index: Int): SliderSettingsSnapshot =
+    fun setKeyboardHeightIndex(index: Int): SettingsSnapshot =
         repository.setKeyboardHeightIndex(index)
 
-    fun setSlideSensitivityIndex(index: Int): SliderSettingsSnapshot =
+    fun setSlideSensitivityIndex(index: Int): SettingsSnapshot =
         repository.setSlideSensitivityIndex(index)
 
-    fun setLongPressDelay(milliseconds: Int): SliderSettingsSnapshot =
+    fun setLongPressDelay(milliseconds: Int): SettingsSnapshot =
         repository.setLongPressDelay(milliseconds)
 
-    fun restoreLongPressDefault(): SliderSettingsSnapshot =
+    fun restoreLongPressDefault(): SettingsSnapshot =
         repository.restoreLongPressDefault()
 
-    fun setHandwritingTimeoutIndex(index: Int): SliderSettingsSnapshot =
+    fun setHandwritingTimeoutIndex(index: Int): SettingsSnapshot =
         repository.setHandwritingTimeoutIndex(index)
 
-    fun setHandwritingStrokeWidthIndex(index: Int): SliderSettingsSnapshot =
+    fun setHandwritingStrokeWidthIndex(index: Int): SettingsSnapshot =
         repository.setHandwritingStrokeWidthIndex(index)
 }

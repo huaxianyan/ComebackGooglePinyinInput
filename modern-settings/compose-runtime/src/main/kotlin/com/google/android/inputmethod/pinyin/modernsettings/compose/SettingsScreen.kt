@@ -42,6 +42,7 @@ data class SettingsActions(
     val onVolumeCommit: (Int) -> Unit,
     val onVolumeDefault: () -> Unit,
     val onVibrationEnabledChange: (Boolean) -> Unit,
+    val onBooleanChange: (BooleanSettingContract, Boolean) -> Unit,
     val onVibrationCommit: (Int) -> Unit,
     val onVibrationDefault: () -> Unit,
     val onKeyboardHeightChange: (Int) -> Unit,
@@ -54,7 +55,7 @@ data class SettingsActions(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(snapshot: SliderSettingsSnapshot, actions: SettingsActions) {
+fun SettingsScreen(snapshot: SettingsSnapshot, actions: SettingsActions) {
     val context = LocalContext.current
     val percentText: (Int) -> String = {
         context.getString(R.string.modern_settings_percent_format, it)
@@ -78,6 +79,40 @@ fun SettingsScreen(snapshot: SliderSettingsSnapshot, actions: SettingsActions) {
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }
+            item { SectionTitle(stringResource(R.string.modern_settings_section_input)) }
+            item {
+                SettingsSwitchRow(
+                    title = legacyString(
+                        "setting_double_space_period_title",
+                        R.string.modern_settings_double_space_title,
+                    ),
+                    supporting = legacyString(
+                        "setting_double_space_period_summary_cn",
+                        R.string.modern_settings_double_space_summary,
+                    ),
+                    checked = snapshot.doubleSpacePeriod.value,
+                    onCheckedChange = {
+                        actions.onBooleanChange(BooleanSettingContracts.doubleSpacePeriod, it)
+                    },
+                )
+            }
+            item {
+                SettingsSwitchRow(
+                    title = legacyString(
+                        "setting_scrub_move_title",
+                        R.string.modern_settings_scrub_move_title,
+                    ),
+                    supporting = legacyString(
+                        "setting_scrub_move_summary",
+                        R.string.modern_settings_scrub_move_summary,
+                    ),
+                    checked = snapshot.scrubMove.value,
+                    onCheckedChange = {
+                        actions.onBooleanChange(BooleanSettingContracts.scrubMove, it)
+                    },
+                )
+            }
+            item { HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp)) }
             item { SectionTitle(stringResource(R.string.modern_settings_section_key_feedback)) }
             item {
                 SettingsSwitchRow(
@@ -143,6 +178,34 @@ fun SettingsScreen(snapshot: SliderSettingsSnapshot, actions: SettingsActions) {
             }
             item { HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp)) }
             item { SectionTitle(stringResource(R.string.modern_settings_section_layout_gestures)) }
+            item {
+                SettingsSwitchRow(
+                    title = legacyString(
+                        "setting_show_english_keyboard_title",
+                        R.string.modern_settings_show_english_keyboard_title,
+                    ),
+                    checked = snapshot.showEnglishKeyboard.value,
+                    onCheckedChange = {
+                        actions.onBooleanChange(BooleanSettingContracts.showEnglishKeyboard, it)
+                    },
+                )
+            }
+            item {
+                SettingsSwitchRow(
+                    title = legacyString(
+                        "setting_enable_symbol_alt_physical_key_title",
+                        R.string.modern_settings_physical_alt_title,
+                    ),
+                    supporting = legacyString(
+                        "setting_enable_symbol_alt_physical_key_summary",
+                        R.string.modern_settings_physical_alt_summary,
+                    ),
+                    checked = snapshot.emojiAltPhysicalKey.value,
+                    onCheckedChange = {
+                        actions.onBooleanChange(BooleanSettingContracts.emojiAltPhysicalKey, it)
+                    },
+                )
+            }
             item {
                 DiscreteSettingsSlider(
                     title = legacyString(
@@ -305,7 +368,7 @@ private fun SectionTitle(title: String) {
 @Composable
 private fun SettingsSwitchRow(
     title: String,
-    supporting: String,
+    supporting: String? = null,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
 ) {
@@ -318,11 +381,13 @@ private fun SettingsSwitchRow(
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(title, style = MaterialTheme.typography.bodyLarge)
-            Text(
-                supporting,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.bodyMedium,
-            )
+            supporting?.let {
+                Text(
+                    it,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
         }
         Switch(checked = checked, onCheckedChange = onCheckedChange)
     }

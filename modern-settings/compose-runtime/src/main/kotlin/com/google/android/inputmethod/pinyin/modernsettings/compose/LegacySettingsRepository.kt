@@ -13,7 +13,7 @@ class LegacySettingsRepository(context: Context) {
         Context.MODE_PRIVATE,
     )
 
-    fun readSliderSnapshot(): SliderSettingsSnapshot {
+    fun readSnapshot(): SettingsSnapshot {
         val volumeDefault = deviceDefault(
             "pref_def_value_sound_volume_on_keypress",
             "-1.0",
@@ -46,7 +46,7 @@ class LegacySettingsRepository(context: Context) {
             SliderSettingContracts.handwritingStrokeWidth,
         )
 
-        return SliderSettingsSnapshot(
+        return SettingsSnapshot(
             soundEnabled = preferences.getBoolean(SliderSettingContracts.SOUND_ENABLED_KEY, false),
             volume = volume,
             vibrationEnabled = preferences.getBoolean(
@@ -54,6 +54,10 @@ class LegacySettingsRepository(context: Context) {
                 true,
             ),
             vibration = vibration,
+            doubleSpacePeriod = readBoolean(BooleanSettingContracts.doubleSpacePeriod),
+            scrubMove = readBoolean(BooleanSettingContracts.scrubMove),
+            showEnglishKeyboard = readBoolean(BooleanSettingContracts.showEnglishKeyboard),
+            emojiAltPhysicalKey = readBoolean(BooleanSettingContracts.emojiAltPhysicalKey),
             keyboardHeightIndex = keyboardHeightIndex,
             keyboardHeightLabel = readEntryLabel(
                 "entries_keyboard_height_ratio",
@@ -89,74 +93,86 @@ class LegacySettingsRepository(context: Context) {
         )
     }
 
-    fun setSoundEnabled(enabled: Boolean): SliderSettingsSnapshot {
+    fun setSoundEnabled(enabled: Boolean): SettingsSnapshot {
         preferences.edit().putBoolean(SliderSettingContracts.SOUND_ENABLED_KEY, enabled).apply()
-        return readSliderSnapshot()
+        return readSnapshot()
     }
 
-    fun setVibrationEnabled(enabled: Boolean): SliderSettingsSnapshot {
+    fun setVibrationEnabled(enabled: Boolean): SettingsSnapshot {
         preferences.edit().putBoolean(SliderSettingContracts.VIBRATION_ENABLED_KEY, enabled).apply()
-        return readSliderSnapshot()
+        return readSnapshot()
     }
 
-    fun setVolumePercent(percent: Int): SliderSettingsSnapshot {
+    fun setBoolean(contract: BooleanSettingContract, enabled: Boolean): SettingsSnapshot {
+        require(contract in BooleanSettingContracts.firstPlainBatch)
+        preferences.edit().putBoolean(contract.key, enabled).apply()
+        return readSnapshot()
+    }
+
+    fun setVolumePercent(percent: Int): SettingsSnapshot {
         preferences.edit().putFloat(
             SliderSettingContracts.SOUND_VOLUME_KEY,
             SliderSettingContracts.encodeVolumePercent(percent),
         ).apply()
-        return readSliderSnapshot()
+        return readSnapshot()
     }
 
-    fun restoreVolumeDefault(): SliderSettingsSnapshot {
+    fun restoreVolumeDefault(): SettingsSnapshot {
         preferences.edit().remove(SliderSettingContracts.SOUND_VOLUME_KEY).apply()
-        return readSliderSnapshot()
+        return readSnapshot()
     }
 
-    fun setVibrationDuration(milliseconds: Int): SliderSettingsSnapshot {
+    fun setVibrationDuration(milliseconds: Int): SettingsSnapshot {
         preferences.edit().putString(
             SliderSettingContracts.VIBRATION_DURATION_KEY,
             SliderSettingContracts.encodeVibration(milliseconds),
         ).apply()
-        return readSliderSnapshot()
+        return readSnapshot()
     }
 
-    fun restoreVibrationDefault(): SliderSettingsSnapshot {
+    fun restoreVibrationDefault(): SettingsSnapshot {
         preferences.edit().remove(SliderSettingContracts.VIBRATION_DURATION_KEY).apply()
-        return readSliderSnapshot()
+        return readSnapshot()
     }
 
-    fun setKeyboardHeightIndex(index: Int): SliderSettingsSnapshot {
+    fun setKeyboardHeightIndex(index: Int): SettingsSnapshot {
         writeEnumerated(SliderSettingContracts.keyboardHeight, index)
-        return readSliderSnapshot()
+        return readSnapshot()
     }
 
-    fun setSlideSensitivityIndex(index: Int): SliderSettingsSnapshot {
+    fun setSlideSensitivityIndex(index: Int): SettingsSnapshot {
         writeEnumerated(SliderSettingContracts.slideSensitivity, index)
-        return readSliderSnapshot()
+        return readSnapshot()
     }
 
-    fun setLongPressDelay(milliseconds: Int): SliderSettingsSnapshot {
+    fun setLongPressDelay(milliseconds: Int): SettingsSnapshot {
         preferences.edit().putString(
             SliderSettingContracts.LONG_PRESS_DELAY_KEY,
             SliderSettingContracts.encodeLongPress(milliseconds),
         ).apply()
-        return readSliderSnapshot()
+        return readSnapshot()
     }
 
-    fun restoreLongPressDefault(): SliderSettingsSnapshot {
+    fun restoreLongPressDefault(): SettingsSnapshot {
         preferences.edit().remove(SliderSettingContracts.LONG_PRESS_DELAY_KEY).apply()
-        return readSliderSnapshot()
+        return readSnapshot()
     }
 
-    fun setHandwritingTimeoutIndex(index: Int): SliderSettingsSnapshot {
+    fun setHandwritingTimeoutIndex(index: Int): SettingsSnapshot {
         writeEnumerated(SliderSettingContracts.handwritingTimeout, index)
-        return readSliderSnapshot()
+        return readSnapshot()
     }
 
-    fun setHandwritingStrokeWidthIndex(index: Int): SliderSettingsSnapshot {
+    fun setHandwritingStrokeWidthIndex(index: Int): SettingsSnapshot {
         writeEnumerated(SliderSettingContracts.handwritingStrokeWidth, index)
-        return readSliderSnapshot()
+        return readSnapshot()
     }
+
+    private fun readBoolean(contract: BooleanSettingContract): BooleanSettingState =
+        BooleanSettingState(
+            value = preferences.getBoolean(contract.key, contract.defaultValue),
+            isExplicit = preferences.contains(contract.key),
+        )
 
     private fun writeEnumerated(contract: EnumeratedSliderContract, index: Int) {
         preferences.edit().putString(contract.key, contract.valueAt(index)).apply()
@@ -223,11 +239,15 @@ class LegacySettingsRepository(context: Context) {
     }
 }
 
-data class SliderSettingsSnapshot(
+data class SettingsSnapshot(
     val soundEnabled: Boolean,
     val volume: ResolvedSetting<Float>,
     val vibrationEnabled: Boolean,
     val vibration: ResolvedSetting<Int>,
+    val doubleSpacePeriod: BooleanSettingState,
+    val scrubMove: BooleanSettingState,
+    val showEnglishKeyboard: BooleanSettingState,
+    val emojiAltPhysicalKey: BooleanSettingState,
     val keyboardHeightIndex: Int,
     val keyboardHeightLabel: String,
     val keyboardHeightLabels: List<String>,

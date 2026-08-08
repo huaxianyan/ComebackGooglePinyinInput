@@ -19,7 +19,7 @@ import androidx.compose.ui.platform.LocalContext
 /** API-35+-guarded host for the staged official Compose Material 3 settings runtime. */
 class ComposeSettingsPrototypeActivity : ComponentActivity() {
     private lateinit var controller: SettingsController
-    private var snapshot by mutableStateOf<SliderSettingsSnapshot?>(null)
+    private var snapshot by mutableStateOf<SettingsSnapshot?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
@@ -45,6 +45,9 @@ class ComposeSettingsPrototypeActivity : ComponentActivity() {
                             },
                             onVibrationEnabledChange = { enabled ->
                                 snapshot = controller.setVibrationEnabled(enabled)
+                            },
+                            onBooleanChange = { contract, enabled ->
+                                snapshot = controller.setBoolean(contract, enabled)
                             },
                             onVibrationCommit = { milliseconds ->
                                 snapshot = controller.setVibrationDuration(milliseconds)

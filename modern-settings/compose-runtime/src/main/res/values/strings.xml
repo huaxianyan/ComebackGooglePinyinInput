@@ -2,6 +2,7 @@
 <resources>
     <string name="modern_settings_title">Keyboard settings</string>
     <string name="modern_settings_stage_summary">Official Compose Material 3 · staged write validation</string>
+    <string name="modern_settings_section_input">Input</string>
     <string name="modern_settings_section_key_feedback">Key feedback</string>
     <string name="modern_settings_section_layout_gestures">Layout and gestures</string>
     <string name="modern_settings_section_handwriting">Handwriting</string>
@@ -14,6 +15,13 @@
     <string name="modern_settings_long_press_title">Key long press delay</string>
     <string name="modern_settings_handwriting_timeout_title">Handwriting speed</string>
     <string name="modern_settings_handwriting_stroke_width_title">Handwriting stroke width</string>
+    <string name="modern_settings_double_space_title">Double-space period</string>
+    <string name="modern_settings_double_space_summary">Double-tap Space to insert a period followed by a space</string>
+    <string name="modern_settings_scrub_move_title">Slide on the space bar to move the cursor</string>
+    <string name="modern_settings_scrub_move_summary">Move the cursor by sliding left or right on the space bar</string>
+    <string name="modern_settings_show_english_keyboard_title">Show English keyboard</string>
+    <string name="modern_settings_physical_alt_title">Alt key for symbols on a physical keyboard</string>
+    <string name="modern_settings_physical_alt_summary">Use Alt to enter symbols when a physical keyboard is connected</string>
     <string name="modern_settings_enabled">On</string>
     <string name="modern_settings_disabled">Off</string>
     <string name="modern_settings_system_default">System default</string>

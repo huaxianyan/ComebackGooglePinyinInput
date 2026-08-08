@@ -174,6 +174,13 @@ snapped final index is written on release. There is no reset button, preview,
 new storage type, or additional persistence implementation, matching the legacy
 controls.
 
+The first ordinary-Boolean stage adds four audited plain Preference contracts:
+`enable_double_space_period`, `enable_scrub_move`, `show_english_keyboard`, and
+`enable_emoji_alt_physical_key`. Each has Boolean fallback `true`, records key
+presence separately from its visible value, and writes only after a user switch
+action. See `modern-settings-preference-inventory.md` for deferred capability,
+dependency, listener, and navigation boundaries.
+
 The long-press stage models absent default `300 ms` separately from explicit
 `"300"` with `DefaultableSetting`. Its official discrete Slider covers exactly
 `100..700 ms` in `10 ms` steps and persists the original String only on release.
