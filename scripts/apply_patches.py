@@ -1914,6 +1914,24 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
         "    .line 502",
     )
 
+    theme_selector_activity = decoded / (
+        "smali/com/google/android/apps/inputmethod/libs/theme/preference/"
+        "ThemeSelectorActivity.smali"
+    )
+    replace_once(
+        theme_selector_activity,
+        "    const v0, 0x7f0401cc\n\n"
+        "    invoke-virtual {p0, v0}, Lcom/google/android/apps/inputmethod/libs/theme/"
+        "preference/ThemeSelectorActivity;->setContentView(I)V\n\n"
+        "    .line 4",
+        "    const v0, 0x7f0401cc\n\n"
+        "    invoke-virtual {p0, v0}, Lcom/google/android/apps/inputmethod/libs/theme/"
+        "preference/ThemeSelectorActivity;->setContentView(I)V\n\n"
+        "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/"
+        "ThemeSettingsInsetsCompat;->attachSelector(Landroid/app/Activity;)V\n\n"
+        "    .line 4",
+    )
+
     for helper_name in (
         "NavigationBarCompat.smali",
         "ScrollTouchCompat.smali",
@@ -1928,6 +1946,8 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
         "ImeSurfaceRendererCompat.smali",
         "ImeSurfaceRendererCompat$SyncRunnable.smali",
         "ImeSurfaceSliceDrawable.smali",
+        "ThemeSettingsInsetsCompat.smali",
+        "ThemeSettingsInsetsCompat$SystemBarsListener.smali",
     ):
         helper_src = ROOT / "patches/smali" / helper_name
         helper_dst = decoded / "smali/com/google/android/inputmethod/pinyin" / helper_name

@@ -614,6 +614,31 @@ def main() -> int:
         ),
         "reconstructed host build",
     )
+    patch_script = Path("scripts/apply_patches.py").read_text(encoding="utf-8")
+    require(
+        patch_script,
+        (
+            "ThemeSettingsInsetsCompat;->attachSelector(Landroid/app/Activity;)V",
+            '"ThemeSettingsInsetsCompat.smali"',
+            '"ThemeSettingsInsetsCompat$SystemBarsListener.smali"',
+        ),
+        "legacy theme selector system-bar integration",
+    )
+    theme_insets = Path("patches/smali/ThemeSettingsInsetsCompat$SystemBarsListener.smali").read_text(
+        encoding="utf-8"
+    )
+    require(
+        theme_insets,
+        (
+            "WindowInsets$Type;->systemBars()I",
+            "WindowInsets;->getInsets(I)Landroid/graphics/Insets;",
+            "getSystemWindowInsetTop()I",
+            "getSystemWindowInsetBottom()I",
+            "View;->setPadding(IIII)V",
+        ),
+        "dynamic theme selector system-bar Insets",
+    )
+
     manifest_prep = Path("scripts/prepare_compose_host_manifest.py").read_text(encoding="utf-8")
     require(
         manifest_prep,
@@ -687,6 +712,23 @@ def main() -> int:
         ):
             if forbidden in manifest_text:
                 raise RuntimeError(f"unguarded AndroidX process entry point: {forbidden}")
+
+        theme_selector = decoded / (
+            "smali/com/google/android/apps/inputmethod/libs/theme/preference/"
+            "ThemeSelectorActivity.smali"
+        )
+        theme_selector_text = theme_selector.read_text(encoding="utf-8")
+        require(
+            theme_selector_text,
+            ("ThemeSettingsInsetsCompat;->attachSelector(Landroid/app/Activity;)V",),
+            "theme selector Insets hook",
+        )
+        theme_insets_helper = decoded / (
+            "smali/com/google/android/inputmethod/pinyin/"
+            "ThemeSettingsInsetsCompat$SystemBarsListener.smali"
+        )
+        if not theme_insets_helper.is_file():
+            raise RuntimeError("theme selector system-bar Insets helper is missing")
 
         legacy_ime = decoded / "smali/com/google/android/inputmethod/pinyin/PinyinIME.smali"
         if not legacy_ime.is_file():

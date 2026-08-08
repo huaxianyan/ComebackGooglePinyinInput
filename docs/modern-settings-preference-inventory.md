@@ -260,8 +260,13 @@ their existing component or synchronization effects before migration.
   contract: the Compose row uses the legacy `setting_theme` title and starts the
   existing, non-exported same-package `ThemeSelectorActivity` with an explicit
   component Intent. It does not duplicate theme persistence, builder/editor,
-  image selection/cropping, preview, or activity-result behavior; device
-  acceptance remains pending;
+  image selection/cropping, preview, or activity-result behavior. Functional
+  device acceptance passes. The first routed build exposed an existing target-36
+  geometry gap in the legacy no-ActionBar selector: its root began beneath the
+  status bar. A dynamic system-bars Insets listener is now attached after the
+  original `setContentView()`, preserving baseline padding and avoiding fixed
+  dimensions, Insets consumption, or edge-to-edge opt-out; geometry acceptance
+  remains pending;
 - vibration availability is implemented and accepted on Pixel hardware with a
   vibrator; the no-vibrator runtime branch remains in the later device matrix;
 - emoji/language switch-key dependency group is implemented and device-
