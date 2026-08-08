@@ -112,6 +112,76 @@ fun SettingsScreen(snapshot: SettingsSnapshot, actions: SettingsActions) {
                     },
                 )
             }
+            item {
+                SettingsSwitchRow(
+                    title = legacyString(
+                        "setting_chinese_english_mixed_input_title",
+                        R.string.modern_settings_chinese_english_title,
+                    ),
+                    supporting = legacyString(
+                        "setting_chinese_english_mixed_input_summary",
+                        R.string.modern_settings_chinese_english_summary,
+                    ),
+                    checked = snapshot.chineseEnglishMixedInput.value,
+                    onCheckedChange = {
+                        actions.onBooleanChange(
+                            BooleanSettingContracts.chineseEnglishMixedInput,
+                            it,
+                        )
+                    },
+                )
+            }
+            item {
+                SettingsSwitchRow(
+                    title = legacyString(
+                        "setting_chinese_digits_mixed_input_title",
+                        R.string.modern_settings_chinese_digits_title,
+                    ),
+                    supporting = legacyString(
+                        "setting_chinese_digits_mixed_input_summary",
+                        R.string.modern_settings_chinese_digits_summary,
+                    ),
+                    checked = snapshot.chineseDigitsMixedInput.value,
+                    onCheckedChange = {
+                        actions.onBooleanChange(
+                            BooleanSettingContracts.chineseDigitsMixedInput,
+                            it,
+                        )
+                    },
+                )
+            }
+            item {
+                SettingsSwitchRow(
+                    title = legacyString(
+                        "setting_suggest_emojis_title",
+                        R.string.modern_settings_suggest_emojis_title,
+                    ),
+                    supporting = legacyString(
+                        "setting_suggest_emojis_summary",
+                        R.string.modern_settings_suggest_emojis_summary,
+                    ),
+                    checked = snapshot.suggestEmojis.value,
+                    onCheckedChange = {
+                        actions.onBooleanChange(BooleanSettingContracts.suggestEmojis, it)
+                    },
+                )
+            }
+            item {
+                SettingsSwitchRow(
+                    title = legacyString(
+                        "setting_intelligent_correction_title",
+                        R.string.modern_settings_spatial_correction_title,
+                    ),
+                    supporting = legacyString(
+                        "setting_intelligent_correction_summary",
+                        R.string.modern_settings_spatial_correction_summary,
+                    ),
+                    checked = snapshot.spatialCorrection.value,
+                    onCheckedChange = {
+                        actions.onBooleanChange(BooleanSettingContracts.spatialCorrection, it)
+                    },
+                )
+            }
             item { HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp)) }
             item { SectionTitle(stringResource(R.string.modern_settings_section_key_feedback)) }
             item {

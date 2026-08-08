@@ -49,6 +49,22 @@ Compose records both `value` and `SharedPreferences.contains(key)`. A user
 switch action writes one Boolean. No reset action is added because the original
 plain checkbox provides none.
 
+## Second plain Boolean batch
+
+The following Input-page entries satisfy the same plain-Preference boundary and
+have exact Boolean fallback `true`:
+
+| Key | Legacy presentation | Migration |
+| --- | --- | --- |
+| `chinese_english_mixed_input` | title + summary | writable |
+| `chinese_digits_mixed_input` | title + summary | writable |
+| `enable_suggest_emojis` | title + summary | writable |
+| `enable_spatial_model` | title + summary | writable |
+
+Their resource IDs are consumed directly by the decode processors or settings
+reader, but no settings-Activity listener or secondary write is attached. Each
+modern switch therefore performs exactly the original single Boolean write.
+
 ## Plain-looking entries that are not yet safe to migrate
 
 ### Dynamic availability
@@ -90,10 +106,9 @@ require their existing component or synchronization effects before migration.
 
 ## Remaining Input page inventory
 
-- plain Boolean candidates pending per-key audit: Chinese/English mixed input,
-  Chinese/digits mixed input, emoji suggestions, spatial correction, Chinese
-  prediction, auto spacing, Latin correction, capitalization, offensive-word
-  blocking, and related options;
+- plain Boolean candidates pending per-key audit: simplified/traditional
+  conversion, Chinese prediction, auto spacing, Latin correction,
+  capitalization, offensive-word blocking, and related options;
 - dependency groups: gesture input and its preview/auto-commit children; Latin
   suggestions and next-word prediction; fuzzy Pinyin and its detail page;
 - `pinyin_scheme`: ListPreference with exact entry ordering and String values.

@@ -22,6 +22,14 @@
     <string name="modern_settings_show_english_keyboard_title">Show English keyboard</string>
     <string name="modern_settings_physical_alt_title">Alt key for symbols on a physical keyboard</string>
     <string name="modern_settings_physical_alt_summary">Use Alt to enter symbols when a physical keyboard is connected</string>
+    <string name="modern_settings_chinese_english_title">Suggest English words</string>
+    <string name="modern_settings_chinese_english_summary">Suggest popular English words when inputting Pinyin</string>
+    <string name="modern_settings_chinese_digits_title">Suggest digits</string>
+    <string name="modern_settings_chinese_digits_summary">Suggest digits when inputting Pinyin</string>
+    <string name="modern_settings_suggest_emojis_title">Suggest emojis</string>
+    <string name="modern_settings_suggest_emojis_summary">Suggest emojis while typing</string>
+    <string name="modern_settings_spatial_correction_title">Intelligent correction</string>
+    <string name="modern_settings_spatial_correction_summary">Intelligently correct mistyped words</string>
     <string name="modern_settings_enabled">On</string>
     <string name="modern_settings_disabled">Off</string>
     <string name="modern_settings_system_default">System default</string>

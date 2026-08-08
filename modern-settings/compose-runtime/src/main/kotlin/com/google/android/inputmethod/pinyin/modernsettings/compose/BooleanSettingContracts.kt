@@ -34,6 +34,22 @@ object BooleanSettingContracts {
         key = "enable_emoji_alt_physical_key",
         defaultValue = true,
     )
+    val chineseEnglishMixedInput = BooleanSettingContract(
+        key = "chinese_english_mixed_input",
+        defaultValue = true,
+    )
+    val chineseDigitsMixedInput = BooleanSettingContract(
+        key = "chinese_digits_mixed_input",
+        defaultValue = true,
+    )
+    val suggestEmojis = BooleanSettingContract(
+        key = "enable_suggest_emojis",
+        defaultValue = true,
+    )
+    val spatialCorrection = BooleanSettingContract(
+        key = "enable_spatial_model",
+        defaultValue = true,
+    )
 
     val firstPlainBatch = listOf(
         doubleSpacePeriod,
@@ -41,4 +57,11 @@ object BooleanSettingContracts {
         showEnglishKeyboard,
         emojiAltPhysicalKey,
     )
+    val secondPlainBatch = listOf(
+        chineseEnglishMixedInput,
+        chineseDigitsMixedInput,
+        suggestEmojis,
+        spatialCorrection,
+    )
+    val writablePlain = firstPlainBatch + secondPlainBatch
 }

@@ -56,6 +56,14 @@ class LegacySettingsRepository(context: Context) {
             vibration = vibration,
             doubleSpacePeriod = readBoolean(BooleanSettingContracts.doubleSpacePeriod),
             scrubMove = readBoolean(BooleanSettingContracts.scrubMove),
+            chineseEnglishMixedInput = readBoolean(
+                BooleanSettingContracts.chineseEnglishMixedInput,
+            ),
+            chineseDigitsMixedInput = readBoolean(
+                BooleanSettingContracts.chineseDigitsMixedInput,
+            ),
+            suggestEmojis = readBoolean(BooleanSettingContracts.suggestEmojis),
+            spatialCorrection = readBoolean(BooleanSettingContracts.spatialCorrection),
             showEnglishKeyboard = readBoolean(BooleanSettingContracts.showEnglishKeyboard),
             emojiAltPhysicalKey = readBoolean(BooleanSettingContracts.emojiAltPhysicalKey),
             keyboardHeightIndex = keyboardHeightIndex,
@@ -104,7 +112,7 @@ class LegacySettingsRepository(context: Context) {
     }
 
     fun setBoolean(contract: BooleanSettingContract, enabled: Boolean): SettingsSnapshot {
-        require(contract in BooleanSettingContracts.firstPlainBatch)
+        require(contract in BooleanSettingContracts.writablePlain)
         preferences.edit().putBoolean(contract.key, enabled).apply()
         return readSnapshot()
     }
@@ -246,6 +254,10 @@ data class SettingsSnapshot(
     val vibration: ResolvedSetting<Int>,
     val doubleSpacePeriod: BooleanSettingState,
     val scrubMove: BooleanSettingState,
+    val chineseEnglishMixedInput: BooleanSettingState,
+    val chineseDigitsMixedInput: BooleanSettingState,
+    val suggestEmojis: BooleanSettingState,
+    val spatialCorrection: BooleanSettingState,
     val showEnglishKeyboard: BooleanSettingState,
     val emojiAltPhysicalKey: BooleanSettingState,
     val keyboardHeightIndex: Int,

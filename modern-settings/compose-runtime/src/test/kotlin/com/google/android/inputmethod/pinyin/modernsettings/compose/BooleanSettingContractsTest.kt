@@ -20,8 +20,22 @@ class BooleanSettingContractsTest {
     }
 
     @Test
-    fun firstPlainBatchHasNoDuplicateKeys() {
-        val keys = BooleanSettingContracts.firstPlainBatch.map { it.key }
+    fun secondPlainBatchPreservesExactLegacyKeysAndDefaults() {
+        assertEquals(
+            listOf(
+                "chinese_english_mixed_input",
+                "chinese_digits_mixed_input",
+                "enable_suggest_emojis",
+                "enable_spatial_model",
+            ),
+            BooleanSettingContracts.secondPlainBatch.map { it.key },
+        )
+        assertTrue(BooleanSettingContracts.secondPlainBatch.all { it.defaultValue })
+    }
+
+    @Test
+    fun writablePlainSettingsHaveNoDuplicateKeys() {
+        val keys = BooleanSettingContracts.writablePlain.map { it.key }
         assertEquals(keys.size, keys.toSet().size)
     }
 }
