@@ -61,6 +61,7 @@ data class SettingsActions(
     val onVolumeCommit: (Int) -> Unit,
     val onVolumeDefault: () -> Unit,
     val onVibrationEnabledChange: (Boolean) -> Unit,
+    val onOneHandedModeChange: (Int) -> Unit,
     val onPinyinSchemeChange: (Int) -> Unit,
     val onGestureInputEnabledChange: (Boolean) -> Unit,
     val onBooleanChange: (BooleanSettingContract, Boolean) -> Unit,
@@ -521,8 +522,50 @@ fun SettingsScreen(snapshot: SettingsSnapshot, actions: SettingsActions) {
                     onRestoreDefault = actions.onVibrationDefault,
                 )
             }
+            if (snapshot.capabilities.popupOnKeypressVisible) {
+                item {
+                    SettingsSwitchRow(
+                        title = legacyString(
+                            "setting_popup_on_keypress_title",
+                            R.string.modern_settings_popup_on_keypress_title,
+                        ),
+                        checked = snapshot.popupOnKeypress.value,
+                        onCheckedChange = {
+                            actions.onBooleanChange(BooleanSettingContracts.popupOnKeypress, it)
+                        },
+                    )
+                }
+            }
+            if (snapshot.capabilities.voiceInputVisible) {
+                item {
+                    SettingsSwitchRow(
+                        title = legacyString(
+                            "setting_voice_input_title",
+                            R.string.modern_settings_voice_input_title,
+                        ),
+                        checked = snapshot.voiceInput.value,
+                        onCheckedChange = {
+                            actions.onBooleanChange(BooleanSettingContracts.voiceInput, it)
+                        },
+                    )
+                }
+            }
             item { HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp)) }
             item { SectionTitle(stringResource(R.string.modern_settings_section_layout_gestures)) }
+            if (snapshot.capabilities.oneHandedModeVisible) {
+                item {
+                    EnumeratedListSetting(
+                        title = legacyString(
+                            "setting_one_handed_mode_title",
+                            R.string.modern_settings_one_handed_mode_title,
+                        ),
+                        selectedIndex = snapshot.oneHandedModeIndex,
+                        selectedLabel = snapshot.oneHandedModeLabel,
+                        labels = snapshot.oneHandedModeLabels,
+                        onSelect = actions.onOneHandedModeChange,
+                    )
+                }
+            }
             item {
                 SettingsSwitchRow(
                     title = legacyString(

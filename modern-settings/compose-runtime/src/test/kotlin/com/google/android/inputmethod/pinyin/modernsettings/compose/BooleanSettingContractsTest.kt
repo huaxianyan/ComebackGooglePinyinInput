@@ -51,6 +51,17 @@ class BooleanSettingContractsTest {
     }
 
     @Test
+    fun capabilityGatedKeyboardBatchPreservesExactKeysAndDefaults() {
+        assertEquals(
+            listOf("enable_popup_on_keypress", "enable_voice_input"),
+            BooleanSettingContracts.capabilityGatedKeyboardBatch.map { it.key },
+        )
+        assertTrue(
+            BooleanSettingContracts.capabilityGatedKeyboardBatch.all { it.defaultValue }
+        )
+    }
+
+    @Test
     fun englishDependencyBatchPreservesExactKeysDefaultsAndDependency() {
         assertEquals(
             listOf(

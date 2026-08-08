@@ -178,10 +178,20 @@ legacy rows based on runtime capability checks:
 - `enable_vibrate_on_keypress` and `vibration_duration`;
 - `one_handed_mode`.
 
-The existing vibration controls predate this inventory and therefore still
-need capability-visibility parity before formal routing. Popup, voice, and
-one-handed controls must not be added until the corresponding `ais` predicates
-are reconstructed without hidden assumptions.
+The existing vibration controls predate this inventory and still need a
+non-vibrator configuration gate before formal routing. The remaining `ais`
+predicates are now reconstructed and implemented exactly:
+
+- popup-on-keypress and one-handed mode are removed when `@bool/is_tablet` is
+  true (`sw600dp`), rather than being guessed from display dimensions;
+- voice input is present only when the enabled IME list contains a package whose
+  name starts with `com.google.android` and one of its enabled (including
+  implicit) subtypes has mode exactly `voice`; lookup exceptions mean hidden;
+- capability-hidden settings remain stored but both UI and Repository reject
+  new writes.
+
+`supports_one_handed_mode` is a separate IME runtime gate and is deliberately
+not substituted for the settings-page `is_tablet` predicate.
 
 ### Dependencies or custom state machines
 
@@ -191,7 +201,11 @@ are reconstructed without hidden assumptions.
 - `switch_to_other_imes` depends on `show_language_switch_key`;
 - `show_emoji_switch_key` declares `disableDependentsState=true`;
 - `show_language_switch_key` uses `UncheckDisabledCheckBoxPreference`;
-- `one_handed_mode` uses `AutoSyncedListPreference`;
+- `one_handed_mode` originally uses `AutoSyncedListPreference`; its implementation
+  only refreshes the ListPreference on external writes and adds no second key or
+  callback. The Compose selector therefore preserves the exact String values
+  `0`, `1`, `2`, default `0`, original order and normal SharedPreferences
+  notification path;
 - contact import uses `AutoSyncedCheckBoxPreference`;
 - fuzzy-Pinyin detail entries originally use
   `CheckBoxPreferenceWithContentDescription`; the Compose route preserves all

@@ -103,6 +103,7 @@
 - [x] Compose 审计包英文运行时修复通过真机验收：正式 `v2.0.0` 和 fresh 非 Compose 隔离基线帮助排除 fresh data、application ID 与 audit 签名；最终定位 Compose AGP host 将原版 `ZIP_STORED` 的 `res/raw/metadata.json` 错误压缩，破坏依赖 `openRawResourceFd()` 的英文模型初始化。增加 `androidResources.noCompress += "json"` 和 APK 级 `ZIP_STORED` 门禁后，英文候选开关语义、候选关闭时独立英文滑行、手势父开关对中英文滑行的控制以及中文回归全部通过
 - [x] 首个 Compose ListPreference `pinyin_scheme` 通过真机验收：官方 Material 3 单选对话框保留 String 类型、缺省 `quanpin`、七项原始顺序和本地化标签；取消不写、持久化、全拼与小鹤双拼实际输入、滑行回归均正常，`ListItem` 标题和摘要也已与同页 24 dp 内容边缘对齐
 - [x] Compose 模糊拼音依赖组通过真机验收：父开关缺省关闭，详情入口随父开关禁用；详情页按原始顺序提供十二个 Material 3 Switch，保留前六项 true、后六项 false 的默认值、父关闭时保留子值且拒绝写入、显式可访问性描述、工具栏/系统 Back 和配置重建导航状态；实际模糊候选、关闭后的恢复以及全拼/小鹤双拼/中英文滑行回归均正常
+- [ ] 验收 Compose 键盘能力门控组：严格复现 `ais`——`is_tablet=true` 隐藏按键弹出和单手模式，语音按钮仅在已启用的 `com.google.android*` IME 具有 mode=`voice` 的已启用/隐式 subtype 时显示，异常时隐藏；隐藏项由 Repository 拒绝写入。单手模式保留 String `0/1/2`、默认 `0`、原始顺序和普通 SharedPreferences 通知；需验证手机可见项、语音实际门控、按键弹出效果、左右单手布局和现有输入回归
 
 ## 测试约定
 

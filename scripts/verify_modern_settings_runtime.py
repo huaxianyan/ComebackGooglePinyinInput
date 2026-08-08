@@ -95,6 +95,13 @@ def main() -> int:
             "BooleanSettingContracts.latinShowSuggestions",
             "BooleanSettingContracts.nextWordPrediction",
             "BooleanSettingContracts.autoCapitalization",
+            "actions.onOneHandedModeChange",
+            "snapshot.oneHandedModeLabels",
+            "snapshot.capabilities.popupOnKeypressVisible",
+            "snapshot.capabilities.voiceInputVisible",
+            "snapshot.capabilities.oneHandedModeVisible",
+            "BooleanSettingContracts.popupOnKeypress",
+            "BooleanSettingContracts.voiceInput",
             "actions.onPinyinSchemeChange",
             "snapshot.pinyinSchemeLabels",
             "BooleanSettingContracts.fuzzyPinyin",
@@ -144,6 +151,9 @@ def main() -> int:
                 'name="modern_settings_section_chinese_input"',
                 'name="modern_settings_section_english_input"',
                 'name="modern_settings_pinyin_scheme_title"',
+                'name="modern_settings_one_handed_mode_title"',
+                'name="modern_settings_popup_on_keypress_title"',
+                'name="modern_settings_voice_input_title"',
                 'name="modern_settings_fuzzy_pinyin_title"',
                 'name="modern_settings_fuzzy_pinyin_detail_title"',
                 'name="modern_settings_navigate_back"',
@@ -202,6 +212,9 @@ def main() -> int:
     require(
         list_contracts,
         (
+            'key = "one_handed_mode"',
+            'defaultValue = "0"',
+            'values = listOf("0", "1", "2")',
             'key = "pinyin_scheme"',
             'defaultValue = "quanpin"',
             '"shuangpin_ms"',
@@ -219,11 +232,41 @@ def main() -> int:
     require(
         list_test,
         (
+            "oneHandedModePreservesExactLegacyKeyDefaultAndOrder",
             "pinyinSchemePreservesExactLegacyKeyDefaultAndOrder",
             "absentValueUsesFullPinyinDefault",
             "unsupportedValueAndIndexAreRejected",
         ),
         "ListPreference contract tests",
+    )
+
+    capabilities = next(
+        (project / "compose-runtime/src/main/kotlin").rglob("SettingsCapabilities.kt")
+    ).read_text(encoding="utf-8")
+    require(
+        capabilities,
+        (
+            "popupOnKeypressVisible = !isTablet",
+            "oneHandedModeVisible = !isTablet",
+            "manager.enabledInputMethodList.map",
+            'inputMethod.packageName.startsWith("com.google.android")',
+            'inputMethod.subtypeModes.any { it == "voice" }',
+            "getEnabledInputMethodSubtypeList(",
+            "catch (_: Exception)",
+        ),
+        "audited keyboard capability predicates",
+    )
+    capability_test = next(
+        (project / "compose-runtime/src/test/kotlin").rglob("SettingsCapabilitiesTest.kt")
+    ).read_text(encoding="utf-8")
+    require(
+        capability_test,
+        (
+            "enabledGoogleVoiceSubtypeIsAvailable",
+            "packagePrefixModeAndEnabledListMustMatchExactly",
+            "emptyEnabledInputMethodListIsUnavailable",
+        ),
+        "keyboard capability predicate tests",
     )
 
     boolean_contracts = next(
@@ -244,6 +287,8 @@ def main() -> int:
             'key = "enable_chinese_prediction"',
             'key = "auto_space"',
             'key = "block_offensive_words"',
+            'key = "enable_popup_on_keypress"',
+            'key = "enable_voice_input"',
             'key = "pref_key_auto_correction"',
             'key = "show_suggestions"',
             'key = "next_word_prediction"',
@@ -273,9 +318,10 @@ def main() -> int:
             "val firstPlainBatch = listOf(",
             "val secondPlainBatch = listOf(",
             "val thirdPlainBatch = listOf(",
+            "val capabilityGatedKeyboardBatch = listOf(",
             "val englishDependencyBatch = listOf(",
             "val gestureDependencyBatch = listOf(",
-            "englishDependencyBatch + gestureDependencyBatch",
+            "capabilityGatedKeyboardBatch + englishDependencyBatch +",
         ),
         "audited Boolean persistence contracts",
     )
@@ -288,6 +334,7 @@ def main() -> int:
             "firstPlainBatchPreservesExactLegacyKeysAndDefaults",
             "secondPlainBatchPreservesExactLegacyKeysAndDefaults",
             "thirdPlainBatchPreservesExactLegacyKeysAndDefaults",
+            "capabilityGatedKeyboardBatchPreservesExactKeysAndDefaults",
             "englishDependencyBatchPreservesExactKeysDefaultsAndDependency",
             "gestureGroupPreservesMirroredKeyDefaultsAndDependencies",
             "fuzzyPinyinGroupPreservesKeysOrderDefaultsAndDependency",
@@ -342,10 +389,16 @@ def main() -> int:
             "handwritingStrokeWidthLabels: List<String>",
             "fuzzyPinyin: BooleanSettingState",
             "fuzzyPinyinOptions: List<BooleanSettingState>",
+            "capabilities: SettingsCapabilities",
+            "popupOnKeypress: BooleanSettingState",
+            "voiceInput: BooleanSettingState",
+            "oneHandedModeLabels: List<String>",
             "fun readSnapshot()",
             "data class SettingsSnapshot(",
             "fun setSoundEnabled(enabled: Boolean)",
             "fun setVibrationEnabled(enabled: Boolean)",
+            "fun setOneHandedModeIndex(index: Int)",
+            'require(SettingsCapabilityResolver.resolve(applicationContext).oneHandedModeVisible)',
             "fun setPinyinSchemeIndex(index: Int)",
             "preferences.edit().putString(contract.key, contract.valueAt(index)).apply()",
             "fun setGestureInputEnabled(enabled: Boolean)",
@@ -353,6 +406,8 @@ def main() -> int:
             ".putBoolean(BooleanSettingContracts.gestureInputPersistent.key, enabled)",
             "fun setBoolean(",
             "require(contract in BooleanSettingContracts.writable)",
+            "require(capabilities.popupOnKeypressVisible)",
+            "require(capabilities.voiceInputVisible)",
             "contract.dependency?.let { dependency ->",
             '"Boolean dependency is disabled: ${dependency.key}"',
             "isExplicit = preferences.contains(contract.key)",
@@ -373,7 +428,7 @@ def main() -> int:
     expected_write_counts = {
         "putBoolean(": 5,
         "putFloat(": 1,
-        "putString(": 4,
+        "putString(": 5,
         ".remove(": 3,
     }
     for operation, expected_count in expected_write_counts.items():

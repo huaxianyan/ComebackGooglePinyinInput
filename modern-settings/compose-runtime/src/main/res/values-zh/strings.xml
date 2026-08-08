@@ -5,6 +5,9 @@
     <string name="modern_settings_section_input">常规输入</string>
     <string name="modern_settings_section_chinese_input">中文输入</string>
     <string name="modern_settings_pinyin_scheme_title">拼音方案</string>
+    <string name="modern_settings_one_handed_mode_title">单手模式</string>
+    <string name="modern_settings_popup_on_keypress_title">按键时弹出显示字符</string>
+    <string name="modern_settings_voice_input_title">显示语音输入按钮</string>
     <string name="modern_settings_fuzzy_pinyin_title">模糊拼音</string>
     <string name="modern_settings_fuzzy_pinyin_detail_title">模糊拼音设置</string>
     <string name="modern_settings_navigate_back">返回</string>

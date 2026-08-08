@@ -67,6 +67,14 @@ object BooleanSettingContracts {
         key = "block_offensive_words",
         defaultValue = true,
     )
+    val popupOnKeypress = BooleanSettingContract(
+        key = "enable_popup_on_keypress",
+        defaultValue = true,
+    )
+    val voiceInput = BooleanSettingContract(
+        key = "enable_voice_input",
+        defaultValue = true,
+    )
     val latinAutoCorrection = BooleanSettingContract(
         key = "pref_key_auto_correction",
         defaultValue = true,
@@ -137,6 +145,10 @@ object BooleanSettingContracts {
         automaticSpace,
         blockOffensiveWords,
     )
+    val capabilityGatedKeyboardBatch = listOf(
+        popupOnKeypress,
+        voiceInput,
+    )
     val englishDependencyBatch = listOf(
         latinAutoCorrection,
         latinShowSuggestions,
@@ -162,7 +174,8 @@ object BooleanSettingContracts {
         fuzzyPinyinUanUang,
     )
     val writable = firstPlainBatch + secondPlainBatch + thirdPlainBatch +
-        englishDependencyBatch + gestureDependencyBatch + fuzzyPinyin +
+        capabilityGatedKeyboardBatch + englishDependencyBatch +
+        gestureDependencyBatch + fuzzyPinyin +
         fuzzyPinyinOptionBatch
 
     private fun fuzzyOption(key: String, defaultValue: Boolean) =

@@ -18,6 +18,12 @@ data class EnumeratedListContract(
 }
 
 object ListSettingContracts {
+    val oneHandedMode = EnumeratedListContract(
+        key = "one_handed_mode",
+        defaultValue = "0",
+        values = listOf("0", "1", "2"),
+    )
+
     val pinyinScheme = EnumeratedListContract(
         key = "pinyin_scheme",
         defaultValue = "quanpin",

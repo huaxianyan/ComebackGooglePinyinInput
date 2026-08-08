@@ -46,6 +46,9 @@ class ComposeSettingsPrototypeActivity : ComponentActivity() {
                             onVibrationEnabledChange = { enabled ->
                                 snapshot = controller.setVibrationEnabled(enabled)
                             },
+                            onOneHandedModeChange = { index ->
+                                snapshot = controller.setOneHandedModeIndex(index)
+                            },
                             onPinyinSchemeChange = { index ->
                                 snapshot = controller.setPinyinSchemeIndex(index)
                             },

@@ -8,6 +8,15 @@ class ListSettingContractsTest {
     private val contract = ListSettingContracts.pinyinScheme
 
     @Test
+    fun oneHandedModePreservesExactLegacyKeyDefaultAndOrder() {
+        val oneHandedMode = ListSettingContracts.oneHandedMode
+        assertEquals("one_handed_mode", oneHandedMode.key)
+        assertEquals("0", oneHandedMode.defaultValue)
+        assertEquals(listOf("0", "1", "2"), oneHandedMode.values)
+        assertEquals(0, oneHandedMode.indexOf(null))
+    }
+
+    @Test
     fun pinyinSchemePreservesExactLegacyKeyDefaultAndOrder() {
         assertEquals("pinyin_scheme", contract.key)
         assertEquals("quanpin", contract.defaultValue)

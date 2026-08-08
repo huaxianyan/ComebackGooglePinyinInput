@@ -14,6 +14,7 @@ class LegacySettingsRepository(context: Context) {
     )
 
     fun readSnapshot(): SettingsSnapshot {
+        val capabilities = SettingsCapabilityResolver.resolve(applicationContext)
         val volumeDefault = deviceDefault(
             "pref_def_value_sound_volume_on_keypress",
             "-1.0",
@@ -39,6 +40,7 @@ class LegacySettingsRepository(context: Context) {
             vibrationDefault,
         )
 
+        val oneHandedModeIndex = readListIndex(ListSettingContracts.oneHandedMode)
         val pinyinSchemeIndex = readListIndex(ListSettingContracts.pinyinScheme)
         val keyboardHeightIndex = readEnumeratedIndex(SliderSettingContracts.keyboardHeight)
         val slideSensitivityIndex = readEnumeratedIndex(SliderSettingContracts.slideSensitivity)
@@ -48,6 +50,7 @@ class LegacySettingsRepository(context: Context) {
         )
 
         return SettingsSnapshot(
+            capabilities = capabilities,
             soundEnabled = preferences.getBoolean(SliderSettingContracts.SOUND_ENABLED_KEY, false),
             volume = volume,
             vibrationEnabled = preferences.getBoolean(
@@ -83,6 +86,14 @@ class LegacySettingsRepository(context: Context) {
             nextWordPrediction = readBoolean(BooleanSettingContracts.nextWordPrediction),
             autoCapitalization = readBoolean(BooleanSettingContracts.autoCapitalization),
             blockOffensiveWords = readBoolean(BooleanSettingContracts.blockOffensiveWords),
+            popupOnKeypress = readBoolean(BooleanSettingContracts.popupOnKeypress),
+            voiceInput = readBoolean(BooleanSettingContracts.voiceInput),
+            oneHandedModeIndex = oneHandedModeIndex,
+            oneHandedModeLabel = readEntryLabel(
+                "entries_one_handed_mode",
+                oneHandedModeIndex,
+            ),
+            oneHandedModeLabels = readEntryLabels("entries_one_handed_mode"),
             pinyinSchemeIndex = pinyinSchemeIndex,
             pinyinSchemeLabel = readEntryLabel("entries_pinyin_scheme", pinyinSchemeIndex),
             pinyinSchemeLabels = readEntryLabels("entries_pinyin_scheme"),
@@ -133,6 +144,15 @@ class LegacySettingsRepository(context: Context) {
         return readSnapshot()
     }
 
+    fun setOneHandedModeIndex(index: Int): SettingsSnapshot {
+        require(SettingsCapabilityResolver.resolve(applicationContext).oneHandedModeVisible) {
+            "One-handed mode is unavailable"
+        }
+        val contract = ListSettingContracts.oneHandedMode
+        preferences.edit().putString(contract.key, contract.valueAt(index)).apply()
+        return readSnapshot()
+    }
+
     fun setPinyinSchemeIndex(index: Int): SettingsSnapshot {
         val contract = ListSettingContracts.pinyinScheme
         preferences.edit().putString(contract.key, contract.valueAt(index)).apply()
@@ -149,6 +169,13 @@ class LegacySettingsRepository(context: Context) {
 
     fun setBoolean(contract: BooleanSettingContract, enabled: Boolean): SettingsSnapshot {
         require(contract in BooleanSettingContracts.writable)
+        val capabilities = SettingsCapabilityResolver.resolve(applicationContext)
+        if (contract == BooleanSettingContracts.popupOnKeypress) {
+            require(capabilities.popupOnKeypressVisible) { "Key popup is unavailable" }
+        }
+        if (contract == BooleanSettingContracts.voiceInput) {
+            require(capabilities.voiceInputVisible) { "Voice input is unavailable" }
+        }
         contract.dependency?.let { dependency ->
             require(readBoolean(dependency).value) {
                 "Boolean dependency is disabled: ${dependency.key}"
@@ -292,6 +319,7 @@ class LegacySettingsRepository(context: Context) {
 }
 
 data class SettingsSnapshot(
+    val capabilities: SettingsCapabilities,
     val soundEnabled: Boolean,
     val volume: ResolvedSetting<Float>,
     val vibrationEnabled: Boolean,
@@ -316,6 +344,11 @@ data class SettingsSnapshot(
     val nextWordPrediction: BooleanSettingState,
     val autoCapitalization: BooleanSettingState,
     val blockOffensiveWords: BooleanSettingState,
+    val popupOnKeypress: BooleanSettingState,
+    val voiceInput: BooleanSettingState,
+    val oneHandedModeIndex: Int,
+    val oneHandedModeLabel: String,
+    val oneHandedModeLabels: List<String>,
     val pinyinSchemeIndex: Int,
     val pinyinSchemeLabel: String,
     val pinyinSchemeLabels: List<String>,
