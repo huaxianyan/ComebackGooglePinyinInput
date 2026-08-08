@@ -5,6 +5,33 @@
     <string name="modern_settings_section_input">General input</string>
     <string name="modern_settings_section_chinese_input">Chinese input</string>
     <string name="modern_settings_pinyin_scheme_title">Pinyin scheme</string>
+    <string name="modern_settings_fuzzy_pinyin_title">Fuzzy Pinyin</string>
+    <string name="modern_settings_fuzzy_pinyin_detail_title">Fuzzy Pinyin settings</string>
+    <string name="modern_settings_navigate_back">Navigate back</string>
+    <string name="modern_settings_fuzzy_z_zh">z = zh</string>
+    <string name="modern_settings_fuzzy_z_zh_description">z = z h</string>
+    <string name="modern_settings_fuzzy_c_ch">c = ch</string>
+    <string name="modern_settings_fuzzy_c_ch_description">c = c h</string>
+    <string name="modern_settings_fuzzy_s_sh">s = sh</string>
+    <string name="modern_settings_fuzzy_s_sh_description">s = s h</string>
+    <string name="modern_settings_fuzzy_an_ang">an = ang</string>
+    <string name="modern_settings_fuzzy_an_ang_description">a n = a n g</string>
+    <string name="modern_settings_fuzzy_en_eng">en = eng</string>
+    <string name="modern_settings_fuzzy_en_eng_description">e n = e n g</string>
+    <string name="modern_settings_fuzzy_in_ing">in = ing</string>
+    <string name="modern_settings_fuzzy_in_ing_description">i n = i n g</string>
+    <string name="modern_settings_fuzzy_l_n">l = n</string>
+    <string name="modern_settings_fuzzy_l_n_description">l = n</string>
+    <string name="modern_settings_fuzzy_f_h">f = h</string>
+    <string name="modern_settings_fuzzy_f_h_description">f = h</string>
+    <string name="modern_settings_fuzzy_r_l">r = l</string>
+    <string name="modern_settings_fuzzy_r_l_description">r = l</string>
+    <string name="modern_settings_fuzzy_k_g">k = g</string>
+    <string name="modern_settings_fuzzy_k_g_description">k = g</string>
+    <string name="modern_settings_fuzzy_ian_iang">ian = iang</string>
+    <string name="modern_settings_fuzzy_ian_iang_description">i a n = i a n g</string>
+    <string name="modern_settings_fuzzy_uan_uang">uan = uang</string>
+    <string name="modern_settings_fuzzy_uan_uang_description">u a n = u a n g</string>
     <string name="modern_settings_section_english_input">English input</string>
     <string name="modern_settings_section_key_feedback">Key feedback</string>
     <string name="modern_settings_section_layout_gestures">Layout and gestures</string>

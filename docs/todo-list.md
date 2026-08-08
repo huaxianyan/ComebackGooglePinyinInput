@@ -102,6 +102,7 @@
 - [ ] 低优先级调查“双空格输入句号”历史失效：`v2.0.0` 正式版和 Compose 审计版均无法触发，开关持久化本身正常，因此不是现代设置迁移回归；当前阶段不修改原生输入语义
 - [x] Compose 审计包英文运行时修复通过真机验收：正式 `v2.0.0` 和 fresh 非 Compose 隔离基线帮助排除 fresh data、application ID 与 audit 签名；最终定位 Compose AGP host 将原版 `ZIP_STORED` 的 `res/raw/metadata.json` 错误压缩，破坏依赖 `openRawResourceFd()` 的英文模型初始化。增加 `androidResources.noCompress += "json"` 和 APK 级 `ZIP_STORED` 门禁后，英文候选开关语义、候选关闭时独立英文滑行、手势父开关对中英文滑行的控制以及中文回归全部通过
 - [x] 首个 Compose ListPreference `pinyin_scheme` 通过真机验收：官方 Material 3 单选对话框保留 String 类型、缺省 `quanpin`、七项原始顺序和本地化标签；取消不写、持久化、全拼与小鹤双拼实际输入、滑行回归均正常，`ListItem` 标题和摘要也已与同页 24 dp 内容边缘对齐
+- [ ] 验收 Compose 模糊拼音依赖组：父开关缺省关闭，详情入口随父开关禁用；详情页按原始顺序提供十二个 Material 3 Switch，保留前六项 true、后六项 false 的默认值、父关闭时保留子值且拒绝写入、显式可访问性描述、工具栏/系统 Back 和配置重建导航状态；需验证实际模糊拼音候选及关闭后的恢复
 
 ## 测试约定
 

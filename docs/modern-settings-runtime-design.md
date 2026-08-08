@@ -194,6 +194,17 @@ and reject writes until the parent is on. See
 `modern-settings-preference-inventory.md` for deferred capability, dependency,
 listener, and navigation boundaries.
 
+The fuzzy-Pinyin stage adds the default-off `fuzzy_pinyin` parent and a guarded
+full-screen Compose detail route. The route retains the original order of all
+twelve Boolean options, their six-true/six-false defaults, stored values while
+the parent is off, and the explicit accessibility descriptions previously
+provided by `CheckBoxPreferenceWithContentDescription`. Both UI navigation and
+Repository writes enforce the parent dependency. Toolbar and system Back return
+to the main settings screen, while `rememberSaveable` retains the route across
+configuration recreation. Official Material 3 Switch/ListItem/TopAppBar and
+official auto-mirrored Material icons are used; predictive-Back animation remains
+outside this isolated stage.
+
 The first ListPreference stage migrates `pinyin_scheme` to an official Material
 3 `ListItem`, `AlertDialog`, and radio-button single-choice group. It reads the
 original localized `entries_pinyin_scheme` array and writes only the exact

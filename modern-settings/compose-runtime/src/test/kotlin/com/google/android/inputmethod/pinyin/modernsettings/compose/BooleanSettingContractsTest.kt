@@ -94,6 +94,38 @@ class BooleanSettingContractsTest {
     }
 
     @Test
+    fun fuzzyPinyinGroupPreservesKeysOrderDefaultsAndDependency() {
+        assertEquals("fuzzy_pinyin", BooleanSettingContracts.fuzzyPinyin.key)
+        assertEquals(false, BooleanSettingContracts.fuzzyPinyin.defaultValue)
+        assertEquals(
+            listOf(
+                "fuzzy_pinyin_z_zh",
+                "fuzzy_pinyin_c_ch",
+                "fuzzy_pinyin_s_sh",
+                "fuzzy_pinyin_an_ang",
+                "fuzzy_pinyin_en_eng",
+                "fuzzy_pinyin_in_ing",
+                "fuzzy_pinyin_l_n",
+                "fuzzy_pinyin_f_h",
+                "fuzzy_pinyin_r_l",
+                "fuzzy_pinyin_k_g",
+                "fuzzy_pinyin_ian_iang",
+                "fuzzy_pinyin_uan_uang",
+            ),
+            BooleanSettingContracts.fuzzyPinyinOptionBatch.map { it.key },
+        )
+        assertEquals(
+            listOf(true, true, true, true, true, true) + List(6) { false },
+            BooleanSettingContracts.fuzzyPinyinOptionBatch.map { it.defaultValue },
+        )
+        assertTrue(
+            BooleanSettingContracts.fuzzyPinyinOptionBatch.all {
+                it.dependency == BooleanSettingContracts.fuzzyPinyin
+            }
+        )
+    }
+
+    @Test
     fun writableSettingsHaveNoDuplicateKeys() {
         val keys = BooleanSettingContracts.writable.map { it.key }
         assertEquals(keys.size, keys.toSet().size)

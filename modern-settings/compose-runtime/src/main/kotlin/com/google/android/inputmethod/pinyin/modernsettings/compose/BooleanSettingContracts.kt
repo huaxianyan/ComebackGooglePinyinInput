@@ -102,6 +102,22 @@ object BooleanSettingContracts {
         defaultValue = false,
         dependency = gestureInput,
     )
+    val fuzzyPinyin = BooleanSettingContract(
+        key = "fuzzy_pinyin",
+        defaultValue = false,
+    )
+    val fuzzyPinyinZZh = fuzzyOption("fuzzy_pinyin_z_zh", true)
+    val fuzzyPinyinCCh = fuzzyOption("fuzzy_pinyin_c_ch", true)
+    val fuzzyPinyinSSh = fuzzyOption("fuzzy_pinyin_s_sh", true)
+    val fuzzyPinyinAnAng = fuzzyOption("fuzzy_pinyin_an_ang", true)
+    val fuzzyPinyinEnEng = fuzzyOption("fuzzy_pinyin_en_eng", true)
+    val fuzzyPinyinInIng = fuzzyOption("fuzzy_pinyin_in_ing", true)
+    val fuzzyPinyinLN = fuzzyOption("fuzzy_pinyin_l_n", false)
+    val fuzzyPinyinFH = fuzzyOption("fuzzy_pinyin_f_h", false)
+    val fuzzyPinyinRL = fuzzyOption("fuzzy_pinyin_r_l", false)
+    val fuzzyPinyinKG = fuzzyOption("fuzzy_pinyin_k_g", false)
+    val fuzzyPinyinIanIang = fuzzyOption("fuzzy_pinyin_ian_iang", false)
+    val fuzzyPinyinUanUang = fuzzyOption("fuzzy_pinyin_uan_uang", false)
 
     val firstPlainBatch = listOf(
         doubleSpacePeriod,
@@ -131,6 +147,28 @@ object BooleanSettingContracts {
         incrementalGesturePreview,
         gestureAutoCommit,
     )
+    val fuzzyPinyinOptionBatch = listOf(
+        fuzzyPinyinZZh,
+        fuzzyPinyinCCh,
+        fuzzyPinyinSSh,
+        fuzzyPinyinAnAng,
+        fuzzyPinyinEnEng,
+        fuzzyPinyinInIng,
+        fuzzyPinyinLN,
+        fuzzyPinyinFH,
+        fuzzyPinyinRL,
+        fuzzyPinyinKG,
+        fuzzyPinyinIanIang,
+        fuzzyPinyinUanUang,
+    )
     val writable = firstPlainBatch + secondPlainBatch + thirdPlainBatch +
-        englishDependencyBatch + gestureDependencyBatch
+        englishDependencyBatch + gestureDependencyBatch + fuzzyPinyin +
+        fuzzyPinyinOptionBatch
+
+    private fun fuzzyOption(key: String, defaultValue: Boolean) =
+        BooleanSettingContract(
+            key = key,
+            defaultValue = defaultValue,
+            dependency = fuzzyPinyin,
+        )
 }

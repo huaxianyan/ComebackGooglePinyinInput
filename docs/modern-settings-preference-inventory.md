@@ -185,15 +185,17 @@ are reconstructed without hidden assumptions.
 
 ### Dependencies or custom state machines
 
-- fuzzy-Pinyin detail depends on `fuzzy_pinyin`;
+- fuzzy-Pinyin parent/detail group is now implemented: the detail route depends
+  on `fuzzy_pinyin`, and Repository writes for all twelve children are rejected
+  while the parent is off;
 - `switch_to_other_imes` depends on `show_language_switch_key`;
 - `show_emoji_switch_key` declares `disableDependentsState=true`;
 - `show_language_switch_key` uses `UncheckDisabledCheckBoxPreference`;
 - `one_handed_mode` uses `AutoSyncedListPreference`;
 - contact import uses `AutoSyncedCheckBoxPreference`;
-- fuzzy-Pinyin detail entries use
-  `CheckBoxPreferenceWithContentDescription` and must preserve those explicit
-  accessibility descriptions.
+- fuzzy-Pinyin detail entries originally use
+  `CheckBoxPreferenceWithContentDescription`; the Compose route preserves all
+  twelve explicit accessibility descriptions on the Material 3 Switch nodes.
 
 ### Listener or side-effect parity required
 
@@ -205,8 +207,9 @@ their existing component or synchronization effects before migration.
 
 - plain Boolean candidates pending per-key audit are now limited to related
   options not present on the principal visible Input page;
-- dependency groups: gesture input and its preview/auto-commit children; Latin
-  suggestions and next-word prediction; fuzzy Pinyin and its detail page;
+- migrated dependency groups now include gesture input and its preview/auto-
+  commit children, Latin suggestions and next-word prediction, and fuzzy Pinyin
+  with its twelve-option detail route;
 - `pinyin_scheme`: implemented as the first official Material 3 single-choice
   dialog. It preserves String storage, absent default `quanpin`, original entry
   order (`quanpin`, Microsoft, Unispim, Pinyin PlusPlus, Intelligent ABC,
@@ -230,7 +233,9 @@ These are deliberately excluded from ordinary Boolean/List migration:
 - theme selector/editor;
 - dictionary health, contacts, shortcuts, clear operations;
 - SAF backup location, interval, retention, immediate backup, and import;
-- fuzzy-Pinyin detail page;
+- fuzzy-Pinyin detail page is implemented as a process/configuration-safe
+  Compose route with app-bar and system Back navigation; device acceptance is
+  pending;
 - about, privacy, terms, and licenses.
 
 Each modern navigation route must preserve the existing Activity/fragment

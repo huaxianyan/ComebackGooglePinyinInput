@@ -27,6 +27,7 @@ OVERRIDE_LIBRARIES = (
     "androidx.compose.animation.core",
     "androidx.compose.foundation",
     "androidx.compose.foundation.layout",
+    "androidx.compose.material.icons",
     "androidx.compose.material.ripple",
     "androidx.compose.material3",
     "androidx.compose.runtime",
