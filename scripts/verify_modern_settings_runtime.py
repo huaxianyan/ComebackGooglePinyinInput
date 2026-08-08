@@ -118,6 +118,8 @@ def main() -> int:
                 'name="modern_settings_use_system_default"',
                 'name="modern_settings_use_default"',
                 'name="modern_settings_section_input"',
+                'name="modern_settings_section_chinese_input"',
+                'name="modern_settings_section_english_input"',
                 'name="modern_settings_double_space_title"',
                 'name="modern_settings_scrub_move_title"',
                 'name="modern_settings_show_english_keyboard_title"',

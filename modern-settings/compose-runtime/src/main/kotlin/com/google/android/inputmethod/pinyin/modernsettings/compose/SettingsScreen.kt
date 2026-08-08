@@ -112,6 +112,15 @@ fun SettingsScreen(snapshot: SettingsSnapshot, actions: SettingsActions) {
                     },
                 )
             }
+            item { HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp)) }
+            item {
+                SectionTitle(
+                    legacyString(
+                        "setting_chinese_input",
+                        R.string.modern_settings_section_chinese_input,
+                    )
+                )
+            }
             item {
                 SettingsSwitchRow(
                     title = legacyString(
@@ -224,6 +233,15 @@ fun SettingsScreen(snapshot: SettingsSnapshot, actions: SettingsActions) {
                     onCheckedChange = {
                         actions.onBooleanChange(BooleanSettingContracts.automaticSpace, it)
                     },
+                )
+            }
+            item { HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp)) }
+            item {
+                SectionTitle(
+                    legacyString(
+                        "setting_english_input",
+                        R.string.modern_settings_section_english_input,
+                    )
                 )
             }
             item {

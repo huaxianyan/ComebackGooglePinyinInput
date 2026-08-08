@@ -78,7 +78,17 @@ The next independent Input-page entries are also direct Boolean contracts:
 
 Each key is read by its native-era decode/spacing/Latin settings path, but none
 has an Activity-side change listener, custom Preference widget, XML dependency,
-or secondary persistence operation.
+or secondary persistence operation. The modern hierarchy preserves the original
+category boundary: traditional conversion, Chinese prediction, and automatic
+spacing remain under “Chinese input”; offensive-word blocking remains under
+“English input”. Automatic spacing mentions English words but is located in the
+original Chinese category because it applies to mixed input there.
+
+On the accepted audit device, the current legacy English input path exposes no
+candidate words, so the actual offensive-word filtering effect cannot be
+observed. This is recorded as an existing capability boundary rather than
+claimed as functional acceptance; its UI and Boolean persistence are still
+auditable independently.
 
 The actual candidate trigger for `enable_suggest_emojis` is accepted. The
 actual candidate trigger for `chinese_digits_mixed_input` remains deliberately
