@@ -46,6 +46,9 @@ class ComposeSettingsPrototypeActivity : ComponentActivity() {
                             onVibrationEnabledChange = { enabled ->
                                 snapshot = controller.setVibrationEnabled(enabled)
                             },
+                            onGestureInputEnabledChange = { enabled ->
+                                snapshot = controller.setGestureInputEnabled(enabled)
+                            },
                             onBooleanChange = { contract, enabled ->
                                 snapshot = controller.setBoolean(contract, enabled)
                             },

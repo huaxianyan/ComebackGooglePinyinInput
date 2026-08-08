@@ -21,6 +21,9 @@ class SettingsController(
     fun setVibrationEnabled(enabled: Boolean): SettingsSnapshot =
         repository.setVibrationEnabled(enabled)
 
+    fun setGestureInputEnabled(enabled: Boolean): SettingsSnapshot =
+        repository.setGestureInputEnabled(enabled)
+
     fun setBoolean(
         contract: BooleanSettingContract,
         enabled: Boolean,

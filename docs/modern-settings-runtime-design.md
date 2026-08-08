@@ -174,7 +174,8 @@ snapped final index is written on release. There is no reset button, preview,
 new storage type, or additional persistence implementation, matching the legacy
 controls.
 
-The Boolean stages currently cover sixteen audited Preference contracts:
+The Boolean stages currently cover nineteen visible Preference contracts plus
+one mirrored persistence key:
 `enable_double_space_period`, `enable_scrub_move`,
 `show_english_keyboard`, `enable_emoji_alt_physical_key`,
 `chinese_english_mixed_input`, `chinese_digits_mixed_input`,
@@ -186,7 +187,10 @@ visible value and writes only after a user switch action. The
 traditional-Chinese fallback is `false`; the other currently migrated Boolean
 fallbacks are `true`. `next_word_prediction` retains its value while
 `show_suggestions` is off, but the UI is disabled and repository writes are
-rejected until the parent is enabled. See
+rejected until the parent is enabled. The `enable_gesture_input` parent writes
+both itself and `enable_gesture_input_persistent`, reproducing the original
+`SettingsActivity` listener; its two child settings retain values while disabled
+and reject writes until the parent is on. See
 `modern-settings-preference-inventory.md` for deferred capability, dependency,
 listener, and navigation boundaries.
 

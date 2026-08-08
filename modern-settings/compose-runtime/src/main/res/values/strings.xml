@@ -21,6 +21,13 @@
     <string name="modern_settings_double_space_summary">Double-tap Space to insert a period followed by a space</string>
     <string name="modern_settings_scrub_move_title">Slide on the space bar to move the cursor</string>
     <string name="modern_settings_scrub_move_summary">Move the cursor by sliding left or right on the space bar</string>
+    <string name="modern_settings_gesture_input_title">Enable glide typing</string>
+    <string name="modern_settings_gesture_input_summary">Input a word by sliding through the letters</string>
+    <string name="modern_settings_gesture_preview_title">Dynamic suggestion preview</string>
+    <string name="modern_settings_gesture_preview_summary">Show the suggested word while gesturing</string>
+    <string name="modern_settings_gesture_auto_commit_title">Auto commit glide input</string>
+    <string name="modern_settings_gesture_auto_commit_summary">Commit the current composing text before the next glide input</string>
+    <string name="modern_settings_requires_gesture_input">Turn on glide typing to use this setting</string>
     <string name="modern_settings_show_english_keyboard_title">Show English keyboard</string>
     <string name="modern_settings_physical_alt_title">Alt key for symbols on a physical keyboard</string>
     <string name="modern_settings_physical_alt_summary">Use Alt to enter symbols when a physical keyboard is connected</string>

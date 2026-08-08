@@ -55,6 +55,14 @@ class LegacySettingsRepository(context: Context) {
             ),
             vibration = vibration,
             doubleSpacePeriod = readBoolean(BooleanSettingContracts.doubleSpacePeriod),
+            gestureInput = readBoolean(BooleanSettingContracts.gestureInput),
+            gestureInputPersistent = readBoolean(
+                BooleanSettingContracts.gestureInputPersistent,
+            ),
+            incrementalGesturePreview = readBoolean(
+                BooleanSettingContracts.incrementalGesturePreview,
+            ),
+            gestureAutoCommit = readBoolean(BooleanSettingContracts.gestureAutoCommit),
             scrubMove = readBoolean(BooleanSettingContracts.scrubMove),
             chineseEnglishMixedInput = readBoolean(
                 BooleanSettingContracts.chineseEnglishMixedInput,
@@ -116,6 +124,14 @@ class LegacySettingsRepository(context: Context) {
 
     fun setVibrationEnabled(enabled: Boolean): SettingsSnapshot {
         preferences.edit().putBoolean(SliderSettingContracts.VIBRATION_ENABLED_KEY, enabled).apply()
+        return readSnapshot()
+    }
+
+    fun setGestureInputEnabled(enabled: Boolean): SettingsSnapshot {
+        preferences.edit()
+            .putBoolean(BooleanSettingContracts.gestureInput.key, enabled)
+            .putBoolean(BooleanSettingContracts.gestureInputPersistent.key, enabled)
+            .apply()
         return readSnapshot()
     }
 
@@ -266,6 +282,10 @@ data class SettingsSnapshot(
     val vibrationEnabled: Boolean,
     val vibration: ResolvedSetting<Int>,
     val doubleSpacePeriod: BooleanSettingState,
+    val gestureInput: BooleanSettingState,
+    val gestureInputPersistent: BooleanSettingState,
+    val incrementalGesturePreview: BooleanSettingState,
+    val gestureAutoCommit: BooleanSettingState,
     val scrubMove: BooleanSettingState,
     val chineseEnglishMixedInput: BooleanSettingState,
     val chineseDigitsMixedInput: BooleanSettingState,

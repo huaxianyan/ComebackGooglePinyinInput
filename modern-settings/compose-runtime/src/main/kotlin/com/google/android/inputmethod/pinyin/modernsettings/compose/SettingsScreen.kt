@@ -42,6 +42,7 @@ data class SettingsActions(
     val onVolumeCommit: (Int) -> Unit,
     val onVolumeDefault: () -> Unit,
     val onVibrationEnabledChange: (Boolean) -> Unit,
+    val onGestureInputEnabledChange: (Boolean) -> Unit,
     val onBooleanChange: (BooleanSettingContract, Boolean) -> Unit,
     val onVibrationCommit: (Int) -> Unit,
     val onVibrationDefault: () -> Unit,
@@ -94,6 +95,20 @@ fun SettingsScreen(snapshot: SettingsSnapshot, actions: SettingsActions) {
                     onCheckedChange = {
                         actions.onBooleanChange(BooleanSettingContracts.doubleSpacePeriod, it)
                     },
+                )
+            }
+            item {
+                SettingsSwitchRow(
+                    title = legacyString(
+                        "setting_gesture_input_title",
+                        R.string.modern_settings_gesture_input_title,
+                    ),
+                    supporting = legacyString(
+                        "setting_gesture_input_summary",
+                        R.string.modern_settings_gesture_input_summary,
+                    ),
+                    checked = snapshot.gestureInput.value,
+                    onCheckedChange = actions.onGestureInputEnabledChange,
                 )
             }
             item {
@@ -200,6 +215,53 @@ fun SettingsScreen(snapshot: SettingsSnapshot, actions: SettingsActions) {
                     checked = snapshot.traditionalChinese.value,
                     onCheckedChange = {
                         actions.onBooleanChange(BooleanSettingContracts.traditionalChinese, it)
+                    },
+                )
+            }
+            item {
+                val dependencyEnabled = snapshot.gestureInput.value
+                val originalSummary = legacyString(
+                    "setting_gesture_input_preview_summary",
+                    R.string.modern_settings_gesture_preview_summary,
+                )
+                SettingsSwitchRow(
+                    title = legacyString(
+                        "setting_gesture_input_preview_title",
+                        R.string.modern_settings_gesture_preview_title,
+                    ),
+                    supporting = if (dependencyEnabled) originalSummary else
+                        originalSummary + "\n" + stringResource(
+                            R.string.modern_settings_requires_gesture_input
+                        ),
+                    checked = snapshot.incrementalGesturePreview.value,
+                    enabled = dependencyEnabled,
+                    onCheckedChange = {
+                        actions.onBooleanChange(
+                            BooleanSettingContracts.incrementalGesturePreview,
+                            it,
+                        )
+                    },
+                )
+            }
+            item {
+                val dependencyEnabled = snapshot.gestureInput.value
+                val originalSummary = legacyString(
+                    "setting_gesture_auto_commit_summary",
+                    R.string.modern_settings_gesture_auto_commit_summary,
+                )
+                SettingsSwitchRow(
+                    title = legacyString(
+                        "setting_gesture_auto_commit_title",
+                        R.string.modern_settings_gesture_auto_commit_title,
+                    ),
+                    supporting = if (dependencyEnabled) originalSummary else
+                        originalSummary + "\n" + stringResource(
+                            R.string.modern_settings_requires_gesture_input
+                        ),
+                    checked = snapshot.gestureAutoCommit.value,
+                    enabled = dependencyEnabled,
+                    onCheckedChange = {
+                        actions.onBooleanChange(BooleanSettingContracts.gestureAutoCommit, it)
                     },
                 )
             }

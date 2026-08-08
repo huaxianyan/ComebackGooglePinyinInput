@@ -84,6 +84,24 @@ object BooleanSettingContracts {
         key = "enable_auto_capitalization",
         defaultValue = true,
     )
+    val gestureInput = BooleanSettingContract(
+        key = "enable_gesture_input",
+        defaultValue = true,
+    )
+    val gestureInputPersistent = BooleanSettingContract(
+        key = "enable_gesture_input_persistent",
+        defaultValue = true,
+    )
+    val incrementalGesturePreview = BooleanSettingContract(
+        key = "enable_incremental_gesture_input",
+        defaultValue = true,
+        dependency = gestureInput,
+    )
+    val gestureAutoCommit = BooleanSettingContract(
+        key = "enable_gesture_auto_commit",
+        defaultValue = false,
+        dependency = gestureInput,
+    )
 
     val firstPlainBatch = listOf(
         doubleSpacePeriod,
@@ -109,6 +127,10 @@ object BooleanSettingContracts {
         nextWordPrediction,
         autoCapitalization,
     )
-    val writable =
-        firstPlainBatch + secondPlainBatch + thirdPlainBatch + englishDependencyBatch
+    val gestureDependencyBatch = listOf(
+        incrementalGesturePreview,
+        gestureAutoCommit,
+    )
+    val writable = firstPlainBatch + secondPlainBatch + thirdPlainBatch +
+        englishDependencyBatch + gestureDependencyBatch
 }

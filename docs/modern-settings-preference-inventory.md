@@ -119,6 +119,28 @@ settings persistence and dependency behavior can be accepted independently,
 but spelling, suggestion, next-word, and offensive-filter runtime effects are
 not claimed as functional acceptance.
 
+## Gesture dependency and mirrored-write group
+
+The glide-typing parent has a non-obvious Activity callback:
+
+| Role | Key | Fallback |
+| --- | --- | --- |
+| visible parent | `enable_gesture_input` | `true` |
+| mirrored persistent key | `enable_gesture_input_persistent` | `true` |
+| dynamic preview child | `enable_incremental_gesture_input` | `true` |
+| auto-commit child | `enable_gesture_auto_commit` | `false` |
+
+The original `SettingsActivity.onSharedPreferenceChanged()` listens for the
+visible parent key and mirrors its checked value into the persistent key. The
+modern repository reproduces the same final contract by writing both Booleans
+in one editor transaction; the parent must not use the generic single-key
+path. Both children depend on the visible parent, retain their stored values
+while disabled, and reject repository writes while the parent is off.
+
+The original hierarchy keeps the parent in the general Input area and the two
+children in the Chinese-input category. Compose preserves that placement rather
+than moving controls solely for visual convenience.
+
 ## Plain-looking entries that are not yet safe to migrate
 
 ### Dynamic availability
@@ -138,8 +160,6 @@ are reconstructed without hidden assumptions.
 
 ### Dependencies or custom state machines
 
-- `enable_incremental_gesture_input` and `enable_gesture_auto_commit` depend on
-  `enable_gesture_input`;
 - fuzzy-Pinyin detail depends on `fuzzy_pinyin`;
 - `switch_to_other_imes` depends on `show_language_switch_key`;
 - `show_emoji_switch_key` declares `disableDependentsState=true`;
@@ -152,10 +172,9 @@ are reconstructed without hidden assumptions.
 
 ### Listener or side-effect parity required
 
-`SettingsActivity` mirrors changes to `enable_gesture_input` into the separate
-persistent gesture key. That setting is not a plain Boolean write. Launcher
-visibility, dictionary/contact operations, and any AutoSynced Preference also
-require their existing component or synchronization effects before migration.
+The gesture mirror callback is now migrated. Launcher visibility,
+dictionary/contact operations, and any AutoSynced Preference still require
+their existing component or synchronization effects before migration.
 
 ## Remaining Input page inventory
 

@@ -21,6 +21,13 @@
     <string name="modern_settings_double_space_summary">点按两次空格键可插入句号和空格</string>
     <string name="modern_settings_scrub_move_title">滑动空格键移动光标</string>
     <string name="modern_settings_scrub_move_summary">在空格键上左右滑动以移动光标</string>
+    <string name="modern_settings_gesture_input_title">启用滑行输入</string>
+    <string name="modern_settings_gesture_input_summary">在字母之间滑动以输入字词</string>
+    <string name="modern_settings_gesture_preview_title">动态建议预览</string>
+    <string name="modern_settings_gesture_preview_summary">滑行输入时显示建议字词</string>
+    <string name="modern_settings_gesture_auto_commit_title">自动提交滑行输入</string>
+    <string name="modern_settings_gesture_auto_commit_summary">下一次滑行输入前自动提交当前输入内容</string>
+    <string name="modern_settings_requires_gesture_input">开启滑行输入后可使用此设置</string>
     <string name="modern_settings_show_english_keyboard_title">显示英文键盘</string>
     <string name="modern_settings_physical_alt_title">使用实体键盘 Alt 键输入符号</string>
     <string name="modern_settings_physical_alt_summary">连接实体键盘时使用 Alt 键输入符号</string>

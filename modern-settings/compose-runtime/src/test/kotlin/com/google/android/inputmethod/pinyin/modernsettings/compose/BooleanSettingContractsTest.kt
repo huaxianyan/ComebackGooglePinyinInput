@@ -70,6 +70,30 @@ class BooleanSettingContractsTest {
     }
 
     @Test
+    fun gestureGroupPreservesMirroredKeyDefaultsAndDependencies() {
+        assertEquals("enable_gesture_input", BooleanSettingContracts.gestureInput.key)
+        assertEquals(
+            "enable_gesture_input_persistent",
+            BooleanSettingContracts.gestureInputPersistent.key,
+        )
+        assertTrue(BooleanSettingContracts.gestureInput.defaultValue)
+        assertTrue(BooleanSettingContracts.gestureInputPersistent.defaultValue)
+        assertEquals(
+            listOf("enable_incremental_gesture_input", "enable_gesture_auto_commit"),
+            BooleanSettingContracts.gestureDependencyBatch.map { it.key },
+        )
+        assertEquals(
+            listOf(true, false),
+            BooleanSettingContracts.gestureDependencyBatch.map { it.defaultValue },
+        )
+        assertTrue(
+            BooleanSettingContracts.gestureDependencyBatch.all {
+                it.dependency == BooleanSettingContracts.gestureInput
+            }
+        )
+    }
+
+    @Test
     fun writableSettingsHaveNoDuplicateKeys() {
         val keys = BooleanSettingContracts.writable.map { it.key }
         assertEquals(keys.size, keys.toSet().size)
