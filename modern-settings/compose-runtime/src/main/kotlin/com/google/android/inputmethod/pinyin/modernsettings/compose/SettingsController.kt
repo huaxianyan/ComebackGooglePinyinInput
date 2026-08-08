@@ -7,6 +7,9 @@ class SettingsController(
 ) {
     fun read(): SettingsSnapshot = repository.readSnapshot()
 
+    fun setLauncherIconVisible(visible: Boolean): SettingsSnapshot =
+        repository.setLauncherIconVisible(visible)
+
     fun setSoundEnabled(enabled: Boolean): SettingsSnapshot =
         repository.setSoundEnabled(enabled)
 

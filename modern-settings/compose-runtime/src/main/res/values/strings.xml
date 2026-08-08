@@ -10,6 +10,8 @@
     <string name="modern_settings_home_dictionary_summary">User dictionary, health, backup, and import</string>
     <string name="modern_settings_home_other_title">Other</string>
     <string name="modern_settings_home_other_summary">Launcher icon, about, and legal information</string>
+    <string name="modern_settings_launcher_icon_title">Show app icon</string>
+    <string name="modern_settings_launcher_icon_summary">Show the app icon in the launcher</string>
     <string name="modern_settings_chinese_input_summary">Pinyin scheme, mixed input, prediction, and Fuzzy Pinyin</string>
     <string name="modern_settings_english_input_summary">Correction, suggestions, prediction, and capitalization</string>
     <string name="modern_settings_keyboard_appearance_title">Appearance and layout</string>

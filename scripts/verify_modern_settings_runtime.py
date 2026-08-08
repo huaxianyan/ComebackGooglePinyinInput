@@ -69,6 +69,9 @@ def main() -> int:
             "data class SettingsActions(",
             "val onOpenThemeSelector: () -> Unit",
             "actions.onOpenThemeSelector",
+            "val onLauncherIconVisibleChange: (Boolean) -> Unit",
+            "actions.onLauncherIconVisibleChange",
+            "snapshot.launcherIcon.value",
             "fun SettingsScreen(",
             "fun DefaultAwareAdjustment(",
             "SystemDefaultAdjustment(",
@@ -164,6 +167,8 @@ def main() -> int:
                 'name="modern_settings_pinyin_scheme_title"',
                 'name="modern_settings_one_handed_mode_title"',
                 'name="modern_settings_theme_title"',
+                'name="modern_settings_launcher_icon_title"',
+                'name="modern_settings_launcher_icon_summary"',
                 'name="modern_settings_popup_on_keypress_title"',
                 'name="modern_settings_voice_input_title"',
                 'name="modern_settings_fuzzy_pinyin_title"',
@@ -295,6 +300,26 @@ def main() -> int:
             "nonGoogleOtherImeDoesNotSatisfyLegacyFallback",
         ),
         "keyboard capability predicate tests",
+    )
+
+    launcher_rules = next(
+        (project / "compose-runtime/src/main/kotlin").rglob("LauncherIconSettingRules.kt")
+    ).read_text(encoding="utf-8")
+    require(
+        launcher_rules,
+        ("!isSystemOrUpdatedSystemApp && resourceDefault",),
+        "launcher icon absent-key default",
+    )
+    launcher_rules_test = next(
+        (project / "compose-runtime/src/test/kotlin").rglob("LauncherIconSettingRulesTest.kt")
+    ).read_text(encoding="utf-8")
+    require(
+        launcher_rules_test,
+        (
+            "sideloadedAppUsesResourceDefault",
+            "systemAndUpdatedSystemAppsDefaultToHidden",
+        ),
+        "launcher icon default tests",
     )
 
     language_switch_rules = next(
@@ -536,6 +561,11 @@ def main() -> int:
             "fuzzyPinyin: BooleanSettingState",
             "fuzzyPinyinOptions: List<BooleanSettingState>",
             "capabilities: SettingsCapabilities",
+            "launcherIcon: BooleanSettingState",
+            "fun setLauncherIconVisible(visible: Boolean)",
+            'LAUNCHER_ICON_KEY = "show_launcher_icon"',
+            "ApplicationInfo.FLAG_SYSTEM or ApplicationInfo.FLAG_UPDATED_SYSTEM_APP",
+            "LauncherIconSettingRules.defaultVisible(",
             "popupOnKeypress: BooleanSettingState",
             "voiceInput: BooleanSettingState",
             "showEmojiSwitchKey: BooleanSettingState",
@@ -583,7 +613,7 @@ def main() -> int:
         "staged legacy settings repository",
     )
     expected_write_counts = {
-        "putBoolean(": 5,
+        "putBoolean(": 6,
         "putFloat(": 1,
         "putString(": 5,
         ".remove(": 3,
@@ -680,6 +710,7 @@ def main() -> int:
                 "com.google.android.inputmethod.pinyin.PinyinIME",
                 "ComposeSettingsPrototypeActivity",
                 "com.google.android.apps.inputmethod.libs.theme.preference.ThemeSelectorActivity",
+                "com.google.android.apps.inputmethod.libs.framework.core.LauncherActivity",
                 'android:enabled="@bool/modern_settings_runtime_enabled"',
                 '<queries>',
                 'android:name="android.view.InputMethod"',
@@ -712,6 +743,30 @@ def main() -> int:
         ):
             if forbidden in manifest_text:
                 raise RuntimeError(f"unguarded AndroidX process entry point: {forbidden}")
+
+        app_base = decoded / (
+            "smali/com/google/android/apps/inputmethod/libs/framework/core/AppBase.smali"
+        )
+        require(
+            app_base.read_text(encoding="utf-8"),
+            (
+                "const v1, 0x7f110299",
+                "LauncherIconVisibilityInitializer;->a(Landroid/content/Context;)V",
+            ),
+            "launcher icon SharedPreferences side effect",
+        )
+        launcher_initializer = decoded / (
+            "smali/com/google/android/apps/inputmethod/libs/framework/core/"
+            "LauncherIconVisibilityInitializer.smali"
+        )
+        require(
+            launcher_initializer.read_text(encoding="utf-8"),
+            (
+                "LauncherActivity;",
+                "LauncherIconVisibilityInitializer;->b(Landroid/content/Context;)V",
+            ),
+            "launcher component visibility initializer",
+        )
 
         theme_selector = decoded / (
             "smali/com/google/android/apps/inputmethod/libs/theme/preference/"

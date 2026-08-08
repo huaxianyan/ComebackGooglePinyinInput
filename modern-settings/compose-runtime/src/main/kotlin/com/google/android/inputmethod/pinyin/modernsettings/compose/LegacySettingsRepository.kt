@@ -2,6 +2,7 @@ package com.google.android.inputmethod.pinyin.modernsettings.compose
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.content.pm.ApplicationInfo
 import android.os.Build
 
 /** Read-only bridge to the exact default SharedPreferences used by Lamx. */
@@ -58,6 +59,7 @@ class LegacySettingsRepository(context: Context) {
         val handwritingStrokeWidthIndex = readEnumeratedIndex(
             SliderSettingContracts.handwritingStrokeWidth,
         )
+        val launcherIcon = readLauncherIcon()
 
         return SettingsSnapshot(
             capabilities = capabilities,
@@ -127,6 +129,7 @@ class LegacySettingsRepository(context: Context) {
             slideSensitivityLabels = readEntryLabels(
                 "entries_keyboard_slide_sensitivity_ratio",
             ),
+            launcherIcon = launcherIcon,
             longPress = SliderSettingContracts.resolveLongPress(
                 preferences.contains(SliderSettingContracts.LONG_PRESS_DELAY_KEY),
                 preferences.getString(SliderSettingContracts.LONG_PRESS_DELAY_KEY, null),
@@ -146,6 +149,11 @@ class LegacySettingsRepository(context: Context) {
                 "entries_handwriting_stroke_width_scale",
             ),
         )
+    }
+
+    fun setLauncherIconVisible(visible: Boolean): SettingsSnapshot {
+        preferences.edit().putBoolean(LAUNCHER_ICON_KEY, visible).apply()
+        return readSnapshot()
     }
 
     fun setSoundEnabled(enabled: Boolean): SettingsSnapshot {
@@ -298,6 +306,29 @@ class LegacySettingsRepository(context: Context) {
         ).value,
     )
 
+    private fun readLauncherIcon(): BooleanSettingState {
+        val isExplicit = preferences.contains(LAUNCHER_ICON_KEY)
+        val value = if (isExplicit) {
+            preferences.getBoolean(LAUNCHER_ICON_KEY, false)
+        } else {
+            val flags = applicationContext.applicationInfo.flags
+            val isSystemOrUpdatedSystemApp = flags and (
+                ApplicationInfo.FLAG_SYSTEM or ApplicationInfo.FLAG_UPDATED_SYSTEM_APP
+            ) != 0
+            val resourceId = resources.getIdentifier(
+                "show_launcher_icon",
+                "bool",
+                applicationContext.packageName,
+            )
+            require(resourceId != 0) { "Missing launcher icon default resource" }
+            LauncherIconSettingRules.defaultVisible(
+                isSystemOrUpdatedSystemApp = isSystemOrUpdatedSystemApp,
+                resourceDefault = resources.getBoolean(resourceId),
+            )
+        }
+        return BooleanSettingState(value = value, isExplicit = isExplicit)
+    }
+
     private fun readBoolean(contract: BooleanSettingContract): BooleanSettingState =
         BooleanSettingState(
             value = preferences.getBoolean(contract.key, contract.defaultValue),
@@ -339,6 +370,8 @@ class LegacySettingsRepository(context: Context) {
     }
 
     companion object {
+        private const val LAUNCHER_ICON_KEY = "show_launcher_icon"
+
         internal fun selectDeviceOverride(
             entries: Array<String>,
             device: Map<String, String>,
@@ -418,6 +451,7 @@ data class SettingsSnapshot(
     val slideSensitivityIndex: Int,
     val slideSensitivityLabel: String,
     val slideSensitivityLabels: List<String>,
+    val launcherIcon: BooleanSettingState,
     val longPress: DefaultableSetting<Int>,
     val handwritingTimeoutIndex: Int,
     val handwritingTimeoutLabel: String,

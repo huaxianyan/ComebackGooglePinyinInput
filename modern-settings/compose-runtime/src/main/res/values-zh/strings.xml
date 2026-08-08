@@ -10,6 +10,8 @@
     <string name="modern_settings_home_dictionary_summary">用户词典、健康状态、备份和导入</string>
     <string name="modern_settings_home_other_title">其他</string>
     <string name="modern_settings_home_other_summary">启动器图标、关于和法律信息</string>
+    <string name="modern_settings_launcher_icon_title">显示应用图标</string>
+    <string name="modern_settings_launcher_icon_summary">在启动器中显示应用图标</string>
     <string name="modern_settings_chinese_input_summary">拼音方案、混合输入、联想和模糊拼音</string>
     <string name="modern_settings_english_input_summary">纠错、建议、预测和自动大写</string>
     <string name="modern_settings_keyboard_appearance_title">外观与布局</string>

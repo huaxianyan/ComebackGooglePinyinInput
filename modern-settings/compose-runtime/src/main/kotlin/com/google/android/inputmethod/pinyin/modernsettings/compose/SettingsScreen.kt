@@ -58,6 +58,7 @@ import kotlin.math.roundToInt
 
 data class SettingsActions(
     val onOpenThemeSelector: () -> Unit,
+    val onLauncherIconVisibleChange: (Boolean) -> Unit,
     val onSoundEnabledChange: (Boolean) -> Unit,
     val onVolumeCommit: (Int) -> Unit,
     val onVolumeDefault: () -> Unit,
@@ -147,7 +148,8 @@ fun SettingsScreen(snapshot: SettingsSnapshot, actions: SettingsActions) {
                 SettingsRoute.Handwriting -> handwritingSettingsItems(
                     snapshot, actions, millisecondsText,
                 )
-                SettingsRoute.Dictionary, SettingsRoute.Other -> pendingSpecializedSettingsItems()
+                SettingsRoute.Dictionary -> pendingSpecializedSettingsItems()
+                SettingsRoute.Other -> otherSettingsItems(snapshot, actions)
                 SettingsRoute.FuzzyPinyin -> error("Fuzzy Pinyin uses its dedicated screen")
             }
         }

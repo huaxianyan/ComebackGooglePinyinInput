@@ -235,9 +235,16 @@ large-screen matrix.
 
 ### Listener or side-effect parity required
 
-The gesture mirror callback is now migrated. Launcher visibility,
-dictionary/contact operations, and any AutoSynced Preference still require
-their existing component or synchronization effects before migration.
+The gesture mirror callback is migrated. Launcher visibility is also
+implemented without duplicating the primary-DEX side effect: Compose writes the
+exact Boolean key through the same SharedPreferences, so the process-wide
+`AppBase` listener still invokes `LauncherIconVisibilityInitializer`, updates
+only the legacy `LauncherActivity` component, and retains the existing
+`BackupManager.dataChanged()` notification. Key absence remains explicit; its
+fallback is `false` for system/updated-system apps and otherwise the original
+`@bool/show_launcher_icon`. The testing-only Compose launcher is intentionally
+independent. Dictionary/contact operations and remaining AutoSynced Preferences
+still require their existing effects before migration.
 
 ## Remaining Input page inventory
 
@@ -265,8 +272,9 @@ their existing component or synchronization effects before migration.
   geometry gap in the legacy no-ActionBar selector: its root began beneath the
   status bar. A dynamic system-bars Insets listener is now attached after the
   original `setContentView()`, preserving baseline padding and avoiding fixed
-  dimensions, Insets consumption, or edge-to-edge opt-out; geometry acceptance
-  remains pending;
+  dimensions, Insets consumption, or edge-to-edge opt-out. Portrait/landscape,
+  top/bottom system bars, return navigation, and theme behavior pass device
+  acceptance;
 - vibration availability is implemented and accepted on Pixel hardware with a
   vibrator; the no-vibrator runtime branch remains in the later device matrix;
 - emoji/language switch-key dependency group is implemented and device-

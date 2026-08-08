@@ -39,6 +39,9 @@ class ComposeSettingsPrototypeActivity : ComponentActivity() {
                                     LegacySettingsNavigation.themeSelectorIntent(this)
                                 )
                             },
+                            onLauncherIconVisibleChange = { visible ->
+                                snapshot = controller.setLauncherIconVisible(visible)
+                            },
                             onSoundEnabledChange = { enabled ->
                                 snapshot = controller.setSoundEnabled(enabled)
                             },

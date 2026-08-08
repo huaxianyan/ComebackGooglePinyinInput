@@ -97,6 +97,26 @@ internal fun androidx.compose.foundation.lazy.LazyListScope.homeSettingsItems(
         }
 }
 
+internal fun androidx.compose.foundation.lazy.LazyListScope.otherSettingsItems(
+    snapshot: SettingsSnapshot,
+    actions: SettingsActions,
+) {
+    item {
+        SettingsSwitchRow(
+            title = legacyString(
+                "setting_show_launcher_icon_title",
+                R.string.modern_settings_launcher_icon_title,
+            ),
+            supporting = legacyString(
+                "setting_show_launcher_icon_summary",
+                R.string.modern_settings_launcher_icon_summary,
+            ),
+            checked = snapshot.launcherIcon.value,
+            onCheckedChange = actions.onLauncherIconVisibleChange,
+        )
+    }
+}
+
 internal fun androidx.compose.foundation.lazy.LazyListScope.pendingSpecializedSettingsItems() {
     item {
         Text(
