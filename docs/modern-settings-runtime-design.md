@@ -203,7 +203,10 @@ Repository writes enforce the parent dependency. Toolbar and system Back return
 to the main settings screen, while `rememberSaveable` retains the route across
 configuration recreation. Official Material 3 Switch/ListItem/TopAppBar and
 official auto-mirrored Material icons are used; predictive-Back animation remains
-outside this isolated stage.
+outside this isolated stage. Device acceptance confirms the complete dependency
+and default matrix, retained child values, both Back paths, configuration
+recreation, actual fuzzy-candidate activation/restoration, and no Full Pinyin,
+flyPY, Chinese-glide, or English-glide regression.
 
 The first ListPreference stage migrates `pinyin_scheme` to an official Material
 3 `ListItem`, `AlertDialog`, and radio-button single-choice group. It reads the

@@ -234,8 +234,10 @@ These are deliberately excluded from ordinary Boolean/List migration:
 - dictionary health, contacts, shortcuts, clear operations;
 - SAF backup location, interval, retention, immediate backup, and import;
 - fuzzy-Pinyin detail page is implemented as a process/configuration-safe
-  Compose route with app-bar and system Back navigation; device acceptance is
-  pending;
+  Compose route with app-bar and system Back navigation. Device acceptance
+  confirms parent/child dependency, all defaults and retained child values,
+  toolbar/system Back, configuration recreation, actual fuzzy candidates and
+  restoration when disabled, plus Full Pinyin, flyPY and glide regressions;
 - about, privacy, terms, and licenses.
 
 Each modern navigation route must preserve the existing Activity/fragment
