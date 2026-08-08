@@ -13,6 +13,7 @@
     <string name="modern_settings_chinese_input_summary">拼音方案、混合输入、联想和模糊拼音</string>
     <string name="modern_settings_english_input_summary">纠错、建议、预测和自动大写</string>
     <string name="modern_settings_keyboard_appearance_title">外观与布局</string>
+    <string name="modern_settings_theme_title">主题背景</string>
     <string name="modern_settings_keyboard_appearance_summary">主题、单手模式和键盘高度</string>
     <string name="modern_settings_keyboard_keys_title">按键与切换</string>
     <string name="modern_settings_keyboard_keys_summary">按键气泡、输入按钮、切换和交互</string>

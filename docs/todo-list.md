@@ -109,7 +109,8 @@
 - [x] 确定现代设置页面层级：设置首页只提供“输入设置 / 键盘 / 词典与备份 / 其他”导航；输入设置下分常规、中文、英文，模糊拼音归属中文；键盘下分外观与布局、按键与切换、按键反馈、手写。手写不再单占首页层级，但两个 Preference 的 key、默认值、类型、预览和 Slider 语义不变
 - [x] 页面层级 V1 通过真机验收：导航首页、输入/中文/英文/模糊拼音、键盘四个子页、词典与其他占位页均正常；显式 route stack 的各入口、系统/工具栏 Back、配置重建和跨页依赖无异常
 - [x] 完成页面源码机械拆分：`SettingsScreen.kt` 只保留 route dispatch、Back 和顶层 Scaffold；首页、输入、键盘、手写、模糊拼音及共享组件分别归档，Verifier 禁止顶层 Screen 重新持有具体设置控件；未改变页面内容、顺序、依赖或写入语义
-- [ ] Compose 振动能力门控已实现、待真机验收：严格保持旧 `ais.c(Context)` 的“存在 `Vibrator` 且 `hasVibrator()` 为 true”条件，API 35+ 使用 typed system service；无振动器时同时隐藏振动开关和时长控件，保留已有值，并由 Repository 拒绝开关、时长和恢复默认三条写入。纯逻辑四种真值组合已覆盖；无振动器运行时分支留待后续设备矩阵
+- [x] Compose 振动能力门控通过 Pixel 有振动器分支真机验收：严格保持旧 `ais.c(Context)` 的“存在 `Vibrator` 且 `hasVibrator()` 为 true”条件，API 35+ 使用 typed system service；两行可见性、开关依赖、显式值保留、预览、恢复系统默认及声音设置隔离均正常。无振动器时同时隐藏两行、保留值并由 Repository 拒绝三条写入，纯逻辑四种真值组合已覆盖；无振动器运行时分支留待后续设备矩阵
+- [ ] Compose 主题导航已实现、待真机验收：在“键盘 → 外观与布局”恢复原 `setting_theme` 入口，通过显式同包 Intent 启动 primary DEX 中现有 `ThemeSelectorActivity`；不复制主题持久化、图片选择/裁剪、编辑器、预览或结果处理逻辑，返回 Compose 设置时沿用 `onResume()` 刷新
 
 ## 测试约定
 

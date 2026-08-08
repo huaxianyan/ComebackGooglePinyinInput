@@ -256,8 +256,14 @@ their existing component or synchronization effects before migration.
 
 ## Remaining Keyboard page inventory
 
-- theme navigation (specialized Activity) remains pending;
-- vibration availability on hardware without a vibrator remains pending;
+- theme navigation is implemented as the original non-persistent navigation
+  contract: the Compose row uses the legacy `setting_theme` title and starts the
+  existing, non-exported same-package `ThemeSelectorActivity` with an explicit
+  component Intent. It does not duplicate theme persistence, builder/editor,
+  image selection/cropping, preview, or activity-result behavior; device
+  acceptance remains pending;
+- vibration availability is implemented and accepted on Pixel hardware with a
+  vibrator; the no-vibrator runtime branch remains in the later device matrix;
 - emoji/language switch-key dependency group is implemented and device-
   accepted. The reversed emoji/language dependency and retained language value
   behave correctly. The first build hid `switch_to_other_imes` even though the

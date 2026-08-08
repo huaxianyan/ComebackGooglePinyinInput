@@ -13,6 +13,7 @@
     <string name="modern_settings_chinese_input_summary">Pinyin scheme, mixed input, prediction, and Fuzzy Pinyin</string>
     <string name="modern_settings_english_input_summary">Correction, suggestions, prediction, and capitalization</string>
     <string name="modern_settings_keyboard_appearance_title">Appearance and layout</string>
+    <string name="modern_settings_theme_title">Theme</string>
     <string name="modern_settings_keyboard_appearance_summary">Theme, one-handed mode, and keyboard height</string>
     <string name="modern_settings_keyboard_keys_title">Keys and switching</string>
     <string name="modern_settings_keyboard_keys_summary">Key popups, input buttons, switching, and interaction</string>

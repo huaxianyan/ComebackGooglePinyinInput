@@ -50,6 +50,7 @@ def main() -> int:
             "SettingsScreen(",
             "override fun onResume()",
             "snapshot = controller.read()",
+            "LegacySettingsNavigation.themeSelectorIntent(this)",
             "setContent {",
         ),
         "guarded Compose settings activity",
@@ -66,6 +67,8 @@ def main() -> int:
             "import androidx.activity.compose.BackHandler",
             "import androidx.compose.material3.TopAppBar",
             "data class SettingsActions(",
+            "val onOpenThemeSelector: () -> Unit",
+            "actions.onOpenThemeSelector",
             "fun SettingsScreen(",
             "fun DefaultAwareAdjustment(",
             "SystemDefaultAdjustment(",
@@ -160,6 +163,7 @@ def main() -> int:
                 'name="modern_settings_section_english_input"',
                 'name="modern_settings_pinyin_scheme_title"',
                 'name="modern_settings_one_handed_mode_title"',
+                'name="modern_settings_theme_title"',
                 'name="modern_settings_popup_on_keypress_title"',
                 'name="modern_settings_voice_input_title"',
                 'name="modern_settings_fuzzy_pinyin_title"',
@@ -471,6 +475,18 @@ def main() -> int:
         "shared settings components",
     )
 
+    legacy_navigation = (settings_source_dir / "LegacySettingsNavigation.kt").read_text(
+        encoding="utf-8"
+    )
+    require(
+        legacy_navigation,
+        (
+            '"com.google.android.apps.inputmethod.libs.theme.preference.ThemeSelectorActivity"',
+            "Intent().setClassName(context, themeSelectorActivity)",
+        ),
+        "legacy specialized settings navigation",
+    )
+
     navigation_test = next(
         (project / "compose-runtime/src/test/kotlin").rglob("SettingsNavigationTest.kt")
     ).read_text(encoding="utf-8")
@@ -638,6 +654,7 @@ def main() -> int:
                 "com.google.android.apps.inputmethod.pinyin.PinyinApp",
                 "com.google.android.inputmethod.pinyin.PinyinIME",
                 "ComposeSettingsPrototypeActivity",
+                "com.google.android.apps.inputmethod.libs.theme.preference.ThemeSelectorActivity",
                 'android:enabled="@bool/modern_settings_runtime_enabled"',
                 '<queries>',
                 'android:name="android.view.InputMethod"',

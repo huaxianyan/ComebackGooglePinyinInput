@@ -34,6 +34,11 @@ class ComposeSettingsPrototypeActivity : ComponentActivity() {
                     SettingsScreen(
                         snapshot = it,
                         actions = SettingsActions(
+                            onOpenThemeSelector = {
+                                startActivity(
+                                    LegacySettingsNavigation.themeSelectorIntent(this)
+                                )
+                            },
                             onSoundEnabledChange = { enabled ->
                                 snapshot = controller.setSoundEnabled(enabled)
                             },

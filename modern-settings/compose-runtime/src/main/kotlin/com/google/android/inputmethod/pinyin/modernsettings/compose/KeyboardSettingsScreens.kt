@@ -93,6 +93,15 @@ internal fun androidx.compose.foundation.lazy.LazyListScope.keyboardAppearanceSe
     snapshot: SettingsSnapshot,
     actions: SettingsActions,
 ) {
+    item {
+        SettingsNavigationRow(
+            title = legacyString(
+                "setting_theme",
+                R.string.modern_settings_theme_title,
+            ),
+            onClick = actions.onOpenThemeSelector,
+        )
+    }
     if (snapshot.capabilities.oneHandedModeVisible) {
         item {
             EnumeratedListSetting(

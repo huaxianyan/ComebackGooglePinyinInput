@@ -57,6 +57,7 @@ import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
 
 data class SettingsActions(
+    val onOpenThemeSelector: () -> Unit,
     val onSoundEnabledChange: (Boolean) -> Unit,
     val onVolumeCommit: (Int) -> Unit,
     val onVolumeDefault: () -> Unit,
