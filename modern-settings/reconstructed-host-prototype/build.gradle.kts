@@ -27,6 +27,11 @@ android {
         compose = true
     }
 
+    // EnglishIme opens its raw metadata through openRawResourceFd(), which
+    // requires an uncompressed APK entry just like the original apktool
+    // doNotCompress contract. AGP otherwise deflates metadata.json silently.
+    androidResources.noCompress += "json"
+
     if (legacyHostDir.isPresent) {
         val host = file(legacyHostDir.get())
         sourceSets.named("main") {

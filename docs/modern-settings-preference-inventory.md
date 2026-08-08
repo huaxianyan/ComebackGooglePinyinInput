@@ -127,10 +127,19 @@ than an absent or historical feature.
 
 Static comparison rules out missing payload: both APKs have byte-identical
 English/Latin/HmmGesture Smali, English keyboard XML, all 76 shared assets, and
-all five ARM64 native libraries. The current audit process emits no related
-Warning/Error. Settings persistence and dependency behavior remain accepted,
-but English runtime effects are not; diagnosis continues across fresh-data
-initialization, application ID, signing identity, and host resource/DEX assembly.
+all five ARM64 native libraries. A fresh, non-Compose package rebuilt from
+formal v2.0.0 with the same isolated application-ID model and audit debug
+certificate also passes English candidates and glide, ruling out fresh data,
+package isolation, and signing identity.
+
+The remaining APK comparison identifies the causal packaging defect: formal
+v2.0.0 stores `res/raw/metadata.json` uncompressed, while AGP deflated it in the
+Compose host. The English model path uses `openRawResourceFd()`, which requires
+an uncompressed entry; `main_en_d3_20160715.gzip` remained stored, but its
+metadata became inaccessible. The reconstructed host therefore declares JSON
+`noCompress`, and the verifier requires both English raw entries to be
+`ZIP_STORED`. Settings persistence and dependency behavior remain accepted;
+English runtime acceptance must be repeated on the corrected host.
 
 ## Gesture dependency and mirrored-write group
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
+from zipfile import ZIP_STORED, ZipFile
 
 
 def require(text: str, fragments: tuple[str, ...], label: str) -> None:
@@ -17,6 +18,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--project", type=Path, default=Path("modern-settings"))
     parser.add_argument("--decoded", type=Path)
+    parser.add_argument("--apk", type=Path)
     args = parser.parse_args()
 
     project = args.project
@@ -327,6 +329,7 @@ def main() -> int:
             "multiDexEnabled = true",
             'implementation(project(\":compose-runtime\"))',
             '"--stable-ids"',
+            'androidResources.noCompress += "json"',
         ),
         "reconstructed host build",
     )
@@ -343,6 +346,19 @@ def main() -> int:
         ),
         "guarded legacy manifest",
     )
+
+    if args.apk is not None:
+        with ZipFile(args.apk) as archive:
+            for entry in (
+                "res/raw/main_en_d3_20160715.gzip",
+                "res/raw/metadata.json",
+            ):
+                if entry not in archive.namelist():
+                    raise RuntimeError(f"missing English runtime payload: {entry}")
+                if archive.getinfo(entry).compress_type != ZIP_STORED:
+                    raise RuntimeError(
+                        f"English runtime payload must be uncompressed: {entry}"
+                    )
 
     if args.decoded is not None:
         decoded = args.decoded
