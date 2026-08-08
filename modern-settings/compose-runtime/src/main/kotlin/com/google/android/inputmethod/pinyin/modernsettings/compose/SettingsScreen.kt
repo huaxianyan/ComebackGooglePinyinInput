@@ -683,8 +683,12 @@ private fun EnumeratedListSetting(
     var dialogVisible by rememberSaveable { mutableStateOf(false) }
 
     ListItem(
-        headlineContent = { Text(title) },
-        supportingContent = { Text(selectedLabel) },
+        headlineContent = {
+            Text(title, modifier = Modifier.padding(start = 8.dp))
+        },
+        supportingContent = {
+            Text(selectedLabel, modifier = Modifier.padding(start = 8.dp))
+        },
         modifier = Modifier.clickable { dialogVisible = true },
     )
 
