@@ -111,7 +111,7 @@
 - [x] 完成页面源码机械拆分：`SettingsScreen.kt` 只保留 route dispatch、Back 和顶层 Scaffold；首页、输入、键盘、手写、模糊拼音及共享组件分别归档，Verifier 禁止顶层 Screen 重新持有具体设置控件；未改变页面内容、顺序、依赖或写入语义
 - [x] Compose 振动能力门控通过 Pixel 有振动器分支真机验收：严格保持旧 `ais.c(Context)` 的“存在 `Vibrator` 且 `hasVibrator()` 为 true”条件，API 35+ 使用 typed system service；两行可见性、开关依赖、显式值保留、预览、恢复系统默认及声音设置隔离均正常。无振动器时同时隐藏两行、保留值并由 Repository 拒绝三条写入，纯逻辑四种真值组合已覆盖；无振动器运行时分支留待后续设备矩阵
 - [x] Compose 主题导航及 target 36 系统栏几何通过真机验收：入口、当前主题、内置/图片主题、Builder/Editor、返回与键盘实际主题行为均与 release 正常；旧无 ActionBar `ThemeSelectorActivity` 顶部遮挡由动态 system-bars Insets listener 修复，顶部/底部、横竖屏、返回和主题行为均无回归，不硬编码高度、不消费 Insets、不使用 edge-to-edge opt-out
-- [ ] Compose“显示启动器图标”已实现、待真机验收：保留 key=`show_launcher_icon`、Boolean 类型和 absence 状态；缺省值严格复现 `LauncherIconVisibilityInitializer`——system/updated-system app 缺省隐藏，普通侧载包采用 `@bool/show_launcher_icon`。写入仍走同一 SharedPreferences，使 `AppBase` 全局 listener 调用原 initializer 更新 `LauncherActivity` component 并保留 BackupManager 通知；审计专用 Compose launcher 不受该正式组件开关控制
+- [x] Compose“显示启动器图标”通过真机验收：保留 key=`show_launcher_icon`、Boolean 类型和 absence 状态；缺省值严格复现 `LauncherIconVisibilityInitializer`——system/updated-system app 缺省隐藏，普通侧载包采用 `@bool/show_launcher_icon`。关闭/持久化/重新开启、旧 `LauncherActivity` 图标消失与恢复、审计 launcher 独立保留、旧入口启动、IME 和主题隔离均正常；最终公开 package 查询确认正式组件与审计组件均 enabled，默认 IME 未改变
 
 ## 测试约定
 

@@ -243,8 +243,12 @@ only the legacy `LauncherActivity` component, and retains the existing
 `BackupManager.dataChanged()` notification. Key absence remains explicit; its
 fallback is `false` for system/updated-system apps and otherwise the original
 `@bool/show_launcher_icon`. The testing-only Compose launcher is intentionally
-independent. Dictionary/contact operations and remaining AutoSynced Preferences
-still require their existing effects before migration.
+independent. Device acceptance confirms off/on persistence, disappearance and
+restoration of the legacy launcher entry, continued availability of the audit
+entry, the old launch flow, and IME/theme isolation. A final public package
+query shows both components enabled and the default IME unchanged. Dictionary/
+contact operations and remaining AutoSynced Preferences still require their
+existing effects before migration.
 
 ## Remaining Input page inventory
 
