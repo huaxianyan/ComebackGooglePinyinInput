@@ -306,37 +306,39 @@ internal fun androidx.compose.foundation.lazy.LazyListScope.keyboardFeedbackSett
             onRestoreDefault = actions.onVolumeDefault,
         )
     }
-    item {
-        SettingsSwitchRow(
-            title = legacyString(
-                "setting_vibrate_on_keypress_title",
-                R.string.modern_settings_vibration_title,
-            ),
-            supporting = stringResource(
-                if (snapshot.vibrationEnabled) R.string.modern_settings_enabled
-                else R.string.modern_settings_disabled
-            ),
-            checked = snapshot.vibrationEnabled,
-            onCheckedChange = actions.onVibrationEnabledChange,
-        )
-    }
-    item {
-        DefaultAwareAdjustment(
-            title = legacyString(
-                "setting_vibration_strength_on_keypress_title",
-                R.string.modern_settings_vibration_duration_title,
-            ),
-            state = snapshot.vibration,
-            valueText = millisecondsText,
-            enabledByDependency = snapshot.vibrationEnabled,
-            decreaseDescription = stringResource(
-                R.string.modern_settings_decrease_vibration
-            ),
-            increaseDescription = stringResource(
-                R.string.modern_settings_increase_vibration
-            ),
-            onCommit = actions.onVibrationCommit,
-            onRestoreDefault = actions.onVibrationDefault,
-        )
+    if (snapshot.capabilities.vibrationControlsVisible) {
+        item {
+            SettingsSwitchRow(
+                title = legacyString(
+                    "setting_vibrate_on_keypress_title",
+                    R.string.modern_settings_vibration_title,
+                ),
+                supporting = stringResource(
+                    if (snapshot.vibrationEnabled) R.string.modern_settings_enabled
+                    else R.string.modern_settings_disabled
+                ),
+                checked = snapshot.vibrationEnabled,
+                onCheckedChange = actions.onVibrationEnabledChange,
+            )
+        }
+        item {
+            DefaultAwareAdjustment(
+                title = legacyString(
+                    "setting_vibration_strength_on_keypress_title",
+                    R.string.modern_settings_vibration_duration_title,
+                ),
+                state = snapshot.vibration,
+                valueText = millisecondsText,
+                enabledByDependency = snapshot.vibrationEnabled,
+                decreaseDescription = stringResource(
+                    R.string.modern_settings_decrease_vibration
+                ),
+                increaseDescription = stringResource(
+                    R.string.modern_settings_increase_vibration
+                ),
+                onCommit = actions.onVibrationCommit,
+                onRestoreDefault = actions.onVibrationDefault,
+            )
+        }
     }
 }

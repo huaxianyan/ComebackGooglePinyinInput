@@ -2,11 +2,13 @@ package com.google.android.inputmethod.pinyin.modernsettings.compose
 
 import android.content.Context
 import android.os.Build
+import android.os.Vibrator
 import android.view.inputmethod.InputMethodManager
 
 data class SettingsCapabilities(
     val popupOnKeypressVisible: Boolean,
     val voiceInputVisible: Boolean,
+    val vibrationControlsVisible: Boolean,
     val oneHandedModeVisible: Boolean,
     val emojiSwitchKeyVisible: Boolean,
     val inputMethodSwitchingAvailable: Boolean,
@@ -28,9 +30,14 @@ object SettingsCapabilityResolver {
         val isTabletId = resources.getIdentifier("is_tablet", "bool", context.packageName)
         val isTablet = isTabletId != 0 && resources.getBoolean(isTabletId)
         val inputMethods = enabledInputMethods(context)
+        val vibratorService = context.getSystemService(Vibrator::class.java)
         return SettingsCapabilities(
             popupOnKeypressVisible = !isTablet,
             voiceInputVisible = hasEnabledGoogleVoiceSubtype(inputMethods),
+            vibrationControlsVisible = vibrationControlsVisible(
+                serviceIsVibrator = vibratorService != null,
+                hasVibrator = vibratorService?.hasVibrator() == true,
+            ),
             oneHandedModeVisible = !isTablet,
             emojiSwitchKeyVisible = Build.VERSION.SDK_INT >= 19 && !isTablet,
             inputMethodSwitchingAvailable = hasSettingsActivitySwitchTarget(
@@ -39,6 +46,11 @@ object SettingsCapabilityResolver {
             ),
         )
     }
+
+    internal fun vibrationControlsVisible(
+        serviceIsVibrator: Boolean,
+        hasVibrator: Boolean,
+    ): Boolean = serviceIsVibrator && hasVibrator
 
     internal fun hasEnabledGoogleVoiceSubtype(
         inputMethods: Iterable<EnabledImeCapability>,

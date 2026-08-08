@@ -99,6 +99,7 @@ def main() -> int:
             "snapshot.oneHandedModeLabels",
             "snapshot.capabilities.popupOnKeypressVisible",
             "snapshot.capabilities.voiceInputVisible",
+            "snapshot.capabilities.vibrationControlsVisible",
             "snapshot.capabilities.oneHandedModeVisible",
             "BooleanSettingContracts.popupOnKeypress",
             "BooleanSettingContracts.voiceInput",
@@ -259,6 +260,11 @@ def main() -> int:
         capabilities,
         (
             "popupOnKeypressVisible = !isTablet",
+            "vibrationControlsVisible = vibrationControlsVisible(",
+            "context.getSystemService(Vibrator::class.java)",
+            "serviceIsVibrator = vibratorService != null",
+            "hasVibrator = vibratorService?.hasVibrator() == true",
+            "serviceIsVibrator && hasVibrator",
             "oneHandedModeVisible = !isTablet",
             "emojiSwitchKeyVisible = Build.VERSION.SDK_INT >= 19 && !isTablet",
             "inputMethodSwitchingAvailable = hasSettingsActivitySwitchTarget(",
@@ -276,6 +282,7 @@ def main() -> int:
     require(
         capability_test,
         (
+            "vibrationControlsRequireVibratorServiceWithHardware",
             "enabledGoogleVoiceSubtypeIsAvailable",
             "packagePrefixModeAndEnabledListMustMatchExactly",
             "emptyEnabledInputMethodListIsUnavailable",
@@ -524,6 +531,8 @@ def main() -> int:
             "data class SettingsSnapshot(",
             "fun setSoundEnabled(enabled: Boolean)",
             "fun setVibrationEnabled(enabled: Boolean)",
+            "requireVibrationControlsAvailable()",
+            "require(SettingsCapabilityResolver.resolve(applicationContext).vibrationControlsVisible)",
             "fun setOneHandedModeIndex(index: Int)",
             'require(SettingsCapabilityResolver.resolve(applicationContext).oneHandedModeVisible)',
             "fun setPinyinSchemeIndex(index: Int)",

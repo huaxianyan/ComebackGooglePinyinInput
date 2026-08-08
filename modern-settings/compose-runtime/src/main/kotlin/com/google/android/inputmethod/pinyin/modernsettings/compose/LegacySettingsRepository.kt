@@ -154,6 +154,7 @@ class LegacySettingsRepository(context: Context) {
     }
 
     fun setVibrationEnabled(enabled: Boolean): SettingsSnapshot {
+        requireVibrationControlsAvailable()
         preferences.edit().putBoolean(SliderSettingContracts.VIBRATION_ENABLED_KEY, enabled).apply()
         return readSnapshot()
     }
@@ -232,6 +233,7 @@ class LegacySettingsRepository(context: Context) {
     }
 
     fun setVibrationDuration(milliseconds: Int): SettingsSnapshot {
+        requireVibrationControlsAvailable()
         preferences.edit().putString(
             SliderSettingContracts.VIBRATION_DURATION_KEY,
             SliderSettingContracts.encodeVibration(milliseconds),
@@ -240,6 +242,7 @@ class LegacySettingsRepository(context: Context) {
     }
 
     fun restoreVibrationDefault(): SettingsSnapshot {
+        requireVibrationControlsAvailable()
         preferences.edit().remove(SliderSettingContracts.VIBRATION_DURATION_KEY).apply()
         return readSnapshot()
     }
@@ -275,6 +278,12 @@ class LegacySettingsRepository(context: Context) {
     fun setHandwritingStrokeWidthIndex(index: Int): SettingsSnapshot {
         writeEnumerated(SliderSettingContracts.handwritingStrokeWidth, index)
         return readSnapshot()
+    }
+
+    private fun requireVibrationControlsAvailable() {
+        require(SettingsCapabilityResolver.resolve(applicationContext).vibrationControlsVisible) {
+            "Vibration controls are unavailable"
+        }
     }
 
     private fun currentLanguageSwitchState(

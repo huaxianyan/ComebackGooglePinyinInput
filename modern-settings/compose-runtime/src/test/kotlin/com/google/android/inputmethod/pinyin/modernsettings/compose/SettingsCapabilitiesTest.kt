@@ -6,6 +6,14 @@ import kotlin.test.assertTrue
 
 class SettingsCapabilitiesTest {
     @Test
+    fun vibrationControlsRequireVibratorServiceWithHardware() {
+        assertTrue(SettingsCapabilityResolver.vibrationControlsVisible(true, true))
+        assertFalse(SettingsCapabilityResolver.vibrationControlsVisible(false, true))
+        assertFalse(SettingsCapabilityResolver.vibrationControlsVisible(true, false))
+        assertFalse(SettingsCapabilityResolver.vibrationControlsVisible(false, false))
+    }
+
+    @Test
     fun enabledGoogleVoiceSubtypeIsAvailable() {
         assertTrue(
             SettingsCapabilityResolver.hasEnabledGoogleVoiceSubtype(

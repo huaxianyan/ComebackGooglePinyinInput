@@ -178,9 +178,14 @@ legacy rows based on runtime capability checks:
 - `enable_vibrate_on_keypress` and `vibration_duration`;
 - `one_handed_mode`.
 
-The existing vibration controls predate this inventory and still need a
-non-vibrator configuration gate before formal routing. The remaining `ais`
-predicates are now reconstructed and implemented exactly:
+The vibration controls now reproduce the original `ais.c(Context)` gate: the
+platform vibrator service must resolve to a `Vibrator` and `hasVibrator()` must
+be true. The API-35+ implementation uses typed `getSystemService(Vibrator::class.java)`;
+both vibration rows are omitted otherwise, retained values are not changed, and
+Repository writes/default restoration are rejected while unavailable. The pure
+truth table is unit-tested; current hardware acceptance and a later no-vibrator
+runtime matrix remain separate boundaries. The remaining `ais` predicates are
+reconstructed and implemented exactly:
 
 - popup-on-keypress and one-handed mode are removed when `@bool/is_tablet` is
   true (`sw600dp`), rather than being guessed from display dimensions;
