@@ -100,6 +100,7 @@ internal fun androidx.compose.foundation.lazy.LazyListScope.homeSettingsItems(
 internal fun androidx.compose.foundation.lazy.LazyListScope.otherSettingsItems(
     snapshot: SettingsSnapshot,
     actions: SettingsActions,
+    navigateTo: (SettingsRoute) -> Unit,
 ) {
     item {
         SettingsSwitchRow(
@@ -113,6 +114,68 @@ internal fun androidx.compose.foundation.lazy.LazyListScope.otherSettingsItems(
             ),
             checked = snapshot.launcherIcon.value,
             onCheckedChange = actions.onLauncherIconVisibleChange,
+        )
+    }
+    item {
+        SettingsNavigationRow(
+            title = legacyString(
+                "setting_about_title",
+                R.string.modern_settings_about_title,
+            ),
+            supporting = stringResource(R.string.modern_settings_about_summary),
+            onClick = { navigateTo(SettingsRoute.About) },
+        )
+    }
+}
+
+internal fun androidx.compose.foundation.lazy.LazyListScope.aboutSettingsItems(
+    actions: SettingsActions,
+) {
+    item {
+        SettingsActionRow(
+            title = legacyString("setting_tos_title", R.string.modern_settings_terms_title),
+            onClick = actions.onOpenTerms,
+        )
+    }
+    item {
+        SettingsActionRow(
+            title = legacyString(
+                "setting_privacy_title",
+                R.string.modern_settings_privacy_title,
+            ),
+            onClick = actions.onOpenPrivacyPolicy,
+        )
+    }
+    item {
+        SettingsActionRow(
+            title = legacyString(
+                "setting_license_title",
+                R.string.modern_settings_licenses_title,
+            ),
+            supporting = legacyString(
+                "setting_license_summary",
+                R.string.modern_settings_licenses_summary,
+            ),
+            onClick = actions.onOpenLicenses,
+        )
+    }
+    item {
+        val context = LocalContext.current
+        val version = context.packageManager.getPackageInfo(context.packageName, 0).versionName
+            ?: stringResource(R.string.modern_settings_version_unknown)
+        ListItem(
+            headlineContent = {
+                Text(
+                    legacyString(
+                        "setting_about_version_title",
+                        R.string.modern_settings_version_title,
+                    ),
+                    modifier = Modifier.padding(start = 8.dp),
+                )
+            },
+            supportingContent = {
+                Text(version, modifier = Modifier.padding(start = 8.dp))
+            },
         )
     }
 }

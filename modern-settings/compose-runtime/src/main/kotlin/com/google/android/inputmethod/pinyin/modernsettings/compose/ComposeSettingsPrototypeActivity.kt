@@ -2,7 +2,11 @@ package com.google.android.inputmethod.pinyin.modernsettings.compose
 
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.material3.MaterialTheme
@@ -18,8 +22,45 @@ import androidx.compose.ui.platform.LocalContext
 
 /** API-35+-guarded host for the staged official Compose Material 3 settings runtime. */
 class ComposeSettingsPrototypeActivity : ComponentActivity() {
+    private enum class TreePurpose { Location, Enable, Import }
+
     private lateinit var controller: SettingsController
+    private lateinit var dictionaryRepository: LegacyDictionarySettingsRepository
     private var snapshot by mutableStateOf<SettingsSnapshot?>(null)
+    private var dictionarySnapshot by mutableStateOf<DictionarySettingsSnapshot?>(null)
+    private var treePurpose = TreePurpose.Location
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private val backupRefresh = object : Runnable {
+        override fun run() {
+            if (!::dictionaryRepository.isInitialized) return
+            val current = dictionaryRepository.read()
+            dictionarySnapshot = current
+            if (current.backupInProgress) mainHandler.postDelayed(this, 500L)
+        }
+    }
+    private val treePicker = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
+        if (uri == null) {
+            dictionarySnapshot = dictionaryRepository.read()
+            return@registerForActivityResult
+        }
+        val completedPurpose = treePurpose
+        dictionaryRepository.acceptTreeAsync(
+            uri = uri,
+            enableAfterSelection = completedPurpose == TreePurpose.Enable,
+        ) { error ->
+            if (error != null) {
+                Toast.makeText(this, error, Toast.LENGTH_LONG).show()
+            } else {
+                Toast.makeText(
+                    this,
+                    R.string.modern_settings_dictionary_location_saved,
+                    Toast.LENGTH_SHORT,
+                ).show()
+                if (completedPurpose == TreePurpose.Import) dictionaryRepository.openImport()
+            }
+            refreshDictionaryUntilIdle()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
@@ -28,17 +69,75 @@ class ComposeSettingsPrototypeActivity : ComponentActivity() {
             LegacySettingsRepository(this),
             SettingsPreviewEffects(this),
         )
+        dictionaryRepository = LegacyDictionarySettingsRepository(this)
         setContent {
             ModernSettingsTheme {
-                snapshot?.let {
+                snapshot?.let { settings ->
+                    dictionarySnapshot?.let { dictionary ->
                     SettingsScreen(
-                        snapshot = it,
+                        snapshot = settings,
+                        dictionarySnapshot = dictionary,
                         actions = SettingsActions(
                             onOpenThemeSelector = {
                                 startActivity(
                                     LegacySettingsNavigation.themeSelectorIntent(this)
                                 )
                             },
+                            onOpenTerms = {
+                                startActivity(LegacySettingsNavigation.legacyWebIntent(this, "tos_url"))
+                            },
+                            onOpenPrivacyPolicy = {
+                                startActivity(
+                                    LegacySettingsNavigation.legacyWebIntent(this, "privacy_url"),
+                                )
+                            },
+                            onOpenLicenses = {
+                                startActivity(LegacySettingsNavigation.licensesIntent(this))
+                            },
+                            onLoadDictionaryHealth = dictionaryRepository::loadHealth,
+                            onAutomaticBackupEnabledChange = { enabled ->
+                                if (!enabled) {
+                                    dictionaryRepository.disableAutomaticBackup()
+                                    dictionarySnapshot = dictionaryRepository.read()
+                                } else if (dictionaryRepository.read().locationAccessible) {
+                                    dictionaryRepository.enableAutomaticBackup()
+                                    refreshDictionaryUntilIdle()
+                                } else {
+                                    treePurpose = TreePurpose.Enable
+                                    treePicker.launch(null)
+                                }
+                            },
+                            onChooseBackupLocation = {
+                                treePurpose = TreePurpose.Location
+                                treePicker.launch(null)
+                            },
+                            onBackupIntervalChange = { index ->
+                                dictionaryRepository.setInterval(index)
+                                dictionarySnapshot = dictionaryRepository.read()
+                            },
+                            onBackupRetentionChange = { index ->
+                                dictionaryRepository.setRetention(index)
+                                dictionarySnapshot = dictionaryRepository.read()
+                            },
+                            onBackupNow = {
+                                dictionaryRepository.requestBackup()
+                                refreshDictionaryUntilIdle()
+                            },
+                            onImportBackup = {
+                                if (dictionaryRepository.read().locationAccessible) {
+                                    dictionaryRepository.openImport()
+                                } else {
+                                    treePurpose = TreePurpose.Import
+                                    treePicker.launch(null)
+                                }
+                            },
+                            onShortcutsEnabledChange = { enabled ->
+                                dictionaryRepository.setShortcutsEnabled(enabled)
+                                dictionarySnapshot = dictionaryRepository.read()
+                            },
+                            onOpenShortcutEditor = dictionaryRepository::openShortcutEditor,
+                            onOpenLegacyDictionaryOperations =
+                                dictionaryRepository::openLegacyDictionaryOperations,
                             onLauncherIconVisibleChange = { visible ->
                                 snapshot = controller.setLauncherIconVisible(visible)
                             },
@@ -92,6 +191,7 @@ class ComposeSettingsPrototypeActivity : ComponentActivity() {
                             },
                         ),
                     )
+                    }
                 }
             }
         }
@@ -100,6 +200,17 @@ class ComposeSettingsPrototypeActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         snapshot = controller.read()
+        refreshDictionaryUntilIdle()
+    }
+
+    override fun onDestroy() {
+        mainHandler.removeCallbacks(backupRefresh)
+        super.onDestroy()
+    }
+
+    private fun refreshDictionaryUntilIdle() {
+        mainHandler.removeCallbacks(backupRefresh)
+        backupRefresh.run()
     }
 }
 

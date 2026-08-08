@@ -12,6 +12,14 @@
     <string name="modern_settings_home_other_summary">Launcher icon, about, and legal information</string>
     <string name="modern_settings_launcher_icon_title">Show app icon</string>
     <string name="modern_settings_launcher_icon_summary">Show the app icon in the launcher</string>
+    <string name="modern_settings_about_title">About</string>
+    <string name="modern_settings_about_summary">Terms, privacy, licenses, and version</string>
+    <string name="modern_settings_terms_title">Terms of service</string>
+    <string name="modern_settings_privacy_title">Privacy policy</string>
+    <string name="modern_settings_licenses_title">Open source licenses</string>
+    <string name="modern_settings_licenses_summary">License details for open source software</string>
+    <string name="modern_settings_version_title">Current version</string>
+    <string name="modern_settings_version_unknown">Unknown</string>
     <string name="modern_settings_chinese_input_summary">Pinyin scheme, mixed input, prediction, and Fuzzy Pinyin</string>
     <string name="modern_settings_english_input_summary">Correction, suggestions, prediction, and capitalization</string>
     <string name="modern_settings_keyboard_appearance_title">Appearance and layout</string>
@@ -22,6 +30,41 @@
     <string name="modern_settings_keyboard_feedback_summary">Sound, volume, vibration, and strength</string>
     <string name="modern_settings_handwriting_summary">Recognition speed and stroke width</string>
     <string name="modern_settings_specialized_page_pending">This specialized settings page has not yet been migrated. Its existing legacy behavior remains unchanged.</string>
+    <string name="modern_settings_dictionary_health_title">Current user dictionary status</string>
+    <string name="modern_settings_dictionary_health_loading">Reading the current user dictionary…</string>
+    <string name="modern_settings_dictionary_health_refresh">Tap to check again</string>
+    <string name="modern_settings_dictionary_backup_section">Automatic backup</string>
+    <string name="modern_settings_dictionary_auto_backup_title">Automatically back up user dictionary</string>
+    <string name="modern_settings_dictionary_location_title">Backup and import location</string>
+    <string name="modern_settings_dictionary_interval_title">Backup frequency</string>
+    <string name="modern_settings_dictionary_retention_title">Backups to retain</string>
+    <string name="modern_settings_dictionary_backup_now_title">Back up now</string>
+    <string name="modern_settings_dictionary_import_title">Import a user dictionary backup</string>
+    <string name="modern_settings_dictionary_privacy_summary">Backup and import share the selected directory. You may choose device storage or a cloud document provider with read and write access. Cloud synchronization and retention are managed by that storage provider.</string>
+    <string name="modern_settings_dictionary_backup_in_progress">Creating a user dictionary backup…</string>
+    <string name="modern_settings_dictionary_last_backup">Last backup: %1$s %2$s</string>
+    <string name="modern_settings_dictionary_backup_retained">Backup files remain after app data is cleared or the app is uninstalled</string>
+    <string name="modern_settings_dictionary_location_unset">Not selected (shared by backup and import)</string>
+    <string name="modern_settings_dictionary_location_inaccessible">Location is inaccessible; select it again</string>
+    <string name="modern_settings_dictionary_location_selected">Backup directory selected</string>
+    <string name="modern_settings_dictionary_backup_now_summary">Export to the selected directory now</string>
+    <string name="modern_settings_dictionary_location_required">Select a backup and import directory first</string>
+    <string name="modern_settings_dictionary_import_summary">List user dictionary backups in the selected directory</string>
+    <string name="modern_settings_dictionary_import_choose_summary">Select an existing backup directory and import</string>
+    <string name="modern_settings_dictionary_shortcuts_section">Shortcuts dictionary</string>
+    <string name="modern_settings_dictionary_enable_shortcuts">Enable shortcuts dictionary</string>
+    <string name="modern_settings_dictionary_edit_shortcuts">Edit shortcuts dictionary</string>
+    <string name="modern_settings_dictionary_system_editor_summary">Open the system user dictionary editor</string>
+    <string name="modern_settings_dictionary_legacy_operations_section">Additional dictionary operations</string>
+    <string name="modern_settings_dictionary_legacy_operations_title">Contacts and clearing</string>
+    <string name="modern_settings_dictionary_legacy_operations_summary">Use the existing confirmation and permission flow for contact suggestions and clearing the user dictionary</string>
+    <string name="modern_settings_dictionary_grant_failed">The selected directory did not grant persistent read and write access</string>
+    <string name="modern_settings_dictionary_location_saved">Backup and import directory saved</string>
+    <string name="modern_settings_dictionary_internal_storage">Internal storage</string>
+    <string name="modern_settings_dictionary_sd_card">SD card (%1$s)</string>
+    <!-- These two persisted legacy status tokens intentionally remain Chinese in every locale. -->
+    <string name="modern_settings_dictionary_legacy_success_status" translatable="false">备份成功</string>
+    <string name="modern_settings_dictionary_legacy_location_validated" translatable="false">备份目录验证成功</string>
     <string name="modern_settings_section_input">General input</string>
     <string name="modern_settings_section_chinese_input">Chinese input</string>
     <string name="modern_settings_pinyin_scheme_title">Pinyin scheme</string>

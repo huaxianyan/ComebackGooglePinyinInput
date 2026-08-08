@@ -58,6 +58,19 @@ import kotlin.math.roundToInt
 
 data class SettingsActions(
     val onOpenThemeSelector: () -> Unit,
+    val onOpenTerms: () -> Unit,
+    val onOpenPrivacyPolicy: () -> Unit,
+    val onOpenLicenses: () -> Unit,
+    val onLoadDictionaryHealth: ((String) -> Unit) -> Unit,
+    val onAutomaticBackupEnabledChange: (Boolean) -> Unit,
+    val onChooseBackupLocation: () -> Unit,
+    val onBackupIntervalChange: (Int) -> Unit,
+    val onBackupRetentionChange: (Int) -> Unit,
+    val onBackupNow: () -> Unit,
+    val onImportBackup: () -> Unit,
+    val onShortcutsEnabledChange: (Boolean) -> Unit,
+    val onOpenShortcutEditor: () -> Unit,
+    val onOpenLegacyDictionaryOperations: () -> Unit,
     val onLauncherIconVisibleChange: (Boolean) -> Unit,
     val onSoundEnabledChange: (Boolean) -> Unit,
     val onVolumeCommit: (Int) -> Unit,
@@ -79,7 +92,11 @@ data class SettingsActions(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(snapshot: SettingsSnapshot, actions: SettingsActions) {
+fun SettingsScreen(
+    snapshot: SettingsSnapshot,
+    dictionarySnapshot: DictionarySettingsSnapshot,
+    actions: SettingsActions,
+) {
     var routePath by rememberSaveable { mutableStateOf(SettingsRouteStack.initialPath) }
     val route = SettingsRouteStack.current(routePath)
     val navigateTo: (SettingsRoute) -> Unit = { destination ->
@@ -148,8 +165,9 @@ fun SettingsScreen(snapshot: SettingsSnapshot, actions: SettingsActions) {
                 SettingsRoute.Handwriting -> handwritingSettingsItems(
                     snapshot, actions, millisecondsText,
                 )
-                SettingsRoute.Dictionary -> pendingSpecializedSettingsItems()
-                SettingsRoute.Other -> otherSettingsItems(snapshot, actions)
+                SettingsRoute.Dictionary -> dictionarySettingsItems(dictionarySnapshot, actions)
+                SettingsRoute.Other -> otherSettingsItems(snapshot, actions, navigateTo)
+                SettingsRoute.About -> aboutSettingsItems(actions)
                 SettingsRoute.FuzzyPinyin -> error("Fuzzy Pinyin uses its dedicated screen")
             }
         }
@@ -177,6 +195,10 @@ private fun routeTitle(route: SettingsRoute): String = when (route) {
     SettingsRoute.Handwriting -> stringResource(R.string.modern_settings_section_handwriting)
     SettingsRoute.Dictionary -> stringResource(R.string.modern_settings_home_dictionary_title)
     SettingsRoute.Other -> stringResource(R.string.modern_settings_home_other_title)
+    SettingsRoute.About -> legacyString(
+        "setting_about_title",
+        R.string.modern_settings_about_title,
+    )
     SettingsRoute.FuzzyPinyin -> legacyString(
         "setting_fuzzy_pinyin_detail_title",
         R.string.modern_settings_fuzzy_pinyin_detail_title,

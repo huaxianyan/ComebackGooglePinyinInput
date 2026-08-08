@@ -168,19 +168,27 @@ internal fun EnumeratedListSetting(
     selectedIndex: Int,
     selectedLabel: String,
     labels: List<String>,
+    enabled: Boolean = true,
     onSelect: (Int) -> Unit,
 ) {
     require(selectedIndex in labels.indices)
     var dialogVisible by rememberSaveable { mutableStateOf(false) }
+    val contentColor = if (enabled) MaterialTheme.colorScheme.onSurface
+    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
 
     ListItem(
         headlineContent = {
-            Text(title, modifier = Modifier.padding(start = 8.dp))
+            Text(title, modifier = Modifier.padding(start = 8.dp), color = contentColor)
         },
         supportingContent = {
-            Text(selectedLabel, modifier = Modifier.padding(start = 8.dp))
+            Text(
+                selectedLabel,
+                modifier = Modifier.padding(start = 8.dp),
+                color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant
+                else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f),
+            )
         },
-        modifier = Modifier.clickable { dialogVisible = true },
+        modifier = Modifier.clickable(enabled = enabled) { dialogVisible = true },
     )
 
     if (dialogVisible) {
@@ -229,6 +237,33 @@ internal fun EnumeratedListSetting(
             },
         )
     }
+}
+
+@Composable
+internal fun SettingsActionRow(
+    title: String,
+    supporting: String? = null,
+    enabled: Boolean = true,
+    onClick: () -> Unit,
+) {
+    val titleColor = if (enabled) MaterialTheme.colorScheme.onSurface
+    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+    ListItem(
+        headlineContent = {
+            Text(title, modifier = Modifier.padding(start = 8.dp), color = titleColor)
+        },
+        supportingContent = supporting?.let { text ->
+            {
+                Text(
+                    text,
+                    modifier = Modifier.padding(start = 8.dp),
+                    color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant
+                    else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f),
+                )
+            }
+        },
+        modifier = Modifier.clickable(enabled = enabled, onClick = onClick),
+    )
 }
 
 @Composable

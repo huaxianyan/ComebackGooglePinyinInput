@@ -357,10 +357,24 @@ not alter either handwriting key, storage type, default, preview, or Slider
 contract.
 
 Dictionary and backup remains one domain with user-dictionary, backup/restore,
-and shortcuts sections. Other initially owns launcher visibility and later
-about/privacy/license destinations. Theme and dictionary operations remain
-specialized navigation targets; moving their entry rows does not authorize
-reimplementing legacy side effects as generic Compose writes.
+and shortcuts sections. Its Compose page now owns typed presentation state but
+continues to delegate dictionary inspection, SAF directory validation, native
+export, backup listing, confirmation, and native merge import to the existing
+primary-DEX compatibility implementation. The selected directory is accepted
+only after persistent read/write grant confirmation and the existing asynchronous
+create/read/rename/delete validator succeeds. Interval and retention retain the
+exact integer lists and fallback values; invalid writes are rejected. The
+shortcuts Boolean retains its original key/default/dependency, while its editor
+continues through the system user-dictionary Activity.
+
+Contact suggestions and clearing remain behind an explicit same-package legacy
+Dictionary fragment entry. This is intentional: their permission controller,
+confirmation dialog, and destructive task lifecycle have not been duplicated in
+Compose, and no destructive test is authorized in this stage. Other now owns
+launcher visibility plus a nested About route that reuses the original terms and
+privacy URLs, existing license Activity, and package version. Theme and
+remaining dictionary operations remain specialized targets; moving their entry
+rows does not authorize reimplementing legacy side effects as generic writes.
 
 Navigation uses an explicit, saveable route stack rather than accumulating
 independent page Booleans. Toolbar Back and system Back pop one route; Back on
@@ -372,27 +386,27 @@ and write gates exactly as before.
 Hierarchy V1 implements this route tree with a saveable encoded path and a pure
 `SettingsRouteStack`. Unit tests cover root behavior, nested
 Input/Chinese/Fuzzy navigation, one-level popping, rejection of Home as a child,
-and safe fallback for a stale restored route. Dictionary/backup and Other are
-navigation placeholders only: they explicitly report that specialized behavior
-is not migrated and perform no writes. Device acceptance confirms the complete
-route tree, both Back paths, configuration restoration, and cross-page
-dependencies. The subsequent mechanical extraction leaves `SettingsScreen.kt`
-responsible only for route dispatch, Back, and the top-level Scaffold; home,
-Input, Keyboard, Handwriting, Fuzzy Pinyin, and shared controls now have separate
-source ownership. The verifier rejects concrete setting controls returning to
-the top-level screen.
+and safe fallback for a stale restored route. Device acceptance confirms the
+original route tree, both Back paths, configuration restoration, and cross-page
+dependencies. Dictionary/backup is no longer a placeholder, and Other now has a
+nested About route; these additions still await device acceptance. The
+mechanical extraction leaves `SettingsScreen.kt` responsible only for route
+dispatch, Back, and the top-level Scaffold; home, Input, Keyboard, Handwriting,
+Fuzzy Pinyin, Dictionary, and shared controls have separate source ownership.
+The verifier rejects concrete setting controls returning to the top-level
+screen.
 
 ## Next implementation stage
 
-1. Extract shared rows, sliders, dialogs, and section components from the current
-   monolithic `SettingsScreen.kt` without changing behavior.
-2. Add the saveable route stack and navigation-only Settings home.
-3. Split Input into general, Chinese, English, and existing Fuzzy Pinyin routes;
-   verify gesture and suggestion dependencies across route boundaries.
-4. Split Keyboard into appearance/layout, keys/switching, feedback, and
-   Handwriting routes; rerun the accepted emoji/language/other-IME matrix.
-5. Add Dictionary/backup and Other entry routes without prematurely rewriting
-   their specialized legacy operations.
-6. Validate route restoration, toolbar/system Back, light/dark mode, dynamic
-   color, RTL, font scaling, TalkBack, landscape, narrow screens, and
-   multi-window behavior.
+1. Device-test the read-only health callback and refresh lifecycle without
+   reading dictionary contents.
+2. Test SAF cancellation and validation failure first, then a user-selected
+   writable directory, while preserving prior grants until validation succeeds.
+3. Test interval/retention persistence and automatic-backup enable/disable;
+   separately authorize and test immediate backup and merge import.
+4. Keep contact suggestions and clearing on the legacy controller until their
+   exact permission/destructive-task lifecycle has an isolated audit package
+   and explicit authorization.
+5. Validate About URLs, licenses, route restoration, toolbar/system Back,
+   light/dark mode, dynamic color, RTL, font scaling, TalkBack, landscape,
+   narrow screens, and multi-window behavior.

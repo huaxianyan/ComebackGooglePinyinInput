@@ -12,6 +12,7 @@ internal enum class SettingsRoute {
     Handwriting,
     Dictionary,
     Other,
+    About,
     FuzzyPinyin,
 }
 

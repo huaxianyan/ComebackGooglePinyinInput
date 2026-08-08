@@ -305,14 +305,33 @@ home screen contains navigation rows rather than live settings.
 These are deliberately excluded from ordinary Boolean/List migration:
 
 - theme selector/editor;
-- dictionary health, contacts, shortcuts, clear operations;
-- SAF backup location, interval, retention, immediate backup, and import;
+- dictionary health is now a Compose read-only row backed by the existing
+  on-demand asynchronous primary-DEX inspector. It retains native save-lock
+  serialization and never reads dictionary contents;
+- SAF backup location, interval, retention, immediate backup, and import now
+  have typed Compose presentation and write gates. Directory selection retains
+  persistent read/write grants and delegates asynchronous create/read/rename/
+  delete validation to `DictionaryAutoBackupCompat`; backup and import still
+  reuse its native exporter, backup list, confirmation, and native merge path;
+- `dictionary_auto_backup_interval_days` remains Int with exact values
+  `1/3/7/14/30` and fallback `7`; retention remains Int with exact values
+  `3/5/10/20/30` and fallback `10`. Controls require an enabled, accessible
+  directory and reject unavailable writes;
+- `enable_shortcuts_dictionary` is now migrated as Boolean default `true` with
+  explicit absence tracking. The editor remains dependent on its effective
+  value and opens `android.settings.USER_DICTIONARY_SETTINGS`;
+- contact suggestions and clear-user-dictionary remain in the existing
+  Dictionary fragment. Compose exposes one explicit legacy-operations entry so
+  permission handling, confirmation, and destructive task semantics are not
+  duplicated before isolated testing and authorization;
 - fuzzy-Pinyin detail page is implemented as a process/configuration-safe
   Compose route with app-bar and system Back navigation. Device acceptance
   confirms parent/child dependency, all defaults and retained child values,
   toolbar/system Back, configuration recreation, actual fuzzy candidates and
   restoration when disabled, plus Full Pinyin, flyPY and glide regressions;
-- about, privacy, terms, and licenses.
+- About is now a nested Compose route. It reuses the original terms/privacy URL
+  resources, explicit legacy license Activity, and current package version; its
+  device/browser acceptance is pending.
 
 Each modern navigation route must preserve the existing Activity/fragment
 contract, result handling, SAF grants, threading, and side effects. No new data
