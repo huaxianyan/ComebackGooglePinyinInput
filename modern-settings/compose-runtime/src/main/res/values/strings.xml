@@ -60,6 +60,11 @@
     <string name="modern_settings_gesture_auto_commit_summary">Commit the current composing text before the next glide input</string>
     <string name="modern_settings_requires_gesture_input">Turn on glide typing to use this setting</string>
     <string name="modern_settings_show_english_keyboard_title">Show English keyboard</string>
+    <string name="modern_settings_show_emoji_switch_key_title">Show emoji switch key</string>
+    <string name="modern_settings_show_emoji_switch_key_summary">When emoji switch key is enabled, the language switch key cannot be shown</string>
+    <string name="modern_settings_show_language_switch_key_title">Show language switch key</string>
+    <string name="modern_settings_switch_to_other_imes_title">Switch to other input methods</string>
+    <string name="modern_settings_switch_to_other_imes_summary">Language switch key switches to other input methods</string>
     <string name="modern_settings_physical_alt_title">Alt key for symbols on a physical keyboard</string>
     <string name="modern_settings_physical_alt_summary">Use Alt to enter symbols when a physical keyboard is connected</string>
     <string name="modern_settings_chinese_english_title">Suggest English words</string>

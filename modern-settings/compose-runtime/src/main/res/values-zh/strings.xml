@@ -60,6 +60,11 @@
     <string name="modern_settings_gesture_auto_commit_summary">下一次滑行输入前自动提交当前输入内容</string>
     <string name="modern_settings_requires_gesture_input">开启滑行输入后可使用此设置</string>
     <string name="modern_settings_show_english_keyboard_title">显示英文键盘</string>
+    <string name="modern_settings_show_emoji_switch_key_title">显示表情符号切换键</string>
+    <string name="modern_settings_show_emoji_switch_key_summary">启用表情符号切换键后，语言切换键将无法显示</string>
+    <string name="modern_settings_show_language_switch_key_title">显示语言切换键</string>
+    <string name="modern_settings_switch_to_other_imes_title">切换到其他输入法</string>
+    <string name="modern_settings_switch_to_other_imes_summary">语言切换键可切换到其他输入法</string>
     <string name="modern_settings_physical_alt_title">使用实体键盘 Alt 键输入符号</string>
     <string name="modern_settings_physical_alt_summary">连接实体键盘时使用 Alt 键输入符号</string>
     <string name="modern_settings_chinese_english_title">建议英语单词</string>

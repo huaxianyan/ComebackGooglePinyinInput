@@ -36,4 +36,59 @@ class SettingsCapabilitiesTest {
     fun emptyEnabledInputMethodListIsUnavailable() {
         assertFalse(SettingsCapabilityResolver.hasEnabledGoogleVoiceSubtype(emptyList()))
     }
+
+    @Test
+    fun ownImeWithMultipleEnabledSubtypesOffersSwitching() {
+        assertTrue(
+            SettingsCapabilityResolver.hasSettingsActivitySwitchTarget(
+                applicationPackageName = "com.example.pinyin",
+                inputMethods = listOf(
+                    EnabledImeCapability(
+                        "com.example.pinyin",
+                        listOf("keyboard", "keyboard"),
+                    )
+                ),
+            )
+        )
+    }
+
+    @Test
+    fun otherGoogleImeRequiresANonAuxiliaryEnabledSubtype() {
+        assertFalse(
+            SettingsCapabilityResolver.hasSettingsActivitySwitchTarget(
+                applicationPackageName = "com.example.pinyin",
+                inputMethods = listOf(
+                    EnabledImeCapability(
+                        "com.google.android.inputmethod.voice",
+                        listOf("voice"),
+                        listOf(true),
+                    )
+                ),
+            )
+        )
+        assertTrue(
+            SettingsCapabilityResolver.hasSettingsActivitySwitchTarget(
+                applicationPackageName = "com.example.pinyin",
+                inputMethods = listOf(
+                    EnabledImeCapability(
+                        "com.google.android.inputmethod.latin",
+                        listOf("keyboard"),
+                        listOf(false),
+                    )
+                ),
+            )
+        )
+    }
+
+    @Test
+    fun nonGoogleOtherImeDoesNotSatisfyLegacyFallback() {
+        assertFalse(
+            SettingsCapabilityResolver.hasSettingsActivitySwitchTarget(
+                applicationPackageName = "com.example.pinyin",
+                inputMethods = listOf(
+                    EnabledImeCapability("org.example.keyboard", listOf("keyboard"))
+                ),
+            )
+        )
+    }
 }

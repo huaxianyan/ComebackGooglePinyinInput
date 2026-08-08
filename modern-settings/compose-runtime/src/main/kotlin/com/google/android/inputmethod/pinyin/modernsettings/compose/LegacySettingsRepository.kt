@@ -42,6 +42,16 @@ class LegacySettingsRepository(context: Context) {
 
         val oneHandedModeIndex = readListIndex(ListSettingContracts.oneHandedMode)
         val pinyinSchemeIndex = readListIndex(ListSettingContracts.pinyinScheme)
+        val showEmojiSwitchKey = readBoolean(BooleanSettingContracts.showEmojiSwitchKey)
+        val showLanguageSwitchKey = readBoolean(BooleanSettingContracts.showLanguageSwitchKey)
+        val showEnglishKeyboard = readBoolean(BooleanSettingContracts.showEnglishKeyboard)
+        val languageSwitchState = LanguageSwitchSettingRules.resolve(
+            emojiSwitchKeyVisible = capabilities.emojiSwitchKeyVisible,
+            inputMethodSwitchingAvailable = capabilities.inputMethodSwitchingAvailable,
+            emojiSwitchKeyChecked = showEmojiSwitchKey.value,
+            showEnglishKeyboard = showEnglishKeyboard.value,
+            persistedLanguageSwitchKey = showLanguageSwitchKey.value,
+        )
         val keyboardHeightIndex = readEnumeratedIndex(SliderSettingContracts.keyboardHeight)
         val slideSensitivityIndex = readEnumeratedIndex(SliderSettingContracts.slideSensitivity)
         val handwritingTimeoutIndex = readEnumeratedIndex(SliderSettingContracts.handwritingTimeout)
@@ -88,6 +98,10 @@ class LegacySettingsRepository(context: Context) {
             blockOffensiveWords = readBoolean(BooleanSettingContracts.blockOffensiveWords),
             popupOnKeypress = readBoolean(BooleanSettingContracts.popupOnKeypress),
             voiceInput = readBoolean(BooleanSettingContracts.voiceInput),
+            showEmojiSwitchKey = showEmojiSwitchKey,
+            showLanguageSwitchKey = showLanguageSwitchKey,
+            switchToOtherImes = readBoolean(BooleanSettingContracts.switchToOtherImes),
+            languageSwitchState = languageSwitchState,
             oneHandedModeIndex = oneHandedModeIndex,
             oneHandedModeLabel = readEntryLabel(
                 "entries_one_handed_mode",
@@ -97,7 +111,7 @@ class LegacySettingsRepository(context: Context) {
             pinyinSchemeIndex = pinyinSchemeIndex,
             pinyinSchemeLabel = readEntryLabel("entries_pinyin_scheme", pinyinSchemeIndex),
             pinyinSchemeLabels = readEntryLabels("entries_pinyin_scheme"),
-            showEnglishKeyboard = readBoolean(BooleanSettingContracts.showEnglishKeyboard),
+            showEnglishKeyboard = showEnglishKeyboard,
             emojiAltPhysicalKey = readBoolean(BooleanSettingContracts.emojiAltPhysicalKey),
             keyboardHeightIndex = keyboardHeightIndex,
             keyboardHeightLabel = readEntryLabel(
@@ -176,6 +190,25 @@ class LegacySettingsRepository(context: Context) {
         if (contract == BooleanSettingContracts.voiceInput) {
             require(capabilities.voiceInputVisible) { "Voice input is unavailable" }
         }
+        if (contract == BooleanSettingContracts.showEmojiSwitchKey) {
+            require(capabilities.emojiSwitchKeyVisible) { "Emoji switch key is unavailable" }
+        }
+        if (
+            contract == BooleanSettingContracts.showLanguageSwitchKey ||
+            contract == BooleanSettingContracts.switchToOtherImes
+        ) {
+            val state = currentLanguageSwitchState(capabilities)
+            if (contract == BooleanSettingContracts.showLanguageSwitchKey) {
+                require(state.languageSwitchEnabled) { "Language switch key is disabled" }
+            } else {
+                require(state.switchToOtherImesVisible) {
+                    "Switching to other input methods is unavailable"
+                }
+                require(state.switchToOtherImesEnabled) {
+                    "Switching to other input methods is disabled"
+                }
+            }
+        }
         contract.dependency?.let { dependency ->
             require(readBoolean(dependency).value) {
                 "Boolean dependency is disabled: ${dependency.key}"
@@ -243,6 +276,18 @@ class LegacySettingsRepository(context: Context) {
         writeEnumerated(SliderSettingContracts.handwritingStrokeWidth, index)
         return readSnapshot()
     }
+
+    private fun currentLanguageSwitchState(
+        capabilities: SettingsCapabilities,
+    ): LanguageSwitchSettingState = LanguageSwitchSettingRules.resolve(
+        emojiSwitchKeyVisible = capabilities.emojiSwitchKeyVisible,
+        inputMethodSwitchingAvailable = capabilities.inputMethodSwitchingAvailable,
+        emojiSwitchKeyChecked = readBoolean(BooleanSettingContracts.showEmojiSwitchKey).value,
+        showEnglishKeyboard = readBoolean(BooleanSettingContracts.showEnglishKeyboard).value,
+        persistedLanguageSwitchKey = readBoolean(
+            BooleanSettingContracts.showLanguageSwitchKey,
+        ).value,
+    )
 
     private fun readBoolean(contract: BooleanSettingContract): BooleanSettingState =
         BooleanSettingState(
@@ -346,6 +391,10 @@ data class SettingsSnapshot(
     val blockOffensiveWords: BooleanSettingState,
     val popupOnKeypress: BooleanSettingState,
     val voiceInput: BooleanSettingState,
+    val showEmojiSwitchKey: BooleanSettingState,
+    val showLanguageSwitchKey: BooleanSettingState,
+    val switchToOtherImes: BooleanSettingState,
+    val languageSwitchState: LanguageSwitchSettingState,
     val oneHandedModeIndex: Int,
     val oneHandedModeLabel: String,
     val oneHandedModeLabels: List<String>,

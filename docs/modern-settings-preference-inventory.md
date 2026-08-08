@@ -202,9 +202,22 @@ large-screen matrix.
 - fuzzy-Pinyin parent/detail group is now implemented: the detail route depends
   on `fuzzy_pinyin`, and Repository writes for all twelve children are rejected
   while the parent is off;
-- `switch_to_other_imes` depends on `show_language_switch_key`;
-- `show_emoji_switch_key` declares `disableDependentsState=true`;
-- `show_language_switch_key` uses `UncheckDisabledCheckBoxPreference`;
+- the emoji/language switch-key group is now reconstructed and implemented as a
+  multi-parent state machine. `show_emoji_switch_key` is Boolean, defaults to
+  `false`, is shown only on API 19+ phones, and declares
+  `disableDependentsState=true`; `show_language_switch_key` is Boolean, defaults
+  to `true`, and uses `UncheckDisabledCheckBoxPreference`, so dependency disable
+  visually unchecks it without overwriting its retained persisted value;
+- the Settings-Activity form of `ajy.d()` has no IME Window token and therefore
+  offers input-method switching only when this package has more than one enabled
+  subtype or another enabled `com.google.*` IME has a non-auxiliary subtype.
+  When available, Boolean `switch_to_other_imes` (default `true`) remains visible
+  and depends on both the effective language-switch state and
+  `show_english_keyboard`. When unavailable, that row is removed and the
+  language-switch row additionally depends on `show_english_keyboard`;
+- Compose derives visual checked/enabled state separately from all three stored
+  Booleans. Disabled children retain storage, and Repository writes are rejected
+  whenever the corresponding legacy dependency or visibility gate is false;
 - `one_handed_mode` originally uses `AutoSyncedListPreference`; its implementation
   only refreshes the ListPreference on external writes and adds no second key or
   callback. The Compose selector therefore preserves the exact String values
@@ -238,11 +251,11 @@ their existing component or synchronization effects before migration.
 
 ## Remaining Keyboard page inventory
 
-- theme navigation (specialized Activity);
-- `one_handed_mode` (AutoSyncedListPreference plus capability gate);
-- popup and voice controls (capability gates);
-- emoji/language switch-key dependency group;
-- physical-key symbol option (migrated in the first Boolean batch).
+- theme navigation (specialized Activity) remains pending;
+- vibration availability on hardware without a vibrator remains pending;
+- emoji/language switch-key dependency group is implemented and awaits device
+  acceptance;
+- physical-key symbol option was migrated in the first Boolean batch.
 
 ## Specialized pages and navigation
 

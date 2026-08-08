@@ -211,6 +211,21 @@ persistence, portrait/landscape geometry, and no existing input regression. The
 `is_tablet=true` runtime branch remains explicitly pending for the large-screen
 test matrix.
 
+The language/emoji switch-key stage keeps stored state distinct from effective
+Preference state. `show_emoji_switch_key` is absent-default `false` and visible
+only on API 19+ phones. When checked, its reversed dependency disables the
+`UncheckDisabledCheckBoxPreference` language row and displays that row unchecked,
+but does not overwrite the retained `show_language_switch_key` Boolean (default
+`true`). The Settings Activity has no IME Window token, so the reconstructed
+`ajy.d()` fallback reports switching available only when this package has more
+than one enabled subtype or another enabled `com.google.*` IME exposes a
+non-auxiliary enabled subtype. If available, `switch_to_other_imes` remains
+visible and requires both effective language switching and
+`show_english_keyboard`; if unavailable, it is omitted and the language row
+instead also requires `show_english_keyboard`. UI and Repository use one pure
+rule reducer, hidden/disabled writes are rejected, and no dependency transition
+fabricates a child write.
+
 The fuzzy-Pinyin stage adds the default-off `fuzzy_pinyin` parent and a guarded
 full-screen Compose detail route. The route retains the original order of all
 twelve Boolean options, their six-true/six-false defaults, stored values while

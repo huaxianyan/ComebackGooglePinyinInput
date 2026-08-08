@@ -578,6 +578,65 @@ fun SettingsScreen(snapshot: SettingsSnapshot, actions: SettingsActions) {
                     },
                 )
             }
+            if (snapshot.capabilities.emojiSwitchKeyVisible) {
+                item {
+                    SettingsSwitchRow(
+                        title = legacyString(
+                            "setting_show_emoji_switch_key_title",
+                            R.string.modern_settings_show_emoji_switch_key_title,
+                        ),
+                        supporting = legacyString(
+                            "setting_show_emoji_switch_key_summary",
+                            R.string.modern_settings_show_emoji_switch_key_summary,
+                        ),
+                        checked = snapshot.showEmojiSwitchKey.value,
+                        onCheckedChange = {
+                            actions.onBooleanChange(
+                                BooleanSettingContracts.showEmojiSwitchKey,
+                                it,
+                            )
+                        },
+                    )
+                }
+            }
+            item {
+                SettingsSwitchRow(
+                    title = legacyString(
+                        "setting_show_language_switch_key_title",
+                        R.string.modern_settings_show_language_switch_key_title,
+                    ),
+                    checked = snapshot.languageSwitchState.languageSwitchChecked,
+                    enabled = snapshot.languageSwitchState.languageSwitchEnabled,
+                    onCheckedChange = {
+                        actions.onBooleanChange(
+                            BooleanSettingContracts.showLanguageSwitchKey,
+                            it,
+                        )
+                    },
+                )
+            }
+            if (snapshot.languageSwitchState.switchToOtherImesVisible) {
+                item {
+                    SettingsSwitchRow(
+                        title = legacyString(
+                            "setting_switch_to_other_imes_title",
+                            R.string.modern_settings_switch_to_other_imes_title,
+                        ),
+                        supporting = legacyString(
+                            "setting_switch_to_other_imes_summary",
+                            R.string.modern_settings_switch_to_other_imes_summary,
+                        ),
+                        checked = snapshot.switchToOtherImes.value,
+                        enabled = snapshot.languageSwitchState.switchToOtherImesEnabled,
+                        onCheckedChange = {
+                            actions.onBooleanChange(
+                                BooleanSettingContracts.switchToOtherImes,
+                                it,
+                            )
+                        },
+                    )
+                }
+            }
             item {
                 SettingsSwitchRow(
                     title = legacyString(

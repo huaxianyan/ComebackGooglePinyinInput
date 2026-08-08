@@ -75,6 +75,18 @@ object BooleanSettingContracts {
         key = "enable_voice_input",
         defaultValue = true,
     )
+    val showEmojiSwitchKey = BooleanSettingContract(
+        key = "show_emoji_switch_key",
+        defaultValue = false,
+    )
+    val showLanguageSwitchKey = BooleanSettingContract(
+        key = "show_language_switch_key",
+        defaultValue = true,
+    )
+    val switchToOtherImes = BooleanSettingContract(
+        key = "switch_to_other_imes",
+        defaultValue = true,
+    )
     val latinAutoCorrection = BooleanSettingContract(
         key = "pref_key_auto_correction",
         defaultValue = true,
@@ -149,6 +161,11 @@ object BooleanSettingContracts {
         popupOnKeypress,
         voiceInput,
     )
+    val languageSwitchDependencyBatch = listOf(
+        showEmojiSwitchKey,
+        showLanguageSwitchKey,
+        switchToOtherImes,
+    )
     val englishDependencyBatch = listOf(
         latinAutoCorrection,
         latinShowSuggestions,
@@ -174,8 +191,8 @@ object BooleanSettingContracts {
         fuzzyPinyinUanUang,
     )
     val writable = firstPlainBatch + secondPlainBatch + thirdPlainBatch +
-        capabilityGatedKeyboardBatch + englishDependencyBatch +
-        gestureDependencyBatch + fuzzyPinyin +
+        capabilityGatedKeyboardBatch + languageSwitchDependencyBatch +
+        englishDependencyBatch + gestureDependencyBatch + fuzzyPinyin +
         fuzzyPinyinOptionBatch
 
     private fun fuzzyOption(key: String, defaultValue: Boolean) =

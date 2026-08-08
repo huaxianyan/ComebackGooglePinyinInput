@@ -62,6 +62,22 @@ class BooleanSettingContractsTest {
     }
 
     @Test
+    fun languageSwitchGroupPreservesExactKeysAndDefaults() {
+        assertEquals(
+            listOf(
+                "show_emoji_switch_key",
+                "show_language_switch_key",
+                "switch_to_other_imes",
+            ),
+            BooleanSettingContracts.languageSwitchDependencyBatch.map { it.key },
+        )
+        assertEquals(
+            listOf(false, true, true),
+            BooleanSettingContracts.languageSwitchDependencyBatch.map { it.defaultValue },
+        )
+    }
+
+    @Test
     fun englishDependencyBatchPreservesExactKeysDefaultsAndDependency() {
         assertEquals(
             listOf(

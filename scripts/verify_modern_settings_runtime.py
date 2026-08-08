@@ -102,6 +102,13 @@ def main() -> int:
             "snapshot.capabilities.oneHandedModeVisible",
             "BooleanSettingContracts.popupOnKeypress",
             "BooleanSettingContracts.voiceInput",
+            "BooleanSettingContracts.showEmojiSwitchKey",
+            "BooleanSettingContracts.showLanguageSwitchKey",
+            "BooleanSettingContracts.switchToOtherImes",
+            "snapshot.capabilities.emojiSwitchKeyVisible",
+            "snapshot.languageSwitchState.languageSwitchChecked",
+            "snapshot.languageSwitchState.switchToOtherImesVisible",
+            "snapshot.languageSwitchState.switchToOtherImesEnabled",
             "actions.onPinyinSchemeChange",
             "snapshot.pinyinSchemeLabels",
             "BooleanSettingContracts.fuzzyPinyin",
@@ -162,6 +169,11 @@ def main() -> int:
                 'name="modern_settings_double_space_title"',
                 'name="modern_settings_scrub_move_title"',
                 'name="modern_settings_show_english_keyboard_title"',
+                'name="modern_settings_show_emoji_switch_key_title"',
+                'name="modern_settings_show_emoji_switch_key_summary"',
+                'name="modern_settings_show_language_switch_key_title"',
+                'name="modern_settings_switch_to_other_imes_title"',
+                'name="modern_settings_switch_to_other_imes_summary"',
                 'name="modern_settings_physical_alt_title"',
                 'name="modern_settings_chinese_english_title"',
                 'name="modern_settings_chinese_digits_title"',
@@ -248,6 +260,8 @@ def main() -> int:
         (
             "popupOnKeypressVisible = !isTablet",
             "oneHandedModeVisible = !isTablet",
+            "emojiSwitchKeyVisible = Build.VERSION.SDK_INT >= 19 && !isTablet",
+            "inputMethodSwitchingAvailable = hasSettingsActivitySwitchTarget(",
             "manager.enabledInputMethodList.map",
             'inputMethod.packageName.startsWith("com.google.android")',
             'inputMethod.subtypeModes.any { it == "voice" }',
@@ -265,8 +279,42 @@ def main() -> int:
             "enabledGoogleVoiceSubtypeIsAvailable",
             "packagePrefixModeAndEnabledListMustMatchExactly",
             "emptyEnabledInputMethodListIsUnavailable",
+            "ownImeWithMultipleEnabledSubtypesOffersSwitching",
+            "otherGoogleImeRequiresANonAuxiliaryEnabledSubtype",
+            "nonGoogleOtherImeDoesNotSatisfyLegacyFallback",
         ),
         "keyboard capability predicate tests",
+    )
+
+    language_switch_rules = next(
+        (project / "compose-runtime/src/main/kotlin").rglob("LanguageSwitchSettingRules.kt")
+    ).read_text(encoding="utf-8")
+    require(
+        language_switch_rules,
+        (
+            "(!emojiSwitchKeyVisible || !emojiSwitchKeyChecked)",
+            "(inputMethodSwitchingAvailable || showEnglishKeyboard)",
+            "languageSwitchChecked = languageSwitchEnabled && persistedLanguageSwitchKey",
+            "switchToOtherImesVisible = inputMethodSwitchingAvailable",
+            "inputMethodSwitchingAvailable &&",
+            "showEnglishKeyboard && languageSwitchChecked",
+        ),
+        "language and emoji switch dependency rules",
+    )
+    language_switch_test = next(
+        (project / "compose-runtime/src/test/kotlin").rglob(
+            "LanguageSwitchSettingRulesTest.kt"
+        )
+    ).read_text(encoding="utf-8")
+    require(
+        language_switch_test,
+        (
+            "emojiKeyTemporarilyUnchecksLanguageKeyWithoutChangingPersistedInput",
+            "disablingEmojiRestoresPersistedLanguageKey",
+            "switchToOtherImesRequiresEnglishAndEffectiveLanguageKeys",
+            "noSwitchTargetRemovesChildAndMakesLanguageDependOnEnglish",
+        ),
+        "language and emoji switch dependency tests",
     )
 
     boolean_contracts = next(
@@ -289,6 +337,9 @@ def main() -> int:
             'key = "block_offensive_words"',
             'key = "enable_popup_on_keypress"',
             'key = "enable_voice_input"',
+            'key = "show_emoji_switch_key"',
+            'key = "show_language_switch_key"',
+            'key = "switch_to_other_imes"',
             'key = "pref_key_auto_correction"',
             'key = "show_suggestions"',
             'key = "next_word_prediction"',
@@ -319,9 +370,10 @@ def main() -> int:
             "val secondPlainBatch = listOf(",
             "val thirdPlainBatch = listOf(",
             "val capabilityGatedKeyboardBatch = listOf(",
+            "val languageSwitchDependencyBatch = listOf(",
             "val englishDependencyBatch = listOf(",
             "val gestureDependencyBatch = listOf(",
-            "capabilityGatedKeyboardBatch + englishDependencyBatch +",
+            "capabilityGatedKeyboardBatch + languageSwitchDependencyBatch +",
         ),
         "audited Boolean persistence contracts",
     )
@@ -335,6 +387,7 @@ def main() -> int:
             "secondPlainBatchPreservesExactLegacyKeysAndDefaults",
             "thirdPlainBatchPreservesExactLegacyKeysAndDefaults",
             "capabilityGatedKeyboardBatchPreservesExactKeysAndDefaults",
+            "languageSwitchGroupPreservesExactKeysAndDefaults",
             "englishDependencyBatchPreservesExactKeysDefaultsAndDependency",
             "gestureGroupPreservesMirroredKeyDefaultsAndDependencies",
             "fuzzyPinyinGroupPreservesKeysOrderDefaultsAndDependency",
@@ -392,6 +445,10 @@ def main() -> int:
             "capabilities: SettingsCapabilities",
             "popupOnKeypress: BooleanSettingState",
             "voiceInput: BooleanSettingState",
+            "showEmojiSwitchKey: BooleanSettingState",
+            "showLanguageSwitchKey: BooleanSettingState",
+            "switchToOtherImes: BooleanSettingState",
+            "languageSwitchState: LanguageSwitchSettingState",
             "oneHandedModeLabels: List<String>",
             "fun readSnapshot()",
             "data class SettingsSnapshot(",
@@ -408,6 +465,11 @@ def main() -> int:
             "require(contract in BooleanSettingContracts.writable)",
             "require(capabilities.popupOnKeypressVisible)",
             "require(capabilities.voiceInputVisible)",
+            "require(capabilities.emojiSwitchKeyVisible)",
+            "currentLanguageSwitchState(capabilities)",
+            "require(state.languageSwitchEnabled)",
+            "require(state.switchToOtherImesVisible)",
+            "require(state.switchToOtherImesEnabled)",
             "contract.dependency?.let { dependency ->",
             '"Boolean dependency is disabled: ${dependency.key}"',
             "isExplicit = preferences.contains(contract.key)",
