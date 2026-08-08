@@ -114,7 +114,7 @@
 - [x] Compose“显示启动器图标”通过真机验收：保留 key=`show_launcher_icon`、Boolean 类型和 absence 状态；缺省值严格复现 `LauncherIconVisibilityInitializer`——system/updated-system app 缺省隐藏，普通侧载包采用 `@bool/show_launcher_icon`。关闭/持久化/重新开启、旧 `LauncherActivity` 图标消失与恢复、审计 launcher 独立保留、旧入口启动、IME 和主题隔离均正常；最终公开 package 查询确认正式组件与审计组件均 enabled，默认 IME 未改变
 - [x] 完成 Compose“词典与备份”集成实现并通过静态/构建门禁：只读健康状态继续调用现有异步 inspector；SAF 目录必须取得持久读写授权并通过现有 create/read/rename/delete 验证后才提交；自动备份开关、Int 间隔 `1/3/7/14/30`、Int 保留数 `3/5/10/20/30`、立即备份和导入继续委托原生 exporter/importer 与合并语义；自定义短语保留 Boolean 默认 true 和编辑器依赖。联系人建议与清除词典仍显式进入旧 Fragment，不复制权限/确认/破坏性任务。真机验收待统一执行，且未授权前不执行立即备份、目录变更、导入或清除
 - [x] 完成“其他 → 关于”Compose 子页实现并通过构建门禁：复用旧 `tos_url` / `privacy_url`、现有 `UnquantumLicenseMenuActivity` 和当前 package version；工具栏/系统 Back、浏览器解析及许可证页面仍待统一真机验收
-- [ ] 统一验收 `work/modern-settings-dictionary-about-v2.apk`：先验证只读状态、Back/旋转、关于和取消路径；再由维护者明确选择是否测试 SAF 目录、自动备份、立即备份和合并导入；联系人、清除用户字典仍需独立 `dictionaryaudit` 与破坏性测试授权
+- [ ] 统一验收 `work/modern-settings-dictionary-about-v2.apk`（SHA-256 `d0a88818977ec7c4eeeb4fcf3981b46a9417ced7467937b29f8f296029680eb9`，29,835,596 bytes；双构建逐字节一致；6,633/6,633 旧资源 ID、API 31/33/34/35/36、v1/v2/v3 签名、16 KiB ZIP alignment 和英文 raw `ZIP_STORED` 门禁通过）：先验证只读状态、Back/旋转、关于和取消路径；再由维护者明确选择是否测试 SAF 目录、自动备份、立即备份和合并导入；联系人、清除用户字典仍需独立 `dictionaryaudit` 与破坏性测试授权。本轮本地与远程 ADB 均无在线设备，因此未安装、不启动 Activity，也未改变默认输入法或任何词典/SAF 状态
 
 ## 测试约定
 
