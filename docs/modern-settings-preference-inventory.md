@@ -266,6 +266,14 @@ their existing component or synchronization effects before migration.
 
 ## Specialized pages and navigation
 
+The confirmed modern hierarchy uses four home destinations: Input, Keyboard,
+Dictionary and backup, and Other. Handwriting moves beneath Keyboard because it
+is a keyboard input form and its two controls do not justify a top-level page;
+this changes navigation only, not either Preference contract. Input divides into
+general, Chinese, and English routes, with Fuzzy Pinyin under Chinese. Keyboard
+divides into appearance/layout, keys/switching, feedback, and Handwriting. The
+home screen contains navigation rows rather than live settings.
+
 These are deliberately excluded from ordinary Boolean/List migration:
 
 - theme selector/editor;

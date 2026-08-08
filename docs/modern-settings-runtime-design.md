@@ -311,15 +311,75 @@ activity refreshes its read-only snapshot in `onResume()` so returning from a
 legacy settings surface cannot leave stale state. Production routing still
 requires all remaining labels to be resource-backed before writes are enabled.
 
+## Confirmed information architecture
+
+The prototype single list is not the production hierarchy. It made early
+contract auditing cheap, but retaining every migrated row in one screen would
+make discovery, code ownership, and device acceptance progressively worse. The
+confirmed production tree is:
+
+```text
+Settings home
+├─ Input
+│  ├─ general input rows
+│  ├─ Chinese input
+│  │  └─ Fuzzy Pinyin
+│  └─ English input
+├─ Keyboard
+│  ├─ Appearance and layout
+│  ├─ Keys and switching
+│  ├─ Key feedback
+│  └─ Handwriting
+├─ Dictionary and backup
+└─ Other
+```
+
+The home screen contains navigation rows and summaries, not live switches or
+sliders. Input retains the original general/Chinese/English semantic categories,
+but Chinese and English become child routes so they no longer form one long
+list. The gesture parent remains a general-input row while its Chinese preview
+and auto-commit children remain on the Chinese route; shared Repository rules,
+not visual co-location, enforce that dependency. Fuzzy Pinyin remains a child
+of Chinese input.
+
+Keyboard uses four child routes:
+
+- Appearance and layout: theme, one-handed mode, and keyboard height;
+- Keys and switching: popup, voice, English keyboard, emoji/language/other-IME
+  switching, physical-key symbol behavior, slide sensitivity, and long press;
+- Key feedback: sound/volume and vibration/duration;
+- Handwriting: recognition timeout and stroke width.
+
+Handwriting intentionally moves below Keyboard rather than retaining the legacy
+top-level header: it is a keyboard input form in the modern user model, and two
+sliders do not justify a home-screen destination. This navigation change does
+not alter either handwriting key, storage type, default, preview, or Slider
+contract.
+
+Dictionary and backup remains one domain with user-dictionary, backup/restore,
+and shortcuts sections. Other initially owns launcher visibility and later
+about/privacy/license destinations. Theme and dictionary operations remain
+specialized navigation targets; moving their entry rows does not authorize
+reimplementing legacy side effects as generic Compose writes.
+
+Navigation uses an explicit, saveable route stack rather than accumulating
+independent page Booleans. Toolbar Back and system Back pop one route; Back on
+Home finishes the Activity. The fixed, argument-free tree does not require a
+Navigation Compose dependency. Page composables remain stateless projections of
+shared Controller/Repository state, so cross-page dependencies retain values
+and write gates exactly as before.
+
 ## Next implementation stage
 
-1. Make the host assembly a single reproducible build command from the original
-   APK.
-2. Add binary host gates for resource IDs, manifest auto-start exclusions, DEX
-   order, signatures, ZIP alignment, and native ELF alignment.
-3. Introduce a read-only `SettingsRepository` inventory and tests.
-4. Implement one low-risk settings section with official Compose Material 3
-   rows, Switch, and Slider.
-5. Add writes only after exact storage/default/callback equivalence is proven.
-6. Validate light/dark mode, dynamic color, RTL, font scaling, TalkBack,
-   landscape, narrow screens, and multi-window behavior.
+1. Extract shared rows, sliders, dialogs, and section components from the current
+   monolithic `SettingsScreen.kt` without changing behavior.
+2. Add the saveable route stack and navigation-only Settings home.
+3. Split Input into general, Chinese, English, and existing Fuzzy Pinyin routes;
+   verify gesture and suggestion dependencies across route boundaries.
+4. Split Keyboard into appearance/layout, keys/switching, feedback, and
+   Handwriting routes; rerun the accepted emoji/language/other-IME matrix.
+5. Add Dictionary/backup and Other entry routes without prematurely rewriting
+   their specialized legacy operations.
+6. Validate route restoration, toolbar/system Back, light/dark mode, dynamic
+   color, RTL, font scaling, TalkBack, landscape, narrow screens, and
+   multi-window behavior.

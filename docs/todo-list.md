@@ -106,6 +106,8 @@
 - [x] Compose 键盘能力门控组通过真机验收：严格复现 `ais`——`is_tablet=true` 隐藏按键弹出和单手模式，语音按钮仅在已启用的 `com.google.android*` IME 具有 mode=`voice` 的已启用/隐式 subtype 时显示，异常时隐藏；隐藏项由 Repository 拒绝写入。单手模式保留 String `0/1/2`、默认 `0`、原始顺序和普通 SharedPreferences 通知；手机侧可见性、语音能力门控、按键弹出效果、左右/关闭三种单手布局、持久化、横竖屏几何及现有输入回归均正常。`is_tablet=true` 运行时分支仍留待后续大屏矩阵覆盖
 - [x] Compose 表情/语言切换键状态机通过真机验收：表情键与语言键反向依赖、禁用时视觉取消但保留语言键持久值、关闭表情键后的恢复均正确；首版错误隐藏 `switch_to_other_imes` 已定位并通过精确 `android.view.InputMethod` intent query 修复，不申请 `QUERY_ALL_PACKAGES`。Pixel 上该行恢复可见，可正常开关和持久化，实际点击语言键时“切换到其他输入法”开/关行为均符合预期；表情键、语言键、英文键盘均关闭时，中文键盘不再错误出现内部 globe key
 - [x] target 36 既有设置回归已由 MD3 路径解决：`switch_to_other_imes` 行在 target 28 可见，升级 target 36 后旧值继续生效但旧设置页无法修改；不回补已发布的 target 36 release，MD3 宿主已恢复可见性和可修改性，并通过开/关实际行为验证。正式发布前仍需在最终 application ID 上覆盖升级保留值
+- [x] 确定现代设置页面层级：设置首页只提供“输入设置 / 键盘 / 词典与备份 / 其他”导航；输入设置下分常规、中文、英文，模糊拼音归属中文；键盘下分外观与布局、按键与切换、按键反馈、手写。手写不再单占首页层级，但两个 Preference 的 key、默认值、类型、预览和 Slider 语义不变
+- [ ] 将单体 `SettingsScreen.kt` 按页面和共享组件拆分，建立可保存的显式 route stack；先完成纯结构迁移，再逐页验证跨页面依赖、系统/工具栏 Back 和配置重建，不在拆页提交中混入新设置语义
 
 ## 测试约定
 
