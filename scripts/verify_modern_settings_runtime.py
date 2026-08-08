@@ -58,6 +58,9 @@ def main() -> int:
         (
             "import androidx.compose.material3.Slider",
             "import androidx.compose.material3.Switch",
+            "import androidx.compose.material3.AlertDialog",
+            "import androidx.compose.material3.ListItem",
+            "import androidx.compose.material3.RadioButton",
             "import androidx.compose.material3.TopAppBar",
             "data class SettingsActions(",
             "fun SettingsScreen(",
@@ -89,6 +92,8 @@ def main() -> int:
             "BooleanSettingContracts.latinShowSuggestions",
             "BooleanSettingContracts.nextWordPrediction",
             "BooleanSettingContracts.autoCapitalization",
+            "actions.onPinyinSchemeChange",
+            "snapshot.pinyinSchemeLabels",
             "actions.onGestureInputEnabledChange",
             "BooleanSettingContracts.incrementalGesturePreview",
             "BooleanSettingContracts.gestureAutoCommit",
@@ -130,6 +135,7 @@ def main() -> int:
                 'name="modern_settings_section_input"',
                 'name="modern_settings_section_chinese_input"',
                 'name="modern_settings_section_english_input"',
+                'name="modern_settings_pinyin_scheme_title"',
                 'name="modern_settings_double_space_title"',
                 'name="modern_settings_scrub_move_title"',
                 'name="modern_settings_show_english_keyboard_title"',
@@ -175,6 +181,36 @@ def main() -> int:
             "fun encodeLongPress(milliseconds: Int)",
         ),
         "audited Slider persistence contracts",
+    )
+
+    list_contracts = next(
+        (project / "compose-runtime/src/main/kotlin").rglob("ListSettingContracts.kt")
+    ).read_text(encoding="utf-8")
+    require(
+        list_contracts,
+        (
+            'key = "pinyin_scheme"',
+            'defaultValue = "quanpin"',
+            '"shuangpin_ms"',
+            '"shuangpin_ziguang"',
+            '"shuangpin_jiajia"',
+            '"shuangpin_abc"',
+            '"shuangpin_ziranma"',
+            '"shuangpin_flypy"',
+        ),
+        "audited ListPreference persistence contracts",
+    )
+    list_test = next(
+        (project / "compose-runtime/src/test/kotlin").rglob("ListSettingContractsTest.kt")
+    ).read_text(encoding="utf-8")
+    require(
+        list_test,
+        (
+            "pinyinSchemePreservesExactLegacyKeyDefaultAndOrder",
+            "absentValueUsesFullPinyinDefault",
+            "unsupportedValueAndIndexAreRejected",
+        ),
+        "ListPreference contract tests",
     )
 
     boolean_contracts = next(
@@ -269,6 +305,7 @@ def main() -> int:
             '"pref_def_value_sound_volume_on_keypress"',
             '"pref_def_value_per_device_vibration_duration_on_keypress"',
             '"HARDWARE" to Build.HARDWARE',
+            '"entries_pinyin_scheme"',
             '"entries_keyboard_height_ratio"',
             '"entries_keyboard_slide_sensitivity_ratio"',
             "keyboardHeightLabels: List<String>",
@@ -279,6 +316,8 @@ def main() -> int:
             "data class SettingsSnapshot(",
             "fun setSoundEnabled(enabled: Boolean)",
             "fun setVibrationEnabled(enabled: Boolean)",
+            "fun setPinyinSchemeIndex(index: Int)",
+            "preferences.edit().putString(contract.key, contract.valueAt(index)).apply()",
             "fun setGestureInputEnabled(enabled: Boolean)",
             ".putBoolean(BooleanSettingContracts.gestureInput.key, enabled)",
             ".putBoolean(BooleanSettingContracts.gestureInputPersistent.key, enabled)",
@@ -304,7 +343,7 @@ def main() -> int:
     expected_write_counts = {
         "putBoolean(": 5,
         "putFloat(": 1,
-        "putString(": 3,
+        "putString(": 4,
         ".remove(": 3,
     }
     for operation, expected_count in expected_write_counts.items():

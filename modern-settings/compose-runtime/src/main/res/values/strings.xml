@@ -4,6 +4,7 @@
     <string name="modern_settings_stage_summary">Official Compose Material 3 · staged write validation</string>
     <string name="modern_settings_section_input">General input</string>
     <string name="modern_settings_section_chinese_input">Chinese input</string>
+    <string name="modern_settings_pinyin_scheme_title">Pinyin scheme</string>
     <string name="modern_settings_section_english_input">English input</string>
     <string name="modern_settings_section_key_feedback">Key feedback</string>
     <string name="modern_settings_section_layout_gestures">Layout and gestures</string>

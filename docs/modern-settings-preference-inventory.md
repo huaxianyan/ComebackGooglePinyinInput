@@ -207,7 +207,11 @@ their existing component or synchronization effects before migration.
   options not present on the principal visible Input page;
 - dependency groups: gesture input and its preview/auto-commit children; Latin
   suggestions and next-word prediction; fuzzy Pinyin and its detail page;
-- `pinyin_scheme`: ListPreference with exact entry ordering and String values.
+- `pinyin_scheme`: implemented as the first official Material 3 single-choice
+  dialog. It preserves String storage, absent default `quanpin`, original entry
+  order (`quanpin`, Microsoft, Unispim, Pinyin PlusPlus, Intelligent ABC,
+  Ziranma, flyPY), localized legacy labels, immediate single-selection commit,
+  and dismiss-without-write behavior; device acceptance remains pending.
 
 ## Remaining Keyboard page inventory
 

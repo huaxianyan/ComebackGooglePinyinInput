@@ -194,6 +194,14 @@ and reject writes until the parent is on. See
 `modern-settings-preference-inventory.md` for deferred capability, dependency,
 listener, and navigation boundaries.
 
+The first ListPreference stage migrates `pinyin_scheme` to an official Material
+3 `ListItem`, `AlertDialog`, and radio-button single-choice group. It reads the
+original localized `entries_pinyin_scheme` array and writes only the exact
+corresponding String value. Key absence resolves to the legacy `quanpin` default;
+all seven values retain their original order, unsupported stored values are
+rejected rather than silently remapped, choosing a different option commits once,
+and Back/outside/cancel dismissal does not write.
+
 The long-press stage models absent default `300 ms` separately from explicit
 `"300"` with `DefaultableSetting`. Its official discrete Slider covers exactly
 `100..700 ms` in `10 ms` steps and persists the original String only on release.

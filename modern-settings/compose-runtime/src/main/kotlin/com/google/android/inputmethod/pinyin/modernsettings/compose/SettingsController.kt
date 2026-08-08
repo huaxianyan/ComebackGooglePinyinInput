@@ -21,6 +21,9 @@ class SettingsController(
     fun setVibrationEnabled(enabled: Boolean): SettingsSnapshot =
         repository.setVibrationEnabled(enabled)
 
+    fun setPinyinSchemeIndex(index: Int): SettingsSnapshot =
+        repository.setPinyinSchemeIndex(index)
+
     fun setGestureInputEnabled(enabled: Boolean): SettingsSnapshot =
         repository.setGestureInputEnabled(enabled)
 

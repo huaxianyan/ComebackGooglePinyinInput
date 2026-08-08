@@ -39,6 +39,7 @@ class LegacySettingsRepository(context: Context) {
             vibrationDefault,
         )
 
+        val pinyinSchemeIndex = readListIndex(ListSettingContracts.pinyinScheme)
         val keyboardHeightIndex = readEnumeratedIndex(SliderSettingContracts.keyboardHeight)
         val slideSensitivityIndex = readEnumeratedIndex(SliderSettingContracts.slideSensitivity)
         val handwritingTimeoutIndex = readEnumeratedIndex(SliderSettingContracts.handwritingTimeout)
@@ -80,6 +81,9 @@ class LegacySettingsRepository(context: Context) {
             nextWordPrediction = readBoolean(BooleanSettingContracts.nextWordPrediction),
             autoCapitalization = readBoolean(BooleanSettingContracts.autoCapitalization),
             blockOffensiveWords = readBoolean(BooleanSettingContracts.blockOffensiveWords),
+            pinyinSchemeIndex = pinyinSchemeIndex,
+            pinyinSchemeLabel = readEntryLabel("entries_pinyin_scheme", pinyinSchemeIndex),
+            pinyinSchemeLabels = readEntryLabels("entries_pinyin_scheme"),
             showEnglishKeyboard = readBoolean(BooleanSettingContracts.showEnglishKeyboard),
             emojiAltPhysicalKey = readBoolean(BooleanSettingContracts.emojiAltPhysicalKey),
             keyboardHeightIndex = keyboardHeightIndex,
@@ -124,6 +128,12 @@ class LegacySettingsRepository(context: Context) {
 
     fun setVibrationEnabled(enabled: Boolean): SettingsSnapshot {
         preferences.edit().putBoolean(SliderSettingContracts.VIBRATION_ENABLED_KEY, enabled).apply()
+        return readSnapshot()
+    }
+
+    fun setPinyinSchemeIndex(index: Int): SettingsSnapshot {
+        val contract = ListSettingContracts.pinyinScheme
+        preferences.edit().putString(contract.key, contract.valueAt(index)).apply()
         return readSnapshot()
     }
 
@@ -215,6 +225,9 @@ class LegacySettingsRepository(context: Context) {
         preferences.edit().putString(contract.key, contract.valueAt(index)).apply()
     }
 
+    private fun readListIndex(contract: EnumeratedListContract): Int =
+        contract.indexOf(preferences.getString(contract.key, contract.defaultValue))
+
     private fun readEnumeratedIndex(contract: EnumeratedSliderContract): Int =
         contract.indexOf(preferences.getString(contract.key, contract.defaultValue))
 
@@ -299,6 +312,9 @@ data class SettingsSnapshot(
     val nextWordPrediction: BooleanSettingState,
     val autoCapitalization: BooleanSettingState,
     val blockOffensiveWords: BooleanSettingState,
+    val pinyinSchemeIndex: Int,
+    val pinyinSchemeLabel: String,
+    val pinyinSchemeLabels: List<String>,
     val showEnglishKeyboard: BooleanSettingState,
     val emojiAltPhysicalKey: BooleanSettingState,
     val keyboardHeightIndex: Int,

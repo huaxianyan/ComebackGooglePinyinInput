@@ -4,6 +4,7 @@
     <string name="modern_settings_stage_summary">官方 Compose Material 3 · 分阶段写入验证</string>
     <string name="modern_settings_section_input">常规输入</string>
     <string name="modern_settings_section_chinese_input">中文输入</string>
+    <string name="modern_settings_pinyin_scheme_title">拼音方案</string>
     <string name="modern_settings_section_english_input">英文输入</string>
     <string name="modern_settings_section_key_feedback">按键反馈</string>
     <string name="modern_settings_section_layout_gestures">布局和手势</string>
