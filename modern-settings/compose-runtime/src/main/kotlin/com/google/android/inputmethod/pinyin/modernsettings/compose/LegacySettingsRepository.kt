@@ -67,6 +67,10 @@ class LegacySettingsRepository(context: Context) {
             traditionalChinese = readBoolean(BooleanSettingContracts.traditionalChinese),
             chinesePrediction = readBoolean(BooleanSettingContracts.chinesePrediction),
             automaticSpace = readBoolean(BooleanSettingContracts.automaticSpace),
+            latinAutoCorrection = readBoolean(BooleanSettingContracts.latinAutoCorrection),
+            latinShowSuggestions = readBoolean(BooleanSettingContracts.latinShowSuggestions),
+            nextWordPrediction = readBoolean(BooleanSettingContracts.nextWordPrediction),
+            autoCapitalization = readBoolean(BooleanSettingContracts.autoCapitalization),
             blockOffensiveWords = readBoolean(BooleanSettingContracts.blockOffensiveWords),
             showEnglishKeyboard = readBoolean(BooleanSettingContracts.showEnglishKeyboard),
             emojiAltPhysicalKey = readBoolean(BooleanSettingContracts.emojiAltPhysicalKey),
@@ -116,7 +120,12 @@ class LegacySettingsRepository(context: Context) {
     }
 
     fun setBoolean(contract: BooleanSettingContract, enabled: Boolean): SettingsSnapshot {
-        require(contract in BooleanSettingContracts.writablePlain)
+        require(contract in BooleanSettingContracts.writable)
+        contract.dependency?.let { dependency ->
+            require(readBoolean(dependency).value) {
+                "Boolean dependency is disabled: ${dependency.key}"
+            }
+        }
         preferences.edit().putBoolean(contract.key, enabled).apply()
         return readSnapshot()
     }
@@ -265,6 +274,10 @@ data class SettingsSnapshot(
     val traditionalChinese: BooleanSettingState,
     val chinesePrediction: BooleanSettingState,
     val automaticSpace: BooleanSettingState,
+    val latinAutoCorrection: BooleanSettingState,
+    val latinShowSuggestions: BooleanSettingState,
+    val nextWordPrediction: BooleanSettingState,
+    val autoCapitalization: BooleanSettingState,
     val blockOffensiveWords: BooleanSettingState,
     val showEnglishKeyboard: BooleanSettingState,
     val emojiAltPhysicalKey: BooleanSettingState,

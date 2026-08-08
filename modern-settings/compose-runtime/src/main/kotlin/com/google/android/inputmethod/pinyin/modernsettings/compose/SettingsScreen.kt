@@ -247,6 +247,76 @@ fun SettingsScreen(snapshot: SettingsSnapshot, actions: SettingsActions) {
             item {
                 SettingsSwitchRow(
                     title = legacyString(
+                        "setting_spell_correction_title",
+                        R.string.modern_settings_latin_auto_correction_title,
+                    ),
+                    supporting = legacyString(
+                        "setting_spell_correction_summary",
+                        R.string.modern_settings_latin_auto_correction_summary,
+                    ),
+                    checked = snapshot.latinAutoCorrection.value,
+                    onCheckedChange = {
+                        actions.onBooleanChange(BooleanSettingContracts.latinAutoCorrection, it)
+                    },
+                )
+            }
+            item {
+                SettingsSwitchRow(
+                    title = legacyString(
+                        "setting_show_suggestion_title",
+                        R.string.modern_settings_latin_show_suggestions_title,
+                    ),
+                    supporting = legacyString(
+                        "setting_show_suggestion_summary",
+                        R.string.modern_settings_latin_show_suggestions_summary,
+                    ),
+                    checked = snapshot.latinShowSuggestions.value,
+                    onCheckedChange = {
+                        actions.onBooleanChange(BooleanSettingContracts.latinShowSuggestions, it)
+                    },
+                )
+            }
+            item {
+                val dependencyEnabled = snapshot.latinShowSuggestions.value
+                val originalSummary = legacyString(
+                    "setting_next_word_prediction_summary",
+                    R.string.modern_settings_next_word_prediction_summary,
+                )
+                SettingsSwitchRow(
+                    title = legacyString(
+                        "setting_next_word_prediction_title",
+                        R.string.modern_settings_next_word_prediction_title,
+                    ),
+                    supporting = if (dependencyEnabled) originalSummary else
+                        originalSummary + "\n" + stringResource(
+                            R.string.modern_settings_requires_show_suggestions
+                        ),
+                    checked = snapshot.nextWordPrediction.value,
+                    enabled = dependencyEnabled,
+                    onCheckedChange = {
+                        actions.onBooleanChange(BooleanSettingContracts.nextWordPrediction, it)
+                    },
+                )
+            }
+            item {
+                SettingsSwitchRow(
+                    title = legacyString(
+                        "setting_auto_capitalization_title",
+                        R.string.modern_settings_auto_capitalization_title,
+                    ),
+                    supporting = legacyString(
+                        "setting_auto_capitalization_summary",
+                        R.string.modern_settings_auto_capitalization_summary,
+                    ),
+                    checked = snapshot.autoCapitalization.value,
+                    onCheckedChange = {
+                        actions.onBooleanChange(BooleanSettingContracts.autoCapitalization, it)
+                    },
+                )
+            }
+            item {
+                SettingsSwitchRow(
+                    title = legacyString(
                         "setting_block_offensive_words_title",
                         R.string.modern_settings_block_offensive_words_title,
                     ),
@@ -518,6 +588,7 @@ private fun SettingsSwitchRow(
     title: String,
     supporting: String? = null,
     checked: Boolean,
+    enabled: Boolean = true,
     onCheckedChange: (Boolean) -> Unit,
 ) {
     Row(
@@ -528,16 +599,26 @@ private fun SettingsSwitchRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.bodyLarge)
+            Text(
+                title,
+                color = if (enabled) MaterialTheme.colorScheme.onSurface
+                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+                style = MaterialTheme.typography.bodyLarge,
+            )
             supporting?.let {
                 Text(
                     it,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant
+                    else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f),
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }
         }
-        Switch(checked = checked, onCheckedChange = onCheckedChange)
+        Switch(
+            checked = checked,
+            enabled = enabled,
+            onCheckedChange = onCheckedChange,
+        )
     }
 }
 

@@ -95,6 +95,30 @@ actual candidate trigger for `chinese_digits_mixed_input` remains deliberately
 unverified and low priority; its Boolean UI/persistence contract passed, and no
 native decoder behavior is changed in this branch.
 
+## English Boolean dependency batch
+
+The original English category is now structurally restored with:
+
+| Key | Fallback | Dependency | Migration |
+| --- | --- | --- | --- |
+| `pref_key_auto_correction` | `true` | none | writable |
+| `show_suggestions` | `true` | none | writable |
+| `next_word_prediction` | `true` | `show_suggestions` | writable |
+| `enable_auto_capitalization` | `true` | none | writable |
+| `block_offensive_words` | `true` | none | already writable |
+
+`pref_key_auto_correction` is the literal value of the legacy
+`pref_key_latin_auto_correction` resource; it must not be replaced with the
+separate framework-era `spell_correction` key/default pair. The child
+`next_word_prediction` value is retained when `show_suggestions` is off, while
+its Switch is disabled and repository writes are rejected until the parent is
+on. Turning the parent back on exposes the retained child state.
+
+The audit device currently presents no English candidate words. Consequently,
+settings persistence and dependency behavior can be accepted independently,
+but spelling, suggestion, next-word, and offensive-filter runtime effects are
+not claimed as functional acceptance.
+
 ## Plain-looking entries that are not yet safe to migrate
 
 ### Dynamic availability
@@ -116,7 +140,6 @@ are reconstructed without hidden assumptions.
 
 - `enable_incremental_gesture_input` and `enable_gesture_auto_commit` depend on
   `enable_gesture_input`;
-- `next_word_prediction` depends on `latin_show_suggestion`;
 - fuzzy-Pinyin detail depends on `fuzzy_pinyin`;
 - `switch_to_other_imes` depends on `show_language_switch_key`;
 - `show_emoji_switch_key` declares `disableDependentsState=true`;
@@ -136,8 +159,8 @@ require their existing component or synchronization effects before migration.
 
 ## Remaining Input page inventory
 
-- plain Boolean candidates pending per-key audit: Latin correction,
-  capitalization, and related options;
+- plain Boolean candidates pending per-key audit are now limited to related
+  options not present on the principal visible Input page;
 - dependency groups: gesture input and its preview/auto-commit children; Latin
   suggestions and next-word prediction; fuzzy Pinyin and its detail page;
 - `pinyin_scheme`: ListPreference with exact entry ordering and String values.

@@ -51,8 +51,27 @@ class BooleanSettingContractsTest {
     }
 
     @Test
-    fun writablePlainSettingsHaveNoDuplicateKeys() {
-        val keys = BooleanSettingContracts.writablePlain.map { it.key }
+    fun englishDependencyBatchPreservesExactKeysDefaultsAndDependency() {
+        assertEquals(
+            listOf(
+                "pref_key_auto_correction",
+                "show_suggestions",
+                "next_word_prediction",
+                "enable_auto_capitalization",
+            ),
+            BooleanSettingContracts.englishDependencyBatch.map { it.key },
+        )
+        assertTrue(BooleanSettingContracts.englishDependencyBatch.all { it.defaultValue })
+        assertEquals(
+            BooleanSettingContracts.latinShowSuggestions,
+            BooleanSettingContracts.nextWordPrediction.dependency,
+        )
+        assertEquals(null, BooleanSettingContracts.latinShowSuggestions.dependency)
+    }
+
+    @Test
+    fun writableSettingsHaveNoDuplicateKeys() {
+        val keys = BooleanSettingContracts.writable.map { it.key }
         assertEquals(keys.size, keys.toSet().size)
     }
 }

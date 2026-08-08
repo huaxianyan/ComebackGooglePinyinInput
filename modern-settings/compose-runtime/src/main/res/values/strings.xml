@@ -39,6 +39,15 @@
     <string name="modern_settings_automatic_space_summary">Insert a space automatically between English words</string>
     <string name="modern_settings_block_offensive_words_title">Block offensive words</string>
     <string name="modern_settings_block_offensive_words_summary">Do not suggest potentially offensive words</string>
+    <string name="modern_settings_latin_auto_correction_title">Auto spell correction</string>
+    <string name="modern_settings_latin_auto_correction_summary">Automatically correct mistyped words</string>
+    <string name="modern_settings_latin_show_suggestions_title">Show suggestions</string>
+    <string name="modern_settings_latin_show_suggestions_summary">Display suggested words while typing</string>
+    <string name="modern_settings_next_word_prediction_title">Next-word suggestions</string>
+    <string name="modern_settings_next_word_prediction_summary">Use the previous word in making suggestions</string>
+    <string name="modern_settings_requires_show_suggestions">Turn on Show suggestions to use this setting</string>
+    <string name="modern_settings_auto_capitalization_title">Auto capitalization</string>
+    <string name="modern_settings_auto_capitalization_summary">Capitalize the first word of each sentence</string>
     <string name="modern_settings_enabled">On</string>
     <string name="modern_settings_disabled">Off</string>
     <string name="modern_settings_system_default">System default</string>

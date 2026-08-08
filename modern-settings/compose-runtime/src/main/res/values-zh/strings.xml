@@ -39,6 +39,15 @@
     <string name="modern_settings_automatic_space_summary">在英文单词之间自动插入空格</string>
     <string name="modern_settings_block_offensive_words_title">屏蔽不当字词</string>
     <string name="modern_settings_block_offensive_words_summary">不提供可能具有冒犯性的字词建议</string>
+    <string name="modern_settings_latin_auto_correction_title">自动拼写更正</string>
+    <string name="modern_settings_latin_auto_correction_summary">自动更正拼写错误的字词</string>
+    <string name="modern_settings_latin_show_suggestions_title">显示建议</string>
+    <string name="modern_settings_latin_show_suggestions_summary">输入时显示建议字词</string>
+    <string name="modern_settings_next_word_prediction_title">下一个字词联想</string>
+    <string name="modern_settings_next_word_prediction_summary">根据上一个字词提供建议</string>
+    <string name="modern_settings_requires_show_suggestions">开启“显示建议”后可使用此设置</string>
+    <string name="modern_settings_auto_capitalization_title">自动大写</string>
+    <string name="modern_settings_auto_capitalization_summary">将每个句子的第一个字词首字母大写</string>
     <string name="modern_settings_enabled">已开启</string>
     <string name="modern_settings_disabled">已关闭</string>
     <string name="modern_settings_system_default">系统默认</string>

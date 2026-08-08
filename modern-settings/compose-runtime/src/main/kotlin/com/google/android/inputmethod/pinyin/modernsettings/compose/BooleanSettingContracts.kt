@@ -9,6 +9,7 @@ data class BooleanSettingState(
 data class BooleanSettingContract(
     val key: String,
     val defaultValue: Boolean,
+    val dependency: BooleanSettingContract? = null,
 )
 
 /**
@@ -66,6 +67,23 @@ object BooleanSettingContracts {
         key = "block_offensive_words",
         defaultValue = true,
     )
+    val latinAutoCorrection = BooleanSettingContract(
+        key = "pref_key_auto_correction",
+        defaultValue = true,
+    )
+    val latinShowSuggestions = BooleanSettingContract(
+        key = "show_suggestions",
+        defaultValue = true,
+    )
+    val nextWordPrediction = BooleanSettingContract(
+        key = "next_word_prediction",
+        defaultValue = true,
+        dependency = latinShowSuggestions,
+    )
+    val autoCapitalization = BooleanSettingContract(
+        key = "enable_auto_capitalization",
+        defaultValue = true,
+    )
 
     val firstPlainBatch = listOf(
         doubleSpacePeriod,
@@ -85,5 +103,12 @@ object BooleanSettingContracts {
         automaticSpace,
         blockOffensiveWords,
     )
-    val writablePlain = firstPlainBatch + secondPlainBatch + thirdPlainBatch
+    val englishDependencyBatch = listOf(
+        latinAutoCorrection,
+        latinShowSuggestions,
+        nextWordPrediction,
+        autoCapitalization,
+    )
+    val writable =
+        firstPlainBatch + secondPlainBatch + thirdPlainBatch + englishDependencyBatch
 }

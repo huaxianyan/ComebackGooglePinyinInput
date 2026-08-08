@@ -174,15 +174,19 @@ snapped final index is written on release. There is no reset button, preview,
 new storage type, or additional persistence implementation, matching the legacy
 controls.
 
-The ordinary-Boolean stages currently cover twelve audited plain Preference
-contracts: `enable_double_space_period`, `enable_scrub_move`,
+The Boolean stages currently cover sixteen audited Preference contracts:
+`enable_double_space_period`, `enable_scrub_move`,
 `show_english_keyboard`, `enable_emoji_alt_physical_key`,
 `chinese_english_mixed_input`, `chinese_digits_mixed_input`,
 `enable_suggest_emojis`, `enable_spatial_model`, `enable_sc_tc_conversion`,
-`enable_chinese_prediction`, `auto_space`, and `block_offensive_words`. Each
-records key presence separately from its visible value and writes only after a
-user switch action. The traditional-Chinese fallback is `false`; the other
-currently migrated plain-Boolean fallbacks are `true`. See
+`enable_chinese_prediction`, `auto_space`, `block_offensive_words`,
+`pref_key_auto_correction`, `show_suggestions`, `next_word_prediction`, and
+`enable_auto_capitalization`. Each records key presence separately from its
+visible value and writes only after a user switch action. The
+traditional-Chinese fallback is `false`; the other currently migrated Boolean
+fallbacks are `true`. `next_word_prediction` retains its value while
+`show_suggestions` is off, but the UI is disabled and repository writes are
+rejected until the parent is enabled. See
 `modern-settings-preference-inventory.md` for deferred capability, dependency,
 listener, and navigation boundaries.
 
