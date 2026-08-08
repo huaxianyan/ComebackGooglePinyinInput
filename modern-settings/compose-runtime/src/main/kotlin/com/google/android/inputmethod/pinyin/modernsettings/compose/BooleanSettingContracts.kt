@@ -50,6 +50,22 @@ object BooleanSettingContracts {
         key = "enable_spatial_model",
         defaultValue = true,
     )
+    val traditionalChinese = BooleanSettingContract(
+        key = "enable_sc_tc_conversion",
+        defaultValue = false,
+    )
+    val chinesePrediction = BooleanSettingContract(
+        key = "enable_chinese_prediction",
+        defaultValue = true,
+    )
+    val automaticSpace = BooleanSettingContract(
+        key = "auto_space",
+        defaultValue = true,
+    )
+    val blockOffensiveWords = BooleanSettingContract(
+        key = "block_offensive_words",
+        defaultValue = true,
+    )
 
     val firstPlainBatch = listOf(
         doubleSpacePeriod,
@@ -63,5 +79,11 @@ object BooleanSettingContracts {
         suggestEmojis,
         spatialCorrection,
     )
-    val writablePlain = firstPlainBatch + secondPlainBatch
+    val thirdPlainBatch = listOf(
+        traditionalChinese,
+        chinesePrediction,
+        automaticSpace,
+        blockOffensiveWords,
+    )
+    val writablePlain = firstPlainBatch + secondPlainBatch + thirdPlainBatch
 }

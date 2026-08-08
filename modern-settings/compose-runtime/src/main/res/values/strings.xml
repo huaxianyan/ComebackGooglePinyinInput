@@ -30,6 +30,13 @@
     <string name="modern_settings_suggest_emojis_summary">Suggest emojis while typing</string>
     <string name="modern_settings_spatial_correction_title">Intelligent correction</string>
     <string name="modern_settings_spatial_correction_summary">Intelligently correct mistyped words</string>
+    <string name="modern_settings_traditional_chinese_title">Traditional Chinese</string>
+    <string name="modern_settings_chinese_prediction_title">Chinese prediction</string>
+    <string name="modern_settings_chinese_prediction_summary">Use the previous word to make suggestions</string>
+    <string name="modern_settings_automatic_space_title">Insert spaces automatically</string>
+    <string name="modern_settings_automatic_space_summary">Insert a space automatically between English words</string>
+    <string name="modern_settings_block_offensive_words_title">Block offensive words</string>
+    <string name="modern_settings_block_offensive_words_summary">Do not suggest potentially offensive words</string>
     <string name="modern_settings_enabled">On</string>
     <string name="modern_settings_disabled">Off</string>
     <string name="modern_settings_system_default">System default</string>

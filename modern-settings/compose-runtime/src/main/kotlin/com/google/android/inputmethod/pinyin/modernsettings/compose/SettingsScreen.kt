@@ -182,6 +182,66 @@ fun SettingsScreen(snapshot: SettingsSnapshot, actions: SettingsActions) {
                     },
                 )
             }
+            item {
+                SettingsSwitchRow(
+                    title = legacyString(
+                        "setting_tradition_title",
+                        R.string.modern_settings_traditional_chinese_title,
+                    ),
+                    checked = snapshot.traditionalChinese.value,
+                    onCheckedChange = {
+                        actions.onBooleanChange(BooleanSettingContracts.traditionalChinese, it)
+                    },
+                )
+            }
+            item {
+                SettingsSwitchRow(
+                    title = legacyString(
+                        "setting_prediction_chinese_title",
+                        R.string.modern_settings_chinese_prediction_title,
+                    ),
+                    supporting = legacyString(
+                        "setting_prediction_chinese_summary",
+                        R.string.modern_settings_chinese_prediction_summary,
+                    ),
+                    checked = snapshot.chinesePrediction.value,
+                    onCheckedChange = {
+                        actions.onBooleanChange(BooleanSettingContracts.chinesePrediction, it)
+                    },
+                )
+            }
+            item {
+                SettingsSwitchRow(
+                    title = legacyString(
+                        "setting_auto_space_title",
+                        R.string.modern_settings_automatic_space_title,
+                    ),
+                    supporting = legacyString(
+                        "setting_auto_space_summary",
+                        R.string.modern_settings_automatic_space_summary,
+                    ),
+                    checked = snapshot.automaticSpace.value,
+                    onCheckedChange = {
+                        actions.onBooleanChange(BooleanSettingContracts.automaticSpace, it)
+                    },
+                )
+            }
+            item {
+                SettingsSwitchRow(
+                    title = legacyString(
+                        "setting_block_offensive_words_title",
+                        R.string.modern_settings_block_offensive_words_title,
+                    ),
+                    supporting = legacyString(
+                        "setting_block_offensive_words_summary",
+                        R.string.modern_settings_block_offensive_words_summary,
+                    ),
+                    checked = snapshot.blockOffensiveWords.value,
+                    onCheckedChange = {
+                        actions.onBooleanChange(BooleanSettingContracts.blockOffensiveWords, it)
+                    },
+                )
+            }
             item { HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp)) }
             item { SectionTitle(stringResource(R.string.modern_settings_section_key_feedback)) }
             item {

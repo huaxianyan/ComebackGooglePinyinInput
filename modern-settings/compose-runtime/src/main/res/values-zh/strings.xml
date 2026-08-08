@@ -30,6 +30,13 @@
     <string name="modern_settings_suggest_emojis_summary">输入时建议表情符号</string>
     <string name="modern_settings_spatial_correction_title">智能更正</string>
     <string name="modern_settings_spatial_correction_summary">错别字智能更正</string>
+    <string name="modern_settings_traditional_chinese_title">繁体中文</string>
+    <string name="modern_settings_chinese_prediction_title">中文联想</string>
+    <string name="modern_settings_chinese_prediction_summary">根据上一个字词提供建议</string>
+    <string name="modern_settings_automatic_space_title">自动插入空格</string>
+    <string name="modern_settings_automatic_space_summary">在英文单词之间自动插入空格</string>
+    <string name="modern_settings_block_offensive_words_title">屏蔽不当字词</string>
+    <string name="modern_settings_block_offensive_words_summary">不提供可能具有冒犯性的字词建议</string>
     <string name="modern_settings_enabled">已开启</string>
     <string name="modern_settings_disabled">已关闭</string>
     <string name="modern_settings_system_default">系统默认</string>

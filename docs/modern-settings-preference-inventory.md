@@ -65,6 +65,26 @@ Their resource IDs are consumed directly by the decode processors or settings
 reader, but no settings-Activity listener or secondary write is attached. Each
 modern switch therefore performs exactly the original single Boolean write.
 
+## Third plain Boolean batch
+
+The next independent Input-page entries are also direct Boolean contracts:
+
+| Key | Fallback | Legacy presentation | Migration |
+| --- | --- | --- | --- |
+| `enable_sc_tc_conversion` | `false` | title | writable |
+| `enable_chinese_prediction` | `true` | title + summary | writable |
+| `auto_space` | `true` | title + summary | writable |
+| `block_offensive_words` | `true` | title + summary | writable |
+
+Each key is read by its native-era decode/spacing/Latin settings path, but none
+has an Activity-side change listener, custom Preference widget, XML dependency,
+or secondary persistence operation.
+
+The actual candidate trigger for `enable_suggest_emojis` is accepted. The
+actual candidate trigger for `chinese_digits_mixed_input` remains deliberately
+unverified and low priority; its Boolean UI/persistence contract passed, and no
+native decoder behavior is changed in this branch.
+
 ## Plain-looking entries that are not yet safe to migrate
 
 ### Dynamic availability
@@ -106,9 +126,8 @@ require their existing component or synchronization effects before migration.
 
 ## Remaining Input page inventory
 
-- plain Boolean candidates pending per-key audit: simplified/traditional
-  conversion, Chinese prediction, auto spacing, Latin correction,
-  capitalization, offensive-word blocking, and related options;
+- plain Boolean candidates pending per-key audit: Latin correction,
+  capitalization, and related options;
 - dependency groups: gesture input and its preview/auto-commit children; Latin
   suggestions and next-word prediction; fuzzy Pinyin and its detail page;
 - `pinyin_scheme`: ListPreference with exact entry ordering and String values.

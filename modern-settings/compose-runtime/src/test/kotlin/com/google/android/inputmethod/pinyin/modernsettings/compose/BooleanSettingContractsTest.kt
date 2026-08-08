@@ -34,6 +34,23 @@ class BooleanSettingContractsTest {
     }
 
     @Test
+    fun thirdPlainBatchPreservesExactLegacyKeysAndDefaults() {
+        assertEquals(
+            listOf(
+                "enable_sc_tc_conversion",
+                "enable_chinese_prediction",
+                "auto_space",
+                "block_offensive_words",
+            ),
+            BooleanSettingContracts.thirdPlainBatch.map { it.key },
+        )
+        assertEquals(
+            listOf(false, true, true, true),
+            BooleanSettingContracts.thirdPlainBatch.map { it.defaultValue },
+        )
+    }
+
+    @Test
     fun writablePlainSettingsHaveNoDuplicateKeys() {
         val keys = BooleanSettingContracts.writablePlain.map { it.key }
         assertEquals(keys.size, keys.toSet().size)
