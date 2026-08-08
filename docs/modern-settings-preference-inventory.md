@@ -191,7 +191,11 @@ predicates are now reconstructed and implemented exactly:
   new writes.
 
 `supports_one_handed_mode` is a separate IME runtime gate and is deliberately
-not substituted for the settings-page `is_tablet` predicate.
+not substituted for the settings-page `is_tablet` predicate. Phone-device
+acceptance confirms capability visibility, key-popup behavior, all three
+one-handed values and persistence, portrait/landscape geometry, and existing
+input regressions. The `is_tablet=true` runtime branch remains part of the later
+large-screen matrix.
 
 ### Dependencies or custom state machines
 

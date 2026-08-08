@@ -205,7 +205,11 @@ one-handed selector preserves String values `0`/`1`/`2`, default `0`, original
 localized order and ordinary SharedPreferences notifications; static audit of
 `AutoSyncedListPreference` found no mirrored key or additional business callback.
 The separate `supports_one_handed_mode` runtime resource is not incorrectly used
-as the settings-page visibility gate.
+as the settings-page visibility gate. Phone-device acceptance confirms the
+resolved visibility, key-popup effect, `0`/`1`/`2` one-handed layouts and
+persistence, portrait/landscape geometry, and no existing input regression. The
+`is_tablet=true` runtime branch remains explicitly pending for the large-screen
+test matrix.
 
 The fuzzy-Pinyin stage adds the default-off `fuzzy_pinyin` parent and a guarded
 full-screen Compose detail route. The route retains the original order of all
