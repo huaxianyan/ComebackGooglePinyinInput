@@ -172,8 +172,14 @@ The first handwriting write stage enables the original timeout and stroke-width
 path. Their localized labels and exact values update while dragging; only the
 snapped final index is written on release. There is no reset button, preview,
 new storage type, or additional persistence implementation, matching the legacy
-controls. Long-press delay remains read-only for its separate absent/default and
-reset stage.
+controls.
+
+The long-press stage models absent default `300 ms` separately from explicit
+`"300"` with `DefaultableSetting`. Its official discrete Slider covers exactly
+`100..700 ms` in `10 ms` steps and persists the original String only on release.
+The full-width “使用默认值” action is disabled while the key is absent and removes
+the key when an explicit value exists. There is no preview side effect, and
+misaligned or out-of-range values are rejected by the typed contract.
 
 This stage also enables the two parent Boolean switches. In system-default state,
 “设置自定义值” opens a process/configuration-safe draft at zero without writing;

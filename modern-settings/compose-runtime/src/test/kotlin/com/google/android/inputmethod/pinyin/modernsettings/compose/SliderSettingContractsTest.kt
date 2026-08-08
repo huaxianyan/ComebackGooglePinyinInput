@@ -119,6 +119,23 @@ class SliderSettingContractsTest {
     }
 
     @Test
+    fun longPressAbsentDefaultIsDistinctFromExplicitThreeHundred() {
+        val absent = SliderSettingContracts.resolveLongPress(false, null)
+        val explicit = SliderSettingContracts.resolveLongPress(true, "300")
+
+        assertEquals(300, assertIs<DefaultableSetting.Default<Int>>(absent).value)
+        assertEquals(300, assertIs<DefaultableSetting.Explicit<Int>>(explicit).value)
+        assertEquals("100", SliderSettingContracts.encodeLongPress(100))
+        assertEquals("700", SliderSettingContracts.encodeLongPress(700))
+        assertFailsWith<IllegalArgumentException> {
+            SliderSettingContracts.encodeLongPress(305)
+        }
+        assertFailsWith<IllegalArgumentException> {
+            SliderSettingContracts.resolveLongPress(true, "701")
+        }
+    }
+
+    @Test
     fun longPressMappingIsExactly100To700InTenMillisecondSteps() {
         assertEquals(0, SliderSettingContracts.longPressProgress(100))
         assertEquals(20, SliderSettingContracts.longPressProgress(300))

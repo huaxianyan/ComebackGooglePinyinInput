@@ -24,6 +24,7 @@
     <string name="modern_settings_cancel">取消</string>
     <string name="modern_settings_apply">应用</string>
     <string name="modern_settings_use_system_default">使用系统默认</string>
+    <string name="modern_settings_use_default">使用默认值</string>
     <string name="modern_settings_decrease_volume">降低按键音量</string>
     <string name="modern_settings_increase_volume">提高按键音量</string>
     <string name="modern_settings_decrease_vibration">缩短振动时长</string>

@@ -24,6 +24,7 @@
     <string name="modern_settings_cancel">Cancel</string>
     <string name="modern_settings_apply">Apply</string>
     <string name="modern_settings_use_system_default">Use system default</string>
+    <string name="modern_settings_use_default">Use default</string>
     <string name="modern_settings_decrease_volume">Decrease keypress volume</string>
     <string name="modern_settings_increase_volume">Increase keypress volume</string>
     <string name="modern_settings_decrease_vibration">Shorten vibration duration</string>

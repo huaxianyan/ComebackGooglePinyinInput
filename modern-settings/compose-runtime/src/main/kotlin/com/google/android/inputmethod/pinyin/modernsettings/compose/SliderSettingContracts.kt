@@ -29,6 +29,11 @@ data class EnumeratedSliderContract(
     fun valueAt(index: Int): String = values[index]
 }
 
+sealed interface DefaultableSetting<out T> {
+    data class Default<T>(val value: T) : DefaultableSetting<T>
+    data class Explicit<T>(val value: T) : DefaultableSetting<T>
+}
+
 /** Exact persistence contracts recovered from the original Preference subclasses. */
 object SliderSettingContracts {
     const val SOUND_VOLUME_KEY = "sound_volume"
@@ -88,6 +93,21 @@ object SliderSettingContracts {
     fun encodeVibration(milliseconds: Int): String {
         require(milliseconds >= 0)
         return if (milliseconds == 0) "0" else (milliseconds + 1).toString()
+    }
+
+    fun resolveLongPress(
+        hasStoredValue: Boolean,
+        storedValue: String?,
+    ): DefaultableSetting<Int> {
+        val milliseconds = (storedValue ?: "300").toInt()
+        require(milliseconds in 100..700 && (milliseconds - 100) % 10 == 0)
+        return if (hasStoredValue) DefaultableSetting.Explicit(milliseconds)
+        else DefaultableSetting.Default(milliseconds)
+    }
+
+    fun encodeLongPress(milliseconds: Int): String {
+        require(milliseconds in 100..700 && (milliseconds - 100) % 10 == 0)
+        return milliseconds.toString()
     }
 
     fun longPressProgress(milliseconds: Int): Int = (milliseconds - 100) / 10

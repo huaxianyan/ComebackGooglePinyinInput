@@ -68,10 +68,10 @@ class LegacySettingsRepository(context: Context) {
             slideSensitivityLabels = readEntryLabels(
                 "entries_keyboard_slide_sensitivity_ratio",
             ),
-            longPressDelayMs = preferences.getString(
-                SliderSettingContracts.LONG_PRESS_DELAY_KEY,
-                "300",
-            )!!.toInt(),
+            longPress = SliderSettingContracts.resolveLongPress(
+                preferences.contains(SliderSettingContracts.LONG_PRESS_DELAY_KEY),
+                preferences.getString(SliderSettingContracts.LONG_PRESS_DELAY_KEY, null),
+            ),
             handwritingTimeoutIndex = handwritingTimeoutIndex,
             handwritingTimeoutLabel = readEntryLabel(
                 "entries_handwriting_timeout_ms",
@@ -132,6 +132,19 @@ class LegacySettingsRepository(context: Context) {
 
     fun setSlideSensitivityIndex(index: Int): SliderSettingsSnapshot {
         writeEnumerated(SliderSettingContracts.slideSensitivity, index)
+        return readSliderSnapshot()
+    }
+
+    fun setLongPressDelay(milliseconds: Int): SliderSettingsSnapshot {
+        preferences.edit().putString(
+            SliderSettingContracts.LONG_PRESS_DELAY_KEY,
+            SliderSettingContracts.encodeLongPress(milliseconds),
+        ).apply()
+        return readSliderSnapshot()
+    }
+
+    fun restoreLongPressDefault(): SliderSettingsSnapshot {
+        preferences.edit().remove(SliderSettingContracts.LONG_PRESS_DELAY_KEY).apply()
         return readSliderSnapshot()
     }
 
@@ -221,7 +234,7 @@ data class SliderSettingsSnapshot(
     val slideSensitivityIndex: Int,
     val slideSensitivityLabel: String,
     val slideSensitivityLabels: List<String>,
-    val longPressDelayMs: Int,
+    val longPress: DefaultableSetting<Int>,
     val handwritingTimeoutIndex: Int,
     val handwritingTimeoutLabel: String,
     val handwritingTimeoutLabels: List<String>,

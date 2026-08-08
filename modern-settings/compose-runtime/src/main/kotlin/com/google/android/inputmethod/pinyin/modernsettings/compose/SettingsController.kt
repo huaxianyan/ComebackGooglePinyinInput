@@ -36,6 +36,12 @@ class SettingsController(
     fun setSlideSensitivityIndex(index: Int): SliderSettingsSnapshot =
         repository.setSlideSensitivityIndex(index)
 
+    fun setLongPressDelay(milliseconds: Int): SliderSettingsSnapshot =
+        repository.setLongPressDelay(milliseconds)
+
+    fun restoreLongPressDefault(): SliderSettingsSnapshot =
+        repository.restoreLongPressDefault()
+
     fun setHandwritingTimeoutIndex(index: Int): SliderSettingsSnapshot =
         repository.setHandwritingTimeoutIndex(index)
 

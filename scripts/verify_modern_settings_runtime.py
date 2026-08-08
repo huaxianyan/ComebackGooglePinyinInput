@@ -70,6 +70,9 @@ def main() -> int:
             "previewEffects.previewVibration(milliseconds)",
             "snapshot.keyboardHeightLabels::get",
             "snapshot.slideSensitivityLabels::get",
+            "actions.onLongPressDelayChange",
+            "actions.onLongPressDefault",
+            "LongPressDelaySetting(",
             "actions.onHandwritingTimeoutChange",
             "actions.onHandwritingStrokeWidthChange",
             "snapshot.handwritingTimeoutLabels",
@@ -100,6 +103,7 @@ def main() -> int:
                 'name="modern_settings_set_custom"',
                 'name="modern_settings_choose_custom_unsaved"',
                 'name="modern_settings_use_system_default"',
+                'name="modern_settings_use_default"',
                 'name="modern_settings_value_adjustable"',
             ),
             f"{label} modern settings resources",
@@ -119,6 +123,9 @@ def main() -> int:
             "progress * 10 + 100",
             "fun encodeVolumePercent(percent: Int)",
             "percent / 100f",
+            "sealed interface DefaultableSetting",
+            "fun resolveLongPress(",
+            "fun encodeLongPress(milliseconds: Int)",
         ),
         "audited Slider persistence contracts",
     )
@@ -175,6 +182,8 @@ def main() -> int:
             "fun restoreVibrationDefault()",
             "fun setKeyboardHeightIndex(index: Int)",
             "fun setSlideSensitivityIndex(index: Int)",
+            "fun setLongPressDelay(milliseconds: Int)",
+            "fun restoreLongPressDefault()",
             "fun setHandwritingTimeoutIndex(index: Int)",
             "fun setHandwritingStrokeWidthIndex(index: Int)",
             "preferences.edit().putString(contract.key, contract.valueAt(index)).apply()",
@@ -184,8 +193,8 @@ def main() -> int:
     expected_write_counts = {
         "putBoolean(": 2,
         "putFloat(": 1,
-        "putString(": 2,
-        ".remove(": 2,
+        "putString(": 3,
+        ".remove(": 3,
     }
     for operation, expected_count in expected_write_counts.items():
         actual_count = repository_text.count(operation)

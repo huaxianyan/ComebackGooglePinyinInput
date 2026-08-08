@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
@@ -45,6 +46,8 @@ data class SettingsActions(
     val onVibrationDefault: () -> Unit,
     val onKeyboardHeightChange: (Int) -> Unit,
     val onSlideSensitivityChange: (Int) -> Unit,
+    val onLongPressDelayChange: (Int) -> Unit,
+    val onLongPressDefault: () -> Unit,
     val onHandwritingTimeoutChange: (Int) -> Unit,
     val onHandwritingStrokeWidthChange: (Int) -> Unit,
 )
@@ -169,16 +172,15 @@ fun SettingsScreen(snapshot: SliderSettingsSnapshot, actions: SettingsActions) {
                 )
             }
             item {
-                DiscreteSettingsSlider(
+                LongPressDelaySetting(
                     title = legacyString(
                         "setting_key_long_press_delay_title",
                         R.string.modern_settings_long_press_title,
                     ),
-                    value = SliderSettingContracts.longPressProgress(
-                        snapshot.longPressDelayMs,
-                    ).coerceIn(0, 60).toFloat(),
-                    valueText = millisecondsText(snapshot.longPressDelayMs),
-                    maximumIndex = 60,
+                    state = snapshot.longPress,
+                    millisecondsText = millisecondsText,
+                    onCommit = actions.onLongPressDelayChange,
+                    onRestoreDefault = actions.onLongPressDefault,
                 )
             }
             item { HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp)) }
@@ -229,6 +231,44 @@ fun SettingsScreen(snapshot: SliderSettingsSnapshot, actions: SettingsActions) {
                     onValueCommit = actions.onHandwritingStrokeWidthChange,
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun LongPressDelaySetting(
+    title: String,
+    state: DefaultableSetting<Int>,
+    millisecondsText: (Int) -> String,
+    onCommit: (Int) -> Unit,
+    onRestoreDefault: () -> Unit,
+) {
+    val milliseconds = when (state) {
+        is DefaultableSetting.Default -> state.value
+        is DefaultableSetting.Explicit -> state.value
+    }
+    Column {
+        DiscreteSettingsSlider(
+            title = title,
+            value = SliderSettingContracts.longPressProgress(milliseconds).toFloat(),
+            valueText = millisecondsText(milliseconds),
+            valueTextForIndex = { progress ->
+                millisecondsText(SliderSettingContracts.longPressMilliseconds(progress))
+            },
+            maximumIndex = 60,
+            editable = true,
+            onValueCommit = { progress ->
+                onCommit(SliderSettingContracts.longPressMilliseconds(progress))
+            },
+        )
+        OutlinedButton(
+            onClick = onRestoreDefault,
+            enabled = state is DefaultableSetting.Explicit,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp),
+        ) {
+            Text(stringResource(R.string.modern_settings_use_default))
         }
     }
 }

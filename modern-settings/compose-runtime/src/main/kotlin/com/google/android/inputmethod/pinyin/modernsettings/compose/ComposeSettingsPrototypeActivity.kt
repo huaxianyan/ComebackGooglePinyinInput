@@ -58,6 +58,12 @@ class ComposeSettingsPrototypeActivity : ComponentActivity() {
                             onSlideSensitivityChange = { index ->
                                 snapshot = controller.setSlideSensitivityIndex(index)
                             },
+                            onLongPressDelayChange = { milliseconds ->
+                                snapshot = controller.setLongPressDelay(milliseconds)
+                            },
+                            onLongPressDefault = {
+                                snapshot = controller.restoreLongPressDefault()
+                            },
                             onHandwritingTimeoutChange = { index ->
                                 snapshot = controller.setHandwritingTimeoutIndex(index)
                             },
