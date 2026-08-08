@@ -530,6 +530,9 @@ def main() -> int:
             'values_v35 / "modern_settings_runtime.xml"',
             'uses_sdk.set(T + "overrideLibrary"',
             '"androidx.compose.material.icons"',
+            'queries = root.find("queries")',
+            'action.set(A + "name", "android.view.InputMethod")',
+            "broad QUERY_ALL_PACKAGES permission",
         ),
         "guarded legacy manifest",
     )
@@ -557,6 +560,8 @@ def main() -> int:
                 "com.google.android.inputmethod.pinyin.PinyinIME",
                 "ComposeSettingsPrototypeActivity",
                 'android:enabled="@bool/modern_settings_runtime_enabled"',
+                '<queries>',
+                'android:name="android.view.InputMethod"',
             ),
             "combined host manifest",
         )
@@ -582,6 +587,7 @@ def main() -> int:
             "androidx.startup.InitializationProvider",
             "androidx.profileinstaller.ProfileInstallReceiver",
             "android:appComponentFactory=",
+            "android.permission.QUERY_ALL_PACKAGES",
         ):
             if forbidden in manifest_text:
                 raise RuntimeError(f"unguarded AndroidX process entry point: {forbidden}")

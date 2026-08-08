@@ -227,13 +227,17 @@ rule reducer, hidden/disabled writes are rejected, and no dependency transition
 fabricates a child write.
 
 Device acceptance has not closed this stage. On the current Pixel, Gboard and
-other IMEs are enabled but the modern page still omits `switch_to_other_imes`.
+other IMEs are enabled but the first modern build omitted `switch_to_other_imes`.
 The same row was available on target 28 and a value saved there continues to
 work after upgrading, while the target 36 legacy settings page no longer permits
-editing it. This is classified as an existing target-36 settings regression plus
-an unresolved modern capability-resolver defect, not as valid unavailability.
-The published target-36 release will not be patched; the MD3 release must restore
-the row for capable configurations and cover both fresh and upgraded state.
+editing it. Static comparison identifies the target-30+ package-visibility
+boundary: the inherited manifest did not declare visibility for IME services, so
+settings-side `InputMethodManager` enumeration could not reliably observe the
+enabled targets. The MD3 host now adds a narrowly scoped
+`android.view.InputMethod` intent under `<queries>`; it does not request
+`QUERY_ALL_PACKAGES`, and the published target-36 release remains unchanged.
+Device validation must confirm that this restores the row and cover both fresh
+and upgraded state.
 Separately, disabling emoji and language keys and then disabling the English
 keyboard was observed to expose an unexpected switch button in the audit host,
 while formal `v2.0.0` does not. Whether that surface belongs to the keyboard or

@@ -111,6 +111,25 @@ def main() -> int:
     application = root.find("application")
     if application is None:
         raise RuntimeError("legacy manifest has no application")
+
+    # targetSdk 30+ package visibility otherwise hides enabled IMEs from the
+    # settings-side InputMethodManager queries inherited from the target-28 app.
+    # Declare only the service intent the app actually needs; never request the
+    # broad QUERY_ALL_PACKAGES permission.
+    queries = root.find("queries")
+    if queries is None:
+        queries = ET.Element("queries")
+        root.insert(list(root).index(application), queries)
+    has_input_method_query = any(
+        action.attrib.get(A + "name") == "android.view.InputMethod"
+        for intent in queries.findall("intent")
+        for action in intent.findall("action")
+    )
+    if not has_input_method_query:
+        intent = ET.SubElement(queries, "intent")
+        action = ET.SubElement(intent, "action")
+        action.set(A + "name", "android.view.InputMethod")
+
     application.set(T + "remove", "android:appComponentFactory")
 
     activity = ET.SubElement(application, "activity")
