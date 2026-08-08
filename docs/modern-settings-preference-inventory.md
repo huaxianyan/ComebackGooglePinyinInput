@@ -118,12 +118,19 @@ The audit device currently presents no English candidate words and English
 QWERTY glide input does not produce words. This is not an absent design:
 `keyboard_en_qwerty.xml` binds `EnglishGestureMotionEventHandler` and
 `keyboard_en_9key.xml` binds `English9KeyGestureMotionEventHandler` to the same
-`enable_gesture_input` key, and both handler classes are present. Consequently,
-settings persistence and dependency behavior can be accepted independently,
-but spelling, suggestion, next-word, offensive-filter, and English-glide runtime
-effects are not claimed as functional acceptance. A formal-v2.0.0 A/B test is
-required before classifying the missing English decode/candidate chain as a
-historical modern-Android incompatibility or a project regression.
+`enable_gesture_input` key, and both handler classes are present. Formal
+`v2.0.0` A/B testing confirms that English candidates work when
+`show_suggestions` is on, while English glide works independently whether that
+suggestion switch is on or off. The Compose audit host still has neither after
+explicitly cycling both switches, so this is an audit-runtime regression rather
+than an absent or historical feature.
+
+Static comparison rules out missing payload: both APKs have byte-identical
+English/Latin/HmmGesture Smali, English keyboard XML, all 76 shared assets, and
+all five ARM64 native libraries. The current audit process emits no related
+Warning/Error. Settings persistence and dependency behavior remain accepted,
+but English runtime effects are not; diagnosis continues across fresh-data
+initialization, application ID, signing identity, and host resource/DEX assembly.
 
 ## Gesture dependency and mirrored-write group
 
