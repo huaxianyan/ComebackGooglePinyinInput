@@ -408,6 +408,39 @@ def main() -> int:
         ),
         "pure adjustment state reducer",
     )
+    navigation = next(
+        (project / "compose-runtime/src/main/kotlin").rglob("SettingsNavigation.kt")
+    ).read_text(encoding="utf-8")
+    require(
+        navigation,
+        (
+            "internal enum class SettingsRoute",
+            "KeyboardAppearance",
+            "KeyboardKeys",
+            "KeyboardFeedback",
+            "Handwriting",
+            "object SettingsRouteStack",
+            "fun decode(path: String)",
+            "fun push(path: String, destination: SettingsRoute)",
+            "fun pop(path: String)",
+            "require(destination != SettingsRoute.Home)",
+        ),
+        "saveable settings route stack",
+    )
+    navigation_test = next(
+        (project / "compose-runtime/src/test/kotlin").rglob("SettingsNavigationTest.kt")
+    ).read_text(encoding="utf-8")
+    require(
+        navigation_test,
+        (
+            "initialPathIsHomeAndCannotPop",
+            "nestedRoutePushAndPopPreserveHierarchy",
+            "homeCannotBePushedAsAChild",
+            "invalidRestoredPathFallsBackToHome",
+        ),
+        "settings navigation tests",
+    )
+
     adjustment_test = next(
         (project / "compose-runtime/src/test/kotlin").rglob("AdjustmentStateTest.kt")
     ).read_text(encoding="utf-8")

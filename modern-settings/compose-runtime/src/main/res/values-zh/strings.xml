@@ -2,6 +2,23 @@
 <resources>
     <string name="modern_settings_title">键盘设置</string>
     <string name="modern_settings_stage_summary">官方 Compose Material 3 · 分阶段写入验证</string>
+    <string name="modern_settings_home_input_title">输入设置</string>
+    <string name="modern_settings_home_input_summary">拼音、英文、滑行输入和纠错</string>
+    <string name="modern_settings_home_keyboard_title">键盘</string>
+    <string name="modern_settings_home_keyboard_summary">外观、布局、按键、反馈和手写</string>
+    <string name="modern_settings_home_dictionary_title">词典与备份</string>
+    <string name="modern_settings_home_dictionary_summary">用户词典、健康状态、备份和导入</string>
+    <string name="modern_settings_home_other_title">其他</string>
+    <string name="modern_settings_home_other_summary">启动器图标、关于和法律信息</string>
+    <string name="modern_settings_chinese_input_summary">拼音方案、混合输入、联想和模糊拼音</string>
+    <string name="modern_settings_english_input_summary">纠错、建议、预测和自动大写</string>
+    <string name="modern_settings_keyboard_appearance_title">外观与布局</string>
+    <string name="modern_settings_keyboard_appearance_summary">主题、单手模式和键盘高度</string>
+    <string name="modern_settings_keyboard_keys_title">按键与切换</string>
+    <string name="modern_settings_keyboard_keys_summary">按键气泡、输入按钮、切换和交互</string>
+    <string name="modern_settings_keyboard_feedback_summary">声音、音量、振动和强度</string>
+    <string name="modern_settings_handwriting_summary">识别速度和笔迹粗细</string>
+    <string name="modern_settings_specialized_page_pending">此专用设置页面尚未迁移，现有旧版行为保持不变。</string>
     <string name="modern_settings_section_input">常规输入</string>
     <string name="modern_settings_section_chinese_input">中文输入</string>
     <string name="modern_settings_pinyin_scheme_title">拼音方案</string>

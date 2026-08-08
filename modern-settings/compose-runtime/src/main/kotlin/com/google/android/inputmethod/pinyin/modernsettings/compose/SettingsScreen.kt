@@ -78,13 +78,22 @@ data class SettingsActions(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(snapshot: SettingsSnapshot, actions: SettingsActions) {
-    var fuzzyDetailVisible by rememberSaveable { mutableStateOf(false) }
-    BackHandler(enabled = fuzzyDetailVisible) { fuzzyDetailVisible = false }
-    if (fuzzyDetailVisible) {
+    var routePath by rememberSaveable { mutableStateOf(SettingsRouteStack.initialPath) }
+    val route = SettingsRouteStack.current(routePath)
+    val navigateTo: (SettingsRoute) -> Unit = { destination ->
+        routePath = SettingsRouteStack.push(routePath, destination)
+    }
+    val navigateBack: () -> Unit = {
+        routePath = SettingsRouteStack.pop(routePath)
+    }
+    val canNavigateBack = SettingsRouteStack.canPop(routePath)
+
+    BackHandler(enabled = canNavigateBack, onBack = navigateBack)
+    if (route == SettingsRoute.FuzzyPinyin) {
         FuzzyPinyinDetailScreen(
             snapshot = snapshot,
             actions = actions,
-            onNavigateBack = { fuzzyDetailVisible = false },
+            onNavigateBack = navigateBack,
         )
         return
     }
@@ -96,23 +105,71 @@ fun SettingsScreen(snapshot: SettingsSnapshot, actions: SettingsActions) {
     val millisecondsText: (Int) -> String = {
         context.getString(R.string.modern_settings_milliseconds_format, it)
     }
+    val title = routeTitle(route)
     Scaffold(
-        topBar = { TopAppBar(title = { Text(stringResource(R.string.modern_settings_title)) }) },
+        topBar = {
+            TopAppBar(
+                title = { Text(title) },
+                navigationIcon = {
+                    if (canNavigateBack) {
+                        IconButton(onClick = navigateBack) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = stringResource(
+                                    R.string.modern_settings_navigate_back,
+                                ),
+                            )
+                        }
+                    }
+                },
+            )
+        },
         modifier = Modifier.fillMaxSize(),
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier.padding(innerPadding),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            item {
-                Text(
-                    text = stringResource(R.string.modern_settings_stage_summary),
-                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
+            if (route == SettingsRoute.Home) {
+                item {
+                    Text(
+                        text = stringResource(R.string.modern_settings_stage_summary),
+                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+                item {
+                    SettingsNavigationRow(
+                        title = stringResource(R.string.modern_settings_home_input_title),
+                        supporting = stringResource(R.string.modern_settings_home_input_summary),
+                        onClick = { navigateTo(SettingsRoute.Input) },
+                    )
+                }
+                item {
+                    SettingsNavigationRow(
+                        title = stringResource(R.string.modern_settings_home_keyboard_title),
+                        supporting = stringResource(R.string.modern_settings_home_keyboard_summary),
+                        onClick = { navigateTo(SettingsRoute.Keyboard) },
+                    )
+                }
+                item {
+                    SettingsNavigationRow(
+                        title = stringResource(R.string.modern_settings_home_dictionary_title),
+                        supporting = stringResource(R.string.modern_settings_home_dictionary_summary),
+                        onClick = { navigateTo(SettingsRoute.Dictionary) },
+                    )
+                }
+                item {
+                    SettingsNavigationRow(
+                        title = stringResource(R.string.modern_settings_home_other_title),
+                        supporting = stringResource(R.string.modern_settings_home_other_summary),
+                        onClick = { navigateTo(SettingsRoute.Other) },
+                    )
+                }
             }
-            item { SectionTitle(stringResource(R.string.modern_settings_section_input)) }
+            if (route == SettingsRoute.Input) {
+                item { SectionTitle(stringResource(R.string.modern_settings_section_input)) }
             item {
                 SettingsSwitchRow(
                     title = legacyString(
@@ -159,17 +216,31 @@ fun SettingsScreen(snapshot: SettingsSnapshot, actions: SettingsActions) {
                     },
                 )
             }
-            item { HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp)) }
-            item {
-                SectionTitle(
-                    legacyString(
-                        "setting_chinese_input",
-                        R.string.modern_settings_section_chinese_input,
+                item { HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp)) }
+                item {
+                    SettingsNavigationRow(
+                        title = legacyString(
+                            "setting_chinese_input",
+                            R.string.modern_settings_section_chinese_input,
+                        ),
+                        supporting = stringResource(R.string.modern_settings_chinese_input_summary),
+                        onClick = { navigateTo(SettingsRoute.ChineseInput) },
                     )
-                )
+                }
+                item {
+                    SettingsNavigationRow(
+                        title = legacyString(
+                            "setting_english_input",
+                            R.string.modern_settings_section_english_input,
+                        ),
+                        supporting = stringResource(R.string.modern_settings_english_input_summary),
+                        onClick = { navigateTo(SettingsRoute.EnglishInput) },
+                    )
+                }
             }
-            item {
-                EnumeratedListSetting(
+            if (route == SettingsRoute.ChineseInput) {
+                item {
+                    EnumeratedListSetting(
                     title = legacyString(
                         "setting_pinyin_scheme_title",
                         R.string.modern_settings_pinyin_scheme_title,
@@ -360,20 +431,13 @@ fun SettingsScreen(snapshot: SettingsSnapshot, actions: SettingsActions) {
                         R.string.modern_settings_fuzzy_pinyin_detail_title,
                     ),
                     enabled = snapshot.fuzzyPinyin.value,
-                    onClick = { fuzzyDetailVisible = true },
+                    onClick = { navigateTo(SettingsRoute.FuzzyPinyin) },
                 )
             }
-            item { HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp)) }
-            item {
-                SectionTitle(
-                    legacyString(
-                        "setting_english_input",
-                        R.string.modern_settings_section_english_input,
-                    )
-                )
             }
-            item {
-                SettingsSwitchRow(
+            if (route == SettingsRoute.EnglishInput) {
+                item {
+                    SettingsSwitchRow(
                     title = legacyString(
                         "setting_spell_correction_title",
                         R.string.modern_settings_latin_auto_correction_title,
@@ -458,10 +522,10 @@ fun SettingsScreen(snapshot: SettingsSnapshot, actions: SettingsActions) {
                     },
                 )
             }
-            item { HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp)) }
-            item { SectionTitle(stringResource(R.string.modern_settings_section_key_feedback)) }
-            item {
-                SettingsSwitchRow(
+            }
+            if (route == SettingsRoute.KeyboardFeedback) {
+                item {
+                    SettingsSwitchRow(
                     title = legacyString(
                         "setting_sound_on_keypress_title",
                         R.string.modern_settings_sound_title,
@@ -522,6 +586,8 @@ fun SettingsScreen(snapshot: SettingsSnapshot, actions: SettingsActions) {
                     onRestoreDefault = actions.onVibrationDefault,
                 )
             }
+            }
+            if (route == SettingsRoute.KeyboardKeys) {
             if (snapshot.capabilities.popupOnKeypressVisible) {
                 item {
                     SettingsSwitchRow(
@@ -550,8 +616,38 @@ fun SettingsScreen(snapshot: SettingsSnapshot, actions: SettingsActions) {
                     )
                 }
             }
-            item { HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp)) }
-            item { SectionTitle(stringResource(R.string.modern_settings_section_layout_gestures)) }
+            }
+            if (route == SettingsRoute.Keyboard) {
+                item {
+                    SettingsNavigationRow(
+                        title = stringResource(R.string.modern_settings_keyboard_appearance_title),
+                        supporting = stringResource(R.string.modern_settings_keyboard_appearance_summary),
+                        onClick = { navigateTo(SettingsRoute.KeyboardAppearance) },
+                    )
+                }
+                item {
+                    SettingsNavigationRow(
+                        title = stringResource(R.string.modern_settings_keyboard_keys_title),
+                        supporting = stringResource(R.string.modern_settings_keyboard_keys_summary),
+                        onClick = { navigateTo(SettingsRoute.KeyboardKeys) },
+                    )
+                }
+                item {
+                    SettingsNavigationRow(
+                        title = stringResource(R.string.modern_settings_section_key_feedback),
+                        supporting = stringResource(R.string.modern_settings_keyboard_feedback_summary),
+                        onClick = { navigateTo(SettingsRoute.KeyboardFeedback) },
+                    )
+                }
+                item {
+                    SettingsNavigationRow(
+                        title = stringResource(R.string.modern_settings_section_handwriting),
+                        supporting = stringResource(R.string.modern_settings_handwriting_summary),
+                        onClick = { navigateTo(SettingsRoute.Handwriting) },
+                    )
+                }
+            }
+            if (route == SettingsRoute.KeyboardAppearance) {
             if (snapshot.capabilities.oneHandedModeVisible) {
                 item {
                     EnumeratedListSetting(
@@ -566,6 +662,8 @@ fun SettingsScreen(snapshot: SettingsSnapshot, actions: SettingsActions) {
                     )
                 }
             }
+            }
+            if (route == SettingsRoute.KeyboardKeys) {
             item {
                 SettingsSwitchRow(
                     title = legacyString(
@@ -653,6 +751,8 @@ fun SettingsScreen(snapshot: SettingsSnapshot, actions: SettingsActions) {
                     },
                 )
             }
+            }
+            if (route == SettingsRoute.KeyboardAppearance) {
             item {
                 DiscreteSettingsSlider(
                     title = legacyString(
@@ -667,6 +767,8 @@ fun SettingsScreen(snapshot: SettingsSnapshot, actions: SettingsActions) {
                     onValueCommit = actions.onKeyboardHeightChange,
                 )
             }
+            }
+            if (route == SettingsRoute.KeyboardKeys) {
             item {
                 DiscreteSettingsSlider(
                     title = legacyString(
@@ -693,8 +795,8 @@ fun SettingsScreen(snapshot: SettingsSnapshot, actions: SettingsActions) {
                     onRestoreDefault = actions.onLongPressDefault,
                 )
             }
-            item { HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp)) }
-            item { SectionTitle(stringResource(R.string.modern_settings_section_handwriting)) }
+            }
+            if (route == SettingsRoute.Handwriting) {
             item {
                 DiscreteSettingsSlider(
                     title = legacyString(
@@ -741,8 +843,46 @@ fun SettingsScreen(snapshot: SettingsSnapshot, actions: SettingsActions) {
                     onValueCommit = actions.onHandwritingStrokeWidthChange,
                 )
             }
+            }
+            if (route == SettingsRoute.Dictionary || route == SettingsRoute.Other) {
+                item {
+                    Text(
+                        text = stringResource(R.string.modern_settings_specialized_page_pending),
+                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+            }
         }
     }
+}
+
+@Composable
+private fun routeTitle(route: SettingsRoute): String = when (route) {
+    SettingsRoute.Home -> stringResource(R.string.modern_settings_title)
+    SettingsRoute.Input -> stringResource(R.string.modern_settings_home_input_title)
+    SettingsRoute.ChineseInput -> legacyString(
+        "setting_chinese_input",
+        R.string.modern_settings_section_chinese_input,
+    )
+    SettingsRoute.EnglishInput -> legacyString(
+        "setting_english_input",
+        R.string.modern_settings_section_english_input,
+    )
+    SettingsRoute.Keyboard -> stringResource(R.string.modern_settings_home_keyboard_title)
+    SettingsRoute.KeyboardAppearance -> stringResource(
+        R.string.modern_settings_keyboard_appearance_title,
+    )
+    SettingsRoute.KeyboardKeys -> stringResource(R.string.modern_settings_keyboard_keys_title)
+    SettingsRoute.KeyboardFeedback -> stringResource(R.string.modern_settings_section_key_feedback)
+    SettingsRoute.Handwriting -> stringResource(R.string.modern_settings_section_handwriting)
+    SettingsRoute.Dictionary -> stringResource(R.string.modern_settings_home_dictionary_title)
+    SettingsRoute.Other -> stringResource(R.string.modern_settings_home_other_title)
+    SettingsRoute.FuzzyPinyin -> legacyString(
+        "setting_fuzzy_pinyin_detail_title",
+        R.string.modern_settings_fuzzy_pinyin_detail_title,
+    )
 }
 
 private data class FuzzyPinyinOptionUi(
@@ -825,7 +965,8 @@ private fun FuzzyPinyinDetailScreen(
 @Composable
 private fun SettingsNavigationRow(
     title: String,
-    enabled: Boolean,
+    supporting: String? = null,
+    enabled: Boolean = true,
     onClick: () -> Unit,
 ) {
     val color = if (enabled) MaterialTheme.colorScheme.onSurface
@@ -837,6 +978,16 @@ private fun SettingsNavigationRow(
                 modifier = Modifier.padding(start = 8.dp),
                 color = color,
             )
+        },
+        supportingContent = supporting?.let { supportingText ->
+            {
+                Text(
+                    supportingText,
+                    modifier = Modifier.padding(start = 8.dp),
+                    color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant
+                    else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f),
+                )
+            }
         },
         trailingContent = {
             Icon(

@@ -369,6 +369,14 @@ Navigation Compose dependency. Page composables remain stateless projections of
 shared Controller/Repository state, so cross-page dependencies retain values
 and write gates exactly as before.
 
+Hierarchy V1 implements this route tree with a saveable encoded path and a pure
+`SettingsRouteStack`. Unit tests cover root behavior, nested
+Input/Chinese/Fuzzy navigation, one-level popping, rejection of Home as a child,
+and safe fallback for a stale restored route. Dictionary/backup and Other are
+navigation placeholders only: they explicitly report that specialized behavior
+is not migrated and perform no writes. Device acceptance precedes the mechanical
+extraction of page composables from `SettingsScreen.kt` into separate files.
+
 ## Next implementation stage
 
 1. Extract shared rows, sliders, dialogs, and section components from the current

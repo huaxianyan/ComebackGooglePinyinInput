@@ -2,6 +2,23 @@
 <resources>
     <string name="modern_settings_title">Keyboard settings</string>
     <string name="modern_settings_stage_summary">Official Compose Material 3 · staged write validation</string>
+    <string name="modern_settings_home_input_title">Input settings</string>
+    <string name="modern_settings_home_input_summary">Pinyin, English, glide typing, and correction</string>
+    <string name="modern_settings_home_keyboard_title">Keyboard</string>
+    <string name="modern_settings_home_keyboard_summary">Appearance, layout, keys, feedback, and handwriting</string>
+    <string name="modern_settings_home_dictionary_title">Dictionary and backup</string>
+    <string name="modern_settings_home_dictionary_summary">User dictionary, health, backup, and import</string>
+    <string name="modern_settings_home_other_title">Other</string>
+    <string name="modern_settings_home_other_summary">Launcher icon, about, and legal information</string>
+    <string name="modern_settings_chinese_input_summary">Pinyin scheme, mixed input, prediction, and Fuzzy Pinyin</string>
+    <string name="modern_settings_english_input_summary">Correction, suggestions, prediction, and capitalization</string>
+    <string name="modern_settings_keyboard_appearance_title">Appearance and layout</string>
+    <string name="modern_settings_keyboard_appearance_summary">Theme, one-handed mode, and keyboard height</string>
+    <string name="modern_settings_keyboard_keys_title">Keys and switching</string>
+    <string name="modern_settings_keyboard_keys_summary">Key popups, input buttons, switching, and interaction</string>
+    <string name="modern_settings_keyboard_feedback_summary">Sound, volume, vibration, and strength</string>
+    <string name="modern_settings_handwriting_summary">Recognition speed and stroke width</string>
+    <string name="modern_settings_specialized_page_pending">This specialized settings page has not yet been migrated. Its existing legacy behavior remains unchanged.</string>
     <string name="modern_settings_section_input">General input</string>
     <string name="modern_settings_section_chinese_input">Chinese input</string>
     <string name="modern_settings_pinyin_scheme_title">Pinyin scheme</string>
