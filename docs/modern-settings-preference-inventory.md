@@ -211,7 +211,9 @@ their existing component or synchronization effects before migration.
   dialog. It preserves String storage, absent default `quanpin`, original entry
   order (`quanpin`, Microsoft, Unispim, Pinyin PlusPlus, Intelligent ABC,
   Ziranma, flyPY), localized legacy labels, immediate single-selection commit,
-  and dismiss-without-write behavior; device acceptance remains pending.
+  and dismiss-without-write behavior. Device acceptance confirms persistence,
+  Full Pinyin and flyPY phrase input, unchanged glide input, cancel semantics,
+  and alignment with the page's 24 dp content edge.
 
 ## Remaining Keyboard page inventory
 
