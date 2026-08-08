@@ -100,6 +100,7 @@
 
 - [x] 第一批普通 Boolean 设置完成真机验收：开关、持久化、相互隔离、中文资源，以及空格滑动和英文键盘实际行为均正常
 - [ ] 低优先级调查“双空格输入句号”历史失效：`v2.0.0` 正式版和 Compose 审计版均无法触发，开关持久化本身正常，因此不是现代设置迁移回归；当前阶段不修改原生输入语义
+- [ ] A/B 调查英文候选与英文滑行输入缺失：Compose 审计版中文 QWERTY 滑行已通过，但英文无候选且不能滑行；原始 `keyboard_en_qwerty.xml` / `keyboard_en_9key.xml` 明确绑定 `EnglishGestureMotionEventHandler` / `English9KeyGestureMotionEventHandler` 到同一 `enable_gesture_input`，对应类也存在，因此英文滑行属于预期能力而非未设计功能；先与正式 `v2.0.0` 对比，再判断历史兼容问题或项目回归
 
 ## 测试约定
 

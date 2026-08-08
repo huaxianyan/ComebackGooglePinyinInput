@@ -114,10 +114,16 @@ separate framework-era `spell_correction` key/default pair. The child
 its Switch is disabled and repository writes are rejected until the parent is
 on. Turning the parent back on exposes the retained child state.
 
-The audit device currently presents no English candidate words. Consequently,
+The audit device currently presents no English candidate words and English
+QWERTY glide input does not produce words. This is not an absent design:
+`keyboard_en_qwerty.xml` binds `EnglishGestureMotionEventHandler` and
+`keyboard_en_9key.xml` binds `English9KeyGestureMotionEventHandler` to the same
+`enable_gesture_input` key, and both handler classes are present. Consequently,
 settings persistence and dependency behavior can be accepted independently,
-but spelling, suggestion, next-word, and offensive-filter runtime effects are
-not claimed as functional acceptance.
+but spelling, suggestion, next-word, offensive-filter, and English-glide runtime
+effects are not claimed as functional acceptance. A formal-v2.0.0 A/B test is
+required before classifying the missing English decode/candidate chain as a
+historical modern-Android incompatibility or a project regression.
 
 ## Gesture dependency and mirrored-write group
 
