@@ -226,6 +226,19 @@ instead also requires `show_english_keyboard`. UI and Repository use one pure
 rule reducer, hidden/disabled writes are rejected, and no dependency transition
 fabricates a child write.
 
+Device acceptance has not closed this stage. On the current Pixel, Gboard and
+other IMEs are enabled but the modern page still omits `switch_to_other_imes`.
+The same row was available on target 28 and a value saved there continues to
+work after upgrading, while the target 36 legacy settings page no longer permits
+editing it. This is classified as an existing target-36 settings regression plus
+an unresolved modern capability-resolver defect, not as valid unavailability.
+The published target-36 release will not be patched; the MD3 release must restore
+the row for capable configurations and cover both fresh and upgraded state.
+Separately, disabling emoji and language keys and then disabling the English
+keyboard was observed to expose an unexpected switch button in the audit host,
+while formal `v2.0.0` does not. Whether that surface belongs to the keyboard or
+SystemUI must be established before assigning a code owner or fix.
+
 The fuzzy-Pinyin stage adds the default-off `fuzzy_pinyin` parent and a guarded
 full-screen Compose detail route. The route retains the original order of all
 twelve Boolean options, their six-true/six-false defaults, stored values while

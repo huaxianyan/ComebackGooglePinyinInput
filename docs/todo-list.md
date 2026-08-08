@@ -104,7 +104,8 @@
 - [x] 首个 Compose ListPreference `pinyin_scheme` 通过真机验收：官方 Material 3 单选对话框保留 String 类型、缺省 `quanpin`、七项原始顺序和本地化标签；取消不写、持久化、全拼与小鹤双拼实际输入、滑行回归均正常，`ListItem` 标题和摘要也已与同页 24 dp 内容边缘对齐
 - [x] Compose 模糊拼音依赖组通过真机验收：父开关缺省关闭，详情入口随父开关禁用；详情页按原始顺序提供十二个 Material 3 Switch，保留前六项 true、后六项 false 的默认值、父关闭时保留子值且拒绝写入、显式可访问性描述、工具栏/系统 Back 和配置重建导航状态；实际模糊候选、关闭后的恢复以及全拼/小鹤双拼/中英文滑行回归均正常
 - [x] Compose 键盘能力门控组通过真机验收：严格复现 `ais`——`is_tablet=true` 隐藏按键弹出和单手模式，语音按钮仅在已启用的 `com.google.android*` IME 具有 mode=`voice` 的已启用/隐式 subtype 时显示，异常时隐藏；隐藏项由 Repository 拒绝写入。单手模式保留 String `0/1/2`、默认 `0`、原始顺序和普通 SharedPreferences 通知；手机侧可见性、语音能力门控、按键弹出效果、左右/关闭三种单手布局、持久化、横竖屏几何及现有输入回归均正常。`is_tablet=true` 运行时分支仍留待后续大屏矩阵覆盖
-- [ ] 验收 Compose 表情/语言切换键状态机：表情键仅 API 19+ 手机显示且默认 false；开启后语言键视觉取消勾选但保留持久值，关闭后恢复；`ajy.d()` 的 Settings Activity 回退按本包多 subtype 或其他 `com.google.*` 非辅助 subtype 判定；“切换到其他输入法”仅在能力存在时显示，并同时依赖有效语言键和英文键。需验证三项实际键盘布局、子值保留、重进设置、横竖屏和现有输入回归
+- [ ] Compose 表情/语言切换键状态机部分通过、尚未验收闭环：表情键与语言键的反向依赖、禁用时视觉取消但保留语言键持久值、关闭表情键后的恢复，以及多数布局/输入回归正常；但 Pixel 当前已启用 Gboard 等可切换 IME，MD3 页面仍错误隐藏 `switch_to_other_imes`，说明 Settings Activity 能力解析存在缺陷。另观察到表情键、语言键均关闭后再关闭英文键盘会出现一个输入法切换按钮，而正式 `v2.0.0` 不出现；需先区分该按钮属于键盘内部 globe key 还是 SystemUI 导航栏 IME picker，再定位修复
+- [ ] 记录 target 36 既有设置回归：`switch_to_other_imes` 行在 target 28 可见，升级后已保存值仍继续生效；target 36 设置页不再提供该行，因此无法修改。暂不回补已发布的 target 36 release，必须在 MD3 新 release 路由启用前恢复可见性和可修改性，并验证新装、升级保留值及开/关两条路径
 
 ## 测试约定
 
