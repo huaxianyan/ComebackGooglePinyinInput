@@ -138,8 +138,11 @@ Compose host. The English model path uses `openRawResourceFd()`, which requires
 an uncompressed entry; `main_en_d3_20160715.gzip` remained stored, but its
 metadata became inaccessible. The reconstructed host therefore declares JSON
 `noCompress`, and the verifier requires both English raw entries to be
-`ZIP_STORED`. Settings persistence and dependency behavior remain accepted;
-English runtime acceptance must be repeated on the corrected host.
+`ZIP_STORED`. Corrected-host device acceptance confirms English candidates
+follow `show_suggestions`, English glide remains available when suggestions are
+off, the gesture parent controls both English and Chinese glide, and Chinese
+input remains unaffected. The English runtime and its settings dependencies are
+therefore accepted together.
 
 ## Gesture dependency and mirrored-write group
 

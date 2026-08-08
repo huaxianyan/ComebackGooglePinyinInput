@@ -100,7 +100,7 @@
 
 - [x] 第一批普通 Boolean 设置完成真机验收：开关、持久化、相互隔离、中文资源，以及空格滑动和英文键盘实际行为均正常
 - [ ] 低优先级调查“双空格输入句号”历史失效：`v2.0.0` 正式版和 Compose 审计版均无法触发，开关持久化本身正常，因此不是现代设置迁移回归；当前阶段不修改原生输入语义
-- [ ] 验收 Compose 审计包英文运行时修复：正式 `v2.0.0` 和 fresh 非 Compose 隔离基线均有英文候选/滑行，排除 fresh data、application ID 和 audit 签名；两 APK 的 English/Latin/HmmGesture Smali、英文 XML、assets 和 native 库一致。已定位 Compose AGP host 将原版 `ZIP_STORED` 的 `res/raw/metadata.json` 错误压缩，破坏依赖 `openRawResourceFd()` 的英文模型初始化；已增加 `androidResources.noCompress += "json"` 和 APK 级 `ZIP_STORED` 门禁，待真机复测英文候选与滑行
+- [x] Compose 审计包英文运行时修复通过真机验收：正式 `v2.0.0` 和 fresh 非 Compose 隔离基线帮助排除 fresh data、application ID 与 audit 签名；最终定位 Compose AGP host 将原版 `ZIP_STORED` 的 `res/raw/metadata.json` 错误压缩，破坏依赖 `openRawResourceFd()` 的英文模型初始化。增加 `androidResources.noCompress += "json"` 和 APK 级 `ZIP_STORED` 门禁后，英文候选开关语义、候选关闭时独立英文滑行、手势父开关对中英文滑行的控制以及中文回归全部通过
 
 ## 测试约定
 

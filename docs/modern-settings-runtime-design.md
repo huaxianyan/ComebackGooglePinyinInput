@@ -211,6 +211,15 @@ buttons commit once and invoke the original sound-effect or positive-duration
 vibration preview semantics. Dependency-off state retains explicit values while
 disabling the complete adjustment group.
 
+Host packaging preserves the original English model's random-access contract:
+`res/raw/main_en_d3_20160715.gzip` and `res/raw/metadata.json` must both remain
+uncompressed (`ZIP_STORED`). AGP's default compression of the JSON metadata
+silently disabled English candidates and glide because the legacy model loader
+uses `openRawResourceFd()`. `androidResources.noCompress += "json"` restores the
+original apktool contract, and APK-level verification prevents recurrence. The
+corrected Compose host passes device acceptance with suggestions on/off,
+independent English glide, the shared gesture parent, and Chinese regression.
+
 For device testing, `build_modern_settings_host.py --audit-launcher` can add a
 launcher entry labelled “Material 3 设置审计” to an isolated audit package. The
 activity is always guarded by `@bool/modern_settings_runtime_enabled`: false in
