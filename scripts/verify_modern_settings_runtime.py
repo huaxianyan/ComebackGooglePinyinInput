@@ -427,6 +427,43 @@ def main() -> int:
         ),
         "saveable settings route stack",
     )
+    settings_source_dir = project / "compose-runtime/src/main/kotlin/com/google/android/inputmethod/pinyin/modernsettings/compose"
+    split_sources = {
+        name: (settings_source_dir / name).read_text(encoding="utf-8")
+        for name in (
+            "SettingsScreen.kt",
+            "SettingsHomeScreen.kt",
+            "InputSettingsScreens.kt",
+            "KeyboardSettingsScreens.kt",
+            "HandwritingSettingsScreen.kt",
+            "FuzzyPinyinSettingsScreen.kt",
+            "SettingsComponents.kt",
+        )
+    }
+    require(
+        split_sources["SettingsScreen.kt"],
+        (
+            "when (route)",
+            "homeSettingsItems(navigateTo)",
+            "chineseInputSettingsItems(snapshot, actions, navigateTo)",
+            "keyboardKeysSettingsItems(",
+            "handwritingSettingsItems(",
+        ),
+        "settings route dispatcher",
+    )
+    if "SettingsSwitchRow(" in split_sources["SettingsScreen.kt"]:
+        raise RuntimeError("top-level SettingsScreen must not own page controls")
+    require(
+        split_sources["SettingsComponents.kt"],
+        (
+            "fun SettingsNavigationRow(",
+            "fun SettingsSwitchRow(",
+            "fun EnumeratedListSetting(",
+            "fun DiscreteSettingsSlider(",
+        ),
+        "shared settings components",
+    )
+
     navigation_test = next(
         (project / "compose-runtime/src/test/kotlin").rglob("SettingsNavigationTest.kt")
     ).read_text(encoding="utf-8")

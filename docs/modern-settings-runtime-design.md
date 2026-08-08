@@ -374,8 +374,13 @@ Hierarchy V1 implements this route tree with a saveable encoded path and a pure
 Input/Chinese/Fuzzy navigation, one-level popping, rejection of Home as a child,
 and safe fallback for a stale restored route. Dictionary/backup and Other are
 navigation placeholders only: they explicitly report that specialized behavior
-is not migrated and perform no writes. Device acceptance precedes the mechanical
-extraction of page composables from `SettingsScreen.kt` into separate files.
+is not migrated and perform no writes. Device acceptance confirms the complete
+route tree, both Back paths, configuration restoration, and cross-page
+dependencies. The subsequent mechanical extraction leaves `SettingsScreen.kt`
+responsible only for route dispatch, Back, and the top-level Scaffold; home,
+Input, Keyboard, Handwriting, Fuzzy Pinyin, and shared controls now have separate
+source ownership. The verifier rejects concrete setting controls returning to
+the top-level screen.
 
 ## Next implementation stage
 
