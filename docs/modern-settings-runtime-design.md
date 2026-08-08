@@ -236,12 +236,14 @@ settings-side `InputMethodManager` enumeration could not reliably observe the
 enabled targets. The MD3 host now adds a narrowly scoped
 `android.view.InputMethod` intent under `<queries>`; it does not request
 `QUERY_ALL_PACKAGES`, and the published target-36 release remains unchanged.
-Device validation must confirm that this restores the row and cover both fresh
-and upgraded state.
-Separately, disabling emoji and language keys and then disabling the English
-keyboard was observed to expose an unexpected switch button in the audit host,
-while formal `v2.0.0` does not. Whether that surface belongs to the keyboard or
-SystemUI must be established before assigning a code owner or fix.
+Device validation confirms that this restores the row: its value persists, and
+actual language-key presses include or exclude other IMEs as selected. The
+previously observed switch surface was confirmed to be the in-keyboard globe
+key, not SystemUI. With emoji and language keys off and the English keyboard
+then disabled, the query-fixed host correctly shows no globe key on the Chinese
+keyboard. The staged audit application ID therefore closes the behavior matrix;
+formal release still requires an upgrade-retention check under the final
+application ID.
 
 The fuzzy-Pinyin stage adds the default-off `fuzzy_pinyin` parent and a guarded
 full-screen Compose detail route. The route retains the original order of all

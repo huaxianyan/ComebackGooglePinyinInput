@@ -253,17 +253,15 @@ their existing component or synchronization effects before migration.
 
 - theme navigation (specialized Activity) remains pending;
 - vibration availability on hardware without a vibrator remains pending;
-- emoji/language switch-key dependency group is implemented but device
-  acceptance is incomplete. The reversed emoji/language dependency and retained
-  language value behave correctly; however, the first build hid
-  `switch_to_other_imes` even though the Pixel has enabled targets including
-  Gboard. This is traced to target-30+ package visibility, and the MD3 host now
-  declares only an `android.view.InputMethod` intent query (not
-  `QUERY_ALL_PACKAGES`); restoration of the row awaits device confirmation. A second
-  observed combination (emoji and language keys off, then English keyboard off)
-  exposes an unexpected input-method switch button not seen in formal `v2.0.0`;
-  its ownership (in-keyboard globe versus SystemUI IME picker) is pending exact
-  classification;
+- emoji/language switch-key dependency group is implemented and device-
+  accepted. The reversed emoji/language dependency and retained language value
+  behave correctly. The first build hid `switch_to_other_imes` even though the
+  Pixel had enabled targets including Gboard; this was traced to target-30+
+  package visibility. The MD3 host declares only an `android.view.InputMethod`
+  intent query (not `QUERY_ALL_PACKAGES`), after which the row is visible,
+  persists changes, and its enabled/disabled value produces the expected actual
+  globe-key behavior. With emoji, language, and English keyboard controls all
+  off, the Chinese keyboard correctly has no internal globe key;
 - physical-key symbol option was migrated in the first Boolean batch.
 
 ## Specialized pages and navigation
