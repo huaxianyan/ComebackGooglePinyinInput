@@ -203,7 +203,7 @@
     return-void
 .end method
 
-.method static startNativeImport(Landroid/content/Context;Landroid/net/Uri;)Z
+.method public static startNativeImport(Landroid/content/Context;Landroid/net/Uri;)Z
     .registers 13
 
     .line 85

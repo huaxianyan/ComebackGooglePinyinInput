@@ -104,14 +104,57 @@ internal class LegacyDictionarySettingsRepository(private val activity: Activity
             .invoke(null, context, true)
     }
 
-    fun openImport() {
+    fun loadImportBackups(onLoaded: (List<DictionaryImportEntry>) -> Unit) {
         require(read().locationAccessible)
-        activity.startActivity(
-            Intent().setClassName(
-                context.packageName,
-                "com.google.android.inputmethod.pinyin.LocalBackupImportActivity",
-            ),
-        )
+        runCatching {
+            val type = Class.forName(
+                "com.google.android.inputmethod.pinyin.DictionaryAutoBackupCompat",
+            )
+            val callbackType = Class.forName(
+                "com.google.android.inputmethod.pinyin.DictionaryAutoBackupCompat\$BackupListCallback",
+            )
+            val callback = Proxy.newProxyInstance(
+                callbackType.classLoader,
+                arrayOf(callbackType),
+            ) { proxy, method, arguments ->
+                when (method.name) {
+                    "onBackupListLoaded" -> {
+                        val entries = (arguments?.firstOrNull() as? List<*>).orEmpty().mapNotNull {
+                            entry ->
+                            entry ?: return@mapNotNull null
+                            val entryType = entry.javaClass
+                            val name = entryType.getMethod("getName").invoke(entry) as? String
+                            val uri = entryType.getMethod("getUri").invoke(entry) as? Uri
+                            if (name.isNullOrEmpty() || uri == null) null
+                            else DictionaryImportEntry(name = name, uri = uri.toString())
+                        }
+                        onLoaded(entries)
+                        null
+                    }
+                    "toString" -> "ModernDictionaryBackupListCallback"
+                    "hashCode" -> System.identityHashCode(proxy)
+                    "equals" -> proxy === arguments?.firstOrNull()
+                    else -> null
+                }
+            }
+            type.getMethod(
+                "listBackupsAsync",
+                Context::class.java,
+                callbackType,
+            ).invoke(null, context, callback)
+        }.onFailure {
+            onLoaded(emptyList())
+        }
+    }
+
+    fun importBackup(entry: DictionaryImportEntry): Boolean {
+        require(read().locationAccessible)
+        val uri = Uri.parse(entry.uri)
+        return runCatching {
+            Class.forName("com.google.android.inputmethod.pinyin.LocalBackupImportActivity")
+                .getMethod("startNativeImport", Context::class.java, Uri::class.java)
+                .invoke(null, context, uri) as Boolean
+        }.getOrDefault(false)
     }
 
     fun openShortcutEditor() {

@@ -51,6 +51,11 @@
     <string name="modern_settings_dictionary_location_required">请先选择备份和导入目录</string>
     <string name="modern_settings_dictionary_import_summary">列出所选目录中的用户词典备份</string>
     <string name="modern_settings_dictionary_import_choose_summary">选择已有备份目录并导入</string>
+    <string name="modern_settings_dictionary_import_list_title">导入用户词典备份</string>
+    <string name="modern_settings_dictionary_import_empty">所选目录中没有可访问的 Google 拼音用户词典备份。</string>
+    <string name="modern_settings_dictionary_import_confirm_title">导入用户词典备份？</string>
+    <string name="modern_settings_dictionary_import_confirm_message">将“%1$s”合并到当前用户词典？</string>
+    <string name="modern_settings_dictionary_import_action">导入</string>
     <string name="modern_settings_dictionary_shortcuts_section">自定义短语</string>
     <string name="modern_settings_dictionary_enable_shortcuts">启用自定义短语</string>
     <string name="modern_settings_dictionary_edit_shortcuts">编辑自定义短语</string>

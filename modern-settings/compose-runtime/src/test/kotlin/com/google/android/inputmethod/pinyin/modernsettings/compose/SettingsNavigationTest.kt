@@ -26,6 +26,25 @@ class SettingsNavigationTest {
         assertEquals(SettingsRouteStack.initialPath, SettingsRouteStack.pop(input))
     }
 
+    @Test
+    fun routeDepthDeterminesTransitionDirection() {
+        val input = SettingsRouteStack.push(SettingsRouteStack.initialPath, SettingsRoute.Input)
+        val chinese = SettingsRouteStack.push(input, SettingsRoute.ChineseInput)
+
+        assertEquals(
+            SettingsNavigationDirection.Forward,
+            SettingsRouteStack.direction(input, chinese),
+        )
+        assertEquals(
+            SettingsNavigationDirection.Backward,
+            SettingsRouteStack.direction(chinese, input),
+        )
+        assertEquals(
+            SettingsNavigationDirection.None,
+            SettingsRouteStack.direction(input, input),
+        )
+    }
+
     @Test(expected = IllegalArgumentException::class)
     fun homeCannotBePushedAsAChild() {
         SettingsRouteStack.push(SettingsRouteStack.initialPath, SettingsRoute.Home)

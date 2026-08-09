@@ -301,11 +301,11 @@ public final class DictionaryAutoBackupCompat {
         return out.toString();
     }
 
-    interface BackupListCallback {
+    public interface BackupListCallback {
         void onBackupListLoaded(List<BackupEntry> entries);
     }
 
-    static void listBackupsAsync(final Context source, final BackupListCallback callback) {
+    public static void listBackupsAsync(final Context source, final BackupListCallback callback) {
         final Context context = source.getApplicationContext();
         IO.execute(new Runnable() {
             @Override public void run() {
@@ -361,10 +361,12 @@ public final class DictionaryAutoBackupCompat {
         return backups;
     }
 
-    static final class BackupEntry {
+    public static final class BackupEntry {
         final String name;
         final Uri uri;
         BackupEntry(String name, Uri uri) { this.name = name; this.uri = uri; }
+        public String getName() { return name; }
+        public Uri getUri() { return uri; }
     }
 
     private static boolean rotate(Context context, Uri tree, int retention) {

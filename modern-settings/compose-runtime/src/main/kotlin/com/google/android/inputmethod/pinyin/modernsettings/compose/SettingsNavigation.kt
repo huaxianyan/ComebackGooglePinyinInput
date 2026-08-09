@@ -1,5 +1,11 @@
 package com.google.android.inputmethod.pinyin.modernsettings.compose
 
+internal enum class SettingsNavigationDirection {
+    None,
+    Forward,
+    Backward,
+}
+
 internal enum class SettingsRoute {
     Home,
     Input,
@@ -42,5 +48,15 @@ internal object SettingsRouteStack {
         val routes = decode(path)
         return if (routes.size <= 1) initialPath
         else routes.dropLast(1).joinToString("/") { it.name }
+    }
+
+    fun direction(initialPath: String, targetPath: String): SettingsNavigationDirection {
+        val initial = decode(initialPath)
+        val target = decode(targetPath)
+        return when {
+            target.size > initial.size -> SettingsNavigationDirection.Forward
+            target.size < initial.size -> SettingsNavigationDirection.Backward
+            else -> SettingsNavigationDirection.None
+        }
     }
 }

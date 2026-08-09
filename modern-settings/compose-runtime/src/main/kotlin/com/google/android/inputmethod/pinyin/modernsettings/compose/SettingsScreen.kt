@@ -2,6 +2,13 @@ package com.google.android.inputmethod.pinyin.modernsettings.compose
 
 import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -48,11 +55,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
 
@@ -68,6 +77,10 @@ data class SettingsActions(
     val onBackupRetentionChange: (Int) -> Unit,
     val onBackupNow: () -> Unit,
     val onImportBackup: () -> Unit,
+    val onDismissImportBackup: () -> Unit,
+    val onSelectImportBackup: (DictionaryImportEntry) -> Unit,
+    val onCancelImportConfirmation: () -> Unit,
+    val onConfirmImportBackup: () -> Unit,
     val onShortcutsEnabledChange: (Boolean) -> Unit,
     val onOpenShortcutEditor: () -> Unit,
     val onOpenLegacyDictionaryOperations: () -> Unit,
@@ -90,12 +103,12 @@ data class SettingsActions(
     val onHandwritingStrokeWidthChange: (Int) -> Unit,
 )
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     snapshot: SettingsSnapshot,
     dictionarySnapshot: DictionarySettingsSnapshot,
     dictionaryHealth: DictionaryHealthState,
+    dictionaryImport: DictionaryImportState,
     actions: SettingsActions,
 ) {
     var routePath by rememberSaveable { mutableStateOf(SettingsRouteStack.initialPath) }
@@ -107,8 +120,59 @@ fun SettingsScreen(
         routePath = SettingsRouteStack.pop(routePath)
     }
     val canNavigateBack = SettingsRouteStack.canPop(routePath)
+    val layoutDirection = LocalLayoutDirection.current
 
     BackHandler(enabled = canNavigateBack, onBack = navigateBack)
+    AnimatedContent(
+        targetState = routePath,
+        modifier = Modifier.fillMaxSize(),
+        transitionSpec = {
+            val direction = SettingsRouteStack.direction(initialState, targetState)
+            if (direction == SettingsNavigationDirection.None) {
+                fadeIn(tween(120)) togetherWith fadeOut(tween(120))
+            } else {
+                val layoutSign = if (layoutDirection == LayoutDirection.Ltr) 1 else -1
+                val forwardSign = if (direction == SettingsNavigationDirection.Forward) {
+                    layoutSign
+                } else {
+                    -layoutSign
+                }
+                (slideInHorizontally(tween(300)) { width -> forwardSign * width / 5 } +
+                    fadeIn(tween(durationMillis = 220, delayMillis = 60))) togetherWith
+                    (slideOutHorizontally(tween(220)) { width -> -forwardSign * width / 5 } +
+                        fadeOut(tween(140)))
+            }
+        },
+        label = "settings-route",
+    ) { targetPath ->
+        SettingsRoutePage(
+            route = SettingsRouteStack.current(targetPath),
+            canNavigateBack = SettingsRouteStack.canPop(targetPath),
+            snapshot = snapshot,
+            dictionarySnapshot = dictionarySnapshot,
+            dictionaryHealth = dictionaryHealth,
+            actions = actions,
+            navigateTo = navigateTo,
+            navigateBack = navigateBack,
+        )
+    }
+    if (route == SettingsRoute.Dictionary) {
+        DictionaryImportDialog(dictionaryImport, actions)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SettingsRoutePage(
+    route: SettingsRoute,
+    canNavigateBack: Boolean,
+    snapshot: SettingsSnapshot,
+    dictionarySnapshot: DictionarySettingsSnapshot,
+    dictionaryHealth: DictionaryHealthState,
+    actions: SettingsActions,
+    navigateTo: (SettingsRoute) -> Unit,
+    navigateBack: () -> Unit,
+) {
     if (route == SettingsRoute.FuzzyPinyin) {
         FuzzyPinyinDetailScreen(
             snapshot = snapshot,
@@ -117,7 +181,6 @@ fun SettingsScreen(
         )
         return
     }
-
     val context = LocalContext.current
     val percentText: (Int) -> String = {
         context.getString(R.string.modern_settings_percent_format, it)

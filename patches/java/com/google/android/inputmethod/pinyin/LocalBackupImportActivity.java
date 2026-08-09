@@ -81,7 +81,7 @@ public final class LocalBackupImportActivity extends Activity
                 }).show();
     }
 
-    static boolean startNativeImport(Context source, Uri uri) {
+    public static boolean startNativeImport(Context source, Uri uri) {
         final Context app = source.getApplicationContext();
         try {
             Class<?> managerClass = Class.forName("aib");

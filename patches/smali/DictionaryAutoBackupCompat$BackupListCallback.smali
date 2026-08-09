@@ -1,4 +1,4 @@
-.class interface abstract Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$BackupListCallback;
+.class public interface abstract Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$BackupListCallback;
 .super Ljava/lang/Object;
 .source "DictionaryAutoBackupCompat.java"
 
@@ -9,7 +9,7 @@
 .end annotation
 
 .annotation system Ldalvik/annotation/InnerClass;
-    accessFlags = 0x608
+    accessFlags = 0x609
     name = "BackupListCallback"
 .end annotation
 

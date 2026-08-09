@@ -31,6 +31,7 @@ def main() -> int:
             'androidx.activity:activity-compose:1.13.0',
             'androidx.compose.material3:material3',
             'androidx.compose.material:material-icons-core',
+            'androidx.compose.animation:animation',
             "minSdk = 23",
         ),
         "Compose runtime dependencies",
@@ -55,6 +56,10 @@ def main() -> int:
             "CompositionLocalProvider(LocalLayoutDirection provides layoutDirection)",
             "context.resources.configuration.layoutDirection",
             "modernSettingsLayoutDirection(",
+            "dictionaryImport = dictionaryImport",
+            "openDictionaryImport()",
+            "DictionaryImportStateReducer.select(",
+            "dictionaryRepository::importBackup",
         ),
         "guarded Compose settings activity",
     )
@@ -84,6 +89,14 @@ def main() -> int:
             "DictionarySettingContracts.retentionValues",
             "dictionarySettingsItems(",
             "dictionaryHealth,",
+            "DictionaryImportDialog(",
+            "DictionaryAutoBackupCompat\\$BackupListCallback",
+            'getMethod("startNativeImport", Context::class.java, Uri::class.java)',
+            "DictionaryImportStateReducer.open()",
+            "AnimatedContent(",
+            "SettingsRouteStack.direction(initialState, targetState)",
+            "slideInHorizontally(tween(300))",
+            "slideOutHorizontally(tween(220))",
             "actions.onShortcutsEnabledChange",
             "actions.onOpenLegacyDictionaryOperations",
             '"PREFERENCE_FRAGMENT",',
@@ -492,6 +505,9 @@ def main() -> int:
             "fun decode(path: String)",
             "fun push(path: String, destination: SettingsRoute)",
             "fun pop(path: String)",
+            "fun direction(initialPath: String, targetPath: String)",
+            "SettingsNavigationDirection.Forward",
+            "SettingsNavigationDirection.Backward",
             "require(destination != SettingsRoute.Home)",
         ),
         "saveable settings route stack",
@@ -537,6 +553,27 @@ def main() -> int:
         "shared settings components",
     )
 
+    dictionary_bridge = (
+        project.parent
+        / "patches/java/com/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat.java"
+    ).read_text(encoding="utf-8")
+    import_bridge = (
+        project.parent
+        / "patches/java/com/google/android/inputmethod/pinyin/LocalBackupImportActivity.java"
+    ).read_text(encoding="utf-8")
+    require(
+        dictionary_bridge + "\n" + import_bridge,
+        (
+            "public interface BackupListCallback",
+            "public static final class BackupEntry",
+            "public String getName()",
+            "public Uri getUri()",
+            "public static void listBackupsAsync(",
+            "public static boolean startNativeImport(Context source, Uri uri)",
+        ),
+        "primary-DEX modern dictionary import bridge",
+    )
+
     legacy_navigation = (settings_source_dir / "LegacySettingsNavigation.kt").read_text(
         encoding="utf-8"
     )
@@ -557,6 +594,7 @@ def main() -> int:
         (
             "initialPathIsHomeAndCannotPop",
             "nestedRoutePushAndPopPreserveHierarchy",
+            "routeDepthDeterminesTransitionDirection",
             "homeCannotBePushedAsAChild",
             "invalidRestoredPathFallsBackToHome",
         ),

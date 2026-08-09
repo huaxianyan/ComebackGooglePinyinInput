@@ -33,6 +33,7 @@ class ModernSettingsActivity : ComponentActivity() {
     private var snapshot by mutableStateOf<SettingsSnapshot?>(null)
     private var dictionarySnapshot by mutableStateOf<DictionarySettingsSnapshot?>(null)
     private var dictionaryHealth by mutableStateOf(DictionaryHealthState())
+    private var dictionaryImport by mutableStateOf(DictionaryImportState())
     private var treePurpose = TreePurpose.Location
     private val mainHandler = Handler(Looper.getMainLooper())
     private val backupRefresh = object : Runnable {
@@ -61,7 +62,7 @@ class ModernSettingsActivity : ComponentActivity() {
                     R.string.modern_settings_dictionary_location_saved,
                     Toast.LENGTH_SHORT,
                 ).show()
-                if (completedPurpose == TreePurpose.Import) dictionaryRepository.openImport()
+                if (completedPurpose == TreePurpose.Import) openDictionaryImport()
             }
             refreshDictionaryUntilIdle()
         }
@@ -83,6 +84,7 @@ class ModernSettingsActivity : ComponentActivity() {
                         snapshot = settings,
                         dictionarySnapshot = dictionary,
                         dictionaryHealth = dictionaryHealth,
+                        dictionaryImport = dictionaryImport,
                         actions = SettingsActions(
                             onOpenThemeSelector = {
                                 startActivity(
@@ -131,11 +133,29 @@ class ModernSettingsActivity : ComponentActivity() {
                             },
                             onImportBackup = {
                                 if (dictionaryRepository.read().locationAccessible) {
-                                    dictionaryRepository.openImport()
+                                    openDictionaryImport()
                                 } else {
                                     treePurpose = TreePurpose.Import
                                     treePicker.launch(null)
                                 }
+                            },
+                            onDismissImportBackup = {
+                                dictionaryImport = DictionaryImportStateReducer.close()
+                            },
+                            onSelectImportBackup = { entry ->
+                                dictionaryImport = DictionaryImportStateReducer.select(
+                                    dictionaryImport,
+                                    entry,
+                                )
+                            },
+                            onCancelImportConfirmation = {
+                                dictionaryImport = DictionaryImportStateReducer.cancelConfirmation(
+                                    dictionaryImport,
+                                )
+                            },
+                            onConfirmImportBackup = {
+                                dictionaryImport.selected?.let(dictionaryRepository::importBackup)
+                                dictionaryImport = DictionaryImportStateReducer.close()
                             },
                             onShortcutsEnabledChange = { enabled ->
                                 dictionaryRepository.setShortcutsEnabled(enabled)
@@ -231,6 +251,17 @@ class ModernSettingsActivity : ComponentActivity() {
     private fun refreshDictionaryUntilIdle() {
         mainHandler.removeCallbacks(backupRefresh)
         backupRefresh.run()
+    }
+
+    private fun openDictionaryImport() {
+        dictionaryImport = DictionaryImportStateReducer.open()
+        dictionaryRepository.loadImportBackups { entries ->
+            runOnUiThread {
+                if (!isFinishing && !isDestroyed && dictionaryImport.visible) {
+                    dictionaryImport = DictionaryImportStateReducer.loaded(entries)
+                }
+            }
+        }
     }
 }
 
