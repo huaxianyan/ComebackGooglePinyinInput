@@ -112,11 +112,13 @@ def main() -> int:
             "snapshot.launcherIcon.value",
             "fun SettingsScreen(",
             "fun DefaultAwareAdjustment(",
-            "SystemDefaultAdjustment(",
-            "AdjustmentStateReducer.startCustom",
-            "AdjustmentStateReducer.applyDraft",
-            "AdjustmentStateReducer.cancelDraft",
-            "AdjustmentStateReducer.restoreDefault",
+            "data class AdjustmentInteractionState(",
+            "AdjustmentStateReducer.update(",
+            "AdjustmentStateReducer.commit(",
+            "AdjustmentStateReducer.restoreDefault(",
+            "AdjustmentStateReducer.canRestoreDefault(",
+            "displayedValue = 0",
+            "onValueChangeFinished = ::commitTouchedValue",
             "rememberSaveable(title, resolvedKey, stateSaver = adjustmentStateSaver)",
             "previewEffects.previewVolume(percent)",
             "previewEffects.previewVibration(milliseconds)",
@@ -173,8 +175,8 @@ def main() -> int:
             "snapshot.handwritingTimeoutLabels",
             "snapshot.handwritingStrokeWidthLabels",
             "WindowInsets.safeGestures.only(WindowInsetsSides.Horizontal)",
-            "displayedValue.roundToInt()",
-            "stringResource(R.string.modern_settings_set_custom)",
+            "interaction.displayedValue.toFloat()",
+            "stringResource(R.string.modern_settings_system_default)",
             "stringResource(R.string.modern_settings_use_system_default)",
         ),
         "official Compose Material 3 settings modules",
@@ -182,6 +184,20 @@ def main() -> int:
     for forbidden in ("android.widget.SeekBar", "onDraw(", "Md3SliderView"):
         if forbidden in kotlin_text:
             raise RuntimeError(f"modern settings must not simulate Slider: {forbidden}")
+    adjustment_controls = next(
+        kotlin_root.rglob("AdjustmentControls.kt")
+    ).read_text(encoding="utf-8")
+    for obsolete_flow in (
+        "SystemDefaultAdjustment(",
+        "modern_settings_set_custom",
+        "modern_settings_choose_custom_unsaved",
+        "modern_settings_cancel",
+        "modern_settings_apply",
+    ):
+        if obsolete_flow in adjustment_controls:
+            raise RuntimeError(
+                f"key-feedback adjustment must commit directly on release: {obsolete_flow}"
+            )
     if any("\u4e00" <= character <= "\u9fff" for character in kotlin_text):
         raise RuntimeError("modern settings Kotlin must not hard-code Chinese UI text")
 
@@ -486,10 +502,13 @@ def main() -> int:
         (
             "sealed interface AdjustmentEditorState",
             "data object SystemDefault",
-            "data class EditingDraft(val value: Int, val touched: Boolean)",
             "data class Explicit(val value: Int)",
-            "require(state is AdjustmentEditorState.EditingDraft && state.touched)",
-            "dependencyEnabled && state !is AdjustmentEditorState.SystemDefault",
+            "data class AdjustmentInteractionState(",
+            "val displayedValue: Int",
+            "touched = true",
+            "require(state.touched)",
+            "state.touched || state.persisted is AdjustmentEditorState.Explicit",
+            "fun isInteractive(dependencyEnabled: Boolean): Boolean = dependencyEnabled",
         ),
         "pure adjustment state reducer",
     )
@@ -610,10 +629,11 @@ def main() -> int:
     require(
         adjustment_test,
         (
-            "untouchedDraftCannotBecomeExplicitZero",
-            "touchedDraftCanApplyExplicitZeroWithoutCollapsingToDefault",
-            "cancelDiscardsDraftAndRestoreReturnsToDefault",
-            "dependencyDisableRetainsExplicitValueButBlocksInteraction",
+            "systemDefaultUsesLeftmostDisplayWithoutBecomingExplicitZero",
+            "touchingLeftmostPositionCanCommitExplicitZero",
+            "dragUpdatesTransientValueAndReleaseCommitsIt",
+            "restoreDeletesCustomIdentityAndReturnsDisplayToLeftmost",
+            "dependencyOnlyControlsInteractivityWithoutChangingState",
         ),
         "adjustment reducer tests",
     )

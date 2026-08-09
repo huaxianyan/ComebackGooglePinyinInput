@@ -1,6 +1,5 @@
 package com.google.android.inputmethod.pinyin.modernsettings.compose
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -10,8 +9,6 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeGestures
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Slider
@@ -19,9 +16,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -33,25 +28,24 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
 
-private val adjustmentStateSaver = listSaver<AdjustmentEditorState, Int>(
+private val adjustmentStateSaver = listSaver<AdjustmentInteractionState, Int>(
     save = { state ->
-        when (state) {
-            AdjustmentEditorState.SystemDefault -> listOf(0, 0, 0)
-            is AdjustmentEditorState.EditingDraft -> listOf(
-                1,
-                state.value,
-                if (state.touched) 1 else 0,
-            )
-            is AdjustmentEditorState.Explicit -> listOf(2, state.value, 1)
+        val persistedValue = when (val persisted = state.persisted) {
+            AdjustmentEditorState.SystemDefault -> -1
+            is AdjustmentEditorState.Explicit -> persisted.value
         }
+        listOf(persistedValue, state.displayedValue, if (state.touched) 1 else 0)
     },
     restore = { saved ->
-        when (saved[0]) {
-            0 -> AdjustmentEditorState.SystemDefault
-            1 -> AdjustmentEditorState.EditingDraft(saved[1], saved[2] != 0)
-            2 -> AdjustmentEditorState.Explicit(saved[1])
-            else -> error("Unknown saved adjustment state: ${saved[0]}")
-        }
+        AdjustmentInteractionState(
+            persisted = if (saved[0] < 0) {
+                AdjustmentEditorState.SystemDefault
+            } else {
+                AdjustmentEditorState.Explicit(saved[0])
+            },
+            displayedValue = saved[1],
+            touched = saved[2] != 0,
+        )
     },
 )
 
@@ -64,6 +58,10 @@ fun ResolvedSetting<Float>.toVolumeProgress(): ResolvedSetting<Int> = when (this
     )
 }
 
+/**
+ * An always-visible adjustment that keeps key absence distinct from explicit zero.
+ * Dragging is transient; release commits once and triggers the caller's one-shot preview.
+ */
 @Composable
 fun DefaultAwareAdjustment(
     title: String,
@@ -76,179 +74,33 @@ fun DefaultAwareAdjustment(
     onRestoreDefault: () -> Unit,
 ) {
     val resolvedState = AdjustmentStateReducer.fromResolved(state)
-    val resolvedKey = when (resolvedState) {
+    val resolvedKey = when (val persisted = resolvedState.persisted) {
         AdjustmentEditorState.SystemDefault -> "default"
-        is AdjustmentEditorState.Explicit -> "explicit:${resolvedState.value}"
-        is AdjustmentEditorState.EditingDraft -> error("Repository cannot contain a draft")
+        is AdjustmentEditorState.Explicit -> "explicit:${persisted.value}"
     }
-    var editorState by rememberSaveable(title, resolvedKey, stateSaver = adjustmentStateSaver) {
+    var interaction by rememberSaveable(title, resolvedKey, stateSaver = adjustmentStateSaver) {
         mutableStateOf(resolvedState)
     }
-
-    when (val current = editorState) {
-        AdjustmentEditorState.SystemDefault -> {
-            SystemDefaultAdjustment(
-                title = title,
-                dependencyEnabled = enabledByDependency,
-                onCustomize = {
-                    editorState = AdjustmentStateReducer.startCustom(current)
-                },
-            )
-        }
-        is AdjustmentEditorState.EditingDraft -> {
-            AdjustmentControlGroup(
-                title = title,
-                value = current.value,
-                summary = if (current.touched) valueText(current.value)
-                else stringResource(R.string.modern_settings_choose_custom_unsaved),
-                valueText = valueText,
-                enabled = AdjustmentStateReducer.isInteractive(
-                    current,
-                    enabledByDependency,
-                ),
-                decreaseDescription = decreaseDescription,
-                increaseDescription = increaseDescription,
-                onValueChange = { value ->
-                    editorState = AdjustmentStateReducer.updateDraft(editorState, value)
-                },
-                footer = {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End,
-                    ) {
-                        TextButton(
-                            onClick = {
-                                editorState = AdjustmentStateReducer.cancelDraft(editorState)
-                            },
-                        ) {
-                            Text(stringResource(R.string.modern_settings_cancel))
-                        }
-                        Button(
-                            onClick = {
-                                val applied = AdjustmentStateReducer.applyDraft(editorState)
-                                onCommit(applied.value)
-                            },
-                            enabled = enabledByDependency && current.touched,
-                        ) {
-                            Text(stringResource(R.string.modern_settings_apply))
-                        }
-                    }
-                },
-            )
-        }
-        is AdjustmentEditorState.Explicit -> {
-            AdjustmentControlGroup(
-                title = title,
-                value = current.value,
-                summary = valueText(current.value),
-                valueText = valueText,
-                enabled = AdjustmentStateReducer.isInteractive(
-                    current,
-                    enabledByDependency,
-                ),
-                decreaseDescription = decreaseDescription,
-                increaseDescription = increaseDescription,
-                onCommit = { value ->
-                    AdjustmentStateReducer.updateExplicit(current, value)
-                    onCommit(value)
-                },
-                footer = {
-                    OutlinedButton(
-                        onClick = {
-                            AdjustmentStateReducer.restoreDefault(current)
-                            onRestoreDefault()
-                        },
-                        enabled = enabledByDependency,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text(stringResource(R.string.modern_settings_use_system_default))
-                    }
-                },
-            )
-        }
+    val enabled = AdjustmentStateReducer.isInteractive(enabledByDependency)
+    val showsSystemDefault =
+        interaction.persisted is AdjustmentEditorState.SystemDefault && !interaction.touched
+    val summary = if (showsSystemDefault) {
+        stringResource(R.string.modern_settings_system_default)
+    } else {
+        valueText(interaction.displayedValue)
     }
-}
 
-@Composable
-private fun SystemDefaultAdjustment(
-    title: String,
-    dependencyEnabled: Boolean,
-    onCustomize: () -> Unit,
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 12.dp),
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    title,
-                    color = if (dependencyEnabled) MaterialTheme.colorScheme.onSurface
-                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
-                    style = MaterialTheme.typography.bodyLarge,
-                )
-                Text(
-                    stringResource(
-                        if (dependencyEnabled) {
-                            R.string.modern_settings_system_default_explanation
-                        } else {
-                            R.string.modern_settings_dependency_disabled
-                        }
-                    ),
-                    color = if (dependencyEnabled) MaterialTheme.colorScheme.onSurfaceVariant
-                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
-            AssistChip(
-                onClick = {},
-                label = { Text(stringResource(R.string.modern_settings_system_default)) },
-                enabled = false,
-            )
-        }
-        OutlinedButton(
-            onClick = onCustomize,
-            enabled = dependencyEnabled,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 8.dp),
-        ) {
-            Text(stringResource(R.string.modern_settings_set_custom))
-        }
+    fun update(value: Int) {
+        interaction = AdjustmentStateReducer.update(interaction, value)
     }
-}
 
-@Composable
-private fun AdjustmentControlGroup(
-    title: String,
-    value: Int,
-    summary: String,
-    valueText: (Int) -> String,
-    enabled: Boolean,
-    decreaseDescription: String,
-    increaseDescription: String,
-    onCommit: ((Int) -> Unit)? = null,
-    onValueChange: ((Int) -> Unit)? = null,
-    footer: @Composable () -> Unit,
-) {
-    var displayedValue by remember(value) { mutableFloatStateOf(value.toFloat()) }
-    val displayedProgress = displayedValue.roundToInt().coerceIn(0, 100)
-    val displayedSummary = if (onCommit != null) valueText(displayedProgress) else summary
-    val adjustmentSemantics = stringResource(
-        R.string.modern_settings_value_adjustable,
-        title,
-        valueText(displayedProgress),
-    )
-    val updateValue: (Int) -> Unit = { candidate ->
-        val updated = candidate.coerceIn(0, 100)
-        displayedValue = updated.toFloat()
-        onValueChange?.invoke(updated)
+    fun commitTouchedValue() {
+        if (!interaction.touched) return
+        val committed = AdjustmentStateReducer.commit(interaction)
+        interaction = committed
+        onCommit(committed.displayedValue)
     }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -261,7 +113,7 @@ private fun AdjustmentControlGroup(
             style = MaterialTheme.typography.bodyLarge,
         )
         Text(
-            displayedSummary,
+            summary,
             color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant
             else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
             style = MaterialTheme.typography.bodyMedium,
@@ -274,33 +126,34 @@ private fun AdjustmentControlGroup(
         ) {
             TextButton(
                 onClick = {
-                    val next = (displayedProgress - 1).coerceAtLeast(0)
-                    updateValue(next)
-                    onCommit?.invoke(next)
+                    update((interaction.displayedValue - 1).coerceAtLeast(0))
+                    commitTouchedValue()
                 },
                 enabled = enabled,
                 modifier = Modifier.semantics { contentDescription = decreaseDescription },
             ) {
                 Text("−")
             }
+            val adjustmentDescription = stringResource(
+                R.string.modern_settings_value_adjustable,
+                title,
+                summary,
+            )
             Slider(
-                value = displayedValue.coerceIn(0f, 100f),
-                onValueChange = { updateValue(it.roundToInt()) },
-                onValueChangeFinished = {
-                    onCommit?.invoke(displayedValue.roundToInt().coerceIn(0, 100))
-                },
+                value = interaction.displayedValue.toFloat(),
+                onValueChange = { update(it.roundToInt()) },
+                onValueChangeFinished = ::commitTouchedValue,
                 valueRange = 0f..100f,
                 steps = 99,
                 enabled = enabled,
                 modifier = Modifier
                     .weight(1f)
-                    .semantics { contentDescription = adjustmentSemantics },
+                    .semantics { contentDescription = adjustmentDescription },
             )
             TextButton(
                 onClick = {
-                    val next = (displayedProgress + 1).coerceAtMost(100)
-                    updateValue(next)
-                    onCommit?.invoke(next)
+                    update((interaction.displayedValue + 1).coerceAtMost(100))
+                    commitTouchedValue()
                 },
                 enabled = enabled,
                 modifier = Modifier.semantics { contentDescription = increaseDescription },
@@ -308,6 +161,15 @@ private fun AdjustmentControlGroup(
                 Text("+")
             }
         }
-        footer()
+        OutlinedButton(
+            onClick = {
+                interaction = AdjustmentStateReducer.restoreDefault(interaction)
+                onRestoreDefault()
+            },
+            enabled = enabled && AdjustmentStateReducer.canRestoreDefault(interaction),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(stringResource(R.string.modern_settings_use_system_default))
+        }
     }
 }

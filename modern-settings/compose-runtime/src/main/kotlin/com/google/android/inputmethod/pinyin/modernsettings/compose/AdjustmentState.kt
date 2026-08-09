@@ -1,57 +1,59 @@
 package com.google.android.inputmethod.pinyin.modernsettings.compose
 
-/** Pure state model for a nullable system-default adjustment. */
+/** Persisted identity remains distinct even when system-default and explicit zero share a position. */
 sealed interface AdjustmentEditorState {
     data object SystemDefault : AdjustmentEditorState
-    data class EditingDraft(val value: Int, val touched: Boolean) : AdjustmentEditorState
     data class Explicit(val value: Int) : AdjustmentEditorState
 }
 
-/** Pure reducer; persistence and previews are deliberately outside this type. */
+data class AdjustmentInteractionState(
+    val persisted: AdjustmentEditorState,
+    val displayedValue: Int,
+    val touched: Boolean = false,
+)
+
+/** Pure reducer; persistence and one-shot previews remain outside this type. */
 object AdjustmentStateReducer {
-    fun fromResolved(setting: ResolvedSetting<Int>): AdjustmentEditorState = when (setting) {
-        is ResolvedSetting.SystemDefault -> AdjustmentEditorState.SystemDefault
-        is ResolvedSetting.Explicit -> AdjustmentEditorState.Explicit(validate(setting.value))
+    fun fromResolved(setting: ResolvedSetting<Int>): AdjustmentInteractionState = when (setting) {
+        is ResolvedSetting.SystemDefault -> AdjustmentInteractionState(
+            persisted = AdjustmentEditorState.SystemDefault,
+            displayedValue = 0,
+        )
+        is ResolvedSetting.Explicit -> AdjustmentInteractionState(
+            persisted = AdjustmentEditorState.Explicit(validate(setting.value)),
+            displayedValue = setting.value,
+        )
     }
 
-    fun startCustom(state: AdjustmentEditorState): AdjustmentEditorState.EditingDraft {
-        require(state is AdjustmentEditorState.SystemDefault)
-        return AdjustmentEditorState.EditingDraft(value = 0, touched = false)
-    }
-
-    fun updateDraft(
-        state: AdjustmentEditorState,
+    fun update(
+        state: AdjustmentInteractionState,
         value: Int,
-    ): AdjustmentEditorState.EditingDraft {
-        require(state is AdjustmentEditorState.EditingDraft)
-        return AdjustmentEditorState.EditingDraft(validate(value), touched = true)
+    ): AdjustmentInteractionState = state.copy(
+        displayedValue = validate(value),
+        touched = true,
+    )
+
+    fun commit(state: AdjustmentInteractionState): AdjustmentInteractionState {
+        require(state.touched)
+        val value = validate(state.displayedValue)
+        return AdjustmentInteractionState(
+            persisted = AdjustmentEditorState.Explicit(value),
+            displayedValue = value,
+        )
     }
 
-    fun cancelDraft(state: AdjustmentEditorState): AdjustmentEditorState.SystemDefault {
-        require(state is AdjustmentEditorState.EditingDraft)
-        return AdjustmentEditorState.SystemDefault
+    fun restoreDefault(state: AdjustmentInteractionState): AdjustmentInteractionState {
+        require(canRestoreDefault(state))
+        return AdjustmentInteractionState(
+            persisted = AdjustmentEditorState.SystemDefault,
+            displayedValue = 0,
+        )
     }
 
-    fun applyDraft(state: AdjustmentEditorState): AdjustmentEditorState.Explicit {
-        require(state is AdjustmentEditorState.EditingDraft && state.touched)
-        return AdjustmentEditorState.Explicit(validate(state.value))
-    }
+    fun canRestoreDefault(state: AdjustmentInteractionState): Boolean =
+        state.touched || state.persisted is AdjustmentEditorState.Explicit
 
-    fun updateExplicit(
-        state: AdjustmentEditorState,
-        value: Int,
-    ): AdjustmentEditorState.Explicit {
-        require(state is AdjustmentEditorState.Explicit)
-        return AdjustmentEditorState.Explicit(validate(value))
-    }
-
-    fun restoreDefault(state: AdjustmentEditorState): AdjustmentEditorState.SystemDefault {
-        require(state is AdjustmentEditorState.Explicit)
-        return AdjustmentEditorState.SystemDefault
-    }
-
-    fun isInteractive(state: AdjustmentEditorState, dependencyEnabled: Boolean): Boolean =
-        dependencyEnabled && state !is AdjustmentEditorState.SystemDefault
+    fun isInteractive(dependencyEnabled: Boolean): Boolean = dependencyEnabled
 
     private fun validate(value: Int): Int {
         require(value in 0..100)

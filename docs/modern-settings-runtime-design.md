@@ -282,15 +282,19 @@ The full-width “使用默认值” action is disabled while the key is absent 
 the key when an explicit value exists. There is no preview side effect, and
 misaligned or out-of-range values are rejected by the typed contract.
 
-This stage also enables the two parent Boolean switches. In system-default state,
-“设置自定义值” opens a process/configuration-safe draft at zero without writing;
-Apply remains disabled until the user explicitly operates the Slider or a step
-button. Cancel discards the draft. Explicit volume uses the original Float
-`percent / 100f`; explicit vibration uses the original zero/`N + 1` String
-encoding. “使用系统默认” removes the corresponding key. Slider release and step
-buttons commit once and invoke the original sound-effect or positive-duration
-vibration preview semantics. Dependency-off state retains explicit values while
-disabling the complete adjustment group.
+This stage also enables the two parent Boolean switches. The two feedback
+adjustments always render their official Slider and no longer require a separate
+customize/cancel/apply flow. Key absence is represented by a leftmost visual
+placeholder and the “system default” summary without inventing a persisted
+numeric value; the restore action remains disabled until the Slider is operated
+or an explicit value already exists. Slider dragging is transient, release
+commits exactly once and immediately invokes the original sound-effect or
+positive-duration vibration preview, while each step-button click commits and
+previews once. Explicit zero remains distinct from key absence. Explicit volume
+uses the original Float `percent / 100f`; explicit vibration uses the original
+zero/`N + 1` String encoding. “使用系统默认” removes the corresponding key and
+returns the visual position to the left edge. Dependency-off state retains
+explicit values while disabling the complete adjustment group.
 
 Host packaging preserves the original English model's random-access contract:
 `res/raw/main_en_d3_20160715.gzip` and `res/raw/metadata.json` must both remain
@@ -310,9 +314,10 @@ from the legacy settings entry point instead.
 Section and title strings are still prototype-only, but enum value labels now
 come from the original localized `entries_*` arrays (for example low, normal,
 high) while their exact stored values remain separate in the contract. A
-negative system-default value still has no Slider because it has no truthful
-numeric position. If its parent switch is off, the supporting text now explains
-that dependency rather than repeating the enabled-state description. The
+negative system-default sentinel is never passed to the Slider: absent feedback
+values use a left-edge UI placeholder labelled “system default”, while the
+persistence model continues to retain key absence separately from explicit
+zero. The
 activity refreshes its read-only snapshot in `onResume()` so returning from a
 legacy settings surface cannot leave stale state. Production routing still
 requires all remaining labels to be resource-backed before writes are enabled.
