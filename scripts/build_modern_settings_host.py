@@ -46,6 +46,10 @@ def main() -> int:
         help="add an API-35+-guarded launcher entry to an isolated audit package",
     )
     parser.add_argument(
+        "--launcher-label",
+        help="replace the legacy launcher label for a clearly identified isolated audit package",
+    )
+    parser.add_argument(
         "--debuggable",
         action="store_true",
         help="build an isolated debug host; forbidden for the formal application ID",
@@ -55,6 +59,8 @@ def main() -> int:
     formal_application_id = "com.google.android.inputmethod.pinyin.compat"
     if args.debuggable and args.application_id == formal_application_id:
         raise RuntimeError("Debug mode is forbidden for the formal application ID")
+    if args.launcher_label and args.application_id == formal_application_id:
+        raise RuntimeError("A custom launcher label is forbidden for the formal application ID")
 
     for path in (args.original, args.apktool, args.gradle, args.keystore):
         if not path.resolve().exists():
@@ -115,6 +121,8 @@ def main() -> int:
     ]
     if args.audit_launcher:
         manifest_command.append("--audit-launcher")
+    if args.launcher_label:
+        manifest_command.extend(("--launcher-label", args.launcher_label))
     run(manifest_command)
 
     gradle_home = ROOT / "work/modern-settings-gradle-home"

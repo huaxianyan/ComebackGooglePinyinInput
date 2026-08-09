@@ -72,6 +72,10 @@ ACTIVITY = (
     "com.google.android.inputmethod.pinyin.modernsettings.compose."
     "ModernSettingsActivity"
 )
+LEGACY_LAUNCHER_ACTIVITY = (
+    "com.google.android.apps.inputmethod.libs.framework.core.LauncherActivity"
+)
+FORMAL_APPLICATION_ID = "com.google.android.inputmethod.pinyin.compat"
 
 
 def remove_component(application: ET.Element, tag: str, name: str) -> None:
@@ -85,7 +89,10 @@ def main() -> int:
     parser.add_argument("decoded", type=Path)
     parser.add_argument("--package", required=True, dest="package_name")
     parser.add_argument("--audit-launcher", action="store_true")
+    parser.add_argument("--launcher-label")
     args = parser.parse_args()
+    if args.launcher_label and args.package_name == FORMAL_APPLICATION_ID:
+        raise RuntimeError("A custom launcher label is forbidden for the formal application ID")
 
     manifest = args.decoded / "AndroidManifest.xml"
     tree = ET.parse(manifest)
@@ -131,6 +138,18 @@ def main() -> int:
         action.set(A + "name", "android.view.InputMethod")
 
     application.set(T + "remove", "android:appComponentFactory")
+
+    if args.launcher_label:
+        legacy_launchers = [
+            candidate
+            for candidate in application.findall("activity")
+            if candidate.attrib.get(A + "name") == LEGACY_LAUNCHER_ACTIVITY
+        ]
+        if len(legacy_launchers) != 1:
+            raise RuntimeError(
+                f"expected one legacy launcher activity, found {len(legacy_launchers)}"
+            )
+        legacy_launchers[0].set(A + "label", args.launcher_label)
 
     activity = ET.SubElement(application, "activity")
     activity.set(A + "name", ACTIVITY)
