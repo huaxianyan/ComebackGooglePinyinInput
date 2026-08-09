@@ -524,6 +524,10 @@ def main() -> int:
         (
             "fun SettingsNavigationRow(",
             "fun SettingsSwitchRow(",
+            ".toggleable(",
+            "role = Role.Switch",
+            ".semantics(mergeDescendants = true)",
+            "onCheckedChange = null",
             "fun EnumeratedListSetting(",
             "fun DiscreteSettingsSlider(",
         ),
