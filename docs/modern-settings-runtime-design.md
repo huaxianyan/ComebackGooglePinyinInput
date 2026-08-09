@@ -380,6 +380,24 @@ visible during refresh, and Dictionary items have stable keys/content types.
 The isolated release-like audit build passes device scrolling/refresh acceptance
 without recurrence; post-fix P90/P95 frame times are 5/6 ms with 0 missed vsync.
 
+The display and accessibility matrix now covers dynamic light/dark color, a
+918x411 dp landscape window, a 411x411 dp split window (`sw349dp`), 2.0 font
+scale, a 320x714 dp maximum-display-size window, and the combined 2.0/320 dp
+extreme. Lists, dialogs, Switches, Sliders, system bars, route state, and Back
+remain reachable without clipping or overlap. TalkBack exposed that an adjacent
+text column did not label its Switch; each switch row is now one merged
+`Role.Switch` toggleable semantic node, while the visual Switch has no duplicate
+callback. Device speech includes state, title, supporting text, role, and action,
+and the remaining focus, Slider, disabled-item, dialog, and Back matrix passes.
+
+The original application intentionally remains without application-wide
+`supportsRtl=true`: enabling it would also mirror the API 17-34 legacy runtime
+and native IME. `ModernSettingsActivity` instead maps its received
+`Configuration.layoutDirection` into `LocalLayoutDirection`, isolating RTL to
+the API 35+ Compose subtree. Forced-RTL device acceptance confirms mirrored
+navigation/Back icons, Switches, Sliders, dialogs, About, and Dictionary layouts;
+LTR is unchanged when the configuration is restored.
+
 Contact suggestions and clearing remain behind an explicit same-package legacy
 Dictionary fragment entry. This is intentional: their permission controller,
 confirmation dialog, and destructive task lifecycle have not been duplicated in
@@ -418,13 +436,10 @@ screen.
 
 ## Next implementation stage
 
-1. Validate light/dark mode, dynamic color, RTL, font scaling, TalkBack,
-   landscape, narrow screens, and multi-window behavior on the stable list
-   implementation.
-2. Cover the no-vibrator and `is_tablet=true` runtime branches.
-3. Exercise API 17–34 legacy routing on representative runtimes and complete a
+1. Cover the no-vibrator and `is_tablet=true` runtime branches.
+2. Exercise API 17–34 legacy routing on representative runtimes and complete a
    formal release-variant core-input regression.
-4. Keep contact suggestions and clearing on the legacy controller until their
+3. Keep contact suggestions and clearing on the legacy controller until their
    exact permission/destructive-task lifecycle has an isolated audit package
    and explicit authorization.
-5. Modernize release workflow/version enforcement before any release decision.
+4. Modernize release workflow/version enforcement before any release decision.
