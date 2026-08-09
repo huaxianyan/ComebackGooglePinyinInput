@@ -760,6 +760,8 @@ def main() -> int:
     require(
         patch_script,
         (
+            'const-string v1, \\"app_icon\\"',
+            'PinyinFirstRunActivity;->b(Landroid/content/Context;)Z',
             'const/16 v1, 0x23',
             'const-string v1, \\"modern_settings_use_legacy\\"',
             'modernsettings.compose.ModernSettingsActivity',
@@ -882,6 +884,8 @@ def main() -> int:
         require(
             settings_activity_text,
             (
+                'const-string v1, "app_icon"',
+                "PinyinFirstRunActivity;->b(Landroid/content/Context;)Z",
                 "Build$VERSION;->SDK_INT:I",
                 "const/16 v1, 0x23",
                 'const-string v1, "modern_settings_use_legacy"',
