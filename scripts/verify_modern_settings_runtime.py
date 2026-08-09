@@ -79,6 +79,8 @@ def main() -> int:
             "dictionarySettingsItems(dictionarySnapshot, actions)",
             "actions.onShortcutsEnabledChange",
             "actions.onOpenLegacyDictionaryOperations",
+            '"PREFERENCE_FRAGMENT",',
+            '"setting_dictionary",',
             "SettingsRoute.About",
             "LegacySettingsNavigation.legacyWebIntent",
             "LegacySettingsNavigation.licensesIntent",

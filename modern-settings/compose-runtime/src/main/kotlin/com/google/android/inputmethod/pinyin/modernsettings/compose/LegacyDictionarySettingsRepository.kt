@@ -126,6 +126,9 @@ internal class LegacyDictionarySettingsRepository(private val activity: Activity
             ).putExtra(
                 ":android:show_fragment",
                 "com.google.android.apps.inputmethod.pinyin.preference.DictionarySettingsFragment",
+            ).putExtra(
+                "PREFERENCE_FRAGMENT",
+                "setting_dictionary",
             ),
         )
     }
