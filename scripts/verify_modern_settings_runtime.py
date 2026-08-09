@@ -655,6 +655,28 @@ def main() -> int:
         if forbidden_write in repository_text:
             raise RuntimeError(f"unaudited settings write path: {forbidden_write}")
 
+    host_builder = Path("scripts/build_modern_settings_host.py").read_text(encoding="utf-8")
+    require(
+        host_builder,
+        (
+            'formal_application_id = "com.google.android.inputmethod.pinyin.compat"',
+            'if args.debuggable and args.application_id == formal_application_id:',
+            'raise RuntimeError("Debug mode is forbidden for the formal application ID")',
+            'variant = "debug" if args.debuggable else "release"',
+            'gradle_task = "assembleDebug" if args.debuggable else "assembleRelease"',
+            'reconstructed-host-prototype-release-unsigned.apk',
+            '*(["--debuggable"] if args.debuggable else [])',
+        ),
+        "release-like modern host builder",
+    )
+
+    gradle_properties = (project / "gradle.properties").read_text(encoding="utf-8")
+    require(
+        gradle_properties,
+        ("android.enableResourceOptimizations=false",),
+        "embedded legacy resource retention",
+    )
+
     host_build = (project / "reconstructed-host-prototype/build.gradle.kts").read_text(
         encoding="utf-8"
     )
@@ -667,6 +689,7 @@ def main() -> int:
             'implementation(project(\":compose-runtime\"))',
             '"--stable-ids"',
             'androidResources.noCompress += "json"',
+            "checkReleaseBuilds = false",
         ),
         "reconstructed host build",
     )

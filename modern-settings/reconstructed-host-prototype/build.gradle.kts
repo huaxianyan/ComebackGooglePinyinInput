@@ -27,6 +27,13 @@ android {
         compose = true
     }
 
+    // Apktool reconstructs many qualifier-only and intentionally self-named
+    // legacy resources that AGP lint cannot model. Release correctness is
+    // enforced by the project resource-ID and API invariant verifiers instead.
+    lint {
+        checkReleaseBuilds = false
+    }
+
     // EnglishIme opens its raw metadata through openRawResourceFd(), which
     // requires an uncompressed APK entry just like the original apktool
     // doNotCompress contract. AGP otherwise deflates metadata.json silently.

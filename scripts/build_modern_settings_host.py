@@ -45,7 +45,16 @@ def main() -> int:
         action="store_true",
         help="add an API-35+-guarded launcher entry to an isolated audit package",
     )
+    parser.add_argument(
+        "--debuggable",
+        action="store_true",
+        help="build an isolated debug host; forbidden for the formal application ID",
+    )
     args = parser.parse_args()
+
+    formal_application_id = "com.google.android.inputmethod.pinyin.compat"
+    if args.debuggable and args.application_id == formal_application_id:
+        raise RuntimeError("Debug mode is forbidden for the formal application ID")
 
     for path in (args.original, args.apktool, args.gradle, args.keystore):
         if not path.resolve().exists():
@@ -76,7 +85,7 @@ def main() -> int:
             str(decoded),
             "--application-id",
             args.application_id,
-            "--debuggable",
+            *(["--debuggable"] if args.debuggable else []),
         ]
     )
     # Build once before AGP-specific normalization to obtain the patched legacy
@@ -115,21 +124,28 @@ def main() -> int:
     env["ANDROID_HOME"] = str(args.sdk.resolve())
     env["ANDROID_SDK_ROOT"] = str(args.sdk.resolve())
     env["GRADLE_USER_HOME"] = str(gradle_home.resolve())
+    variant = "debug" if args.debuggable else "release"
+    gradle_task = "assembleDebug" if args.debuggable else "assembleRelease"
     gradle_args = [
         "-p",
         str(ROOT / "modern-settings"),
         ":reconstructed-host-prototype:clean",
-        ":reconstructed-host-prototype:assembleDebug",
+        f":reconstructed-host-prototype:{gradle_task}",
         f"-PlegacyHostDir={decoded}",
         f"-PhostApplicationId={args.application_id}",
     ]
     run(executable(args.gradle.resolve(), gradle_args), env=env)
 
-    host_apk = (
-        ROOT
-        / "modern-settings/reconstructed-host-prototype/build/outputs/apk/debug/"
-        "reconstructed-host-prototype-debug.apk"
-    )
+    if variant == "release":
+        host_apk = ROOT / (
+            "modern-settings/reconstructed-host-prototype/build/outputs/apk/release/"
+            "reconstructed-host-prototype-release-unsigned.apk"
+        )
+    else:
+        host_apk = ROOT / (
+            "modern-settings/reconstructed-host-prototype/build/outputs/apk/debug/"
+            "reconstructed-host-prototype-debug.apk"
+        )
     run(
         [
             python,
