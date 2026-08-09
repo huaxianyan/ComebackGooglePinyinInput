@@ -370,7 +370,12 @@ continues through the system user-dictionary Activity.
 Contact suggestions and clearing remain behind an explicit same-package legacy
 Dictionary fragment entry. This is intentional: their permission controller,
 confirmation dialog, and destructive task lifecycle have not been duplicated in
-Compose, and no destructive test is authorized in this stage. Other now owns
+Compose, and no destructive clear test is authorized in this stage. The first
+device-tested Intent supplied only `:android:show_fragment`, so the framework
+created the right class but `CommonPreferenceFragment` rejected the missing XML
+name with `Preference xml file not specified`. The accepted V3 Intent also
+supplies `PREFERENCE_FRAGMENT=setting_dictionary`; device testing confirms the
+legacy page, both target rows, and Back navigation without a new crash. Other now owns
 launcher visibility plus a nested About route that reuses the original terms and
 privacy URLs, existing license Activity, and package version. Theme and
 remaining dictionary operations remain specialized targets; moving their entry
@@ -389,7 +394,9 @@ Input/Chinese/Fuzzy navigation, one-level popping, rejection of Home as a child,
 and safe fallback for a stale restored route. Device acceptance confirms the
 original route tree, both Back paths, configuration restoration, and cross-page
 dependencies. Dictionary/backup is no longer a placeholder, and Other now has a
-nested About route; these additions still await device acceptance. The
+nested About route. Device acceptance covers read-only health refresh, settings
+dialogs, route/Back behavior, Google Drive SAF backup and native merge import,
+terms/privacy/licenses/version, and the corrected legacy-operations entry. The
 mechanical extraction leaves `SettingsScreen.kt` responsible only for route
 dispatch, Back, and the top-level Scaffold; home, Input, Keyboard, Handwriting,
 Fuzzy Pinyin, Dictionary, and shared controls have separate source ownership.

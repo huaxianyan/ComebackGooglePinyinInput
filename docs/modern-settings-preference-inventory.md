@@ -323,15 +323,19 @@ These are deliberately excluded from ordinary Boolean/List migration:
 - contact suggestions and clear-user-dictionary remain in the existing
   Dictionary fragment. Compose exposes one explicit legacy-operations entry so
   permission handling, confirmation, and destructive task semantics are not
-  duplicated before isolated testing and authorization;
+  duplicated before isolated testing and authorization. Device V2 exposed a
+  missing XML-name argument (`Preference xml file not specified`); accepted V3
+  supplies both `:android:show_fragment` and
+  `PREFERENCE_FRAGMENT=setting_dictionary`. The page, both target rows, and Back
+  now pass without a new crash; clearing itself was not executed;
 - fuzzy-Pinyin detail page is implemented as a process/configuration-safe
   Compose route with app-bar and system Back navigation. Device acceptance
   confirms parent/child dependency, all defaults and retained child values,
   toolbar/system Back, configuration recreation, actual fuzzy candidates and
   restoration when disabled, plus Full Pinyin, flyPY and glide regressions;
 - About is now a nested Compose route. It reuses the original terms/privacy URL
-  resources, explicit legacy license Activity, and current package version; its
-  device/browser acceptance is pending.
+  resources, explicit legacy license Activity, and current package version;
+  device/browser acceptance passes.
 
 Each modern navigation route must preserve the existing Activity/fragment
 contract, result handling, SAF grants, threading, and side effects. No new data
