@@ -13,6 +13,7 @@
 - 已验收并合并的现代化阶段：targetSdk 29、30、31、32、33、34、35、36
 - Android 17 / targetSdk 37：独立后续调查
 - 架构：arm64-v8a
+- 有效 ABI 运行下限：API 21；虽然 Manifest `minSdkVersion=17`，但 Android 在 API 21 前不存在 `arm64-v8a` 应用 ABI，且本 APK 不含 32 位 native payload，因此 API 17 只能做静态门禁，不能进行真实安装/启动验收
 
 ## 原生库
 

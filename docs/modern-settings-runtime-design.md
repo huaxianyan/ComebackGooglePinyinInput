@@ -42,7 +42,7 @@ The first host prototype established all of the following on the Pixel 10 Pro:
 - all 6,633 legacy public resources retain their original numeric IDs;
 - the patched legacy application remains `classes.dex`;
 - Compose and AndroidX occupy `classes2.dex` and later;
-- API 17-20 can start the legacy main DEX without AndroidX MultiDex;
+- legacy startup types remain in the primary DEX without AndroidX MultiDex;
 - the Compose activity is routed only on API 35+;
 - AndroidX Startup, ProfileInstaller, and `appComponentFactory` automatic process
   entry points are removed, so old processes do not load modern classes;
@@ -55,6 +55,12 @@ The first host prototype established all of the following on the Pixel 10 Pro:
 The isolated audit identity is
 `com.google.android.inputmethod.pinyin.materialcomposehostaudit`. It must never
 be published as a formal build.
+
+`minSdkVersion=17` is a manifest/Java compatibility declaration, not the
+installable ABI floor. This APK contains only AArch64 native libraries, while
+Android did not support the `arm64-v8a` application ABI before API 21. There is
+therefore no genuine API 17 runtime that can install this payload. API 17 gates
+are static only; they must not be reported as runtime acceptance.
 
 ## Resource and DEX invariants
 
@@ -398,6 +404,26 @@ the API 35+ Compose subtree. Forced-RTL device acceptance confirms mirrored
 navigation/Back icons, Switches, Sliders, dialogs, About, and Dictionary layouts;
 LTR is unchanged when the configuration is restored.
 
+Capability instrumentation on an API 36 x86_64 translated runtime confirms the
+same APK resolves `is_tablet=false` at `sw411dp` and `is_tablet=true` at
+`sw720dp`. Popup, one-handed mode, and emoji-switch visibility change from true
+to false together; the modern Activity starts under the tablet configuration.
+The vibrator service and hardware are present in both available devices. JVM
+and on-device ART invocation confirm that either a missing service or
+`hasVibrator=false` resolves vibration controls to false, but this remains
+branch-injection evidence rather than acceptance on real no-vibrator hardware.
+Stopping the Emulator vibrator HAL makes system_server unusable and is not a
+valid hardware simulation.
+
+The unchanged ARM64 audit APK installs through native translation and starts the
+legacy `SettingsActivity` on an API 34 x86_64 Google APIs image without
+VerifyError or AndroidX startup. API 23 x86_64 has no ARM translation and rejects
+the APK with `INSTALL_FAILED_NO_MATCHING_ABIS`; deleting native entries fails in
+`PinyinApp`, and copying AArch64 ELF files under x86 names correctly fails with
+`unexpected e_machine: 183`. The official Emulator refuses an API 23 ARM64 AVD
+on this x86_64 host (`QEMU2 emulator does not support arm64 CPU architecture`).
+API 23 runtime acceptance is therefore environment-blocked rather than passed.
+
 Contact suggestions and clearing remain behind an explicit same-package legacy
 Dictionary fragment entry. This is intentional: their permission controller,
 confirmation dialog, and destructive task lifecycle have not been duplicated in
@@ -436,9 +462,12 @@ screen.
 
 ## Next implementation stage
 
-1. Cover the no-vibrator and `is_tablet=true` runtime branches.
-2. Exercise API 17–34 legacy routing on representative runtimes and complete a
-   formal release-variant core-input regression.
+1. Complete a release-variant core-input regression on the accepted ARM64 audit
+   runtime, then repeat on a properly versioned formal candidate only after
+   explicit installation authorization.
+2. Keep API 23 runtime acceptance open until a usable ARM64 device/emulator is
+   available; keep API 17 explicitly static-only because no ARM64 API 17 runtime
+   exists.
 3. Keep contact suggestions and clearing on the legacy controller until their
    exact permission/destructive-task lifecycle has an isolated audit package
    and explicit authorization.
