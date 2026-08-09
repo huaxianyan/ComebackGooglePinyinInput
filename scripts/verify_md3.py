@@ -89,7 +89,60 @@ def main() -> None:
         decoded
         / "smali/com/google/android/inputmethod/pinyin/firstrun/FirstRunStateCompat.smali"
     ).read_text(encoding="utf-8")
-    require(state, ('const-string v1, "guide_complete"', "SharedPreferences$Editor;->commit()Z"), "completion state")
+    require(
+        state,
+        (
+            'const-string v1, "guide_complete"',
+            'const-string v1, "legacy_migration_checked"',
+            'const-string v3, "HAD_FIRST_RUN"',
+            "SharedPreferences;->contains(Ljava/lang/String;)Z",
+            "SharedPreferences$Editor;->commit()Z",
+        ),
+        "completion and one-time legacy migration state",
+    )
+
+    dynamic_colors = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in (decoded / "res/values-v35").glob("*.xml")
+    )
+    require(
+        dynamic_colors,
+        (
+            "@android:color/system_accent1_600",
+            "@android:color/system_accent1_100",
+            "@android:color/system_neutral2_10",
+            "@android:color/system_neutral2_50",
+        ),
+        "API-35 dynamic MD3 first-run roles",
+    )
+    if not any(
+        value in dynamic_colors
+        for value in (
+            '<item name="android:layout_height">40dp</item>',
+            '<item name="android:layout_height">40.0dip</item>',
+        )
+    ):
+        raise RuntimeError("API-35 first-run buttons must use the MD3 40dp height")
+    if not any(
+        value in dynamic_colors
+        for value in (
+            '<item name="android:elevation">0dp</item>',
+            '<item name="android:elevation">0.0dip</item>',
+        )
+    ):
+        raise RuntimeError("API-35 first-run buttons must not add legacy elevation")
+    step_styles = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in (decoded / "res/values").glob("*.xml")
+    )
+    require(
+        step_styles,
+        (
+            "@drawable/bg_first_run_md3_tonal_button",
+            "@color/first_run_md3_tonal_button_text",
+        ),
+        "tonal first-run step actions",
+    )
 
     settings = (
         decoded / "smali/com/google/android/inputmethod/pinyin/Md3SettingsCompat.smali"

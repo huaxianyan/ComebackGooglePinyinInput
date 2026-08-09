@@ -1,14 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="first_run_md3_primary">#FFA8C7FA</color>
-    <color name="first_run_md3_on_primary">#FF062E6F</color>
-    <color name="first_run_md3_primary_container">#FF0842A0</color>
-    <color name="first_run_md3_on_primary_container">#FFD7E3FF</color>
-    <color name="first_run_md3_surface">#FF111318</color>
-    <color name="first_run_md3_surface_container">#FF1D2024</color>
-    <color name="first_run_md3_on_surface">#FFE2E2E9</color>
-    <color name="first_run_md3_on_surface_variant">#FFC4C6D0</color>
-    <color name="first_run_md3_outline">#FF8E9099</color>
+    <!-- Match Compose Material 3 dynamicDarkColorScheme() to the nearest
+         public system tonal-palette roles available to legacy Views. -->
+    <color name="first_run_md3_primary">@android:color/system_accent1_200</color>
+    <color name="first_run_md3_on_primary">@android:color/system_accent1_800</color>
+    <color name="first_run_md3_primary_container">@android:color/system_accent1_700</color>
+    <color name="first_run_md3_on_primary_container">@android:color/system_accent1_100</color>
+    <color name="first_run_md3_surface">@android:color/system_neutral2_900</color>
+    <color name="first_run_md3_surface_container">@android:color/system_neutral2_800</color>
+    <color name="first_run_md3_on_surface">@android:color/system_neutral2_100</color>
+    <color name="first_run_md3_on_surface_variant">@android:color/system_neutral2_200</color>
+    <color name="first_run_md3_outline">@android:color/system_neutral2_400</color>
 
     <style name="AppThemeSelector.NoTitle" parent="@android:style/Theme.Material.NoActionBar">
         <item name="android:fontFamily">sans</item>

@@ -6,6 +6,7 @@
 # static fields
 .field private static final PREFS:Ljava/lang/String; = "first_run_local_state"
 .field private static final KEY_COMPLETE:Ljava/lang/String; = "guide_complete"
+.field private static final KEY_LEGACY_MIGRATION_CHECKED:Ljava/lang/String; = "legacy_migration_checked"
 .field private static final KEY_DASHBOARD_PENDING:Ljava/lang/String; = "dashboard_pending"
 .field private static volatile sGuideLaunchClaimed:Z
 
@@ -38,7 +39,7 @@
 .end method
 
 .method public static isComplete(Landroid/content/Context;)Z
-    .locals 2
+    .locals 4
 
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/firstrun/FirstRunStateCompat;->prefs(Landroid/content/Context;)Landroid/content/SharedPreferences;
 
@@ -46,13 +47,70 @@
 
     const-string v1, "guide_complete"
 
-    const/4 p0, 0x0
+    invoke-interface {v0, v1}, Landroid/content/SharedPreferences;->contains(Ljava/lang/String;)Z
 
-    invoke-interface {v0, v1, p0}, Landroid/content/SharedPreferences;->getBoolean(Ljava/lang/String;Z)Z
+    move-result v2
+
+    if-eqz v2, :check_migration
+
+    const/4 v2, 0x0
+
+    invoke-interface {v0, v1, v2}, Landroid/content/SharedPreferences;->getBoolean(Ljava/lang/String;Z)Z
 
     move-result v0
 
     return v0
+
+    :check_migration
+    const-string v1, "legacy_migration_checked"
+
+    invoke-interface {v0, v1}, Landroid/content/SharedPreferences;->contains(Ljava/lang/String;)Z
+
+    move-result v2
+
+    if-eqz v2, :migrate_legacy
+
+    const/4 v0, 0x0
+
+    return v0
+
+    :migrate_legacy
+    # Snapshot HAD_FIRST_RUN before opening the guide. Lapy.onCreate() writes
+    # that legacy key immediately, so it cannot be consulted again after Back.
+    invoke-static {p0}, Landroid/preference/PreferenceManager;->getDefaultSharedPreferences(Landroid/content/Context;)Landroid/content/SharedPreferences;
+
+    move-result-object v2
+
+    const-string v3, "HAD_FIRST_RUN"
+
+    invoke-interface {v2, v3}, Landroid/content/SharedPreferences;->contains(Ljava/lang/String;)Z
+
+    move-result v2
+
+    invoke-interface {v0}, Landroid/content/SharedPreferences;->edit()Landroid/content/SharedPreferences$Editor;
+
+    move-result-object v0
+
+    const-string v1, "legacy_migration_checked"
+
+    const/4 v3, 0x1
+
+    invoke-interface {v0, v1, v3}, Landroid/content/SharedPreferences$Editor;->putBoolean(Ljava/lang/String;Z)Landroid/content/SharedPreferences$Editor;
+
+    move-result-object v0
+
+    if-eqz v2, :commit_migration
+
+    const-string v1, "guide_complete"
+
+    invoke-interface {v0, v1, v3}, Landroid/content/SharedPreferences$Editor;->putBoolean(Ljava/lang/String;Z)Landroid/content/SharedPreferences$Editor;
+
+    move-result-object v0
+
+    :commit_migration
+    invoke-interface {v0}, Landroid/content/SharedPreferences$Editor;->commit()Z
+
+    return v2
 .end method
 
 .method public static declared-synchronized claimGuideLaunch(Landroid/content/Context;)Z
@@ -128,6 +186,12 @@
 
     move-result-object v0
 
+    const-string v1, "legacy_migration_checked"
+
+    invoke-interface {v0, v1, v2}, Landroid/content/SharedPreferences$Editor;->putBoolean(Ljava/lang/String;Z)Landroid/content/SharedPreferences$Editor;
+
+    move-result-object v0
+
     const-string v1, "dashboard_pending"
 
     invoke-interface {v0, v1, v2}, Landroid/content/SharedPreferences$Editor;->putBoolean(Ljava/lang/String;Z)Landroid/content/SharedPreferences$Editor;
@@ -179,6 +243,36 @@
     move-result-object v0
 
     const-string v1, "USER_SELECTED_KEYBOARD"
+
+    invoke-interface {v0, v1}, Landroid/content/SharedPreferences$Editor;->remove(Ljava/lang/String;)Landroid/content/SharedPreferences$Editor;
+
+    move-result-object v0
+
+    invoke-interface {v0}, Landroid/content/SharedPreferences$Editor;->commit()Z
+
+    # The local file is intentionally outside BackupAgent. Clear every setup
+    # marker defensively if a restore callback is nevertheless delivered.
+    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/firstrun/FirstRunStateCompat;->prefs(Landroid/content/Context;)Landroid/content/SharedPreferences;
+
+    move-result-object v0
+
+    invoke-interface {v0}, Landroid/content/SharedPreferences;->edit()Landroid/content/SharedPreferences$Editor;
+
+    move-result-object v0
+
+    const-string v1, "guide_complete"
+
+    invoke-interface {v0, v1}, Landroid/content/SharedPreferences$Editor;->remove(Ljava/lang/String;)Landroid/content/SharedPreferences$Editor;
+
+    move-result-object v0
+
+    const-string v1, "legacy_migration_checked"
+
+    invoke-interface {v0, v1}, Landroid/content/SharedPreferences$Editor;->remove(Ljava/lang/String;)Landroid/content/SharedPreferences$Editor;
+
+    move-result-object v0
+
+    const-string v1, "dashboard_pending"
 
     invoke-interface {v0, v1}, Landroid/content/SharedPreferences$Editor;->remove(Ljava/lang/String;)Landroid/content/SharedPreferences$Editor;
 

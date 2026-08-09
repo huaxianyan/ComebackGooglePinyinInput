@@ -66,9 +66,12 @@
         <item name="android:lineSpacingExtra">2dp</item>
     </style>
     <style name="FirstRunSinglePageStepButton" parent="@style/FirstRunPageButton">
+        <item name="android:background">@drawable/bg_first_run_md3_tonal_button</item>
+        <item name="android:textColor">@color/first_run_md3_tonal_button_text</item>
         <item name="android:layout_gravity">right</item>
         <item name="android:layout_marginTop">16dp</item>
         <item name="android:minWidth">112dp</item>
+        <item name="android:elevation">0dp</item>
     </style>
     <style name="FirstRunSinglePageDone" parent="@style/FirstRunPageSettingsDone">
         <item name="android:layout_gravity">right</item>

@@ -1,14 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="first_run_md3_primary">#FF0B57D0</color>
-    <color name="first_run_md3_on_primary">#FFFFFFFF</color>
-    <color name="first_run_md3_primary_container">#FFD7E3FF</color>
-    <color name="first_run_md3_on_primary_container">#FF001B3F</color>
-    <color name="first_run_md3_surface">#FFF9F9FF</color>
-    <color name="first_run_md3_surface_container">#FFEEEEF4</color>
-    <color name="first_run_md3_on_surface">#FF1A1B20</color>
-    <color name="first_run_md3_on_surface_variant">#FF44474F</color>
-    <color name="first_run_md3_outline">#FF74777F</color>
+    <!-- Match Compose Material 3 dynamicLightColorScheme() to the nearest
+         public system tonal-palette roles available to legacy Views. -->
+    <color name="first_run_md3_primary">@android:color/system_accent1_600</color>
+    <color name="first_run_md3_on_primary">@android:color/system_accent1_0</color>
+    <color name="first_run_md3_primary_container">@android:color/system_accent1_100</color>
+    <color name="first_run_md3_on_primary_container">@android:color/system_accent1_900</color>
+    <color name="first_run_md3_surface">@android:color/system_neutral2_10</color>
+    <color name="first_run_md3_surface_container">@android:color/system_neutral2_50</color>
+    <color name="first_run_md3_on_surface">@android:color/system_neutral2_900</color>
+    <color name="first_run_md3_on_surface_variant">@android:color/system_neutral2_700</color>
+    <color name="first_run_md3_outline">@android:color/system_neutral2_500</color>
 
     <dimen name="first_run_page_button_font_size">14sp</dimen>
     <dimen name="first_run_page_button_padding_top">32dp</dimen>
@@ -95,10 +97,10 @@
         <item name="android:paddingLeft">24dp</item>
         <item name="android:paddingRight">24dp</item>
         <item name="android:layout_width">wrap_content</item>
-        <item name="android:layout_height">48dp</item>
+        <item name="android:layout_height">40dp</item>
         <item name="android:minWidth">120dp</item>
         <item name="android:layout_marginTop">@dimen/first_run_page_button_padding_top</item>
-        <item name="android:elevation">2dp</item>
+        <item name="android:elevation">0dp</item>
         <item name="android:stateListAnimator">@null</item>
     </style>
     <style name="FirstRunPageFooterButton" parent="@style/FirstRunPageButton">
