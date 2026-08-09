@@ -52,6 +52,9 @@ def main() -> int:
             "snapshot = controller.read()",
             "LegacySettingsNavigation.themeSelectorIntent(this)",
             "setContent {",
+            "CompositionLocalProvider(LocalLayoutDirection provides layoutDirection)",
+            "context.resources.configuration.layoutDirection",
+            "modernSettingsLayoutDirection(",
         ),
         "guarded Compose settings activity",
     )

@@ -4,6 +4,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.view.View
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
@@ -15,10 +16,13 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
 
 /** API-35+-guarded host for the staged official Compose Material 3 settings runtime. */
 class ModernSettingsActivity : ComponentActivity() {
@@ -240,5 +244,17 @@ private fun ModernSettingsTheme(content: @Composable () -> Unit) {
         dark -> darkColorScheme()
         else -> lightColorScheme()
     }
-    MaterialTheme(colorScheme = colors, content = content)
+    val layoutDirection = modernSettingsLayoutDirection(
+        context.resources.configuration.layoutDirection,
+    )
+    CompositionLocalProvider(LocalLayoutDirection provides layoutDirection) {
+        MaterialTheme(colorScheme = colors, content = content)
+    }
 }
+
+internal fun modernSettingsLayoutDirection(configurationLayoutDirection: Int): LayoutDirection =
+    if (configurationLayoutDirection == View.LAYOUT_DIRECTION_RTL) {
+        LayoutDirection.Rtl
+    } else {
+        LayoutDirection.Ltr
+    }
