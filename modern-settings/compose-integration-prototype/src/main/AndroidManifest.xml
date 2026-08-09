@@ -6,7 +6,7 @@
         android:supportsRtl="true"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
         <activity
-            android:name="com.google.android.inputmethod.pinyin.modernsettings.compose.ComposeSettingsPrototypeActivity"
+            android:name="com.google.android.inputmethod.pinyin.modernsettings.compose.ModernSettingsActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

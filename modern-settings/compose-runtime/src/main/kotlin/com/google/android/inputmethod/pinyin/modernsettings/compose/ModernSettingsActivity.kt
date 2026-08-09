@@ -21,7 +21,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 
 /** API-35+-guarded host for the staged official Compose Material 3 settings runtime. */
-class ComposeSettingsPrototypeActivity : ComponentActivity() {
+class ModernSettingsActivity : ComponentActivity() {
     private enum class TreePurpose { Location, Enable, Import }
 
     private lateinit var controller: SettingsController

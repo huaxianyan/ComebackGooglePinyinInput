@@ -300,6 +300,59 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
         "    .line 7",
     )
 
+    # API 35+ uses the source-built Compose host for every normal settings
+    # entry. Keep the legacy Activity as the API 17-34 implementation and as a
+    # narrowly gated same-package host for operations whose permission,
+    # confirmation, and destructive task lifecycles have not been migrated.
+    # The modern class is referenced only by name so primary DEX verification
+    # and API 17-34 startup never resolve an AndroidX/Compose type.
+    settings_activity = decoded / (
+        "smali/com/google/android/apps/inputmethod/pinyin/preference/"
+        "SettingsActivity.smali"
+    )
+    replace_once(
+        settings_activity,
+        "    invoke-direct {p0}, Labu;-><init>()V\n\n"
+        "    return-void\n"
+        ".end method\n\n\n"
+        "# virtual methods",
+        "    invoke-direct {p0}, Labu;-><init>()V\n\n"
+        "    return-void\n"
+        ".end method\n\n"
+        ".method public onCreate(Landroid/os/Bundle;)V\n"
+        "    .locals 4\n\n"
+        "    invoke-super {p0, p1}, Labu;->onCreate(Landroid/os/Bundle;)V\n\n"
+        "    sget v0, Landroid/os/Build$VERSION;->SDK_INT:I\n\n"
+        "    const/16 v1, 0x23\n\n"
+        "    if-lt v0, v1, :legacy_settings\n\n"
+        "    invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/pinyin/"
+        "preference/SettingsActivity;->getIntent()Landroid/content/Intent;\n\n"
+        "    move-result-object v0\n\n"
+        "    const-string v1, \"modern_settings_use_legacy\"\n\n"
+        "    const/4 v2, 0x0\n\n"
+        "    invoke-virtual {v0, v1, v2}, Landroid/content/Intent;->getBooleanExtra("
+        "Ljava/lang/String;Z)Z\n\n"
+        "    move-result v0\n\n"
+        "    if-nez v0, :legacy_settings\n\n"
+        "    new-instance v0, Landroid/content/Intent;\n\n"
+        "    invoke-direct {v0}, Landroid/content/Intent;-><init>()V\n\n"
+        "    invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/pinyin/"
+        "preference/SettingsActivity;->getPackageName()Ljava/lang/String;\n\n"
+        "    move-result-object v1\n\n"
+        "    const-string v2, \"com.google.android.inputmethod.pinyin."
+        "modernsettings.compose.ModernSettingsActivity\"\n\n"
+        "    invoke-virtual {v0, v1, v2}, Landroid/content/Intent;->setClassName("
+        "Ljava/lang/String;Ljava/lang/String;)Landroid/content/Intent;\n\n"
+        "    invoke-virtual {p0, v0}, Lcom/google/android/apps/inputmethod/pinyin/"
+        "preference/SettingsActivity;->startActivity(Landroid/content/Intent;)V\n\n"
+        "    invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/pinyin/"
+        "preference/SettingsActivity;->finish()V\n\n"
+        "    :legacy_settings\n"
+        "    return-void\n"
+        ".end method\n\n\n"
+        "# virtual methods",
+    )
+
     # Do not launch a transparent permission Activity from the IME service.
     # Runtime permission requests made from a real settings Activity continue
     # through FeaturePermissionsManager's direct Activity.requestPermissions

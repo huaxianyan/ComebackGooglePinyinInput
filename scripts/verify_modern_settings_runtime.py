@@ -39,12 +39,12 @@ def main() -> int:
     kotlin_files = tuple(kotlin_root.rglob("*.kt"))
     kotlin_text = "\n".join(path.read_text(encoding="utf-8") for path in kotlin_files)
     activity_text = next(
-        kotlin_root.rglob("ComposeSettingsPrototypeActivity.kt")
+        kotlin_root.rglob("ModernSettingsActivity.kt")
     ).read_text(encoding="utf-8")
     require(
         activity_text,
         (
-            "class ComposeSettingsPrototypeActivity : ComponentActivity()",
+            "class ModernSettingsActivity : ComponentActivity()",
             "SettingsController(",
             "SettingsPreviewEffects(this)",
             "SettingsScreen(",
@@ -708,9 +708,26 @@ def main() -> int:
             '"androidx.compose.material.icons"',
             'queries = root.find("queries")',
             'action.set(A + "name", "android.view.InputMethod")',
+            'activity.set(A + "exported", "true" if args.audit_launcher else "false")',
             "broad QUERY_ALL_PACKAGES permission",
         ),
         "guarded legacy manifest",
+    )
+    require(
+        patch_script,
+        (
+            'const/16 v1, 0x23',
+            'const-string v1, \\"modern_settings_use_legacy\\"',
+            'modernsettings.compose.ModernSettingsActivity',
+            '->setClassName(',
+            'preference/SettingsActivity;->finish()V',
+        ),
+        "API-35 modern settings route",
+    )
+    require(
+        kotlin_text,
+        ('"modern_settings_use_legacy"',),
+        "legacy dictionary route bypass",
     )
 
     if args.apk is not None:
@@ -734,7 +751,7 @@ def main() -> int:
             (
                 "com.google.android.apps.inputmethod.pinyin.PinyinApp",
                 "com.google.android.inputmethod.pinyin.PinyinIME",
-                "ComposeSettingsPrototypeActivity",
+                "ModernSettingsActivity",
                 "com.google.android.apps.inputmethod.libs.theme.preference.ThemeSelectorActivity",
                 "com.google.android.apps.inputmethod.libs.framework.core.LauncherActivity",
                 'android:enabled="@bool/modern_settings_runtime_enabled"',
@@ -814,10 +831,28 @@ def main() -> int:
         legacy_ime = decoded / "smali/com/google/android/inputmethod/pinyin/PinyinIME.smali"
         if not legacy_ime.is_file():
             raise RuntimeError("legacy IME must remain in primary classes.dex")
+        settings_activity = decoded / (
+            "smali/com/google/android/apps/inputmethod/pinyin/preference/SettingsActivity.smali"
+        )
+        settings_activity_text = settings_activity.read_text(encoding="utf-8")
+        require(
+            settings_activity_text,
+            (
+                "Build$VERSION;->SDK_INT:I",
+                "const/16 v1, 0x23",
+                'const-string v1, "modern_settings_use_legacy"',
+                "modernsettings.compose.ModernSettingsActivity",
+                "->setClassName(",
+                "SettingsActivity;->finish()V",
+            ),
+            "primary-DEX API-35 settings route",
+        )
+        if "Lcom/google/android/inputmethod/pinyin/modernsettings/compose/ModernSettingsActivity;" in settings_activity_text:
+            raise RuntimeError("primary DEX must reference the modern Activity by string only")
         compose_activities = list(
             decoded.glob(
                 "smali_classes*/com/google/android/inputmethod/pinyin/modernsettings/compose/"
-                "ComposeSettingsPrototypeActivity.smali"
+                "ModernSettingsActivity.smali"
             )
         )
         if len(compose_activities) != 1:

@@ -70,7 +70,7 @@ OVERRIDE_LIBRARIES = (
 
 ACTIVITY = (
     "com.google.android.inputmethod.pinyin.modernsettings.compose."
-    "ComposeSettingsPrototypeActivity"
+    "ModernSettingsActivity"
 )
 
 
@@ -134,7 +134,7 @@ def main() -> int:
 
     activity = ET.SubElement(application, "activity")
     activity.set(A + "name", ACTIVITY)
-    activity.set(A + "exported", "true")
+    activity.set(A + "exported", "true" if args.audit_launcher else "false")
     activity.set(A + "enabled", "@bool/modern_settings_runtime_enabled")
     activity.set(A + "theme", "@android:style/Theme.Material.Light.NoActionBar")
     if args.audit_launcher:

@@ -129,6 +129,9 @@ internal class LegacyDictionarySettingsRepository(private val activity: Activity
             ).putExtra(
                 "PREFERENCE_FRAGMENT",
                 "setting_dictionary",
+            ).putExtra(
+                "modern_settings_use_legacy",
+                true,
             ),
         )
     }
