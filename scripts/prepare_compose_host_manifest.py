@@ -75,6 +75,7 @@ ACTIVITY = (
 LEGACY_LAUNCHER_ACTIVITY = (
     "com.google.android.apps.inputmethod.libs.framework.core.LauncherActivity"
 )
+IME_SERVICE = "com.google.android.inputmethod.pinyin.PinyinIME"
 FORMAL_APPLICATION_ID = "com.google.android.inputmethod.pinyin.compat"
 
 
@@ -90,9 +91,12 @@ def main() -> int:
     parser.add_argument("--package", required=True, dest="package_name")
     parser.add_argument("--audit-launcher", action="store_true")
     parser.add_argument("--launcher-label")
+    parser.add_argument("--ime-label")
     args = parser.parse_args()
     if args.launcher_label and args.package_name == FORMAL_APPLICATION_ID:
         raise RuntimeError("A custom launcher label is forbidden for the formal application ID")
+    if args.ime_label and args.package_name == FORMAL_APPLICATION_ID:
+        raise RuntimeError("A custom IME label is forbidden for the formal application ID")
 
     manifest = args.decoded / "AndroidManifest.xml"
     tree = ET.parse(manifest)
@@ -150,6 +154,16 @@ def main() -> int:
                 f"expected one legacy launcher activity, found {len(legacy_launchers)}"
             )
         legacy_launchers[0].set(A + "label", args.launcher_label)
+
+    if args.ime_label:
+        ime_services = [
+            candidate
+            for candidate in application.findall("service")
+            if candidate.attrib.get(A + "name") == IME_SERVICE
+        ]
+        if len(ime_services) != 1:
+            raise RuntimeError(f"expected one IME service, found {len(ime_services)}")
+        ime_services[0].set(A + "label", args.ime_label)
 
     activity = ET.SubElement(application, "activity")
     activity.set(A + "name", ACTIVITY)

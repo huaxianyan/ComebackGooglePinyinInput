@@ -50,6 +50,10 @@ def main() -> int:
         help="replace the legacy launcher label for a clearly identified isolated audit package",
     )
     parser.add_argument(
+        "--ime-label",
+        help="replace the IME service label for a clearly identified isolated audit package",
+    )
+    parser.add_argument(
         "--debuggable",
         action="store_true",
         help="build an isolated debug host; forbidden for the formal application ID",
@@ -61,6 +65,8 @@ def main() -> int:
         raise RuntimeError("Debug mode is forbidden for the formal application ID")
     if args.launcher_label and args.application_id == formal_application_id:
         raise RuntimeError("A custom launcher label is forbidden for the formal application ID")
+    if args.ime_label and args.application_id == formal_application_id:
+        raise RuntimeError("A custom IME label is forbidden for the formal application ID")
 
     for path in (args.original, args.apktool, args.gradle, args.keystore):
         if not path.resolve().exists():
@@ -123,6 +129,8 @@ def main() -> int:
         manifest_command.append("--audit-launcher")
     if args.launcher_label:
         manifest_command.extend(("--launcher-label", args.launcher_label))
+    if args.ime_label:
+        manifest_command.extend(("--ime-label", args.ime_label))
     run(manifest_command)
 
     gradle_home = ROOT / "work/modern-settings-gradle-home"
