@@ -85,6 +85,20 @@ def main() -> None:
         "single first-run system-bar insets",
     )
 
+    first_run_activity = (
+        decoded
+        / "smali/com/google/android/apps/inputmethod/pinyin/firstrun/PinyinFirstRunActivity.smali"
+    ).read_text(encoding="utf-8")
+    require(
+        first_run_activity,
+        (
+            "FirstRunStateCompat;->isComplete(Landroid/content/Context;)Z",
+            "FirstRunStateCompat;->prepareIncompleteGuideLaunch(Landroid/content/Context;)V",
+            "Lapy;->a(Landroid/content/Context;Ljava/lang/Class;)Z",
+        ),
+        "re-enterable incomplete first-run route",
+    )
+
     state = (
         decoded
         / "smali/com/google/android/inputmethod/pinyin/firstrun/FirstRunStateCompat.smali"
@@ -95,6 +109,7 @@ def main() -> None:
             'const-string v1, "guide_complete"',
             'const-string v1, "legacy_migration_checked"',
             'const-string v3, "HAD_FIRST_RUN"',
+            ".method public static prepareIncompleteGuideLaunch(Landroid/content/Context;)V",
             "SharedPreferences;->contains(Ljava/lang/String;)Z",
             "SharedPreferences$Editor;->commit()Z",
         ),

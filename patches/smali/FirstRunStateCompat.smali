@@ -283,6 +283,32 @@
     return-void
 .end method
 
+.method public static prepareIncompleteGuideLaunch(Landroid/content/Context;)V
+    .locals 2
+
+    # Lapy.onCreate() writes HAD_FIRST_RUN before the user completes the guide.
+    # Once one-time migration has classified this installation as new, remove
+    # that transient legacy marker before each launch attempt so Back remains
+    # an exit path rather than an implicit completion path.
+    invoke-static {p0}, Landroid/preference/PreferenceManager;->getDefaultSharedPreferences(Landroid/content/Context;)Landroid/content/SharedPreferences;
+
+    move-result-object v0
+
+    invoke-interface {v0}, Landroid/content/SharedPreferences;->edit()Landroid/content/SharedPreferences$Editor;
+
+    move-result-object v0
+
+    const-string v1, "HAD_FIRST_RUN"
+
+    invoke-interface {v0, v1}, Landroid/content/SharedPreferences$Editor;->remove(Ljava/lang/String;)Landroid/content/SharedPreferences$Editor;
+
+    move-result-object v0
+
+    invoke-interface {v0}, Landroid/content/SharedPreferences$Editor;->commit()Z
+
+    return-void
+.end method
+
 .method public static shouldForceDashboard(Landroid/content/Context;)Z
     .locals 3
 

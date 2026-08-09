@@ -616,6 +616,8 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
         "    :check_legacy_first_run\n"
         "    .prologue\n"
         "    .line 2\n"
+        "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/firstrun/"
+        "FirstRunStateCompat;->prepareIncompleteGuideLaunch(Landroid/content/Context;)V\n\n"
         "    sget-boolean v0, Laik;->h:Z",
     )
     replace_once(
