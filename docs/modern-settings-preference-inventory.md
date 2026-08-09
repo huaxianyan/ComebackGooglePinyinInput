@@ -307,7 +307,10 @@ These are deliberately excluded from ordinary Boolean/List migration:
 - theme selector/editor;
 - dictionary health is now a Compose read-only row backed by the existing
   on-demand asynchronous primary-DEX inspector. It retains native save-lock
-  serialization and never reads dictionary contents;
+  serialization and never reads dictionary contents. Its UI state is owned by
+  the Activity rather than the first lazy item, concurrent loads are rejected,
+  and refresh retains the last summary so item height and scroll anchors remain
+  stable when the row leaves and re-enters composition;
 - SAF backup location, interval, retention, immediate backup, and import now
   have typed Compose presentation and write gates. Directory selection retains
   persistent read/write grants and delegates asynchronous create/read/rename/
@@ -343,7 +346,11 @@ format or replacement screen is implied.
 
 ## Formal routing gate
 
-API 35+ routing remains disabled until the principal Input and Keyboard
-settings, dependency groups, runtime visibility predicates, and specialized
-navigation entry points are covered. API 17–34 continues to use the legacy
-Preference implementation.
+The gate is now enabled: normal `SettingsActivity` entries route by class-name
+string to `ModernSettingsActivity` on API 35+, while API 17–34 continues to use
+the legacy Preference implementation without resolving a Compose type. The
+legacy Dictionary operations Intent carries a narrow same-package bypass to
+avoid a routing loop. Device acceptance covers the launcher/system settings
+route, nested legacy entry and Back return. A same-signature final-application-ID
+upgrade from published `v2.0.0` retained existing data and
+`switch_to_other_imes`; this was an installation test only, not a new release.

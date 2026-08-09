@@ -367,6 +367,19 @@ exact integer lists and fallback values; invalid writes are rejected. The
 shortcuts Boolean retains its original key/default/dependency, while its editor
 continues through the system user-dictionary Activity.
 
+Performance tracing distinguished frame throughput from scroll-anchor stability.
+On the Pixel's active 120 Hz display, Chinese Input sustained 116–120 fps and
+Dictionary pure scrolling presented 1,989/1,993 frames on time; GPU and normal
+UI work were not the bottleneck. The observed Dictionary-only oscillation came
+from the first lazy item owning `rememberSaveable` health state and running
+`LaunchedEffect(Unit)` every time it re-entered composition. Loading collapsed
+a multi-line summary to one line and completion expanded it again, so
+`LazyColumn` repeatedly corrected its anchor near the top. Health state now
+belongs to the Activity, concurrent loads are rejected, the last summary remains
+visible during refresh, and Dictionary items have stable keys/content types.
+The isolated release-like audit build passes device scrolling/refresh acceptance
+without recurrence; post-fix P90/P95 frame times are 5/6 ms with 0 missed vsync.
+
 Contact suggestions and clearing remain behind an explicit same-package legacy
 Dictionary fragment entry. This is intentional: their permission controller,
 confirmation dialog, and destructive task lifecycle have not been duplicated in
@@ -405,15 +418,13 @@ screen.
 
 ## Next implementation stage
 
-1. Device-test the read-only health callback and refresh lifecycle without
-   reading dictionary contents.
-2. Test SAF cancellation and validation failure first, then a user-selected
-   writable directory, while preserving prior grants until validation succeeds.
-3. Test interval/retention persistence and automatic-backup enable/disable;
-   separately authorize and test immediate backup and merge import.
+1. Validate light/dark mode, dynamic color, RTL, font scaling, TalkBack,
+   landscape, narrow screens, and multi-window behavior on the stable list
+   implementation.
+2. Cover the no-vibrator and `is_tablet=true` runtime branches.
+3. Exercise API 17–34 legacy routing on representative runtimes and complete a
+   formal release-variant core-input regression.
 4. Keep contact suggestions and clearing on the legacy controller until their
    exact permission/destructive-task lifecycle has an isolated audit package
    and explicit authorization.
-5. Validate About URLs, licenses, route restoration, toolbar/system Back,
-   light/dark mode, dynamic color, RTL, font scaling, TalkBack, landscape,
-   narrow screens, and multi-window behavior.
+5. Modernize release workflow/version enforcement before any release decision.

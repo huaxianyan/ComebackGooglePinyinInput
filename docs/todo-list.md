@@ -115,6 +115,8 @@
 - [x] Compose“词典与备份”通过 Pixel 真机验收：只读健康状态继续调用现有异步 inspector；SAF 目录必须取得持久读写授权并通过现有 create/read/rename/delete 验证后才提交；自动备份开关、Int 间隔 `1/3/7/14/30`、Int 保留数 `3/5/10/20/30`、立即备份和导入继续委托原生 exporter/importer 与合并语义；自定义短语保留 Boolean 默认 true 和编辑器依赖。维护者额外验证 Google Drive 目录上的备份和合并导入正常。联系人建议与清除词典暂时显式进入旧 Fragment，不复制权限/确认/破坏性任务；V2 首次入口缺少 `PREFERENCE_FRAGMENT=setting_dictionary` 导致 `Preference xml file not specified`，V3 已补齐参数，旧页面启动、两项目标可见和 Back 返回通过，且当前进程无新增崩溃。未执行清除用户字典
 - [x] “其他 → 关于”Compose 子页通过真机验收：复用旧 `tos_url` / `privacy_url`、现有 `UnquantumLicenseMenuActivity` 和当前 package version；工具栏/系统 Back、浏览器解析和许可证页面正常
 - [x] 最终验收产物 `work/modern-settings-dictionary-about-v3.apk`（SHA-256 `b7b911a9e7a37a6a120a55d732371b7013482275847d9ea15d2f7342f91346cb`，29,835,596 bytes）：双构建逐字节一致；46 项单元测试、6,633/6,633 旧资源 ID、API 31/33/34/35/36、v1/v2/v3 签名、16 KiB ZIP alignment 和英文 raw `ZIP_STORED` 门禁通过。设备覆盖安装后默认输入法保持该审计包，当前进程 PID 与 V2 历史崩溃 PID 不同且没有新增 crash/ANR/VerifyError；清除用户字典仍需独立 `dictionaryaudit` 与破坏性测试授权
+- [x] API 35+ 正式设置路由通过真机验收：旧 `SettingsActivity` 仅以字符串类名启动 `ModernSettingsActivity`，API 17–34 不解析 Compose 类型；词典旧操作携带精确旁路参数避免循环。普通启动器、系统设置入口、旧词典页和 Back 返回均正常。最终 application ID 使用正式签名覆盖已发布 `v2.0.0` 的安装测试确认数据和 `switch_to_other_imes` 继承正常；该设备安装测试不等于发布，新版本号和 Release 尚未创建
+- [x] 词典页滚动锚点抖动已定位并通过隔离 release-like 审计包验收：120 Hz Perfetto 证明中文输入稳定 116–120 fps、词典纯滚动 1,989/1,993 帧按时呈现，问题不是 GPU 或全局 LazyColumn 吞吐；健康首项离屏重入时重复执行 `LaunchedEffect(Unit)`，并在单行加载状态与多行摘要间改变高度，触发 LazyColumn 锚点反复修正。健康状态现提升到 Activity、保留旧摘要、拒绝并发加载，词典项增加稳定 key/contentType。`work/modern-settings-dictionary-scroll-fix-v1.apk`（SHA-256 `4debf048d9c20f7d6dd6ddaf1ba87c4b53170e30f606995204aff205116a2f8f`，27,509,157 bytes）双构建逐字节一致、49 项单元测试和全部现有门禁通过；维护者确认抖动与不流畅感均未复现，修复后 P90/P95 为 5/6 ms、Missed Vsync=0。正式 ID 安装仍是修复前候选，本轮未覆盖正式包
 
 ## 测试约定
 
