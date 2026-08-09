@@ -8,25 +8,22 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 
 internal fun LazyListScope.dictionarySettingsItems(
     snapshot: DictionarySettingsSnapshot,
+    health: DictionaryHealthState,
     actions: SettingsActions,
 ) {
-    item {
-        DictionaryHealthRow(actions.onLoadDictionaryHealth)
+    item(key = "dictionary_health", contentType = "status") {
+        DictionaryHealthRow(health, actions.onRefreshDictionaryHealth)
     }
-    item {
+    item(key = "dictionary_backup_section", contentType = "section") {
         SectionTitle(stringResource(R.string.modern_settings_dictionary_backup_section))
     }
-    item {
+    item(key = "dictionary_backup_enabled", contentType = "switch") {
         SettingsSwitchRow(
             title = legacyString(
                 "dictionary_auto_backup_title",
@@ -38,7 +35,7 @@ internal fun LazyListScope.dictionarySettingsItems(
             onCheckedChange = actions.onAutomaticBackupEnabledChange,
         )
     }
-    item {
+    item(key = "dictionary_backup_location", contentType = "action") {
         SettingsActionRow(
             title = legacyString(
                 "dictionary_auto_backup_location_title",
@@ -49,7 +46,7 @@ internal fun LazyListScope.dictionarySettingsItems(
             onClick = actions.onChooseBackupLocation,
         )
     }
-    item {
+    item(key = "dictionary_backup_interval", contentType = "list") {
         EnumeratedListSetting(
             title = legacyString(
                 "dictionary_auto_backup_interval_title",
@@ -63,7 +60,7 @@ internal fun LazyListScope.dictionarySettingsItems(
             onSelect = actions.onBackupIntervalChange,
         )
     }
-    item {
+    item(key = "dictionary_backup_retention", contentType = "list") {
         EnumeratedListSetting(
             title = legacyString(
                 "dictionary_auto_backup_retention_title",
@@ -77,7 +74,7 @@ internal fun LazyListScope.dictionarySettingsItems(
             onSelect = actions.onBackupRetentionChange,
         )
     }
-    item {
+    item(key = "dictionary_backup_now", contentType = "action") {
         SettingsActionRow(
             title = legacyString(
                 "dictionary_auto_backup_now_title",
@@ -91,7 +88,7 @@ internal fun LazyListScope.dictionarySettingsItems(
             onClick = actions.onBackupNow,
         )
     }
-    item {
+    item(key = "dictionary_backup_import", contentType = "action") {
         SettingsActionRow(
             title = legacyString(
                 "dictionary_auto_backup_import_title",
@@ -105,7 +102,7 @@ internal fun LazyListScope.dictionarySettingsItems(
             onClick = actions.onImportBackup,
         )
     }
-    item {
+    item(key = "dictionary_backup_privacy", contentType = "text") {
         Text(
             text = legacyString(
                 "dictionary_auto_backup_privacy_summary",
@@ -116,7 +113,7 @@ internal fun LazyListScope.dictionarySettingsItems(
             style = MaterialTheme.typography.bodyMedium,
         )
     }
-    item {
+    item(key = "dictionary_shortcuts_section", contentType = "section") {
         SectionTitle(
             legacyString(
                 "setting_shortcuts_dictionary_category_title",
@@ -124,7 +121,7 @@ internal fun LazyListScope.dictionarySettingsItems(
             ),
         )
     }
-    item {
+    item(key = "dictionary_shortcuts_enabled", contentType = "switch") {
         SettingsSwitchRow(
             title = legacyString(
                 "setting_enable_shortcuts_dictionary_title",
@@ -134,7 +131,7 @@ internal fun LazyListScope.dictionarySettingsItems(
             onCheckedChange = actions.onShortcutsEnabledChange,
         )
     }
-    item {
+    item(key = "dictionary_shortcuts_editor", contentType = "action") {
         SettingsActionRow(
             title = legacyString(
                 "setting_edit_shortcuts_dictionary_title",
@@ -145,10 +142,10 @@ internal fun LazyListScope.dictionarySettingsItems(
             onClick = actions.onOpenShortcutEditor,
         )
     }
-    item {
+    item(key = "dictionary_legacy_section", contentType = "section") {
         SectionTitle(stringResource(R.string.modern_settings_dictionary_legacy_operations_section))
     }
-    item {
+    item(key = "dictionary_legacy_operations", contentType = "navigation") {
         SettingsNavigationRow(
             title = stringResource(R.string.modern_settings_dictionary_legacy_operations_title),
             supporting = stringResource(R.string.modern_settings_dictionary_legacy_operations_summary),
@@ -158,21 +155,24 @@ internal fun LazyListScope.dictionarySettingsItems(
 }
 
 @Composable
-private fun DictionaryHealthRow(load: ((String) -> Unit) -> Unit) {
-    var loading by rememberSaveable { mutableStateOf(true) }
-    var summary by rememberSaveable {
-        mutableStateOf("")
+private fun DictionaryHealthRow(
+    state: DictionaryHealthState,
+    onRefresh: () -> Unit,
+) {
+    LaunchedEffect(state.summary, state.loading) {
+        if (state.summary.isEmpty() && !state.loading) onRefresh()
     }
-    val refresh = {
-        if (!loading || summary.isEmpty()) {
-            loading = true
-            load { result ->
-                summary = result
-                loading = false
-            }
-        }
+    val supporting = when {
+        state.summary.isEmpty() -> stringResource(
+            R.string.modern_settings_dictionary_health_loading,
+        )
+        state.loading -> state.summary + "\n" + stringResource(
+            R.string.modern_settings_dictionary_health_loading,
+        )
+        else -> state.summary + "\n" + stringResource(
+            R.string.modern_settings_dictionary_health_refresh,
+        )
     }
-    LaunchedEffect(Unit) { refresh() }
     ListItem(
         headlineContent = {
             Text(
@@ -185,11 +185,10 @@ private fun DictionaryHealthRow(load: ((String) -> Unit) -> Unit) {
         },
         supportingContent = {
             Text(
-                if (loading) stringResource(R.string.modern_settings_dictionary_health_loading)
-                else summary + "\n" + stringResource(R.string.modern_settings_dictionary_health_refresh),
+                supporting,
                 modifier = Modifier.padding(start = 8.dp),
             )
         },
-        modifier = Modifier.clickable(enabled = !loading, onClick = refresh),
+        modifier = Modifier.clickable(enabled = !state.loading, onClick = onRefresh),
     )
 }

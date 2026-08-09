@@ -61,7 +61,7 @@ data class SettingsActions(
     val onOpenTerms: () -> Unit,
     val onOpenPrivacyPolicy: () -> Unit,
     val onOpenLicenses: () -> Unit,
-    val onLoadDictionaryHealth: ((String) -> Unit) -> Unit,
+    val onRefreshDictionaryHealth: () -> Unit,
     val onAutomaticBackupEnabledChange: (Boolean) -> Unit,
     val onChooseBackupLocation: () -> Unit,
     val onBackupIntervalChange: (Int) -> Unit,
@@ -95,6 +95,7 @@ data class SettingsActions(
 fun SettingsScreen(
     snapshot: SettingsSnapshot,
     dictionarySnapshot: DictionarySettingsSnapshot,
+    dictionaryHealth: DictionaryHealthState,
     actions: SettingsActions,
 ) {
     var routePath by rememberSaveable { mutableStateOf(SettingsRouteStack.initialPath) }
@@ -165,7 +166,11 @@ fun SettingsScreen(
                 SettingsRoute.Handwriting -> handwritingSettingsItems(
                     snapshot, actions, millisecondsText,
                 )
-                SettingsRoute.Dictionary -> dictionarySettingsItems(dictionarySnapshot, actions)
+                SettingsRoute.Dictionary -> dictionarySettingsItems(
+                    dictionarySnapshot,
+                    dictionaryHealth,
+                    actions,
+                )
                 SettingsRoute.Other -> otherSettingsItems(snapshot, actions, navigateTo)
                 SettingsRoute.About -> aboutSettingsItems(actions)
                 SettingsRoute.FuzzyPinyin -> error("Fuzzy Pinyin uses its dedicated screen")

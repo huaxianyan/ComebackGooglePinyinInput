@@ -28,6 +28,7 @@ class ModernSettingsActivity : ComponentActivity() {
     private lateinit var dictionaryRepository: LegacyDictionarySettingsRepository
     private var snapshot by mutableStateOf<SettingsSnapshot?>(null)
     private var dictionarySnapshot by mutableStateOf<DictionarySettingsSnapshot?>(null)
+    private var dictionaryHealth by mutableStateOf(DictionaryHealthState())
     private var treePurpose = TreePurpose.Location
     private val mainHandler = Handler(Looper.getMainLooper())
     private val backupRefresh = object : Runnable {
@@ -77,6 +78,7 @@ class ModernSettingsActivity : ComponentActivity() {
                     SettingsScreen(
                         snapshot = settings,
                         dictionarySnapshot = dictionary,
+                        dictionaryHealth = dictionaryHealth,
                         actions = SettingsActions(
                             onOpenThemeSelector = {
                                 startActivity(
@@ -94,7 +96,7 @@ class ModernSettingsActivity : ComponentActivity() {
                             onOpenLicenses = {
                                 startActivity(LegacySettingsNavigation.licensesIntent(this))
                             },
-                            onLoadDictionaryHealth = dictionaryRepository::loadHealth,
+                            onRefreshDictionaryHealth = ::refreshDictionaryHealth,
                             onAutomaticBackupEnabledChange = { enabled ->
                                 if (!enabled) {
                                     dictionaryRepository.disableAutomaticBackup()
@@ -206,6 +208,20 @@ class ModernSettingsActivity : ComponentActivity() {
     override fun onDestroy() {
         mainHandler.removeCallbacks(backupRefresh)
         super.onDestroy()
+    }
+
+    private fun refreshDictionaryHealth() {
+        val started = DictionaryHealthStateReducer.start(dictionaryHealth)
+        if (started == dictionaryHealth) return
+        dictionaryHealth = started
+        dictionaryRepository.loadHealth { result ->
+            runOnUiThread {
+                dictionaryHealth = DictionaryHealthStateReducer.complete(
+                    dictionaryHealth,
+                    result,
+                )
+            }
+        }
     }
 
     private fun refreshDictionaryUntilIdle() {
