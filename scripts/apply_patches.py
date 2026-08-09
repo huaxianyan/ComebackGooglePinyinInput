@@ -33,7 +33,13 @@ def replace_exactly(path: Path, old: str, new: str, expected: int) -> None:
     path.write_text(text.replace(old, new), encoding="utf-8", newline="\n")
 
 
-def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
+def apply(
+    decoded: Path,
+    application_id: str,
+    debuggable: bool = False,
+    version_name: str = "2.0.0",
+    version_code: int = 4520385,
+) -> None:
     if not (decoded / "apktool.yml").is_file():
         raise RuntimeError(f"Not an apktool output directory: {decoded}")
     if debuggable and application_id == FORMAL_APPLICATION_ID:
@@ -50,11 +56,15 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
         "sdkInfo:\n  minSdkVersion: 17\n  targetSdkVersion: 26",
         "sdkInfo:\n  minSdkVersion: 17\n  targetSdkVersion: 36",
     )
+    if version_code <= 0:
+        raise ValueError("versionCode must be positive")
+    if not version_name.strip():
+        raise ValueError("versionName must not be empty")
     replace_once(
         decoded / "apktool.yml",
         "versionInfo:\n  versionCode: 4520313\n  versionName: 4.5.2.193126728-arm64-v8a",
-        "versionInfo:\n  versionCode: 4520385\n"
-        "  versionName: 2.0.0",
+        f"versionInfo:\n  versionCode: {version_code}\n"
+        f"  versionName: {version_name}",
     )
 
     # Keep the formal product name unchanged. Isolated audit packages use a
@@ -2081,6 +2091,7 @@ def apply(decoded: Path, application_id: str, debuggable: bool = False) -> None:
 
     auto_backup_helpers = sorted(
         list((ROOT / "patches/smali").glob("DictionaryAutoBackup*.smali"))
+        + list((ROOT / "patches/smali").glob("DictionaryOperationsCompat*.smali"))
         + list((ROOT / "patches/smali").glob("DictionaryHealthStatusCompat*.smali"))
         + list((ROOT / "patches/smali").glob("LocalBackupImportActivity*.smali"))
     )
@@ -2178,8 +2189,16 @@ def main() -> None:
         action="store_true",
         help="enable Android debugging for an isolated non-formal audit ID",
     )
+    parser.add_argument("--version-name", default="2.0.0")
+    parser.add_argument("--version-code", type=int, default=4520385)
     args = parser.parse_args()
-    apply(args.decoded.resolve(), args.application_id, args.debuggable)
+    apply(
+        args.decoded.resolve(),
+        args.application_id,
+        args.debuggable,
+        args.version_name,
+        args.version_code,
+    )
 
 
 if __name__ == "__main__":

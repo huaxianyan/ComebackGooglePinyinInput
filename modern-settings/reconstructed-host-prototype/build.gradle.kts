@@ -6,6 +6,8 @@ plugins {
 val legacyHostDir = providers.gradleProperty("legacyHostDir")
 val hostApplicationId = providers.gradleProperty("hostApplicationId")
     .orElse("com.google.android.inputmethod.pinyin.materialcomposehostaudit")
+val hostVersionName = providers.gradleProperty("hostVersionName").orElse("2.0.0")
+val hostVersionCode = providers.gradleProperty("hostVersionCode").map(String::toInt).orElse(4520385)
 
 android {
     namespace = "com.google.android.inputmethod.pinyin.modernsettings.host"
@@ -15,8 +17,8 @@ android {
         applicationId = hostApplicationId.get()
         minSdk = 17
         targetSdk = 36
-        versionCode = 4520385
-        versionName = "2.0.0"
+        versionCode = hostVersionCode.get()
+        versionName = hostVersionName.get()
         multiDexEnabled = true
         ndk {
             abiFilters += "arm64-v8a"

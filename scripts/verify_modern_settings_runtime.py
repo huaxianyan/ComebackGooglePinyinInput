@@ -60,6 +60,9 @@ def main() -> int:
             "openDictionaryImport()",
             "DictionaryImportStateReducer.select(",
             "dictionaryRepository::importBackup",
+            "CLEAR_IN_PROGRESS_KEY",
+            "dictionaryRepository.isClearInProgress()",
+            "dictionaryRepository.detachClearCallback(dictionaryClearCallback)",
         ),
         "guarded Compose settings activity",
     )
@@ -101,9 +104,11 @@ def main() -> int:
             ".background(MaterialTheme.colorScheme.surface)",
             ".clipToBounds()",
             "actions.onShortcutsEnabledChange",
-            "actions.onOpenLegacyDictionaryOperations",
-            '"PREFERENCE_FRAGMENT",',
-            '"setting_dictionary",',
+            "actions.onContactSuggestionsEnabledChange",
+            "DictionaryClearDialog(",
+            "DictionaryClearStateReducer.canConfirm(state)",
+            "contactsPermission.launch(Manifest.permission.READ_CONTACTS)",
+            "dictionaryRepository.startClear(callback)",
             "SettingsRoute.About",
             "LegacySettingsNavigation.legacyWebIntent",
             "LegacySettingsNavigation.licensesIntent",
@@ -228,7 +233,11 @@ def main() -> int:
                 'name="modern_settings_dictionary_location_title"',
                 'name="modern_settings_dictionary_import_title"',
                 'name="modern_settings_dictionary_enable_shortcuts"',
-                'name="modern_settings_dictionary_legacy_operations_title"',
+                'name="modern_settings_dictionary_contacts_title"',
+                'name="modern_settings_dictionary_contacts_permission_summary"',
+                'name="modern_settings_dictionary_clear_confirm_title"',
+                'name="modern_settings_dictionary_clear_code_label"',
+                'name="modern_settings_dictionary_clear_success"',
                 'name="modern_settings_about_title"',
                 'name="modern_settings_terms_title"',
                 'name="modern_settings_privacy_title"',
@@ -583,8 +592,12 @@ def main() -> int:
         project.parent
         / "patches/java/com/google/android/inputmethod/pinyin/LocalBackupImportActivity.java"
     ).read_text(encoding="utf-8")
+    operations_bridge = (
+        project.parent
+        / "patches/java/com/google/android/inputmethod/pinyin/DictionaryOperationsCompat.java"
+    ).read_text(encoding="utf-8")
     require(
-        dictionary_bridge + "\n" + import_bridge,
+        dictionary_bridge + "\n" + import_bridge + "\n" + operations_bridge,
         (
             "public interface BackupListCallback",
             "public static final class BackupEntry",
@@ -592,8 +605,16 @@ def main() -> int:
             "public Uri getUri()",
             "public static void listBackupsAsync(",
             "public static boolean startNativeImport(Context source, Uri uri)",
+            "public interface ClearCallback",
+            "hasContactsPermission(Context context)",
+            'getBoolean("import_user_contacts", false)',
+            'Class.forName("bdz")',
+            'getMethod("startClearUserDict")',
+            "clearInProgress",
+            "pendingClearResult",
+            "if (callback == null) pendingClearResult = success",
         ),
-        "primary-DEX modern dictionary import bridge",
+        "primary-DEX modern dictionary operations bridge",
     )
 
     legacy_navigation = (settings_source_dir / "LegacySettingsNavigation.kt").read_text(
@@ -636,6 +657,21 @@ def main() -> int:
             "dependencyOnlyControlsInteractivityWithoutChangingState",
         ),
         "adjustment reducer tests",
+    )
+
+    dictionary_operations_test = next(
+        (project / "compose-runtime/src/test/kotlin").rglob("DictionaryOperationsStateTest.kt")
+    ).read_text(encoding="utf-8")
+    require(
+        dictionary_operations_test,
+        (
+            "challengeRequiresExactlyFourDigits",
+            "inputIsNumericAndBoundedAndOnlyExactMatchConfirms",
+            "confirmedOperationCannotBeDismissedOrStartedTwice",
+            "cancelAndCompletionDiscardChallengeAndInput",
+            "restoredActivityCanReflectPrimaryDexTaskStateWithoutReopeningDialog",
+        ),
+        "dictionary operations state tests",
     )
 
     repository = next((project / "compose-runtime/src/main/kotlin").rglob("LegacySettingsRepository.kt"))
@@ -743,6 +779,8 @@ def main() -> int:
             'variant = "debug" if args.debuggable else "release"',
             'gradle_task = "assembleDebug" if args.debuggable else "assembleRelease"',
             'reconstructed-host-prototype-release-unsigned.apk',
+            'f"-PhostVersionName={args.version_name}"',
+            'f"-PhostVersionCode={args.version_code}"',
             '*(["--debuggable"] if args.debuggable else [])',
         ),
         "release-like modern host builder",
@@ -763,6 +801,10 @@ def main() -> int:
         (
             "minSdk = 17",
             "targetSdk = 36",
+            'hostVersionName = providers.gradleProperty("hostVersionName")',
+            'hostVersionCode = providers.gradleProperty("hostVersionCode")',
+            "versionCode = hostVersionCode.get()",
+            "versionName = hostVersionName.get()",
             "multiDexEnabled = true",
             'implementation(project(\":compose-runtime\"))',
             '"--stable-ids"',
@@ -831,11 +873,16 @@ def main() -> int:
         ),
         "API-35 modern settings route",
     )
-    require(
-        kotlin_text,
-        ('"modern_settings_use_legacy"',),
-        "legacy dictionary route bypass",
-    )
+    for forbidden_legacy_dictionary_route in (
+        "onOpenLegacyDictionaryOperations",
+        '"modern_settings_use_legacy"',
+        '"PREFERENCE_FRAGMENT"',
+    ):
+        if forbidden_legacy_dictionary_route in kotlin_text:
+            raise RuntimeError(
+                "modern dictionary UI must not navigate to the legacy page: "
+                + forbidden_legacy_dictionary_route
+            )
 
     if args.apk is not None:
         with ZipFile(args.apk) as archive:
@@ -934,6 +981,41 @@ def main() -> int:
         )
         if not theme_insets_helper.is_file():
             raise RuntimeError("theme selector system-bar Insets helper is missing")
+
+        operations_helper = decoded / (
+            "smali/com/google/android/inputmethod/pinyin/DictionaryOperationsCompat.smali"
+        )
+        operations_delegate = decoded / (
+            "smali/com/google/android/inputmethod/pinyin/"
+            "DictionaryOperationsCompat$ControllerDelegate.smali"
+        )
+        require(
+            operations_helper.read_text(encoding="utf-8"),
+            (
+                'const-string v0, "android.permission.READ_CONTACTS"',
+                'const-string v1, "import_user_contacts"',
+                "new-instance v1, Lbdz;",
+                "Lbdz;->startClearUserDict()V",
+                "clearInProgress:Z",
+                "pendingClearResult:Ljava/lang/Boolean;",
+                "Ljava/lang/Boolean;->valueOf(Z)Ljava/lang/Boolean;",
+            ),
+            "primary-DEX contact and clear bridge",
+        )
+        require(
+            operations_delegate.read_text(encoding="utf-8"),
+            (
+                "IDictionarySyncControllerDelegate;",
+                "DictionaryOperationsCompat;->notifyClearFinished(Lbdz;Z)V",
+            ),
+            "primary-DEX clear controller delegate",
+        )
+        legacy_dictionary_fragment = decoded / (
+            "smali/com/google/android/apps/inputmethod/pinyin/preference/"
+            "DictionarySettingsFragment.smali"
+        )
+        if not legacy_dictionary_fragment.is_file():
+            raise RuntimeError("legacy dictionary settings must remain for API 17-34")
 
         legacy_ime = decoded / "smali/com/google/android/inputmethod/pinyin/PinyinIME.smali"
         if not legacy_ime.is_file():

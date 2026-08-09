@@ -31,6 +31,8 @@ def main() -> int:
     parser.add_argument("--work", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--application-id", required=True)
+    parser.add_argument("--version-name", default="2.0.0")
+    parser.add_argument("--version-code", type=int, default=4520385)
     parser.add_argument("--apktool", type=Path, required=True)
     parser.add_argument("--apktool-framework", type=Path, required=True)
     parser.add_argument("--gradle", type=Path, required=True)
@@ -97,6 +99,10 @@ def main() -> int:
             str(decoded),
             "--application-id",
             args.application_id,
+            "--version-name",
+            args.version_name,
+            "--version-code",
+            str(args.version_code),
             *(["--debuggable"] if args.debuggable else []),
         ]
     )
@@ -149,6 +155,8 @@ def main() -> int:
         f":reconstructed-host-prototype:{gradle_task}",
         f"-PlegacyHostDir={decoded}",
         f"-PhostApplicationId={args.application_id}",
+        f"-PhostVersionName={args.version_name}",
+        f"-PhostVersionCode={args.version_code}",
     ]
     run(executable(args.gradle.resolve(), gradle_args), env=env)
 

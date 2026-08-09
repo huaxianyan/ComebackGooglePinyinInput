@@ -1,5 +1,22 @@
 # Changelog
 
+## [3.0.0] - Unreleased
+
+Android 15+ 设置界面改用源码构建的官方 Compose Material 3 运行时；Android 14 及更低版本继续使用原生旧版 Preference 设置。正式发布仍需完成最终真机人工验收。
+
+### Added
+
+- 为 API 35+ 增加官方 Material 3 分层设置首页、类型化开关/列表/Slider、可保存路由栈、页面转场、动态配色、RTL、大字体、横屏、分屏和 TalkBack 语义。
+- 在现代词典页内整合 SAF 备份列表、合并导入、联系人建议授权，以及带四位随机确认码的清除用户词典流程；不跳转旧设置页，也不读取或显示联系人和词典正文。
+- 增加纯 Java、primary-DEX、AndroidX-free 的窄桥接层，复用原词典导入、联系人偏好和 `UserDictClearTask` 控制器；清除任务继续强制关闭已废弃的账户同步路径。
+
+### Changed
+
+- API 17–34 保持旧 Preference UI、键值、默认值、依赖、回调和专用页面；API 35+ 才路由到 Compose Activity，旧 ART 正常启动不解析 Compose/AndroidX 类型。
+- 按键音量和振动时长改为始终可见的官方 Material 3 Slider；拖动释放时仅提交和预览一次，系统默认仍通过删除键表达，显式零值保持独立。
+- 正式构建改用可复现的现代 Compose host 管线，保留全部 6,633 个旧资源 ID、primary DEX 和原生载荷，并继续验证 API 31/33/34/35/36、v1/v2/v3 签名及 16 KiB ZIP alignment。
+- 正式版本身份由 `version.properties` 单一来源管理；Tag 必须精确匹配 `v$VERSION_NAME`，APK 名称和 Release 元数据不再硬编码旧版本号。
+
 ## [2.0.0] - 2026-08-06
 
 Android 16 大版本正式基线。已验收的 target SDK 29–36 分支合并到 `master`；后续 Material You/MD3、16 KiB、预测返回和其他开发均以该基线为起点。

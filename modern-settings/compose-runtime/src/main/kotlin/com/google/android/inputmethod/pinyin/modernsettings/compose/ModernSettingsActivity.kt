@@ -1,5 +1,6 @@
 package com.google.android.inputmethod.pinyin.modernsettings.compose
 
+import android.Manifest
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -23,6 +24,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
+import java.util.Locale
+import java.util.Random
 
 /** API-35+-guarded host for the staged official Compose Material 3 settings runtime. */
 class ModernSettingsActivity : ComponentActivity() {
@@ -34,6 +37,8 @@ class ModernSettingsActivity : ComponentActivity() {
     private var dictionarySnapshot by mutableStateOf<DictionarySettingsSnapshot?>(null)
     private var dictionaryHealth by mutableStateOf(DictionaryHealthState())
     private var dictionaryImport by mutableStateOf(DictionaryImportState())
+    private var dictionaryClear by mutableStateOf(DictionaryClearState())
+    private var dictionaryClearCallback: Any? = null
     private var treePurpose = TreePurpose.Location
     private val mainHandler = Handler(Looper.getMainLooper())
     private val backupRefresh = object : Runnable {
@@ -43,6 +48,21 @@ class ModernSettingsActivity : ComponentActivity() {
             dictionarySnapshot = current
             if (current.backupInProgress) mainHandler.postDelayed(this, 500L)
         }
+    }
+    private val contactsPermission = registerForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        if (granted) {
+            dictionaryRepository.setContactSuggestionsEnabled(true)
+        } else {
+            dictionaryRepository.setContactSuggestionsEnabled(false)
+            Toast.makeText(
+                this,
+                R.string.modern_settings_dictionary_contacts_permission_denied,
+                Toast.LENGTH_SHORT,
+            ).show()
+        }
+        dictionarySnapshot = dictionaryRepository.read()
     }
     private val treePicker = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
         if (uri == null) {
@@ -76,6 +96,39 @@ class ModernSettingsActivity : ComponentActivity() {
             SettingsPreviewEffects(this),
         )
         dictionaryRepository = LegacyDictionarySettingsRepository(this)
+        dictionaryClear = when {
+            savedInstanceState?.getBoolean(CLEAR_IN_PROGRESS_KEY, false) == true ->
+                DictionaryClearStateReducer.observeInProgress(true)
+            savedInstanceState?.getBoolean(CLEAR_DIALOG_VISIBLE_KEY, false) == true ->
+                DictionaryClearState(
+                    confirmationVisible = true,
+                    challenge = savedInstanceState.getString(CLEAR_CHALLENGE_KEY).orEmpty(),
+                    input = savedInstanceState.getString(CLEAR_INPUT_KEY).orEmpty(),
+                ).takeIf { it.challenge.length == 4 && it.challenge.all(Char::isDigit) }
+                    ?: DictionaryClearState()
+            else -> DictionaryClearState()
+        }
+        dictionaryClearCallback = dictionaryRepository.attachClearCallback(
+            onStarted = {
+                runOnUiThread {
+                    dictionaryClear = DictionaryClearStateReducer.observeInProgress(true)
+                    dictionarySnapshot = dictionaryRepository.read()
+                }
+            },
+            onFinished = { success ->
+                runOnUiThread {
+                    dictionaryClear = DictionaryClearStateReducer.complete()
+                    dictionarySnapshot = dictionaryRepository.read()
+                    refreshDictionaryHealth()
+                    Toast.makeText(
+                        this,
+                        if (success) R.string.modern_settings_dictionary_clear_success
+                        else R.string.modern_settings_dictionary_clear_error,
+                        Toast.LENGTH_LONG,
+                    ).show()
+                }
+            },
+        )
         setContent {
             ModernSettingsTheme {
                 snapshot?.let { settings ->
@@ -85,6 +138,7 @@ class ModernSettingsActivity : ComponentActivity() {
                         dictionarySnapshot = dictionary,
                         dictionaryHealth = dictionaryHealth,
                         dictionaryImport = dictionaryImport,
+                        dictionaryClear = dictionaryClear,
                         actions = SettingsActions(
                             onOpenThemeSelector = {
                                 startActivity(
@@ -162,8 +216,49 @@ class ModernSettingsActivity : ComponentActivity() {
                                 dictionarySnapshot = dictionaryRepository.read()
                             },
                             onOpenShortcutEditor = dictionaryRepository::openShortcutEditor,
-                            onOpenLegacyDictionaryOperations =
-                                dictionaryRepository::openLegacyDictionaryOperations,
+                            onContactSuggestionsEnabledChange = { enabled ->
+                                if (!enabled) {
+                                    dictionaryRepository.setContactSuggestionsEnabled(false)
+                                    dictionarySnapshot = dictionaryRepository.read()
+                                } else if (dictionaryRepository.read().contactsPermissionGranted) {
+                                    dictionaryRepository.setContactSuggestionsEnabled(true)
+                                    dictionarySnapshot = dictionaryRepository.read()
+                                } else {
+                                    contactsPermission.launch(Manifest.permission.READ_CONTACTS)
+                                }
+                            },
+                            onOpenClearDictionaryConfirmation = {
+                                val challenge = String.format(
+                                    Locale.ROOT,
+                                    "%04d",
+                                    Random().nextInt(10_000),
+                                )
+                                dictionaryClear = DictionaryClearStateReducer.open(challenge)
+                            },
+                            onClearDictionaryInputChange = { input ->
+                                dictionaryClear = DictionaryClearStateReducer.updateInput(
+                                    dictionaryClear,
+                                    input,
+                                )
+                            },
+                            onDismissClearDictionaryConfirmation = {
+                                dictionaryClear = DictionaryClearStateReducer.dismiss(dictionaryClear)
+                            },
+                            onConfirmClearDictionary = {
+                                val startedState = DictionaryClearStateReducer.start(dictionaryClear)
+                                val callback = dictionaryClearCallback
+                                if (callback != null && dictionaryRepository.startClear(callback)) {
+                                    dictionaryClear = startedState
+                                    dictionarySnapshot = dictionaryRepository.read()
+                                } else {
+                                    dictionaryClear = DictionaryClearStateReducer.complete()
+                                    Toast.makeText(
+                                        this,
+                                        R.string.modern_settings_dictionary_clear_error,
+                                        Toast.LENGTH_LONG,
+                                    ).show()
+                                }
+                            },
                             onLauncherIconVisibleChange = { visible ->
                                 snapshot = controller.setLauncherIconVisible(visible)
                             },
@@ -226,11 +321,36 @@ class ModernSettingsActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         snapshot = controller.read()
+        if (dictionaryRepository.isClearInProgress()) {
+            dictionaryClear = DictionaryClearStateReducer.observeInProgress(true)
+        } else if (dictionaryClear.inProgress) {
+            // The process was recreated after the legacy task disappeared. Never retry a
+            // destructive operation implicitly; report an unknown/failed completion and refresh.
+            dictionaryClear = DictionaryClearStateReducer.complete()
+            refreshDictionaryHealth()
+            Toast.makeText(
+                this,
+                R.string.modern_settings_dictionary_clear_error,
+                Toast.LENGTH_LONG,
+            ).show()
+        }
         refreshDictionaryUntilIdle()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putBoolean(CLEAR_DIALOG_VISIBLE_KEY, dictionaryClear.confirmationVisible)
+        outState.putBoolean(CLEAR_IN_PROGRESS_KEY, dictionaryClear.inProgress)
+        if (dictionaryClear.confirmationVisible) {
+            outState.putString(CLEAR_CHALLENGE_KEY, dictionaryClear.challenge)
+            outState.putString(CLEAR_INPUT_KEY, dictionaryClear.input)
+        }
     }
 
     override fun onDestroy() {
         mainHandler.removeCallbacks(backupRefresh)
+        dictionaryRepository.detachClearCallback(dictionaryClearCallback)
+        dictionaryClearCallback = null
         super.onDestroy()
     }
 
@@ -262,6 +382,13 @@ class ModernSettingsActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    private companion object {
+        const val CLEAR_DIALOG_VISIBLE_KEY = "modern_dictionary_clear_dialog_visible"
+        const val CLEAR_IN_PROGRESS_KEY = "modern_dictionary_clear_in_progress"
+        const val CLEAR_CHALLENGE_KEY = "modern_dictionary_clear_challenge"
+        const val CLEAR_INPUT_KEY = "modern_dictionary_clear_input"
     }
 }
 

@@ -34,6 +34,9 @@ internal object DictionaryHealthStateReducer {
 }
 
 data class DictionarySettingsSnapshot(
+    val contactSuggestionsEnabled: Boolean,
+    val contactsPermissionGranted: Boolean,
+    val clearInProgress: Boolean,
     val automaticBackupEnabled: Boolean,
     val locationAccessible: Boolean,
     val locationSummary: String,

@@ -429,19 +429,33 @@ the APK with `INSTALL_FAILED_NO_MATCHING_ABIS`; deleting native entries fails in
 on this x86_64 host (`QEMU2 emulator does not support arm64 CPU architecture`).
 API 23 runtime acceptance is therefore environment-blocked rather than passed.
 
-Contact suggestions and clearing remain behind an explicit same-package legacy
-Dictionary fragment entry. This is intentional: their permission controller,
-confirmation dialog, and destructive task lifecycle have not been duplicated in
-Compose, and no destructive clear test is authorized in this stage. The first
-device-tested Intent supplied only `:android:show_fragment`, so the framework
-created the right class but `CommonPreferenceFragment` rejected the missing XML
-name with `Preference xml file not specified`. The accepted V3 Intent also
-supplies `PREFERENCE_FRAGMENT=setting_dictionary`; device testing confirms the
-legacy page, both target rows, and Back navigation without a new crash. Other now owns
-launcher visibility plus a nested About route that reuses the original terms and
-privacy URLs, existing license Activity, and package version. Theme and
-remaining dictionary operations remain specialized targets; moving their entry
-rows does not authorize reimplementing legacy side effects as generic writes.
+Contact suggestions and clearing now remain inside the API 35+ Compose
+dictionary page. Compose owns permission explanation/result state, the random
+four-digit destructive confirmation, progress, success, failure, recreation,
+and concurrent-submit rejection. A narrow pure-Java primary-DEX
+`DictionaryOperationsCompat` bridge owns only the old Preference contract and
+the original `bdz`/`UserDictClearTask` controller boundary; it contains no
+AndroidX or API-35 static type and does not expose contact or dictionary content.
+Before starting the authoritative clear task, the bridge forces the removed
+account-sync preference off, matching the accepted legacy page and preventing a
+stale restored value from reviving obsolete network behavior. The modern
+Activity reattaches its callback after recreation and reflects an already
+running primary-DEX task without opening a second confirmation dialog.
+
+The legacy `DictionarySettingsFragment`, `AbstractDictionarySettings`, and
+`setting_dictionary.xml` remain intact and authoritative on API 17–34. Static
+gates reject any modern route back to that page. API 34 translated-ARM64 runtime
+instrumentation confirms the old `SettingsActivity` still starts and that the
+new bridge loads without resolving Compose/AndroidX. Actual dictionary clearing
+is deliberately untested until a separately authorized destructive audit;
+implementation and non-destructive lifecycle validation are not evidence that
+user data was cleared successfully.
+
+Other owns launcher visibility plus a nested About route that reuses the
+original terms and privacy URLs, existing license Activity, and package version.
+Theme and other specialized operations remain their authoritative targets;
+moving entry rows does not authorize reimplementing legacy side effects as
+generic writes.
 
 Navigation uses an explicit, saveable route stack rather than accumulating
 independent page Booleans. Toolbar Back and system Back pop one route; Back on
@@ -467,13 +481,19 @@ screen.
 
 ## Next implementation stage
 
-1. Complete a release-variant core-input regression on the accepted ARM64 audit
-   runtime, then repeat on a properly versioned formal candidate only after
-   explicit installation authorization.
-2. Keep API 23 runtime acceptance open until a usable ARM64 device/emulator is
-   available; keep API 17 explicitly static-only because no ARM64 API 17 runtime
-   exists.
-3. Keep contact suggestions and clearing on the legacy controller until their
-   exact permission/destructive-task lifecycle has an isolated audit package
-   and explicit authorization.
-4. Modernize release workflow/version enforcement before any release decision.
+1. Run the final Pixel 10 Pro acceptance on the isolated `dictionaryaudit`
+   candidate: contact denial/grant/revocation UI, recreation/Back behavior, and
+   all non-destructive dictionary states. Do not inspect contact data.
+2. Run an actual clear only after separate destructive-test authorization and a
+   verified backup/restore boundary; refresh aggregate health afterward without
+   reading dictionary contents.
+3. After audit acceptance, build a formally signed `3.0.0` candidate and perform
+   the authorized upgrade-retention and core-IME regression. Do not overwrite
+   the formal application ID before that authorization.
+4. Keep API 23 runtime acceptance open until usable ARM64 hardware/emulation is
+   available; keep API 17 static-only. Keep native 16 KiB runtime acceptance,
+   predictive Back, and API 37 isolated.
+5. Create `v3.0.0` and publish only after the maintainer explicitly approves the
+   final candidate. The workflow now derives version/tag/artifact identity from
+   `version.properties` and rejects mismatches; this does not itself authorize a
+   Tag or GitHub Release.

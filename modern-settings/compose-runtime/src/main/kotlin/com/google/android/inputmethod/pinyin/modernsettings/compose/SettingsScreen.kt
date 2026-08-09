@@ -85,7 +85,11 @@ data class SettingsActions(
     val onConfirmImportBackup: () -> Unit,
     val onShortcutsEnabledChange: (Boolean) -> Unit,
     val onOpenShortcutEditor: () -> Unit,
-    val onOpenLegacyDictionaryOperations: () -> Unit,
+    val onContactSuggestionsEnabledChange: (Boolean) -> Unit,
+    val onOpenClearDictionaryConfirmation: () -> Unit,
+    val onClearDictionaryInputChange: (String) -> Unit,
+    val onDismissClearDictionaryConfirmation: () -> Unit,
+    val onConfirmClearDictionary: () -> Unit,
     val onLauncherIconVisibleChange: (Boolean) -> Unit,
     val onSoundEnabledChange: (Boolean) -> Unit,
     val onVolumeCommit: (Int) -> Unit,
@@ -111,6 +115,7 @@ fun SettingsScreen(
     dictionarySnapshot: DictionarySettingsSnapshot,
     dictionaryHealth: DictionaryHealthState,
     dictionaryImport: DictionaryImportState,
+    dictionaryClear: DictionaryClearState,
     actions: SettingsActions,
 ) {
     var routePath by rememberSaveable { mutableStateOf(SettingsRouteStack.initialPath) }
@@ -163,6 +168,7 @@ fun SettingsScreen(
     }
     if (route == SettingsRoute.Dictionary) {
         DictionaryImportDialog(dictionaryImport, actions)
+        DictionaryClearDialog(dictionaryClear, actions)
     }
 }
 

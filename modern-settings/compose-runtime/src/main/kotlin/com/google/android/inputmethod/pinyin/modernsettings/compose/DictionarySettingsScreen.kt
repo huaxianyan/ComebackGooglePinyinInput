@@ -8,11 +8,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -21,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 
 internal fun LazyListScope.dictionarySettingsItems(
@@ -30,6 +33,43 @@ internal fun LazyListScope.dictionarySettingsItems(
 ) {
     item(key = "dictionary_health", contentType = "status") {
         DictionaryHealthRow(health, actions.onRefreshDictionaryHealth)
+    }
+    item(key = "dictionary_personalization_section", contentType = "section") {
+        SectionTitle(stringResource(R.string.modern_settings_dictionary_personalization_section))
+    }
+    item(key = "dictionary_contact_suggestions", contentType = "switch") {
+        SettingsSwitchRow(
+            title = legacyString(
+                "setting_import_user_contacts_title",
+                R.string.modern_settings_dictionary_contacts_title,
+            ),
+            supporting = stringResource(
+                if (snapshot.contactsPermissionGranted) {
+                    R.string.modern_settings_dictionary_contacts_summary
+                } else {
+                    R.string.modern_settings_dictionary_contacts_permission_summary
+                },
+            ),
+            checked = snapshot.contactSuggestionsEnabled,
+            onCheckedChange = actions.onContactSuggestionsEnabledChange,
+        )
+    }
+    item(key = "dictionary_clear", contentType = "action") {
+        SettingsActionRow(
+            title = legacyString(
+                "setting_sync_clear_title",
+                R.string.modern_settings_dictionary_clear_title,
+            ),
+            supporting = stringResource(
+                if (snapshot.clearInProgress) {
+                    R.string.modern_settings_dictionary_clear_in_progress
+                } else {
+                    R.string.modern_settings_dictionary_clear_summary
+                },
+            ),
+            enabled = !snapshot.clearInProgress && !snapshot.backupInProgress,
+            onClick = actions.onOpenClearDictionaryConfirmation,
+        )
     }
     item(key = "dictionary_backup_section", contentType = "section") {
         SectionTitle(stringResource(R.string.modern_settings_dictionary_backup_section))
@@ -153,16 +193,51 @@ internal fun LazyListScope.dictionarySettingsItems(
             onClick = actions.onOpenShortcutEditor,
         )
     }
-    item(key = "dictionary_legacy_section", contentType = "section") {
-        SectionTitle(stringResource(R.string.modern_settings_dictionary_legacy_operations_section))
-    }
-    item(key = "dictionary_legacy_operations", contentType = "navigation") {
-        SettingsNavigationRow(
-            title = stringResource(R.string.modern_settings_dictionary_legacy_operations_title),
-            supporting = stringResource(R.string.modern_settings_dictionary_legacy_operations_summary),
-            onClick = actions.onOpenLegacyDictionaryOperations,
-        )
-    }
+}
+
+@Composable
+internal fun DictionaryClearDialog(
+    state: DictionaryClearState,
+    actions: SettingsActions,
+) {
+    if (!state.confirmationVisible) return
+    AlertDialog(
+        onDismissRequest = actions.onDismissClearDictionaryConfirmation,
+        title = { Text(stringResource(R.string.modern_settings_dictionary_clear_confirm_title)) },
+        text = {
+            androidx.compose.foundation.layout.Column {
+                Text(
+                    stringResource(
+                        R.string.modern_settings_dictionary_clear_confirm_message,
+                        state.challenge,
+                    ),
+                )
+                OutlinedTextField(
+                    value = state.input,
+                    onValueChange = actions.onClearDictionaryInputChange,
+                    modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+                    label = {
+                        Text(stringResource(R.string.modern_settings_dictionary_clear_code_label))
+                    },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true,
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = actions.onConfirmClearDictionary,
+                enabled = DictionaryClearStateReducer.canConfirm(state),
+            ) {
+                Text(stringResource(R.string.modern_settings_dictionary_clear_action))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = actions.onDismissClearDictionaryConfirmation) {
+                Text(stringResource(R.string.modern_settings_cancel))
+            }
+        },
+    )
 }
 
 @Composable

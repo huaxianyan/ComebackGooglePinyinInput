@@ -46,7 +46,13 @@ internal class LegacyDictionarySettingsRepository(private val activity: Activity
             label.isNullOrEmpty() -> activity.getString(R.string.modern_settings_dictionary_location_selected)
             else -> label
         }
+        val contactsPermission = operationBoolean("hasContactsPermission")
         return DictionarySettingsSnapshot(
+            contactSuggestionsEnabled = contactsPermission && operationBoolean(
+                "isContactSuggestionsEnabled",
+            ),
+            contactsPermissionGranted = contactsPermission,
+            clearInProgress = isClearInProgress(),
             automaticBackupEnabled = enabled,
             locationAccessible = accessible,
             locationSummary = locationSummary,
@@ -70,6 +76,40 @@ internal class LegacyDictionarySettingsRepository(private val activity: Activity
     fun setShortcutsEnabled(enabled: Boolean) {
         legacyPreferences.edit().putBoolean(shortcutsKey, enabled).apply()
     }
+
+    fun setContactSuggestionsEnabled(enabled: Boolean): Boolean = runCatching {
+        operationsType.getMethod(
+            "setContactSuggestionsEnabled",
+            Context::class.java,
+            Boolean::class.javaPrimitiveType,
+        ).invoke(null, context, enabled) as Boolean
+    }.getOrDefault(false)
+
+    fun isClearInProgress(): Boolean = operationBoolean("isClearInProgress")
+
+    fun attachClearCallback(onStarted: () -> Unit, onFinished: (Boolean) -> Unit): Any? =
+        createClearCallback(onStarted, onFinished)?.also { callback ->
+            runCatching {
+                operationsType.getMethod("setClearCallback", clearCallbackType)
+                    .invoke(null, callback)
+            }
+        }
+
+    fun detachClearCallback(callback: Any?) {
+        if (callback == null) return
+        runCatching {
+            operationsType.getMethod("clearClearCallback", clearCallbackType)
+                .invoke(null, callback)
+        }
+    }
+
+    fun startClear(callback: Any): Boolean = runCatching {
+        operationsType.getMethod(
+            "startClear",
+            Context::class.java,
+            clearCallbackType,
+        ).invoke(null, context, callback) as Boolean
+    }.getOrDefault(false)
 
     fun disableAutomaticBackup() {
         preferences.edit().putBoolean(DictionarySettingContracts.enabledKey, false).apply()
@@ -159,24 +199,6 @@ internal class LegacyDictionarySettingsRepository(private val activity: Activity
 
     fun openShortcutEditor() {
         activity.startActivity(Intent("android.settings.USER_DICTIONARY_SETTINGS"))
-    }
-
-    fun openLegacyDictionaryOperations() {
-        activity.startActivity(
-            Intent().setClassName(
-                context.packageName,
-                "com.google.android.apps.inputmethod.pinyin.preference.SettingsActivity",
-            ).putExtra(
-                ":android:show_fragment",
-                "com.google.android.apps.inputmethod.pinyin.preference.DictionarySettingsFragment",
-            ).putExtra(
-                "PREFERENCE_FRAGMENT",
-                "setting_dictionary",
-            ).putExtra(
-                "modern_settings_use_legacy",
-                true,
-            ),
-        )
     }
 
     fun loadHealth(onLoaded: (String) -> Unit) {
@@ -307,6 +329,45 @@ internal class LegacyDictionarySettingsRepository(private val activity: Activity
         return providerLabel?.takeIf(String::isNotEmpty)
             ?: activity.getString(R.string.modern_settings_dictionary_location_selected)
     }
+
+    private fun createClearCallback(
+        onStarted: () -> Unit,
+        onFinished: (Boolean) -> Unit,
+    ): Any? = runCatching {
+        Proxy.newProxyInstance(
+            clearCallbackType.classLoader,
+            arrayOf(clearCallbackType),
+        ) { proxy, method, arguments ->
+            when (method.name) {
+                "onClearStarted" -> {
+                    onStarted()
+                    null
+                }
+                "onClearFinished" -> {
+                    onFinished(arguments?.firstOrNull() as? Boolean ?: false)
+                    null
+                }
+                "toString" -> "ModernDictionaryClearCallback"
+                "hashCode" -> System.identityHashCode(proxy)
+                "equals" -> proxy === arguments?.firstOrNull()
+                else -> null
+            }
+        }
+    }.getOrNull()
+
+    private fun operationBoolean(method: String): Boolean = runCatching {
+        operationsType.getMethod(method, Context::class.java).invoke(null, context) as Boolean
+    }.recoverCatching {
+        operationsType.getMethod(method).invoke(null) as Boolean
+    }.getOrDefault(false)
+
+    private val operationsType: Class<*>
+        get() = Class.forName("com.google.android.inputmethod.pinyin.DictionaryOperationsCompat")
+
+    private val clearCallbackType: Class<*>
+        get() = Class.forName(
+            "com.google.android.inputmethod.pinyin.DictionaryOperationsCompat\$ClearCallback",
+        )
 
     private fun legacyArray(name: String): List<String> {
         val id = activity.resources.getIdentifier(name, "array", context.packageName)
