@@ -481,9 +481,11 @@ screen.
 
 ## Next implementation stage
 
-1. Run the final Pixel 10 Pro acceptance on the isolated `dictionaryaudit`
-   candidate: contact denial/grant/revocation UI, recreation/Back behavior, and
-   all non-destructive dictionary states. Do not inspect contact data.
+1. The isolated `dictionaryaudit` candidate has passed the Pixel 10 Pro
+   non-destructive matrix: contact permission denial/grant, switch state,
+   invalid clear code, cancel, Back, rotation/recreation, and current-page MD3
+   presentation. It did not navigate to legacy Preference UI, inspect contact
+   data, or start a real clear operation.
 2. Run an actual clear only after separate destructive-test authorization and a
    verified backup/restore boundary; refresh aggregate health afterward without
    reading dictionary contents.
