@@ -270,17 +270,47 @@ def apply(
         '            <include href="@xml/keymapping_header_candidates" />\n'
         '        </view>\n'
     )
+    candidate_body_include = (
+        '    <include layout="@layout/'
+        'keyboard_candidates_body_inner_no_deletable_label" />\n'
+    )
+    for body_name in ("keyboard_number_body.xml", "keyboard_number_password_body.xml"):
+        body_layout = decoded / "res/layout" / body_name
+        closing_tag = (
+            "</com.google.android.apps.inputmethod.libs.framework.keyboard."
+            "SoftKeyboardView>"
+        )
+        replace_once(
+            body_layout,
+            closing_tag,
+            candidate_body_include + closing_tag,
+        )
+
     headerless_keyboards = {
-        "res/xml/keyboard_number.xml": "@layout/keyboard_number_body",
-        "res/xml/keyboard_number_password.xml": "@layout/keyboard_number_password_body",
-        "res/xml/keyboard_phone_number.xml": "@layout/keyboard_number_body",
-        "res/xml/keyboard_date_time.xml": "@layout/keyboard_number_body",
-        "res/xml-sw600dp-v13/keyboard_number.xml": "@layout/keyboard_number_body",
-        "res/xml-sw600dp-v13/keyboard_phone_number.xml": "@layout/keyboard_number_body",
-        "res/xml-sw600dp-v13/keyboard_date_time.xml": "@layout/keyboard_number_body",
+        "res/xml/keyboard_number.xml": ("@layout/keyboard_number_body", True),
+        "res/xml/keyboard_number_password.xml": (
+            "@layout/keyboard_number_password_body", True
+        ),
+        "res/xml/keyboard_phone_number.xml": ("@layout/keyboard_number_body", False),
+        "res/xml/keyboard_date_time.xml": ("@layout/keyboard_number_body", True),
+        "res/xml-sw600dp-v13/keyboard_number.xml": (
+            "@layout/keyboard_number_body", True
+        ),
+        "res/xml-sw600dp-v13/keyboard_phone_number.xml": (
+            "@layout/keyboard_number_body", False
+        ),
+        "res/xml-sw600dp-v13/keyboard_date_time.xml": (
+            "@layout/keyboard_number_body", True
+        ),
     }
-    for relative, body_layout in headerless_keyboards.items():
+    for relative, (body_layout, promote_to_prime) in headerless_keyboards.items():
         keyboard_xml = decoded / relative
+        if promote_to_prime:
+            replace_once(
+                keyboard_xml,
+                'class=".keyboard.Keyboard"',
+                'class=".keyboard.PrimeKeyboard"',
+            )
         body_view = f'        <view layout="{body_layout}" type="body">\n'
         replace_once(keyboard_xml, body_view, universal_header + body_view)
 
@@ -289,6 +319,11 @@ def apply(
         decoded / "res/xml-sw600dp-v13/keyboard_password.xml",
     ]
     for keyboard_xml in password_keyboard_variants:
+        replace_once(
+            keyboard_xml,
+            'class=".keyboard.Keyboard"',
+            'class=".keyboard.PrimeKeyboard"',
+        )
         original_header = (
             '        <view layout="@layout/keyboard_password_header" scalable="false" '
             'type="header">\n'
@@ -304,6 +339,26 @@ def apply(
             + '            <include href="@xml/keymapping_header_password" />\n'
         )
         replace_once(keyboard_xml, original_body, password_body)
+
+    # DialKeyboard owns phone-specific accessibility announcements. Preserve
+    # those overrides while inheriting the same candidate controller used by
+    # PrimeKeyboard, instead of replacing the XML class with a generic type.
+    dial_keyboard = decoded / (
+        "smali/com/google/android/apps/inputmethod/libs/framework/keyboard/"
+        "DialKeyboard.smali"
+    )
+    replace_once(
+        dial_keyboard,
+        ".super Lcom/google/android/apps/inputmethod/libs/framework/keyboard/Keyboard;",
+        ".super Lcom/google/android/apps/inputmethod/libs/framework/keyboard/PrimeKeyboard;",
+    )
+    replace_once(
+        dial_keyboard,
+        "invoke-direct {p0}, Lcom/google/android/apps/inputmethod/libs/framework/"
+        "keyboard/Keyboard;-><init>()V",
+        "invoke-direct {p0}, Lcom/google/android/apps/inputmethod/libs/framework/"
+        "keyboard/PrimeKeyboard;-><init>()V",
+    )
 
     # Preserve the framework Preference persistence/callback graph while
     # applying the API 35+ MD3 presentation layer to every generated fragment
@@ -1974,7 +2029,6 @@ def apply(
         "    .line 545\n"
         "    const/4 v0, 0x0",
     )
-
     fixed_candidates = decoded / (
         "smali/com/google/android/apps/inputmethod/libs/framework/keyboard/widget/"
         "FixedSizeCandidatesHolderView.smali"

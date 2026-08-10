@@ -52,6 +52,10 @@ def verify_keyboard(path: Path, expected_layout: str) -> None:
     root = ET.parse(path).getroot()
     keyboard = root.find("keyboard")
     require(keyboard is not None, f"Missing keyboard definition: {path}")
+    require(
+        keyboard.get("class") in (".keyboard.PrimeKeyboard", ".keyboard.DialKeyboard"),
+        f"Header keyboard is not candidate-capable: {path}",
+    )
     views = keyboard.findall("view")
     require(len(views) >= 2, f"Header/body pair missing: {path}")
     header = views[0]
@@ -104,6 +108,18 @@ def main() -> None:
         and 'android:layout_weight="250.0"' in password_body_text,
         "Password QWERTY and bottom rows do not preserve their original proportions",
     )
+    candidate_body_include = (
+        '@layout/keyboard_candidates_body_inner_no_deletable_label'
+    )
+    for body_layout in (
+        password_body_layout,
+        decoded / "res/layout/keyboard_number_body.xml",
+        decoded / "res/layout/keyboard_number_password_body.xml",
+    ):
+        require(
+            candidate_body_include in body_layout.read_text(encoding="utf-8"),
+            f"Prime candidate controller has no pageable body holder: {body_layout}",
+        )
     helper = decoded / "smali/com/google/android/inputmethod/pinyin/PasswordBodyView.smali"
     helper_text = helper.read_text(encoding="utf-8")
     require(
@@ -116,6 +132,18 @@ def main() -> None:
         verify_keyboard(
             resolve_variant(decoded, variants), "@layout/keyboard_universal_header"
         )
+    dial_keyboard = decoded / (
+        "smali/com/google/android/apps/inputmethod/libs/framework/keyboard/"
+        "DialKeyboard.smali"
+    )
+    dial_text = dial_keyboard.read_text(encoding="utf-8")
+    require(
+        ".super Lcom/google/android/apps/inputmethod/libs/framework/keyboard/"
+        "PrimeKeyboard;" in dial_text
+        and "PrimeKeyboard;-><init>()V" in dial_text,
+        "DialKeyboard does not preserve phone behavior on a candidate-capable base",
+    )
+
     for variants in PASSWORD_KEYBOARDS:
         path = resolve_variant(decoded, variants)
         verify_keyboard(path, "@layout/keyboard_universal_header")
