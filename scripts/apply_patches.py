@@ -2221,6 +2221,7 @@ def apply(
         "ThemeSettingsInsetsCompat.smali",
         "ThemeSettingsInsetsCompat$SystemBarsListener.smali",
         "SystemAutoThemeCompat.smali",
+        "SensitiveClipboardCompat.smali",
     ):
         helper_src = ROOT / "patches/smali" / helper_name
         helper_dst = decoded / "smali/com/google/android/inputmethod/pinyin" / helper_name
