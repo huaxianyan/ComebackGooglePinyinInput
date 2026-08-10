@@ -489,13 +489,13 @@ screen.
 2. Run an actual clear only after separate destructive-test authorization and a
    verified backup/restore boundary; refresh aggregate health afterward without
    reading dictionary contents.
-3. After audit acceptance, build a formally signed `3.0.0` candidate and perform
+3. After audit acceptance, build a formally signed `2.0.1` candidate and perform
    the authorized upgrade-retention and core-IME regression. Do not overwrite
    the formal application ID before that authorization.
 4. Keep API 23 runtime acceptance open until usable ARM64 hardware/emulation is
    available; keep API 17 static-only. Keep native 16 KiB runtime acceptance,
    predictive Back, and API 37 isolated.
-5. Create `v3.0.0` and publish only after the maintainer explicitly approves the
+5. Create `v2.0.1` and publish only after the maintainer explicitly approves the
    final candidate. The workflow now derives version/tag/artifact identity from
    `version.properties` and rejects mismatches; this does not itself authorize a
    Tag or GitHub Release.
