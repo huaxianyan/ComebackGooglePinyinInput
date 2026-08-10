@@ -1,6 +1,6 @@
 # Changelog
 
-## [2.0.1] - Unreleased
+## [2.0.1] - 2026-08-10
 
 Android 15+ 设置界面改用源码构建的官方 Compose Material 3 运行时；Android 14 及更低版本继续使用原生旧版 Preference 设置。正式发布仍需完成最终真机人工验收。
 
