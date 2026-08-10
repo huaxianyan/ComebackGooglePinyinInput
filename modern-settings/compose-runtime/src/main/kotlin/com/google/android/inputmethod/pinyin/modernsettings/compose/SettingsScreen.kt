@@ -68,6 +68,7 @@ import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
 
 data class SettingsActions(
+    val onSystemAutoThemeEnabledChange: (Boolean) -> Unit,
     val onOpenThemeSelector: () -> Unit,
     val onOpenTerms: () -> Unit,
     val onOpenPrivacyPolicy: () -> Unit,

@@ -23,6 +23,9 @@
     <string name="modern_settings_english_input_summary">纠错、建议、预测和自动大写</string>
     <string name="modern_settings_keyboard_appearance_title">外观与布局</string>
     <string name="modern_settings_theme_title">主题背景</string>
+    <string name="modern_settings_system_auto_theme_title">跟随系统</string>
+    <string name="modern_settings_system_auto_theme_summary">浅色模式使用 Material 浅色主题，深色模式使用 Material 深色主题</string>
+    <string name="modern_settings_manual_theme_summary">选择固定或自定义主题；选择后将关闭“跟随系统”</string>
     <string name="modern_settings_keyboard_appearance_summary">主题、单手模式和键盘高度</string>
     <string name="modern_settings_keyboard_keys_title">按键与切换</string>
     <string name="modern_settings_keyboard_keys_summary">按键气泡、输入按钮、切换和交互</string>

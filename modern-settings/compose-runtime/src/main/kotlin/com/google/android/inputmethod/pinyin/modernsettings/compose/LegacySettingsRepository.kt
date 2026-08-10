@@ -63,6 +63,10 @@ class LegacySettingsRepository(context: Context) {
 
         return SettingsSnapshot(
             capabilities = capabilities,
+            systemAutoThemeEnabled = preferences.getBoolean(
+                SystemAutoThemeSetting.preferenceKey,
+                false,
+            ),
             soundEnabled = preferences.getBoolean(SliderSettingContracts.SOUND_ENABLED_KEY, false),
             volume = volume,
             vibrationEnabled = preferences.getBoolean(
@@ -149,6 +153,16 @@ class LegacySettingsRepository(context: Context) {
                 "entries_handwriting_stroke_width_scale",
             ),
         )
+    }
+
+    fun setSystemAutoThemeEnabled(enabled: Boolean): SettingsSnapshot {
+        val bridge = Class.forName(SYSTEM_AUTO_THEME_BRIDGE)
+        bridge.getMethod(
+            "setEnabled",
+            Context::class.java,
+            Boolean::class.javaPrimitiveType,
+        ).invoke(null, applicationContext, enabled)
+        return readSnapshot()
     }
 
     fun setLauncherIconVisible(visible: Boolean): SettingsSnapshot {
@@ -371,6 +385,8 @@ class LegacySettingsRepository(context: Context) {
 
     companion object {
         private const val LAUNCHER_ICON_KEY = "show_launcher_icon"
+        private const val SYSTEM_AUTO_THEME_BRIDGE =
+            "com.google.android.inputmethod.pinyin.SystemAutoThemeCompat"
 
         internal fun selectDeviceOverride(
             entries: Array<String>,
@@ -407,6 +423,7 @@ class LegacySettingsRepository(context: Context) {
 
 data class SettingsSnapshot(
     val capabilities: SettingsCapabilities,
+    val systemAutoThemeEnabled: Boolean,
     val soundEnabled: Boolean,
     val volume: ResolvedSetting<Float>,
     val vibrationEnabled: Boolean,

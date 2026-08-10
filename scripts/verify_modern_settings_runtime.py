@@ -78,6 +78,11 @@ def main() -> int:
             "import androidx.activity.compose.BackHandler",
             "import androidx.compose.material3.TopAppBar",
             "data class SettingsActions(",
+            "val onSystemAutoThemeEnabledChange: (Boolean) -> Unit",
+            "actions.onSystemAutoThemeEnabledChange",
+            "snapshot.systemAutoThemeEnabled",
+            "SystemAutoThemeSetting.preferenceKey",
+            '"com.google.android.inputmethod.pinyin.SystemAutoThemeCompat"',
             "val onOpenThemeSelector: () -> Unit",
             "actions.onOpenThemeSelector",
             "val onRefreshDictionaryHealth: () -> Unit",
@@ -226,6 +231,9 @@ def main() -> int:
                 'name="modern_settings_pinyin_scheme_title"',
                 'name="modern_settings_one_handed_mode_title"',
                 'name="modern_settings_theme_title"',
+                'name="modern_settings_system_auto_theme_title"',
+                'name="modern_settings_system_auto_theme_summary"',
+                'name="modern_settings_manual_theme_summary"',
                 'name="modern_settings_launcher_icon_title"',
                 'name="modern_settings_launcher_icon_summary"',
                 'name="modern_settings_dictionary_health_title"',
@@ -608,6 +616,10 @@ def main() -> int:
         project.parent
         / "patches/java/com/google/android/inputmethod/pinyin/DictionaryOperationsCompat.java"
     ).read_text(encoding="utf-8")
+    auto_theme_bridge = (
+        project.parent
+        / "patches/java/com/google/android/inputmethod/pinyin/SystemAutoThemeCompat.java"
+    ).read_text(encoding="utf-8")
     require(
         dictionary_bridge + "\n" + import_bridge + "\n" + operations_bridge,
         (
@@ -627,6 +639,26 @@ def main() -> int:
             "if (callback == null) pendingClearResult = success",
         ),
         "primary-DEX modern dictionary operations bridge",
+    )
+    require(
+        auto_theme_bridge,
+        (
+            'AUTO_THEME_KEY = "compat_system_auto_keyboard_theme"',
+            "Configuration.UI_MODE_NIGHT_MASK",
+            "Configuration.UI_MODE_NIGHT_YES",
+            "MATERIAL_DARK_THEME = 0x7f110224",
+            "MATERIAL_LIGHT_THEME = 0x7f110225",
+            "public static boolean applyIfEnabled(Context context, Configuration configuration)",
+            ".putString(keyboardThemeKey, keyboardTheme)",
+            ".putString(additionalThemeKey, additionalTheme)",
+            "editor.putBoolean(AUTO_THEME_KEY, true)",
+            "preferences(context).edit().remove(AUTO_THEME_KEY).commit()",
+            "ApplicationInfo.FLAG_DEBUGGABLE",
+            'DIAGNOSTIC_TAG = "SystemAutoTheme"',
+            '"configuration uiMode=0x"',
+            '"rebuilding InputView after automatic theme resolution"',
+        ),
+        "primary-DEX System Auto theme bridge",
     )
 
     legacy_navigation = (settings_source_dir / "LegacySettingsNavigation.kt").read_text(
@@ -984,8 +1016,11 @@ def main() -> int:
         theme_selector_text = theme_selector.read_text(encoding="utf-8")
         require(
             theme_selector_text,
-            ("ThemeSettingsInsetsCompat;->attachSelector(Landroid/app/Activity;)V",),
-            "theme selector Insets hook",
+            (
+                "ThemeSettingsInsetsCompat;->attachSelector(Landroid/app/Activity;)V",
+                "SystemAutoThemeCompat;->disable(Landroid/content/Context;)V",
+            ),
+            "theme selector Insets and automatic-mode hooks",
         )
         theme_insets_helper = decoded / (
             "smali/com/google/android/inputmethod/pinyin/"
@@ -993,6 +1028,40 @@ def main() -> int:
         )
         if not theme_insets_helper.is_file():
             raise RuntimeError("theme selector system-bar Insets helper is missing")
+
+        auto_theme_helper = decoded / (
+            "smali/com/google/android/inputmethod/pinyin/SystemAutoThemeCompat.smali"
+        )
+        require(
+            auto_theme_helper.read_text(encoding="utf-8"),
+            (
+                '"compat_system_auto_keyboard_theme"',
+                "const v4, 0x7f110224",
+                "const v4, 0x7f110225",
+                "->writeResolvedTheme(Landroid/content/Context;Landroid/content/res/Configuration;Z)Z",
+            ),
+            "primary-DEX System Auto theme helper",
+        )
+        google_ime = decoded / (
+            "smali/com/google/android/apps/inputmethod/libs/framework/core/"
+            "GoogleInputMethodService.smali"
+        )
+        google_ime_text = google_ime.read_text(encoding="utf-8")
+        require(
+            google_ime_text,
+            (
+                "SystemAutoThemeCompat;->applyIfEnabled(Landroid/content/Context;)Z",
+                "SystemAutoThemeCompat;->applyIfEnabled(Landroid/content/Context;Landroid/content/res/Configuration;)Z",
+                "move-result v9",
+                "SystemAutoThemeCompat;->logInputViewRebuild(Landroid/content/Context;)V",
+                "GoogleInputMethodService;->c()V",
+            ),
+            "IME System Auto configuration hooks",
+        )
+        if google_ime_text.count(
+            "SystemAutoThemeCompat;->logInputViewRebuild(Landroid/content/Context;)V"
+        ) != 2:
+            raise RuntimeError("both IME configuration exits must rebuild an updated auto theme")
 
         operations_helper = decoded / (
             "smali/com/google/android/inputmethod/pinyin/DictionaryOperationsCompat.smali"

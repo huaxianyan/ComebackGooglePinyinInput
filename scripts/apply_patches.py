@@ -2002,6 +2002,83 @@ def apply(
         "    .line 502",
     )
 
+    # Preserve an explicit automatic-theme mode, resolve it to the original
+    # Material light/dark pair before theme construction, and update it before
+    # the existing configuration-change teardown rebuilds the keyboard view.
+    replace_once(
+        framework,
+        "    .line 76\n"
+        "    invoke-super {p0}, Landroid/inputmethodservice/InputMethodService;->onCreate()V\n\n"
+        "    .line 77",
+        "    .line 76\n"
+        "    invoke-super {p0}, Landroid/inputmethodservice/InputMethodService;->onCreate()V\n\n"
+        "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/"
+        "SystemAutoThemeCompat;->applyIfEnabled(Landroid/content/Context;)Z\n\n"
+        "    .line 77",
+    )
+    replace_once(
+        framework,
+        ".method public onConfigurationChanged(Landroid/content/res/Configuration;)V\n"
+        "    .locals 9",
+        ".method public onConfigurationChanged(Landroid/content/res/Configuration;)V\n"
+        "    .locals 10",
+    )
+    replace_once(
+        framework,
+        "    .line 341\n"
+        "    :cond_0\n"
+        "    new-array v0, v2, [Ljava/lang/Object;",
+        "    .line 341\n"
+        "    :cond_0\n"
+        "    invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/"
+        "SystemAutoThemeCompat;->applyIfEnabled(Landroid/content/Context;"
+        "Landroid/content/res/Configuration;)Z\n\n"
+        "    move-result v9\n\n"
+        "    new-array v0, v2, [Ljava/lang/Object;",
+    )
+    # UI-mode changes enter the legacy broad configuration path, which tears
+    # down InputView but does not itself call onCreateInputView(). Rebuild once
+    # after the framework has accepted the new Configuration and only when the
+    # automatic resolver changed the concrete theme pair.
+    replace_once(
+        framework,
+        "    .line 362\n"
+        "    invoke-super {p0, p1}, Landroid/inputmethodservice/InputMethodService;"
+        "->onConfigurationChanged(Landroid/content/res/Configuration;)V\n\n"
+        "    goto :goto_0",
+        "    .line 362\n"
+        "    invoke-super {p0, p1}, Landroid/inputmethodservice/InputMethodService;"
+        "->onConfigurationChanged(Landroid/content/res/Configuration;)V\n\n"
+        "    if-eqz v9, :system_auto_theme_minor_config_done\n\n"
+        "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/"
+        "SystemAutoThemeCompat;->logInputViewRebuild(Landroid/content/Context;)V\n\n"
+        "    invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/libs/framework/"
+        "core/GoogleInputMethodService;->c()V\n\n"
+        "    :system_auto_theme_minor_config_done\n"
+        "    goto :goto_0",
+    )
+    replace_once(
+        framework,
+        "    .line 373\n"
+        "    :cond_9\n"
+        "    :goto_5\n"
+        "    invoke-super {p0, p1}, Landroid/inputmethodservice/InputMethodService;"
+        "->onConfigurationChanged(Landroid/content/res/Configuration;)V\n\n"
+        "    goto :goto_0",
+        "    .line 373\n"
+        "    :cond_9\n"
+        "    :goto_5\n"
+        "    invoke-super {p0, p1}, Landroid/inputmethodservice/InputMethodService;"
+        "->onConfigurationChanged(Landroid/content/res/Configuration;)V\n\n"
+        "    if-eqz v9, :system_auto_theme_config_done\n\n"
+        "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/"
+        "SystemAutoThemeCompat;->logInputViewRebuild(Landroid/content/Context;)V\n\n"
+        "    invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/libs/framework/"
+        "core/GoogleInputMethodService;->c()V\n\n"
+        "    :system_auto_theme_config_done\n"
+        "    goto :goto_0",
+    )
+
     theme_selector_activity = decoded / (
         "smali/com/google/android/apps/inputmethod/libs/theme/preference/"
         "ThemeSelectorActivity.smali"
@@ -2018,6 +2095,30 @@ def apply(
         "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/"
         "ThemeSettingsInsetsCompat;->attachSelector(Landroid/app/Activity;)V\n\n"
         "    .line 4",
+    )
+    # A deliberate fixed/custom theme selection exits automatic mode. Merely
+    # opening and cancelling the selector does not alter the mode.
+    replace_once(
+        theme_selector_activity,
+        "    .prologue\n"
+        "    .line 153\n"
+        "    iget-object v0, p0, Lcom/google/android/apps/inputmethod/libs/theme/"
+        "preference/ThemeSelectorActivity;->a:Lbdb;",
+        "    .prologue\n"
+        "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/"
+        "SystemAutoThemeCompat;->disable(Landroid/content/Context;)V\n\n"
+        "    .line 153\n"
+        "    iget-object v0, p0, Lcom/google/android/apps/inputmethod/libs/theme/"
+        "preference/ThemeSelectorActivity;->a:Lbdb;",
+    )
+    replace_once(
+        theme_selector_activity,
+        "    .line 202\n"
+        "    invoke-static {p0}, Lamx;->a(Landroid/content/Context;)Lamx;",
+        "    .line 202\n"
+        "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/"
+        "SystemAutoThemeCompat;->disable(Landroid/content/Context;)V\n\n"
+        "    invoke-static {p0}, Lamx;->a(Landroid/content/Context;)Lamx;",
     )
 
     for helper_name in (
@@ -2036,6 +2137,7 @@ def apply(
         "ImeSurfaceSliceDrawable.smali",
         "ThemeSettingsInsetsCompat.smali",
         "ThemeSettingsInsetsCompat$SystemBarsListener.smali",
+        "SystemAutoThemeCompat.smali",
     ):
         helper_src = ROOT / "patches/smali" / helper_name
         helper_dst = decoded / "smali/com/google/android/inputmethod/pinyin" / helper_name

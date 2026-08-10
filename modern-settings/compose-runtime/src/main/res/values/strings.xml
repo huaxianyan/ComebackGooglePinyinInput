@@ -23,6 +23,9 @@
     <string name="modern_settings_english_input_summary">Correction, suggestions, prediction, and capitalization</string>
     <string name="modern_settings_keyboard_appearance_title">Appearance and layout</string>
     <string name="modern_settings_theme_title">Theme</string>
+    <string name="modern_settings_system_auto_theme_title">System Auto</string>
+    <string name="modern_settings_system_auto_theme_summary">Use the Material light theme in light mode and the Material dark theme in dark mode</string>
+    <string name="modern_settings_manual_theme_summary">Choose a fixed or custom theme; selecting one turns off System Auto</string>
     <string name="modern_settings_keyboard_appearance_summary">Theme, one-handed mode, and keyboard height</string>
     <string name="modern_settings_keyboard_keys_title">Keys and switching</string>
     <string name="modern_settings_keyboard_keys_summary">Key popups, input buttons, switching, and interaction</string>

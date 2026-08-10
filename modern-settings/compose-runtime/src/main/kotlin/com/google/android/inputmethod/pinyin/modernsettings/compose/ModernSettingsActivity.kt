@@ -140,6 +140,9 @@ class ModernSettingsActivity : ComponentActivity() {
                         dictionaryImport = dictionaryImport,
                         dictionaryClear = dictionaryClear,
                         actions = SettingsActions(
+                            onSystemAutoThemeEnabledChange = { enabled ->
+                                snapshot = controller.setSystemAutoThemeEnabled(enabled)
+                            },
                             onOpenThemeSelector = {
                                 startActivity(
                                     LegacySettingsNavigation.themeSelectorIntent(this)

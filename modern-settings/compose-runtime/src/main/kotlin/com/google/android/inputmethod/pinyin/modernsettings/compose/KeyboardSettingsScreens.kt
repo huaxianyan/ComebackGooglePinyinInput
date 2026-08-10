@@ -94,11 +94,20 @@ internal fun androidx.compose.foundation.lazy.LazyListScope.keyboardAppearanceSe
     actions: SettingsActions,
 ) {
     item {
+        SettingsSwitchRow(
+            title = stringResource(R.string.modern_settings_system_auto_theme_title),
+            supporting = stringResource(R.string.modern_settings_system_auto_theme_summary),
+            checked = snapshot.systemAutoThemeEnabled,
+            onCheckedChange = actions.onSystemAutoThemeEnabledChange,
+        )
+    }
+    item {
         SettingsNavigationRow(
             title = legacyString(
                 "setting_theme",
                 R.string.modern_settings_theme_title,
             ),
+            supporting = stringResource(R.string.modern_settings_manual_theme_summary),
             onClick = actions.onOpenThemeSelector,
         )
     }
