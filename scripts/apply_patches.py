@@ -2433,8 +2433,8 @@ def main() -> None:
         action="store_true",
         help="enable Android debugging for an isolated non-formal audit ID",
     )
-    parser.add_argument("--version-name", default="2.0.0")
-    parser.add_argument("--version-code", type=int, default=4520385)
+    parser.add_argument("--version-name", default="2.0.2")
+    parser.add_argument("--version-code", type=int, default=4520387)
     args = parser.parse_args()
     apply(
         args.decoded.resolve(),

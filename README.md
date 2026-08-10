@@ -35,16 +35,16 @@ Google 拼音输入法最初由 Google 发布并通过 Google Play 等官方 And
 | --- | --- |
 | 项目中文名称 | Google 拼音输入法 创造性 AI 版 |
 | English project name | Comeback Google Pinyin Input |
-| 项目版本 | `2.0.0` |
-| Android versionName | `2.0.0` |
-| Android versionCode | `4520385` |
+| 项目版本 | `2.0.2` |
+| Android versionName | `2.0.2` |
+| Android versionCode | `4520387` |
 | 正式包名 | `com.google.android.inputmethod.pinyin.compat` |
 | 架构 | `arm64-v8a` |
-| 正式 APK | `ComebackGooglePinyinInput-arm64-v8a-2.0.0.apk` |
+| 正式 APK | `ComebackGooglePinyinInput-arm64-v8a-2.0.2.apk` |
 | target SDK | 36 |
 | 主要测试设备 | Pixel 10 Pro / Android 16 |
 
-上表对应正式 Release [`v2.0.0`](https://github.com/huaxianyan/comeback-google-pinyin-input/releases/tag/v2.0.0)。该版本将逐 API 29–36 的验收成果合并为正式 Android 16 基线；后续 Material You/MD3、16 KiB、预测返回和其他开发均从这个基线开始。此前 `v1.0.3` 保留为最后一个 target 28 正式版本。
+上表对应正式 Release [`v2.0.2`](https://github.com/huaxianyan/comeback-google-pinyin-input/releases/tag/v2.0.2)。该版本在 `v2.0.1` 官方 Compose Material 3 设置运行时基础上，为所有相关键盘增加统一原生 Header，并让敏感剪贴板候选在密码/PIN 等目标中安全脱敏。`v2.0.0` 保留为逐 API 29–36 验收形成的 Android 16 正式基线，`v1.0.3` 保留为最后一个 target 28 正式版本。
 
 `targetSdkVersion` 29–36 的提升已经按逐 API、逐分支、逐项验收策略完成并合并到 `master`。历史分支、已知行为边界和测试门槛见 [`docs/target-sdk-modernization-plan.md`](docs/target-sdk-modernization-plan.md)。Android 17 继续作为独立调查阶段；中间审计包使用隔离 application ID，不覆盖正式包，也不发布正式 Release。
 
@@ -57,6 +57,8 @@ Google 拼音输入法最初由 Google 发布并通过 Google Play 等官方 And
 - 修复候选、标点、符号和表情列表滚动后外层键盘错误触发点击的问题。
 - 修复全键盘符号/表情分页中失效的滑动距离门槛，同时保留原有翻页、吸附和动画参数。
 - 增加与原生候选管线融合的剪贴板候选、主题化剪贴板图标和原生关闭控制，点击后提交完整剪贴板文本。
+- 为文本、密码/PIN、数字、电话和日期时间等键盘提供统一原生 Header，候选不会替换必需输入键。
+- 对来源标记敏感或目标为密码/PIN 的剪贴板候选进行圆点脱敏；显示、无障碍、完整 payload 与去重身份相互分离。
 - 根据实际键盘主题表面调整 Android 导航栏颜色和明暗图标。
 - 移除持续固定 120 Hz 的旧兼容请求，由 Android 的 LTPO/ARR 调度刷新率。
 - 将首次使用引导整理为“启用 → 选择输入法 → 完成”，使用明确的上一步/下一步导航。
