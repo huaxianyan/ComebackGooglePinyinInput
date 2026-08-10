@@ -204,3 +204,25 @@ default IME=com.google.android.inputmethod.pinyin.compat/com.google.android.inpu
 ```
 
 设备仅保留正式包和本次 `themeaudit` 包；旧 `materialcomposehostaudit` 已卸载。
+
+## 正式候选构建
+
+提交 `4d3ef5f` 的手动 Actions 构建通过全部正式门禁，不创建 Tag 或 GitHub Release：
+
+```text
+run=31352617000
+artifact=9049552834
+package=com.google.android.inputmethod.pinyin.compat
+versionName=2.0.1
+versionCode=4520386
+targetSdkVersion=36
+debuggable=false
+size=27,538,012 bytes
+SHA-256=dbb040714db26157857d0852000fe0cdcf6bb7edd280c8d5df906600f5230cb3
+certificate SHA-256=985CBF843A362169B129AEAC5E153D13095F0923231936D1486A20C8332CDE2F
+v1/v2/v3=true
+16 KiB ZIP alignment=true
+reproducible signed build=true
+```
+
+该正式候选包含最终设置首页标题和 System Auto 功能，但尚未覆盖安装；安装正式 application ID 仍须单独授权。
