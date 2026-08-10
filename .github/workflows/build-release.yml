@@ -333,7 +333,7 @@ jobs:
           $notes = @"
           # Google 拼音输入法 $env:EXPECTED_VERSION_NAME
 
-          本版本在保留原生输入、候选、学习、词典、手写、主题和备份语义的前提下，为 Android 15 及更高版本提供官方 Compose Material 3 设置界面；Android 14 及更低版本继续使用原设置界面。
+          本版本在保留原生输入、候选、学习、词典、手写、主题和备份语义的前提下，加入 ``CHANGELOG.md`` 所列的兼容性、界面和安全改进。Android 15 及更高版本使用官方 Compose Material 3 设置界面；Android 14 及更低版本继续使用原设置界面。
 
           - Architecture: ``arm64-v8a``
           - Android versionName: ``$env:EXPECTED_VERSION_NAME``
@@ -358,7 +358,7 @@ jobs:
               "$env:APK_PATH#$env:RELEASE_APK_NAME" `
               "$env:APK_PATH.sha256#$env:RELEASE_APK_NAME.sha256" `
               --repo $env:GITHUB_REPOSITORY --verify-tag `
-              --title "v$env:EXPECTED_VERSION_NAME - Material 3 设置" `
+              --title "v$env:EXPECTED_VERSION_NAME - Google 拼音输入法" `
               --notes-file release-notes.md
           }
 

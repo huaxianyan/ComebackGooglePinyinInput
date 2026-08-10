@@ -132,7 +132,7 @@
 - [x] 设置首页正式文案已改为“Google 拼音输入法设置”（英文为 “Google Pinyin Input settings”），并移除已经完成使命的“官方 Compose Material 3 · 分阶段写入验证”说明；Verifier 禁止该验证文案重新进入正式首页。完整隔离构建、60 项单元测试、6,633 资源 ID 和 API 31/33/34/35/36 门禁通过，未覆盖当前正式候选，仍不发布并等待下一项计划功能
 - [x] 正式 `v2.0.1` 已创建签名 Tag 和 GitHub Release；Release APK 与 Actions Artifact、设备安装 `base.apk` 逐字节一致，SHA-256 为 `09061687ca67cce5879323207d2b876d90a00bbd621d96167ce9ae695ae95b1c`，正式签名身份、v1/v2/v3 和 16 KiB ZIP alignment 复核通过
 - [x] 统一键盘 Header 与敏感剪贴板候选已在隔离分支完成全键盘、浅色/深色、密码/PIN 脱敏、完整 payload 提交、关闭和无崩溃验收；提交 `8902e1f` 的 Actions run `31414951727` 全部门禁通过且只生成 Artifact
-- [ ] 将已验收实现以正式身份构建并发布为 `v2.0.2`，发布后复核 Release 资产、覆盖安装正式包并卸载全部本项目测试包
+- [x] `v2.0.2` 正式候选由 `master` Actions run `31418998015` 从提交 `39510e5` 完整构建：Compose 测试、API 31/33/34/35/36、统一 Header、敏感剪贴板、6,633 旧资源 ID、v1/v2/v3、正式证书、16 KiB ZIP alignment 和双构建一致性全部通过。APK 为 27,550,386 bytes，SHA-256 为 `c94a12a4ea3e1f06f49dd91f127b64f02da44a5d8d3577f3db6706022026a9a9`；正式包已从 `2.0.1` 覆盖安装到 Pixel 10 Pro，默认输入法保持正式 `PinyinIME`，设备 `base.apk` 与 Artifact 逐字节一致，`headeraudit` 和敏感剪贴板测试器已卸载
 
 ## 测试约定
 
