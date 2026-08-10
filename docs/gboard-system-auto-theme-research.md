@@ -294,4 +294,40 @@ v1/v2/v3=true
 reproducible signed build=true
 ```
 
-该正式候选包含最终设置首页标题和 System Auto 功能，但尚未覆盖安装；安装正式 application ID 仍须单独授权。
+该候选是第一阶段单一 Material light/dark 自动主题实现，已由后续独立三槽模型取代。
+
+## 独立三槽正式候选与升级验收
+
+最终实现提交：
+
+```text
+commit=f3b264c217aa38da861c9326262c03cc5f425769
+branch=feat/modern-material-settings-runtime
+```
+
+手动 Actions 正式签名构建通过全部门禁，且未创建 Tag 或 GitHub Release：
+
+```text
+run=31359106284
+artifact=9051775122
+package=com.google.android.inputmethod.pinyin.compat
+versionName=2.0.1
+versionCode=4520386
+targetSdkVersion=36
+debuggable=false
+size=27,550,300 bytes
+SHA-256=09061687ca67cce5879323207d2b876d90a00bbd621d96167ce9ae695ae95b1c
+certificate SHA-256=985CBF843A362169B129AEAC5E153D13095F0923231936D1486A20C8332CDE2F
+v1/v2/v3=true
+16 KiB ZIP alignment=true
+reproducible signed build=true
+```
+
+经用户明确授权后覆盖安装既有正式 `2.0.1`。设备实际安装的 `base.apk` 与 Actions APK 字节完全一致；默认输入法、首次引导完成状态和原固定主题均保持不变。首次迁移结果为“跟随主题”关闭、固定槽可用、浅色/深色槽保留为禁用状态，符合 absent 模式迁移契约。用户完成简单输入和设置页确认后：
+
+```text
+default IME=com.google.android.inputmethod.pinyin.compat/com.google.android.inputmethod.pinyin.PinyinIME
+system night mode=yes
+process PID=13822
+crash/ANR/DropBox/VerifyError/IllegalAccessError=0
+```
