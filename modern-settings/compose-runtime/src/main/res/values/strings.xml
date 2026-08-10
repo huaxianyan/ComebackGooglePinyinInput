@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="modern_settings_title">Keyboard settings</string>
-    <string name="modern_settings_stage_summary">Official Compose Material 3 · staged write validation</string>
+    <string name="modern_settings_title">Google Pinyin Input settings</string>
     <string name="modern_settings_home_input_title">Input settings</string>
     <string name="modern_settings_home_input_summary">Pinyin, English, glide typing, and correction</string>
     <string name="modern_settings_home_keyboard_title">Keyboard</string>

@@ -60,14 +60,6 @@ internal fun androidx.compose.foundation.lazy.LazyListScope.homeSettingsItems(
     navigateTo: (SettingsRoute) -> Unit,
 ) {
         item {
-            Text(
-                text = stringResource(R.string.modern_settings_stage_summary),
-                modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.bodyMedium,
-            )
-        }
-        item {
             SettingsNavigationRow(
                 title = stringResource(R.string.modern_settings_home_input_title),
                 supporting = stringResource(R.string.modern_settings_home_input_summary),

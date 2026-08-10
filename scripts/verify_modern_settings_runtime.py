@@ -280,6 +280,18 @@ def main() -> int:
             ),
             f"{label} modern settings resources",
         )
+    require(
+        values,
+        ('<string name="modern_settings_title">Google Pinyin Input settings</string>',),
+        "production English settings title",
+    )
+    require(
+        values_zh,
+        ('<string name="modern_settings_title">Google 拼音输入法设置</string>',),
+        "production Simplified Chinese settings title",
+    )
+    if "modern_settings_stage_summary" in values + values_zh + kotlin_text:
+        raise RuntimeError("staged validation copy must not ship in the production settings home")
 
     contracts = next((project / "compose-runtime/src/main/kotlin").rglob("SliderSettingContracts.kt"))
     contract_text = contracts.read_text(encoding="utf-8")

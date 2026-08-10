@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="modern_settings_title">键盘设置</string>
-    <string name="modern_settings_stage_summary">官方 Compose Material 3 · 分阶段写入验证</string>
+    <string name="modern_settings_title">Google 拼音输入法设置</string>
     <string name="modern_settings_home_input_title">输入设置</string>
     <string name="modern_settings_home_input_summary">拼音、英文、滑行输入和纠错</string>
     <string name="modern_settings_home_keyboard_title">键盘</string>

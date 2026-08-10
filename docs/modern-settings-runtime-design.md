@@ -486,12 +486,13 @@ screen.
    invalid clear code, cancel, Back, rotation/recreation, and current-page MD3
    presentation. It did not navigate to legacy Preference UI, inspect contact
    data, or start a real clear operation.
-2. Run an actual clear only after separate destructive-test authorization and a
-   verified backup/restore boundary; refresh aggregate health afterward without
-   reading dictionary contents.
-3. After audit acceptance, build a formally signed `2.0.1` candidate and perform
-   the authorized upgrade-retention and core-IME regression. Do not overwrite
-   the formal application ID before that authorization.
+2. The maintainer completed the destructive backup/clear/import loop on the
+   formal candidate: aggregate health reached zero after clear and returned to
+   the pre-clear visible state after native merge import. No dictionary content
+   was read or recorded by the assistant.
+3. The formally signed `2.0.1` candidate has been installed with explicit
+   authorization and passed an initial functional check. Release remains blocked
+   on the next planned feature and its final formal-ID regression.
 4. Keep API 23 runtime acceptance open until usable ARM64 hardware/emulation is
    available; keep API 17 static-only. Keep native 16 KiB runtime acceptance,
    predictive Back, and API 37 isolated.
