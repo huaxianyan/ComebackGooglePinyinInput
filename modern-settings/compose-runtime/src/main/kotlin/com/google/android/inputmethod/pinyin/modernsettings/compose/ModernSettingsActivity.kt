@@ -49,6 +49,11 @@ class ModernSettingsActivity : ComponentActivity() {
             if (current.backupInProgress) mainHandler.postDelayed(this, 500L)
         }
     }
+    private val themeSelector = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult(),
+    ) {
+        if (::controller.isInitialized) snapshot = controller.finishThemeSelection()
+    }
     private val contactsPermission = registerForActivityResult(
         ActivityResultContracts.RequestPermission(),
     ) { granted ->
@@ -143,8 +148,9 @@ class ModernSettingsActivity : ComponentActivity() {
                             onSystemAutoThemeEnabledChange = { enabled ->
                                 snapshot = controller.setSystemAutoThemeEnabled(enabled)
                             },
-                            onOpenThemeSelector = {
-                                startActivity(
+                            onOpenThemeSelector = { slot ->
+                                snapshot = controller.beginThemeSelection(slot)
+                                themeSelector.launch(
                                     LegacySettingsNavigation.themeSelectorIntent(this)
                                 )
                             },

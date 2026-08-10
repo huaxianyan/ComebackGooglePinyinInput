@@ -69,7 +69,7 @@ import kotlin.math.roundToInt
 
 data class SettingsActions(
     val onSystemAutoThemeEnabledChange: (Boolean) -> Unit,
-    val onOpenThemeSelector: () -> Unit,
+    val onOpenThemeSelector: (ThemeSelectionSlot) -> Unit,
     val onOpenTerms: () -> Unit,
     val onOpenPrivacyPolicy: () -> Unit,
     val onOpenLicenses: () -> Unit,
@@ -231,7 +231,10 @@ private fun SettingsRoutePage(
                 SettingsRoute.ChineseInput -> chineseInputSettingsItems(snapshot, actions, navigateTo)
                 SettingsRoute.EnglishInput -> englishInputSettingsItems(snapshot, actions)
                 SettingsRoute.Keyboard -> keyboardSettingsItems(navigateTo)
-                SettingsRoute.KeyboardAppearance -> keyboardAppearanceSettingsItems(snapshot, actions)
+                SettingsRoute.KeyboardAppearance -> keyboardAppearanceSettingsItems(
+                    snapshot, actions, navigateTo,
+                )
+                SettingsRoute.ThemeBackground -> themeBackgroundSettingsItems(snapshot, actions)
                 SettingsRoute.KeyboardKeys -> keyboardKeysSettingsItems(
                     snapshot, actions, millisecondsText,
                 )
@@ -270,6 +273,7 @@ private fun routeTitle(route: SettingsRoute): String = when (route) {
     SettingsRoute.KeyboardAppearance -> stringResource(
         R.string.modern_settings_keyboard_appearance_title,
     )
+    SettingsRoute.ThemeBackground -> stringResource(R.string.modern_settings_theme_title)
     SettingsRoute.KeyboardKeys -> stringResource(R.string.modern_settings_keyboard_keys_title)
     SettingsRoute.KeyboardFeedback -> stringResource(R.string.modern_settings_section_key_feedback)
     SettingsRoute.Handwriting -> stringResource(R.string.modern_settings_section_handwriting)

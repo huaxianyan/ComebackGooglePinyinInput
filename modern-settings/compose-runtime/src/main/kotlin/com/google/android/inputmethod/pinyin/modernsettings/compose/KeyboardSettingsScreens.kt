@@ -92,23 +92,16 @@ internal fun androidx.compose.foundation.lazy.LazyListScope.keyboardSettingsItem
 internal fun androidx.compose.foundation.lazy.LazyListScope.keyboardAppearanceSettingsItems(
     snapshot: SettingsSnapshot,
     actions: SettingsActions,
+    navigateTo: (SettingsRoute) -> Unit,
 ) {
-    item {
-        SettingsSwitchRow(
-            title = stringResource(R.string.modern_settings_system_auto_theme_title),
-            supporting = stringResource(R.string.modern_settings_system_auto_theme_summary),
-            checked = snapshot.systemAutoThemeEnabled,
-            onCheckedChange = actions.onSystemAutoThemeEnabledChange,
-        )
-    }
     item {
         SettingsNavigationRow(
             title = legacyString(
                 "setting_theme",
                 R.string.modern_settings_theme_title,
             ),
-            supporting = stringResource(R.string.modern_settings_manual_theme_summary),
-            onClick = actions.onOpenThemeSelector,
+            supporting = stringResource(R.string.modern_settings_theme_page_summary),
+            onClick = { navigateTo(SettingsRoute.ThemeBackground) },
         )
     }
     if (snapshot.capabilities.oneHandedModeVisible) {
@@ -137,6 +130,54 @@ internal fun androidx.compose.foundation.lazy.LazyListScope.keyboardAppearanceSe
             maximumIndex = SliderSettingContracts.keyboardHeight.values.lastIndex,
             editable = true,
             onValueCommit = actions.onKeyboardHeightChange,
+        )
+    }
+}
+
+internal fun androidx.compose.foundation.lazy.LazyListScope.themeBackgroundSettingsItems(
+    snapshot: SettingsSnapshot,
+    actions: SettingsActions,
+) {
+    val followTheme = snapshot.systemAutoThemeEnabled
+    item {
+        SettingsSwitchRow(
+            title = stringResource(R.string.modern_settings_system_auto_theme_title),
+            supporting = stringResource(R.string.modern_settings_system_auto_theme_summary),
+            checked = followTheme,
+            onCheckedChange = actions.onSystemAutoThemeEnabledChange,
+        )
+    }
+    item {
+        SettingsNavigationRow(
+            title = stringResource(R.string.modern_settings_light_mode_theme_title),
+            supporting = stringResource(
+                if (followTheme) R.string.modern_settings_light_mode_theme_summary
+                else R.string.modern_settings_theme_requires_follow_enabled,
+            ),
+            enabled = followTheme,
+            onClick = { actions.onOpenThemeSelector(ThemeSelectionSlot.Light) },
+        )
+    }
+    item {
+        SettingsNavigationRow(
+            title = stringResource(R.string.modern_settings_dark_mode_theme_title),
+            supporting = stringResource(
+                if (followTheme) R.string.modern_settings_dark_mode_theme_summary
+                else R.string.modern_settings_theme_requires_follow_enabled,
+            ),
+            enabled = followTheme,
+            onClick = { actions.onOpenThemeSelector(ThemeSelectionSlot.Dark) },
+        )
+    }
+    item {
+        SettingsNavigationRow(
+            title = stringResource(R.string.modern_settings_fixed_theme_title),
+            supporting = stringResource(
+                if (followTheme) R.string.modern_settings_theme_requires_follow_disabled
+                else R.string.modern_settings_fixed_theme_summary,
+            ),
+            enabled = !followTheme,
+            onClick = { actions.onOpenThemeSelector(ThemeSelectionSlot.Fixed) },
         )
     }
 }

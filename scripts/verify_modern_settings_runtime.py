@@ -83,8 +83,13 @@ def main() -> int:
             "snapshot.systemAutoThemeEnabled",
             "SystemAutoThemeSetting.preferenceKey",
             '"com.google.android.inputmethod.pinyin.SystemAutoThemeCompat"',
-            "val onOpenThemeSelector: () -> Unit",
-            "actions.onOpenThemeSelector",
+            "val onOpenThemeSelector: (ThemeSelectionSlot) -> Unit",
+            "actions.onOpenThemeSelector(ThemeSelectionSlot.Light)",
+            "actions.onOpenThemeSelector(ThemeSelectionSlot.Dark)",
+            "actions.onOpenThemeSelector(ThemeSelectionSlot.Fixed)",
+            "SettingsRoute.ThemeBackground",
+            "themeBackgroundSettingsItems(snapshot, actions)",
+            "ThemeSettingRules.canSelect(slot, followThemeEnabled)",
             "val onRefreshDictionaryHealth: () -> Unit",
             "DictionaryHealthStatusCompat\\$Callback",
             "DictionaryHealthStateReducer.start(dictionaryHealth)",
@@ -231,9 +236,17 @@ def main() -> int:
                 'name="modern_settings_pinyin_scheme_title"',
                 'name="modern_settings_one_handed_mode_title"',
                 'name="modern_settings_theme_title"',
+                'name="modern_settings_theme_page_summary"',
                 'name="modern_settings_system_auto_theme_title"',
                 'name="modern_settings_system_auto_theme_summary"',
-                'name="modern_settings_manual_theme_summary"',
+                'name="modern_settings_light_mode_theme_title"',
+                'name="modern_settings_light_mode_theme_summary"',
+                'name="modern_settings_dark_mode_theme_title"',
+                'name="modern_settings_dark_mode_theme_summary"',
+                'name="modern_settings_fixed_theme_title"',
+                'name="modern_settings_fixed_theme_summary"',
+                'name="modern_settings_theme_requires_follow_enabled"',
+                'name="modern_settings_theme_requires_follow_disabled"',
                 'name="modern_settings_launcher_icon_title"',
                 'name="modern_settings_launcher_icon_summary"',
                 'name="modern_settings_dictionary_health_title"',
@@ -300,6 +313,15 @@ def main() -> int:
     )
     if "modern_settings_stage_summary" in values + values_zh + kotlin_text:
         raise RuntimeError("staged validation copy must not ship in the production settings home")
+    for obsolete_dictionary_copy in (
+        "modern_settings_dictionary_privacy_summary",
+        "dictionary_backup_privacy",
+        "dictionary_auto_backup_privacy_summary",
+    ):
+        if obsolete_dictionary_copy in values + values_zh + kotlin_text:
+            raise RuntimeError(
+                f"verbose dictionary backup copy must not ship: {obsolete_dictionary_copy}"
+            )
 
     contracts = next((project / "compose-runtime/src/main/kotlin").rglob("SliderSettingContracts.kt"))
     contract_text = contracts.read_text(encoding="utf-8")
@@ -648,14 +670,25 @@ def main() -> int:
             "Configuration.UI_MODE_NIGHT_YES",
             "MATERIAL_DARK_THEME = 0x7f110224",
             "MATERIAL_LIGHT_THEME = 0x7f110225",
+            'SLOT_LIGHT = "light"',
+            'SLOT_DARK = "dark"',
+            'SLOT_FIXED = "fixed"',
+            'SELECTION_SLOT_KEY = "compat_theme_selection_slot"',
+            'FIXED_BASE_KEY = "compat_theme_fixed_keyboard"',
+            "public static void beginSelection(Context context, String slot)",
+            "public static boolean finishSelection(Context context)",
+            "public static void captureFixedTheme(Context context)",
+            "public static void reconcileCustomThemeEdit(Context context, Intent data)",
+            'additional.startsWith("files:user_theme_") && additional.endsWith(deleted)',
+            "public static boolean applyOnCreate(Context context)",
             "public static boolean applyIfEnabled(Context context, Configuration configuration)",
-            ".putString(keyboardThemeKey, keyboardTheme)",
-            ".putString(additionalThemeKey, additionalTheme)",
-            "editor.putBoolean(AUTO_THEME_KEY, true)",
-            "preferences(context).edit().remove(AUTO_THEME_KEY).commit()",
+            'Class.forName("baq")',
+            ".putString(FIXED_BASE_KEY, current[0])",
+            ".putString(LIGHT_ADDITIONAL_KEY, context.getString(MATERIAL_LIGHT_THEME))",
+            ".putString(DARK_ADDITIONAL_KEY, context.getString(MATERIAL_DARK_THEME))",
             "ApplicationInfo.FLAG_DEBUGGABLE",
             'DIAGNOSTIC_TAG = "SystemAutoTheme"',
-            '"configuration uiMode=0x"',
+            '"configuration uiMode="',
             '"rebuilding InputView after automatic theme resolution"',
         ),
         "primary-DEX System Auto theme bridge",
@@ -1019,6 +1052,8 @@ def main() -> int:
             (
                 "ThemeSettingsInsetsCompat;->attachSelector(Landroid/app/Activity;)V",
                 "SystemAutoThemeCompat;->disable(Landroid/content/Context;)V",
+                "SystemAutoThemeCompat;->reconcileCustomThemeEdit(Landroid/content/Context;Landroid/content/Intent;)V",
+                "SystemAutoThemeCompat;->captureFixedTheme(Landroid/content/Context;)V",
             ),
             "theme selector Insets and automatic-mode hooks",
         )
@@ -1036,11 +1071,18 @@ def main() -> int:
             auto_theme_helper.read_text(encoding="utf-8"),
             (
                 '"compat_system_auto_keyboard_theme"',
-                "const v4, 0x7f110224",
-                "const v4, 0x7f110225",
-                "->writeResolvedTheme(Landroid/content/Context;Landroid/content/res/Configuration;Z)Z",
+                '"compat_theme_selection_slot"',
+                '"compat_theme_light_keyboard"',
+                '"compat_theme_dark_keyboard"',
+                '"compat_theme_fixed_keyboard"',
+                ".method public static beginSelection(Landroid/content/Context;Ljava/lang/String;)V",
+                ".method public static finishSelection(Landroid/content/Context;)Z",
+                ".method public static captureFixedTheme(Landroid/content/Context;)V",
+                ".method public static reconcileCustomThemeEdit(Landroid/content/Context;Landroid/content/Intent;)V",
+                ".method public static applyOnCreate(Landroid/content/Context;)Z",
+                '"baq"',
             ),
-            "primary-DEX System Auto theme helper",
+            "primary-DEX System Auto theme-slot helper",
         )
         google_ime = decoded / (
             "smali/com/google/android/apps/inputmethod/libs/framework/core/"
@@ -1050,7 +1092,7 @@ def main() -> int:
         require(
             google_ime_text,
             (
-                "SystemAutoThemeCompat;->applyIfEnabled(Landroid/content/Context;)Z",
+                "SystemAutoThemeCompat;->applyOnCreate(Landroid/content/Context;)Z",
                 "SystemAutoThemeCompat;->applyIfEnabled(Landroid/content/Context;Landroid/content/res/Configuration;)Z",
                 "move-result v9",
                 "SystemAutoThemeCompat;->logInputViewRebuild(Landroid/content/Context;)V",

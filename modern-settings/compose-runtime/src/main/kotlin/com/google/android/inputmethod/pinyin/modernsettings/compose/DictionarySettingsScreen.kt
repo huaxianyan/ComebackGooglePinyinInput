@@ -13,7 +13,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -151,17 +150,6 @@ internal fun LazyListScope.dictionarySettingsItems(
             ),
             enabled = !snapshot.backupInProgress,
             onClick = actions.onImportBackup,
-        )
-    }
-    item(key = "dictionary_backup_privacy", contentType = "text") {
-        Text(
-            text = legacyString(
-                "dictionary_auto_backup_privacy_summary",
-                R.string.modern_settings_dictionary_privacy_summary,
-            ),
-            modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            style = MaterialTheme.typography.bodyMedium,
         )
     }
     item(key = "dictionary_shortcuts_section", contentType = "section") {

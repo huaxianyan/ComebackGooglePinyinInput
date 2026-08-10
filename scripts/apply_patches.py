@@ -2013,7 +2013,7 @@ def apply(
         "    .line 76\n"
         "    invoke-super {p0}, Landroid/inputmethodservice/InputMethodService;->onCreate()V\n\n"
         "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/"
-        "SystemAutoThemeCompat;->applyIfEnabled(Landroid/content/Context;)Z\n\n"
+        "SystemAutoThemeCompat;->applyOnCreate(Landroid/content/Context;)Z\n\n"
         "    .line 77",
     )
     replace_once(
@@ -2113,12 +2113,49 @@ def apply(
     )
     replace_once(
         theme_selector_activity,
+        "    .line 160\n"
+        "    :cond_0\n"
+        "    invoke-direct {p0, v0}, Lcom/google/android/apps/inputmethod/libs/theme/"
+        "preference/ThemeSelectorActivity;->a(Lbaq;)V\n\n"
+        "    .line 161\n"
+        "    return-void",
+        "    .line 160\n"
+        "    :cond_0\n"
+        "    invoke-direct {p0, v0}, Lcom/google/android/apps/inputmethod/libs/theme/"
+        "preference/ThemeSelectorActivity;->a(Lbaq;)V\n\n"
+        "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/"
+        "SystemAutoThemeCompat;->captureFixedTheme(Landroid/content/Context;)V\n\n"
+        "    .line 161\n"
+        "    return-void",
+    )
+    replace_once(
+        theme_selector_activity,
         "    .line 202\n"
         "    invoke-static {p0}, Lamx;->a(Landroid/content/Context;)Lamx;",
         "    .line 202\n"
         "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/"
         "SystemAutoThemeCompat;->disable(Landroid/content/Context;)V\n\n"
         "    invoke-static {p0}, Lamx;->a(Landroid/content/Context;)Lamx;",
+    )
+    # Custom-theme creation, edit and deletion stay in the original selector;
+    # the slot transaction is captured only when the user navigates back.
+    replace_once(
+        theme_selector_activity,
+        "    .line 246\n"
+        "    invoke-direct {p0}, Lcom/google/android/apps/inputmethod/libs/theme/"
+        "preference/ThemeSelectorActivity;->c()V\n\n"
+        "    goto :goto_0",
+        "    .line 246\n"
+        "    invoke-direct {p0}, Lcom/google/android/apps/inputmethod/libs/theme/"
+        "preference/ThemeSelectorActivity;->c()V\n\n"
+        "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/"
+        "SystemAutoThemeCompat;->disable(Landroid/content/Context;)V\n\n"
+        "    invoke-static {p0, p3}, Lcom/google/android/inputmethod/pinyin/"
+        "SystemAutoThemeCompat;->reconcileCustomThemeEdit(Landroid/content/Context;"
+        "Landroid/content/Intent;)V\n\n"
+        "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/"
+        "SystemAutoThemeCompat;->captureFixedTheme(Landroid/content/Context;)V\n\n"
+        "    goto :goto_0",
     )
 
     for helper_name in (

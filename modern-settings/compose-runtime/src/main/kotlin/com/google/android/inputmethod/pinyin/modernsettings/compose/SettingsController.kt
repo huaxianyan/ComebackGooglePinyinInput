@@ -10,6 +10,12 @@ class SettingsController(
     fun setSystemAutoThemeEnabled(enabled: Boolean): SettingsSnapshot =
         repository.setSystemAutoThemeEnabled(enabled)
 
+    fun beginThemeSelection(slot: ThemeSelectionSlot): SettingsSnapshot =
+        repository.beginThemeSelection(slot)
+
+    fun finishThemeSelection(): SettingsSnapshot =
+        repository.finishThemeSelection()
+
     fun setLauncherIconVisible(visible: Boolean): SettingsSnapshot =
         repository.setLauncherIconVisible(visible)
 
