@@ -223,6 +223,7 @@ jobs:
           python scripts/verify_target34.py work/final-decoded
           python scripts/verify_target35.py work/final-decoded
           python scripts/verify_target36.py work/final-decoded
+          python scripts/verify_universal_keyboard_header.py work/final-decoded
           $aapt2 = Join-Path $env:ANDROID_SDK_ROOT "build-tools\36.0.0\aapt2.exe"
           & $aapt2 dump resources "dist/$env:RELEASE_APK_NAME" | `
             Out-File work/final-resources.txt -Encoding utf8

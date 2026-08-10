@@ -253,11 +253,57 @@ def apply(
             "first_run_page_footer.xml",
             "keyboard_candidates_header_inner.xml",
             "keyboard_candidates_header_inner_no_deletable_label.xml",
+            "keyboard_password_body.xml",
             "softkey_candidate.xml",
         }
         if destination.exists() and source.name not in overwritten_layouts:
             raise RuntimeError(f"Refusing to overwrite resource: {destination}")
         shutil.copyfile(source, destination)
+
+    # Complete the keyboard framework's header topology before adding features
+    # such as clipboard and Inline Autofill. Every keyboard <view> must inflate
+    # to SoftKeyboardView; registering an arbitrary container as type=header
+    # crashes GoogleInputMethodService.loadSoftKeyboardView().
+    universal_header = (
+        '        <view layout="@layout/keyboard_universal_header" scalable="false" type="header">\n'
+        '            <softkeys href="@xml/softkeys_header_candidates" />\n'
+        '            <include href="@xml/keymapping_header_candidates" />\n'
+        '        </view>\n'
+    )
+    headerless_keyboards = {
+        "res/xml/keyboard_number.xml": "@layout/keyboard_number_body",
+        "res/xml/keyboard_number_password.xml": "@layout/keyboard_number_password_body",
+        "res/xml/keyboard_phone_number.xml": "@layout/keyboard_number_body",
+        "res/xml/keyboard_date_time.xml": "@layout/keyboard_number_body",
+        "res/xml-sw600dp-v13/keyboard_number.xml": "@layout/keyboard_number_body",
+        "res/xml-sw600dp-v13/keyboard_phone_number.xml": "@layout/keyboard_number_body",
+        "res/xml-sw600dp-v13/keyboard_date_time.xml": "@layout/keyboard_number_body",
+    }
+    for relative, body_layout in headerless_keyboards.items():
+        keyboard_xml = decoded / relative
+        body_view = f'        <view layout="{body_layout}" type="body">\n'
+        replace_once(keyboard_xml, body_view, universal_header + body_view)
+
+    password_keyboard_variants = [
+        decoded / "res/xml/keyboard_password.xml",
+        decoded / "res/xml-sw600dp-v13/keyboard_password.xml",
+    ]
+    for keyboard_xml in password_keyboard_variants:
+        original_header = (
+            '        <view layout="@layout/keyboard_password_header" scalable="false" '
+            'type="header">\n'
+            '            <softkeys href="@xml/softkeys_header_password" />\n'
+            '            <include href="@xml/keymapping_header_password" />\n'
+            '        </view>\n'
+        )
+        replace_once(keyboard_xml, original_header, universal_header)
+        original_body = '        <view layout="@layout/keyboard_password_body" type="body">\n'
+        password_body = (
+            original_body
+            + '            <softkeys href="@xml/softkeys_header_password" />\n'
+            + '            <include href="@xml/keymapping_header_password" />\n'
+        )
+        replace_once(keyboard_xml, original_body, password_body)
 
     # Preserve the framework Preference persistence/callback graph while
     # applying the API 35+ MD3 presentation layer to every generated fragment
@@ -2280,6 +2326,10 @@ def apply(
         (
             "Md3SettingsCompat.smali",
             "smali/com/google/android/inputmethod/pinyin/Md3SettingsCompat.smali",
+        ),
+        (
+            "PasswordBodyView.smali",
+            "smali/com/google/android/inputmethod/pinyin/PasswordBodyView.smali",
         ),
         (
             "Md3SwitchView.smali",
