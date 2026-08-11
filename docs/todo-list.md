@@ -133,6 +133,8 @@
 - [x] 正式 `v2.0.1` 已创建签名 Tag 和 GitHub Release；Release APK 与 Actions Artifact、设备安装 `base.apk` 逐字节一致，SHA-256 为 `09061687ca67cce5879323207d2b876d90a00bbd621d96167ce9ae695ae95b1c`，正式签名身份、v1/v2/v3 和 16 KiB ZIP alignment 复核通过
 - [x] 统一键盘 Header 与敏感剪贴板候选已在隔离分支完成全键盘、浅色/深色、密码/PIN 脱敏、完整 payload 提交、关闭和无崩溃验收；提交 `8902e1f` 的 Actions run `31414951727` 全部门禁通过且只生成 Artifact
 - [x] `v2.0.2` 正式候选由 `master` Actions run `31418998015` 从提交 `39510e5` 完整构建：Compose 测试、API 31/33/34/35/36、统一 Header、敏感剪贴板、6,633 旧资源 ID、v1/v2/v3、正式证书、16 KiB ZIP alignment 和双构建一致性全部通过。APK 为 27,550,386 bytes，SHA-256 为 `c94a12a4ea3e1f06f49dd91f127b64f02da44a5d8d3577f3db6706022026a9a9`；正式包已从 `2.0.1` 覆盖安装到 Pixel 10 Pro，默认输入法保持正式 `PinyinIME`，设备 `base.apk` 与 Artifact 逐字节一致，`headeraudit` 和敏感剪贴板测试器已卸载
+- [x] 完成 Android 官方 Inline Suggestions协议、Gboard `17.8.4` 当前公开 APK及 HeliBoard/FlorisBoard/AnySoftKeyboard 的静态交叉研究，形成 `docs/gboard-inline-autofill-research.md`；确认 IME只声明 presentation spec并托管远端 `InlineContentView`，看不到或提交 Autofill payload，现有统一 Header需增加独立 Surface裁剪 host而不能把 Autofill转换成原生文字 Candidate
+- [ ] 在独立 `feat/inline-autofill` 分支按研究阶段建立 API 30+窄桥、有界 request、generation生命周期、Header Inline host和 Surface裁剪；API 17–29继续使用系统旧式 Autofill回退，不改变 Body必需输入键、密码预测/学习语义或现有 Candidate/剪贴板数据模型
 
 ## 测试约定
 
