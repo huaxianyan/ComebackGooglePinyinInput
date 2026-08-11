@@ -1428,6 +1428,40 @@ def apply(
         "    goto :goto_0\n.end method\n",
         "    invoke-virtual {v0, v5, v3, v3}, Lamx;->a(IIZ)V\n\n"
         "    goto :goto_0\n.end method\n\n"
+        ".method public onStartInput(Landroid/view/inputmethod/EditorInfo;Z)V\n"
+        "    .locals 2\n\n"
+        "    invoke-super {p0, p1, p2}, Labp;->onStartInput("
+        "Landroid/view/inputmethod/EditorInfo;Z)V\n\n"
+        "    sget v0, Landroid/os/Build$VERSION;->SDK_INT:I\n\n"
+        "    const/16 v1, 0x1e\n\n"
+        "    if-lt v0, v1, :inline_autofill_input_started\n\n"
+        "    invoke-static {}, Lcom/google/android/inputmethod/pinyin/"
+        "InlineAutofillCompat;->startInputSession()V\n\n"
+        "    :inline_autofill_input_started\n"
+        "    return-void\n"
+        ".end method\n\n"
+        ".method public onFinishInput()V\n"
+        "    .locals 2\n\n"
+        "    sget v0, Landroid/os/Build$VERSION;->SDK_INT:I\n\n"
+        "    const/16 v1, 0x1e\n\n"
+        "    if-lt v0, v1, :inline_autofill_input_finished\n\n"
+        "    invoke-static {}, Lcom/google/android/inputmethod/pinyin/"
+        "InlineAutofillCompat;->clear()V\n\n"
+        "    :inline_autofill_input_finished\n"
+        "    invoke-super {p0}, Labp;->onFinishInput()V\n\n"
+        "    return-void\n"
+        ".end method\n\n"
+        ".method public onWindowHidden()V\n"
+        "    .locals 2\n\n"
+        "    sget v0, Landroid/os/Build$VERSION;->SDK_INT:I\n\n"
+        "    const/16 v1, 0x1e\n\n"
+        "    if-lt v0, v1, :inline_autofill_window_hidden\n\n"
+        "    invoke-static {}, Lcom/google/android/inputmethod/pinyin/"
+        "InlineAutofillCompat;->clear()V\n\n"
+        "    :inline_autofill_window_hidden\n"
+        "    invoke-super {p0}, Labp;->onWindowHidden()V\n\n"
+        "    return-void\n"
+        ".end method\n\n"
         ".method public onCreateInlineSuggestionsRequest(Landroid/os/Bundle;)"
         "Landroid/view/inputmethod/InlineSuggestionsRequest;\n"
         "    .locals 2\n\n"
@@ -2047,7 +2081,7 @@ def apply(
         "    const/16 v1, 0x1e\n\n"
         "    if-lt v0, v1, :inline_autofill_start_done\n\n"
         "    invoke-static {}, Lcom/google/android/inputmethod/pinyin/"
-        "InlineAutofillCompat;->clear()V\n\n"
+        "InlineAutofillCompat;->startInputSession()V\n\n"
         "    :inline_autofill_start_done\n"
         "    # After setup, show the original four-layout dashboard",
     )
@@ -2106,6 +2140,8 @@ def apply(
         "    iget v0, p0, Lcom/google/android/apps/inputmethod/libs/framework/core/"
         "InputBundle;->b:I",
         "    .prologue\n"
+        "    invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/"
+        "InlineAutofillClipHost;->onCandidates(Ljava/util/List;)V\n\n"
         "    invoke-static {p1}, Lcom/google/android/apps/inputmethod/libs/framework/core/"
         "ClipboardCandidateCompat;->decorateCandidates(Ljava/util/List;)Ljava/util/List;\n\n"
         "    move-result-object p1\n\n"
@@ -2119,6 +2155,8 @@ def apply(
         "    .line 545\n"
         "    const/4 v0, 0x0",
         "    .prologue\n"
+        "    invoke-static {}, Lcom/google/android/inputmethod/pinyin/"
+        "InlineAutofillClipHost;->onCandidatesCleared()V\n\n"
         "    invoke-static {}, Lcom/google/android/apps/inputmethod/libs/framework/core/"
         "ClipboardCandidateCompat;->candidatesUpdated()V\n\n"
         "    .line 545\n"
@@ -2482,8 +2520,25 @@ def apply(
             "smali/com/google/android/inputmethod/pinyin/PasswordBodyView.smali",
         ),
         (
+            "InlineAutofillClipHost.smali",
+            "smali/com/google/android/inputmethod/pinyin/InlineAutofillClipHost.smali",
+        ),
+        (
+            "InlineAutofillClipHost$SiblingState.smali",
+            "smali/com/google/android/inputmethod/pinyin/"
+            "InlineAutofillClipHost$SiblingState.smali",
+        ),
+        (
             "InlineAutofillCompat.smali",
             "smali/com/google/android/inputmethod/pinyin/InlineAutofillCompat.smali",
+        ),
+        (
+            "InlineAutofillCompat$1.smali",
+            "smali/com/google/android/inputmethod/pinyin/InlineAutofillCompat$1.smali",
+        ),
+        (
+            "InlineAutofillCompat$2.smali",
+            "smali/com/google/android/inputmethod/pinyin/InlineAutofillCompat$2.smali",
         ),
         (
             "Md3SwitchView.smali",

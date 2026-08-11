@@ -418,11 +418,14 @@ android:supportsInlineSuggestionsWithTouchExploration="true"
 
 ### 阶段 B：隔离审计包的 Header渲染
 
-- 增加独立 ClipHost；
-- 异步 inflate并按 generation发布；
-- 完成 Candidate / Autofill / Clipboard优先级；
-- 不改变任何 Body键或密码输入语义；
-- 使用只含合成测试数据的 Autofill服务验证，不使用真实密码做诊断。
+- [x] 增加 API中立的独立 `InlineAutofillClipHost`，内部使用横向滚动容器且不把远端 View转换为 Candidate；
+- [x] 最多按 provider原顺序异步 inflate 3项，使用 generation、活动会话和 Header实例身份拒绝迟到回调；
+- [x] 增加1.2秒有界超时、null/异常/重复 callback处理，允许按原索引发布已完成的部分结果；
+- [x] 对每个远端 View按 Header全局可见矩形显式设置本地 clip bounds，并在 layout、scroll、attach/detach时更新或释放；
+- [x] 完成原生 Candidate > Inline Autofill > 空闲剪贴板的表现层优先级；不清空原生 Candidate或改变 Clipboard数据模型；
+- [x] 补齐 editor开始、输入视图结束、`onFinishInput()`、IME隐藏、服务销毁和 Header detach清理；
+- [x] 不改变任何 Body键、密码预测/学习语义或 touch exploration声明；
+- [ ] 使用只含合成测试数据的 Autofill服务完成真机显示、点击、横向滚动、裁剪和快速切换验收，不使用真实密码做诊断。
 
 ### 阶段 C：密码管理器互操作
 

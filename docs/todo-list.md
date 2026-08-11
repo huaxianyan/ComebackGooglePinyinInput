@@ -136,7 +136,8 @@
 - [x] 完成 Android 官方 Inline Suggestions协议、Gboard `17.8.4` 当前公开 APK及 HeliBoard/FlorisBoard/AnySoftKeyboard 的静态交叉研究，形成 `docs/gboard-inline-autofill-research.md`；确认 IME只声明 presentation spec并托管远端 `InlineContentView`，看不到或提交 Autofill payload，现有统一 Header需增加独立 Surface裁剪 host而不能把 Autofill转换成原生文字 Candidate
 - [x] `feat/inline-autofill` 阶段 A：声明标准 Inline Suggestions能力，建立 API 30+窄桥和独立 `InlineAutofillCompat`，请求3个有界 presentation spec且最多3项建议；尚无 Surface host时不读取 response数量、元数据或正文，只推进 generation并返回未处理。输入视图开始/结束及服务销毁均使 generation失效；源码编译、最终 DEX窄桥、API 17–29 SDK门控和隐私边界已加入静态门禁。提交 `10e45f5` 的 Actions run `31454668628` 已通过 Compose测试、API 31/33/34/35/36、6,633旧资源 ID、签名、16 KiB alignment和双构建一致性门禁，仅上传隔离 Artifact，未创建 Release
 - [ ] `feat/inline-autofill` 阶段 A运行时验收：在 API 30+标准 Autofill服务上确认 request/response协议触发及系统 fallback，在可用旧 ART环境验证 API 17–29启动；静态门禁不替代运行时结论
-- [ ] `feat/inline-autofill` 阶段 B：在隔离审计包实现独立 Header Inline host、异步 inflate、generation/会话/Header身份校验和显式 remote Surface裁剪；保持 API 17–29系统旧式 Autofill回退，不改变 Body必需输入键、密码预测/学习语义或现有 Candidate/剪贴板数据模型
+- [x] `feat/inline-autofill` 阶段 B实现：独立 API中立 Header ClipHost托管横向远端 View；最多3项异步 inflate按 provider索引聚合，具备 generation/会话/Header身份校验、1.2秒超时及 null/异常/重复 callback处理；layout/scroll/attach/detach均显式更新或释放 remote View clip bounds。表现层优先级为原生 Candidate > Inline Autofill > 空闲剪贴板，不改变 Body键、密码预测/学习语义、Candidate/剪贴板数据模型或 touch exploration声明
+- [ ] `feat/inline-autofill` 阶段 B真机验收：使用合成 Autofill数据验证显示、系统点击填充、0/1/多项、横向滚动、Surface裁剪、字段/应用/输入法/方向快速切换和 fallback；不得使用真实密码、银行卡或TOTP进行诊断
 
 ## 测试约定
 

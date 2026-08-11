@@ -10,5 +10,6 @@
         <FrameLayout android:tag="compat_clipboard_dismiss" android:visibility="gone" android:clickable="true" android:focusable="true" android:contentDescription="@string/clipboard_candidate_dismiss_content_description" android:layout_gravity="right" android:layout_width="@dimen/softkey_show_more_candidates_min_width" android:layout_height="fill_parent" android:minWidth="@dimen/softkey_show_more_candidates_min_width" android:background="?BgShowMoreCandidatesButton" android:paddingLeft="1.0dip">
             <TextView android:tag="compat_clipboard_dismiss_symbol" android:text="@string/clipboard_candidate_dismiss_symbol" android:textColor="?ColorLabelCandidate" android:textSize="24.0sp" android:gravity="center" android:layout_width="fill_parent" android:layout_height="fill_parent" />
         </FrameLayout>
+        <com.google.android.inputmethod.pinyin.InlineAutofillClipHost android:tag="compat_inline_autofill_host" android:visibility="gone" android:layout_width="fill_parent" android:layout_height="fill_parent" />
     </FrameLayout>
 </FrameLayout>
