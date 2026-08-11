@@ -224,6 +224,9 @@ jobs:
           python scripts/verify_target35.py work/final-decoded
           python scripts/verify_target36.py work/final-decoded
           python scripts/verify_universal_keyboard_header.py work/final-decoded
+          python scripts/verify_inline_autofill.py work/final-decoded `
+            --android-jar "$env:ANDROID_SDK_ROOT\platforms\android-36\android.jar" `
+            --jdk "$env:JAVA_HOME"
           python scripts/test_sensitive_clipboard_compat.py `
             --android-jar "$env:ANDROID_SDK_ROOT\platforms\android-36\android.jar" `
             --jdk "$env:JAVA_HOME" --decoded work/final-decoded

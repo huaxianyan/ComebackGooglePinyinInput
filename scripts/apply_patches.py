@@ -254,6 +254,7 @@ def apply(
             "keyboard_candidates_header_inner.xml",
             "keyboard_candidates_header_inner_no_deletable_label.xml",
             "keyboard_password_body.xml",
+            "method.xml",
             "softkey_candidate.xml",
         }
         if destination.exists() and source.name not in overwritten_layouts:
@@ -1397,6 +1398,68 @@ def apply(
         "DictionaryAutoBackupCompat;->request(Landroid/content/Context;Z)V\n\n"
         "    .line 23",
     )
+    # Android 11+ asks the IME for a bounded Inline Autofill presentation
+    # contract. Keep API 30 types behind SDK guards so API 17-29 never load the
+    # helper, and invalidate the protocol generation whenever an input view is
+    # started, finished, or the service is destroyed.
+    replace_once(
+        pinyin_ime,
+        ".method public onDestroy()V\n    .locals 0",
+        ".method public onDestroy()V\n    .locals 2",
+    )
+    replace_once(
+        pinyin_ime,
+        "    .prologue\n"
+        "    .line 14\n"
+        "    invoke-direct {p0}, Lcom/google/android/inputmethod/pinyin/PinyinIME;->h()V",
+        "    .prologue\n"
+        "    sget v0, Landroid/os/Build$VERSION;->SDK_INT:I\n\n"
+        "    const/16 v1, 0x1e\n\n"
+        "    if-lt v0, v1, :inline_autofill_destroy_done\n\n"
+        "    invoke-static {}, Lcom/google/android/inputmethod/pinyin/"
+        "InlineAutofillCompat;->clear()V\n\n"
+        "    :inline_autofill_destroy_done\n"
+        "    .line 14\n"
+        "    invoke-direct {p0}, Lcom/google/android/inputmethod/pinyin/PinyinIME;->h()V",
+    )
+    replace_once(
+        pinyin_ime,
+        "    invoke-virtual {v0, v5, v3, v3}, Lamx;->a(IIZ)V\n\n"
+        "    goto :goto_0\n.end method\n",
+        "    invoke-virtual {v0, v5, v3, v3}, Lamx;->a(IIZ)V\n\n"
+        "    goto :goto_0\n.end method\n\n"
+        ".method public onCreateInlineSuggestionsRequest(Landroid/os/Bundle;)"
+        "Landroid/view/inputmethod/InlineSuggestionsRequest;\n"
+        "    .locals 2\n\n"
+        "    sget v0, Landroid/os/Build$VERSION;->SDK_INT:I\n\n"
+        "    const/16 v1, 0x1e\n\n"
+        "    if-lt v0, v1, :inline_autofill_request_supported\n\n"
+        "    const/4 v0, 0x0\n\n"
+        "    return-object v0\n\n"
+        "    :inline_autofill_request_supported\n"
+        "    invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/"
+        "InlineAutofillCompat;->createRequest(Landroid/content/Context;Landroid/os/Bundle;)"
+        "Landroid/view/inputmethod/InlineSuggestionsRequest;\n\n"
+        "    move-result-object v0\n\n"
+        "    return-object v0\n"
+        ".end method\n\n"
+        ".method public onInlineSuggestionsResponse("
+        "Landroid/view/inputmethod/InlineSuggestionsResponse;)Z\n"
+        "    .locals 2\n\n"
+        "    sget v0, Landroid/os/Build$VERSION;->SDK_INT:I\n\n"
+        "    const/16 v1, 0x1e\n\n"
+        "    if-lt v0, v1, :inline_autofill_response_supported\n\n"
+        "    const/4 v0, 0x0\n\n"
+        "    return v0\n\n"
+        "    :inline_autofill_response_supported\n"
+        "    invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/"
+        "InlineAutofillCompat;->handleResponse("
+        "Landroid/view/inputmethod/InlineSuggestionsResponse;)Z\n\n"
+        "    move-result v0\n\n"
+        "    return v0\n"
+        ".end method\n",
+    )
+
     replace_once(
         pinyin_ime,
         "    .line 32\n"
@@ -1973,6 +2036,38 @@ def apply(
         "    invoke-super {p0, p1}, Labp;->onFinishInputView(Z)V\n\n"
         "    .line 98",
     )
+    replace_once(
+        pinyin_ime,
+        "    invoke-super {p0, p1, p2}, Labp;->onStartInputView("
+        "Landroid/view/inputmethod/EditorInfo;Z)V\n\n"
+        "    # After setup, show the original four-layout dashboard",
+        "    invoke-super {p0, p1, p2}, Labp;->onStartInputView("
+        "Landroid/view/inputmethod/EditorInfo;Z)V\n\n"
+        "    sget v0, Landroid/os/Build$VERSION;->SDK_INT:I\n\n"
+        "    const/16 v1, 0x1e\n\n"
+        "    if-lt v0, v1, :inline_autofill_start_done\n\n"
+        "    invoke-static {}, Lcom/google/android/inputmethod/pinyin/"
+        "InlineAutofillCompat;->clear()V\n\n"
+        "    :inline_autofill_start_done\n"
+        "    # After setup, show the original four-layout dashboard",
+    )
+    replace_once(
+        pinyin_ime,
+        "    const/4 v2, 0x0\n\n"
+        "    .line 96\n"
+        "    invoke-static {p0}, Lcom/google/android/apps/inputmethod/libs/framework/core/"
+        "ClipboardCandidateCompat;->stop",
+        "    const/4 v2, 0x0\n\n"
+        "    sget v0, Landroid/os/Build$VERSION;->SDK_INT:I\n\n"
+        "    const/16 v1, 0x1e\n\n"
+        "    if-lt v0, v1, :inline_autofill_finish_done\n\n"
+        "    invoke-static {}, Lcom/google/android/inputmethod/pinyin/"
+        "InlineAutofillCompat;->clear()V\n\n"
+        "    :inline_autofill_finish_done\n"
+        "    .line 96\n"
+        "    invoke-static {p0}, Lcom/google/android/apps/inputmethod/libs/framework/core/"
+        "ClipboardCandidateCompat;->stop",
+    )
 
     input_bundle = decoded / (
         "smali/com/google/android/apps/inputmethod/libs/framework/core/InputBundle.smali"
@@ -2385,6 +2480,10 @@ def apply(
         (
             "PasswordBodyView.smali",
             "smali/com/google/android/inputmethod/pinyin/PasswordBodyView.smali",
+        ),
+        (
+            "InlineAutofillCompat.smali",
+            "smali/com/google/android/inputmethod/pinyin/InlineAutofillCompat.smali",
         ),
         (
             "Md3SwitchView.smali",

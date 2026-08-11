@@ -408,11 +408,13 @@ android:supportsInlineSuggestionsWithTouchExploration="true"
 
 ### 阶段 A：最小协议与静态门禁
 
-- 在 input-method XML声明 `supportsInlineSuggestions=true`；
-- 建立 API 30窄桥和 `InlineAutofillCompat`；
-- 返回有界 request；
-- response只统计数量并安全返回，不显示、不记录内容；
-- 先通过 API 17–36静态加载、重建和签名门禁。
+- [x] 在 input-method XML声明 `supportsInlineSuggestions=true`，继续不声明 touch exploration支持；
+- [x] 建立带 SDK门控的 API 30窄桥和独立 `InlineAutofillCompat`；
+- [x] 返回 3个 presentation spec、最多3项建议的有界 request，尺寸使用当前 Header高度和 `48dp..240dp`宽度范围；
+- [x] 在尚无 Surface host时，response不读取数量、元数据或正文，只推进 generation并返回未处理；
+- [x] 在输入视图开始、结束和服务销毁时推进 generation，拒绝后续阶段复用旧会话结果；
+- [x] 增加源码编译、最终 DEX窄桥、API 17–29 SDK门控和隐私边界静态验证，并接入 Release workflow；
+- [ ] 在 API 30+设备上验证标准 Autofill服务确实发起 request/response，并验证 API 17–29旧 ART启动；本项属于运行时验收，不由静态门禁替代。
 
 ### 阶段 B：隔离审计包的 Header渲染
 
