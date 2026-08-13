@@ -2,6 +2,30 @@
 
 ## [Unreleased]
 
+## [2.0.3] - 2026-08-13
+
+在统一原生 Header 上加入 Android 标准 Inline Autofill，并将 Clipboard、Autofill 和未来 Header Action 收敛到集中生命周期、仲裁、渲染和清理平台；同时在现代设置“关于”页面加入项目 GitHub 仓库入口。
+
+### Added
+
+- Android 11/API 30 及以上支持标准 Inline Suggestions request/response/inflate 协议，托管 Framework/Autofill Provider 提供的 `InlineContentView` 远端 Surface；点击继续由 Framework/Provider 完成认证与填充，IME 不读取凭据正文、不转换为 Candidate，也不调用 `commitText()`。
+- 增加编译期注册的统一 Header Platform：模块共享 session、Header identity、render generation、集中仲裁、placement、原生 chrome factory、renderer registry、无障碍和清理契约，但 Clipboard、Inline Autofill 与本地 Action 保持各自数据模型。
+- Inline Autofill 使用一个可见建议和原生上一项/下一项 rails；单项建议时两侧仍保持布局但不可点击、不可聚焦且不提供无障碍操作，多项建议保留 Provider 原始顺序。
+- API 35+ Compose Material 3 设置的“其他 → 关于”页面增加 GitHub 仓库入口，显示完整公开地址并通过系统浏览器打开。
+
+### Changed
+
+- Header 所有权固定为“普通原生 Candidate → Clipboard quick-paste Candidate → Inline Autofill → idle Header”；Clipboard 接管期间保留仍有效的 Inline contribution，提交或关闭 Clipboard 后自动恢复。
+- Clipboard 与 Autofill rails 复用原生 show-more Candidate 的运行时 divider、方向图标、alpha、padding 和测量宽度；主题或方向切换后的首次布局等待原生 divider 完成测量，避免 1×1 点状分隔线。
+- Inline request 的前景色来自真实 Google 拼音 Candidate 主题渲染链，仅作为新 request 的 AndroidX Style Bundle 建议；不以颜色或 theme cache key 猜测 response 身份，也不直接重绘 Provider Surface。
+- 远端 Surface 使用 View ancestry 的局部坐标转换进行显式裁剪；inactive Surface 保持 mounted 但 invisible、clipped、disabled、non-focusable 且不参与无障碍。
+- 密码键盘继续采用 `v2.0.2` 已验收几何：固定通用 Header、按用户比例缩放的普通 QWERTY Body，以及一个固定 Header 高度的数字行；不保留实验性的 `onMeasure()` 或 framework 缩放注入。
+
+### Build
+
+- 增加 Header Platform、Inline Autofill、Clipboard 仲裁/rails、旧 ART 隔离和最终 DEX 静态门禁；完整 Compose 组合包继续保持 6,633 个旧资源 ID、legacy primary DEX、API 31/33/34/35/36、v1/v2/v3 和 16 KiB ZIP alignment。
+- README 重构为简洁项目首页；原始 APK 来源、构建、Actions、签名和发布细节迁移到独立文档。
+
 ## [2.0.2] - 2026-08-11
 
 在所有相关手机和平板键盘上建立统一的原生 Header 候选区域，并为系统标记敏感的剪贴板内容及密码输入目标提供安全的脱敏候选粘贴。
