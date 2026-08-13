@@ -48,7 +48,8 @@ public final class InlineAutofillCompat {
     private static final int ATTR_COLOR_LABEL_CANDIDATE = 0x7f010066;
     private static final int LAYOUT_SOFTKEY_CANDIDATE = 0x7f040171;
     private static final int ID_CANDIDATE_LABEL = 0x7f0f0183;
-    private static final int PRESENTATION_COUNT = 3;
+    private static final int PRESENTATION_SPEC_COUNT = 3;
+    private static final int MAX_SUGGESTION_COUNT = 6;
     private static final float MIN_CHIP_WIDTH_DP = 48.0f;
     private static final float MAX_CHIP_WIDTH_DP = 240.0f;
     private static final long INFLATION_TIMEOUT_MS = 1200L;
@@ -161,12 +162,12 @@ public final class InlineAutofillCompat {
                 .setStyle(styles)
                 .build();
         ArrayList<InlinePresentationSpec> specs =
-                new ArrayList<InlinePresentationSpec>(PRESENTATION_COUNT);
-        for (int i = 0; i < PRESENTATION_COUNT; i++) {
+                new ArrayList<InlinePresentationSpec>(PRESENTATION_SPEC_COUNT);
+        for (int i = 0; i < PRESENTATION_SPEC_COUNT; i++) {
             specs.add(spec);
         }
         return new InlineSuggestionsRequest.Builder(specs)
-                .setMaxSuggestionCount(PRESENTATION_COUNT)
+                .setMaxSuggestionCount(MAX_SUGGESTION_COUNT)
                 .build();
     }
 
@@ -184,7 +185,7 @@ public final class InlineAutofillCompat {
             return false;
         }
         List<InlineSuggestion> suggestions = response.getInlineSuggestions();
-        int count = suggestions == null ? 0 : Math.min(PRESENTATION_COUNT, suggestions.size());
+        int count = suggestions == null ? 0 : Math.min(MAX_SUGGESTION_COUNT, suggestions.size());
         if (count == 0) {
             // Framework can emit an empty companion response immediately after
             // a non-empty response for the same editor. Preserve only a

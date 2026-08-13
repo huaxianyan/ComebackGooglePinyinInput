@@ -215,6 +215,31 @@ work/header-platform-compose-diag-v53/runtime-compose-settings-acceptance/
 work/header-platform-compose-diag-v53/runtime-integrated-ime-acceptance/
 ```
 
+## Inline Autofill 六项建议补充验收
+
+在 `v2.0.3` 发布后的独立修复分支中，将 Inline Autofill 的 presentation spec 数量与建议总上限拆分：
+
+```text
+presentation specs = 3
+max suggestion count = 6
+```
+
+Android 会对超出 spec 列表的建议复用最后一个 spec，因此无需为六项建议创建六套重复规格。请求值 `6` 是当前 Bitwarden 行为下获得完整 Inline 集合的最小值：最多五个凭据建议，加一个 Provider 保留的 Vault 入口；请求更大的值不会增加 Bitwarden 的凭据上限。
+
+Pixel 10 Pro / Android 16 上使用 Bitwarden `2026.7.0` 和具有七条匹配记录的网站完成运行时验收：Header 可按 Provider 顺序浏览五个凭据建议和一个 Vault 入口，维护者随机点击其中一个凭据后由 Framework/Bitwarden 正常完成填充。此次修复不改变单项可见 carousel、Framework-owned click、Provider 顺序、Clipboard 仲裁、Surface 裁剪、过期 callback 拒绝或隐私边界。
+
+验收包为隔离、release-like、非 debuggable 包：
+
+```text
+package=com.google.android.inputmethod.pinyin.inlinesixaudit
+versionName=2.0.3-inline-six-audit1
+versionCode=4520389
+targetSdkVersion=36
+SHA-256=aca5d5e5a250b27a6c76ddb5be5e00dffe9bf5f9d08411ea47a636a6859ebfa1
+```
+
+该包通过从原始 APK 开始的 apktool/Compose 完整重建、6,633 个旧资源 ID、legacy primary DEX、API 31/33/34/35/36、Header/Clipboard/Inline、v1/v2/v3 签名和 16 KiB ZIP alignment 门禁。验收结束后已恢复测试前默认输入法并卸载隔离包；Bitwarden Autofill Provider 保持不变。
+
 ## API 与上游边界
 
 - API 35+ Compose 路由已在 API 36 真机运行时通过。

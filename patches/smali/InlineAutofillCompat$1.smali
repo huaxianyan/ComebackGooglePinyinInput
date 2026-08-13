@@ -21,7 +21,7 @@
 .method constructor <init>()V
     .locals 0
 
-    .line 58
+    .line 59
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
     return-void
@@ -32,9 +32,9 @@
 .method public applyClip(Landroid/view/View;Landroid/graphics/Rect;)V
     .locals 0
 
-    .line 61
+    .line 62
     invoke-static {p1, p2}, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->applyRemoteClip(Landroid/view/View;Landroid/graphics/Rect;)V
 
-    .line 62
+    .line 63
     return-void
 .end method

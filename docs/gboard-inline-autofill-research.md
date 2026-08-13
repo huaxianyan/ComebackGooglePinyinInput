@@ -319,13 +319,13 @@ SoftKeyboardView Header
 
 因此“共用 Header”不等于“共用 Candidate数据模型”。正确复用层级是 Header空间和显示仲裁，而不是渲染对象。
 
-### 5.4 首版 Request建议
+### 5.4 Request数量决策
 
-以下是实施假设，尚需原型测量验证：
+首版采用以下保守假设：
 
 - API：仅 API 30+；
-- `maxSuggestionCount`：首版建议3，且不超过AOSP建议的5；
-- spec数量：至少3个相同 spec，以兼容部分密码管理器对多 spec的实际依赖；
+- `maxSuggestionCount`：首版为3；
+- spec数量：3个相同 spec，以兼容部分密码管理器对多 spec的实际依赖；
 - 高度：使用当前 qualified `keyboard_header_height`减去必要的垂直 inset，不写死设备像素；
 - min width：约一个可触达 chip的最小宽度；
 - max width：以 Header可用宽度和约240dp的单 chip上限取较小值；
@@ -333,7 +333,9 @@ SoftKeyboardView Header
 - Locale：当前主要输入语言加活动次要语言；如果无法可靠取得，使用空 LocaleList，而不是伪造系统语言；
 - style：优先评估官方 `androidx.autofill:inline` style Bundle的可复现、资源 ID稳定接入；不能复制 AndroidX私有 Bundle协议或手写 Gboard内部样式。
 
-“3个 spec / 3个建议”需要真实密码管理器交叉测试后才能定案。Gboard的9个和HeliBoard的6个都不应被当作平台要求。
+后续真实 Bitwarden 多匹配项测试关闭了“3个建议”的假设：本项目请求3项时，Bitwarden按 `min(requestMax - 1, 5)` 只提供2个凭据，并用余下1项显示 Vault入口；Gboard请求9项时则得到5个凭据和1个入口。Bitwarden公开 Android源码也明确将 Inline凭据限制为5项且不把 Vault入口计入该上限。
+
+因此当前决策是保留3个 presentation spec，但将总请求和本地 response上限提升为6。Android会让超出 spec列表的建议复用最后一个 spec；请求6是获得 Bitwarden完整“5个凭据 + 1个 Vault入口”的最小值，不复制 Gboard的9项，也不使用无限上限。AOSP“实践中不超过5”的性能建议已纳入风险评估：本项目一次只显示一个 Surface，并继续使用1.2秒有界聚合、null/异常处理和会话失效清理；6项需要单独运行时回归。
 
 ### 5.5 生命周期状态机
 
@@ -421,7 +423,7 @@ android:supportsInlineSuggestionsWithTouchExploration="true"
 
 - [x] 在 input-method XML声明 `supportsInlineSuggestions=true`，继续不声明 touch exploration支持；
 - [x] 建立带 SDK门控的 API 30窄桥和独立 `InlineAutofillCompat`；
-- [x] 返回 3个 presentation spec、最多3项建议的有界 request，尺寸使用当前 Header高度和 `48dp..240dp`宽度范围；
+- [x] 返回3个 presentation spec；首版最多3项，后续基于 Bitwarden多匹配项证据将总请求上限修正为6，尺寸继续使用当前 Header高度和 `48dp..240dp`宽度范围；
 - [x] 在尚无 Surface host时，response不读取数量、元数据或正文，只推进 generation并返回未处理；
 - [x] 在输入视图开始、结束和服务销毁时推进 generation，拒绝后续阶段复用旧会话结果；
 - [x] 增加源码编译、最终 DEX窄桥、API 17–29 SDK门控和隐私边界静态验证，并接入 Release workflow；
@@ -430,7 +432,7 @@ android:supportsInlineSuggestionsWithTouchExploration="true"
 ### 阶段 B：隔离审计包的 Header渲染（历史阶段，后续已平台化）
 
 - [x] 阶段 B 曾增加 API 中立的独立 `InlineAutofillClipHost`；最终实现已删除该 process-global host，迁移到每个 Header 一个 `HeaderPlatformHostView`、固定 previous/next rails 和 remote-surface renderer，且始终不把远端 View 转换为 Candidate；
-- [x] 最多按 provider原顺序异步 inflate 3项，使用 generation、活动会话和 Header实例身份拒绝迟到回调；
+- [x] 最多按 provider原顺序异步 inflate 6项，使用 generation、活动会话和 Header实例身份拒绝迟到回调；
 - [x] 增加1.2秒有界超时、null/异常/重复 callback处理，允许按原索引发布已完成的部分结果；
 - [x] 对每个远端 View按 Header全局可见矩形显式设置本地 clip bounds，并在 layout、scroll、attach/detach时更新或释放；
 - [x] 完成原生 Candidate > Inline Autofill > 空闲剪贴板的表现层优先级；不清空原生 Candidate或改变 Clipboard数据模型；
@@ -525,7 +527,7 @@ work/research/gboard-current-public/decoded-base/smali/com/google/android/librar
 ### 基于事实的设计推断
 
 - 本项目应在统一 Header内增加独立 Inline host，而不是新增键盘外 fallback strip；
-- 首版应请求3项而不是复制 Gboard的9项；
+- 首版请求3项是保守起点；真实 Bitwarden多匹配项证据支持将当前总上限提升为6，而不是复制 Gboard的9项；
 - 原生候选应优先于 Inline Autofill，Inline Autofill优先于空闲剪贴板；
 - API 30回调应只在 `PinyinIME`保留窄桥，主体放入独立 Compat类；
 - generation + 有界异步聚合是避免旧 Surface回流的最低必要机制。

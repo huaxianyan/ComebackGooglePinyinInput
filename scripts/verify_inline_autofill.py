@@ -60,7 +60,8 @@ def verify_sources(android_jar: Path, jdk: Path) -> None:
         (
             "Build.VERSION.SDK_INT < API_R",
             "HEADER_HEIGHT_RES_ID = 0x7f0d00a9",
-            "PRESENTATION_COUNT = 3",
+            "PRESENTATION_SPEC_COUNT = 3",
+            "MAX_SUGGESTION_COUNT = 6",
             "INFLATION_TIMEOUT_MS = 1200L",
             "inline request geometry orientation=",
             "resolveKeyboardThemeCandidateColor(",
@@ -77,7 +78,8 @@ def verify_sources(android_jar: Path, jdk: Path) -> None:
             "TextViewStyle subtitleStyle = subtitleStyleBuilder.build()",
             "UiVersions.newStylesBuilder()",
             "InlineSuggestionUi.newStyleBuilder()",
-            ".setMaxSuggestionCount(PRESENTATION_COUNT)",
+            ".setMaxSuggestionCount(MAX_SUGGESTION_COUNT)",
+            "Math.min(MAX_SUGGESTION_COUNT, suggestions.size())",
             "response.getInlineSuggestions()",
             "new Size(ViewGroup.LayoutParams.WRAP_CONTENT,",
             "ViewGroup.LayoutParams.WRAP_CONTENT)",
@@ -167,7 +169,8 @@ def verify_sources(android_jar: Path, jdk: Path) -> None:
     require_all(
         helper_smali,
         (
-            ".field private static final PRESENTATION_COUNT:I = 0x3",
+            ".field private static final PRESENTATION_SPEC_COUNT:I = 0x3",
+            ".field private static final MAX_SUGGESTION_COUNT:I = 0x6",
             ".field private static final INFLATION_TIMEOUT_MS:J = 0x4b0L",
             "InlinePresentationSpec$Builder;-><init>",
             "InlineSuggestionsRequest$Builder;->setMaxSuggestionCount(I)",

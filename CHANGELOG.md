@@ -2,6 +2,21 @@
 
 ## [Unreleased]
 
+## [2.0.4] - 2026-08-13
+
+修正 Inline Autofill 请求数量过低的问题，使 Bitwarden 等 Autofill Provider 能在统一 Header 中提供更多匹配凭据，同时保持原有 Framework 点击、认证和填充链路。
+
+### Fixed
+
+- 将 Inline Autofill 的 presentation spec 数量与建议总上限分离：继续提供 3 个 presentation spec，并将请求及本地响应处理上限从 3 项提高到 6 项；超出 spec 列表的建议按 Android 公共协议复用最后一个 spec。
+- 修复 Bitwarden 因预留一个 Vault 入口而在原 3 项上限下只能显示 2 个匹配凭据的问题；现在最多可显示 5 个凭据和 1 个 Vault 入口，且保留 Provider 原始顺序。
+- 保持单项可见 carousel、上一项/下一项 rails、Framework-owned click、Clipboard 仲裁、远端 Surface 裁剪、过期回调拒绝和隐私边界不变。
+
+### Build
+
+- 扩展 Java/Smali 静态门禁，分别验证 3 个 presentation spec、6 项请求上限和 6 项响应上限；通过从原始 APK 开始的完整 Compose 重建、6,633 个旧资源 ID、API 31/33/34/35/36、v1/v2/v3 签名和 16 KiB ZIP alignment 验证。
+- Pixel 10 Pro / Android 16 上使用 Bitwarden `2026.7.0` 验收 5 个凭据加 1 个 Vault 入口，并确认随机选择凭据可正常填充。
+
 ## [2.0.3] - 2026-08-13
 
 在统一原生 Header 上加入 Android 标准 Inline Autofill，并将 Clipboard、Autofill 和未来 Header Action 收敛到集中生命周期、仲裁、渲染和清理平台；同时在现代设置“关于”页面加入项目 GitHub 仓库入口。

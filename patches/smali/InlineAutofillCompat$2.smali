@@ -43,7 +43,7 @@
         }
     .end annotation
 
-    .line 235
+    .line 236
     iput p1, p0, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat$2;->val$callbackGeneration:I
 
     iput-object p2, p0, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat$2;->val$moduleReference:Ljava/lang/ref/WeakReference;
@@ -60,7 +60,7 @@
 .method public accept(Landroid/widget/inline/InlineContentView;)V
     .locals 3
 
-    .line 238
+    .line 239
     iget v0, p0, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat$2;->val$callbackGeneration:I
 
     iget-object v1, p0, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat$2;->val$moduleReference:Ljava/lang/ref/WeakReference;
@@ -75,14 +75,14 @@
 
     invoke-static {v0, v1, v2, p1}, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->access$000(ILcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillHeaderModule;ILandroid/view/View;)V
 
-    .line 239
+    .line 240
     return-void
 .end method
 
 .method public bridge synthetic accept(Ljava/lang/Object;)V
     .locals 0
 
-    .line 235
+    .line 236
     check-cast p1, Landroid/widget/inline/InlineContentView;
 
     invoke-virtual {p0, p1}, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat$2;->accept(Landroid/widget/inline/InlineContentView;)V
