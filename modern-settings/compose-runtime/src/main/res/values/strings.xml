@@ -148,6 +148,8 @@
     <string name="modern_settings_gesture_auto_commit_title">Auto commit glide input</string>
     <string name="modern_settings_gesture_auto_commit_summary">Commit the current composing text before the next glide input</string>
     <string name="modern_settings_requires_gesture_input">Turn on glide typing to use this setting</string>
+    <string name="modern_settings_show_simplified_traditional_header_toggle_title">Show Simplified/Traditional Chinese switch</string>
+    <string name="modern_settings_show_simplified_traditional_header_toggle_summary">Show a quick switch to the left of the voice input or hide-keyboard button</string>
     <string name="modern_settings_show_english_keyboard_title">Show English keyboard</string>
     <string name="modern_settings_show_emoji_switch_key_title">Show emoji switch key</string>
     <string name="modern_settings_show_emoji_switch_key_summary">When emoji switch key is enabled, the language switch key cannot be shown</string>

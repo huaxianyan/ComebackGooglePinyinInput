@@ -266,6 +266,61 @@ def apply(
             raise RuntimeError(f"Refusing to overwrite resource: {destination}")
         shutil.copyfile(source, destination)
 
+    # Add the opt-out for the Simplified/Traditional Chinese Header shortcut
+    # directly below the existing voice-input preference. It controls only the
+    # shortcut slot and never changes the conversion mode itself.
+    setting_keyboard = decoded / "res/xml/setting_keyboard.xml"
+    replace_once(
+        setting_keyboard,
+        '    <CheckBoxPreference android:persistent="true" android:title="@string/setting_voice_input_title" android:key="@string/pref_key_enable_voice_input" />\n'
+        '    <CheckBoxPreference android:persistent="true" android:title="@string/setting_show_english_keyboard_title"',
+        '    <CheckBoxPreference android:persistent="true" android:title="@string/setting_voice_input_title" android:key="@string/pref_key_enable_voice_input" />\n'
+        '    <CheckBoxPreference android:persistent="true" android:title="@string/setting_show_simplified_traditional_header_toggle_title" android:key="@string/pref_key_show_simplified_traditional_header_toggle" android:summary="@string/setting_show_simplified_traditional_header_toggle_summary" android:defaultValue="@bool/pref_def_value_show_simplified_traditional_header_toggle" />\n'
+        '    <CheckBoxPreference android:persistent="true" android:title="@string/setting_show_english_keyboard_title"',
+    )
+    replace_once(
+        arrays,
+        '        <item>@string/pref_key_enable_voice_input</item>\n'
+        '        <item>@bool/pref_def_value_enable_voice_input</item>\n'
+        '        <item>@string/pref_key_keyboard_slide_sensitivity_ratio</item>',
+        '        <item>@string/pref_key_enable_voice_input</item>\n'
+        '        <item>@bool/pref_def_value_enable_voice_input</item>\n'
+        '        <item>@string/pref_key_show_simplified_traditional_header_toggle</item>\n'
+        '        <item>@bool/pref_def_value_show_simplified_traditional_header_toggle</item>\n'
+        '        <item>@string/pref_key_keyboard_slide_sensitivity_ratio</item>',
+    )
+
+    # Only the three original Chinese soft-key layouts that already expose the
+    # ENABLE_SC_TC_CONVERSION action receive the new Header slot. English,
+    # handwriting, password, numeric, PIN, phone and date/time layouts retain
+    # their existing Header resources byte-for-byte.
+    for name in (
+        "keyboard_zh_cn_pinyin_qwerty.xml",
+        "keyboard_zh_cn_pinyin_9key.xml",
+        "keyboard_zh_cn_stroke.xml",
+    ):
+        keyboard_xml = decoded / "res/xml" / name
+        replace_once(
+            keyboard_xml,
+            '        <view layout="@layout/keyboard_prime_header" scalable="false" type="header">\n'
+            '            <softkeys href="@xml/softkeys_header_prime" />',
+            '        <view layout="@layout/keyboard_prime_header_chinese" scalable="false" type="header">\n'
+            '            <softkeys href="@xml/softkeys_header_prime" />\n'
+            '            <softkeys href="@xml/softkeys_header_simplified_traditional_toggle" />',
+        )
+        marker = (
+            '            <include href="@xml/keymapping_header_zh_cn_pinyin_9key" />'
+            if name == "keyboard_zh_cn_pinyin_9key.xml" else
+            '            <include href="@xml/keymapping_header_zh_cn_stroke" />'
+            if name == "keyboard_zh_cn_stroke.xml" else
+            '            <include href="@xml/keymapping_header_zh_cn_pinyin_qwerty" />'
+        )
+        replace_once(
+            keyboard_xml,
+            marker,
+            marker + '\n            <include href="@xml/keymapping_header_simplified_traditional_toggle" />',
+        )
+
     # Complete the keyboard framework's header topology before adding features
     # such as clipboard and Inline Autofill. Every keyboard <view> must inflate
     # to SoftKeyboardView; registering an arbitrary container as type=header
@@ -2635,6 +2690,7 @@ def apply(
         "ThemeSettingsInsetsCompat$SystemBarsListener.smali",
         "SystemAutoThemeCompat.smali",
         "SensitiveClipboardCompat.smali",
+        "SimplifiedTraditionalToggleKeyView.smali",
     ):
         helper_src = ROOT / "patches/smali" / helper_name
         helper_dst = decoded / "smali/com/google/android/inputmethod/pinyin" / helper_name

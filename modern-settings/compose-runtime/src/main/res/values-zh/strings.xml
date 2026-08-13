@@ -145,6 +145,8 @@
     <string name="modern_settings_gesture_auto_commit_title">自动提交滑行输入</string>
     <string name="modern_settings_gesture_auto_commit_summary">下一次滑行输入前自动提交当前输入内容</string>
     <string name="modern_settings_requires_gesture_input">开启滑行输入后可使用此设置</string>
+    <string name="modern_settings_show_simplified_traditional_header_toggle_title">显示简繁切换按钮</string>
+    <string name="modern_settings_show_simplified_traditional_header_toggle_summary">在语音输入或收起键左侧显示快捷切换按钮</string>
     <string name="modern_settings_show_english_keyboard_title">显示英文键盘</string>
     <string name="modern_settings_show_emoji_switch_key_title">显示表情符号切换键</string>
     <string name="modern_settings_show_emoji_switch_key_summary">启用表情符号切换键后，语言切换键将无法显示</string>

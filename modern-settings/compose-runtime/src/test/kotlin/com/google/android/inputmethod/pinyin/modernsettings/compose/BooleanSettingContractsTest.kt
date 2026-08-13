@@ -62,6 +62,15 @@ class BooleanSettingContractsTest {
     }
 
     @Test
+    fun headerShortcutPreservesExactKeyAndDefault() {
+        assertEquals(
+            listOf("show_simplified_traditional_header_toggle"),
+            BooleanSettingContracts.headerShortcutBatch.map { it.key },
+        )
+        assertTrue(BooleanSettingContracts.headerShortcutBatch.all { it.defaultValue })
+    }
+
+    @Test
     fun languageSwitchGroupPreservesExactKeysAndDefaults() {
         assertEquals(
             listOf(

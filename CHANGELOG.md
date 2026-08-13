@@ -2,6 +2,27 @@
 
 ## [Unreleased]
 
+## [2.0.5] - 2026-08-13
+
+为普通中文软键盘增加原生简繁快速切换按钮，并提供可选的显示设置；继续复用原有中文 HMM键盘状态、Preference和 Candidate刷新链路。
+
+### Added
+
+- 在中文拼音 QWERTY、中文拼音 9键和中文笔画 Header的语音/收起键左侧增加“简/繁”原生 SoftKey；点击发送原始 `KEYBOARD_STATE_ON/OFF + ENABLE_SC_TC_CONVERSION`事件，不自行转换文本、不直接写简繁 Preference，也不调用 `commitText()`。
+- 在 API 17–34 legacy Preference及 API 35+ Compose Material 3的“键盘 → 按键”中加入“显示简繁切换按钮”，紧跟“显示语音输入按钮”，默认开启且只控制入口可见性。
+- 增加英文、简体中文、繁体中文（台湾、香港）设置和无障碍文案，并增加可复现 Java→Smali生成器与专项静态门禁。
+
+### Changed
+
+- 为三个受支持中文布局使用专属 prime Header；现有 Access Points、语言标签及 `key_pos_header_voice`的 voice/`NO_MICROPHONE` hide-keyboard映射保持不变。
+- 快捷按钮仅在用户开关开启、当前 Header空间充足且 Access Points未展开时显示；空间计算使用中文 Header内明确槽位和局部坐标，不压缩、覆盖或替换现有触摸目标。
+- Access Points展开时复用原生 `access_points_overlay_view`状态，使“简/繁”与“中/EN”同步隐藏，避免第四个 Access Point重叠；收起后恢复并保留当前简繁状态。
+
+### Build
+
+- Release workflow加入简繁 Header专项门禁；完整构建继续通过 Compose Material 3、Header Platform、Inline Autofill、敏感 Clipboard、API 31/33/34/35/36、6,633个旧资源 ID、v1/v2/v3签名和 16 KiB ZIP alignment验证。
+- Pixel 10 Pro / Android 16真机确认简繁输入及 Candidate即时变化、设置状态同步、显示开关、voice/hide-keyboard、Clipboard、Inline Autofill和 Access Points展开/收起均正常。
+
 ## [2.0.4] - 2026-08-13
 
 修正 Inline Autofill 请求数量过低的问题，使 Bitwarden 等 Autofill Provider 能在统一 Header 中提供更多匹配凭据，同时保持原有 Framework 点击、认证和填充链路。
