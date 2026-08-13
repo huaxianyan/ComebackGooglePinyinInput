@@ -141,3 +141,76 @@ V29 真机测试显示，Window touch boost 没有改变旧 IME 主 Surface 的 
 - 不提交固定或交互期 View frame-rate vote。
 
 当前版本完全由 Android 系统默认调度帧率。高刷新率支持推迟到 target API 与渲染路径现代化之后，再使用届时稳定、受支持的帧率类别和生命周期接口实现。
+
+## Candidate 展开/收起专项诊断与正式实现
+
+### 无插桩基线
+
+在 Pixel 10 Pro / Android 16、120Hz 显示模式下，对隔离 Debug 包进行 20 秒 Perfetto、FrameTimeline 和 `gfxinfo framestats` 采集。采集不启用 `input` 数据源，不记录输入、Candidate 文本、触摸坐标或截图。
+
+基线结果：
+
+- 384 个 `gfxinfo` 帧；
+- 221 个 IME FrameTimeline 帧全部 `On-time Present`，`jank_type=None`；
+- App 帧 p50/p95/p99 为 5/10/14ms；
+- 最长主线程 `Choreographer#doFrame` 为 8.720ms；
+- 最长 RenderThread slice 为 6.029ms；
+- GPU p50/p95 均为 1ms；
+- `Thermal Status=0`；
+- 活动帧间隔中位数约 16.67ms；
+- IME UID 的 `frameRateOverride` 为 60Hz。
+
+因此，Candidate 展开/收起“看起来帧率低”是已确认事实，但根因不是 CPU、GPU、layout/draw、GC 或热节流，而是旧 IME Surface 被系统稳定按 60Hz 调度。
+
+### 最小高刷实验
+
+原生切换点为 `asq.a(boolean expanded, boolean animate)`，实际视觉变化由 `ass` 和 `ast` 监听的两个 80ms `translationY` `ObjectAnimator` 承载。实验只在这两个 Animator 的生命周期内执行：
+
+```text
+onAnimationStart → View.setRequestedFrameRate(HIGH)
+onAnimationEnd   → View.setRequestedFrameRate(NO_PREFERENCE)
+```
+
+Debug 实验结果：
+
+- 活动帧间隔中位数从约 16.67ms 降为 8.337ms；
+- 100 个活动间隔位于 7–10ms；
+- IME UID 实际获得 120Hz override；
+- 动画结束并静止后，该 UID override 消失；
+- 用户主观验收为“明显更流畅”。
+
+这证明 API 36 的公开 high category 对该旧 IME Surface 有效，同时无需恢复 Window 级固定 120Hz。
+
+### 正式实现边界
+
+正式实现使用 `CandidateFrameRateCompat`：
+
+- 仅在 `SDK_INT >= 36` 时生效；
+- API 36-only 方法通过精确反射调用，legacy primary DEX 不含直接 `invoke-virtual View.setRequestedFrameRate()`；
+- 仅覆盖原生 80ms Candidate 展开/收起动画；
+- 展开和收起均在 start 请求 `HIGH (-4.0f)`；
+- end 或 cancel 后释放为 `NO_PREFERENCE (-1.0f)`；
+- 不修改动画时长、插值、Candidate 数据、布局、触摸、提交、学习、分页或无障碍语义；
+- API 17–35 为无操作，不改变旧系统行为；
+- 不启用 Window touch boost，不设置 `preferredRefreshRate`，不固定具体 Hz。
+
+### Release-like 运行时验收
+
+从原始 APK 完整重建 non-debuggable 隔离包后，在同一设备做第二次 20 秒采集：
+
+- 活动帧间隔中位数为 8.341ms；
+- 100 个活动间隔位于 7–10ms，15–19ms 活动间隔为0；
+- `gfxinfo` 现代 jank 为0；
+- Missed Vsync 为0；
+- Slow UI thread 为0；
+- 181 个 FrameTimeline 帧为 `On-time Present`；
+- 主线程最长连续运行 6.902ms；
+- RenderThread 最长连续运行 4.517ms；
+- `animation` 平均 0.243ms；
+- `traversal` 平均 1.642ms；
+- GPU 帧主要为 1–2ms；
+- `Thermal Status=0`；
+- 动画期间 UID 获得 120Hz override，静止后 override 消失且显示回落到 60Hz；
+- 无 App deadline miss、`VerifyError`、crash 或 `ApplicationExitInfo` 异常退出。
+
+FrameTimeline 中少量 Late Present 被归因为 `Buffer Stuffing` 或 SurfaceFlinger 侧调度，应用自身 `gfxinfo` 现代 jank 仍为0。这些事件位于动态刷新节奏切换边界，不构成 CPU/GPU 性能不足的证据。

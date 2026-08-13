@@ -148,6 +148,7 @@ gh workflow run build-release.yml `
 VERSION_NAME=<x.y.z>
 VERSION_CODE=<monotonic integer>
 TARGET_SDK=36
+RELEASE_TITLE=<feature-first title without version prefix>
 ```
 
 同时更新：
@@ -182,8 +183,8 @@ v$VERSION_NAME
    git push origin v<x.y.z>
    ```
 
-6. Tag workflow 自动创建 Release 并上传 APK 与 `.sha256`；
-7. 从 Release 页面重新下载资产，复核 SHA-256、签名和 alignment；
+6. Tag workflow使用 `v$VERSION_NAME - $RELEASE_TITLE`创建功能优先标题，并上传 APK与`.sha256`；如同名 Release已经存在则失败，不覆盖已发布资产；
+7. 核对 Release标题、版本化 notes正文和资产名，再从 Release页面重新下载资产，复核 SHA-256、签名和 alignment；
 8. 只有全部一致时，记录发布完成。
 
 不要手工复用本地未验证 APK 替代 Actions 产物。

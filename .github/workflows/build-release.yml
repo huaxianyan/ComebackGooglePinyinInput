@@ -84,7 +84,7 @@ jobs:
               $properties[$name.Trim()] = $value.Trim()
             }
           }
-          foreach ($name in @("VERSION_NAME", "VERSION_CODE", "TARGET_SDK")) {
+          foreach ($name in @("VERSION_NAME", "VERSION_CODE", "TARGET_SDK", "RELEASE_TITLE")) {
             if ([string]::IsNullOrWhiteSpace($properties[$name])) {
               throw "Missing $name in version.properties"
             }
@@ -111,6 +111,7 @@ jobs:
           "EXPECTED_VERSION_NAME=$($properties.VERSION_NAME)" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
           "EXPECTED_VERSION_CODE=$($properties.VERSION_CODE)" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
           "EXPECTED_TARGET_SDK=$($properties.TARGET_SDK)" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+          "EXPECTED_RELEASE_TITLE=$($properties.RELEASE_TITLE)" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
           "RELEASE_APK_NAME=ComebackGooglePinyinInput-arm64-v8a-$($properties.VERSION_NAME).apk" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Validate repository configuration
@@ -225,6 +226,7 @@ jobs:
           python scripts/verify_target36.py work/final-decoded
           python scripts/verify_universal_keyboard_header.py work/final-decoded
           python scripts/verify_simplified_traditional_header_toggle.py work/final-decoded
+          python scripts/verify_candidate_frame_rate.py work/final-decoded
           python scripts/verify_inline_autofill.py work/final-decoded `
             --android-jar "$env:ANDROID_SDK_ROOT\platforms\android-36\android.jar" `
             --jdk "$env:JAVA_HOME"
@@ -359,16 +361,13 @@ jobs:
           Add-Content release-notes.md "`n$notes"
           gh release view $env:TAG_NAME --repo $env:GITHUB_REPOSITORY *> $null
           if ($LASTEXITCODE -eq 0) {
-            gh release upload $env:TAG_NAME `
-              "$env:APK_PATH#$env:RELEASE_APK_NAME" `
-              "$env:APK_PATH.sha256#$env:RELEASE_APK_NAME.sha256" `
-              --repo $env:GITHUB_REPOSITORY --clobber
+            throw "Release $env:TAG_NAME already exists; published releases and assets are immutable"
           } else {
             gh release create $env:TAG_NAME `
               "$env:APK_PATH#$env:RELEASE_APK_NAME" `
               "$env:APK_PATH.sha256#$env:RELEASE_APK_NAME.sha256" `
               --repo $env:GITHUB_REPOSITORY --verify-tag `
-              --title "v$env:EXPECTED_VERSION_NAME - Google 拼音输入法" `
+              --title "v$env:EXPECTED_VERSION_NAME - $env:EXPECTED_RELEASE_TITLE" `
               --notes-file release-notes.md
           }
 
