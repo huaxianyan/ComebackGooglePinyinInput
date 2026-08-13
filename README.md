@@ -50,6 +50,55 @@ target SDK:     36
 
 完整版本变化见 [CHANGELOG.md](CHANGELOG.md)。设计、研究和验收记录见 [docs/](docs/)。
 
+## 效果预览
+
+### Inline Autofill
+
+<table>
+  <tr>
+    <td width="50%" align="center">
+      <img src="images/inline-autofill-login.png" alt="登录页面中的 Inline Autofill 建议" width="270"><br>
+      登录字段中直接显示由 Android Framework 和 Autofill Provider 提供的建议
+    </td>
+    <td width="50%" align="center">
+      <img src="images/inline-autofill-switch.png" alt="多个 Inline Autofill 建议的切换控制" width="270"><br>
+      使用原生上一项、下一项控制切换多个建议，并保持 Provider 原始顺序
+    </td>
+  </tr>
+</table>
+
+### Clipboard 与敏感内容
+
+<table>
+  <tr>
+    <td width="50%" align="center">
+      <img src="images/clipboard-verification-code.png" alt="短信验证码剪贴板候选" width="270"><br>
+      验证码复制后通过真实原生 Candidate 快速粘贴
+    </td>
+    <td width="50%" align="center">
+      <img src="images/sensitive-clipboard-password.png" alt="密码输入框中的敏感剪贴板脱敏候选" width="270"><br>
+      密码目标中的敏感剪贴板只脱敏显示，点击仍提交完整原文
+    </td>
+  </tr>
+</table>
+
+### Material 3 设置与词典备份
+
+<table>
+  <tr>
+    <td width="50%" align="center">
+      <img src="images/material3-settings.png" alt="Compose Material 3 设置首页" width="270"><br>
+      Android 15 及以上使用官方 Compose Material 3 设置界面
+    </td>
+    <td width="50%" align="center">
+      <img src="images/dictionary-and-backup.png" alt="词典健康状态与自动备份设置" width="270"><br>
+      集中查看词典健康状态，并配置自动备份、版本保留和导入位置
+    </td>
+  </tr>
+</table>
+
+> 为公开展示保护站点信息，Chrome 截图中的地址栏文字已遮挡；其余号码、验证码和功能内容保持原样。
+
 ## 兼容性说明
 
 - APK 只包含 `arm64-v8a` 原生库；Manifest 的 `minSdkVersion` 为 17，但 ARM64 Android 应用实际从 API 21 才存在。
