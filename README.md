@@ -27,8 +27,9 @@ target SDK:     36
 - 修复候选、标点、符号和表情滚动/翻页后的误触问题。
 - 补齐现代 Android 所需的组件导出、PendingIntent 和动态 Receiver 安全要求。
 
-### 统一 Header、剪贴板与 Autofill
+### 统一 Header、简繁切换、剪贴板与 Autofill
 
+- 中文拼音 QWERTY、中文拼音 9 键和中文笔画支持原生“简/繁”快速切换；实际输入、候选和设置状态会同步更新，也可在“键盘 → 按键”中关闭该入口。Access Points 展开或空间不足时按钮自动隐藏，不覆盖语言、语音或收起键。
 - 所有相关键盘使用统一原生 Header；密码、PIN、数字、电话和日期时间键盘的必需输入键始终保留在 Body。
 - Clipboard 快捷粘贴继续使用真实原生 Candidate；来源标记敏感或密码目标中的内容会脱敏显示，点击仍提交完整原文。
 - Android 11+ 支持标准 Inline Autofill Suggestions，直接托管 Framework/Provider 提供的远端 Surface，不读取凭据正文，也不自行提交 Autofill payload。
