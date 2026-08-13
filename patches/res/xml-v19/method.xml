@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<input-method android:isDefault="@bool/is_default_ime" android:settingsActivity="com.google.android.apps.inputmethod.pinyin.preference.SettingsActivity" android:supportsSwitchingToNextInputMethod="true" android:supportsInlineSuggestions="true"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <subtype android:label="@string/label_subtype_pinyin" android:icon="@mipmap/app_icon" android:imeSubtypeLocale="zh_CN" android:imeSubtypeMode="keyboard" android:imeSubtypeExtraValue="AsciiCapable,EmojiCapable" android:isAsciiCapable="true" />
+</input-method>

@@ -253,7 +253,13 @@ def apply(
             "first_run_page_footer.xml",
             "keyboard_candidates_header_inner.xml",
             "keyboard_candidates_header_inner_no_deletable_label.xml",
+            "keyboard_hard_header.xml",
+            "keyboard_hard_header_no_deletable_label.xml",
+            "keyboard_handwriting_header.xml",
+            "keyboard_prime_header.xml",
+            "keyboard_prime_header_no_deletable_label.xml",
             "keyboard_password_body.xml",
+            "method.xml",
             "softkey_candidate.xml",
         }
         if destination.exists() and source.name not in overwritten_layouts:
@@ -477,6 +483,20 @@ def apply(
         "modernsettings.compose.ModernSettingsActivity\"\n\n"
         "    invoke-virtual {v0, v1, v2}, Landroid/content/Intent;->setClassName("
         "Ljava/lang/String;Ljava/lang/String;)Landroid/content/Intent;\n\n"
+        "    # Apktool-only isolated audit builds intentionally omit the Compose\n"
+        "    # runtime. Route only when the merged package declares the Activity;\n"
+        "    # formal builds resolve it and preserve modern settings.\n"
+        "    invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/pinyin/"
+        "preference/SettingsActivity;->getPackageManager()"
+        "Landroid/content/pm/PackageManager;\n\n"
+        "    move-result-object v3\n\n"
+        "    const/4 v2, 0x0\n\n"
+        "    invoke-virtual {v3, v0, v2}, Landroid/content/pm/PackageManager;"
+        "->queryIntentActivities(Landroid/content/Intent;I)Ljava/util/List;\n\n"
+        "    move-result-object v3\n\n"
+        "    invoke-interface {v3}, Ljava/util/List;->isEmpty()Z\n\n"
+        "    move-result v3\n\n"
+        "    if-nez v3, :legacy_settings\n\n"
         "    invoke-virtual {p0, v0}, Lcom/google/android/apps/inputmethod/pinyin/"
         "preference/SettingsActivity;->startActivity(Landroid/content/Intent;)V\n\n"
         "    invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/pinyin/"
@@ -1322,6 +1342,63 @@ def apply(
     pinyin_ime = decoded / "smali/com/google/android/inputmethod/pinyin/PinyinIME.smali"
     replace_once(
         pinyin_ime,
+        ".class public Lcom/google/android/inputmethod/pinyin/PinyinIME;\n"
+        ".super Labp;\n"
+        ".source \"PG\"",
+        ".class public Lcom/google/android/inputmethod/pinyin/PinyinIME;\n"
+        ".super Labp;\n"
+        ".source \"PG\"\n\n"
+        "# interfaces\n"
+        ".implements Lcom/google/android/inputmethod/pinyin/headerplatform/"
+        "HeaderPlatformOwner;",
+    )
+    replace_once(
+        pinyin_ime,
+        ".field public a:Ljava/lang/Runnable;",
+        ".field public a:Ljava/lang/Runnable;\n\n"
+        ".field private headerPlatformController:Lcom/google/android/inputmethod/pinyin/"
+        "headerplatform/HeaderPlatformController;",
+    )
+    replace_once(
+        pinyin_ime,
+        ".method public onDestroy()V",
+        ".method public getHeaderPlatformController()Lcom/google/android/inputmethod/"
+        "pinyin/headerplatform/HeaderPlatformController;\n"
+        "    .locals 2\n\n"
+        "    iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/PinyinIME;"
+        "->headerPlatformController:Lcom/google/android/inputmethod/pinyin/"
+        "headerplatform/HeaderPlatformController;\n\n"
+        "    if-nez v0, :header_platform_ready\n\n"
+        "    new-instance v0, Lcom/google/android/inputmethod/pinyin/headerplatform/"
+        "HeaderPlatformController;\n\n"
+        "    invoke-direct {v0}, Lcom/google/android/inputmethod/pinyin/headerplatform/"
+        "HeaderPlatformController;-><init>()V\n\n"
+        "    new-instance v1, Lcom/google/android/inputmethod/pinyin/headerplatform/"
+        "InlineAutofillHeaderModule;\n\n"
+        "    invoke-direct {v1}, Lcom/google/android/inputmethod/pinyin/headerplatform/"
+        "InlineAutofillHeaderModule;-><init>()V\n\n"
+        "    invoke-virtual {v0, v1}, Lcom/google/android/inputmethod/pinyin/"
+        "headerplatform/HeaderPlatformController;->register("
+        "Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderModule;)V\n\n"
+        "    new-instance v1, Lcom/google/android/inputmethod/pinyin/headerplatform/"
+        "ClipboardHeaderModule;\n\n"
+        "    invoke-direct {v1}, Lcom/google/android/inputmethod/pinyin/headerplatform/"
+        "ClipboardHeaderModule;-><init>()V\n\n"
+        "    invoke-virtual {v0, v1}, Lcom/google/android/inputmethod/pinyin/"
+        "headerplatform/HeaderPlatformController;->register("
+        "Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderModule;)V\n\n"
+        "    invoke-virtual {v0}, Lcom/google/android/inputmethod/pinyin/headerplatform/"
+        "HeaderPlatformController;->initialize()V\n\n"
+        "    iput-object v0, p0, Lcom/google/android/inputmethod/pinyin/PinyinIME;"
+        "->headerPlatformController:Lcom/google/android/inputmethod/pinyin/"
+        "headerplatform/HeaderPlatformController;\n\n"
+        "    :header_platform_ready\n"
+        "    return-object v0\n"
+        ".end method\n\n"
+        ".method public onDestroy()V",
+    )
+    replace_once(
+        pinyin_ime,
         "    .line 5\n"
         "    invoke-static {p0}, Lamo;->a(Landroid/content/Context;)Lamo;\n\n"
         "    move-result-object v0\n\n"
@@ -1397,6 +1474,123 @@ def apply(
         "DictionaryAutoBackupCompat;->request(Landroid/content/Context;Z)V\n\n"
         "    .line 23",
     )
+    # Android 11+ asks the IME for a bounded Inline Autofill presentation
+    # contract. Keep API 30 types behind SDK guards so API 17-29 never load the
+    # helper, and invalidate the protocol generation whenever an input view is
+    # started, finished, or the service is destroyed.
+    replace_once(
+        pinyin_ime,
+        ".method public onDestroy()V\n    .locals 0",
+        ".method public onDestroy()V\n    .locals 2",
+    )
+    replace_once(
+        pinyin_ime,
+        "    .prologue\n"
+        "    .line 14\n"
+        "    invoke-direct {p0}, Lcom/google/android/inputmethod/pinyin/PinyinIME;->h()V",
+        "    .prologue\n"
+        "    iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/PinyinIME;"
+        "->headerPlatformController:Lcom/google/android/inputmethod/pinyin/"
+        "headerplatform/HeaderPlatformController;\n\n"
+        "    if-eqz v0, :header_platform_destroy_done\n\n"
+        "    invoke-virtual {v0}, Lcom/google/android/inputmethod/pinyin/headerplatform/"
+        "HeaderPlatformController;->destroy()V\n\n"
+        "    :header_platform_destroy_done\n"
+        "    sget v0, Landroid/os/Build$VERSION;->SDK_INT:I\n\n"
+        "    const/16 v1, 0x1e\n\n"
+        "    if-lt v0, v1, :inline_autofill_destroy_done\n\n"
+        "    invoke-static {}, Lcom/google/android/inputmethod/pinyin/"
+        "InlineAutofillCompat;->clear()V\n\n"
+        "    :inline_autofill_destroy_done\n"
+        "    .line 14\n"
+        "    invoke-direct {p0}, Lcom/google/android/inputmethod/pinyin/PinyinIME;->h()V",
+    )
+    replace_once(
+        pinyin_ime,
+        "    invoke-virtual {v0, v5, v3, v3}, Lamx;->a(IIZ)V\n\n"
+        "    goto :goto_0\n.end method\n",
+        "    invoke-virtual {v0, v5, v3, v3}, Lamx;->a(IIZ)V\n\n"
+        "    goto :goto_0\n.end method\n\n"
+        ".method public onStartInput(Landroid/view/inputmethod/EditorInfo;Z)V\n"
+        "    .locals 2\n\n"
+        "    invoke-super {p0, p1, p2}, Labp;->onStartInput("
+        "Landroid/view/inputmethod/EditorInfo;Z)V\n\n"
+        "    invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/PinyinIME;"
+        "->getHeaderPlatformController()Lcom/google/android/inputmethod/pinyin/"
+        "headerplatform/HeaderPlatformController;\n\n"
+        "    move-result-object v0\n\n"
+        "    invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/headerplatform/"
+        "HeaderEditorContext;->from(Landroid/view/inputmethod/EditorInfo;)"
+        "Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderEditorContext;\n\n"
+        "    move-result-object v1\n\n"
+        "    invoke-virtual {v0, v1}, Lcom/google/android/inputmethod/pinyin/"
+        "headerplatform/HeaderPlatformController;->startInput("
+        "Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderEditorContext;)J\n\n"
+        "    sget v0, Landroid/os/Build$VERSION;->SDK_INT:I\n\n"
+        "    const/16 v1, 0x1e\n\n"
+        "    if-lt v0, v1, :inline_autofill_input_started\n\n"
+        "    invoke-static {}, Lcom/google/android/inputmethod/pinyin/"
+        "InlineAutofillCompat;->startInputSession()V\n\n"
+        "    :inline_autofill_input_started\n"
+        "    return-void\n"
+        ".end method\n\n"
+        ".method public onFinishInput()V\n"
+        "    .locals 2\n\n"
+        "    sget v0, Landroid/os/Build$VERSION;->SDK_INT:I\n\n"
+        "    const/16 v1, 0x1e\n\n"
+        "    if-lt v0, v1, :inline_autofill_input_finished\n\n"
+        "    invoke-static {}, Lcom/google/android/inputmethod/pinyin/"
+        "InlineAutofillCompat;->clear()V\n\n"
+        "    :inline_autofill_input_finished\n"
+        "    iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/PinyinIME;"
+        "->headerPlatformController:Lcom/google/android/inputmethod/pinyin/"
+        "headerplatform/HeaderPlatformController;\n\n"
+        "    if-eqz v0, :header_platform_input_finished\n\n"
+        "    invoke-virtual {v0}, Lcom/google/android/inputmethod/pinyin/headerplatform/"
+        "HeaderPlatformController;->finishInput()V\n\n"
+        "    :header_platform_input_finished\n"
+        "    invoke-super {p0}, Labp;->onFinishInput()V\n\n"
+        "    return-void\n"
+        ".end method\n\n"
+        ".method public onWindowHidden()V\n"
+        "    .locals 0\n\n"
+        "    # Hiding the IME window does not end the editor session. Preserve\n"
+        "    # prepared Inline Surfaces; the Header host owns attach/detach cleanup.\n"
+        "    invoke-super {p0}, Labp;->onWindowHidden()V\n\n"
+        "    return-void\n"
+        ".end method\n\n"
+        ".method public onCreateInlineSuggestionsRequest(Landroid/os/Bundle;)"
+        "Landroid/view/inputmethod/InlineSuggestionsRequest;\n"
+        "    .locals 2\n\n"
+        "    sget v0, Landroid/os/Build$VERSION;->SDK_INT:I\n\n"
+        "    const/16 v1, 0x1e\n\n"
+        "    if-ge v0, v1, :inline_autofill_request_supported\n\n"
+        "    const/4 v0, 0x0\n\n"
+        "    return-object v0\n\n"
+        "    :inline_autofill_request_supported\n"
+        "    invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/"
+        "InlineAutofillCompat;->createRequest(Landroid/content/Context;Landroid/os/Bundle;)"
+        "Landroid/view/inputmethod/InlineSuggestionsRequest;\n\n"
+        "    move-result-object v0\n\n"
+        "    return-object v0\n"
+        ".end method\n\n"
+        ".method public onInlineSuggestionsResponse("
+        "Landroid/view/inputmethod/InlineSuggestionsResponse;)Z\n"
+        "    .locals 2\n\n"
+        "    sget v0, Landroid/os/Build$VERSION;->SDK_INT:I\n\n"
+        "    const/16 v1, 0x1e\n\n"
+        "    if-ge v0, v1, :inline_autofill_response_supported\n\n"
+        "    const/4 v0, 0x0\n\n"
+        "    return v0\n\n"
+        "    :inline_autofill_response_supported\n"
+        "    invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/"
+        "InlineAutofillCompat;->handleResponse(Landroid/content/Context;"
+        "Landroid/view/inputmethod/InlineSuggestionsResponse;)Z\n\n"
+        "    move-result v0\n\n"
+        "    return v0\n"
+        ".end method\n",
+    )
+
     replace_once(
         pinyin_ime,
         "    .line 32\n"
@@ -2035,8 +2229,173 @@ def apply(
     )
     replace_once(
         fixed_candidates,
+        ".implements Lcom/google/android/apps/inputmethod/libs/framework/keyboard/widget/"
+        "FixedSizeCandidatesHolder;\n\n\n# instance fields",
+        ".implements Lcom/google/android/apps/inputmethod/libs/framework/keyboard/widget/"
+        "FixedSizeCandidatesHolder;\n"
+        ".implements Lcom/google/android/inputmethod/pinyin/headerplatform/"
+        "HeaderChromeFactory;\n"
+        ".implements Lcom/google/android/inputmethod/pinyin/headerplatform/"
+        "HeaderNativeCandidateSource;\n\n\n# instance fields\n"
+        ".field private headerPlatformCandidateListener:Lcom/google/android/inputmethod/"
+        "pinyin/headerplatform/HeaderNativeCandidateStateListener;",
+    )
+    replace_once(
+        fixed_candidates,
+        ".method public appendCandidates(Ljava/util/List;)I",
+        ".method private notifyHeaderPlatformCandidateState()V\n"
+        "    .locals 2\n\n"
+        "    iget-object v0, p0, Lcom/google/android/apps/inputmethod/libs/framework/"
+        "keyboard/widget/FixedSizeCandidatesHolderView;"
+        "->headerPlatformCandidateListener:Lcom/google/android/inputmethod/pinyin/"
+        "headerplatform/HeaderNativeCandidateStateListener;\n\n"
+        "    if-eqz v0, :header_platform_candidate_notified\n\n"
+        "    iget v1, p0, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/"
+        "widget/FixedSizeCandidatesHolderView;->c:I\n\n"
+        "    if-lez v1, :header_platform_no_candidates\n\n"
+        "    const/4 v1, 0x1\n\n"
+        "    goto :header_platform_candidate_state_ready\n\n"
+        "    :header_platform_no_candidates\n"
+        "    const/4 v1, 0x0\n\n"
+        "    :header_platform_candidate_state_ready\n"
+        "    invoke-static {}, Lcom/google/android/apps/inputmethod/libs/framework/core/"
+        "ClipboardCandidateCompat;->isInjected()Z\n\n"
+        "    move-result v2\n\n"
+        "    invoke-interface {v0, v1, v2}, Lcom/google/android/inputmethod/pinyin/"
+        "headerplatform/HeaderNativeCandidateStateListener;"
+        "->onNativeCandidateStateChanged(ZZ)V\n\n"
+        "    :header_platform_candidate_notified\n"
+        "    return-void\n"
+        ".end method\n\n"
+        ".method public setHeaderNativeCandidateStateListener("
+        "Lcom/google/android/inputmethod/pinyin/headerplatform/"
+        "HeaderNativeCandidateStateListener;)V\n"
+        "    .locals 0\n\n"
+        "    iput-object p1, p0, Lcom/google/android/apps/inputmethod/libs/framework/"
+        "keyboard/widget/FixedSizeCandidatesHolderView;"
+        "->headerPlatformCandidateListener:Lcom/google/android/inputmethod/pinyin/"
+        "headerplatform/HeaderNativeCandidateStateListener;\n\n"
+        "    invoke-direct {p0}, Lcom/google/android/apps/inputmethod/libs/framework/"
+        "keyboard/widget/FixedSizeCandidatesHolderView;"
+        "->notifyHeaderPlatformCandidateState()V\n\n"
+        "    return-void\n"
+        ".end method\n\n"
+        ".method public createCandidateChromeSlot()Lcom/google/android/inputmethod/"
+        "pinyin/headerplatform/HeaderVisualSlot;\n"
+        "    .locals 4\n\n"
+        "    iget-object v2, p0, Lcom/google/android/apps/inputmethod/libs/framework/"
+        "keyboard/widget/FixedSizeCandidatesHolderView;->a:Lavp;\n\n"
+        "    invoke-virtual {v2}, Lavp;->a()Lcom/google/android/apps/inputmethod/libs/"
+        "framework/keyboard/SoftKeyView;\n\n"
+        "    move-result-object v0\n\n"
+        "    iget-object v1, v2, Lavp;->a:Lcom/google/android/apps/inputmethod/libs/"
+        "framework/core/metadata/SoftKeyDef$a;\n\n"
+        "    invoke-virtual {v1}, Lcom/google/android/apps/inputmethod/libs/framework/"
+        "core/metadata/SoftKeyDef$a;->a()Lcom/google/android/apps/inputmethod/libs/"
+        "framework/core/metadata/SoftKeyDef$a;\n\n"
+        "    move-result-object v1\n\n"
+        "    iget-object v3, v2, Lavp;->a:Lavr;\n\n"
+        "    iget v3, v3, Lavr;->c:I\n\n"
+        "    iput v3, v1, Lcom/google/android/apps/inputmethod/libs/framework/core/"
+        "metadata/SoftKeyDef$a;->b:I\n\n"
+        "    iget-object v1, v2, Lavp;->a:Lcom/google/android/apps/inputmethod/libs/"
+        "framework/core/metadata/SoftKeyDef$a;\n\n"
+        "    invoke-virtual {v1}, Lcom/google/android/apps/inputmethod/libs/framework/"
+        "core/metadata/SoftKeyDef$a;->a()Lcom/google/android/apps/inputmethod/libs/"
+        "framework/core/metadata/SoftKeyDef;\n\n"
+        "    move-result-object v1\n\n"
+        "    invoke-virtual {v0, v1}, Lcom/google/android/apps/inputmethod/libs/framework/"
+        "keyboard/SoftKeyView;->a(Lcom/google/android/apps/inputmethod/libs/framework/"
+        "core/metadata/SoftKeyDef;)Z\n\n"
+        "    const/4 v1, 0x0\n\n"
+        "    invoke-virtual {v0, v1}, Lcom/google/android/apps/inputmethod/libs/framework/"
+        "keyboard/SoftKeyView;->a(Lcom/google/android/apps/inputmethod/libs/framework/"
+        "keyboard/SoftKeyViewListener;)V\n\n"
+        "    invoke-virtual {v0, v1}, Lcom/google/android/apps/inputmethod/libs/framework/"
+        "keyboard/SoftKeyView;->setFocusable(Z)V\n\n"
+        "    invoke-virtual {v0, v1}, Lcom/google/android/apps/inputmethod/libs/framework/"
+        "keyboard/SoftKeyView;->setFocusableInTouchMode(Z)V\n\n"
+        "    invoke-virtual {v0, v1}, Lcom/google/android/apps/inputmethod/libs/framework/"
+        "keyboard/SoftKeyView;->setClickable(Z)V\n\n"
+        "    invoke-virtual {v0, v1}, Lcom/google/android/apps/inputmethod/libs/framework/"
+        "keyboard/SoftKeyView;->setLongClickable(Z)V\n\n"
+        "    new-instance v1, Lcom/google/android/inputmethod/pinyin/headerplatform/"
+        "HeaderVisualSlot;\n\n"
+        "    invoke-direct {v1, v0}, Lcom/google/android/inputmethod/pinyin/headerplatform/"
+        "HeaderVisualSlot;-><init>(Landroid/view/View;)V\n\n"
+        "    return-object v1\n"
+        ".end method\n\n"
+        ".method public captureNativeChrome()Lcom/google/android/inputmethod/pinyin/"
+        "headerplatform/HeaderNativeChromeSnapshot;\n"
+        "    .locals 1\n\n"
+        "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/headerplatform/"
+        "HeaderActionSlot;->captureNativeChrome(Landroid/view/View;)"
+        "Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderNativeChromeSnapshot;\n\n"
+        "    move-result-object v0\n\n"
+        "    return-object v0\n"
+        ".end method\n\n"
+        ".method public createActionChromeSlot(Lcom/google/android/inputmethod/pinyin/"
+        "headerplatform/HeaderActionKind;)Lcom/google/android/inputmethod/pinyin/"
+        "headerplatform/HeaderActionSlot;\n"
+        "    .locals 3\n\n"
+        "    invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/libs/framework/"
+        "keyboard/widget/FixedSizeCandidatesHolderView;->createCandidateChromeSlot()"
+        "Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderVisualSlot;\n\n"
+        "    move-result-object v0\n\n"
+        "    invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/libs/framework/"
+        "keyboard/widget/FixedSizeCandidatesHolderView;->getContext()"
+        "Landroid/content/Context;\n\n"
+        "    move-result-object v1\n\n"
+        "    invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/libs/framework/"
+        "keyboard/widget/FixedSizeCandidatesHolderView;->captureNativeChrome()"
+        "Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderNativeChromeSnapshot;\n\n"
+        "    move-result-object p0\n\n"
+        "    new-instance v2, Lcom/google/android/inputmethod/pinyin/headerplatform/"
+        "HeaderActionSlot;\n\n"
+        "    invoke-direct {v2, v1, v0, p1, p0}, Lcom/google/android/inputmethod/pinyin/"
+        "headerplatform/HeaderActionSlot;-><init>(Landroid/content/Context;"
+        "Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderVisualSlot;"
+        "Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderActionKind;"
+        "Lcom/google/android/inputmethod/pinyin/headerplatform/"
+        "HeaderNativeChromeSnapshot;)V\n\n"
+        "    return-object v2\n"
+        ".end method\n\n"
+        ".method public appendCandidates(Ljava/util/List;)I",
+    )
+    replace_once(
+        fixed_candidates,
         ".method public appendCandidates(Ljava/util/List;)I\n    .locals 11",
         ".method public appendCandidates(Ljava/util/List;)I\n    .locals 12",
+    )
+    replace_once(
+        fixed_candidates,
+        "    .line 135\n"
+        "    :cond_0\n"
+        "    :goto_0\n"
+        "    return v2",
+        "    .line 135\n"
+        "    :cond_0\n"
+        "    :goto_0\n"
+        "    invoke-direct {p0}, Lcom/google/android/apps/inputmethod/libs/framework/"
+        "keyboard/widget/FixedSizeCandidatesHolderView;"
+        "->notifyHeaderPlatformCandidateState()V\n\n"
+        "    return v2",
+    )
+    replace_once(
+        fixed_candidates,
+        "    .line 35\n"
+        "    iput-boolean v1, p0, Lcom/google/android/apps/inputmethod/libs/framework/"
+        "keyboard/widget/FixedSizeCandidatesHolderView;->a:Z\n\n"
+        "    .line 36\n"
+        "    return-void",
+        "    .line 35\n"
+        "    iput-boolean v1, p0, Lcom/google/android/apps/inputmethod/libs/framework/"
+        "keyboard/widget/FixedSizeCandidatesHolderView;->a:Z\n\n"
+        "    invoke-direct {p0}, Lcom/google/android/apps/inputmethod/libs/framework/"
+        "keyboard/widget/FixedSizeCandidatesHolderView;"
+        "->notifyHeaderPlatformCandidateState()V\n\n"
+        "    .line 36\n"
+        "    return-void",
     )
     replace_once(
         fixed_candidates,
@@ -2387,6 +2746,22 @@ def apply(
             "smali/com/google/android/inputmethod/pinyin/PasswordBodyView.smali",
         ),
         (
+            "InlineAutofillCompat.smali",
+            "smali/com/google/android/inputmethod/pinyin/InlineAutofillCompat.smali",
+        ),
+        (
+            "InlineAutofillCompat$1.smali",
+            "smali/com/google/android/inputmethod/pinyin/InlineAutofillCompat$1.smali",
+        ),
+        (
+            "InlineAutofillCompat$2.smali",
+            "smali/com/google/android/inputmethod/pinyin/InlineAutofillCompat$2.smali",
+        ),
+        (
+            "InlineAutofillCompat$3.smali",
+            "smali/com/google/android/inputmethod/pinyin/InlineAutofillCompat$3.smali",
+        ),
+        (
             "Md3SwitchView.smali",
             "smali/com/google/android/inputmethod/pinyin/Md3SwitchView.smali",
         ),
@@ -2403,6 +2778,29 @@ def apply(
             raise RuntimeError(f"Refusing to overwrite existing helper: {helper_dst}")
         helper_dst.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(helper_src, helper_dst)
+
+    header_platform_src = ROOT / "patches/smali/headerplatform"
+    header_platform_dst = decoded / (
+        "smali/com/google/android/inputmethod/pinyin/headerplatform"
+    )
+    if header_platform_dst.exists():
+        raise RuntimeError(
+            f"Refusing to overwrite existing Header platform: {header_platform_dst}"
+        )
+    if not header_platform_src.is_dir():
+        raise RuntimeError(f"Missing Header platform Smali: {header_platform_src}")
+    shutil.copytree(header_platform_src, header_platform_dst)
+
+    # API 30 bridge uses the official AndroidX Inline UI style Bundle protocol.
+    # These classes are isolated from API 17–29 startup and are only resolved by
+    # InlineAutofillCompat after the existing SDK gate.
+    androidx_inline_src = ROOT / "patches/smali/androidx-inline/androidx"
+    androidx_inline_dst = decoded / "smali/androidx"
+    if androidx_inline_dst.exists():
+        raise RuntimeError(f"Refusing to overwrite AndroidX Inline UI: {androidx_inline_dst}")
+    if not androidx_inline_src.is_dir():
+        raise RuntimeError(f"Missing AndroidX Inline UI Smali: {androidx_inline_src}")
+    shutil.copytree(androidx_inline_src, androidx_inline_dst)
 
     candidate_src = ROOT / "patches/smali/ClipboardCandidateCompat.smali"
     candidate_dst = decoded / (

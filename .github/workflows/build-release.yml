@@ -224,6 +224,12 @@ jobs:
           python scripts/verify_target35.py work/final-decoded
           python scripts/verify_target36.py work/final-decoded
           python scripts/verify_universal_keyboard_header.py work/final-decoded
+          python scripts/verify_inline_autofill.py work/final-decoded `
+            --android-jar "$env:ANDROID_SDK_ROOT\platforms\android-36\android.jar" `
+            --jdk "$env:JAVA_HOME"
+          python scripts/test_header_platform.py `
+            --android-jar "$env:ANDROID_SDK_ROOT\platforms\android-36\android.jar" `
+            --jdk "$env:JAVA_HOME" --decoded work/final-decoded
           python scripts/test_sensitive_clipboard_compat.py `
             --android-jar "$env:ANDROID_SDK_ROOT\platforms\android-36\android.jar" `
             --jdk "$env:JAVA_HOME" --decoded work/final-decoded
@@ -333,7 +339,7 @@ jobs:
           $notes = @"
           # Google 拼音输入法 $env:EXPECTED_VERSION_NAME
 
-          本版本在保留原生输入、候选、学习、词典、手写、主题和备份语义的前提下，加入 ``CHANGELOG.md`` 所列的兼容性、界面和安全改进。Android 15 及更高版本使用官方 Compose Material 3 设置界面；Android 14 及更低版本继续使用原设置界面。
+          ## 构建信息
 
           - Architecture: ``arm64-v8a``
           - Android versionName: ``$env:EXPECTED_VERSION_NAME``
@@ -343,10 +349,13 @@ jobs:
           - APK SHA-256: ``$env:APK_SHA256``
           - Signing certificate SHA-256: ``$env:EXPECTED_CERT_SHA256``
           - Source commit: ``${{ github.sha }}``
-
-          完整改动见仓库中的 ``CHANGELOG.md``。本项目是非商业兼容维护项目。原始程序、资源、词库、Google 名称及相关商标的权利归其各自权利人所有。
           "@
-          $notes | Out-File release-notes.md -Encoding utf8
+          $releaseNotesSource = "docs/releases/v$env:EXPECTED_VERSION_NAME.md"
+          if (-not (Test-Path $releaseNotesSource)) {
+            throw "Missing versioned release notes: $releaseNotesSource"
+          }
+          Get-Content $releaseNotesSource -Raw | Out-File release-notes.md -Encoding utf8
+          Add-Content release-notes.md "`n$notes"
           gh release view $env:TAG_NAME --repo $env:GITHUB_REPOSITORY *> $null
           if ($LASTEXITCODE -eq 0) {
             gh release upload $env:TAG_NAME `

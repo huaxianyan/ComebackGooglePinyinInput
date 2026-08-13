@@ -140,6 +140,13 @@ internal fun androidx.compose.foundation.lazy.LazyListScope.aboutSettingsItems(
     }
     item {
         SettingsActionRow(
+            title = stringResource(R.string.modern_settings_repository_title),
+            supporting = LegacySettingsNavigation.repositoryUrl,
+            onClick = actions.onOpenRepository,
+        )
+    }
+    item {
+        SettingsActionRow(
             title = legacyString(
                 "setting_license_title",
                 R.string.modern_settings_licenses_title,

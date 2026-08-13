@@ -133,6 +133,13 @@
 - [x] 正式 `v2.0.1` 已创建签名 Tag 和 GitHub Release；Release APK 与 Actions Artifact、设备安装 `base.apk` 逐字节一致，SHA-256 为 `09061687ca67cce5879323207d2b876d90a00bbd621d96167ce9ae695ae95b1c`，正式签名身份、v1/v2/v3 和 16 KiB ZIP alignment 复核通过
 - [x] 统一键盘 Header 与敏感剪贴板候选已在隔离分支完成全键盘、浅色/深色、密码/PIN 脱敏、完整 payload 提交、关闭和无崩溃验收；提交 `8902e1f` 的 Actions run `31414951727` 全部门禁通过且只生成 Artifact
 - [x] `v2.0.2` 正式候选由 `master` Actions run `31418998015` 从提交 `39510e5` 完整构建：Compose 测试、API 31/33/34/35/36、统一 Header、敏感剪贴板、6,633 旧资源 ID、v1/v2/v3、正式证书、16 KiB ZIP alignment 和双构建一致性全部通过。APK 为 27,550,386 bytes，SHA-256 为 `c94a12a4ea3e1f06f49dd91f127b64f02da44a5d8d3577f3db6706022026a9a9`；正式包已从 `2.0.1` 覆盖安装到 Pixel 10 Pro，默认输入法保持正式 `PinyinIME`，设备 `base.apk` 与 Artifact 逐字节一致，`headeraudit` 和敏感剪贴板测试器已卸载
+- [x] 完成 Android 官方 Inline Suggestions协议、Gboard `17.8.4` 当前公开 APK及 HeliBoard/FlorisBoard/AnySoftKeyboard 的静态交叉研究，形成 `docs/gboard-inline-autofill-research.md`；确认 IME只声明 presentation spec并托管远端 `InlineContentView`，看不到或提交 Autofill payload，现有统一 Header需增加独立 Surface裁剪 host而不能把 Autofill转换成原生文字 Candidate
+- [x] `feat/inline-autofill` 阶段 A：声明标准 Inline Suggestions能力，建立 API 30+窄桥和独立 `InlineAutofillCompat`，请求3个有界 presentation spec且最多3项建议；尚无 Surface host时不读取 response数量、元数据或正文，只推进 generation并返回未处理。输入视图开始/结束及服务销毁均使 generation失效；源码编译、最终 DEX窄桥、API 17–29 SDK门控和隐私边界已加入静态门禁。提交 `10e45f5` 的 Actions run `31454668628` 已通过 Compose测试、API 31/33/34/35/36、6,633旧资源 ID、签名、16 KiB alignment和双构建一致性门禁，仅上传隔离 Artifact，未创建 Release
+- [x] `feat/inline-autofill` 阶段 A 的 API 36 运行时协议验收完成：标准 Framework request/response、Bitwarden 与合成 Provider 的 Inline Surface、Framework-owned click 及空 response/session 失效均正常。API 17–29 旧 ART 运行时仍受 ARM64 ABI/当前模拟环境限制，只保留静态门禁，不能描述成运行时通过
+- [x] `feat/inline-autofill` 阶段 B实现：独立 API中立 Header ClipHost托管横向远端 View；最多3项异步 inflate按 provider索引聚合，具备 generation/会话/Header身份校验、1.2秒超时及 null/异常/重复 callback处理；layout/scroll/attach/detach均显式更新或释放 remote View clip bounds。表现层优先级为原生 Candidate > Inline Autofill > 空闲剪贴板，不改变 Body键、密码预测/学习语义、Candidate/剪贴板数据模型或 touch exploration声明。提交 `d09ee44` 的 Actions run `31459097182` 已通过 Compose、API 31/33/34/35/36、Inline专用门禁、6,633旧资源 ID、签名、16 KiB alignment和双构建一致性检查，只生成隔离 Artifact
+- [x] `feat/header-platform` 完成阶段 B 及平台化真机验收：Pixel 10 Pro / API 36 验证 0/1/多项、Framework 点击填充、稳定 rails、局部坐标 Surface 裁剪、字段/网页/Header/方向切换、Clipboard Candidate 接管与恢复、Bitwarden 解锁/认证 Activity 往返、主题和完整 Compose 组合包；诊断不采集凭据、Clipboard/Candidate/Provider 正文。详见 `docs/header-platform-runtime-acceptance.md`
+- [ ] Inline Autofill TalkBack touch-exploration 独立验收；完成前继续不声明 `supportsInlineSuggestionsWithTouchExploration`
+- [ ] 在可用 ARM64 API 17–29 环境补做旧 ART 启动；当前 API 17 静态-only、API 23 环境阻塞结论保持不变
 
 ## 测试约定
 
