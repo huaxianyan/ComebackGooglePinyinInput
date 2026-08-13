@@ -22,9 +22,11 @@
 
 .field private static final MAX_CHIP_WIDTH_DP:F = 240.0f
 
+.field private static final MAX_SUGGESTION_COUNT:I = 0x6
+
 .field private static final MIN_CHIP_WIDTH_DP:F = 48.0f
 
-.field private static final PRESENTATION_COUNT:I = 0x3
+.field private static final PRESENTATION_SPEC_COUNT:I = 0x3
 
 .field private static final RAIL_WIDTH_RES_ID:I = 0x7f0d0206
 
@@ -65,7 +67,7 @@
 .method static constructor <clinit>()V
     .locals 2
 
-    .line 56
+    .line 57
     new-instance v0, Landroid/os/Handler;
 
     invoke-static {}, Landroid/os/Looper;->getMainLooper()Landroid/os/Looper;
@@ -76,7 +78,7 @@
 
     sput-object v0, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->MAIN_HANDLER:Landroid/os/Handler;
 
-    .line 57
+    .line 58
     new-instance v0, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat$1;
 
     invoke-direct {v0}, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat$1;-><init>()V
@@ -89,7 +91,7 @@
 .method private constructor <init>()V
     .locals 0
 
-    .line 76
+    .line 77
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
     return-void
@@ -102,7 +104,7 @@
 
     monitor-enter v0
 
-    .line 262
+    .line 263
     :try_start_0
     invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->isCurrentLocked(ILcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillHeaderModule;)Z
 
@@ -130,7 +132,7 @@
 
     goto/16 :goto_5
 
-    .line 266
+    .line 267
     :cond_0
     sget-object v1, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->completedInflations:[Z
 
@@ -138,12 +140,12 @@
 
     aput-boolean v2, v1, p2
 
-    .line 267
+    .line 268
     sget-object v1, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->pendingViews:[Landroid/view/View;
 
     aput-object p3, v1, p2
 
-    .line 268
+    .line 269
     if-nez p3, :cond_1
 
     const/4 v1, 0x0
@@ -155,7 +157,7 @@
 
     move-result-object v1
 
-    .line 269
+    .line 270
     :goto_0
     const-string v3, "HeaderPlatformAudit"
 
@@ -199,7 +201,7 @@
 
     move-result-object p2
 
-    .line 271
+    .line 272
     if-nez p3, :cond_3
 
     const-string v4, "none"
@@ -248,14 +250,14 @@
 
     move-result-object p2
 
-    .line 272
+    .line 273
     if-nez p3, :cond_4
 
     const-string p3, "none"
 
     goto :goto_3
 
-    .line 273
+    .line 274
     :cond_4
     new-instance v4, Ljava/lang/StringBuilder;
 
@@ -298,7 +300,7 @@
 
     move-result-object p2
 
-    .line 274
+    .line 275
     if-nez v1, :cond_5
 
     const-string p3, "none"
@@ -341,17 +343,17 @@
 
     move-result-object p2
 
-    .line 269
+    .line 270
     invoke-static {v3, p2}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
 
-    .line 275
+    .line 276
     sget p2, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->pendingCount:I
 
     sub-int/2addr p2, v2
 
     sput p2, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->pendingCount:I
 
-    .line 276
+    .line 277
     sget p2, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->pendingCount:I
 
     if-nez p2, :cond_6
@@ -360,20 +362,20 @@
     :try_end_0
     .catchall {:try_start_0 .. :try_end_0} :catchall_0
 
-    .line 277
+    .line 278
     :cond_6
     monitor-exit v0
 
     return-void
 
-    .line 264
+    .line 265
     :cond_7
     :goto_5
     monitor-exit v0
 
     return-void
 
-    .line 261
+    .line 262
     :catchall_0
     move-exception p0
 
@@ -406,13 +408,13 @@
 .method public static applyRemoteClip(Landroid/view/View;Landroid/graphics/Rect;)V
     .locals 0
 
-    .line 351
+    .line 352
     if-eqz p0, :cond_0
 
-    .line 352
+    .line 353
     invoke-virtual {p0, p1}, Landroid/view/View;->setClipBounds(Landroid/graphics/Rect;)V
 
-    .line 354
+    .line 355
     :cond_0
     return-void
 .end method
@@ -420,50 +422,50 @@
 .method private static cancelPendingLocked()V
     .locals 3
 
-    .line 328
+    .line 329
     sget-object v0, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->timeout:Ljava/lang/Runnable;
 
     const/4 v1, 0x0
 
     if-eqz v0, :cond_0
 
-    .line 329
+    .line 330
     sget-object v0, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->MAIN_HANDLER:Landroid/os/Handler;
 
     sget-object v2, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->timeout:Ljava/lang/Runnable;
 
     invoke-virtual {v0, v2}, Landroid/os/Handler;->removeCallbacks(Ljava/lang/Runnable;)V
 
-    .line 330
+    .line 331
     sput-object v1, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->timeout:Ljava/lang/Runnable;
 
-    .line 332
+    .line 333
     :cond_0
     const/4 v0, 0x0
 
     sput v0, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->pendingCount:I
 
-    .line 333
+    .line 334
     sput-object v1, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->pendingViews:[Landroid/view/View;
 
-    .line 334
+    .line 335
     sput-object v1, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->completedInflations:[Z
 
-    .line 335
+    .line 336
     sput-object v1, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->pendingModule:Ljava/lang/ref/WeakReference;
 
-    .line 336
+    .line 337
     const-wide/16 v1, 0x0
 
     sput-wide v1, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->pendingSessionToken:J
 
-    .line 337
+    .line 338
     sput-wide v1, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->pendingHeaderToken:J
 
-    .line 338
+    .line 339
     sput-boolean v0, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->published:Z
 
-    .line 339
+    .line 340
     return-void
 .end method
 
@@ -474,7 +476,7 @@
 
     monitor-enter v0
 
-    .line 391
+    .line 392
     :try_start_0
     sget v1, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->generation:I
 
@@ -482,27 +484,27 @@
 
     sput v1, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->generation:I
 
-    .line 392
+    .line 393
     const/4 v1, 0x0
 
     sput-boolean v1, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->activeInputSession:Z
 
-    .line 393
+    .line 394
     const/4 v1, 0x0
 
     sput-object v1, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->activeRequestCandidateTextColor:Ljava/lang/Integer;
 
-    .line 394
+    .line 395
     invoke-static {}, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->cancelPendingLocked()V
     :try_end_0
     .catchall {:try_start_0 .. :try_end_0} :catchall_0
 
-    .line 395
+    .line 396
     monitor-exit v0
 
     return-void
 
-    .line 390
+    .line 391
     :catchall_0
     move-exception v1
 
@@ -521,12 +523,12 @@
 
     monitor-enter p1
 
-    .line 87
+    .line 88
     const/4 v0, 0x0
 
     if-nez p0, :cond_0
 
-    .line 88
+    .line 89
     :try_start_0
     const-string p0, "HeaderPlatformAudit"
 
@@ -536,12 +538,12 @@
     :try_end_0
     .catchall {:try_start_0 .. :try_end_0} :catchall_0
 
-    .line 89
+    .line 90
     monitor-exit p1
 
     return-object v0
 
-    .line 91
+    .line 92
     :cond_0
     :try_start_1
     sget v1, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->generation:I
@@ -552,18 +554,18 @@
 
     sput v1, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->generation:I
 
-    .line 92
+    .line 93
     sput-boolean v2, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->activeInputSession:Z
 
-    .line 93
+    .line 94
     invoke-static {}, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->cancelPendingLocked()V
 
-    .line 94
+    .line 95
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->findModule(Landroid/content/Context;)Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillHeaderModule;
 
     move-result-object v1
 
-    .line 95
+    .line 96
     const-string v3, "HeaderPlatformAudit"
 
     new-instance v4, Ljava/lang/StringBuilder;
@@ -612,7 +614,7 @@
 
     if-eqz v1, :cond_2
 
-    .line 97
+    .line 98
     invoke-virtual {v1}, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillHeaderModule;->isSessionAvailable()Z
 
     move-result v6
@@ -639,7 +641,7 @@
 
     if-eqz v1, :cond_3
 
-    .line 98
+    .line 99
     invoke-virtual {v1}, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillHeaderModule;->getHeaderToken()J
 
     move-result-wide v6
@@ -666,33 +668,33 @@
 
     move-result-object v4
 
-    .line 95
+    .line 96
     invoke-static {v3, v4}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
 
-    .line 99
+    .line 100
     if-eqz v1, :cond_4
 
     invoke-virtual {v1}, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillHeaderModule;->clearRemoteViews()V
 
-    .line 101
+    .line 102
     :cond_4
     invoke-virtual {p0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
 
     move-result-object v3
 
-    .line 102
+    .line 103
     invoke-virtual {v3}, Landroid/content/res/Resources;->getDisplayMetrics()Landroid/util/DisplayMetrics;
 
     move-result-object v4
 
-    .line 103
+    .line 104
     const v6, 0x7f0d00a9
 
     invoke-virtual {v3, v6}, Landroid/content/res/Resources;->getDimensionPixelSize(I)I
 
     move-result v6
 
-    .line 104
+    .line 105
     iget v7, v4, Landroid/util/DisplayMetrics;->density:F
 
     const/high16 v8, 0x42400000    # 48.0f
@@ -707,31 +709,31 @@
 
     move-result v2
 
-    .line 105
+    .line 106
     iget v7, v4, Landroid/util/DisplayMetrics;->density:F
 
     const/high16 v8, 0x43700000    # 240.0f
 
     mul-float/2addr v7, v8
 
-    .line 106
+    .line 107
     invoke-static {v7}, Ljava/lang/Math;->round(F)I
 
     move-result v7
 
-    .line 105
+    .line 106
     invoke-static {v2, v7}, Ljava/lang/Math;->max(II)I
 
     move-result v7
 
-    .line 107
+    .line 108
     const v8, 0x7f0d0206
 
     invoke-virtual {v3, v8}, Landroid/content/res/Resources;->getDimensionPixelSize(I)I
 
     move-result v8
 
-    .line 108
+    .line 109
     iget v9, v4, Landroid/util/DisplayMetrics;->widthPixels:I
 
     if-lez v9, :cond_5
@@ -743,7 +745,7 @@
     :cond_5
     move v9, v7
 
-    .line 109
+    .line 110
     :goto_3
     mul-int/lit8 v8, v8, 0x2
 
@@ -753,7 +755,7 @@
 
     move-result v8
 
-    .line 110
+    .line 111
     invoke-static {v7, v8}, Ljava/lang/Math;->min(II)I
 
     move-result v7
@@ -762,20 +764,20 @@
 
     move-result v7
 
-    .line 112
+    .line 113
     new-instance v8, Landroid/util/Size;
 
     invoke-direct {v8, v2, v6}, Landroid/util/Size;-><init>(II)V
 
-    .line 113
+    .line 114
     new-instance v10, Landroid/util/Size;
 
     invoke-direct {v10, v7, v6}, Landroid/util/Size;-><init>(II)V
 
-    .line 117
+    .line 118
     if-nez v1, :cond_6
 
-    .line 118
+    .line 119
     goto :goto_4
 
     :cond_6
@@ -783,22 +785,22 @@
 
     move-result-object v0
 
-    .line 119
+    .line 120
     :goto_4
     if-nez v0, :cond_7
 
-    .line 120
+    .line 121
     const v0, 0x7f010066
 
     invoke-static {p0, v0}, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->resolveKeyboardThemeCandidateColor(Landroid/content/Context;I)Ljava/lang/Integer;
 
     move-result-object v0
 
-    .line 123
+    .line 124
     :cond_7
     sput-object v0, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->activeRequestCandidateTextColor:Ljava/lang/Integer;
 
-    .line 124
+    .line 125
     const-string p0, "HeaderPlatformAudit"
 
     new-instance v1, Ljava/lang/StringBuilder;
@@ -811,7 +813,7 @@
 
     move-result-object v1
 
-    .line 125
+    .line 126
     invoke-virtual {v3}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
 
     move-result-object v11
@@ -828,7 +830,7 @@
 
     move-result-object v1
 
-    .line 126
+    .line 127
     invoke-virtual {v3}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
 
     move-result-object v3
@@ -907,180 +909,182 @@
 
     move-result-object v1
 
-    .line 124
+    .line 125
     invoke-static {p0, v1}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
 
-    .line 134
+    .line 135
     new-instance p0, Landroidx/autofill/inline/common/ViewStyle$Builder;
 
     invoke-direct {p0}, Landroidx/autofill/inline/common/ViewStyle$Builder;-><init>()V
 
-    .line 135
+    .line 136
     invoke-virtual {p0, v5}, Landroidx/autofill/inline/common/ViewStyle$Builder;->setBackgroundColor(I)Landroidx/autofill/inline/common/ViewStyle$BaseBuilder;
 
     move-result-object p0
 
     check-cast p0, Landroidx/autofill/inline/common/ViewStyle$Builder;
 
-    .line 136
+    .line 137
     invoke-virtual {p0, v5, v5, v5, v5}, Landroidx/autofill/inline/common/ViewStyle$Builder;->setPadding(IIII)Landroidx/autofill/inline/common/ViewStyle$BaseBuilder;
 
     move-result-object p0
 
     check-cast p0, Landroidx/autofill/inline/common/ViewStyle$Builder;
 
-    .line 137
+    .line 138
     invoke-virtual {p0, v5, v5, v5, v5}, Landroidx/autofill/inline/common/ViewStyle$Builder;->setLayoutMargin(IIII)Landroidx/autofill/inline/common/ViewStyle$BaseBuilder;
 
     move-result-object p0
 
     check-cast p0, Landroidx/autofill/inline/common/ViewStyle$Builder;
 
-    .line 138
+    .line 139
     invoke-virtual {p0}, Landroidx/autofill/inline/common/ViewStyle$Builder;->build()Landroidx/autofill/inline/common/ViewStyle;
 
     move-result-object p0
 
-    .line 143
+    .line 144
     new-instance v1, Landroidx/autofill/inline/common/TextViewStyle$Builder;
 
     invoke-direct {v1}, Landroidx/autofill/inline/common/TextViewStyle$Builder;-><init>()V
 
-    .line 144
+    .line 145
     new-instance v2, Landroidx/autofill/inline/common/TextViewStyle$Builder;
 
     invoke-direct {v2}, Landroidx/autofill/inline/common/TextViewStyle$Builder;-><init>()V
 
-    .line 145
+    .line 146
     if-eqz v0, :cond_8
 
-    .line 146
+    .line 147
     invoke-virtual {v0}, Ljava/lang/Integer;->intValue()I
 
     move-result v0
 
-    .line 147
+    .line 148
     invoke-virtual {v1, v0}, Landroidx/autofill/inline/common/TextViewStyle$Builder;->setTextColor(I)Landroidx/autofill/inline/common/TextViewStyle$Builder;
 
-    .line 148
+    .line 149
     invoke-virtual {v2, v0}, Landroidx/autofill/inline/common/TextViewStyle$Builder;->setTextColor(I)Landroidx/autofill/inline/common/TextViewStyle$Builder;
 
-    .line 150
+    .line 151
     :cond_8
     invoke-virtual {v1}, Landroidx/autofill/inline/common/TextViewStyle$Builder;->build()Landroidx/autofill/inline/common/TextViewStyle;
 
     move-result-object v0
 
-    .line 151
+    .line 152
     invoke-virtual {v2}, Landroidx/autofill/inline/common/TextViewStyle$Builder;->build()Landroidx/autofill/inline/common/TextViewStyle;
 
     move-result-object v1
 
-    .line 152
+    .line 153
     invoke-static {}, Landroidx/autofill/inline/UiVersions;->newStylesBuilder()Landroidx/autofill/inline/UiVersions$StylesBuilder;
 
     move-result-object v2
 
-    .line 153
+    .line 154
     invoke-static {}, Landroidx/autofill/inline/v1/InlineSuggestionUi;->newStyleBuilder()Landroidx/autofill/inline/v1/InlineSuggestionUi$Style$Builder;
 
     move-result-object v3
 
-    .line 154
+    .line 155
     invoke-virtual {v3, p0}, Landroidx/autofill/inline/v1/InlineSuggestionUi$Style$Builder;->setChipStyle(Landroidx/autofill/inline/common/ViewStyle;)Landroidx/autofill/inline/v1/InlineSuggestionUi$Style$Builder;
 
     move-result-object v3
 
-    .line 155
+    .line 156
     invoke-virtual {v3, p0}, Landroidx/autofill/inline/v1/InlineSuggestionUi$Style$Builder;->setSingleIconChipStyle(Landroidx/autofill/inline/common/ViewStyle;)Landroidx/autofill/inline/v1/InlineSuggestionUi$Style$Builder;
 
     move-result-object p0
 
-    .line 156
+    .line 157
     invoke-virtual {p0, v0}, Landroidx/autofill/inline/v1/InlineSuggestionUi$Style$Builder;->setTitleStyle(Landroidx/autofill/inline/common/TextViewStyle;)Landroidx/autofill/inline/v1/InlineSuggestionUi$Style$Builder;
 
     move-result-object p0
 
-    .line 157
+    .line 158
     invoke-virtual {p0, v1}, Landroidx/autofill/inline/v1/InlineSuggestionUi$Style$Builder;->setSubtitleStyle(Landroidx/autofill/inline/common/TextViewStyle;)Landroidx/autofill/inline/v1/InlineSuggestionUi$Style$Builder;
 
     move-result-object p0
 
-    .line 158
+    .line 159
     invoke-virtual {p0}, Landroidx/autofill/inline/v1/InlineSuggestionUi$Style$Builder;->build()Landroidx/autofill/inline/v1/InlineSuggestionUi$Style;
 
     move-result-object p0
 
-    .line 153
+    .line 154
     invoke-virtual {v2, p0}, Landroidx/autofill/inline/UiVersions$StylesBuilder;->addStyle(Landroidx/autofill/inline/UiVersions$Style;)Landroidx/autofill/inline/UiVersions$StylesBuilder;
 
     move-result-object p0
 
-    .line 159
+    .line 160
     invoke-virtual {p0}, Landroidx/autofill/inline/UiVersions$StylesBuilder;->build()Landroid/os/Bundle;
 
     move-result-object p0
 
-    .line 160
+    .line 161
     new-instance v0, Landroid/widget/inline/InlinePresentationSpec$Builder;
 
     invoke-direct {v0, v8, v10}, Landroid/widget/inline/InlinePresentationSpec$Builder;-><init>(Landroid/util/Size;Landroid/util/Size;)V
 
-    .line 161
+    .line 162
     invoke-virtual {v0, p0}, Landroid/widget/inline/InlinePresentationSpec$Builder;->setStyle(Landroid/os/Bundle;)Landroid/widget/inline/InlinePresentationSpec$Builder;
 
     move-result-object p0
 
-    .line 162
+    .line 163
     invoke-virtual {p0}, Landroid/widget/inline/InlinePresentationSpec$Builder;->build()Landroid/widget/inline/InlinePresentationSpec;
 
     move-result-object p0
 
-    .line 163
+    .line 164
     new-instance v0, Ljava/util/ArrayList;
 
     const/4 v1, 0x3
 
     invoke-direct {v0, v1}, Ljava/util/ArrayList;-><init>(I)V
 
-    .line 165
+    .line 166
     nop
 
     :goto_5
     if-ge v5, v1, :cond_9
 
-    .line 166
+    .line 167
     invoke-virtual {v0, p0}, Ljava/util/ArrayList;->add(Ljava/lang/Object;)Z
 
-    .line 165
+    .line 166
     add-int/lit8 v5, v5, 0x1
 
     goto :goto_5
 
-    .line 168
+    .line 169
     :cond_9
     new-instance p0, Landroid/view/inputmethod/InlineSuggestionsRequest$Builder;
 
     invoke-direct {p0, v0}, Landroid/view/inputmethod/InlineSuggestionsRequest$Builder;-><init>(Ljava/util/List;)V
 
-    .line 169
-    invoke-virtual {p0, v1}, Landroid/view/inputmethod/InlineSuggestionsRequest$Builder;->setMaxSuggestionCount(I)Landroid/view/inputmethod/InlineSuggestionsRequest$Builder;
+    .line 170
+    const/4 v0, 0x6
+
+    invoke-virtual {p0, v0}, Landroid/view/inputmethod/InlineSuggestionsRequest$Builder;->setMaxSuggestionCount(I)Landroid/view/inputmethod/InlineSuggestionsRequest$Builder;
 
     move-result-object p0
 
-    .line 170
+    .line 171
     invoke-virtual {p0}, Landroid/view/inputmethod/InlineSuggestionsRequest$Builder;->build()Landroid/view/inputmethod/InlineSuggestionsRequest;
 
     move-result-object p0
     :try_end_1
     .catchall {:try_start_1 .. :try_end_1} :catchall_0
 
-    .line 168
+    .line 169
     monitor-exit p1
 
     return-object p0
 
-    .line 86
+    .line 87
     :goto_6
     :try_start_2
     monitor-exit p1
@@ -1098,19 +1102,19 @@
 .method private static findModule(Landroid/content/Context;)Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillHeaderModule;
     .locals 2
 
-    .line 342
+    .line 343
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformOwners;->find(Landroid/content/Context;)Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformOwner;
 
     move-result-object p0
 
-    .line 343
+    .line 344
     const/4 v0, 0x0
 
     if-nez p0, :cond_0
 
     return-object v0
 
-    .line 344
+    .line 345
     :cond_0
     invoke-interface {p0}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformOwner;->getHeaderPlatformController()Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformController;
 
@@ -1122,12 +1126,12 @@
 
     move-result-object p0
 
-    .line 346
+    .line 347
     instance-of v1, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillHeaderModule;
 
     if-eqz v1, :cond_1
 
-    .line 347
+    .line 348
     move-object v0, p0
 
     check-cast v0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillHeaderModule;
@@ -1137,7 +1141,7 @@
     :cond_1
     nop
 
-    .line 346
+    .line 347
     :goto_0
     return-object v0
 .end method
@@ -1149,7 +1153,7 @@
 
     monitor-enter v0
 
-    .line 175
+    .line 176
     :try_start_0
     sget-boolean v1, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->activeInputSession:Z
 
@@ -1163,13 +1167,13 @@
 
     goto/16 :goto_7
 
-    .line 180
+    .line 181
     :cond_0
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->findModule(Landroid/content/Context;)Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillHeaderModule;
 
     move-result-object v1
 
-    .line 181
+    .line 182
     const/4 v3, 0x1
 
     if-eqz v1, :cond_9
@@ -1182,13 +1186,13 @@
 
     goto/16 :goto_5
 
-    .line 186
+    .line 187
     :cond_1
     invoke-virtual {p1}, Landroid/view/inputmethod/InlineSuggestionsResponse;->getInlineSuggestions()Ljava/util/List;
 
     move-result-object p1
 
-    .line 187
+    .line 188
     if-nez p1, :cond_2
 
     move v4, v2
@@ -1200,17 +1204,17 @@
 
     move-result v4
 
-    const/4 v5, 0x3
+    const/4 v5, 0x6
 
     invoke-static {v5, v4}, Ljava/lang/Math;->min(II)I
 
     move-result v4
 
-    .line 188
+    .line 189
     :goto_0
     if-nez v4, :cond_5
 
-    .line 195
+    .line 196
     const-string p0, "HeaderPlatformAudit"
 
     new-instance p1, Ljava/lang/StringBuilder;
@@ -1257,26 +1261,26 @@
 
     invoke-static {p0, p1}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
 
-    .line 197
+    .line 198
     sget-object p0, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->pendingViews:[Landroid/view/View;
 
     if-nez p0, :cond_4
 
-    .line 198
+    .line 199
     invoke-virtual {v1}, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillHeaderModule;->clearRemoteViews()V
 
-    .line 199
+    .line 200
     sput-boolean v2, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->published:Z
     :try_end_0
     .catchall {:try_start_0 .. :try_end_0} :catchall_0
 
-    .line 201
+    .line 202
     :cond_4
     monitor-exit v0
 
     return v3
 
-    .line 204
+    .line 205
     :cond_5
     :try_start_1
     sget v5, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->generation:I
@@ -1285,13 +1289,13 @@
 
     sput v5, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->generation:I
 
-    .line 205
+    .line 206
     invoke-static {}, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->cancelPendingLocked()V
 
-    .line 206
+    .line 207
     invoke-virtual {v1}, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillHeaderModule;->clearRemoteViews()V
 
-    .line 207
+    .line 208
     const-string v5, "HeaderPlatformAudit"
 
     new-instance v6, Ljava/lang/StringBuilder;
@@ -1326,7 +1330,7 @@
 
     move-result-object v6
 
-    .line 208
+    .line 209
     invoke-virtual {v1}, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillHeaderModule;->getHeaderToken()J
 
     move-result-wide v7
@@ -1353,56 +1357,56 @@
 
     move-result-object v6
 
-    .line 207
+    .line 208
     invoke-static {v5, v6}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
 
-    .line 209
+    .line 210
     sget v5, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->generation:I
 
-    .line 210
+    .line 211
     new-instance v6, Ljava/lang/ref/WeakReference;
 
     invoke-direct {v6, v1}, Ljava/lang/ref/WeakReference;-><init>(Ljava/lang/Object;)V
 
-    .line 212
+    .line 213
     sput v4, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->pendingCount:I
 
-    .line 213
+    .line 214
     new-array v7, v4, [Landroid/view/View;
 
     sput-object v7, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->pendingViews:[Landroid/view/View;
 
-    .line 214
+    .line 215
     new-array v7, v4, [Z
 
     sput-object v7, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->completedInflations:[Z
 
-    .line 215
+    .line 216
     sput-object v6, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->pendingModule:Ljava/lang/ref/WeakReference;
 
-    .line 216
+    .line 217
     invoke-virtual {v1}, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillHeaderModule;->getSessionToken()J
 
     move-result-wide v7
 
     sput-wide v7, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->pendingSessionToken:J
 
-    .line 217
+    .line 218
     invoke-virtual {v1}, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillHeaderModule;->getHeaderToken()J
 
     move-result-wide v7
 
     sput-wide v7, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->pendingHeaderToken:J
 
-    .line 218
+    .line 219
     sput-boolean v2, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->published:Z
 
-    .line 219
+    .line 220
     invoke-virtual {p0}, Landroid/content/Context;->getMainExecutor()Ljava/util/concurrent/Executor;
 
     move-result-object v1
 
-    .line 225
+    .line 226
     new-instance v7, Landroid/util/Size;
 
     const/4 v8, -0x2
@@ -1411,16 +1415,16 @@
     :try_end_1
     .catchall {:try_start_1 .. :try_end_1} :catchall_0
 
-    .line 228
+    .line 229
     nop
 
     :goto_3
     if-ge v2, v4, :cond_7
 
-    .line 229
+    .line 230
     nop
 
-    .line 231
+    .line 232
     :try_start_2
     invoke-interface {p1, v2}, Ljava/util/List;->get(I)Ljava/lang/Object;
 
@@ -1437,14 +1441,14 @@
     .catch Ljava/lang/RuntimeException; {:try_start_2 .. :try_end_2} :catch_0
     .catchall {:try_start_2 .. :try_end_2} :catchall_0
 
-    .line 245
+    .line 246
     goto :goto_4
 
-    .line 241
+    .line 242
     :catch_0
     move-exception v8
 
-    .line 242
+    .line 243
     :try_start_3
     const-string v9, "HeaderPlatformAudit"
 
@@ -1468,7 +1472,7 @@
 
     move-result-object v10
 
-    .line 243
+    .line 244
     invoke-virtual {v8}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
 
     move-result-object v8
@@ -1485,10 +1489,10 @@
 
     move-result-object v8
 
-    .line 242
+    .line 243
     invoke-static {v9, v8}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
 
-    .line 244
+    .line 245
     invoke-virtual {v6}, Ljava/lang/ref/WeakReference;->get()Ljava/lang/Object;
 
     move-result-object v8
@@ -1499,26 +1503,26 @@
 
     invoke-static {v5, v8, v2, v9}, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->acceptInflated(ILcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillHeaderModule;ILandroid/view/View;)V
 
-    .line 228
+    .line 229
     :goto_4
     add-int/lit8 v2, v2, 0x1
 
     goto :goto_3
 
-    .line 248
+    .line 249
     :cond_7
     sget-boolean p0, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->published:Z
 
     if-nez p0, :cond_8
 
-    .line 249
+    .line 250
     new-instance p0, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat$3;
 
     invoke-direct {p0, v5, v6}, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat$3;-><init>(ILjava/lang/ref/WeakReference;)V
 
     sput-object p0, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->timeout:Ljava/lang/Runnable;
 
-    .line 255
+    .line 256
     sget-object p0, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->MAIN_HANDLER:Landroid/os/Handler;
 
     sget-object p1, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->timeout:Ljava/lang/Runnable;
@@ -1529,13 +1533,13 @@
     :try_end_3
     .catchall {:try_start_3 .. :try_end_3} :catchall_0
 
-    .line 257
+    .line 258
     :cond_8
     monitor-exit v0
 
     return v3
 
-    .line 182
+    .line 183
     :cond_9
     :goto_5
     :try_start_4
@@ -1571,12 +1575,12 @@
     :try_end_4
     .catchall {:try_start_4 .. :try_end_4} :catchall_0
 
-    .line 184
+    .line 185
     monitor-exit v0
 
     return v2
 
-    .line 176
+    .line 177
     :cond_b
     :goto_7
     :try_start_5
@@ -1588,12 +1592,12 @@
     :try_end_5
     .catchall {:try_start_5 .. :try_end_5} :catchall_0
 
-    .line 177
+    .line 178
     monitor-exit v0
 
     return v2
 
-    .line 174
+    .line 175
     :catchall_0
     move-exception p0
 
@@ -1608,7 +1612,7 @@
 .method private static isCurrentLocked(ILcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillHeaderModule;)Z
     .locals 2
 
-    .line 288
+    .line 289
     sget v0, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->generation:I
 
     if-ne p0, v0, :cond_0
@@ -1621,7 +1625,7 @@
 
     sget-wide v0, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->pendingSessionToken:J
 
-    .line 291
+    .line 292
     invoke-virtual {p1, v0, v1}, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillHeaderModule;->isSessionAvailableFor(J)Z
 
     move-result p0
@@ -1634,7 +1638,7 @@
 
     sget-object p0, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->pendingModule:Ljava/lang/ref/WeakReference;
 
-    .line 293
+    .line 294
     invoke-virtual {p0}, Ljava/lang/ref/WeakReference;->get()Ljava/lang/Object;
 
     move-result-object p0
@@ -1652,7 +1656,7 @@
     :cond_0
     const/4 p0, 0x0
 
-    .line 288
+    .line 289
     :goto_0
     return p0
 .end method
@@ -1660,7 +1664,7 @@
 .method private static publishLocked(ILcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillHeaderModule;)V
     .locals 8
 
-    .line 299
+    .line 300
     invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->isCurrentLocked(ILcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillHeaderModule;)Z
 
     move-result p0
@@ -1675,30 +1679,30 @@
 
     goto/16 :goto_3
 
-    .line 303
+    .line 304
     :cond_0
     const/4 p0, 0x1
 
     sput-boolean p0, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->published:Z
 
-    .line 304
+    .line 305
     sget-object v1, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->timeout:Ljava/lang/Runnable;
 
     const/4 v2, 0x0
 
     if-eqz v1, :cond_1
 
-    .line 305
+    .line 306
     sget-object v1, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->MAIN_HANDLER:Landroid/os/Handler;
 
     sget-object v3, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->timeout:Ljava/lang/Runnable;
 
     invoke-virtual {v1, v3}, Landroid/os/Handler;->removeCallbacks(Ljava/lang/Runnable;)V
 
-    .line 306
+    .line 307
     sput-object v2, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->timeout:Ljava/lang/Runnable;
 
-    .line 308
+    .line 309
     :cond_1
     new-instance v1, Ljava/util/ArrayList;
 
@@ -1708,7 +1712,7 @@
 
     invoke-direct {v1, v3}, Ljava/util/ArrayList;-><init>(I)V
 
-    .line 309
+    .line 310
     sget-object v3, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->pendingViews:[Landroid/view/View;
 
     array-length v4, v3
@@ -1731,45 +1735,45 @@
 
     goto :goto_0
 
-    .line 310
+    .line 311
     :cond_3
     sput-object v2, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->pendingViews:[Landroid/view/View;
 
-    .line 311
+    .line 312
     sput-object v2, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->completedInflations:[Z
 
-    .line 312
+    .line 313
     sput-object v2, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->pendingModule:Ljava/lang/ref/WeakReference;
 
-    .line 313
+    .line 314
     const-wide/16 v2, 0x0
 
     sput-wide v2, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->pendingSessionToken:J
 
-    .line 314
+    .line 315
     sput-wide v2, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->pendingHeaderToken:J
 
-    .line 315
+    .line 316
     sput v5, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->pendingCount:I
 
-    .line 316
+    .line 317
     invoke-virtual {v1}, Ljava/util/ArrayList;->isEmpty()Z
 
     move-result v4
 
     if-eqz v4, :cond_4
 
-    .line 317
+    .line 318
     const-string p0, "inline publish empty"
 
     invoke-static {v0, p0}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
 
-    .line 318
+    .line 319
     invoke-virtual {p1}, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillHeaderModule;->clearRemoteViews()V
 
     goto :goto_2
 
-    .line 320
+    .line 321
     :cond_4
     sget-object v4, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->REMOTE_CLIPPER:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderRemoteSurfaceClipper;
 
@@ -1779,7 +1783,7 @@
 
     move-result v4
 
-    .line 322
+    .line 323
     new-instance v6, Ljava/lang/StringBuilder;
 
     invoke-direct {v6}, Ljava/lang/StringBuilder;-><init>()V
@@ -1814,7 +1818,7 @@
 
     move-result-object v1
 
-    .line 323
+    .line 324
     invoke-virtual {p1}, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillHeaderModule;->getHeaderToken()J
 
     move-result-wide v6
@@ -1837,21 +1841,21 @@
 
     move-result-object p0
 
-    .line 322
+    .line 323
     invoke-static {v0, p0}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
 
-    .line 325
+    .line 326
     :goto_2
     return-void
 
-    .line 300
+    .line 301
     :cond_6
     :goto_3
     const-string p0, "inline publish skipped stale/published"
 
     invoke-static {v0, p0}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
 
-    .line 301
+    .line 302
     return-void
 .end method
 
@@ -1862,7 +1866,7 @@
 
     monitor-enter v0
 
-    .line 281
+    .line 282
     :try_start_0
     invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->isCurrentLocked(ILcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillHeaderModule;)Z
 
@@ -1874,18 +1878,18 @@
 
     if-nez v1, :cond_0
 
-    .line 282
+    .line 283
     invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->publishLocked(ILcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillHeaderModule;)V
     :try_end_0
     .catchall {:try_start_0 .. :try_end_0} :catchall_0
 
-    .line 284
+    .line 285
     :cond_0
     monitor-exit v0
 
     return-void
 
-    .line 280
+    .line 281
     :catchall_0
     move-exception p0
 
@@ -1900,10 +1904,10 @@
 .method private static resolveKeyboardThemeCandidateColor(Landroid/content/Context;I)Ljava/lang/Integer;
     .locals 5
 
-    .line 358
+    .line 359
     nop
 
-    .line 359
+    .line 360
     instance-of v0, p0, Lcom/google/android/inputmethod/pinyin/PinyinIME;
 
     const/4 v1, 0x0
@@ -1912,7 +1916,7 @@
 
     if-eqz v0, :cond_1
 
-    .line 364
+    .line 365
     move-object v0, p0
 
     check-cast v0, Lcom/google/android/inputmethod/pinyin/PinyinIME;
@@ -1921,15 +1925,15 @@
 
     move-result-object v0
 
-    .line 365
+    .line 366
     if-eqz v0, :cond_1
 
-    .line 366
+    .line 367
     new-instance v3, Landroid/view/ContextThemeWrapper;
 
     invoke-direct {v3, p0, v2}, Landroid/view/ContextThemeWrapper;-><init>(Landroid/content/Context;I)V
 
-    .line 367
+    .line 368
     invoke-virtual {v3}, Landroid/view/ContextThemeWrapper;->getTheme()Landroid/content/res/Resources$Theme;
 
     move-result-object v4
@@ -1940,13 +1944,13 @@
 
     invoke-virtual {v4, p0}, Landroid/content/res/Resources$Theme;->setTo(Landroid/content/res/Resources$Theme;)V
 
-    .line 368
+    .line 369
     invoke-interface {v0, v3}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/IKeyboardTheme;->applyToContext(Landroid/content/Context;)V
 
-    .line 369
+    .line 370
     nop
 
-    .line 373
+    .line 374
     invoke-static {v3}, Landroid/view/LayoutInflater;->from(Landroid/content/Context;)Landroid/view/LayoutInflater;
 
     move-result-object p0
@@ -1957,19 +1961,19 @@
 
     move-result-object p0
 
-    .line 375
+    .line 376
     const v0, 0x7f0f0183
 
     invoke-virtual {p0, v0}, Landroid/view/View;->findViewById(I)Landroid/view/View;
 
     move-result-object p0
 
-    .line 376
+    .line 377
     instance-of v0, p0, Landroid/widget/TextView;
 
     if-eqz v0, :cond_0
 
-    .line 377
+    .line 378
     check-cast p0, Landroid/widget/TextView;
 
     invoke-virtual {p0}, Landroid/widget/TextView;->getCurrentTextColor()I
@@ -1982,11 +1986,11 @@
 
     return-object p0
 
-    .line 376
+    .line 377
     :cond_0
     move-object p0, v3
 
-    .line 381
+    .line 382
     :cond_1
     filled-new-array {p1}, [I
 
@@ -1996,13 +2000,13 @@
 
     move-result-object p0
 
-    .line 383
+    .line 384
     :try_start_0
     invoke-virtual {p0, v2}, Landroid/content/res/TypedArray;->getColorStateList(I)Landroid/content/res/ColorStateList;
 
     move-result-object p1
 
-    .line 384
+    .line 385
     if-nez p1, :cond_2
 
     :goto_0
@@ -2021,20 +2025,20 @@
 
     goto :goto_0
 
-    .line 386
+    .line 387
     :goto_1
     invoke-virtual {p0}, Landroid/content/res/TypedArray;->recycle()V
 
-    .line 384
+    .line 385
     return-object v1
 
-    .line 386
+    .line 387
     :catchall_0
     move-exception p1
 
     invoke-virtual {p0}, Landroid/content/res/TypedArray;->recycle()V
 
-    .line 387
+    .line 388
     throw p1
 .end method
 
@@ -2045,7 +2049,7 @@
 
     monitor-enter v0
 
-    .line 79
+    .line 80
     :try_start_0
     sget v1, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->generation:I
 
@@ -2055,13 +2059,13 @@
 
     sput v1, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->generation:I
 
-    .line 80
+    .line 81
     sput-boolean v2, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->activeInputSession:Z
 
-    .line 81
+    .line 82
     invoke-static {}, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->cancelPendingLocked()V
 
-    .line 82
+    .line 83
     const-string v1, "HeaderPlatformAudit"
 
     new-instance v2, Ljava/lang/StringBuilder;
@@ -2088,12 +2092,12 @@
     :try_end_0
     .catchall {:try_start_0 .. :try_end_0} :catchall_0
 
-    .line 83
+    .line 84
     monitor-exit v0
 
     return-void
 
-    .line 78
+    .line 79
     :catchall_0
     move-exception v1
 
