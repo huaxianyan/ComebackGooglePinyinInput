@@ -25,6 +25,7 @@ target SDK:     36
 - 完成 target SDK 29–36 的逐版本适配与验收，支持 Android 16 的 covering-IME、系统导航区域和 edge-to-edge 行为。
 - 修复 Android 16 手写首笔崩溃，保留原有离屏画布、压感宽度、路径平滑和原生识别流程。
 - 修复候选、标点、符号和表情滚动/翻页后的误触问题。
+- Android 16高刷新率屏幕上的候选面板展开/收起动画会在运动期间动态请求高刷，结束后立即释放，避免键盘空闲时持续锁定高刷新率。
 - 补齐现代 Android 所需的组件导出、PendingIntent 和动态 Receiver 安全要求。
 
 ### 统一 Header、简繁切换、剪贴板与 Autofill

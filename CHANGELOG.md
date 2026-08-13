@@ -2,6 +2,22 @@
 
 ## [Unreleased]
 
+## [2.0.6] - 2026-08-13
+
+修复候选面板展开和收起动画在高刷新率屏幕上被稳定限制为 60fps 的问题；只在原生 80ms 动画期间请求系统高刷新率类别，结束或取消后立即释放。
+
+### Fixed
+
+- 在 Android 16/API 36 及以上，为候选面板展开和收起的原生 `translationY` 动画动态请求 `REQUESTED_FRAME_RATE_CATEGORY_HIGH`；Pixel 10 Pro 上活动帧间隔由约 16.67ms 降至约 8.34ms，用户真机确认“明显更流畅”。
+- 动画结束、取消或反向切换时恢复 `NO_PREFERENCE`；不固定 120Hz，不在键盘空闲或整个输入视图生命周期持续保持高刷，不启用 Window touch boost。
+- API 36-only 方法通过精确兼容桥调用，legacy primary DEX不直接解析该方法；API 17–35保持原行为。
+
+### Build
+
+- 增加候选动画帧率专项门禁，验证展开/收起 start/end生命周期、API 36边界及 primary DEX隔离，并纳入 Release workflow。
+- 无插桩基线确认原问题不是 CPU、GPU、layout/draw、GC或热节流；release-like non-debuggable包在 Pixel 10 Pro / Android 16上确认约120fps、现代 jank为0、Missed Vsync为0、Slow UI thread为0，静止后120Hz override消失。
+- 完整构建继续通过 Compose Material 3、Header Platform、Inline Autofill、敏感 Clipboard、API 31/33/34/35/36、6,633个旧资源 ID、v1/v2/v3签名和16 KiB ZIP alignment验证。
+
 ## [2.0.5] - 2026-08-13
 
 为普通中文软键盘增加原生简繁快速切换按钮，并提供可选的显示设置；继续复用原有中文 HMM键盘状态、Preference和 Candidate刷新链路。
