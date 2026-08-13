@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout style="@style/HeaderInner.Prime"
+  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
+    <com.google.android.apps.inputmethod.libs.framework.keyboard.widget.AccessPointsBar app:overlayView="@id/access_points_overlay_view" style="@style/AccessPointsBar" />
+    <LinearLayout android:orientation="horizontal" android:paddingLeft="?KeyboardInnerPadding" android:paddingRight="?KeyboardInnerPadding" android:layout_width="fill_parent" android:layout_height="fill_parent">
+        <com.google.android.apps.inputmethod.libs.framework.keyboard.SoftKeyView android:id="@id/key_pos_header_access_points_menu" style="@style/SuggestionStripAccessPointsMenuIcon" />
+        <LinearLayout android:id="@id/access_points_overlay_view" style="@style/PrimeHeaderInnerLinear">
+            <com.google.android.apps.inputmethod.libs.framework.keyboard.SoftKeyView android:id="@id/key_pos_header_lang_1" style="@style/HeaderTab.Prime" />
+            <com.google.android.apps.inputmethod.libs.framework.keyboard.SoftKeyView android:id="@id/key_pos_header_lang_2" style="@style/HeaderTab.Prime" />
+        </LinearLayout>
+    </LinearLayout>
+    <LinearLayout android:gravity="right" android:paddingRight="?KeyboardInnerPadding" style="@style/PrimeHeaderInnerLinear">
+        <com.google.android.inputmethod.pinyin.SimplifiedTraditionalToggleKeyView android:id="@id/key_pos_header_sc_tc_toggle" style="@style/HeaderTab.PrimeIcon" />
+        <com.google.android.apps.inputmethod.libs.framework.keyboard.SoftKeyView android:id="@id/key_pos_header_voice" style="@style/HeaderTab.PrimeIcon" />
+    </LinearLayout>
+</FrameLayout>

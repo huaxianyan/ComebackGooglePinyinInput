@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<framework>
+    <key_mapping>
+        <mapping view_id="@id/key_pos_header_sc_tc_toggle" key_id="@id/softkey_header_simplified_mode" />
+    </key_mapping>
+    <key_mapping state="ENABLE_SC_TC_CONVERSION">
+        <mapping view_id="@id/key_pos_header_sc_tc_toggle" key_id="@id/softkey_header_traditional_mode" />
+    </key_mapping>
+</framework>

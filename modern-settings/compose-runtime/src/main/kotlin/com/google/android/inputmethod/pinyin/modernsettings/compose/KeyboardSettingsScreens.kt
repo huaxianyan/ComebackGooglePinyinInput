@@ -217,6 +217,23 @@ internal fun androidx.compose.foundation.lazy.LazyListScope.keyboardKeysSettings
     }
     item {
         SettingsSwitchRow(
+            title = stringResource(
+                R.string.modern_settings_show_simplified_traditional_header_toggle_title,
+            ),
+            supporting = stringResource(
+                R.string.modern_settings_show_simplified_traditional_header_toggle_summary,
+            ),
+            checked = snapshot.showSimplifiedTraditionalHeaderToggle.value,
+            onCheckedChange = {
+                actions.onBooleanChange(
+                    BooleanSettingContracts.showSimplifiedTraditionalHeaderToggle,
+                    it,
+                )
+            },
+        )
+    }
+    item {
+        SettingsSwitchRow(
             title = legacyString(
                 "setting_show_english_keyboard_title",
                 R.string.modern_settings_show_english_keyboard_title,

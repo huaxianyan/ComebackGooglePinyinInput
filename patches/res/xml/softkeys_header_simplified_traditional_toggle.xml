@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<framework>
+    <softkeys>
+        <softkey id="@id/softkey_header_simplified_mode" layout="@layout/softkey_function_key_label" multi_touch="false" content_description="@string/simplified_chinese_mode_key_content_desc">
+            <action type="PRESS" keycode="KEYBOARD_STATE_ON" data="ENABLE_SC_TC_CONVERSION" />
+            <label location="@id/label" value="@string/label_simplified_chinese_mode" />
+        </softkey>
+        <softkey id="@id/softkey_header_traditional_mode" layout="@layout/softkey_function_key_label" multi_touch="false" content_description="@string/traditional_chinese_mode_key_content_desc">
+            <action type="PRESS" keycode="KEYBOARD_STATE_OFF" data="ENABLE_SC_TC_CONVERSION" />
+            <label location="@id/label" value="@string/label_traditional_chinese_mode" />
+        </softkey>
+    </softkeys>
+</framework>

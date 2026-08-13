@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="pref_key_show_simplified_traditional_header_toggle">show_simplified_traditional_header_toggle</string>
+    <bool name="pref_def_value_show_simplified_traditional_header_toggle">true</bool>
+    <string name="setting_show_simplified_traditional_header_toggle_title">Show Simplified/Traditional Chinese switch</string>
+    <string name="setting_show_simplified_traditional_header_toggle_summary">Show a quick switch to the left of the voice input or hide-keyboard button</string>
+    <string name="simplified_chinese_mode_key_content_desc">Simplified Chinese. Switch to Traditional Chinese</string>
+    <string name="traditional_chinese_mode_key_content_desc">Traditional Chinese. Switch to Simplified Chinese</string>
+    <string name="label_simplified_chinese_mode">简</string>
+    <string name="label_traditional_chinese_mode">繁</string>
+    <item type="id" name="key_pos_header_sc_tc_toggle" />
+    <item type="id" name="softkey_header_simplified_mode" />
+    <item type="id" name="softkey_header_traditional_mode" />
+</resources>

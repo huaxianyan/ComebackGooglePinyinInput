@@ -277,7 +277,8 @@ def main() -> int:
             if value not in pinyin:
                 raise RuntimeError(f"IME Header platform lifecycle is incomplete: {value}")
         platform_layouts = (
-            "keyboard_prime_header.xml", "keyboard_prime_header_no_deletable_label.xml",
+            "keyboard_prime_header.xml", "keyboard_prime_header_chinese.xml",
+            "keyboard_prime_header_no_deletable_label.xml",
             "keyboard_handwriting_header.xml", "keyboard_hard_header.xml",
             "keyboard_hard_header_no_deletable_label.xml", "keyboard_universal_header.xml",
         )

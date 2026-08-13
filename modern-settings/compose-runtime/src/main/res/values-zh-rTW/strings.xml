@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="modern_settings_show_simplified_traditional_header_toggle_title">顯示簡繁切換按鈕</string>
+    <string name="modern_settings_show_simplified_traditional_header_toggle_summary">在語音輸入或收合鍵左側顯示快速切換按鈕</string>
+</resources>

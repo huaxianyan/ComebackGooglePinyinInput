@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="setting_show_simplified_traditional_header_toggle_title">显示简繁切换按钮</string>
+    <string name="setting_show_simplified_traditional_header_toggle_summary">在语音输入或收起键左侧显示快捷切换按钮</string>
+    <string name="simplified_chinese_mode_key_content_desc">当前为简体中文，切换到繁体中文</string>
+    <string name="traditional_chinese_mode_key_content_desc">当前为繁体中文，切换到简体中文</string>
+</resources>
