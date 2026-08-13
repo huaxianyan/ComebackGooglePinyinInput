@@ -12,9 +12,10 @@
     <string name="modern_settings_launcher_icon_title">Show app icon</string>
     <string name="modern_settings_launcher_icon_summary">Show the app icon in the launcher</string>
     <string name="modern_settings_about_title">About</string>
-    <string name="modern_settings_about_summary">Terms, privacy, licenses, and version</string>
+    <string name="modern_settings_about_summary">Repository, terms, privacy, licenses, and version</string>
     <string name="modern_settings_terms_title">Terms of service</string>
     <string name="modern_settings_privacy_title">Privacy policy</string>
+    <string name="modern_settings_repository_title">GitHub repository</string>
     <string name="modern_settings_licenses_title">Open source licenses</string>
     <string name="modern_settings_licenses_summary">License details for open source software</string>
     <string name="modern_settings_version_title">Current version</string>

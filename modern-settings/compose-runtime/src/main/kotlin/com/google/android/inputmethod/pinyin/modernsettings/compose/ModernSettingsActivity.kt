@@ -162,6 +162,9 @@ class ModernSettingsActivity : ComponentActivity() {
                                     LegacySettingsNavigation.legacyWebIntent(this, "privacy_url"),
                                 )
                             },
+                            onOpenRepository = {
+                                startActivity(LegacySettingsNavigation.repositoryIntent())
+                            },
                             onOpenLicenses = {
                                 startActivity(LegacySettingsNavigation.licensesIntent(this))
                             },

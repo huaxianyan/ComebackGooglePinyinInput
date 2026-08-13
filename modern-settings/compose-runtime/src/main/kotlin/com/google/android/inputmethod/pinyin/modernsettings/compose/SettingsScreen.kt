@@ -72,6 +72,7 @@ data class SettingsActions(
     val onOpenThemeSelector: (ThemeSelectionSlot) -> Unit,
     val onOpenTerms: () -> Unit,
     val onOpenPrivacyPolicy: () -> Unit,
+    val onOpenRepository: () -> Unit,
     val onOpenLicenses: () -> Unit,
     val onRefreshDictionaryHealth: () -> Unit,
     val onAutomaticBackupEnabledChange: (Boolean) -> Unit,

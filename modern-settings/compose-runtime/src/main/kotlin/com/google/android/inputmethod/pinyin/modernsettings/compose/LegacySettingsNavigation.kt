@@ -6,6 +6,9 @@ import android.net.Uri
 
 /** Explicit entry points whose implementations remain in the legacy primary DEX. */
 internal object LegacySettingsNavigation {
+    const val repositoryUrl =
+        "https://github.com/huaxianyan/comeback-google-pinyin-input"
+
     const val themeSelectorActivity =
         "com.google.android.apps.inputmethod.libs.theme.preference.ThemeSelectorActivity"
 
@@ -17,6 +20,8 @@ internal object LegacySettingsNavigation {
         require(id != 0) { "Missing legacy web URL: $resourceName" }
         return Intent(Intent.ACTION_VIEW, Uri.parse(context.getString(id)))
     }
+
+    fun repositoryIntent(): Intent = Intent(Intent.ACTION_VIEW, Uri.parse(repositoryUrl))
 
     fun licensesIntent(context: Context): Intent = Intent().setClassName(
         context,

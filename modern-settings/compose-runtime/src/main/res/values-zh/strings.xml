@@ -12,9 +12,10 @@
     <string name="modern_settings_launcher_icon_title">显示应用图标</string>
     <string name="modern_settings_launcher_icon_summary">在启动器中显示应用图标</string>
     <string name="modern_settings_about_title">关于</string>
-    <string name="modern_settings_about_summary">服务条款、隐私政策、开源许可和版本</string>
+    <string name="modern_settings_about_summary">项目仓库、服务条款、隐私政策、开源许可和版本</string>
     <string name="modern_settings_terms_title">服务条款</string>
     <string name="modern_settings_privacy_title">隐私政策</string>
+    <string name="modern_settings_repository_title">GitHub 仓库</string>
     <string name="modern_settings_licenses_title">开源许可</string>
     <string name="modern_settings_licenses_summary">查看开源软件许可详情</string>
     <string name="modern_settings_version_title">当前版本</string>

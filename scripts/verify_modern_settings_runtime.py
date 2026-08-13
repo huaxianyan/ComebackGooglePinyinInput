@@ -122,6 +122,11 @@ def main() -> int:
             "SettingsRoute.About",
             "LegacySettingsNavigation.legacyWebIntent",
             "LegacySettingsNavigation.licensesIntent",
+            "val onOpenRepository: () -> Unit",
+            "actions.onOpenRepository",
+            "LegacySettingsNavigation.repositoryUrl",
+            "LegacySettingsNavigation.repositoryIntent()",
+            '"https://github.com/huaxianyan/comeback-google-pinyin-input"',
             "val onLauncherIconVisibleChange: (Boolean) -> Unit",
             "actions.onLauncherIconVisibleChange",
             "snapshot.launcherIcon.value",
@@ -262,6 +267,7 @@ def main() -> int:
                 'name="modern_settings_about_title"',
                 'name="modern_settings_terms_title"',
                 'name="modern_settings_privacy_title"',
+                'name="modern_settings_repository_title"',
                 'name="modern_settings_licenses_title"',
                 'name="modern_settings_version_title"',
                 'name="modern_settings_popup_on_keypress_title"',
@@ -702,6 +708,9 @@ def main() -> int:
         (
             '"com.google.android.apps.inputmethod.libs.theme.preference.ThemeSelectorActivity"',
             "Intent().setClassName(context, themeSelectorActivity)",
+            "const val repositoryUrl =",
+            '"https://github.com/huaxianyan/comeback-google-pinyin-input"',
+            "fun repositoryIntent(): Intent = Intent(Intent.ACTION_VIEW, Uri.parse(repositoryUrl))",
         ),
         "legacy specialized settings navigation",
     )
@@ -946,6 +955,8 @@ def main() -> int:
             'const-string v1, \\"modern_settings_use_legacy\\"',
             'modernsettings.compose.ModernSettingsActivity',
             '->setClassName(',
+            '->queryIntentActivities(',
+            'Ljava/util/List;->isEmpty()Z',
             'preference/SettingsActivity;->finish()V',
         ),
         "API-35 modern settings route",
@@ -1157,12 +1168,19 @@ def main() -> int:
                 'const-string v1, "modern_settings_use_legacy"',
                 "modernsettings.compose.ModernSettingsActivity",
                 "->setClassName(",
+                "->queryIntentActivities(",
+                "Ljava/util/List;->isEmpty()Z",
                 "SettingsActivity;->finish()V",
             ),
             "primary-DEX API-35 settings route",
         )
         if "Lcom/google/android/inputmethod/pinyin/modernsettings/compose/ModernSettingsActivity;" in settings_activity_text:
             raise RuntimeError("primary DEX must reference the modern Activity by string only")
+        if "Landroid/content/Intent;->resolveActivity(" in settings_activity_text:
+            raise RuntimeError(
+                "explicit modern settings Intent must query the installed manifest; "
+                "resolveActivity() merely echoes an explicit ComponentName"
+            )
         compose_activities = list(
             decoded.glob(
                 "smali_classes*/com/google/android/inputmethod/pinyin/modernsettings/compose/"
