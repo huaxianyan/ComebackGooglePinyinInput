@@ -104,9 +104,11 @@ def main() -> None:
         "Password digit row does not preserve the original header height",
     )
     require(
-        'android:layout_weight="750.0"' in password_body_text
+        '@layout/keyboard_qwerty_input_area' in password_body_text
+        and '@layout/keyboard_prime_bottom' in password_body_text
+        and 'android:layout_weight="750.0"' in password_body_text
         and 'android:layout_weight="250.0"' in password_body_text,
-        "Password QWERTY and bottom rows do not preserve their original proportions",
+        "Password QWERTY and bottom rows do not preserve the formal v2.0.2 geometry",
     )
     candidate_body_include = (
         '@layout/keyboard_candidates_body_inner_no_deletable_label'
@@ -120,12 +122,25 @@ def main() -> None:
             candidate_body_include in body_layout.read_text(encoding="utf-8"),
             f"Prime candidate controller has no pageable body holder: {body_layout}",
         )
+    require(
+        'keyboard_password_body_height' not in password_body_text,
+        "Password Body bypasses the formal v2.0.2 post-scaling expansion contract",
+    )
     helper = decoded / "smali/com/google/android/inputmethod/pinyin/PasswordBodyView.smali"
     helper_text = helper.read_text(encoding="utf-8")
+    for contract in (
+        ".method protected onAttachedToWindow()V",
+        ".method protected onDetachedFromWindow()V",
+        "Resources;->getDimensionPixelSize(I)I",
+        "ViewGroup$LayoutParams;->height:I",
+        "->setLayoutParams(Landroid/view/ViewGroup$LayoutParams;)V",
+    ):
+        require(contract in helper_text,
+                f"Formal v2.0.2 password height contract is missing: {contract}")
     require(
-        "0x7f0d00a9" in helper_text
-        and "getDimensionPixelSize(I)I" in helper_text,
-        "Password body height helper does not add the qualified header height",
+        "onMeasure(II)V" not in helper_text
+        and "scaleFrameworkHeight" not in helper_text,
+        "Password Body retains an experimental height formula",
     )
 
     for variants in HEADERLESS_KEYBOARDS:

@@ -8,7 +8,10 @@ from pathlib import Path
 import re
 import xml.etree.ElementTree as ET
 
-RESOURCE = re.compile(r"^\s*resource (0x[0-9a-fA-F]{8}) ([^/\s]+)/(.+?)\s*$")
+RESOURCE = re.compile(
+    r"^\s*resource (0x[0-9a-fA-F]{8}) ([^/\s]+)/(.+?)"
+    r"(?:\s+(?:PUBLIC|STAGED))*\s*$"
+)
 
 
 def main() -> int:

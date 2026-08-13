@@ -3,12 +3,12 @@
 .source "InlineAutofillCompat.java"
 
 # interfaces
-.implements Ljava/util/function/Consumer;
+.implements Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderRemoteSurfaceClipper;
 
 
 # annotations
-.annotation system Ldalvik/annotation/EnclosingMethod;
-    value = Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->handleResponse(Landroid/view/inputmethod/InlineSuggestionsResponse;)Z
+.annotation system Ldalvik/annotation/EnclosingClass;
+    value = Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;
 .end annotation
 
 .annotation system Ldalvik/annotation/InnerClass;
@@ -16,40 +16,12 @@
     name = null
 .end annotation
 
-.annotation system Ldalvik/annotation/Signature;
-    value = {
-        "Ljava/lang/Object;",
-        "Ljava/util/function/Consumer<",
-        "Landroid/widget/inline/InlineContentView;",
-        ">;"
-    }
-.end annotation
-
-
-# instance fields
-.field final synthetic val$callbackGeneration:I
-
-.field final synthetic val$hostReference:Ljava/lang/ref/WeakReference;
-
-.field final synthetic val$index:I
-
 
 # direct methods
-.method constructor <init>(ILjava/lang/ref/WeakReference;I)V
+.method constructor <init>()V
     .locals 0
-    .annotation system Ldalvik/annotation/Signature;
-        value = {
-            "()V"
-        }
-    .end annotation
 
-    .line 123
-    iput p1, p0, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat$1;->val$callbackGeneration:I
-
-    iput-object p2, p0, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat$1;->val$hostReference:Ljava/lang/ref/WeakReference;
-
-    iput p3, p0, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat$1;->val$index:I
-
+    .line 58
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
     return-void
@@ -57,35 +29,12 @@
 
 
 # virtual methods
-.method public accept(Landroid/widget/inline/InlineContentView;)V
-    .locals 3
-
-    .line 126
-    iget v0, p0, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat$1;->val$callbackGeneration:I
-
-    iget-object v1, p0, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat$1;->val$hostReference:Ljava/lang/ref/WeakReference;
-
-    invoke-virtual {v1}, Ljava/lang/ref/WeakReference;->get()Ljava/lang/Object;
-
-    move-result-object v1
-
-    check-cast v1, Lcom/google/android/inputmethod/pinyin/InlineAutofillClipHost;
-
-    iget v2, p0, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat$1;->val$index:I
-
-    invoke-static {v0, v1, v2, p1}, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->access$000(ILcom/google/android/inputmethod/pinyin/InlineAutofillClipHost;ILandroid/view/View;)V
-
-    .line 127
-    return-void
-.end method
-
-.method public bridge synthetic accept(Ljava/lang/Object;)V
+.method public applyClip(Landroid/view/View;Landroid/graphics/Rect;)V
     .locals 0
 
-    .line 123
-    check-cast p1, Landroid/widget/inline/InlineContentView;
+    .line 61
+    invoke-static {p1, p2}, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat;->applyRemoteClip(Landroid/view/View;Landroid/graphics/Rect;)V
 
-    invoke-virtual {p0, p1}, Lcom/google/android/inputmethod/pinyin/InlineAutofillCompat$1;->accept(Landroid/widget/inline/InlineContentView;)V
-
+    .line 62
     return-void
 .end method

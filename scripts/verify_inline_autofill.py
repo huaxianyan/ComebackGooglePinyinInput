@@ -11,10 +11,29 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 JAVA_HELPER = ROOT / "patches/java/com/google/android/inputmethod/pinyin/InlineAutofillCompat.java"
-JAVA_HOST = ROOT / "patches/java/com/google/android/inputmethod/pinyin/InlineAutofillClipHost.java"
+JAVA_PLATFORM = ROOT / "patches/java/com/google/android/inputmethod/pinyin/headerplatform"
 SMALI_HELPER = ROOT / "patches/smali/InlineAutofillCompat.smali"
-SMALI_HOST = ROOT / "patches/smali/InlineAutofillClipHost.smali"
+SMALI_PLATFORM = ROOT / "patches/smali/headerplatform"
+ANDROIDX_JAR = ROOT / "work/inline-autofill-synthetic-provider/libs/classes.jar"
 ANDROID_NS = "http://schemas.android.com/apk/res/android"
+LEGACY_THEME_STUBS = {
+    "com/google/android/apps/inputmethod/libs/framework/keyboard/IKeyboardTheme.java": """
+package com.google.android.apps.inputmethod.libs.framework.keyboard;
+public interface IKeyboardTheme {
+    void applyToContext(android.content.Context context);
+    String getResourceCacheKey();
+    String getViewStyleCacheKey();
+}
+""",
+    "com/google/android/inputmethod/pinyin/PinyinIME.java": """
+package com.google.android.inputmethod.pinyin;
+public class PinyinIME extends android.inputmethodservice.InputMethodService {
+    protected final com.google.android.apps.inputmethod.libs.framework.keyboard.IKeyboardTheme
+            a() { return null; }
+}
+""",
+}
+
 API_TYPES = (
     "Landroid/view/inputmethod/InlineSuggestion;",
     "Landroid/view/inputmethod/InlineSuggestionsRequest;",
@@ -32,7 +51,10 @@ def require_all(text: str, values: tuple[str, ...], label: str) -> None:
 
 def verify_sources(android_jar: Path, jdk: Path) -> None:
     helper = JAVA_HELPER.read_text(encoding="utf-8")
-    host = JAVA_HOST.read_text(encoding="utf-8")
+    platform_sources = sorted(JAVA_PLATFORM.glob("*.java"))
+    if not platform_sources:
+        raise FileNotFoundError(JAVA_PLATFORM)
+    platform = "\n".join(path.read_text(encoding="utf-8") for path in platform_sources)
     require_all(
         helper,
         (
@@ -40,46 +62,108 @@ def verify_sources(android_jar: Path, jdk: Path) -> None:
             "HEADER_HEIGHT_RES_ID = 0x7f0d00a9",
             "PRESENTATION_COUNT = 3",
             "INFLATION_TIMEOUT_MS = 1200L",
-            "new InlinePresentationSpec.Builder(minSize, maxSize).build()",
+            "inline request geometry orientation=",
+            "resolveKeyboardThemeCandidateColor(",
+            "((PinyinIME) context).a()",
+            "keyboardTheme.applyToContext(isolated)",
+            "isolated.getTheme().setTo(context.getTheme())",
+            "LayoutInflater.from(isolated).inflate(",
+            "((TextView) label).getCurrentTextColor()",
+            "new InlinePresentationSpec.Builder(minSize, maxSize)",
+            ".setStyle(styles)",
+            "titleStyleBuilder.setTextColor(textColor)",
+            "subtitleStyleBuilder.setTextColor(textColor)",
+            "TextViewStyle titleStyle = titleStyleBuilder.build()",
+            "TextViewStyle subtitleStyle = subtitleStyleBuilder.build()",
+            "UiVersions.newStylesBuilder()",
+            "InlineSuggestionUi.newStyleBuilder()",
             ".setMaxSuggestionCount(PRESENTATION_COUNT)",
             "response.getInlineSuggestions()",
+            "new Size(ViewGroup.LayoutParams.WRAP_CONTENT,",
+            "ViewGroup.LayoutParams.WRAP_CONTENT)",
             ".inflate(",
-            "new WeakReference<InlineAutofillClipHost>(host)",
+            "new WeakReference<InlineAutofillHeaderModule>(module)",
             "callbackGeneration == generation",
-            "host.isAvailable()",
-            "publishPartial(callbackGeneration",
-            "InlineAutofillClipHost.clearAllHosts()",
+            "module.isSessionAvailableFor(pendingSessionToken)",
+            "pendingHeaderToken = module.getHeaderToken()",
+            "module.getCurrentCandidateTextColor()",
+            "if (nativeCandidateColor == null)",
+            "activeRequestCandidateTextColor = nativeCandidateColor",
+            "module.setRemoteViews(",
+            "REMOTE_CLIPPER, activeRequestCandidateTextColor",
+            "module.clearRemoteViews()",
+            "HeaderPlatformOwners.find(context)",
+            "if (pendingViews == null)",
+            "published = false",
         ),
-        "Inline Autofill controller",
+        "Inline Autofill protocol bridge",
     )
     require_all(
-        host,
+        platform,
         (
-            "extends FrameLayout",
-            "HorizontalScrollView",
-            "onCandidates(List<?> candidates)",
-            "nativeCandidatesActive",
-            "setInlineViews(List<? extends View> views)",
-            "InlineAutofillCompat.applyRemoteClip(child, new Rect(childRect))",
-            "getGlobalVisibleRect(hostRect)",
-            "removeOnScrollChangedListener(this)",
+            "class InlineAutofillHeaderModule",
+            "isSessionAvailableFor(long expectedSessionToken)",
+            "publishIfReady();",
+            "HeaderPresentationKind.REMOTE_SURFACE",
+            "class InlineAutofillRemoteRenderer",
+            "class InlineAutofillRemoteContent",
+            "requestCandidateTextColor",
+            "payload = null;",
+            "chromeFactory.createCandidateChromeSlot()",
+            "chromeFactory.createActionChromeSlot(HeaderActionKind.PREVIOUS)",
+            "chromeFactory.createActionChromeSlot(HeaderActionKind.NEXT)",
+            "showIndex(currentIndex - 1)",
+            "showIndex(currentIndex + 1)",
+            "view.setVisibility(current ? View.VISIBLE : View.INVISIBLE)",
+            "candidateSlot.getSeparator().setVisibility(View.GONE)",
+            "visualSlot.getRailSeparator()",
+            "visualSlot.getRailSeparator().setVisibility(View.GONE)",
+            "ImageView railSeparator = new ImageView(context)",
+            "railSeparator.setScaleType(ImageView.ScaleType.FIT_XY)",
+            "HeaderNativeChromeSnapshot",
+            "captureNativeChrome(View candidateHolder)",
+            "ID_SHOW_MORE_CANDIDATES = 0x7f0f0149",
+            "findDivider(showMore)",
+            "effectiveImageAlpha(dividerImage)",
+            "image.getImageAlpha() / 255.0f",
+            "float runtimeAlpha = resolveAlpha(context, ATTR_ICON_ALPHA)",
+            "nextSlot.getRailWidth()",
+            "previousSlot.getRoot().setVisibility(View.VISIBLE)",
+            "nextSlot.getRoot().setVisibility(View.VISIBLE)",
+            "previousSlot.setEnabled(currentIndex > 0)",
+            "nextSlot.setEnabled(currentIndex + 1 < views.size())",
+            "Temporary native Candidate ownership must not destroy prepared",
+            "railParams(Gravity.END, trailingInset)",
+            "ATTR_ICON_ALPHA = 0x7f010087",
+            "ATTR_ICON_LEFT = 0x7f01008a",
+            "ATTR_ICON_RIGHT = 0x7f01008b",
             "IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS",
+            "content.offsetRectIntoDescendantCoords(child, childRect)",
+            "childRect.intersect(0, 0, child.getWidth(), child.getHeight())",
+            "inline layout index=",
+            "clipper.applyClip(child, new Rect(childRect))",
+            "icon.setAlpha(1.0f)",
+            "icon.setImageAlpha(Math.round(chrome.getIconAlpha() * 255.0f))",
+            "chrome.newActionIcon(root.getContext(), kind, enabled)",
         ),
-        "Inline Autofill ClipHost",
+        "Inline Autofill Header module/renderer",
     )
     for forbidden in (
-        "getInfo(",
-        "commitText(",
-        "ClipboardManager",
-        "android.util.Log",
-        "getText(",
-        "getAutofillValue(",
+        "getInfo(", "commitText(", "ClipboardManager",
+        "getAutofillValue(", "InlineAutofillClipHost",
+        "child.getLocationOnScreen(",
     ):
-        if forbidden in helper:
-            raise RuntimeError(f"Inline controller must not inspect Autofill payloads: {forbidden}")
+        if forbidden in helper or forbidden in platform:
+            raise RuntimeError(f"Inline Autofill violates payload/platform boundaries: {forbidden}")
+    if ".setTextColor(" in platform:
+        raise RuntimeError("Header platform must not recolor Provider remote Views")
+    if helper.count(".setTextColor(") != 2:
+        raise RuntimeError("Inline request must style title/subtitle only from native Candidate color")
 
     helper_smali = SMALI_HELPER.read_text(encoding="utf-8")
-    host_smali = SMALI_HOST.read_text(encoding="utf-8")
+    platform_smali = "\n".join(
+        path.read_text(encoding="utf-8") for path in SMALI_PLATFORM.glob("*.smali")
+    )
     require_all(
         helper_smali,
         (
@@ -89,45 +173,49 @@ def verify_sources(android_jar: Path, jdk: Path) -> None:
             "InlineSuggestionsRequest$Builder;->setMaxSuggestionCount(I)",
             "InlineSuggestionsResponse;->getInlineSuggestions()Ljava/util/List;",
             "InlineSuggestion;->inflate",
-            "InlineAutofillClipHost;->setInlineViews(Ljava/util/List;)V",
+            "IKeyboardTheme;->applyToContext(Landroid/content/Context;)V",
+            "LayoutInflater;->from(Landroid/content/Context;)Landroid/view/LayoutInflater;",
+            "TextView;->getCurrentTextColor()I",
+            "InlineAutofillHeaderModule;->setRemoteViews",
             "View;->setClipBounds(Landroid/graphics/Rect;)V",
         ),
-        "Inline Autofill smali controller",
+        "Inline Autofill Smali protocol bridge",
     )
     require_all(
-        host_smali,
+        platform_smali,
         (
-            "Landroid/widget/HorizontalScrollView;",
-            "InlineAutofillCompat;->applyRemoteClip(Landroid/view/View;Landroid/graphics/Rect;)V",
-            "->getGlobalVisibleRect(Landroid/graphics/Rect;)Z",
-            "InlineAutofillClipHost;->nativeCandidatesActive:Z",
+            "InlineAutofillRemoteRenderer;",
+            "HeaderChromeFactory;->createCandidateChromeSlot",
+            "HeaderChromeFactory;->createActionChromeSlot",
+            "HeaderRemoteSurfaceClipper;->applyClip",
         ),
-        "Inline Autofill smali ClipHost",
+        "Inline Autofill Smali platform renderer",
     )
-    if any(api_type in host_smali for api_type in API_TYPES):
-        raise RuntimeError("API-neutral ClipHost directly resolves API 30 Inline classes")
-    if "View;->setClipBounds" in host_smali:
-        raise RuntimeError("API-neutral ClipHost directly invokes post-minSdk clipping APIs")
+    if any(api_type in platform_smali for api_type in API_TYPES):
+        raise RuntimeError("API-neutral Header platform directly resolves API 30 Inline classes")
+    if "View;->setClipBounds" in platform_smali:
+        raise RuntimeError("API-neutral Header platform directly invokes post-minSdk clipping")
 
     javac = (jdk / "bin/javac.exe").resolve()
-    for path in (android_jar, javac):
+    for path in (android_jar, ANDROIDX_JAR, javac, JAVA_HELPER, *platform_sources):
         if not path.exists():
             raise FileNotFoundError(path)
     with tempfile.TemporaryDirectory(prefix="inline-autofill-compile-") as temporary:
+        temporary_path = Path(temporary)
+        stub_sources = []
+        for relative, source in LEGACY_THEME_STUBS.items():
+            stub = temporary_path / "stubs" / relative
+            stub.parent.mkdir(parents=True, exist_ok=True)
+            stub.write_text(source, encoding="utf-8")
+            stub_sources.append(stub)
         subprocess.run(
-            [
-                str(javac),
-                "-encoding", "UTF-8",
-                "-source", "7",
-                "-target", "7",
-                "-bootclasspath", str(android_jar),
-                "-d", temporary,
-                str(JAVA_HOST),
-                str(JAVA_HELPER),
-            ],
+            [str(javac), "-encoding", "UTF-8", "-source", "8", "-target", "8",
+             "-bootclasspath", str(android_jar), "-classpath", str(ANDROIDX_JAR),
+             "-d", temporary,
+             str(JAVA_HELPER), *[str(path) for path in platform_sources],
+             *[str(path) for path in stub_sources]],
             check=True,
         )
-
 
 def verify_method_metadata(decoded: Path) -> None:
     phone_methods: list[tuple[int, Path]] = []
@@ -162,11 +250,11 @@ def verify_decoded(decoded: Path) -> None:
     verify_method_metadata(decoded)
     pinyin_path = decoded / "smali/com/google/android/inputmethod/pinyin/PinyinIME.smali"
     helper_path = decoded / "smali/com/google/android/inputmethod/pinyin/InlineAutofillCompat.smali"
-    host_path = decoded / "smali/com/google/android/inputmethod/pinyin/InlineAutofillClipHost.smali"
+    platform_path = decoded / "smali/com/google/android/inputmethod/pinyin/headerplatform"
     input_bundle_path = decoded / (
         "smali/com/google/android/apps/inputmethod/libs/framework/core/InputBundle.smali"
     )
-    for path in (pinyin_path, helper_path, host_path, input_bundle_path):
+    for path in (pinyin_path, helper_path, platform_path, input_bundle_path):
         if not path.exists():
             raise FileNotFoundError(path)
     pinyin = pinyin_path.read_text(encoding="utf-8")
@@ -175,7 +263,9 @@ def verify_decoded(decoded: Path) -> None:
         path.read_text(encoding="utf-8")
         for path in helper_path.parent.glob("InlineAutofillCompat*.smali")
     )
-    host = host_path.read_text(encoding="utf-8")
+    platform = "\n".join(
+        path.read_text(encoding="utf-8") for path in platform_path.glob("*.smali")
+    )
     input_bundle = input_bundle_path.read_text(encoding="utf-8")
     require_all(
         pinyin,
@@ -191,9 +281,9 @@ def verify_decoded(decoded: Path) -> None:
         ),
         "PinyinIME Inline Autofill bridge",
     )
-    if pinyin.count("const/16 v1, 0x1e") < 8 or pinyin.count(
+    if pinyin.count("const/16 v1, 0x1e") < 5 or pinyin.count(
         "InlineAutofillCompat;->clear()V"
-    ) != 4 or pinyin.count("InlineAutofillCompat;->startInputSession()V") != 2:
+    ) != 2 or pinyin.count("InlineAutofillCompat;->startInputSession()V") != 1:
         raise RuntimeError("PinyinIME Inline Autofill lifecycle paths are not fully API-gated")
     for signature in (
         ".method public onCreateInlineSuggestionsRequest",
@@ -202,7 +292,7 @@ def verify_decoded(decoded: Path) -> None:
         method_body = pinyin.split(signature, 1)[1].split(".end method", 1)[0]
         require_all(
             method_body,
-            ("Build$VERSION;->SDK_INT:I", "const/16 v1, 0x1e", "if-lt"),
+            ("Build$VERSION;->SDK_INT:I", "const/16 v1, 0x1e", "if-ge"),
             signature,
         )
 
@@ -212,37 +302,66 @@ def verify_decoded(decoded: Path) -> None:
         (
             "InlineSuggestionsResponse;->getInlineSuggestions()Ljava/util/List;",
             "InlineSuggestion;->inflate",
-            "InlineAutofillClipHost;->setInlineViews(Ljava/util/List;)V",
+            "InlineAutofillHeaderModule;->setRemoteViews",
         ),
-        "final Inline Autofill rendering path",
+        "final Inline Autofill protocol path",
     )
-    if any(api_type in host for api_type in API_TYPES):
-        raise RuntimeError("Final API-neutral ClipHost resolves API 30 Inline classes")
     require_all(
-        input_bundle,
+        platform,
         (
-            "InlineAutofillClipHost;->onCandidates(Ljava/util/List;)V",
-            "InlineAutofillClipHost;->onCandidatesCleared()V",
+            "InlineAutofillHeaderModule;",
+            "InlineAutofillRemoteRenderer;",
+            "HeaderChromeFactory;->createCandidateChromeSlot",
+            "HeaderChromeFactory;->createActionChromeSlot",
+            "HeaderRemoteSurfaceClipper;->applyClip",
         ),
-        "native Candidate priority bridge",
+        "final Inline Autofill Header renderer",
+    )
+    if any(api_type in platform for api_type in API_TYPES):
+        raise RuntimeError("API-neutral Header platform resolves API 30 Inline classes")
+    if "InlineAutofillClipHost;->onCandidates" in input_bundle:
+        raise RuntimeError("Legacy module-specific Candidate priority hook remains")
+    fixed_holder = (decoded / (
+        "smali/com/google/android/apps/inputmethod/libs/framework/keyboard/widget/"
+        "FixedSizeCandidatesHolderView.smali"
+    )).read_text(encoding="utf-8")
+    require_all(
+        fixed_holder,
+        (
+            "HeaderNativeCandidateSource;",
+            ".method public setHeaderNativeCandidateStateListener(",
+            "->notifyHeaderPlatformCandidateState()V",
+            "ClipboardCandidateCompat;->isInjected()Z",
+            "->onNativeCandidateStateChanged(ZZ)V",
+        ),
+        "native Candidate platform source",
     )
 
-    layouts = (
+    inner_layouts = (
         decoded / "res/layout/keyboard_candidates_header_inner.xml",
         decoded / "res/layout/keyboard_candidates_header_inner_no_deletable_label.xml",
     )
-    for layout in layouts:
+    for layout in inner_layouts:
         text = layout.read_text(encoding="utf-8")
-        require_all(
-            text,
-            (
-                "com.google.android.inputmethod.pinyin.InlineAutofillClipHost",
-                'android:tag="compat_inline_autofill_host"',
-                'android:visibility="gone"',
-            ),
-            str(layout),
-        )
+        if "InlineAutofillClipHost" in text or "HeaderPlatformHostView" in text:
+            raise RuntimeError(f"Module-specific or platform hosts remain inside Candidate layer: {layout}")
 
+    platform_layouts = (
+        "keyboard_prime_header.xml",
+        "keyboard_prime_header_no_deletable_label.xml",
+        "keyboard_handwriting_header.xml",
+        "keyboard_hard_header.xml",
+        "keyboard_hard_header_no_deletable_label.xml",
+        "keyboard_universal_header.xml",
+    )
+    for name in platform_layouts:
+        layout = decoded / "res/layout" / name
+        text = layout.read_text(encoding="utf-8")
+        if text.count("HeaderPlatformHostView") != 1:
+            raise RuntimeError(f"Header must contain exactly one platform host: {layout}")
+    for layout in (decoded / "res").rglob("*.xml"):
+        if "InlineAutofillClipHost" in layout.read_text(encoding="utf-8"):
+            raise RuntimeError(f"Legacy module-specific Inline host remains in layout: {layout}")
     allowed = {pinyin_path.resolve()}
     offenders: list[str] = []
     for path in (decoded / "smali").rglob("*.smali"):
@@ -264,8 +383,8 @@ def main() -> None:
     verify_sources(args.android_jar.resolve(), args.jdk.resolve())
     verify_decoded(args.decoded.resolve())
     print(
-        "Inline Autofill stage-B verified: bounded request/inflation, ordered remote host, "
-        "native Candidate priority, explicit clipping, stale rejection, and old-ART isolation"
+        "Inline Autofill Header module verified: bounded ordered inflation, native chrome, "
+        "remote Surface carousel/clipping, stale rejection, and old-ART isolation"
     )
 
 

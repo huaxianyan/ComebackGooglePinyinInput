@@ -3,6 +3,9 @@
     style="@style/Header"
     xmlns:android="http://schemas.android.com/apk/res/android">
     <include layout="@layout/keyboard_incognito_overlay_header" />
-    <FrameLayout style="@style/HeaderInner.Prime" />
-    <include layout="@layout/keyboard_candidates_header_inner_no_deletable_label" />
+    <FrameLayout android:tag="header-platform-native-layer" android:layout_width="fill_parent" android:layout_height="fill_parent">
+        <FrameLayout style="@style/HeaderInner.Prime" />
+        <include layout="@layout/keyboard_candidates_header_inner_no_deletable_label" />
+    </FrameLayout>
+    <com.google.android.inputmethod.pinyin.headerplatform.HeaderPlatformHostView android:visibility="gone" android:layout_width="fill_parent" android:layout_height="fill_parent" />
 </com.google.android.apps.inputmethod.libs.framework.keyboard.SoftKeyboardView>

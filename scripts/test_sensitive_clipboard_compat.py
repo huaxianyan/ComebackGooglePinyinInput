@@ -77,6 +77,7 @@ def main() -> int:
     candidate_required = (
         ".field private static candidateSensitive:Z",
         ".field private static candidatePayload:Ljava/lang/String;",
+        ".method public static isInjected()Z",
         ".field private final maskForEditor:Z",
         "SensitiveClipboardCompat;->isSourceSensitive",
         "SensitiveClipboardCompat;->isPasswordEditor",
@@ -92,6 +93,25 @@ def main() -> int:
         raise RuntimeError("Sensitive clipboard accessibility text is missing")
     if "ClipDescription;->getExtras()" in candidate_source:
         raise RuntimeError("Clipboard candidate bypasses the API-gated sensitivity helper")
+    candidate_layout = (ROOT / "patches/res/layout/softkey_candidate.xml").read_text(
+        encoding="utf-8"
+    )
+    for tag in ("compat_clipboard_left_separator", "compat_clipboard_right_separator"):
+        marker = f'android:tag="{tag}"'
+        line = next((value for value in candidate_layout.splitlines() if marker in value), None)
+        if line is None or 'style="@style/SoftKeyCandidateBarShowMoreCandidateSeparator"' not in line:
+            raise RuntimeError(f"Clipboard rail does not match Autofill divider geometry: {tag}")
+    if "Replace the fixed 24dp Candidate-cell" not in candidate_source:
+        raise RuntimeError("Clipboard divider replacement contract is missing")
+    if "HeaderActionSlot;->syncClipboardDividers" not in candidate_source:
+        raise RuntimeError("Clipboard rails do not use the Autofill native divider source")
+    action_source = (ROOT / "patches/java/com/google/android/inputmethod/pinyin/headerplatform/"
+                     "HeaderActionSlot.java").read_text(encoding="utf-8")
+    for contract in ("syncClipboardDividers", "freezeDrawable(source)",
+                     "effectiveImageAlpha(source)", "effectiveAncestorAlpha(target)",
+                     "addOnPreDrawListener", "contentWidth <= 0 || contentHeight <= 0"):
+        if contract not in action_source:
+            raise RuntimeError(f"Clipboard runtime divider sync is incomplete: {contract}")
 
     if args.decoded is not None:
         decoded = args.decoded.resolve()

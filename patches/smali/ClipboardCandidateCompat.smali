@@ -544,6 +544,14 @@
     return-object p0
 .end method
 
+.method public static isInjected()Z
+    .locals 1
+
+    sget-boolean v0, Lcom/google/android/apps/inputmethod/libs/framework/core/ClipboardCandidateCompat;->injected:Z
+
+    return v0
+.end method
+
 .method public static candidatesUpdated()V
     .locals 4
 
@@ -911,24 +919,28 @@
     invoke-virtual {v0, v4, v3, v7, v1}, Landroid/widget/TextView;->setPadding(IIII)V
 
     :clipboard_icon_done
-    # The native candidate divider is the authoritative themed right edge.
-    # The holder may hide it as a last-column divider, so centerSingle... will
-    # reassert it after holder decoration and clone it only to the left edge.
-    if-eqz v2, :show_clipboard_left_separator
-
-    invoke-virtual {v2, v1}, Landroid/view/View;->setVisibility(I)V
-
-    :show_clipboard_left_separator
-    if-eqz v5, :hide_compat_right_separator
-
-    invoke-virtual {v5, v1}, Landroid/view/View;->setVisibility(I)V
-
-    :hide_compat_right_separator
-    if-eqz v6, :sync_dismiss_color
+    # Clipboard uses the same full-height/inset geometry as the Autofill rails,
+    # not the fixed 24dp divider between ordinary Candidate cells.
+    if-eqz v2, :show_clipboard_rail_separators
 
     const/16 v3, 0x8
 
-    invoke-virtual {v6, v3}, Landroid/view/View;->setVisibility(I)V
+    invoke-virtual {v2, v3}, Landroid/view/View;->setVisibility(I)V
+
+    :show_clipboard_rail_separators
+    if-eqz v6, :show_clipboard_left_separator
+
+    invoke-virtual {v6, v1}, Landroid/view/View;->setVisibility(I)V
+
+    :show_clipboard_left_separator
+    if-eqz v5, :sync_dismiss_color
+
+    if-eqz v6, :show_clipboard_left_only
+
+    invoke-static {p0, v5, v6}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderActionSlot;->syncClipboardDividers(Landroid/view/View;Landroid/view/View;Landroid/view/View;)V
+
+    :show_clipboard_left_only
+    invoke-virtual {v5, v1}, Landroid/view/View;->setVisibility(I)V
 
     :sync_dismiss_color
     invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyView;->getRootView()Landroid/view/View;
@@ -1221,9 +1233,8 @@
     goto :scan_children
 
     :choose_gravity
-    # This runs after the holder's last-column decoration. Keep the actual
-    # native candidate divider as the right edge, then clone that exact themed
-    # appearance to the left divider inside the same parent/alpha hierarchy.
+    # This runs after holder decoration. Replace the fixed 24dp Candidate-cell
+    # divider with symmetric show-more-style rails, matching Inline Autofill.
     if-eqz v6, :select_gravity
 
     if-eqz v3, :select_gravity
@@ -1234,39 +1245,41 @@
 
     move-result-object v7
 
-    if-eqz v7, :force_left_separator
+    if-eqz v7, :find_clipboard_rail_left
 
-    const/4 v5, 0x0
+    const/16 v5, 0x8
 
     invoke-virtual {v7, v5}, Landroid/view/View;->setVisibility(I)V
 
-    :force_left_separator
+    :find_clipboard_rail_left
     const-string v4, "compat_clipboard_left_separator"
 
     invoke-virtual {v3, v4}, Landroid/view/View;->findViewWithTag(Ljava/lang/Object;)Landroid/view/View;
 
-    move-result-object v4
+    move-result-object v7
 
-    if-eqz v4, :hide_legacy_right_separator
-
-    invoke-static {v7, v4}, Lcom/google/android/apps/inputmethod/libs/framework/core/ClipboardCandidateCompat;->syncSeparatorAppearance(Landroid/view/View;Landroid/view/View;)V
-
-    const/4 v5, 0x0
-
-    invoke-virtual {v4, v5}, Landroid/view/View;->setVisibility(I)V
-
-    :hide_legacy_right_separator
     const-string v4, "compat_clipboard_right_separator"
 
     invoke-virtual {v3, v4}, Landroid/view/View;->findViewWithTag(Ljava/lang/Object;)Landroid/view/View;
 
     move-result-object v4
 
-    if-eqz v4, :select_gravity
+    if-eqz v4, :show_clipboard_rail_left
 
-    const/16 v5, 0x8
+    const/4 v5, 0x0
 
     invoke-virtual {v4, v5}, Landroid/view/View;->setVisibility(I)V
+
+    if-eqz v7, :select_gravity
+
+    invoke-static {v3, v7, v4}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderActionSlot;->syncClipboardDividers(Landroid/view/View;Landroid/view/View;Landroid/view/View;)V
+
+    :show_clipboard_rail_left
+    if-eqz v7, :select_gravity
+
+    const/4 v5, 0x0
+
+    invoke-virtual {v7, v5}, Landroid/view/View;->setVisibility(I)V
 
     :select_gravity
     const v0, 0x800003
