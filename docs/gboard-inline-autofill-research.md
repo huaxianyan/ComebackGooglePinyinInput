@@ -14,6 +14,8 @@
 
 适用边界：本文讨论 Android 标准 Inline Suggestions 协议，不讨论让输入法自行读取密码管理器、模拟密码管理器 UI、猜测验证码、解析网页凭据或实现自有账户同步。
 
+> **实现状态更新：** 本文第 5–7 节保留了阶段 A/B 早期方案与研究推导，其中独立 process-global `InlineAutofillClipHost`、自由横向滚动和“Inline 优先于空闲 Clipboard”的提案已经被统一 Header Platform 取代。当前实现使用每个 Header 一个 `HeaderPlatformHostView`、`InlineAutofillHeaderModule`、remote-surface renderer、固定 previous/next rails 和集中仲裁；真实 Clipboard Candidate 优先于 Inline。最终契约与运行证据以 [`header-platform-design.md`](header-platform-design.md) 和 [`header-platform-runtime-acceptance.md`](header-platform-runtime-acceptance.md) 为准。
+
 ## 2. Android 官方协议
 
 ### 2.1 启用条件
@@ -263,9 +265,9 @@ Body
 
 密码、PIN、普通数字、电话和日期时间键盘已经有稳定 Header，必需输入键全部保留在 Body。这解决了 Inline Autofill接入前最重要的结构问题。
 
-### 5.2 正确的 Header拓扑
+### 5.2 早期 Header 拓扑提案（已由 Header Platform 取代）
 
-建议扩展为：
+研究阶段曾建议扩展为：
 
 ```text
 SoftKeyboardView Header
@@ -277,13 +279,22 @@ SoftKeyboardView Header
    └─ 剪贴板 dismiss overlay
 ```
 
-显示规则：
+该阶段曾提出以下显示规则：
 
 ```text
 原生输入候选存在
     > Inline Autofill response
     > 空闲剪贴板 Candidate
     > 空 Header
+```
+
+最终实现不采用这一 Clipboard 顺序。真实 Clipboard quick-paste 是有明确关闭操作、提交语义和最新用户复制意图的原生 Candidate，因此最终集中仲裁为：
+
+```text
+普通原生 Candidate
+> Clipboard quick-paste Candidate
+> Inline Autofill
+> idle Header
 ```
 
 其中：
@@ -416,9 +427,9 @@ android:supportsInlineSuggestionsWithTouchExploration="true"
 - [x] 增加源码编译、最终 DEX窄桥、API 17–29 SDK门控和隐私边界静态验证，并接入 Release workflow；
 - [ ] 在 API 30+设备上验证标准 Autofill服务确实发起 request/response，并验证 API 17–29旧 ART启动；本项属于运行时验收，不由静态门禁替代。
 
-### 阶段 B：隔离审计包的 Header渲染
+### 阶段 B：隔离审计包的 Header渲染（历史阶段，后续已平台化）
 
-- [x] 增加 API中立的独立 `InlineAutofillClipHost`，内部使用横向滚动容器且不把远端 View转换为 Candidate；
+- [x] 阶段 B 曾增加 API 中立的独立 `InlineAutofillClipHost`；最终实现已删除该 process-global host，迁移到每个 Header 一个 `HeaderPlatformHostView`、固定 previous/next rails 和 remote-surface renderer，且始终不把远端 View 转换为 Candidate；
 - [x] 最多按 provider原顺序异步 inflate 3项，使用 generation、活动会话和 Header实例身份拒绝迟到回调；
 - [x] 增加1.2秒有界超时、null/异常/重复 callback处理，允许按原索引发布已完成的部分结果；
 - [x] 对每个远端 View按 Header全局可见矩形显式设置本地 clip bounds，并在 layout、scroll、attach/detach时更新或释放；
@@ -519,12 +530,12 @@ work/research/gboard-current-public/decoded-base/smali/com/google/android/librar
 - API 30回调应只在 `PinyinIME`保留窄桥，主体放入独立 Compat类；
 - generation + 有界异步聚合是避免旧 Surface回流的最低必要机制。
 
-### 尚待原型或真机验证
+### 仍待验证或受环境限制
 
-- Google拼音 Header最合适的 min/max chip尺寸；
-- AndroidX Autofill Inline UI style Bundle能否在保持6,633旧资源 ID和旧 ART隔离的前提下可复现合并；
-- Pixel 10 Pro当前 Password Manager对 spec数量和尺寸的实际要求；
-- Google Password Manager及第三方 provider返回 pinned action的排列；
-- TalkBack启用时平台具体回退行为；
-- API 17–29加载含 API 30 override的 `PinyinIME`是否在本 APK/ART组合下完全安全；
-- 快速滚动、重建和隐藏时远端 Surface释放的实际时序。
+- Google Password Manager 与更多第三方 Provider 的完整交叉矩阵；当前已覆盖合成 Provider 和 Bitwarden；
+- Provider 返回 pinned action 的更多排列；
+- TalkBack 启用时平台具体回退行为；完成前继续不声明 touch-exploration Inline 支持；
+- API 17–29 旧 ART 运行时：最终 DEX 静态隔离已通过，但当前 ARM64 ABI/模拟环境无法完成该运行矩阵；
+- `sw600dp` 大屏上的最终 Header Platform 运行时覆盖。
+
+以下原待验证项已经关闭：官方 AndroidX Inline Style Bundle 已在保持 6,633 个旧资源 ID、primary DEX 隔离和完整 Compose 组合的前提下构建及运行；Pixel 10 Pro 上 0/1/多项、局部坐标裁剪、快速重建、方向切换、隐藏/恢复和 stale callback 拒绝已经通过。
