@@ -2672,7 +2672,66 @@ def apply(
         "    goto :goto_0",
     )
 
+    # Candidate expansion/collapse uses an 80 ms native translation animator.
+    # API 36 can raise only that animation's View to the high frame-rate
+    # category; both end and cancel flow through AnimatorListenerAdapter's
+    # onAnimationEnd and release the request immediately.
+    expand_listener = decoded / "smali/ass.smali"
+    collapse_listener = decoded / "smali/ast.smali"
+    replace_once(
+        expand_listener,
+        "    check-cast v0, Landroid/view/View;\n\n"
+        "    .line 3\n"
+        "    if-eqz v0, :cond_0",
+        "    check-cast v0, Landroid/view/View;\n\n"
+        "    const/4 v1, 0x1\n\n"
+        "    invoke-static {v0, v1}, Lcom/google/android/inputmethod/pinyin/"
+        "CandidateFrameRateCompat;->requestForAnimation(Landroid/view/View;Z)V\n\n"
+        "    .line 3\n"
+        "    if-eqz v0, :cond_0",
+    )
+    replace_once(
+        expand_listener,
+        "    invoke-virtual {p1}, Landroid/animation/ObjectAnimator;->getTarget()"
+        "Ljava/lang/Object;\n\n"
+        "    .line 10",
+        "    invoke-virtual {p1}, Landroid/animation/ObjectAnimator;->getTarget()"
+        "Ljava/lang/Object;\n\n"
+        "    move-result-object v0\n\n"
+        "    check-cast v0, Landroid/view/View;\n\n"
+        "    const/4 v1, 0x0\n\n"
+        "    invoke-static {v0, v1}, Lcom/google/android/inputmethod/pinyin/"
+        "CandidateFrameRateCompat;->requestForAnimation(Landroid/view/View;Z)V\n\n"
+        "    .line 10",
+    )
+    replace_once(
+        collapse_listener,
+        "    check-cast v0, Landroid/view/View;\n\n"
+        "    .line 3\n"
+        "    if-eqz v0, :cond_0",
+        "    check-cast v0, Landroid/view/View;\n\n"
+        "    const/4 v1, 0x1\n\n"
+        "    invoke-static {v0, v1}, Lcom/google/android/inputmethod/pinyin/"
+        "CandidateFrameRateCompat;->requestForAnimation(Landroid/view/View;Z)V\n\n"
+        "    const/4 v1, 0x0\n\n"
+        "    .line 3\n"
+        "    if-eqz v0, :cond_0",
+    )
+    replace_once(
+        collapse_listener,
+        "    check-cast v0, Landroid/view/View;\n\n"
+        "    .line 13\n"
+        "    if-eqz v0, :cond_0",
+        "    check-cast v0, Landroid/view/View;\n\n"
+        "    const/4 v1, 0x0\n\n"
+        "    invoke-static {v0, v1}, Lcom/google/android/inputmethod/pinyin/"
+        "CandidateFrameRateCompat;->requestForAnimation(Landroid/view/View;Z)V\n\n"
+        "    .line 13\n"
+        "    if-eqz v0, :cond_0",
+    )
+
     for helper_name in (
+        "CandidateFrameRateCompat.smali",
         "NavigationBarCompat.smali",
         "ScrollTouchCompat.smali",
         "DictionaryRecoveryCompat.smali",
