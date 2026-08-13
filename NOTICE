@@ -1,0 +1,116 @@
+Comeback Google Pinyin Input — License Scope and Third-Party Notice
+=================================================================
+
+Copyright (c) 2026 huaxianyan.
+
+1. Effective date
+-----------------
+
+This notice and the Mozilla Public License Version 2.0 (MPL-2.0) first
+apply when the commit adding them is publicly distributed.
+
+From that effective date, MPL-2.0 applies to the project-authored
+material expressly listed in Section 2 that is then present in this
+repository, and to later project-authored contributions within the same
+listed paths, but only to the extent that the relevant copyright is
+owned or licensable by the applicable project contributor.
+
+This is a present license grant for identified existing and future
+project-authored material. It does not state that the repository was
+licensed under MPL-2.0 before the effective date, does not retroactively
+authorize conduct occurring before that date, and does not modify any
+existing commit, tag, Release, or third-party license.
+
+2. MPL-2.0 Covered Software
+---------------------------
+
+For purposes of MPL-2.0 Exhibit A, this NOTICE is the location where the
+MPL-2.0 notice is attached to the following files. Subject to Sections 3
+and 4, these files are Covered Software when and to the extent they are
+project-authored and copyrightable:
+
+- `.github/workflows/*.yml`;
+- root-level project-authored Python and PowerShell source files under
+  `scripts/` (`scripts/*.py` and `scripts/*.ps1`);
+- project-authored Kotlin source and test files under
+  `modern-settings/compose-runtime/src/main/kotlin/` and
+  `modern-settings/compose-runtime/src/test/kotlin/`;
+- project-authored Java source files under
+  `patches/java/com/google/android/inputmethod/pinyin/headerplatform/`;
+- `README.md`, `CHANGELOG.md`, and project-authored Markdown documents
+  under `docs/`, including `docs/releases/`.
+
+The applicable notice is:
+
+    This Source Code Form is subject to the terms of the Mozilla Public
+    License, v. 2.0. If a copy of the MPL was not distributed with this
+    file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+The unmodified license text is provided in `LICENSE`.
+
+A path being listed does not claim ownership of facts, ideas, APIs,
+short or unprotectable expressions, third-party quotations, screenshots,
+logos, trademarks, or other material that the contributors do not own
+or have authority to license.
+
+3. Material expressly excluded from the MPL-2.0 grant
+------------------------------------------------------
+
+The root `LICENSE` does not license the repository as an undivided
+whole. Unless a separate, applicable license notice says otherwise, the
+following material is not Covered Software under this project's
+MPL-2.0 grant:
+
+- Google Pinyin Input, the original APK, and all Google-authored or
+  Google-derived program code, bytecode, Smali, resources, dictionaries,
+  language models, artwork, binaries, names, logos, and trademarks;
+- everything under `original/`;
+- everything under `patches/smali/` and `patches/res/`, including
+  generated Smali and copied or modified resources;
+- project patch files or source files outside the explicit Section 2
+  paths where authorship, derivation, or ownership is mixed or not
+  sufficiently clear;
+- AndroidX Inline Autofill sources or bytecode, Android, AndroidX,
+  Jetpack Compose, Material, Gradle, the Gradle Wrapper, apktool, and
+  all other third-party software or dependencies;
+- generated, decoded, reconstructed, downloaded, packaged, signed, or
+  diagnostic artifacts, including APK, DEX, native libraries, ZIP,
+  JAR, keystore, model, image, and build-output files;
+- quoted third-party passages, screenshots, external research material,
+  trademarks, and third-party content embedded in otherwise covered
+  project documentation; and
+- any contribution whose copyright is owned by another contributor or
+  entity that has not agreed to MPL-2.0.
+
+For a mixed file, MPL-2.0 applies only to an expressly covered,
+separable project-authored contribution for which the contributor has
+sufficient rights. No rights in the surrounding third-party material
+are granted or implied.
+
+4. Third-party terms and no implied rights
+------------------------------------------
+
+Third-party material remains governed by its own license, terms, and
+applicable law. If a third-party notice conflicts with this NOTICE for
+that third-party material, the third-party notice controls.
+
+MPL-2.0 permits commercial use of Covered Software subject to its
+conditions, including its source-code and notice requirements. It does
+not grant permission to redistribute, relicense, or commercially exploit
+excluded material. No patent, trademark, publicity, endorsement, or
+other right is granted except as expressly provided by MPL-2.0 for
+Covered Software.
+
+Google Pinyin Input, Google, Android, and related names and marks belong
+to their respective rights holders. This project is not affiliated with
+or endorsed by Google.
+
+5. Contributions
+----------------
+
+A contribution is not automatically accepted merely because it is
+submitted. Contributors should only submit material they have the right
+to license. Unless a different written agreement is made before
+acceptance, a project-authored contribution intentionally submitted for
+inclusion in a Section 2 Covered Software path is expected to be offered
+under MPL-2.0 to the extent the contributor has authority to do so.

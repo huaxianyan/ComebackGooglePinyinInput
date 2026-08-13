@@ -85,10 +85,14 @@ docs/            设计、研究、验收和兼容边界
 - [现代设置运行时设计](docs/modern-settings-runtime-design.md)
 - [Android target SDK 现代化计划](docs/target-sdk-modernization-plan.md)
 
-## 许可证、权利与非商业声明
+## 许可证与权利范围
 
-- 本项目维护者不拥有 Google 原始软件、资源、词库或商标。
-- 本仓库中的兼容补丁、研究和构建脚本以个人、非商业的软件保存、互操作性研究和兼容维护为目的提供。
-- 本项目不收费、不出售应用、不接入广告，也不以 Google 品牌或原始程序牟利。
-- 原始 APK 保持其原有版权状态；使用者应遵守所在地法律、原软件条款及相关权利要求。
-- 如相关权利人认为仓库内容需要调整，可通过 GitHub Issues 联系项目维护者。
+项目维护者拥有或有权许可、且在 [`NOTICE`](NOTICE) 中明确列出的原创代码、脚本和文档，自许可证声明公开之日起采用 [Mozilla Public License 2.0](LICENSE)：允许个人或组织免费或收费地使用、修改和商业分发，但须遵守 MPL-2.0 的源码提供及声明保留要求。
+
+根目录许可证**不适用于整个仓库的所有内容**。Google 拼音输入法原 APK、Google 原始或派生代码、Smali、资源、词库、模型、图片、名称和商标，以及 AndroidX、Compose、Gradle 等第三方内容均不在本项目的 MPL-2.0 授权范围内，继续受各自权利和许可约束。权属混合或来源存在争议的文件也未被纳入。
+
+- [MPL-2.0 完整文本](LICENSE)
+- [精确适用范围、生效边界与排除项](NOTICE)
+- [原始 APK 来源与权利边界](docs/original-apk-provenance.md)
+
+本项目不隶属于 Google，也未获得 Google 官方背书。项目本身不收费、不接入广告，也不以 Google 品牌或原始程序牟利；这不限制第三方在严格遵守适用许可证及第三方权利的前提下商业使用明确列出的 MPL Covered Software。如相关权利人认为仓库内容需要调整，可通过 GitHub Issues 联系项目维护者。
