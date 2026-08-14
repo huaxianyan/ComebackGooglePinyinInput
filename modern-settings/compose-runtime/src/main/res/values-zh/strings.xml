@@ -32,9 +32,9 @@
     <string name="modern_settings_dark_mode_theme_title">深色模式主题</string>
     <string name="modern_settings_dark_mode_theme_summary">选择系统处于深色模式时使用的主题</string>
     <string name="modern_settings_fixed_theme_title">固定主题</string>
-    <string name="modern_settings_fixed_theme_summary">选择关闭“跟随主题”时使用的主题</string>
-    <string name="modern_settings_theme_requires_follow_enabled">开启“跟随主题”后可设置</string>
-    <string name="modern_settings_theme_requires_follow_disabled">关闭“跟随主题”后可设置</string>
+    <string name="modern_settings_fixed_theme_summary">选择关闭「跟随主题」时使用的主题</string>
+    <string name="modern_settings_theme_requires_follow_enabled">开启「跟随主题」后可设置</string>
+    <string name="modern_settings_theme_requires_follow_disabled">关闭「跟随主题」后可设置</string>
     <string name="modern_settings_keyboard_appearance_summary">主题、单手模式和键盘高度</string>
     <string name="modern_settings_keyboard_keys_title">按键与切换</string>
     <string name="modern_settings_keyboard_keys_summary">按键气泡、输入按钮、切换和交互</string>
@@ -64,7 +64,7 @@
     <string name="modern_settings_dictionary_import_list_title">导入用户词典备份</string>
     <string name="modern_settings_dictionary_import_empty">所选目录中没有可访问的 Google 拼音用户词典备份。</string>
     <string name="modern_settings_dictionary_import_confirm_title">导入用户词典备份？</string>
-    <string name="modern_settings_dictionary_import_confirm_message">将“%1$s”合并到当前用户词典？</string>
+    <string name="modern_settings_dictionary_import_confirm_message">将「%1$s」合并到当前用户词典？</string>
     <string name="modern_settings_dictionary_import_action">导入</string>
     <string name="modern_settings_dictionary_shortcuts_section">自定义短语</string>
     <string name="modern_settings_dictionary_enable_shortcuts">启用自定义短语</string>
@@ -72,7 +72,7 @@
     <string name="modern_settings_dictionary_system_editor_summary">打开系统用户词典编辑器</string>
     <string name="modern_settings_dictionary_personalization_section">个人词典</string>
     <string name="modern_settings_dictionary_contacts_title">建议联系人姓名</string>
-    <string name="modern_settings_dictionary_contacts_summary">使用“联系人”中的姓名提供输入建议</string>
+    <string name="modern_settings_dictionary_contacts_summary">使用「联系人」中的姓名提供输入建议</string>
     <string name="modern_settings_dictionary_contacts_permission_summary">授权访问联系人后可提供姓名建议</string>
     <string name="modern_settings_dictionary_contacts_permission_denied">未授予联系人访问权限</string>
     <string name="modern_settings_dictionary_clear_title">清除用户词典</string>
@@ -176,7 +176,7 @@
     <string name="modern_settings_latin_show_suggestions_summary">输入时显示建议字词</string>
     <string name="modern_settings_next_word_prediction_title">下一个字词联想</string>
     <string name="modern_settings_next_word_prediction_summary">根据上一个字词提供建议</string>
-    <string name="modern_settings_requires_show_suggestions">开启“显示建议”后可使用此设置</string>
+    <string name="modern_settings_requires_show_suggestions">开启「显示建议」后可使用此设置</string>
     <string name="modern_settings_auto_capitalization_title">自动大写</string>
     <string name="modern_settings_auto_capitalization_summary">将每个句子的第一个字词首字母大写</string>
     <string name="modern_settings_enabled">已开启</string>

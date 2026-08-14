@@ -137,7 +137,7 @@ and cannot mutate settings.
 
 The first Compose screen binds this snapshot to official Material 3 `Switch`,
 `Slider`, `AssistChip`, `TopAppBar`, `LazyColumn`, and section components. Volume
-and vibration with a negative device default render a separate “system default”
+and vibration with a negative device default render a separate "system default"
 chip and no numeric Slider, so the UI cannot conflate system default with
 explicit zero.
 
@@ -278,21 +278,21 @@ visual alignment with the page's existing 24 dp content edge.
 The long-press stage models absent default `300 ms` separately from explicit
 `"300"` with `DefaultableSetting`. Its official discrete Slider covers exactly
 `100..700 ms` in `10 ms` steps and persists the original String only on release.
-The full-width “使用默认值” action is disabled while the key is absent and removes
+The full-width「使用默认值」action is disabled while the key is absent and removes
 the key when an explicit value exists. There is no preview side effect, and
 misaligned or out-of-range values are rejected by the typed contract.
 
 This stage also enables the two parent Boolean switches. The two feedback
 adjustments always render their official Slider and no longer require a separate
 customize/cancel/apply flow. Key absence is represented by a leftmost visual
-placeholder and the “system default” summary without inventing a persisted
+placeholder and the "system default" summary without inventing a persisted
 numeric value; the restore action remains disabled until the Slider is operated
 or an explicit value already exists. Slider dragging is transient, release
 commits exactly once and immediately invokes the original sound-effect or
 positive-duration vibration preview, while each step-button click commits and
 previews once. Explicit zero remains distinct from key absence. Explicit volume
 uses the original Float `percent / 100f`; explicit vibration uses the original
-zero/`N + 1` String encoding. “使用系统默认” removes the corresponding key and
+zero/`N + 1` String encoding.「使用系统默认」removes the corresponding key and
 returns the visual position to the left edge. Dependency-off state retains
 explicit values while disabling the complete adjustment group.
 
@@ -306,7 +306,7 @@ corrected Compose host passes device acceptance with suggestions on/off,
 independent English glide, the shared gesture parent, and Chinese regression.
 
 For device testing, `build_modern_settings_host.py --audit-launcher` can add a
-launcher entry labelled “Material 3 设置审计” to an isolated audit package. The
+launcher entry labelled「Material 3 设置审计」to an isolated audit package. The
 activity is always guarded by `@bool/modern_settings_runtime_enabled`: false in
 base resources and true only in `values-v35`, so API 17–34 cannot launch or load
 the Compose activity. Formal host builds omit the audit launcher and will route
@@ -315,7 +315,7 @@ Section and title strings are still prototype-only, but enum value labels now
 come from the original localized `entries_*` arrays (for example low, normal,
 high) while their exact stored values remain separate in the contract. A
 negative system-default sentinel is never passed to the Slider: absent feedback
-values use a left-edge UI placeholder labelled “system default”, while the
+values use a left-edge UI placeholder labelled "system default", while the
 persistence model continues to retain key absence separately from explicit
 zero. The
 activity refreshes its read-only snapshot in `onResume()` so returning from a

@@ -2,42 +2,52 @@
 
 ## [Unreleased]
 
+### Changed
+
+- 中文文档、软件界面文本和版本化 Release Notes 统一遵循《中文文案排版指北》，采用链接前后留空格和简体中文直角引号两项争议规则
+- 清理列表末尾机械使用的分号，按语义重写 README、Release 和界面中的普通分号，同时保留确有层次作用的技术并列结构
+- 为 `v1.0.0–v2.0.2` 补充版本化 Release Notes，并修正后续发布流程重复追加版本标题的问题
+
+### Build
+
+- 新增 `scripts/verify_chinese_copywriting.py` 并接入 Release workflow，检查中英文与数字间距、单位空格、直角引号、链接空格和确定性标点规则
+
 ## [2.0.6] - 2026-08-13
 
-修复候选面板展开和收起动画在高刷新率屏幕上被稳定限制为 60fps 的问题；只在原生 80ms 动画期间请求系统高刷新率类别，结束或取消后立即释放。
+修复候选面板展开和收起动画在高刷新率屏幕上被稳定限制为 60 fps 的问题；只在原生 80 ms 动画期间请求系统高刷新率类别，结束或取消后立即释放。
 
 ### Fixed
 
-- 在 Android 16/API 36 及以上，为候选面板展开和收起的原生 `translationY` 动画动态请求 `REQUESTED_FRAME_RATE_CATEGORY_HIGH`；Pixel 10 Pro 上活动帧间隔由约 16.67ms 降至约 8.34ms，用户真机确认“明显更流畅”。
-- 动画结束、取消或反向切换时恢复 `NO_PREFERENCE`；不固定 120Hz，不在键盘空闲或整个输入视图生命周期持续保持高刷，不启用 Window touch boost。
-- API 36-only 方法通过精确兼容桥调用，legacy primary DEX不直接解析该方法；API 17–35保持原行为。
+- 在 Android 16/API 36 及以上，为候选面板展开和收起的原生 `translationY` 动画动态请求 `REQUESTED_FRAME_RATE_CATEGORY_HIGH`；Pixel 10 Pro 上活动帧间隔由约 16.67 ms 降至约 8.34 ms，用户真机确认「明显更流畅」。
+- 动画结束、取消或反向切换时恢复 `NO_PREFERENCE`；不固定 120 Hz，不在键盘空闲或整个输入视图生命周期持续保持高刷，不启用 Window touch boost。
+- API 36-only 方法通过精确兼容桥调用，legacy primary DEX 不直接解析该方法；API 17–35 保持原行为。
 
 ### Build
 
-- 增加候选动画帧率专项门禁，验证展开/收起 start/end生命周期、API 36边界及 primary DEX隔离，并纳入 Release workflow。
-- 无插桩基线确认原问题不是 CPU、GPU、layout/draw、GC或热节流；release-like non-debuggable包在 Pixel 10 Pro / Android 16上确认约120fps、现代 jank为0、Missed Vsync为0、Slow UI thread为0，静止后120Hz override消失。
-- 完整构建继续通过 Compose Material 3、Header Platform、Inline Autofill、敏感 Clipboard、API 31/33/34/35/36、6,633个旧资源 ID、v1/v2/v3签名和16 KiB ZIP alignment验证。
+- 增加候选动画帧率专项门禁，验证展开/收起 start/end 生命周期、API 36 边界及 primary DEX 隔离，并纳入 Release workflow。
+- 无插桩基线确认原问题不是 CPU、GPU、layout/draw、GC 或热节流；release-like non-debuggable 包在 Pixel 10 Pro / Android 16 上确认约 120 fps、现代 jank 为 0、Missed Vsync 为 0、Slow UI thread 为 0，静止后 120 Hz override 消失。
+- 完整构建继续通过 Compose Material 3、Header Platform、Inline Autofill、敏感 Clipboard、API 31/33/34/35/36、6,633 个旧资源 ID、v1/v2/v3 签名和 16 KiB ZIP alignment 验证。
 
 ## [2.0.5] - 2026-08-13
 
-为普通中文软键盘增加原生简繁快速切换按钮，并提供可选的显示设置；继续复用原有中文 HMM键盘状态、Preference和 Candidate刷新链路。
+为普通中文软键盘增加原生简繁快速切换按钮，并提供可选的显示设置；继续复用原有中文 HMM 键盘状态、Preference 和 Candidate 刷新链路。
 
 ### Added
 
-- 在中文拼音 QWERTY、中文拼音 9键和中文笔画 Header的语音/收起键左侧增加“简/繁”原生 SoftKey；点击发送原始 `KEYBOARD_STATE_ON/OFF + ENABLE_SC_TC_CONVERSION`事件，不自行转换文本、不直接写简繁 Preference，也不调用 `commitText()`。
-- 在 API 17–34 legacy Preference及 API 35+ Compose Material 3的“键盘 → 按键”中加入“显示简繁切换按钮”，紧跟“显示语音输入按钮”，默认开启且只控制入口可见性。
-- 增加英文、简体中文、繁体中文（台湾、香港）设置和无障碍文案，并增加可复现 Java→Smali生成器与专项静态门禁。
+- 在中文拼音 QWERTY、中文拼音 9 键和中文笔画 Header 的语音/收起键左侧增加「简/繁」原生 SoftKey；点击发送原始 `KEYBOARD_STATE_ON/OFF + ENABLE_SC_TC_CONVERSION`事件，不自行转换文本、不直接写简繁 Preference，也不调用 `commitText()`。
+- 在 API 17–34 legacy Preference 及 API 35+ Compose Material 3 的「键盘 → 按键」中加入「显示简繁切换按钮」，紧跟「显示语音输入按钮」，默认开启且只控制入口可见性。
+- 增加英文、简体中文、繁体中文（台湾、香港）设置和无障碍文案，并增加可复现 Java→Smali 生成器与专项静态门禁。
 
 ### Changed
 
-- 为三个受支持中文布局使用专属 prime Header；现有 Access Points、语言标签及 `key_pos_header_voice`的 voice/`NO_MICROPHONE` hide-keyboard映射保持不变。
-- 快捷按钮仅在用户开关开启、当前 Header空间充足且 Access Points未展开时显示；空间计算使用中文 Header内明确槽位和局部坐标，不压缩、覆盖或替换现有触摸目标。
-- Access Points展开时复用原生 `access_points_overlay_view`状态，使“简/繁”与“中/EN”同步隐藏，避免第四个 Access Point重叠；收起后恢复并保留当前简繁状态。
+- 为三个受支持中文布局使用专属 prime Header；现有 Access Points、语言标签及 `key_pos_header_voice`的 voice/`NO_MICROPHONE` hide-keyboard 映射保持不变。
+- 快捷按钮仅在用户开关开启、当前 Header 空间充足且 Access Points 未展开时显示；空间计算使用中文 Header 内明确槽位和局部坐标，不压缩、覆盖或替换现有触摸目标。
+- Access Points 展开时复用原生 `access_points_overlay_view`状态，使「简/繁」与「中/EN」同步隐藏，避免第四个 Access Point 重叠；收起后恢复并保留当前简繁状态。
 
 ### Build
 
-- Release workflow加入简繁 Header专项门禁；完整构建继续通过 Compose Material 3、Header Platform、Inline Autofill、敏感 Clipboard、API 31/33/34/35/36、6,633个旧资源 ID、v1/v2/v3签名和 16 KiB ZIP alignment验证。
-- Pixel 10 Pro / Android 16真机确认简繁输入及 Candidate即时变化、设置状态同步、显示开关、voice/hide-keyboard、Clipboard、Inline Autofill和 Access Points展开/收起均正常。
+- Release workflow 加入简繁 Header 专项门禁；完整构建继续通过 Compose Material 3、Header Platform、Inline Autofill、敏感 Clipboard、API 31/33/34/35/36、6,633 个旧资源 ID、v1/v2/v3 签名和 16 KiB ZIP alignment 验证。
+- Pixel 10 Pro / Android 16 真机确认简繁输入及 Candidate 即时变化、设置状态同步、显示开关、voice/hide-keyboard、Clipboard、Inline Autofill 和 Access Points 展开/收起均正常。
 
 ## [2.0.4] - 2026-08-13
 
@@ -56,18 +66,18 @@
 
 ## [2.0.3] - 2026-08-13
 
-在统一原生 Header 上加入 Android 标准 Inline Autofill，并将 Clipboard、Autofill 和未来 Header Action 收敛到集中生命周期、仲裁、渲染和清理平台；同时在现代设置“关于”页面加入项目 GitHub 仓库入口。
+在统一原生 Header 上加入 Android 标准 Inline Autofill，并将 Clipboard、Autofill 和未来 Header Action 收敛到集中生命周期、仲裁、渲染和清理平台；同时在现代设置「关于」页面加入项目 GitHub 仓库入口。
 
 ### Added
 
 - Android 11/API 30 及以上支持标准 Inline Suggestions request/response/inflate 协议，托管 Framework/Autofill Provider 提供的 `InlineContentView` 远端 Surface；点击继续由 Framework/Provider 完成认证与填充，IME 不读取凭据正文、不转换为 Candidate，也不调用 `commitText()`。
 - 增加编译期注册的统一 Header Platform：模块共享 session、Header identity、render generation、集中仲裁、placement、原生 chrome factory、renderer registry、无障碍和清理契约，但 Clipboard、Inline Autofill 与本地 Action 保持各自数据模型。
 - Inline Autofill 使用一个可见建议和原生上一项/下一项 rails；单项建议时两侧仍保持布局但不可点击、不可聚焦且不提供无障碍操作，多项建议保留 Provider 原始顺序。
-- API 35+ Compose Material 3 设置的“其他 → 关于”页面增加 GitHub 仓库入口，显示完整公开地址并通过系统浏览器打开。
+- API 35+ Compose Material 3 设置的「其他 → 关于」页面增加 GitHub 仓库入口，显示完整公开地址并通过系统浏览器打开。
 
 ### Changed
 
-- Header 所有权固定为“普通原生 Candidate → Clipboard quick-paste Candidate → Inline Autofill → idle Header”；Clipboard 接管期间保留仍有效的 Inline contribution，提交或关闭 Clipboard 后自动恢复。
+- Header 所有权固定为「普通原生 Candidate → Clipboard quick-paste Candidate → Inline Autofill → idle Header」；Clipboard 接管期间保留仍有效的 Inline contribution，提交或关闭 Clipboard 后自动恢复。
 - Clipboard 与 Autofill rails 复用原生 show-more Candidate 的运行时 divider、方向图标、alpha、padding 和测量宽度；主题或方向切换后的首次布局等待原生 divider 完成测量，避免 1×1 点状分隔线。
 - Inline request 的前景色来自真实 Google 拼音 Candidate 主题渲染链，仅作为新 request 的 AndroidX Style Bundle 建议；不以颜色或 theme cache key 猜测 response 身份，也不直接重绘 Provider Surface。
 - 远端 Surface 使用 View ancestry 的局部坐标转换进行显式裁剪；inactive Surface 保持 mounted 但 invisible、clipped、disabled、non-focusable 且不参与无障碍。
@@ -103,7 +113,7 @@ Android 15+ 设置界面改用源码构建的官方 Compose Material 3 运行时
 - 为 API 35+ 增加官方 Material 3 分层设置首页、类型化开关/列表/Slider、可保存路由栈、页面转场、动态配色、RTL、大字体、横屏、分屏和 TalkBack 语义。
 - 在现代词典页内整合 SAF 备份列表、合并导入、联系人建议授权，以及带四位随机确认码的清除用户词典流程；不跳转旧设置页，也不读取或显示联系人和词典正文。
 - 增加纯 Java、primary-DEX、AndroidX-free 的窄桥接层，复用原词典导入、联系人偏好和 `UserDictClearTask` 控制器；清除任务继续强制关闭已废弃的账户同步路径。
-- 增加独立“主题背景”页和“跟随主题”策略：浅色模式、深色模式、固定模式分别保存一套完整主题规格，三个槽都可使用原版完整主题选择器；系统只按深浅模式选择槽位，不替用户分类主题，开关切换不会覆盖非活动槽。
+- 增加独立「主题背景」页和「跟随主题」策略：浅色模式、深色模式、固定模式分别保存一套完整主题规格，三个槽都可使用原版完整主题选择器；系统只按深浅模式选择槽位，不替用户分类主题，开关切换不会覆盖非活动槽。
 
 ### Changed
 
@@ -123,7 +133,7 @@ Android 16 大版本正式基线。已验收的 target SDK 29–36 分支合并�
 - 保留 API 29–36 的长期审计分支、隔离 application ID、完成门槛和历史取证；Android 17 继续作为独立调查阶段。
 - GitHub Actions 增加预期 target SDK 身份检查和构建摘要，防止审计产物在目标版本不符时继续发布。
 - target 29 V1 已在 Pixel 10 Pro / Android 16 完成首次引导、核心输入、手写、候选、剪贴板、主题、联系人及 SAF 备份测试；ART、DropBox、进程日志和 Root 文件检查未发现新增问题。
-- 所有非正式 application ID 的后续审计包统一显示为“Google 拼音输入法（测试版）”，便于在 Launcher、应用列表和输入法选择器中与正式版区分。
+- 所有非正式 application ID 的后续审计包统一显示为「Google 拼音输入法（测试版）」，便于在 Launcher、应用列表和输入法选择器中与正式版区分。
 - 从已验收的 target 29 里程碑创建 `feat/target-sdk-30`，第一版只启用 Android 11 / API 30 target 行为，不预先隐藏 scoped storage、Toast 或 package visibility 问题。
 - target 30 V1 已在 Pixel 10 Pro / Android 16 完成功能、ART、Root、scoped storage、Google Drive SAF 和日志检查，未发现 target 30 新增回归；旧 target 29 审计包已从设备卸载。
 - 按维护者要求暂停 target 31，建立与 release-like 验收分离、且禁止用于正式包的可选 debug 诊断模式。
@@ -147,8 +157,8 @@ Android 16 大版本正式基线。已验收的 target SDK 29–36 分支合并�
 ### Fixed
 
 - 移除已经失效的 Google 账户用户词典同步适配器、认证 Activity 和账户/同步权限，避免 Android 在重启后反复请求 Google 账户访问权；Google Drive 等 SAF 备份目录继续仅使用持久 URI 授权。
-- 隐藏旧“同步用户词典”和“立即同步”，并将可能从旧版本恢复的同步开关归一化为关闭，避免设置页重新进入废弃认证路径。
-- 保留原生“清除用户字典”确认流程，但只执行本机中英文词典清空、持久化、恢复旁路清理和引擎通知，不再调度废弃的远端同步清除任务。
+- 隐藏旧「同步用户词典」和「立即同步」，并将可能从旧版本恢复的同步开关归一化为关闭，避免设置页重新进入废弃认证路径。
+- 保留原生「清除用户字典」确认流程，但只执行本机中英文词典清空、持久化、恢复旁路清理和引擎通知，不再调度废弃的远端同步清除任务。
 
 ## [1.0.2] - 2026-07-28
 
@@ -166,18 +176,18 @@ Android 16 大版本正式基线。已验收的 target SDK 29–36 分支合并�
 
 ## [1.0.0] - 2026-07-25
 
-“Google 拼音输入法 创造性 AI 版”首个完整正式版本，也是提升 target API 之前当前 API 阶段的最终正式版本。Android `versionName` 为 `1.0.0`，`versionCode` 为 `4520381`，架构为 `arm64-v8a`；应用内显示名称仍保持“Google 拼音输入法”。
+「Google 拼音输入法 创造性 AI 版」首个完整正式版本，也是提升 target API 之前当前 API 阶段的最终正式版本。Android `versionName` 为 `1.0.0`，`versionCode` 为 `4520381`，架构为 `arm64-v8a`；应用内显示名称仍保持「Google 拼音输入法」。
 
 ### Changed
 
-- 项目中文名称定为“Google 拼音输入法 创造性 AI 版”，英文名称为 “Comeback Google Pinyin Input”；Android 应用、输入法选择器、设置页和 Launcher 的显示名称仍保持“Google 拼音输入法”。
+- 项目中文名称定为「Google 拼音输入法 创造性 AI 版」，英文名称为「Comeback Google Pinyin Input」；Android 应用、输入法选择器、设置页和 Launcher 的显示名称仍保持「Google 拼音输入法」。
 - 正式 APK 文件名定为 `ComebackGooglePinyinInput-arm64-v8a-1.0.0.apk`，正式包名和签名身份保持不变，可覆盖此前兼容安装。
-- 首次引导“完成”恢复为进入 Google 拼音设置页并结束引导，不再直接发送 HOME；返回键仍在非第一页后退一页、第一页退出软件。
+- 首次引导「完成」恢复为进入 Google 拼音设置页并结束引导，不再直接发送 HOME；返回键仍在非第一页后退一页、第一页退出软件。
 - 剪贴板建议改用 Google 拼音原生候选文字样式和左右候选分隔线，移除为 Gboard 较高建议栏设计的圆角框、描边、阴影、额外高度及前置图标。
 - 剪贴板建议右侧在原展开箭头位置提供关闭按钮；关闭仅屏蔽当前剪贴板项目，不清空系统剪贴板，新复制内容仍可再次建议。
 - 剪贴板建议改为仅在候选空闲状态显示；中文、英文、手写等正常输入一旦产生候选就完整让位，输入完成或取消并回到无候选状态后再恢复。
 - 剪贴板文字区使用左右对称的原展开按钮宽度预留位；分隔线跟随候选文本的实际宽度，短验证码不会留下过长空白。
-- 剪贴板可见文字最大宽度收窄到 200dp，并禁止自动横向缩小原生 21sp 字号，超长文本改为在分隔线内省略；关闭符号颜色直接同步当前原生候选文字颜色。
+- 剪贴板可见文字最大宽度收窄到 200 dp，并禁止自动横向缩小原生 21 sp 字号，超长文本改为在分隔线内省略；关闭符号颜色直接同步当前原生候选文字颜色。
 - 关闭按钮复用 Google 拼音原生按键反馈控制器，遵循键盘按键音、振动、音量和振动时长设置。
 - 修正短文本布局回归：左右分隔符改为候选内部两个独立分隔符，最终布局阶段强制隐藏可能重叠的原生末列分隔符。
 - 不再信任兼容分隔符 XML 的静态主题解析；每轮渲染直接克隆当前已完成主题处理的原生候选分隔符 Drawable、tint、image alpha 和 View alpha，确保浅色、深色及彩色主题一致。
@@ -186,14 +196,14 @@ Android 16 大版本正式基线。已验收的 target SDK 29–36 分支合并�
 - 关闭键不再以候选栏右边缘推算中心：QWERTY 直接读取当前可见退格键的窗口坐标，九键读取右侧光标键，必要时回退语音键，再将 `×` 的中心精确对齐到该真实按键列。
 - 分隔符最终改为直接保留剪贴板 Candidate 自己的原生 `candidate_separator` 作为右边界，仅在同一候选/同一父级 alpha 层内克隆其最终 Drawable/tint/filter 到左边界，避免跨 View 层级复制透明度造成浅色、深色和彩色主题下过淡。
 - 剪贴板变化时统一以 `textCandidatesUpdated(false)` 清空旧空闲候选周期后再追加唯一新项目，修复英文输入模式保留旧行并显示两个粘贴候选、从而无法居中的问题。
-- 移除候选 holder 左侧人为 45dp 预留及对应 overlay；200dp 文本上限已经保证与右侧关闭键互不覆盖，全宽居中会自然留下左右空间。
+- 移除候选 holder 左侧人为 45 dp 预留及对应 overlay；200 dp 文本上限已经保证与右侧关闭键互不覆盖，全宽居中会自然留下左右空间。
 - 左分隔符不再克隆再叠加 tint/alpha 状态，而是清除自身静态 tint/filter 后直接共享同一 Candidate 内右侧原生分隔符已经完成主题处理的 Drawable，消除仅左线持续过淡的问题。
-- 在剪贴板候选文字前加入 18dp 剪贴板图标：复用原 Google 拼音 APK 已包含的 AppCompat Material paste glyph，不复制 Gboard 素材；按当前候选文字的实际主题色动态着色，并纳入 200dp 测量和 END ellipsis，完整提交 payload 不变。
-- 修复首版图标不可见：旧 `AutoSizeTextView` 的 `onDraw()` 直接调用 `Canvas.drawText()` 而不调用 `TextView.onDraw()`，因此 compound drawable 永远不会绘制。改为真实 sibling `ImageView`，并在标签 start padding 中预留 18dp 图标加 6dp 间距；普通候选回收时隐藏图标并恢复原生 padding。
-- 修复 V12 真机 ART `VerifyError`：`decorateView()` 的 `v7` 在“无右兼容分隔符”分支保留为整数，却在合流后用于 `instance-of ImageView`。新增独占引用寄存器 `v8`，并让所有分支先经过图标查找后再检查，避免任何 int/View 类型合流。
-- 在已通过真机验证的图标布局上增加 4dp 左侧呼吸空间：图标距左分隔符由 6dp 调整为 10dp，同时标签 start reserve 从 24dp 调整为 28dp，保持图标与文字 6dp 间距、组合居中和当时的 200dp 总上限。
-- 将剪贴板候选最大可见宽度在 200dp 基线之上增加两个当前候选文字 em（`2 × TextView.getTextSize()`）；默认 21sp/字体缩放 1.0 时约为 242dp，可多显示约两个中文字符，同时随系统字体缩放保持“两字”语义。
-- 在词典设置的本地备份区域增加“当前用户词库状态”：仅进入页面或点击该行时异步读取中文/英文词条数、主文件与 `_bak` 大小、`_tmp`/`_unreadable` 旁路和最近落盘时间；不在应用或键盘启动时扫描，不显示词条内容，也不触发备份、恢复或持久化。
+- 在剪贴板候选文字前加入 18 dp 剪贴板图标：复用原 Google 拼音 APK 已包含的 AppCompat Material paste glyph，不复制 Gboard 素材；按当前候选文字的实际主题色动态着色，并纳入 200 dp 测量和 END ellipsis，完整提交 payload 不变。
+- 修复首版图标不可见：旧 `AutoSizeTextView` 的 `onDraw()` 直接调用 `Canvas.drawText()` 而不调用 `TextView.onDraw()`，因此 compound drawable 永远不会绘制。改为真实 sibling `ImageView`，并在标签 start padding 中预留 18 dp 图标加 6 dp 间距；普通候选回收时隐藏图标并恢复原生 padding。
+- 修复 V12 真机 ART `VerifyError`：`decorateView()` 的 `v7` 在「无右兼容分隔符」分支保留为整数，却在合流后用于 `instance-of ImageView`。新增独占引用寄存器 `v8`，并让所有分支先经过图标查找后再检查，避免任何 int/View 类型合流。
+- 在已通过真机验证的图标布局上增加 4 dp 左侧呼吸空间：图标距左分隔符由 6 dp 调整为 10 dp，同时标签 start reserve 从 24 dp 调整为 28 dp，保持图标与文字 6 dp 间距、组合居中和当时的 200 dp 总上限。
+- 将剪贴板候选最大可见宽度在 200 dp 基线之上增加两个当前候选文字 em（`2 × TextView.getTextSize()`）；默认 21 sp/字体缩放 1.0 时约为 242 dp，可多显示约两个中文字符，同时随系统字体缩放保持「两字」语义。
+- 在词典设置的本地备份区域增加「当前用户词库状态」：仅进入页面或点击该行时异步读取中文/英文词条数、主文件与 `_bak` 大小、`_tmp`/`_unreadable` 旁路和最近落盘时间；不在应用或键盘启动时扫描，不显示词条内容，也不触发备份、恢复或持久化。
 
 ### Fixed
 
@@ -212,7 +222,7 @@ Android 16 大版本正式基线。已验收的 target SDK 29–36 分支合并�
 ### Initial compatibility baseline
 
 - 将已验证的固定路径用户词典自动备份、整合式备份列表和卸载重装权限恢复合并到正式兼容包。
-- 使用新的“导入本地备份”和“立即备份”替换旧 DocumentsUI 导入/导出设置项，避免功能重复和不可用的空文件选择器。
+- 使用新的「导入本地备份」和「立即备份」替换旧 DocumentsUI 导入/导出设置项，避免功能重复和不可用的空文件选择器。
 - 正式包名为 `com.google.android.inputmethod.pinyin.compat`。
 - README 更新为完整的版本、来源、签名、功能、构建和版权说明。
 - 将经 SHA-256 与 Google 原始证书信息标识的 4.5.2 arm64-v8a 原始 APK 收录至 `original/`，用于保存和可复现构建。
@@ -223,7 +233,7 @@ Android 16 大版本正式基线。已验收的 target SDK 29–36 分支合并�
 
 ### Fixed
 
-- “导入本地备份”不再启动单独页面，改为在当前字典设置页显示与频率/版本数选择一致的单选列表对话框；选择版本后再就地确认导入。
+- 「导入本地备份」不再启动单独页面，改为在当前字典设置页显示与频率/版本数选择一致的单选列表对话框；选择版本后再就地确认导入。
 - 当前安装无法列出旧 MediaStore 文件且尚未授权时，由新入口直接申请旧框架相同的 `WRITE_EXTERNAL_STORAGE` 文件权限；授权成功后自动重新加载备份列表，不再要求先点击旧导入入口。
 - 保留导出文件从 File Geek 通过 `ACTION_VIEW` / `ACTION_SEND` 打开到 Google 拼音的外部恢复入口。
 
@@ -238,11 +248,11 @@ Android 16 大版本正式基线。已验收的 target SDK 29–36 分支合并�
 
 ### Changed
 
-- 备份固定写入 `内部存储/Documents/GooglePinyinBackup`；“备份位置”改为只读显示，不再启动系统目录选择器。
+- 备份固定写入 `内部存储/Documents/GooglePinyinBackup`；「备份位置」改为只读显示，不再启动系统目录选择器。
 - API 29+ 通过 `MediaStore.Files`、`RELATIVE_PATH` 和 `IS_PENDING` 创建并发布原生 UTF-16LE TSV；清除数据或卸载后公共文件保留。
-- 新增“导入本地备份”，列出当前安装可访问的固定目录备份并复用原生 `UserDictImportTask`。
+- 新增「导入本地备份」，列出当前安装可访问的固定目录备份并复用原生 `UserDictImportTask`。
 - 新增显式 `ACTION_VIEW` / `ACTION_SEND text/plain` 导入 Activity；卸载重装后可在 File Geek 中打开或分享旧备份到 Google 拼音，由用户确认后导入。
-- 测试阶段保留旧“导入用户字典/导出用户字典”；验证完成后再以固定路径入口替换重复旧入口。
+- 测试阶段保留旧「导入用户字典/导出用户字典」；验证完成后再以固定路径入口替换重复旧入口。
 
 ### Build
 
@@ -257,7 +267,7 @@ Android 16 大版本正式基线。已验收的 target SDK 29–36 分支合并�
 
 - 移除 tree picker 上的 `Intent.EXTRA_LOCAL_ONLY` 提示；Android 16 DocumentsUI 在目录模式下可能因此隐藏或禁用 primary storage 入口。
 - 纯本地限制仍由返回 URI 的 `com.android.externalstorage.documents` authority 强制执行，云端 provider 即使显示也无法通过验证。
-- API 26+ 使用 `DocumentsContract.EXTRA_INITIAL_URI` 默认打开 `primary:Documents`，让用户能直接选择预先建立的 `Documents/GooglePinyinBackupAudit`，体验更接近现有“导入用户字典”的文件选择器。
+- API 26+ 使用 `DocumentsContract.EXTRA_INITIAL_URI` 默认打开 `primary:Documents`，让用户能直接选择预先建立的 `Documents/GooglePinyinBackupAudit`，体验更接近现有「导入用户字典」的文件选择器。
 - 继续使用 `ACTION_OPEN_DOCUMENT_TREE`，因为现有导入的 `GET_CONTENT` 只能授权单个文件，无法给自动备份授予创建和轮换多个文件所需的目录写权限。
 
 ### Build
@@ -285,10 +295,10 @@ Android 16 大版本正式基线。已验收的 target SDK 29–36 分支合并�
 
 ### Added
 
-- 在“设置 → 字典 → 用户字典”加入本地自动备份开关、本地目录、频率、保留版本和“立即备份”。
+- 在「设置 → 字典 → 用户字典」加入本地自动备份开关、本地目录、频率、保留版本和「立即备份」。
 - 仅接受 Pixel/AOSP 的本地 ExternalStorageProvider，通过 SAF 持久目录授权写入；不接受云端 DocumentsProvider，不上传或同步词条。
 - 完整复用原生中文/英文 `UserDictExportTask` 和 UTF-16LE TSV 格式，先写 `.partial`，校验 BOM/header 后 rename 为正式 `.txt`。
-- 自动配置保存在未注册到旧 `BackupAgent` 的独立 SharedPreferences；清除数据或卸载后配置消失，但公共本地备份文件保留，新装后由用户使用现有“导入用户字典”手动导入。
+- 自动配置保存在未注册到旧 `BackupAgent` 的独立 SharedPreferences；清除数据或卸载后配置消失，但公共本地备份文件保留，新装后由用户使用现有「导入用户字典」手动导入。
 - 支持 1/3/7/14/30 天最小间隔、3/5/10/20/30 份轮换以及失败退避；不新增 Alarm、Job、Worker、自动恢复或启动扫描。
 
 ### Changed
@@ -312,7 +322,7 @@ Android 16 大版本正式基线。已验收的 target SDK 29–36 分支合并�
 - 原生加载主文件及 `_bak` 都失败时，继续尝试仍存在的 `_tmp`；每个候选只消费一次，重试路径保持有界。
 - 为旧 `SaveDictionaryTask.saveDictionaries()` 增加进程内共享锁，避免不同任务实例中的定时异步保存与生命周期强制保存同时轮换相同的主文件、`_bak` 和 `_tmp`。
 - 用户明确关闭某个可变词库，且主文件已删除或本来就不存在时，同时清除 `_bak`、`_tmp` 和 `_unreadable`，避免以后重新启用时恢复已删除数据。
-- “清除用户字典”成功持久化空词库后，清除旧滚动备份和故障副本，确保破坏性操作覆盖所有恢复副本；普通学习、编辑和定时保存仍保留滚动备份。
+- 「清除用户字典」成功持久化空词库后，清除旧滚动备份和故障副本，确保破坏性操作覆盖所有恢复副本；普通学习、编辑和定时保存仍保留滚动备份。
 
 ### Build
 
@@ -326,10 +336,10 @@ Android 16 大版本正式基线。已验收的 target SDK 29–36 分支合并�
 
 ### Changed
 
-- 移除完成页内容区中央的完成按钮；完成页右下角沿用前两页“下一步”的固定位置和同一按钮样式。
-- 进入最后一页时，右下角按钮文字从“下一步”切换为“完成”，保持可交互；返回前一页时恢复为“下一步”。
+- 移除完成页内容区中央的完成按钮；完成页右下角沿用前两页「下一步」的固定位置和同一按钮样式。
+- 进入最后一页时，右下角按钮文字从「下一步」切换为「完成」，保持可交互；返回前一页时恢复为「下一步」。
 - 右下角按钮在最后一页调用 V38 已验证的 `exitGuide()`，直接返回桌面并移除引导任务；第一、第二页仍执行原生下一页动画。
-- 最后一页继续保留左下角“上一步”，整体形成固定的左后退、右继续/完成导航逻辑。
+- 最后一页继续保留左下角「上一步」，整体形成固定的左后退、右继续/完成导航逻辑。
 
 ### Build
 
@@ -344,7 +354,7 @@ Android 16 大版本正式基线。已验收的 target SDK 29–36 分支合并�
 
 - 完整移除首次引导底部 PageIndicator，不再依赖旧 `PageIndicatorView` 的 enabled-state 视觉语义。
 - 将首次引导 pager 替换为 `NonSwipeableFirstRunViewPager`，仅禁止用户触摸滑页，保留按钮触发的原生程序化翻页和动画。
-- 底部改为左侧“上一步”和右侧“下一步”按钮；第一页隐藏上一步，最后一页隐藏下一步。
+- 底部改为左侧「上一步」和右侧「下一步」按钮；第一页隐藏上一步，最后一页隐藏下一步。
 - 上一步复用旧框架 `navi_skip` 插槽但仅在 `PinyinFirstRunActivity` 中改为后退，功能介绍 Activity 继续保持原来的跳过/关闭行为。
 - 启用或选择输入法完成后不再自动跳页，只解锁当前页的下一步按钮；未完成时下一步不可交互，并使用明确的 disabled 背景和文字颜色。
 
@@ -375,7 +385,7 @@ Android 16 大版本正式基线。已验收的 target SDK 29–36 分支合并�
 
 ### Changed
 
-- 对照当前 Gboard 的标准三页数组，将首次使用流程固定为“启用输入法 → 选择输入法 → 完成”，不再显示旧权限总览页或匿名指标页。
+- 对照当前 Gboard 的标准三页数组，将首次使用流程固定为「启用输入法 → 选择输入法 → 完成」，不再显示旧权限总览页或匿名指标页。
 - 保留旧框架从系统设置/输入法选择器返回后的状态刷新、自动推进、PageIndicator、完成按钮和 `finishAndRemoveTask()` 行为。
 - 构建脚本新增可选 application ID；正式默认仍为 `com.google.android.inputmethod.pinyin.compat`，本次测试包使用独立的 `com.google.android.inputmethod.pinyin.guideaudit`，并同步隔离用户词典 authority 和应用数据。
 
@@ -422,7 +432,7 @@ Android 16 大版本正式基线。已验收的 target SDK 29–36 分支合并�
 ### Fixed
 
 - V33 的 30 次采样确认旧 `lk` final-delta distance 始终为 0，导致全键盘符号/表情的 fling 分支完全不可达；21 次回弹中有 16 次速度实际已超过系统 minimum。
-- 仅对 `PageableRecentSubCategorySoftKeyListHolderView` 跳过失效的 legacy 25dp final-delta 门槛，改为在已经进入 dragging 后按系统 minimum fling velocity 进入原有 fling 目标页逻辑。
+- 仅对 `PageableRecentSubCategorySoftKeyListHolderView` 跳过失效的 legacy 25 dp final-delta 门槛，改为在已经进入 dragging 后按系统 minimum fling velocity 进入原有 fling 目标页逻辑。
 - 保留 paging touch slop、方向竞争、慢速手势 50% settle、target clamp、页码和 Scroller 动画；候选 pager 与其他共享 `lk` 的界面继续使用原双重门槛。
 - 保留 V33 日志一个验证周期，并修正 `result` 文本；诊断 tag 仍为 `GPPagerDiag`。
 
@@ -437,7 +447,7 @@ Android 16 大版本正式基线。已验收的 target SDK 29–36 分支合并�
 
 ### Diagnostics
 
-- 新增 `PagerDiagnosticsCompat`，只记录 `PageableRecentSubCategorySoftKeyListHolderView` 在 UP 时已经计算完成的 current/target、页面 offset、拖动 distance、25dp threshold、velocity、minimum velocity 与 fling 判定。
+- 新增 `PagerDiagnosticsCompat`，只记录 `PageableRecentSubCategorySoftKeyListHolderView` 在 UP 时已经计算完成的 current/target、页面 offset、拖动 distance、25 dp threshold、velocity、minimum velocity 与 fling 判定。
 - 日志 tag 为 `GPPagerDiag`；候选 pager 和其他共享 `lk` 的界面通过类型检查排除。
 - 诊断调用不修改 `lk` 字段、MotionEvent、touch slop、velocity、settle、目标页或 Scroller 动画，V32 点击取消逻辑保持不变。
 
@@ -468,7 +478,7 @@ Android 16 大版本正式基线。已验收的 target SDK 29–36 分支合并�
 ### Reverted
 
 - 根据 V29/V30 真机测试结果，回滚全部 IME 帧率干预：删除 `FrameRateCompat`、Window touch boost、Window preferred refresh rate、View frame-rate vote 以及开始/结束输入生命周期注入。
-- 不恢复曾导致疑似异常发热的固定 120Hz 实现；当前完全由 Android 系统默认调度帧率和 LTPO/ARR。
+- 不恢复曾导致疑似异常发热的固定 120 Hz 实现；当前完全由 Android 系统默认调度帧率和 LTPO/ARR。
 - 高刷新率支持推迟到 target API 与渲染管线现代化后重新实现。
 
 ### Build
@@ -484,7 +494,7 @@ Android 16 大版本正式基线。已验收的 target SDK 29–36 分支合并�
 - 移除 IME Window `preferredRefreshRate=120` 和 decor view `setFrameRate(120, DEFAULT)` 两条固定高刷新率请求，避免键盘可见但空闲时阻止 LTPO/ARR 降频。
 - API 35+ 改用当前 Gboard 使用的 `Window.setFrameRateBoostOnTouchEnabled(true)`，让系统只在触摸交互期间提升刷新率。
 - 新增 `FrameRateCompat.clear()`，在 `onFinishInputView()` 中关闭 touch boost，并将 Window/View 的遗留 frame-rate vote 清为 0。
-- Android 30–34 不再写死 120Hz，由系统默认策略选择适合设备的刷新率；90Hz、120Hz、144Hz 屏幕不再被统一映射到固定值。
+- Android 30–34 不再写死 120 Hz，由系统默认策略选择适合设备的刷新率；90 Hz、120 Hz、144 Hz 屏幕不再被统一映射到固定值。
 
 ### Build
 
@@ -531,8 +541,8 @@ Android 16 大版本正式基线。已验收的 target SDK 29–36 分支合并�
 
 - 修正 V25 在亮色键盘中直接使用深色候选文字 RGB 生成 chip 背景，导致整体明显偏暗的问题。
 - 根据 Gboard 二进制 stylesheet 的实际规则实现亮暗表面：亮色键盘使用约 `#4CFFFFFF` 的白色 surface 叠加，暗色键盘使用约 `#1AFFFFFF`，不再使用文字色作为背景色。
-- 描边降为亮色主题下约 9% 黑色、暗色主题下约 15% 白色，elevation 从 3dp 降到 2dp并移除额外 translationZ，避免阴影过重。
-- 按 Gboard 紧凑 AutoPaste chip 参数调整为 34dp 高、14sp 文本、20dp 图标和 1000dp 完全胶囊圆角。
+- 描边降为亮色主题下约 9% 黑色、暗色主题下约 15% 白色，elevation 从 3 dp 降到 2 dp 并移除额外 translationZ，避免阴影过重。
+- 按 Gboard 紧凑 AutoPaste chip 参数调整为 34 dp 高、14 sp 文本、20 dp 图标和 1000 dp 完全胶囊圆角。
 
 ### Research
 
@@ -551,7 +561,7 @@ Android 16 大版本正式基线。已验收的 target SDK 29–36 分支合并�
 
 - 完整移除 4–8 位验证码正则及提取分支；剪贴板候选现在始终忠实提交完整原文，仅屏幕摘要保留 18 字符加 `...` 的视觉截断。
 - 将 clipboard chip 的主题色填充透明度由约 9% 提升到约 19%，描边透明度提升到约 44%，增强与底层候选栏的层次差异。
-- 为圆角 chip 增加 3dp elevation、1dp translationZ 和平台圆角 outline 阴影，使其呈现更接近 Material 按钮的凸起质感。
+- 为圆角 chip 增加 3 dp elevation、1 dp translationZ 和平台圆角 outline 阴影，使其呈现更接近 Material 按钮的凸起质感。
 - 候选 View 回收时同步清除 elevation 和 translationZ，避免普通候选继承阴影。
 
 ### Build
@@ -580,9 +590,9 @@ Android 16 大版本正式基线。已验收的 target SDK 29–36 分支合并�
 ### Changed
 
 - 剪贴板候选的长文本摘要改为最多显示开头 18 个字符，并使用三个点 `...` 结尾；提交内容仍保持完整。
-- 参考 Gboard AutoPaste chip，将剪贴板候选改为单行垂直/水平居中布局、16sp 文本、36dp 最小高度和更紧凑的内边距。
+- 参考 Gboard AutoPaste chip，将剪贴板候选改为单行垂直/水平居中布局、16 sp 文本、36 dp 最小高度和更紧凑的内边距。
 - 在内容外增加随键盘文字颜色变化的半透明圆角填充与描边，并隐藏该项的原生候选分隔线。
-- 将剪贴板图标固定为 16dp，放置在文本前并保留 8dp 间距。
+- 将剪贴板图标固定为 16 dp，放置在文本前并保留 8 dp 间距。
 - 候选 View 回收时恢复原生背景、字号、padding、分隔线和 drawable，避免普通候选继承 clipboard chip 样式。
 - versionName：`4.5.2.193126728-arm64-v8a-a16compat23-clipboard-chip`。
 
@@ -650,7 +660,7 @@ Android 16 大版本正式基线。已验收的 target SDK 29–36 分支合并�
 
 ### Removed
 
-- 移除用户词典设置页中的“词典更新”分类、“词典更新”开关和“词典更新通知”开关。
+- 移除用户词典设置页中的「词典更新」分类、「词典更新」开关和「词典更新通知」开关。
 - 停止向周期任务管理器注册 `new_words_update`，不再创建指向已失效 `https://tools.google.com/service/update?as=pinyinsysdict` 的 `NewWordsUpdateTaskFactory`。
 - 移除在线词典更新对应的 INTERNET/ACCESS_NETWORK_STATE 功能权限注册。
 - 补充移除遗留的 `daily_ping_task` 周期统计任务注册；保留与在线系统词典无关的本地 English model 周期维护任务。
@@ -674,8 +684,8 @@ Android 16 大版本正式基线。已验收的 target SDK 29–36 分支合并�
 
 ### Removed
 
-- 移除设置“其他”页面中的“发送使用情况统计信息”开关。
-- 移除设置菜单中的“发送反馈”入口，以及 Manifest 中的拼音反馈 Activity、Google User Feedback Activities 和上传 Service。
+- 移除设置「其他」页面中的「发送使用情况统计信息」开关。
+- 移除设置菜单中的「发送反馈」入口，以及 Manifest 中的拼音反馈 Activity、Google User Feedback Activities 和上传 Service。
 - 移除 Manifest 中的 Firebase Instance ID Receivers、Service 和 Firebase JobDispatcher Receiver，阻止失效的注册、广播及后台任务入口被系统启动。
 - 停止在 `PinyinApp` 中创建 `Laym`，不再注册 Clearcut/Primes 的每日 ping、IME 事件和键盘事件统计处理器，也不再创建 Clearcut 上传适配器。
 
@@ -773,7 +783,7 @@ Android 16 大版本正式基线。已验收的 target SDK 29–36 分支合并�
 
 - 兼容版应用 ID 改为 `com.google.android.inputmethod.pinyin.compat`，可与官方原版 `com.google.android.inputmethod.pinyin` 并存，方便同机对比触摸行为。
 - 同步隔离用户词典 Provider authority，避免与原版冲突。
-- 应用中文名及其他语言显示名称保持原样，不添加“改版”或其他后缀。
+- 应用中文名及其他语言显示名称保持原样，不添加「改版」或其他后缀。
 - versionName：`4.5.2.193126728-arm64-v8a-a16compat10`。
 
 ### Testing
@@ -822,7 +832,7 @@ Android 16 大版本正式基线。已验收的 target SDK 29–36 分支合并�
 ### Fixed
 
 - 在 `SoftKeyboardView` 的外层自定义触摸管线增加仅针对九宫格左侧面板的纵向滑动保护。该输入法在标准 View 分派之后还会再次处理同一个事件，解释了仅在内部 `ScrollView` 取消释放仍会上屏的问题。
-- 分页器的翻页提交距离从 25 dp 降至 8 dp，并取消“位移达标后还必须同时达到最低 fling 速度”的限制，使慢速短距离滑动也能翻页。
+- 分页器的翻页提交距离从 25 dp 降至 8 dp，并取消「位移达标后还必须同时达到最低 fling 速度」的限制，使慢速短距离滑动也能翻页。
 
 ### Changed
 

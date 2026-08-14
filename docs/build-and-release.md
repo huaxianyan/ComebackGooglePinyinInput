@@ -19,25 +19,25 @@
 
 关键不变量：
 
-- 全部 6,633 个旧公开资源 ID 保持；
-- patched legacy IME 保持在 `classes.dex`；
-- Compose/AndroidX 只位于 `classes2.dex` 及以后；
-- API 17–34 启动不解析现代设置类；
-- API 35+ 才路由 Compose Material 3 设置；
-- 默认构建为 release-like、非 debuggable；
-- 正式 application ID 禁止 Debug；
-- 原始 native、assets 和英文模型载荷保持；
+- 全部 6,633 个旧公开资源 ID 保持
+- patched legacy IME 保持在 `classes.dex`
+- Compose/AndroidX 只位于 `classes2.dex` 及以后
+- API 17–34 启动不解析现代设置类
+- API 35+ 才路由 Compose Material 3 设置
+- 默认构建为 release-like、非 debuggable
+- 正式 application ID 禁止 Debug
+- 原始 native、assets 和英文模型载荷保持
 - APK 通过 v1/v2/v3 签名和 16 KiB ZIP alignment。
 
 ## 本地工具
 
 需要：
 
-- Python 3.12 或兼容版本；
-- JDK 17；
-- Android SDK Platform 36；
-- Android Build Tools 36.0.0；
-- apktool 2.12.1；
+- Python 3.12 或兼容版本
+- JDK 17
+- Android SDK Platform 36
+- Android Build Tools 36.0.0
+- apktool 2.12.1
 - 与目标安装身份对应的 PKCS#12/JKS keystore。
 
 ### 完整 Compose Host 构建
@@ -103,8 +103,8 @@ zipalign -c -P 16 4
 
 触发规则：
 
-- push 到 `master`：构建、签名、验证并上传 30 天 Artifact；
-- `workflow_dispatch`：按指定 ref 手动构建，可使用隔离 application ID；
+- push 到 `master`：构建、签名、验证并上传 30 天 Artifact
+- `workflow_dispatch`：按指定 ref 手动构建，可使用隔离 application ID
 - push 与 `version.properties` 匹配的 `v*` Tag：执行全部门禁并创建 GitHub Release。
 
 ### Secrets
@@ -153,9 +153,9 @@ RELEASE_TITLE=<feature-first title without version prefix>
 
 同时更新：
 
-- `CHANGELOG.md`；
-- README 中面向用户的当前能力（如有变化）；
-- Release notes 或对应长期文档。
+- `CHANGELOG.md`
+- README 中面向用户的当前能力（如有变化）
+- `docs/releases/v$VERSION_NAME.md` 中的版本化 Release Notes
 
 Tag 必须精确等于：
 
@@ -165,17 +165,17 @@ v$VERSION_NAME
 
 ## 正式发布步骤
 
-1. 功能分支 Actions 通过；
-2. `--no-ff` 合并到 `master`；
-3. push `master`，等待正式 Artifact 构建通过；
+1. 功能分支 Actions 通过
+2. `--no-ff` 合并到 `master`
+3. push `master`，等待正式 Artifact 构建通过
 4. 下载 Artifact，复核：
-   - package/versionCode/versionName/target SDK；
-   - non-debuggable；
-   - 正式证书；
-   - APK SHA-256；
-   - v1/v2/v3；
-   - `zipalign -P 16`；
-   - 最终静态门禁；
+   - package/versionCode/versionName/target SDK
+   - non-debuggable
+   - 正式证书
+   - APK SHA-256
+   - v1/v2/v3
+   - `zipalign -P 16`
+   - 最终静态门禁
 5. 创建 annotated Tag：
 
    ```powershell
@@ -183,9 +183,10 @@ v$VERSION_NAME
    git push origin v<x.y.z>
    ```
 
-6. Tag workflow使用 `v$VERSION_NAME - $RELEASE_TITLE`创建功能优先标题，并上传 APK与`.sha256`；如同名 Release已经存在则失败，不覆盖已发布资产；
-7. 核对 Release标题、版本化 notes正文和资产名，再从 Release页面重新下载资产，复核 SHA-256、签名和 alignment；
-8. 只有全部一致时，记录发布完成。
+6. Tag workflow 使用 `v$VERSION_NAME - $RELEASE_TITLE` 创建功能优先标题，并上传 APK 与 `.sha256`。如同名 Release 已经存在，工作流必须失败，不得覆盖已发布资产
+7. 按 [中文文案与排版规范](chinese-copywriting-style.md) 核对 Release 标题和版本化正文，再检查资产名称
+8. 从 Release 页面重新下载资产，复核 SHA-256、签名和 alignment
+9. 只有全部一致时，记录发布完成
 
 不要手工复用本地未验证 APK 替代 Actions 产物。
 
@@ -201,5 +202,5 @@ ComebackGooglePinyinInput-arm64-v8a-<version>.apk.sha256
 Release 标题：
 
 ```text
-v<version> - Google 拼音输入法
+v<version> - <主要功能>
 ```

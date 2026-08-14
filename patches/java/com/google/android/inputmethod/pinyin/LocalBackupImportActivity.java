@@ -45,7 +45,7 @@ public final class LocalBackupImportActivity extends Activity
         if (isFinishing()) return;
         if (entries.isEmpty()) {
             new AlertDialog.Builder(this).setTitle("没有可访问的用户词典备份")
-                    .setMessage("尚未设置备份和导入目录，或所选目录中没有 Google 拼音用户词典备份。请在字典设置中选择已有备份目录；也可以从文件管理器打开或分享备份 .txt。")
+                    .setMessage("尚未设置备份和导入目录，或所选目录中没有 Google 拼音用户词典备份。请在字典设置中选择已有备份目录，也可以从文件管理器打开或分享备份 .txt。")
                     .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                         @Override public void onClick(DialogInterface d, int w) { finish(); }
                     }).setOnCancelListener(new DialogInterface.OnCancelListener() {
@@ -69,7 +69,7 @@ public final class LocalBackupImportActivity extends Activity
 
     private void confirm(final Uri uri, String name) {
         new AlertDialog.Builder(this).setTitle("导入用户词典备份")
-                .setMessage("将“" + name + "”合并到当前用户词典？")
+                .setMessage("将「" + name + "」合并到当前用户词典？")
                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                     @Override public void onClick(DialogInterface d, int w) {
                         startNativeImport(LocalBackupImportActivity.this, uri); finish();

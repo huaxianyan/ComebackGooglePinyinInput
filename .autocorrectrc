@@ -1,0 +1,6 @@
+# 中文文案排版规则以 https://github.com/sparanoid/chinese-copywriting-guidelines 为基线。
+# 代码块保留命令、路径、日志和原始技术标识，不参与普通正文格式化。
+rules:
+  spellcheck: 0
+context:
+  codeblock: 0

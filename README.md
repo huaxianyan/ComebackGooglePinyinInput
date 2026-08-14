@@ -25,23 +25,23 @@ target SDK:     36
 - 完成 target SDK 29–36 的逐版本适配与验收，支持 Android 16 的 covering-IME、系统导航区域和 edge-to-edge 行为。
 - 修复 Android 16 手写首笔崩溃，保留原有离屏画布、压感宽度、路径平滑和原生识别流程。
 - 修复候选、标点、符号和表情滚动/翻页后的误触问题。
-- Android 16高刷新率屏幕上的候选面板展开/收起动画会在运动期间动态请求高刷，结束后立即释放，避免键盘空闲时持续锁定高刷新率。
+- Android 16 高刷新率屏幕上的候选面板展开/收起动画会在运动期间动态请求高刷，结束后立即释放，避免键盘空闲时持续锁定高刷新率。
 - 补齐现代 Android 所需的组件导出、PendingIntent 和动态 Receiver 安全要求。
 
 ### 统一 Header、简繁切换、剪贴板与 Autofill
 
-- 中文拼音 QWERTY、中文拼音 9 键和中文笔画支持原生“简/繁”快速切换；实际输入、候选和设置状态会同步更新，也可在“键盘 → 按键”中关闭该入口。Access Points 展开或空间不足时按钮自动隐藏，不覆盖语言、语音或收起键。
-- 所有相关键盘使用统一原生 Header；密码、PIN、数字、电话和日期时间键盘的必需输入键始终保留在 Body。
-- Clipboard 快捷粘贴继续使用真实原生 Candidate；来源标记敏感或密码目标中的内容会脱敏显示，点击仍提交完整原文。
+- 中文拼音 QWERTY、中文拼音 9 键和中文笔画支持原生「简/繁」快速切换，实际输入、候选和设置状态会同步更新，也可在「键盘 → 按键」中关闭该入口。Access Points 展开或空间不足时按钮自动隐藏，不覆盖语言、语音或收起键。
+- 所有相关键盘使用统一原生 Header，密码、PIN、数字、电话和日期时间键盘的必需输入键始终保留在 Body。
+- Clipboard 快捷粘贴继续使用真实原生 Candidate，来源标记敏感或密码目标中的内容会脱敏显示，点击仍提交完整原文。
 - Android 11+ 支持标准 Inline Autofill Suggestions，直接托管 Framework/Provider 提供的远端 Surface，不读取凭据正文，也不自行提交 Autofill payload。
 - 原生 Candidate、Clipboard 和 Inline Autofill 由统一 Header Platform 集中仲裁，并复用原生主题、分隔线、上一项/下一项控制和无障碍边界。
 
 ### 设置与首次引导
 
-- Android 15/API 35 及以上使用源码构建的官方 Compose Material 3 设置界面；Android 14 及以下继续使用原版 Preference 设置。
+- Android 15/API 35 及以上使用源码构建的官方 Compose Material 3 设置界面，Android 14 及以下继续使用原版 Preference 设置。
 - 现代设置保留原 Preference key、类型、默认值、依赖和业务回调，并支持动态配色、RTL、大字体、横屏、分屏和 TalkBack 语义。
-- “关于”页面提供当前项目的 [GitHub 仓库](https://github.com/huaxianyan/comeback-google-pinyin-input)入口。
-- 首次引导整理为同页完成“启用输入法”和“选择输入法”，避免旧权限页、失效统计和重复引导状态。
+- 「关于」页面提供当前项目的 [GitHub 仓库](https://github.com/huaxianyan/comeback-google-pinyin-input) 入口。
+- 首次引导整理为同页完成「启用输入法」和「选择输入法」，避免旧权限页、失效统计和重复引导状态。
 
 ### 用户词典与隐私
 
@@ -99,19 +99,19 @@ target SDK:     36
   </tr>
 </table>
 
-> 为公开展示保护站点信息，Chrome 截图中的地址栏文字已遮挡；其余号码、验证码和功能内容保持原样。
+> 为公开展示保护站点信息，Chrome 截图中的地址栏文字已遮挡，其余号码、验证码和功能内容保持原样。
 
 ## 兼容性说明
 
-- APK 只包含 `arm64-v8a` 原生库；Manifest 的 `minSdkVersion` 为 17，但 ARM64 Android 应用实际从 API 21 才存在。
-- API 35+ 设置使用 Compose Material 3；API 17–34 保持旧设置路径，启动时不解析 Compose/AndroidX 设置类。
+- APK 只包含 `arm64-v8a` 原生库。Manifest 的 `minSdkVersion` 为 17，但 ARM64 Android 应用实际从 API 21 才存在。
+- API 35+ 设置使用 Compose Material 3，API 17–34 保持旧设置路径，启动时不解析 Compose/AndroidX 设置类。
 - Inline Autofill 需要 Android 11/API 30 及以上，并取决于当前 App、Android Autofill Framework 和用户选择的 Autofill Provider。
 - TalkBack touch exploration 下的 Inline Suggestions 尚未声明支持，系统会采用自身回退路径。
 - Android 17/API 37、Predictive Back 和最终 16 KiB native page-size 运行时验收属于独立后续工作。
 
 ## 用户词典备份与恢复
 
-在“设置 → 词典与备份”中选择一个 SAF 目录后，自动备份、立即备份和手动导入共用该目录。备份继续使用 Google 拼音原生用户词典导出/导入语义；项目不会创建不兼容的新词典格式，也不会自动扫描公共存储中的旧文件。
+在「设置 → 词典与备份」中选择一个 SAF 目录后，自动备份、立即备份和手动导入共用该目录。备份继续使用 Google 拼音原生用户词典导出/导入语义，项目不会创建不兼容的新词典格式，也不会自动扫描公共存储中的旧文件。
 
 恢复时重新授权原备份目录，从内置列表选择备份并确认导入即可。云端同步、离线和保留能力由所选 DocumentsProvider 管理。
 
@@ -131,6 +131,7 @@ docs/            设计、研究、验收和兼容边界
 
 - [原始 APK 来源与完整性](docs/original-apk-provenance.md)
 - [本地构建、GitHub Actions 与发布流程](docs/build-and-release.md)
+- [中文文案与排版规范](docs/chinese-copywriting-style.md)
 - [Header Platform 架构](docs/header-platform-design.md)
 - [Header Platform 运行时验收](docs/header-platform-runtime-acceptance.md)
 - [现代设置运行时设计](docs/modern-settings-runtime-design.md)
@@ -146,4 +147,4 @@ docs/            设计、研究、验收和兼容边界
 - [精确适用范围、生效边界与排除项](NOTICE)
 - [原始 APK 来源与权利边界](docs/original-apk-provenance.md)
 
-本项目不隶属于 Google，也未获得 Google 官方背书。项目本身不收费、不接入广告，也不以 Google 品牌或原始程序牟利；这不限制第三方在严格遵守适用许可证及第三方权利的前提下商业使用明确列出的 MPL Covered Software。如相关权利人认为仓库内容需要调整，可通过 GitHub Issues 联系项目维护者。
+本项目不隶属于 Google，也未获得 Google 官方背书。项目本身不收费、不接入广告，也不以 Google 品牌或原始程序牟利，但这不限制第三方在严格遵守适用许可证及第三方权利的前提下商业使用明确列出的 MPL Covered Software。如相关权利人认为仓库内容需要调整，可通过 GitHub Issues 联系项目维护者。

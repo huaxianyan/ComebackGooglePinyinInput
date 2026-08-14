@@ -4,8 +4,8 @@
 
 对照以下实现：
 
-- 当前兼容补丁：`patches/smali/FrameRateCompat.smali`；
-- Gboard `17.7.5.932364120-release-arm64-v8a`；
+- 当前兼容补丁：`patches/smali/FrameRateCompat.smali`
+- Gboard `17.7.5.932364120-release-arm64-v8a`
 - Pixel 10 Pro / Android 16 当前显示能力与 frame-rate category。
 
 本研究最初只复核策略；Compatibility v29 已根据结论完成第一轮修正。
@@ -14,22 +14,22 @@
 
 `FrameRateCompat.apply()` 在每次 `PinyinIME.onStartInputView()` 后执行：
 
-1. 将 IME Window 的 `WindowManager.LayoutParams.preferredRefreshRate` 固定为 `120.0f`；
-2. Android 30+ 再对 decor view 调用 `View.setFrameRate(120, FRAME_RATE_COMPATIBILITY_DEFAULT)`；
-3. 两条路径覆盖同一 IME surface，且都没有对应的 clear/release；
+1. 将 IME Window 的 `WindowManager.LayoutParams.preferredRefreshRate` 固定为 `120.0f`
+2. Android 30+ 再对 decor view 调用 `View.setFrameRate(120, FRAME_RATE_COMPATIBILITY_DEFAULT)`
+3. 两条路径覆盖同一 IME surface，且都没有对应的 clear/release
 4. 所有异常被 `Throwable` 捕获并忽略。
 
-该补丁最初用于避免 2018 年应用在现代高刷屏上被归入普通 60Hz 类别。它在目标 Pixel 上能表达明确的 120Hz 偏好，但属于固定帧率请求，不是按交互动态提升。
+该补丁最初用于避免 2018 年应用在现代高刷屏上被归入普通 60 Hz 类别。它在目标 Pixel 上能表达明确的 120 Hz 偏好，但属于固定帧率请求，不是按交互动态提升。
 
 ## Gboard 的实际实现
 
-### 没有固定请求 120Hz
+### 没有固定请求 120 Hz
 
 完整搜索 Gboard 四个 dex 后，没有发现业务代码设置：
 
-- `WindowManager.LayoutParams.preferredRefreshRate`；
-- `preferredDisplayModeId`；
-- `View.setFrameRate(120, ...)`；
+- `WindowManager.LayoutParams.preferredRefreshRate`
+- `preferredDisplayModeId`
+- `View.setFrameRate(120, ...)`
 - `SurfaceControl.Transaction.setFrameRate()`。
 
 APK 中出现的 `View.setFrameRate`/`SurfaceControl.setFrameRate` 符号只存在于 API outline 或通用支持库桥，不构成 Gboard IME 的固定帧率策略。
@@ -38,12 +38,12 @@ APK 中出现的 `View.setFrameRate`/`SurfaceControl.setFrameRate` 符号只存�
 
 Gboard 在 `GoogleInputMethodService.onConfigureWindow()` 中：
 
-1. 反射检查 Window 是否存在 `setFrameRateBoostOnTouchEnabled(boolean)`；
-2. 仅在 API 35+ 调用；
-3. 通过专用 API outline 执行 `Window.setFrameRateBoostOnTouchEnabled(...)`；
+1. 反射检查 Window 是否存在 `setFrameRateBoostOnTouchEnabled(boolean)`
+2. 仅在 API 35+ 调用
+3. 通过专用 API outline 执行 `Window.setFrameRateBoostOnTouchEnabled(...)`
 4. 捕获 RuntimeException 并记录失败。
 
-这是一种系统管理的“触摸期间提升、空闲后回落”机制，而不是让 IME Window 在整个可见期间固定保持 120Hz。
+这是一种系统管理的「触摸期间提升、空闲后回落」机制，而不是让 IME Window 在整个可见期间固定保持 120 Hz。
 
 ### 内容速度提示
 
@@ -53,26 +53,26 @@ Gboard 包含 `View.setFrameContentVelocity(float)` 的兼容桥。实际调用�
 
 当前设备报告：
 
-- 物理/默认 render frame rate：约 120Hz；
-- frame-rate category：`normal=60Hz`，`high=90Hz`；
-- ARR 支持：是；
-- 可用 render rates 包括 120、60、40、30、24、20、15、10、5、2、1Hz；
-- 120Hz 与 60Hz 对应同一分辨率下的显示模式/ARR 路径。
+- 物理/默认 render frame rate：约 120 Hz
+- frame-rate category：`normal=60Hz`，`high=90Hz`
+- ARR 支持：是
+- 可用 render rates 包括 120、60、40、30、24、20、15、10、5、2、1 Hz
+- 120 Hz 与 60 Hz 对应同一分辨率下的显示模式/ARR 路径。
 
-这说明现代系统已经区分“普通”“高”类别，并支持在空闲时降到很低的刷新率。固定 120Hz 会绕过一部分动态分类收益。
+这说明现代系统已经区分「普通」「高」类别，并支持在空闲时降到很低的刷新率。固定 120 Hz 会绕过一部分动态分类收益。
 
 ## 当前实现的优点
 
-- 简单且效果确定；
-- 对目标 120Hz Pixel 明确请求最高刷新率；
-- Window hint 覆盖整个输入法，而不只某个候选 View；
-- IME Window 不可见时其 surface 通常不参与显示合成，因此不会在键盘完全隐藏后继续直接驱动屏幕刷新；
-- 不支持 120Hz 的设备通常由系统匹配可用模式，而不是直接失败。
+- 简单且效果确定
+- 对目标 120 Hz Pixel 明确请求最高刷新率
+- Window hint 覆盖整个输入法，而不只某个候选 View
+- IME Window 不可见时其 surface 通常不参与显示合成，因此不会在键盘完全隐藏后继续直接驱动屏幕刷新
+- 不支持 120 Hz 的设备通常由系统匹配可用模式，而不是直接失败。
 
 ## 当前实现的风险和不足
 
-1. **固定写死 120Hz。** 90Hz、144Hz 或其他屏幕不能表达“使用当前设备高刷新类别”，只表达最接近 120 的精确偏好。
-2. **空闲时仍保留偏好。** 输入法可见但用户未触摸时，Window 和 decor view 仍声明 120Hz，不利于 LTPO/ARR 降频。
+1. **固定写死 120 Hz。** 90 Hz、144 Hz 或其他屏幕不能表达「使用当前设备高刷新类别」，只表达最接近 120 的精确偏好。
+2. **空闲时仍保留偏好。** 输入法可见但用户未触摸时，Window 和 decor view 仍声明 120 Hz，不利于 LTPO/ARR 降频。
 3. **两条重复请求。** Window `preferredRefreshRate` 和 decor `setFrameRate` 同时设置，缺少证据证明必须叠加。
 4. **没有释放。** `onFinishInputView()` 没有将 `preferredRefreshRate` 和 View frame rate 清回 0；Window 对象复用时状态会一直保留。
 5. **使用 DEFAULT compatibility。** 它没有声明 fixed-source 等语义，但也没有利用现代 high category 或 touch boost 策略。
@@ -82,21 +82,21 @@ Gboard 包含 `View.setFrameContentVelocity(float)` 的兼容桥。实际调用�
 
 ## 不能直接照搬 Gboard 的原因
 
-- `Window.setFrameRateBoostOnTouchEnabled()` 是较新的 API，Gboard只在 API 35+ 使用；
-- Google 拼音兼容版还需要覆盖 Android 11–14，没有同等 Window touch-boost API；
-- 旧 Google 拼音滚动和动画代码不会像现代 AndroidX 组件一样全面报告 `setFrameContentVelocity`；
-- 直接删除 120Hz 请求可能让旧应用重新落回 60Hz，破坏已经获得的流畅度。
+- `Window.setFrameRateBoostOnTouchEnabled()` 是较新的 API，Gboard 只在 API 35+ 使用
+- Google 拼音兼容版还需要覆盖 Android 11–14，没有同等 Window touch-boost API
+- 旧 Google 拼音滚动和动画代码不会像现代 AndroidX 组件一样全面报告 `setFrameContentVelocity`
+- 直接删除 120 Hz 请求可能让旧应用重新落回 60 Hz，破坏已经获得的流畅度。
 
-因此不建议仅因为 Gboard 没有固定 120Hz，就立即删除当前补丁。
+因此不建议仅因为 Gboard 没有固定 120 Hz，就立即删除当前补丁。
 
 ## 建议的迭代方向
 
 ### 第一阶段：低风险生命周期修正
 
-1. 保留输入视图活动期间的 120Hz 请求；
+1. 保留输入视图活动期间的 120 Hz 请求
 2. 在 `onFinishInputView()` 明确调用 `FrameRateCompat.clear()`：
-   - `preferredRefreshRate = 0f`；
-   - Android 30+ `decorView.setFrameRate(0f, DEFAULT)`；
+   - `preferredRefreshRate = 0f`
+   - Android 30+ `decorView.setFrameRate(0f, DEFAULT)`
 3. 避免 Window 长期复用时遗留固定偏好。
 
 这一阶段不改变用户已感知的输入流畅度，是最适合优先实施的基础修正。
@@ -105,39 +105,39 @@ Gboard 包含 `View.setFrameContentVelocity(float)` 的兼容桥。实际调用�
 
 分别验证：
 
-- 只使用 Window preferredRefreshRate；
-- 只使用 decor view setFrameRate；
+- 只使用 Window preferredRefreshRate
+- 只使用 decor view setFrameRate
 - 两者同时使用。
 
 根据 SurfaceFlinger/DisplayManager 的实际 frame-rate vote 决定保留哪一条，而不是继续假设必须叠加。
 
 ### 第三阶段：现代动态策略
 
-- API 35+ 调查并采用 `setFrameRateBoostOnTouchEnabled(true)`，让空闲时回落；
-- 对滚动候选、符号列表等真正有速度的 View，考虑报告 `setFrameContentVelocity`；
-- Android 30–34 在没有 touch boost API 时，再决定是否保留固定 120Hz fallback；
-- 如系统提供稳定的 high frame-rate category API，优先表达“高”而不是写死具体 fps。
+- API 35+ 调查并采用 `setFrameRateBoostOnTouchEnabled(true)`，让空闲时回落
+- 对滚动候选、符号列表等真正有速度的 View，考虑报告 `setFrameContentVelocity`
+- Android 30–34 在没有 touch boost API 时，再决定是否保留固定 120 Hz fallback
+- 如系统提供稳定的 high frame-rate category API，优先表达「高」而不是写死具体 fps。
 
 ## V29 实施结果
 
-考虑到目标设备已经出现疑似持续高刷导致的异常发热，V29 不再保留输入视图活动期间的固定 120Hz：
+考虑到目标设备已经出现疑似持续高刷导致的异常发热，V29 不再保留输入视图活动期间的固定 120 Hz：
 
-1. `apply()` 先将旧版 Window `preferredRefreshRate` 和 decor `setFrameRate` vote 清为 0；
-2. API 35+ 通过反射确认并启用 `Window.setFrameRateBoostOnTouchEnabled(true)`；
-3. Android 30–34 只清除固定 vote，由系统默认刷新率策略接管；
-4. `onFinishInputView()` 调用 `clear()`，关闭 touch boost，并再次清除 Window/View vote；
-5. 不再写死 120Hz，因此 90Hz、120Hz、144Hz 和 LTPO 设备均可由系统按能力调度。
+1. `apply()` 先将旧版 Window `preferredRefreshRate` 和 decor `setFrameRate` vote 清为 0
+2. API 35+ 通过反射确认并启用 `Window.setFrameRateBoostOnTouchEnabled(true)`
+3. Android 30–34 只清除固定 vote，由系统默认刷新率策略接管
+4. `onFinishInputView()` 调用 `clear()`，关闭 touch boost，并再次清除 Window/View vote
+5. 不再写死 120 Hz，因此 90 Hz、120 Hz、144 Hz 和 LTPO 设备均可由系统按能力调度。
 
 ## V30 真机实验与 V31 最终决定
 
-V29 真机测试显示，Window touch boost 没有改变旧 IME 主 Surface 的 60Hz 内容分类；全键盘符号/表情分页和候选展开仍明显低帧率。V30 随后实验了只在触摸及动画窗口内提交根 View frame-rate vote，并在 1.5 秒后释放，但用户测试仍无可感知差异。
+V29 真机测试显示，Window touch boost 没有改变旧 IME 主 Surface 的 60 Hz 内容分类；全键盘符号/表情分页和候选展开仍明显低帧率。V30 随后实验了只在触摸及动画窗口内提交根 View frame-rate vote，并在 1.5 秒后释放，但用户测试仍无可感知差异。
 
 继续给旧 target API、旧渲染管线叠加帧率 hint 的收益不足，且固定请求已经出现疑似发热副作用。因此 V31 回滚所有帧率干预：
 
-- 删除 `FrameRateCompat`；
-- 删除开始/结束输入时的 apply/clear 注入；
-- 不启用 Window touch boost；
-- 不设置 Window preferredRefreshRate；
+- 删除 `FrameRateCompat`
+- 删除开始/结束输入时的 apply/clear 注入
+- 不启用 Window touch boost
+- 不设置 Window preferredRefreshRate
 - 不提交固定或交互期 View frame-rate vote。
 
 当前版本完全由 Android 系统默认调度帧率。高刷新率支持推迟到 target API 与渲染路径现代化之后，再使用届时稳定、受支持的帧率类别和生命周期接口实现。
@@ -146,25 +146,25 @@ V29 真机测试显示，Window touch boost 没有改变旧 IME 主 Surface 的 
 
 ### 无插桩基线
 
-在 Pixel 10 Pro / Android 16、120Hz 显示模式下，对隔离 Debug 包进行 20 秒 Perfetto、FrameTimeline 和 `gfxinfo framestats` 采集。采集不启用 `input` 数据源，不记录输入、Candidate 文本、触摸坐标或截图。
+在 Pixel 10 Pro / Android 16、120 Hz 显示模式下，对隔离 Debug 包进行 20 秒 Perfetto、FrameTimeline 和 `gfxinfo framestats` 采集。采集不启用 `input` 数据源，不记录输入、Candidate 文本、触摸坐标或截图。
 
 基线结果：
 
-- 384 个 `gfxinfo` 帧；
-- 221 个 IME FrameTimeline 帧全部 `On-time Present`，`jank_type=None`；
-- App 帧 p50/p95/p99 为 5/10/14ms；
-- 最长主线程 `Choreographer#doFrame` 为 8.720ms；
-- 最长 RenderThread slice 为 6.029ms；
-- GPU p50/p95 均为 1ms；
-- `Thermal Status=0`；
-- 活动帧间隔中位数约 16.67ms；
-- IME UID 的 `frameRateOverride` 为 60Hz。
+- 384 个 `gfxinfo` 帧
+- 221 个 IME FrameTimeline 帧全部 `On-time Present`，`jank_type=None`
+- App 帧 p50/p95/p99 为 5/10/14 ms
+- 最长主线程 `Choreographer#doFrame` 为 8.720 ms
+- 最长 RenderThread slice 为 6.029 ms
+- GPU p50/p95 均为 1 ms
+- `Thermal Status=0`
+- 活动帧间隔中位数约 16.67 ms
+- IME UID 的 `frameRateOverride` 为 60 Hz。
 
-因此，Candidate 展开/收起“看起来帧率低”是已确认事实，但根因不是 CPU、GPU、layout/draw、GC 或热节流，而是旧 IME Surface 被系统稳定按 60Hz 调度。
+因此，Candidate 展开/收起「看起来帧率低」是已确认事实，但根因不是 CPU、GPU、layout/draw、GC 或热节流，而是旧 IME Surface 被系统稳定按 60 Hz 调度。
 
 ### 最小高刷实验
 
-原生切换点为 `asq.a(boolean expanded, boolean animate)`，实际视觉变化由 `ass` 和 `ast` 监听的两个 80ms `translationY` `ObjectAnimator` 承载。实验只在这两个 Animator 的生命周期内执行：
+原生切换点为 `asq.a(boolean expanded, boolean animate)`，实际视觉变化由 `ass` 和 `ast` 监听的两个 80 ms `translationY` `ObjectAnimator` 承载。实验只在这两个 Animator 的生命周期内执行：
 
 ```text
 onAnimationStart → View.setRequestedFrameRate(HIGH)
@@ -173,44 +173,44 @@ onAnimationEnd   → View.setRequestedFrameRate(NO_PREFERENCE)
 
 Debug 实验结果：
 
-- 活动帧间隔中位数从约 16.67ms 降为 8.337ms；
-- 100 个活动间隔位于 7–10ms；
-- IME UID 实际获得 120Hz override；
-- 动画结束并静止后，该 UID override 消失；
-- 用户主观验收为“明显更流畅”。
+- 活动帧间隔中位数从约 16.67 ms 降为 8.337 ms
+- 100 个活动间隔位于 7–10 ms
+- IME UID 实际获得 120 Hz override
+- 动画结束并静止后，该 UID override 消失
+- 用户主观验收为「明显更流畅」。
 
-这证明 API 36 的公开 high category 对该旧 IME Surface 有效，同时无需恢复 Window 级固定 120Hz。
+这证明 API 36 的公开 high category 对该旧 IME Surface 有效，同时无需恢复 Window 级固定 120 Hz。
 
 ### 正式实现边界
 
 正式实现使用 `CandidateFrameRateCompat`：
 
-- 仅在 `SDK_INT >= 36` 时生效；
-- API 36-only 方法通过精确反射调用，legacy primary DEX 不含直接 `invoke-virtual View.setRequestedFrameRate()`；
-- 仅覆盖原生 80ms Candidate 展开/收起动画；
-- 展开和收起均在 start 请求 `HIGH (-4.0f)`；
-- end 或 cancel 后释放为 `NO_PREFERENCE (-1.0f)`；
-- 不修改动画时长、插值、Candidate 数据、布局、触摸、提交、学习、分页或无障碍语义；
-- API 17–35 为无操作，不改变旧系统行为；
+- 仅在 `SDK_INT >= 36` 时生效
+- API 36-only 方法通过精确反射调用，legacy primary DEX 不含直接 `invoke-virtual View.setRequestedFrameRate()`
+- 仅覆盖原生 80 ms Candidate 展开/收起动画
+- 展开和收起均在 start 请求 `HIGH (-4.0f)`
+- end 或 cancel 后释放为 `NO_PREFERENCE (-1.0f)`
+- 不修改动画时长、插值、Candidate 数据、布局、触摸、提交、学习、分页或无障碍语义
+- API 17–35 为无操作，不改变旧系统行为
 - 不启用 Window touch boost，不设置 `preferredRefreshRate`，不固定具体 Hz。
 
 ### Release-like 运行时验收
 
 从原始 APK 完整重建 non-debuggable 隔离包后，在同一设备做第二次 20 秒采集：
 
-- 活动帧间隔中位数为 8.341ms；
-- 100 个活动间隔位于 7–10ms，15–19ms 活动间隔为0；
-- `gfxinfo` 现代 jank 为0；
-- Missed Vsync 为0；
-- Slow UI thread 为0；
-- 181 个 FrameTimeline 帧为 `On-time Present`；
-- 主线程最长连续运行 6.902ms；
-- RenderThread 最长连续运行 4.517ms；
-- `animation` 平均 0.243ms；
-- `traversal` 平均 1.642ms；
-- GPU 帧主要为 1–2ms；
-- `Thermal Status=0`；
-- 动画期间 UID 获得 120Hz override，静止后 override 消失且显示回落到 60Hz；
+- 活动帧间隔中位数为 8.341 ms
+- 100 个活动间隔位于 7–10 ms，15–19 ms 活动间隔为 0
+- `gfxinfo` 现代 jank 为 0
+- Missed Vsync 为 0
+- Slow UI thread 为 0
+- 181 个 FrameTimeline 帧为 `On-time Present`
+- 主线程最长连续运行 6.902 ms
+- RenderThread 最长连续运行 4.517 ms
+- `animation` 平均 0.243 ms
+- `traversal` 平均 1.642 ms
+- GPU 帧主要为 1–2 ms
+- `Thermal Status=0`
+- 动画期间 UID 获得 120 Hz override，静止后 override 消失且显示回落到 60 Hz
 - 无 App deadline miss、`VerifyError`、crash 或 `ApplicationExitInfo` 异常退出。
 
-FrameTimeline 中少量 Late Present 被归因为 `Buffer Stuffing` 或 SurfaceFlinger 侧调度，应用自身 `gfxinfo` 现代 jank 仍为0。这些事件位于动态刷新节奏切换边界，不构成 CPU/GPU 性能不足的证据。
+FrameTimeline 中少量 Late Present 被归因为 `Buffer Stuffing` 或 SurfaceFlinger 侧调度，应用自身 `gfxinfo` 现代 jank 仍为 0。这些事件位于动态刷新节奏切换边界，不构成 CPU/GPU 性能不足的证据。

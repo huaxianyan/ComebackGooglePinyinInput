@@ -93,7 +93,7 @@ Android 公共 API 没有提供把返回 Surface 可靠关联到原主题 reques
 
 - 所有非空 Inline contribution 都保留左右 rails；一项建议时两侧保持 mounted 但 disabled、不可点击、不可聚焦且无无障碍 action。
 - Clipboard 和 Autofill rails 共用真实运行时 show-more Candidate divider 的 Drawable、有效 alpha、padding、scale type 和 ancestor alpha 补偿。
-- 源 divider 尚未测量时，Clipboard rails 先 `INVISIBLE`，通过一次性 `OnPreDrawListener` 在有效尺寸后同步并显示，避免主题/方向切换后的 `1 x 1` “两个小点”。
+- 源 divider 尚未测量时，Clipboard rails 先 `INVISIBLE`，通过一次性 `OnPreDrawListener` 在有效尺寸后同步并显示，避免主题/方向切换后的 `1 x 1` 「两个小点」。
 
 ### 密码键盘高度
 
@@ -162,16 +162,16 @@ Android 16 / API 36
 
 维护者确认通过：
 
-- 普通与密码键盘在非默认及另一高度档位的行几何；
-- 密码键盘仅比普通键盘多一个固定数字/Header 行；
-- 图片主题、浅/深主题、横竖屏和当前导航模式；
-- Header 替换、中文/英文/密码/手写路径；
-- Clipboard 样式、首次布局、原生优先级和 dismiss-to-Inline 恢复；
-- Inline Autofill 单项/多项、字段切换、跨网页 session 隔离及 Framework click；
-- Bitwarden 已解锁、认证 Activity 返回与取消；
+- 普通与密码键盘在非默认及另一高度档位的行几何
+- 密码键盘仅比普通键盘多一个固定数字/Header 行
+- 图片主题、浅/深主题、横竖屏和当前导航模式
+- Header 替换、中文/英文/密码/手写路径
+- Clipboard 样式、首次布局、原生优先级和 dismiss-to-Inline 恢复
+- Inline Autofill 单项/多项、字段切换、跨网页 session 隔离及 Framework click
+- Bitwarden 已解锁、认证 Activity 返回与取消
 - 旧 Surface 不跨 editor/Header/session 残留。
 
-数字/电话键盘本轮没有重新找到 App 场景触发，不能记为本轮运行时通过。其 Body、key mapping 和触摸语义未被 Header Platform 修改，静态契约和既有正式版验收继续通过，因此分类为“继承既有验收、低风险、非阻塞”。
+数字/电话键盘本轮没有重新找到 App 场景触发，不能记为本轮运行时通过。其 Body、key mapping 和触摸语义未被 Header Platform 修改，静态契约和既有正式版验收继续通过，因此分类为「继承既有验收、低风险、非阻塞」。
 
 运行证据：
 
@@ -186,26 +186,26 @@ work/header-platform-diag-v52/runtime-configuration-acceptance/
 
 构建和产物门禁：
 
-- official Compose Material 3 runtime verifier 通过；
-- Compose JVM 单元测试通过；
-- release-like、非 debuggable；
-- API 31/33/34/35/36 门禁通过；
-- 6,633 个旧公开资源 ID 全部保持；
-- `classes.dex` 保留 patched legacy IME，Compose/AndroidX 位于 `classes2.dex` 和 `classes3.dex`；
-- primary DEX 只以字符串和 Manifest 查询路由 `ModernSettingsActivity`；
-- AndroidX Startup、ProfileInstaller 和 `appComponentFactory` 自动入口不存在；
-- `res/raw/main_en_d3_20160715.gzip` 和 `res/raw/metadata.json` 保持 `ZIP_STORED`；
-- Header、Clipboard、Inline Autofill 最终 DEX 门禁通过；
+- official Compose Material 3 runtime verifier 通过
+- Compose JVM 单元测试通过
+- release-like、非 debuggable
+- API 31/33/34/35/36 门禁通过
+- 6,633 个旧公开资源 ID 全部保持
+- `classes.dex` 保留 patched legacy IME，Compose/AndroidX 位于 `classes2.dex` 和 `classes3.dex`
+- primary DEX 只以字符串和 Manifest 查询路由 `ModernSettingsActivity`
+- AndroidX Startup、ProfileInstaller 和 `appComponentFactory` 自动入口不存在
+- `res/raw/main_en_d3_20160715.gzip` 和 `res/raw/metadata.json` 保持 `ZIP_STORED`
+- Header、Clipboard、Inline Autofill 最终 DEX 门禁通过
 - v1/v2/v3 签名与 `zipalign -P 16` 通过。
 
 API 36 运行时确认：
 
-- Compose Material 3 首页、四个顶层页面和嵌套路由；
-- Toolbar Back、系统 Back、对话框和无破坏性 Slider；
-- 词典页面仅只读检查，未执行清除；
-- 浅/深色与横竖屏；
-- 同包主 DEX IME 的中文 Candidate/翻页、英文、密码几何；
-- Inline Autofill、Clipboard 接管/恢复、rails、IME 隐藏/重显和方向切换；
+- Compose Material 3 首页、四个顶层页面和嵌套路由
+- Toolbar Back、系统 Back、对话框和无破坏性 Slider
+- 词典页面仅只读检查，未执行清除
+- 浅/深色与横竖屏
+- 同包主 DEX IME 的中文 Candidate/翻页、英文、密码几何
+- Inline Autofill、Clipboard 接管/恢复、rails、IME 隐藏/重显和方向切换
 - 无 `FATAL EXCEPTION`、`VerifyError`、`NoClassDefFoundError`、`IllegalAccessError`、`ClassNotFoundException` 或 `Resources$NotFoundException`。
 
 运行证据：
@@ -254,23 +254,23 @@ SHA-256=aca5d5e5a250b27a6c76ddb5be5e00dffe9bf5f9d08411ea47a636a6859ebfa1
 
 `diag36`–`diag42` 使用的 `HeaderThemeDiagnostics` 只用于比较 request 与原生 Candidate 的颜色类别。最终策略已明确不以颜色或 theme cache key 识别 response，因此提交前已删除该类、Java/Smali 调用和对应 verifier 要求。生产路径继续使用真实 Candidate foreground 构造新 request 的 Style Bundle，但不保留颜色比较日志或 process-global 诊断状态。
 
-现代设置“其他 → 关于”新增公开仓库入口：
+现代设置「其他 → 关于」新增公开仓库入口：
 
 ```text
 https://github.com/huaxianyan/comeback-google-pinyin-input
 ```
 
-中英文标题分别为“GitHub 仓库”与“GitHub repository”，副标题显示完整 URL，点击使用标准 `ACTION_VIEW`。该入口不读写 Preference、不增加权限，且只属于 API 35+ Compose 设置页面。`diag54` 已在 Pixel 10 Pro / API 36 验证显示、浏览器跳转和返回设置页。
+中英文标题分别为「GitHub 仓库」与「GitHub repository」，副标题显示完整 URL，点击使用标准 `ACTION_VIEW`。该入口不读写 Preference、不增加权限，且只属于 API 35+ Compose 设置页面。`diag54` 已在 Pixel 10 Pro / API 36 验证显示、浏览器跳转和返回设置页。
 
 ## 发布边界
 
 当前结果支持进入代码审查和提交整理，但不自动授权：
 
-- commit；
-- merge；
-- push；
-- Tag；
-- GitHub Release；
+- commit
+- merge
+- push
+- Tag
+- GitHub Release
 - 正式包覆盖安装或发布。
 
 上述操作仍需维护者明确授权。
