@@ -5,7 +5,7 @@
 ### Fixed
 
 - API 36 的 Emoji、颜文字和标点/符号横向分页在确认 dragging 和原生 Scroller settle 期间动态请求高刷新率类别，结束、中断、隐藏或 detach 后立即释放
-- 保留已验证的 V34 fling 决策、系统最小速度和原生 50% settle。布尔分支审计确认 2 次回弹均进入 settle，8 次成功翻页均进入 fling，没有发现 fling 后回弹
+- 保留已验证的 V34 fling 决策和系统最小速度，并仅为 `PageableRecentSubCategorySoftKeyListHolderView` 将非 fling settle 改为相对当前选中页的对称 12.5% 阈值。真机诊断将小于 12.5% 的误触与 12.5%–25% 的明确短滑分离，A/B 验证达到快速短滑回弹 0/20、普通点击误翻页 0/10、轻拖误翻页 0/10
 
 ### Changed
 
@@ -17,6 +17,7 @@
 ### Build
 
 - 新增符号分页帧率专项门禁，验证精确类型范围、drag/Scroller 生命周期、隐藏/detach 清理、V34 fling 边界和 API 36 旧 ART 隔离
+- 新增符号分页 settle 专项门禁，验证精确子类范围、对称 12.5% 目标计算、其他 `lk` 使用者的原生 50% 回退，以及正式实现不包含诊断日志
 - Pixel 10 Pro / Android 16 隔离审计确认三页实际呈现帧间隔中位数由约 16.67 ms 降到约 8.34 ms，空闲后回到 60 Hz 且无 IME UID 高刷请求
 - 新增 `scripts/verify_chinese_copywriting.py` 并接入 Release workflow，检查中英文与数字间距、单位空格、直角引号、链接空格和确定性标点规则
 
