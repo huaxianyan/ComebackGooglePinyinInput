@@ -50,10 +50,19 @@ def main() -> int:
         decoded = root / "decoded"
         classes.mkdir()
         dex.mkdir()
+        feedback_stub = root / "stubs/com/google/android/inputmethod/pinyin/InlineAutofillFeedbackCompat.java"
+        feedback_stub.parent.mkdir(parents=True)
+        feedback_stub.write_text(
+            "package com.google.android.inputmethod.pinyin;\n"
+            "public final class InlineAutofillFeedbackCompat {\n"
+            "  public static void perform(android.view.View view) {}\n"
+            "}\n",
+            encoding="utf-8",
+        )
         subprocess.run(
             [str(javac), "-source", "7", "-target", "7",
              "-bootclasspath", str(android_jar), "-d", str(classes),
-             *[str(path) for path in sources]],
+             *[str(path) for path in sources], str(feedback_stub)],
             check=True,
             env=environment,
         )

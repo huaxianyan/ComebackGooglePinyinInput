@@ -23,6 +23,13 @@ public final class ClipboardCandidateCompat {
 }
 """
 
+FEEDBACK_STUB = r"""
+package com.google.android.inputmethod.pinyin;
+public final class InlineAutofillFeedbackCompat {
+    public static void perform(android.view.View view) {}
+}
+"""
+
 
 def main() -> int:
     parser = argparse.ArgumentParser()
@@ -42,9 +49,14 @@ def main() -> int:
         classes.mkdir(); dex.mkdir()
         stub = root / "com/google/android/apps/inputmethod/libs/framework/core/ClipboardCandidateCompat.java"
         stub.parent.mkdir(parents=True); stub.write_text(STUB, encoding="utf-8")
+        feedback_stub = root / "com/google/android/inputmethod/pinyin/InlineAutofillFeedbackCompat.java"
+        feedback_stub.parent.mkdir(parents=True); feedback_stub.write_text(
+            FEEDBACK_STUB, encoding="utf-8"
+        )
         subprocess.run([str(javac), "-source", "7", "-target", "7", "-bootclasspath",
                         str(android_jar), "-d", str(classes), str(SOURCE), str(stub),
-                        *[str(path) for path in platform]], check=True, env=environment)
+                        str(feedback_stub), *[str(path) for path in platform]],
+                       check=True, env=environment)
         compiled = root / "clipboard.jar"
         subprocess.run([str(jar), "cf", str(compiled), "-C", str(classes), "."], check=True, env=environment)
         subprocess.run([str(d8), "--min-api", "17", "--lib", str(android_jar),

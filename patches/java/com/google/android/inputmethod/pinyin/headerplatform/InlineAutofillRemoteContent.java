@@ -9,6 +9,8 @@ import android.view.ViewGroup;
 import android.view.ViewParent;
 import android.widget.FrameLayout;
 
+import com.google.android.inputmethod.pinyin.InlineAutofillFeedbackCompat;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -61,10 +63,16 @@ final class InlineAutofillRemoteContent implements HeaderRenderedContent,
                 context.getText(PREVIOUS_DESCRIPTION_RES_ID));
         nextSlot.getRoot().setContentDescription(context.getText(NEXT_DESCRIPTION_RES_ID));
         previousSlot.getRoot().setOnClickListener(new View.OnClickListener() {
-            @Override public void onClick(View ignored) { showIndex(currentIndex - 1); }
+            @Override public void onClick(View view) {
+                InlineAutofillFeedbackCompat.perform(view);
+                showIndex(currentIndex - 1);
+            }
         });
         nextSlot.getRoot().setOnClickListener(new View.OnClickListener() {
-            @Override public void onClick(View ignored) { showIndex(currentIndex + 1); }
+            @Override public void onClick(View view) {
+                InlineAutofillFeedbackCompat.perform(view);
+                showIndex(currentIndex + 1);
+            }
         });
         mount(payload.getViews());
         root.addOnLayoutChangeListener(this);
@@ -81,6 +89,7 @@ final class InlineAutofillRemoteContent implements HeaderRenderedContent,
         root.removeOnLayoutChangeListener(this);
         for (View view : views) {
             clipper.applyClip(view, null);
+            view.setOnClickListener(null);
             view.setTranslationX(0.0f);
             view.setEnabled(true);
             view.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_AUTO);
@@ -114,7 +123,23 @@ final class InlineAutofillRemoteContent implements HeaderRenderedContent,
                     width, height, Gravity.CENTER);
             content.addView(view, params);
             views.add(view);
+            // InlineContentView dispatches this callback after its embedded
+            // remote Surface completes a click. Observing that completion does
+            // not intercept or replace the Framework/Provider fill action.
+            view.setOnClickListener(new View.OnClickListener() {
+                @Override public void onClick(View clicked) {
+                    onRemoteSuggestionClick(clicked);
+                }
+            });
         }
+    }
+
+    private void onRemoteSuggestionClick(View view) {
+        if (released || root.getVisibility() != View.VISIBLE
+                || currentIndex < 0 || currentIndex >= views.size()
+                || views.get(currentIndex) != view || !view.isEnabled()
+                || view.getVisibility() != View.VISIBLE) return;
+        InlineAutofillFeedbackCompat.perform(view);
     }
 
     private void showIndex(int index) {

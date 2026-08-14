@@ -25,7 +25,7 @@
 .method constructor <init>(Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;)V
     .locals 0
 
-    .line 63
+    .line 65
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent$1;->this$0:Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;
 
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
@@ -38,7 +38,10 @@
 .method public onClick(Landroid/view/View;)V
     .locals 1
 
-    .line 64
+    .line 67
+    invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/InlineAutofillFeedbackCompat;->perform(Landroid/view/View;)V
+
+    .line 68
     iget-object p1, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent$1;->this$0:Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;
 
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent$1;->this$0:Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;
@@ -51,5 +54,6 @@
 
     invoke-static {p1, v0}, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->access$100(Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;I)V
 
+    .line 69
     return-void
 .end method
