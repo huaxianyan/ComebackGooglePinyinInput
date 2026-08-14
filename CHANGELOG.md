@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [2.0.7] - 2026-08-14
+
+本版本优化 Emoji、颜文字和符号分页的刷新率与短滑翻页手感，让 Inline Autofill 建议遵循 Google 拼音的按键音和振动设置，并改善首次引导后续按钮的禁用态辨识度。
+
 ### Fixed
 
 - API 36 的 Emoji、颜文字和标点/符号横向分页在确认 dragging 和原生 Scroller settle 期间动态请求高刷新率类别，结束、中断、隐藏或 detach 后立即释放
