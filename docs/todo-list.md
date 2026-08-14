@@ -42,6 +42,7 @@
 - [x] 将全键盘符号/表情横向 pager 手感拆分为独立任务，并对照 Gboard ViewPager2/RecyclerView 调查旧 `lk` 的 slop、25 dp fling distance、minimum velocity 与 50% settle
 - [x] V33 诊断确认 30 次手势的旧 25 dp final-delta 全为 0，fling 分支完全不可达；21 次回弹中 16 次速度已超过 minimum
 - [x] V34 真机确认单指可轻松左右翻页且无已知回归；V35 已移除临时诊断，只保留验证通过的局部 fling 修复
+- [x] 补充诊断将剩余回弹收敛到低速度的 50% settle，并用有界位移分类证明误触小于 12.5%、明确短滑回弹位于 12.5%–25%；对称 12.5% A/B 通过快速短滑 0/20 回弹、点击 0/10 误翻页和轻拖 0/10 误翻页
 
 ## 当前任务：词库持久化与恢复
 

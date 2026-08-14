@@ -1191,6 +1191,26 @@ def apply(
         "    invoke-static {v2}, Ljava/lang/Math;->abs(I)I",
     )
 
+    # The legacy non-fling settle rule requires half-page displacement. Runtime
+    # evidence separates accidental sub-12.5% motion from intentional short
+    # swipes at 12.5%-25%. Use a symmetric 12.5% target threshold only for the
+    # full symbol/emoji subclass; every other lk user retains native rounding.
+    replace_once(
+        four_directional_pager,
+        "    .line 934\n"
+        "    :cond_f\n"
+        "    int-to-float v0, v1",
+        "    .line 934\n"
+        "    :cond_f\n"
+        "    if-eqz v7, :compat_original_settle\n\n"
+        "    invoke-static {p0, v1, v3}, Lcom/google/android/inputmethod/pinyin/"
+        "PagerSettleTargetCompat;->choose(Landroid/view/View;IF)I\n\n"
+        "    move-result v3\n\n"
+        "    goto :goto_8\n\n"
+        "    :compat_original_settle\n"
+        "    int-to-float v0, v1",
+    )
+
     # The same symbol/emoji/emoticon pager is still classified at 60 Hz on
     # Android 16. Reuse its native dragging and Scroller lifecycle rather than
     # a timer or a Window-wide vote: acquire when dragging is confirmed or a
@@ -2821,6 +2841,7 @@ def apply(
     for helper_name in (
         "ViewFrameRateCompat.smali",
         "PagerFrameRateCompat.smali",
+        "PagerSettleTargetCompat.smali",
         "NavigationBarCompat.smali",
         "ScrollTouchCompat.smali",
         "DictionaryRecoveryCompat.smali",
