@@ -58,7 +58,7 @@ public final class DictionaryHealthStatusCompat {
         if (recoveryArtifact) state = "需注意：发现不可读恢复归档，建议立即备份";
         else if (temporary) state = "需复查：发现未完成的临时文件，建议重启后再查看";
         else if (nativeReadable) state = "正常：中文和英文用户词库均可读取";
-        else state = "部分状态无法读取；文件信息如下";
+        else state = "部分状态无法读取，文件信息如下";
 
         StringBuilder out = new StringBuilder(256);
         out.append("状态：").append(state);

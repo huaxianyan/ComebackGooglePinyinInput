@@ -353,7 +353,7 @@ public final class DictionaryAutoBackupSettingsCompat {
         private void confirmImport(final DictionaryAutoBackupCompat.BackupEntry entry) {
             if (fragment == null || fragment.getActivity() == null) return;
             new AlertDialog.Builder(fragment.getActivity()).setTitle("导入用户词典备份")
-                    .setMessage("将“" + entry.name + "”合并到当前用户词典？")
+                    .setMessage("将「" + entry.name + "」合并到当前用户词典？")
                     .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                         @Override public void onClick(DialogInterface dialog, int which) {
                             LocalBackupImportActivity.startNativeImport(fragment.getActivity(), entry.uri);

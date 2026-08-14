@@ -210,6 +210,10 @@ jobs:
           $env:GRADLE_USER_HOME = "$env:GITHUB_WORKSPACE\work\modern-settings-gradle-home"
           ./modern-settings/gradlew.bat -p modern-settings :compose-runtime:testDebugUnitTest
 
+      - name: Verify Chinese copywriting
+        shell: pwsh
+        run: python scripts/verify_chinese_copywriting.py
+
       - name: Decode and verify final APK
         shell: pwsh
         run: |
@@ -340,8 +344,6 @@ jobs:
           APK_SHA256: ${{ steps.artifact.outputs.sha256 }}
         run: |
           $notes = @"
-          # Google 拼音输入法 $env:EXPECTED_VERSION_NAME
-
           ## 构建信息
 
           - Architecture: ``arm64-v8a``

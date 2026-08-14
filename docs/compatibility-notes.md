@@ -33,7 +33,7 @@
 
 补丁在以下时机重新应用主题颜色：
 
-1. `PinyinIME.onStartInputView()` 后；
+1. `PinyinIME.onStartInputView()` 后
 2. 旧框架调用 `Window.setNavigationBarColor()` 后。
 
 ## 滑动事件与高刷新率
@@ -72,12 +72,12 @@ Compatibility v20 为可变词库文件增加恢复层。原版持久化按 `主
 
 已知边界：
 
-- target 29/30：非 SDK 接口和 scoped storage；
-- target 31+：所有 PendingIntent 必须声明 immutable/mutable；
-- target 31+：所有带 intent-filter 的组件必须显式 exported；
-- target 33/34+：动态 Receiver 注册 flags；
-- target 35+：Activity edge-to-edge、TextView 测量和旧设置 UI；
-- target 36+：强制 edge-to-edge 和 predictive back；
+- target 29/30：非 SDK 接口和 scoped storage
+- target 31+：所有 PendingIntent 必须声明 immutable/mutable
+- target 31+：所有带 intent-filter 的组件必须显式 exported
+- target 33/34+：动态 Receiver 注册 flags
+- target 35+：Activity edge-to-edge、TextView 测量和旧设置 UI
+- target 36+：强制 edge-to-edge 和 predictive back
 - target 37+：static final 反射、native DCL、本地网络权限和 CJKV IME 辅助功能。
 
 废弃账号同步、Firebase、反馈上传和在线词典更新已在 target 现代化前清理。
@@ -88,11 +88,11 @@ Compatibility v20 为可变词库文件增加恢复层。原版持久化按 `主
 
 最终视觉规则有意保持狭窄：
 
-- 图片主题普通状态用一个共享逻辑高度绘制上部和导航下方切片，并叠加用户选择的原生 body 阴影；
-- 新图片裁剪尺寸包含动态稳定导航高度，不重写已有裁剪文件；
-- 内置主题使用实际 `SoftKeyboardView.background` 延伸键盘主体颜色；
-- 展开候选不切换导航视觉，不复制候选页、候选行、候选按键或任何候选内容；
-- 不使用固定导航高度、隐藏 ID、framework 内部类名、反射或 DecorView reparent；
+- 图片主题普通状态用一个共享逻辑高度绘制上部和导航下方切片，并叠加用户选择的原生 body 阴影
+- 新图片裁剪尺寸包含动态稳定导航高度，不重写已有裁剪文件
+- 内置主题使用实际 `SoftKeyboardView.background` 延伸键盘主体颜色
+- 展开候选不切换导航视觉，不复制候选页、候选行、候选按键或任何候选内容
+- 不使用固定导航高度、隐藏 ID、framework 内部类名、反射或 DecorView reparent
 - 临时候选/主题诊断已从 release-like artifact 删除。
 
 V19 三按钮和手势模式均保持 IME Insets `[0,1481][1080,2410]`、IME Window `[0,172][1080,2410]`、Surface `shown/HAS_DRAWN`。三按钮 navigationBars 为 `[0,2284][1080,2410]`，手势 navigationBars 为 `[0,2347][1080,2410]`、mandatorySystemGestures 为 `[0,2326][1080,2410]`。这些是动态现场值，不得作为代码常量。
