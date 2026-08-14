@@ -2,14 +2,22 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- API 36 的 Emoji、颜文字和标点/符号横向分页在确认 dragging 和原生 Scroller settle 期间动态请求高刷新率类别，结束、中断、隐藏或 detach 后立即释放
+- 保留已验证的 V34 fling 决策、系统最小速度和原生 50% settle，不因少量回弹猜测性降低翻页阈值
+
 ### Changed
 
+- Candidate 动画与符号分页共用 API 中立的 `ViewFrameRateCompat` 反射桥，各自保留独立 View 和原生运动生命周期
 - 中文文档、软件界面文本和版本化 Release Notes 统一遵循《中文文案排版指北》，采用链接前后留空格和简体中文直角引号两项争议规则
 - 清理列表末尾机械使用的分号，按语义重写 README、Release 和界面中的普通分号，同时保留确有层次作用的技术并列结构
 - 为 `v1.0.0–v2.0.2` 补充版本化 Release Notes，并修正后续发布流程重复追加版本标题的问题
 
 ### Build
 
+- 新增符号分页帧率专项门禁，验证精确类型范围、drag/Scroller 生命周期、隐藏/detach 清理、V34 fling 边界和 API 36 旧 ART 隔离
+- Pixel 10 Pro / Android 16 隔离审计确认三页实际呈现帧间隔中位数由约 16.67 ms 降到约 8.34 ms，空闲后回到 60 Hz 且无 IME UID 高刷请求
 - 新增 `scripts/verify_chinese_copywriting.py` 并接入 Release workflow，检查中英文与数字间距、单位空格、直角引号、链接空格和确定性标点规则
 
 ## [2.0.6] - 2026-08-13

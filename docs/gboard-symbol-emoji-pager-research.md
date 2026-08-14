@@ -218,4 +218,50 @@ V34 已按诊断结论实现：
 - 候选 pager 和其他 `lk` 使用者仍执行原来的 distance + velocity 双重条件
 - V32 外层点击取消、页码、target clamp、Scroller 和动画均未修改。
 
-V34 真机测试确认单指可以轻松左右翻页，点击、误选防护及其他已测路径未出现问题，局部 fling 修复通过。验证后制作 V35 正式版：删除 `PagerDiagnosticsCompat` 及 `lk` 中全部诊断调用，只保留经过验证的符号/表情类型分支；正式构建不再产生 `GPPagerDiag` 日志。
+V34 真机测试确认单指可以轻松左右翻页，点击、误选防护及其他已测路径未出现问题，局部 fling 修复通过。验证后制作 V35 正式版：删除 `PagerDiagnosticsCompat` 及 `lk` 中全部诊断调用，只保留经过验证的符号/表情类型分支。正式构建不再产生 `GPPagerDiag` 日志。
+
+## API 36 高刷新率复核
+
+### 正式版基线
+
+在 Pixel 10 Pro / Android 16 上分别清空 `gfxinfo framestats`，由维护者在 Emoji、颜文字和标点/符号页面各完成 6 次单手横向滑动。采集只包含帧调度和呈现时间，不记录页面内容、触摸坐标或截图。
+
+三个页面都被旧 IME Surface 稳定调度为约 60 fps：
+
+- Emoji 实际呈现帧间隔中位数为 16.6775 ms
+- 颜文字实际呈现帧间隔中位数为 16.6719 ms
+- 标点/符号实际呈现帧间隔中位数为 16.6751 ms
+- 三页合计只有 1 个活动间隔位于 7–10 ms，335 个位于 15–19 ms
+- `Thermal Status=0`
+
+App p95 为 5.035–5.673 ms，GPU p95 为 0.884–0.993 ms；三个页面分别有 114/120、116/120 和 117/120 帧在 8.33 ms 内完成。因此根因不是 CPU、GPU 或热节流，而是与 Candidate 动画相同的 60 Hz 内容分类。
+
+### 生命周期方案
+
+不恢复固定 120 Hz、Window touch boost 或定时器。高刷请求直接复用旧 `lk` 已有的运动状态机：
+
+```text
+确认进入 dragging       → HIGH
+Scroller.startScroll()   → HIGH
+Scroller 结束            → NO_PREFERENCE
+新触摸中断旧 settle      → NO_PREFERENCE
+View 隐藏或 detach       → NO_PREFERENCE
+```
+
+`PagerFrameRateCompat` 先执行精确 `instanceof PageableRecentSubCategorySoftKeyListHolderView`。因此共享 `lk` 和 `PageableSoftKeyListHolderView` 中的生命周期钩子只影响 Emoji、颜文字和标点/符号共用的 pager，不改变 Candidate pager 或其他 `lk` 使用者。
+
+API 36 调用集中在 `ViewFrameRateCompat`，通过反射调用公开的 `View.setRequestedFrameRate(float)`。API 17–35 不直接解析该方法并保持无操作。Candidate 动画与 pager 共享 API 中立的 View 桥，但各自维护独立 View 和生命周期，不引入 Window 级全局状态或固定刷新率。
+
+### 隔离审计结果
+
+non-debuggable 隔离包在三页各完成 6 次单手滑动后：
+
+- Emoji 实际呈现帧间隔中位数由 16.6775 ms 降为 8.3397 ms
+- 颜文字由 16.6719 ms 降为 8.3390 ms
+- 标点/符号由 16.6751 ms 降为 8.3448 ms
+- 三页持续滑动和 settle 主体均进入约 120 Hz，少量 16.67 ms 帧位于触摸开始、页面停顿或动态刷新率切换边界
+- 每页停止后 IME UID 高刷请求均消失，显示回到 60 Hz
+- `Thermal Status=0`
+- 维护者确认三页手感均有改善且点击、滑动未发现异常
+
+V34 目标页算法保持不变。维护者额外做了 10 次快速短滑，其中 2 次回弹。这不足以证明新的结构性缺陷，不据此降低原生 50% settle 阈值。临时分支诊断包因新安装身份的首次引导 Activity 被 Android 后台启动限制阻止而无法弹出键盘，随后立即恢复正式 IME 并卸载。正式实现不包含该诊断日志，也不绕过首次引导状态。
