@@ -56,67 +56,67 @@
 .method constructor <init>(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemotePayload;Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderChromeFactory;)V
     .locals 4
 
-    .line 37
+    .line 39
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
-    .line 26
+    .line 28
     new-instance v0, Ljava/util/ArrayList;
 
     invoke-direct {v0}, Ljava/util/ArrayList;-><init>()V
 
     iput-object v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->views:Ljava/util/ArrayList;
 
-    .line 27
+    .line 29
     new-instance v0, Landroid/graphics/Rect;
 
     invoke-direct {v0}, Landroid/graphics/Rect;-><init>()V
 
     iput-object v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->hostRect:Landroid/graphics/Rect;
 
-    .line 28
+    .line 30
     new-instance v0, Landroid/graphics/Rect;
 
     invoke-direct {v0}, Landroid/graphics/Rect;-><init>()V
 
     iput-object v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->childRect:Landroid/graphics/Rect;
 
-    .line 38
+    .line 40
     if-eqz p3, :cond_1
 
-    .line 39
+    .line 41
     invoke-virtual {p2}, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemotePayload;->getClipper()Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderRemoteSurfaceClipper;
 
     move-result-object v0
 
     iput-object v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->clipper:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderRemoteSurfaceClipper;
 
-    .line 40
+    .line 42
     new-instance v0, Landroid/widget/FrameLayout;
 
     invoke-direct {v0, p1}, Landroid/widget/FrameLayout;-><init>(Landroid/content/Context;)V
 
     iput-object v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->root:Landroid/widget/FrameLayout;
 
-    .line 41
+    .line 43
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->root:Landroid/widget/FrameLayout;
 
     const/4 v1, 0x1
 
     invoke-virtual {v0, v1}, Landroid/widget/FrameLayout;->setClipChildren(Z)V
 
-    .line 42
+    .line 44
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->root:Landroid/widget/FrameLayout;
 
     invoke-virtual {v0, v1}, Landroid/widget/FrameLayout;->setClipToPadding(Z)V
 
-    .line 43
+    .line 45
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->root:Landroid/widget/FrameLayout;
 
     const/4 v1, 0x0
 
     invoke-virtual {v0, v1}, Landroid/widget/FrameLayout;->setSaveEnabled(Z)V
 
-    .line 44
+    .line 46
     invoke-virtual {p1}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
 
     move-result-object v0
@@ -127,14 +127,14 @@
 
     move-result v0
 
-    .line 47
+    .line 49
     invoke-interface {p3}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderChromeFactory;->createCandidateChromeSlot()Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderVisualSlot;
 
     move-result-object v2
 
     iput-object v2, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->candidateSlot:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderVisualSlot;
 
-    .line 50
+    .line 52
     iget-object v2, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->candidateSlot:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderVisualSlot;
 
     invoke-virtual {v2}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderVisualSlot;->getSeparator()Landroid/view/View;
@@ -145,7 +145,7 @@
 
     invoke-virtual {v2, v3}, Landroid/view/View;->setVisibility(I)V
 
-    .line 51
+    .line 53
     sget-object v2, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderActionKind;->PREVIOUS:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderActionKind;
 
     invoke-interface {p3, v2}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderChromeFactory;->createActionChromeSlot(Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderActionKind;)Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderActionSlot;
@@ -154,7 +154,7 @@
 
     iput-object v2, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->previousSlot:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderActionSlot;
 
-    .line 52
+    .line 54
     sget-object v2, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderActionKind;->NEXT:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderActionKind;
 
     invoke-interface {p3, v2}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderChromeFactory;->createActionChromeSlot(Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderActionKind;)Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderActionSlot;
@@ -163,7 +163,7 @@
 
     iput-object p3, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->nextSlot:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderActionSlot;
 
-    .line 53
+    .line 55
     iget-object p3, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->nextSlot:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderActionSlot;
 
     invoke-virtual {p3}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderActionSlot;->getRailWidth()I
@@ -172,7 +172,7 @@
 
     if-lez p3, :cond_0
 
-    .line 54
+    .line 56
     iget-object p3, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->nextSlot:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderActionSlot;
 
     invoke-virtual {p3}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderActionSlot;->getRailWidth()I
@@ -187,7 +187,7 @@
     :goto_0
     iput v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->railWidth:I
 
-    .line 55
+    .line 57
     iget-object p3, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->previousSlot:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderActionSlot;
 
     invoke-virtual {p3}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderActionSlot;->getLeadingInset()I
@@ -196,7 +196,7 @@
 
     iput p3, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->leadingInset:I
 
-    .line 56
+    .line 58
     iget-object p3, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->nextSlot:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderActionSlot;
 
     invoke-virtual {p3}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderActionSlot;->getTrailingInset()I
@@ -205,7 +205,7 @@
 
     iput p3, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->trailingInset:I
 
-    .line 57
+    .line 59
     iget-object p3, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->root:Landroid/widget/FrameLayout;
 
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->candidateSlot:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderVisualSlot;
@@ -224,7 +224,7 @@
 
     invoke-virtual {p3, v0, v2}, Landroid/widget/FrameLayout;->addView(Landroid/view/View;Landroid/view/ViewGroup$LayoutParams;)V
 
-    .line 58
+    .line 60
     iget-object p3, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->root:Landroid/widget/FrameLayout;
 
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->previousSlot:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderActionSlot;
@@ -243,7 +243,7 @@
 
     invoke-virtual {p3, v0, v2}, Landroid/widget/FrameLayout;->addView(Landroid/view/View;Landroid/view/ViewGroup$LayoutParams;)V
 
-    .line 59
+    .line 61
     iget-object p3, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->root:Landroid/widget/FrameLayout;
 
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->nextSlot:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderActionSlot;
@@ -262,24 +262,24 @@
 
     invoke-virtual {p3, v0, v2}, Landroid/widget/FrameLayout;->addView(Landroid/view/View;Landroid/view/ViewGroup$LayoutParams;)V
 
-    .line 60
+    .line 62
     iget-object p3, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->previousSlot:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderActionSlot;
 
     invoke-virtual {p3}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderActionSlot;->getRoot()Landroid/view/View;
 
     move-result-object p3
 
-    .line 61
+    .line 63
     const v0, 0x7f110200
 
     invoke-virtual {p1, v0}, Landroid/content/Context;->getText(I)Ljava/lang/CharSequence;
 
     move-result-object v0
 
-    .line 60
+    .line 62
     invoke-virtual {p3, v0}, Landroid/view/View;->setContentDescription(Ljava/lang/CharSequence;)V
 
-    .line 62
+    .line 64
     iget-object p3, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->nextSlot:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderActionSlot;
 
     invoke-virtual {p3}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderActionSlot;->getRoot()Landroid/view/View;
@@ -294,7 +294,7 @@
 
     invoke-virtual {p3, p1}, Landroid/view/View;->setContentDescription(Ljava/lang/CharSequence;)V
 
-    .line 63
+    .line 65
     iget-object p1, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->previousSlot:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderActionSlot;
 
     invoke-virtual {p1}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderActionSlot;->getRoot()Landroid/view/View;
@@ -307,7 +307,7 @@
 
     invoke-virtual {p1, p3}, Landroid/view/View;->setOnClickListener(Landroid/view/View$OnClickListener;)V
 
-    .line 66
+    .line 71
     iget-object p1, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->nextSlot:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderActionSlot;
 
     invoke-virtual {p1}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderActionSlot;->getRoot()Landroid/view/View;
@@ -320,25 +320,25 @@
 
     invoke-virtual {p1, p3}, Landroid/view/View;->setOnClickListener(Landroid/view/View$OnClickListener;)V
 
-    .line 69
+    .line 77
     invoke-virtual {p2}, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemotePayload;->getViews()Ljava/util/List;
 
     move-result-object p1
 
     invoke-direct {p0, p1}, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->mount(Ljava/util/List;)V
 
-    .line 70
+    .line 78
     iget-object p1, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->root:Landroid/widget/FrameLayout;
 
     invoke-virtual {p1, p0}, Landroid/widget/FrameLayout;->addOnLayoutChangeListener(Landroid/view/View$OnLayoutChangeListener;)V
 
-    .line 71
+    .line 79
     invoke-direct {p0, v1}, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->showIndex(I)V
 
-    .line 72
+    .line 80
     return-void
 
-    .line 38
+    .line 40
     :cond_1
     new-instance p1, Ljava/lang/IllegalArgumentException;
 
@@ -352,7 +352,7 @@
 .method static synthetic access$000(Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;)I
     .locals 0
 
-    .line 16
+    .line 18
     iget p0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->currentIndex:I
 
     return p0
@@ -361,8 +361,17 @@
 .method static synthetic access$100(Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;I)V
     .locals 0
 
-    .line 16
+    .line 18
     invoke-direct {p0, p1}, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->showIndex(I)V
+
+    return-void
+.end method
+
+.method static synthetic access$200(Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;Landroid/view/View;)V
+    .locals 0
+
+    .line 18
+    invoke-direct {p0, p1}, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->onRemoteSuggestionClick(Landroid/view/View;)V
 
     return-void
 .end method
@@ -380,10 +389,10 @@
         }
     .end annotation
 
-    .line 180
+    .line 205
     nop
 
-    .line 181
+    .line 206
     invoke-virtual {p1}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
 
     move-result-object p1
@@ -402,17 +411,17 @@
 
     move-result p1
 
-    .line 180
+    .line 205
     const/4 v0, 0x1
 
     invoke-static {v0, p1}, Ljava/lang/Math;->max(II)I
 
     move-result p1
 
-    .line 182
+    .line 207
     nop
 
-    .line 183
+    .line 208
     invoke-interface {p2}, Ljava/util/List;->iterator()Ljava/util/Iterator;
 
     move-result-object p2
@@ -432,12 +441,12 @@
 
     check-cast v1, Landroid/view/View;
 
-    .line 184
+    .line 209
     invoke-virtual {v1}, Landroid/view/View;->getLayoutParams()Landroid/view/ViewGroup$LayoutParams;
 
     move-result-object v1
 
-    .line 185
+    .line 210
     if-eqz v1, :cond_0
 
     iget v2, v1, Landroid/view/ViewGroup$LayoutParams;->width:I
@@ -446,11 +455,11 @@
 
     iget v0, v1, Landroid/view/ViewGroup$LayoutParams;->width:I
 
-    .line 186
+    .line 211
     :cond_0
     goto :goto_0
 
-    .line 187
+    .line 212
     :cond_1
     if-gtz v0, :cond_2
 
@@ -459,7 +468,7 @@
     :cond_2
     move p1, v0
 
-    .line 188
+    .line 213
     :goto_1
     new-instance p2, Landroid/widget/FrameLayout$LayoutParams;
 
@@ -483,14 +492,14 @@
         }
     .end annotation
 
-    .line 104
+    .line 113
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->candidateSlot:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderVisualSlot;
 
     invoke-virtual {v0}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderVisualSlot;->getContentHost()Landroid/widget/FrameLayout;
 
     move-result-object v0
 
-    .line 105
+    .line 114
     invoke-interface {p1}, Ljava/util/List;->iterator()Ljava/util/Iterator;
 
     move-result-object p1
@@ -508,12 +517,12 @@
 
     check-cast v1, Landroid/view/View;
 
-    .line 106
+    .line 115
     invoke-virtual {v1}, Landroid/view/View;->getParent()Landroid/view/ViewParent;
 
     move-result-object v2
 
-    .line 107
+    .line 116
     instance-of v3, v2, Landroid/view/ViewGroup;
 
     if-eqz v3, :cond_0
@@ -522,13 +531,13 @@
 
     invoke-virtual {v2, v1}, Landroid/view/ViewGroup;->removeView(Landroid/view/View;)V
 
-    .line 108
+    .line 117
     :cond_0
     invoke-virtual {v1}, Landroid/view/View;->getLayoutParams()Landroid/view/ViewGroup$LayoutParams;
 
     move-result-object v2
 
-    .line 109
+    .line 118
     const/4 v3, -0x1
 
     if-eqz v2, :cond_1
@@ -537,7 +546,7 @@
 
     if-lez v4, :cond_1
 
-    .line 110
+    .line 119
     iget v4, v2, Landroid/view/ViewGroup$LayoutParams;->width:I
 
     goto :goto_1
@@ -545,7 +554,7 @@
     :cond_1
     const/4 v4, -0x1
 
-    .line 111
+    .line 120
     :goto_1
     if-eqz v2, :cond_2
 
@@ -553,7 +562,7 @@
 
     if-lez v5, :cond_2
 
-    .line 112
+    .line 121
     iget v3, v2, Landroid/view/ViewGroup$LayoutParams;->height:I
 
     goto :goto_2
@@ -561,7 +570,7 @@
     :cond_2
     nop
 
-    .line 113
+    .line 122
     :goto_2
     new-instance v2, Landroid/widget/FrameLayout$LayoutParams;
 
@@ -569,26 +578,103 @@
 
     invoke-direct {v2, v4, v3, v5}, Landroid/widget/FrameLayout$LayoutParams;-><init>(III)V
 
-    .line 115
+    .line 124
     invoke-virtual {v0, v1, v2}, Landroid/widget/FrameLayout;->addView(Landroid/view/View;Landroid/view/ViewGroup$LayoutParams;)V
 
-    .line 116
+    .line 125
     iget-object v2, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->views:Ljava/util/ArrayList;
 
     invoke-virtual {v2, v1}, Ljava/util/ArrayList;->add(Ljava/lang/Object;)Z
 
-    .line 117
+    .line 129
+    new-instance v2, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent$3;
+
+    invoke-direct {v2, p0}, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent$3;-><init>(Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;)V
+
+    invoke-virtual {v1, v2}, Landroid/view/View;->setOnClickListener(Landroid/view/View$OnClickListener;)V
+
+    .line 134
     goto :goto_0
 
-    .line 118
+    .line 135
     :cond_3
+    return-void
+.end method
+
+.method private onRemoteSuggestionClick(Landroid/view/View;)V
+    .locals 2
+
+    .line 138
+    iget-boolean v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->released:Z
+
+    if-nez v0, :cond_1
+
+    iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->root:Landroid/widget/FrameLayout;
+
+    invoke-virtual {v0}, Landroid/widget/FrameLayout;->getVisibility()I
+
+    move-result v0
+
+    if-nez v0, :cond_1
+
+    iget v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->currentIndex:I
+
+    if-ltz v0, :cond_1
+
+    iget v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->currentIndex:I
+
+    iget-object v1, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->views:Ljava/util/ArrayList;
+
+    .line 139
+    invoke-virtual {v1}, Ljava/util/ArrayList;->size()I
+
+    move-result v1
+
+    if-ge v0, v1, :cond_1
+
+    iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->views:Ljava/util/ArrayList;
+
+    iget v1, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->currentIndex:I
+
+    .line 140
+    invoke-virtual {v0, v1}, Ljava/util/ArrayList;->get(I)Ljava/lang/Object;
+
+    move-result-object v0
+
+    if-ne v0, p1, :cond_1
+
+    invoke-virtual {p1}, Landroid/view/View;->isEnabled()Z
+
+    move-result v0
+
+    if-eqz v0, :cond_1
+
+    .line 141
+    invoke-virtual {p1}, Landroid/view/View;->getVisibility()I
+
+    move-result v0
+
+    if-eqz v0, :cond_0
+
+    goto :goto_0
+
+    .line 142
+    :cond_0
+    invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/InlineAutofillFeedbackCompat;->perform(Landroid/view/View;)V
+
+    .line 143
+    return-void
+
+    .line 141
+    :cond_1
+    :goto_0
     return-void
 .end method
 
 .method private railParams(II)Landroid/widget/FrameLayout$LayoutParams;
     .locals 3
 
-    .line 193
+    .line 218
     new-instance v0, Landroid/widget/FrameLayout$LayoutParams;
 
     iget v1, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->railWidth:I
@@ -597,7 +683,7 @@
 
     invoke-direct {v0, v1, v2, p1}, Landroid/widget/FrameLayout$LayoutParams;-><init>(III)V
 
-    .line 195
+    .line 220
     const v1, 0x800003
 
     if-ne p1, v1, :cond_0
@@ -606,11 +692,11 @@
 
     goto :goto_0
 
-    .line 196
+    .line 221
     :cond_0
     iput p2, v0, Landroid/widget/FrameLayout$LayoutParams;->rightMargin:I
 
-    .line 197
+    .line 222
     :goto_0
     return-object v0
 .end method
@@ -618,7 +704,7 @@
 .method private showIndex(I)V
     .locals 6
 
-    .line 121
+    .line 146
     iget-boolean v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->released:Z
 
     if-nez v0, :cond_8
@@ -635,18 +721,18 @@
 
     goto/16 :goto_5
 
-    .line 122
+    .line 147
     :cond_0
     iput p1, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->currentIndex:I
 
-    .line 123
+    .line 148
     new-instance p1, Landroid/graphics/Rect;
 
     const/4 v0, 0x0
 
     invoke-direct {p1, v0, v0, v0, v0}, Landroid/graphics/Rect;-><init>(IIII)V
 
-    .line 124
+    .line 149
     const/4 v1, 0x0
 
     :goto_0
@@ -660,7 +746,7 @@
 
     if-ge v1, v2, :cond_5
 
-    .line 125
+    .line 150
     iget-object v2, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->views:Ljava/util/ArrayList;
 
     invoke-virtual {v2, v1}, Ljava/util/ArrayList;->get(I)Ljava/lang/Object;
@@ -669,7 +755,7 @@
 
     check-cast v2, Landroid/view/View;
 
-    .line 126
+    .line 151
     iget v4, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->currentIndex:I
 
     if-ne v1, v4, :cond_1
@@ -679,13 +765,13 @@
     :cond_1
     const/4 v3, 0x0
 
-    .line 127
+    .line 152
     :goto_1
     const/4 v4, 0x0
 
     invoke-virtual {v2, v4}, Landroid/view/View;->setTranslationX(F)V
 
-    .line 128
+    .line 153
     const/4 v4, 0x4
 
     if-eqz v3, :cond_2
@@ -700,39 +786,39 @@
     :goto_2
     invoke-virtual {v2, v5}, Landroid/view/View;->setVisibility(I)V
 
-    .line 129
+    .line 154
     invoke-virtual {v2, v3}, Landroid/view/View;->setEnabled(Z)V
 
-    .line 130
+    .line 155
     if-eqz v3, :cond_3
 
-    .line 131
+    .line 156
     const/4 v4, 0x0
 
     goto :goto_3
 
-    .line 132
+    .line 157
     :cond_3
     nop
 
-    .line 130
+    .line 155
     :goto_3
     invoke-virtual {v2, v4}, Landroid/view/View;->setImportantForAccessibility(I)V
 
-    .line 133
+    .line 158
     if-nez v3, :cond_4
 
     iget-object v3, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->clipper:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderRemoteSurfaceClipper;
 
     invoke-interface {v3, v2, p1}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderRemoteSurfaceClipper;->applyClip(Landroid/view/View;Landroid/graphics/Rect;)V
 
-    .line 124
+    .line 149
     :cond_4
     add-int/lit8 v1, v1, 0x1
 
     goto :goto_0
 
-    .line 138
+    .line 163
     :cond_5
     iget-object p1, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->previousSlot:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderActionSlot;
 
@@ -742,7 +828,7 @@
 
     invoke-virtual {p1, v0}, Landroid/view/View;->setVisibility(I)V
 
-    .line 139
+    .line 164
     iget-object p1, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->nextSlot:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderActionSlot;
 
     invoke-virtual {p1}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderActionSlot;->getRoot()Landroid/view/View;
@@ -751,7 +837,7 @@
 
     invoke-virtual {p1, v0}, Landroid/view/View;->setVisibility(I)V
 
-    .line 140
+    .line 165
     iget-object p1, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->previousSlot:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderActionSlot;
 
     iget v1, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->currentIndex:I
@@ -768,7 +854,7 @@
     :goto_4
     invoke-virtual {p1, v1}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderActionSlot;->setEnabled(Z)V
 
-    .line 141
+    .line 166
     iget-object p1, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->nextSlot:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderActionSlot;
 
     iget v1, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->currentIndex:I
@@ -788,15 +874,15 @@
     :cond_7
     invoke-virtual {p1, v0}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderActionSlot;->setEnabled(Z)V
 
-    .line 142
+    .line 167
     iget-object p1, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->root:Landroid/widget/FrameLayout;
 
     invoke-virtual {p1, p0}, Landroid/widget/FrameLayout;->post(Ljava/lang/Runnable;)Z
 
-    .line 143
+    .line 168
     return-void
 
-    .line 121
+    .line 146
     :cond_8
     :goto_5
     return-void
@@ -805,14 +891,14 @@
 .method private updateRemoteClip()V
     .locals 7
 
-    .line 146
+    .line 171
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->candidateSlot:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderVisualSlot;
 
     invoke-virtual {v0}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderVisualSlot;->getContentHost()Landroid/widget/FrameLayout;
 
     move-result-object v0
 
-    .line 147
+    .line 172
     iget-boolean v1, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->released:Z
 
     if-nez v1, :cond_4
@@ -833,7 +919,7 @@
 
     if-nez v1, :cond_4
 
-    .line 148
+    .line 173
     invoke-virtual {v0}, Landroid/widget/FrameLayout;->getWidth()I
 
     move-result v1
@@ -848,7 +934,7 @@
 
     goto/16 :goto_2
 
-    .line 149
+    .line 174
     :cond_0
     const/4 v1, 0x0
 
@@ -863,7 +949,7 @@
 
     if-ge v2, v3, :cond_3
 
-    .line 150
+    .line 175
     iget-object v3, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->views:Ljava/util/ArrayList;
 
     invoke-virtual {v3, v2}, Ljava/util/ArrayList;->get(I)Ljava/lang/Object;
@@ -872,12 +958,12 @@
 
     check-cast v3, Landroid/view/View;
 
-    .line 151
+    .line 176
     iget v4, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->currentIndex:I
 
     if-eq v2, v4, :cond_1
 
-    .line 152
+    .line 177
     iget-object v4, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->clipper:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderRemoteSurfaceClipper;
 
     new-instance v5, Landroid/graphics/Rect;
@@ -886,10 +972,10 @@
 
     invoke-interface {v4, v3, v5}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderRemoteSurfaceClipper;->applyClip(Landroid/view/View;Landroid/graphics/Rect;)V
 
-    .line 153
+    .line 178
     goto/16 :goto_1
 
-    .line 162
+    .line 187
     :cond_1
     iget-object v4, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->hostRect:Landroid/graphics/Rect;
 
@@ -903,19 +989,19 @@
 
     invoke-virtual {v4, v1, v1, v5, v6}, Landroid/graphics/Rect;->set(IIII)V
 
-    .line 163
+    .line 188
     iget-object v4, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->childRect:Landroid/graphics/Rect;
 
     iget-object v5, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->hostRect:Landroid/graphics/Rect;
 
     invoke-virtual {v4, v5}, Landroid/graphics/Rect;->set(Landroid/graphics/Rect;)V
 
-    .line 164
+    .line 189
     iget-object v4, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->childRect:Landroid/graphics/Rect;
 
     invoke-virtual {v0, v3, v4}, Landroid/widget/FrameLayout;->offsetRectIntoDescendantCoords(Landroid/view/View;Landroid/graphics/Rect;)V
 
-    .line 165
+    .line 190
     iget-object v4, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->childRect:Landroid/graphics/Rect;
 
     invoke-virtual {v3}, Landroid/view/View;->getWidth()I
@@ -932,12 +1018,12 @@
 
     if-nez v4, :cond_2
 
-    .line 166
+    .line 191
     iget-object v4, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->childRect:Landroid/graphics/Rect;
 
     invoke-virtual {v4, v1, v1, v1, v1}, Landroid/graphics/Rect;->set(IIII)V
 
-    .line 168
+    .line 193
     :cond_2
     new-instance v4, Ljava/lang/StringBuilder;
 
@@ -961,7 +1047,7 @@
 
     iget-object v5, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->root:Landroid/widget/FrameLayout;
 
-    .line 169
+    .line 194
     invoke-virtual {v5}, Landroid/widget/FrameLayout;->getWidth()I
 
     move-result v5
@@ -992,7 +1078,7 @@
 
     move-result-object v4
 
-    .line 170
+    .line 195
     invoke-virtual {v0}, Landroid/widget/FrameLayout;->getWidth()I
 
     move-result v6
@@ -1019,7 +1105,7 @@
 
     move-result-object v4
 
-    .line 171
+    .line 196
     invoke-virtual {v3}, Landroid/view/View;->getWidth()I
 
     move-result v6
@@ -1046,7 +1132,7 @@
 
     move-result-object v4
 
-    .line 172
+    .line 197
     invoke-virtual {v3}, Landroid/view/View;->getLeft()I
 
     move-result v5
@@ -1123,12 +1209,12 @@
 
     move-result-object v4
 
-    .line 168
+    .line 193
     const-string v5, "HeaderPlatformAudit"
 
     invoke-static {v5, v4}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
 
-    .line 175
+    .line 200
     iget-object v4, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->clipper:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderRemoteSurfaceClipper;
 
     new-instance v5, Landroid/graphics/Rect;
@@ -1139,17 +1225,17 @@
 
     invoke-interface {v4, v3, v5}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderRemoteSurfaceClipper;->applyClip(Landroid/view/View;Landroid/graphics/Rect;)V
 
-    .line 149
+    .line 174
     :goto_1
     add-int/lit8 v2, v2, 0x1
 
     goto/16 :goto_0
 
-    .line 177
+    .line 202
     :cond_3
     return-void
 
-    .line 148
+    .line 173
     :cond_4
     :goto_2
     return-void
@@ -1160,7 +1246,7 @@
 .method public getView()Landroid/view/View;
     .locals 1
 
-    .line 74
+    .line 82
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->root:Landroid/widget/FrameLayout;
 
     return-object v0
@@ -1169,40 +1255,40 @@
 .method public onLayoutChange(Landroid/view/View;IIIIIIII)V
     .locals 0
 
-    .line 98
+    .line 107
     invoke-direct {p0}, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->updateRemoteClip()V
 
-    .line 99
+    .line 108
     return-void
 .end method
 
 .method public release()V
     .locals 5
 
-    .line 78
+    .line 86
     iget-boolean v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->released:Z
 
     if-eqz v0, :cond_0
 
     return-void
 
-    .line 79
+    .line 87
     :cond_0
     const/4 v0, 0x1
 
     iput-boolean v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->released:Z
 
-    .line 80
+    .line 88
     iget-object v1, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->root:Landroid/widget/FrameLayout;
 
     invoke-virtual {v1, p0}, Landroid/widget/FrameLayout;->removeCallbacks(Ljava/lang/Runnable;)Z
 
-    .line 81
+    .line 89
     iget-object v1, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->root:Landroid/widget/FrameLayout;
 
     invoke-virtual {v1, p0}, Landroid/widget/FrameLayout;->removeOnLayoutChangeListener(Landroid/view/View$OnLayoutChangeListener;)V
 
-    .line 82
+    .line 90
     iget-object v1, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->views:Ljava/util/ArrayList;
 
     invoke-virtual {v1}, Ljava/util/ArrayList;->iterator()Ljava/util/Iterator;
@@ -1222,63 +1308,66 @@
 
     check-cast v2, Landroid/view/View;
 
-    .line 83
+    .line 91
     iget-object v3, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->clipper:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderRemoteSurfaceClipper;
 
     const/4 v4, 0x0
 
     invoke-interface {v3, v2, v4}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderRemoteSurfaceClipper;->applyClip(Landroid/view/View;Landroid/graphics/Rect;)V
 
-    .line 84
+    .line 92
+    invoke-virtual {v2, v4}, Landroid/view/View;->setOnClickListener(Landroid/view/View$OnClickListener;)V
+
+    .line 93
     const/4 v3, 0x0
 
     invoke-virtual {v2, v3}, Landroid/view/View;->setTranslationX(F)V
 
-    .line 85
+    .line 94
     invoke-virtual {v2, v0}, Landroid/view/View;->setEnabled(Z)V
 
-    .line 86
+    .line 95
     const/4 v3, 0x0
 
     invoke-virtual {v2, v3}, Landroid/view/View;->setImportantForAccessibility(I)V
 
-    .line 87
+    .line 96
     goto :goto_0
 
-    .line 88
+    .line 97
     :cond_1
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->candidateSlot:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderVisualSlot;
 
     invoke-virtual {v0}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderVisualSlot;->clear()V
 
-    .line 89
+    .line 98
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->previousSlot:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderActionSlot;
 
     invoke-virtual {v0}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderActionSlot;->clear()V
 
-    .line 90
+    .line 99
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->nextSlot:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderActionSlot;
 
     invoke-virtual {v0}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderActionSlot;->clear()V
 
-    .line 91
+    .line 100
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->views:Ljava/util/ArrayList;
 
     invoke-virtual {v0}, Ljava/util/ArrayList;->clear()V
 
-    .line 92
+    .line 101
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->root:Landroid/widget/FrameLayout;
 
     invoke-virtual {v0}, Landroid/widget/FrameLayout;->removeAllViews()V
 
-    .line 93
+    .line 102
     return-void
 .end method
 
 .method public run()V
     .locals 0
 
-    .line 101
+    .line 110
     invoke-direct {p0}, Lcom/google/android/inputmethod/pinyin/headerplatform/InlineAutofillRemoteContent;->updateRemoteClip()V
 
     return-void

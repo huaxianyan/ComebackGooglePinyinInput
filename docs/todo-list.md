@@ -139,6 +139,7 @@
 - [x] `feat/inline-autofill` 阶段 A 的 API 36 运行时协议验收完成：标准 Framework request/response、Bitwarden 与合成 Provider 的 Inline Surface、Framework-owned click 及空 response/session 失效均正常。API 17–29 旧 ART 运行时仍受 ARM64 ABI/当前模拟环境限制，只保留静态门禁，不能描述成运行时通过
 - [x] `feat/inline-autofill` 阶段 B 实现：独立 API 中立 Header ClipHost 托管横向远端 View；最多 3 项异步 inflate 按 provider 索引聚合，具备 generation/会话/Header 身份校验、1.2 秒超时及 null/异常/重复 callback 处理；layout/scroll/attach/detach 均显式更新或释放 remote View clip bounds。表现层优先级为原生 Candidate > Inline Autofill > 空闲剪贴板，不改变 Body 键、密码预测/学习语义、Candidate/剪贴板数据模型或 touch exploration 声明。提交 `d09ee44` 的 Actions run `31459097182` 已通过 Compose、API 31/33/34/35/36、Inline 专用门禁、6,633 个旧资源 ID、签名、16 KiB alignment 和双构建一致性检查，只生成隔离 Artifact
 - [x] `feat/header-platform` 完成阶段 B 及平台化真机验收：Pixel 10 Pro / API 36 验证 0/1/多项、Framework 点击填充、稳定 rails、局部坐标 Surface 裁剪、字段/网页/Header/方向切换、Clipboard Candidate 接管与恢复、Bitwarden 解锁/认证 Activity 往返、主题和完整 Compose 组合包；诊断不采集凭据、Clipboard/Candidate/Provider 正文。详见 `docs/header-platform-runtime-acceptance.md`
+- [x] Inline Autofill 按键反馈已完成 Gboard 静态追踪和 Pixel 10 Pro / API 36 隔离验收：外层触摸包装层无法观察远端 Surface 的完整手势，但 Framework 会向直接注册在 `InlineContentView` 上的 `OnClickListener` 报告点击完成。正式实现仅在当前、可见、启用且未释放的远端建议及两个有效 rails 上调用原生 `aue`，不读取或提交 Provider payload。Bitwarden 填充正常，维护者调高后的按键音量和振动时长均反映到实际反馈
 - [ ] Inline Autofill TalkBack touch-exploration 独立验收；完成前继续不声明 `supportsInlineSuggestionsWithTouchExploration`
 - [ ] 在可用 ARM64 API 17–29 环境补做旧 ART 启动；当前 API 17 静态-only、API 23 环境阻塞结论保持不变
 

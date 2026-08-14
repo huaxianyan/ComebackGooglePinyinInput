@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 JAVA_HELPER = ROOT / "patches/java/com/google/android/inputmethod/pinyin/InlineAutofillCompat.java"
 JAVA_PLATFORM = ROOT / "patches/java/com/google/android/inputmethod/pinyin/headerplatform"
 SMALI_HELPER = ROOT / "patches/smali/InlineAutofillCompat.smali"
+SMALI_FEEDBACK = ROOT / "patches/smali/InlineAutofillFeedbackCompat.smali"
 SMALI_PLATFORM = ROOT / "patches/smali/headerplatform"
 ANDROIDX_JAR = ROOT / "work/inline-autofill-synthetic-provider/libs/classes.jar"
 ANDROID_NS = "http://schemas.android.com/apk/res/android"
@@ -30,6 +31,12 @@ package com.google.android.inputmethod.pinyin;
 public class PinyinIME extends android.inputmethodservice.InputMethodService {
     protected final com.google.android.apps.inputmethod.libs.framework.keyboard.IKeyboardTheme
             a() { return null; }
+}
+""",
+    "com/google/android/inputmethod/pinyin/InlineAutofillFeedbackCompat.java": """
+package com.google.android.inputmethod.pinyin;
+public final class InlineAutofillFeedbackCompat {
+    public static void perform(android.view.View view) {}
 }
 """,
 }
@@ -116,6 +123,11 @@ def verify_sources(android_jar: Path, jdk: Path) -> None:
             "chromeFactory.createActionChromeSlot(HeaderActionKind.NEXT)",
             "showIndex(currentIndex - 1)",
             "showIndex(currentIndex + 1)",
+            "InlineAutofillFeedbackCompat.perform(view)",
+            "view.setOnClickListener(new View.OnClickListener()",
+            "onRemoteSuggestionClick(clicked)",
+            "views.get(currentIndex) != view",
+            "view.setOnClickListener(null)",
             "view.setVisibility(current ? View.VISIBLE : View.INVISIBLE)",
             "candidateSlot.getSeparator().setVisibility(View.GONE)",
             "visualSlot.getRailSeparator()",
@@ -157,12 +169,41 @@ def verify_sources(android_jar: Path, jdk: Path) -> None:
     ):
         if forbidden in helper or forbidden in platform:
             raise RuntimeError(f"Inline Autofill violates payload/platform boundaries: {forbidden}")
+    for forbidden in (
+        "InlineAutofillFeedbackHost",
+        "InlineAutofillFeedbackCompat.perform(this)",
+        "view.setSoundEffectsEnabled(false)",
+    ):
+        if forbidden in platform:
+            raise RuntimeError(
+                f"IME must not intercept or alter Provider remote Surface input: {forbidden}"
+            )
+    if platform.count("InlineAutofillFeedbackCompat.perform(view)") != 3:
+        raise RuntimeError(
+            "Autofill remote completion and both enabled rails must use native key feedback"
+        )
     if ".setTextColor(" in platform:
         raise RuntimeError("Header platform must not recolor Provider remote Views")
     if helper.count(".setTextColor(") != 2:
         raise RuntimeError("Inline request must style title/subtitle only from native Candidate color")
 
     helper_smali = SMALI_HELPER.read_text(encoding="utf-8")
+    feedback_smali = SMALI_FEEDBACK.read_text(encoding="utf-8")
+    require_all(
+        feedback_smali,
+        (
+            "new-instance v0, Laue;",
+            "Laue;-><init>(Landroid/content/Context;)V",
+            "Laue;->a(Landroid/view/View;Lcom/google/android/apps/inputmethod/libs/framework/core/KeyData;)V",
+            "Laue;->a()V",
+        ),
+        "Inline Autofill native key feedback bridge",
+    )
+    for forbidden in ("GPAutoFeedback", "InlineAutofillFeedbackDiagnostics"):
+        if forbidden in feedback_smali:
+            raise RuntimeError(f"Formal Autofill feedback contains Debug diagnostics: {forbidden}")
+    if "Landroid/util/Log;" in feedback_smali:
+        raise RuntimeError("Formal Autofill feedback bridge must not log")
     platform_smali = "\n".join(
         path.read_text(encoding="utf-8") for path in SMALI_PLATFORM.glob("*.smali")
     )
@@ -191,13 +232,31 @@ def verify_sources(android_jar: Path, jdk: Path) -> None:
             "HeaderChromeFactory;->createCandidateChromeSlot",
             "HeaderChromeFactory;->createActionChromeSlot",
             "HeaderRemoteSurfaceClipper;->applyClip",
+            "InlineAutofillFeedbackCompat;->perform(Landroid/view/View;)V",
         ),
         "Inline Autofill Smali platform renderer",
     )
+    if "InlineAutofillFeedbackHost;" in platform_smali:
+        raise RuntimeError("Generated Header platform must not wrap Provider remote input")
+    if platform_smali.count(
+        "InlineAutofillFeedbackCompat;->perform(Landroid/view/View;)V"
+    ) != 3:
+        raise RuntimeError(
+            "Generated Autofill remote completion and rails must have three feedback calls"
+        )
+    if platform_smali.count(
+        "View;->setOnClickListener(Landroid/view/View$OnClickListener;)V"
+    ) < 4:
+        raise RuntimeError("Generated remote Inline View must install and clear its click observer")
     if any(api_type in platform_smali for api_type in API_TYPES):
         raise RuntimeError("API-neutral Header platform directly resolves API 30 Inline classes")
     if "View;->setClipBounds" in platform_smali:
         raise RuntimeError("API-neutral Header platform directly invokes post-minSdk clipping")
+    for forbidden in ("Laue;", "AudioManager;", "Vibrator;", "SharedPreferences;"):
+        if forbidden in platform_smali:
+            raise RuntimeError(
+                f"Header platform must use the narrow native feedback bridge: {forbidden}"
+            )
 
     javac = (jdk / "bin/javac.exe").resolve()
     for path in (android_jar, ANDROIDX_JAR, javac, JAVA_HELPER, *platform_sources):
@@ -253,11 +312,12 @@ def verify_decoded(decoded: Path) -> None:
     verify_method_metadata(decoded)
     pinyin_path = decoded / "smali/com/google/android/inputmethod/pinyin/PinyinIME.smali"
     helper_path = decoded / "smali/com/google/android/inputmethod/pinyin/InlineAutofillCompat.smali"
+    feedback_path = decoded / "smali/com/google/android/inputmethod/pinyin/InlineAutofillFeedbackCompat.smali"
     platform_path = decoded / "smali/com/google/android/inputmethod/pinyin/headerplatform"
     input_bundle_path = decoded / (
         "smali/com/google/android/apps/inputmethod/libs/framework/core/InputBundle.smali"
     )
-    for path in (pinyin_path, helper_path, platform_path, input_bundle_path):
+    for path in (pinyin_path, helper_path, feedback_path, platform_path, input_bundle_path):
         if not path.exists():
             raise FileNotFoundError(path)
     pinyin = pinyin_path.read_text(encoding="utf-8")
@@ -269,6 +329,7 @@ def verify_decoded(decoded: Path) -> None:
     platform = "\n".join(
         path.read_text(encoding="utf-8") for path in platform_path.glob("*.smali")
     )
+    feedback = feedback_path.read_text(encoding="utf-8")
     input_bundle = input_bundle_path.read_text(encoding="utf-8")
     require_all(
         pinyin,
@@ -317,9 +378,36 @@ def verify_decoded(decoded: Path) -> None:
             "HeaderChromeFactory;->createCandidateChromeSlot",
             "HeaderChromeFactory;->createActionChromeSlot",
             "HeaderRemoteSurfaceClipper;->applyClip",
+            "InlineAutofillFeedbackCompat;->perform(Landroid/view/View;)V",
         ),
         "final Inline Autofill Header renderer",
     )
+    require_all(
+        feedback,
+        (
+            "new-instance v0, Laue;",
+            "Laue;->a(Landroid/view/View;Lcom/google/android/apps/inputmethod/libs/framework/core/KeyData;)V",
+            "Laue;->a()V",
+        ),
+        "final native key feedback bridge",
+    )
+    for forbidden in ("GPAutoFeedback", "InlineAutofillFeedbackDiagnostics"):
+        if forbidden in feedback or forbidden in platform:
+            raise RuntimeError(f"Final Autofill feedback contains Debug diagnostics: {forbidden}")
+    if "Landroid/util/Log;" in feedback:
+        raise RuntimeError("Final Autofill feedback bridge must not log")
+    if "InlineAutofillFeedbackHost;" in platform:
+        raise RuntimeError("Final Header platform must not wrap Provider remote input")
+    if platform.count(
+        "InlineAutofillFeedbackCompat;->perform(Landroid/view/View;)V"
+    ) != 3:
+        raise RuntimeError(
+            "Final Autofill remote completion and rails must have three feedback calls"
+        )
+    if platform.count(
+        "View;->setOnClickListener(Landroid/view/View$OnClickListener;)V"
+    ) < 4:
+        raise RuntimeError("Final remote Inline View must install and clear its click observer")
     if any(api_type in platform for api_type in API_TYPES):
         raise RuntimeError("API-neutral Header platform resolves API 30 Inline classes")
     if "InlineAutofillClipHost;->onCandidates" in input_bundle:

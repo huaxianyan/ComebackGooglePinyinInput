@@ -2842,6 +2842,7 @@ def apply(
         "ViewFrameRateCompat.smali",
         "PagerFrameRateCompat.smali",
         "PagerSettleTargetCompat.smali",
+        "InlineAutofillFeedbackCompat.smali",
         "NavigationBarCompat.smali",
         "ScrollTouchCompat.smali",
         "DictionaryRecoveryCompat.smali",

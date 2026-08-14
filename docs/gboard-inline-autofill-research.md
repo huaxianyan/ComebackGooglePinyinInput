@@ -462,7 +462,31 @@ android:supportsInlineSuggestionsWithTouchExploration="true"
 - API 17–29 启动，API 30+ 协议，API 31/33/34/35/36 静态门禁
 - 6,633 旧资源 ID、primary DEX、非 Debug、签名和可复现构建。
 
-## 8. 验收标准
+## 8. 按键反馈所有权边界
+
+维护者发现 Inline Autofill 建议本体最初不会遵循 Google 拼音的按键音量和按键振动设置。隔离 Debug 包只记录宿主触摸阶段和反馈桥调用，不记录坐标、凭据、Provider 内容、输入文本或 SharedPreferences 正文。
+
+第一轮实验在每个预挂载建议外增加本地触摸包装层。一次 Provider 建议操作产生约 50 条重复 `host_down`，但没有 `host_up`、`host_move`、`host_cancel` 或反馈桥调用。进一步隐藏非当前包装层后，本地宿主收到 0 条触摸事件。这证明此前的重复 DOWN 来自覆盖远端 Surface 的透明本地 sibling，不是当前 Provider 内容的点击。透明层拦截、Surface Z-order 调整和触摸合成都不是可接受方案。
+
+AOSP `InlineContentView` 的安全模型解释了触摸结果：远端内容属于另一个安全域，通过默认位于宿主窗口上方的独立 Surface 接收输入。宿主不能读取内容、注入触摸或通过代码提交 Provider payload。不过，`InlineContentView` 本身仍是本地 View，Framework 会在远端 Surface 完成点击后调用直接注册在它上面的 `View.OnClickListener`。这个完成通知不提供建议正文，也不替代 Framework/Provider 的认证与填充。
+
+对 Gboard 17.8.4 的进一步静态追踪确认了同一结构：`fwd` 在 `InlineSuggestion.inflate()` 完成后直接对 `InlineContentView` 设置 `fwi` 点击监听器，`fwi` 通过 `nrv` 调用全局 `pdk.g(view, 0)`，再执行 Gboard 自己的点击处理。实际实现 `pdm` 是 `PressEffectPlayerImpl`，它按 Gboard 设置调用 `AudioManager.playSoundEffect()` 和振动路径。因此 Gboard 没有拦截远端触摸，而是在 Framework 报告点击完成后补充本地输入法反馈。
+
+本项目采用相同所有权边界：每个真实远端 View 直接注册点击完成监听器，只在当前、可见、启用且未释放的建议上调用 Google 拼音原生 `aue` 反馈控制器。监听器不读取 Provider 数据，不调用 `performClick()` 或 `commitText()`，不修改远端 View 的 sound-effect 状态，并在内容释放时清除。本地 previous/next rails 继续在自身有效 `onClick()` 中调用同一反馈桥，禁用 rail 不产生反馈。
+
+Pixel 10 Pro / Android 16 的隔离 Debug v3 验证 Bitwarden 填充正常，远端建议按键音正常且存在振动。维护者在测试前主动调高 Google 拼音的按键音量和振动时长，实际反馈随修改后的配置变化，证明调用走的是原生 `aue` 设置链，而不是固定系统反馈。限定日志记录到 3 次彼此相隔约 23.5 秒和 15.2 秒的 `feedback_bridge_called`，没有单次操作内的突发重复调用。
+
+以下方案仍被否决：
+
+- 使用透明 View 拦截触摸后合成或转发事件
+- 把远端 Surface 移到宿主窗口下方
+- 调用本地 `performClick()` 伪造 Provider 点击
+- 根据字段变化、Surface 消失或会话结束猜测用户完成了填充
+- 读取 Provider 数据、Dataset ID、`AutofillValue` 或凭据内容判断点击。
+
+专项门禁验证远端点击完成和两个本地 rails 共 3 个原生反馈调用点，正式 Header 不包含远端触摸包装层，不修改 Provider sound effect，不直接依赖 `aue`、`AudioManager`、`Vibrator` 或 SharedPreferences。Debug 诊断类和日志不进入正式实现。
+
+## 9. 验收标准
 
 实现只有同时满足以下条件才可视为完成：
 
@@ -477,7 +501,7 @@ android:supportsInlineSuggestionsWithTouchExploration="true"
 9. provider 或 IME 不支持 Inline 时，系统回退仍有效
 10. 正式日志和诊断不包含凭据、建议正文或用户选择内容。
 
-## 9. 证据与参考
+## 10. 证据与参考
 
 ### Android 官方
 
@@ -489,6 +513,7 @@ android:supportsInlineSuggestionsWithTouchExploration="true"
 - [InlineSuggestionInfo](https://developer.android.com/reference/android/view/inputmethod/InlineSuggestionInfo)
 - [AOSP InputMethodService.java](https://android.googlesource.com/platform/frameworks/base/+/refs/heads/master/core/java/android/inputmethodservice/InputMethodService.java)
 - [AOSP InlineSuggestion.java](https://android.googlesource.com/platform/frameworks/base/+/refs/heads/master/core/java/android/view/inputmethod/InlineSuggestion.java)
+- [AOSP InlineContentView.java](https://android.googlesource.com/platform/frameworks/base/+/refs/heads/main/core/java/android/widget/inline/InlineContentView.java)
 - [AOSP InlineSuggestionsRequest.java](https://android.googlesource.com/platform/frameworks/base/+/refs/heads/master/core/java/android/view/inputmethod/InlineSuggestionsRequest.java)
 
 ### Gboard 静态证据
@@ -500,6 +525,13 @@ work/research/gboard-current-public/decoded-base/smali/orc.smali
 work/research/gboard-current-public/decoded-base/smali/opv.smali
 work/research/gboard-current-public/decoded-base/smali/fwk.smali
 work/research/gboard-current-public/decoded-base/smali/fwn.smali
+work/research/gboard-current-public/decoded-base/smali_classes2/fwd.smali
+work/research/gboard-current-public/decoded-base/smali_classes2/fwi.smali
+work/research/gboard-current-public/decoded-base/smali_classes2/fwe.smali
+work/research/gboard-current-public/decoded-base/smali_classes2/nrv.smali
+work/research/gboard-current-public/decoded-base/smali/pdi.smali
+work/research/gboard-current-public/decoded-base/smali/pdk.smali
+work/research/gboard-current-public/decoded-base/smali/pdm.smali
 work/research/gboard-current-public/decoded-base/smali/ojk.smali
 work/research/gboard-current-public/decoded-base/smali/com/google/android/libraries/inputmethod/inlinesuggestion/InlineSuggestionScrubSpaceMotionEventHandler.smali
 ```
@@ -512,7 +544,7 @@ work/research/gboard-current-public/decoded-base/smali/com/google/android/librar
 - [FlorisBoard `NlpInlineAutofill`](https://github.com/florisboard/florisboard/blob/2a44855c7fcce943a2d3b2092fe45808037ad258/app/src/main/kotlin/dev/patrickgold/florisboard/ime/nlp/NlpInlineAutofill.kt)
 - [AnySoftKeyboard Inline Suggestions 实现](https://github.com/AnySoftKeyboard/AnySoftKeyboard/blob/6643bda9d400c0ca3025e67ca46361e28ba5e441/ime/app/src/main/java/com/anysoftkeyboard/ime/AnySoftKeyboardInlineSuggestions.java)
 
-## 10. 事实、推断与待验证项
+## 11. 事实、推断与待验证项
 
 ### 已确认事实
 
@@ -521,6 +553,7 @@ work/research/gboard-current-public/decoded-base/smali/com/google/android/librar
 - Gboard 当前声明 `supportsInlineSuggestions=true`
 - Gboard 当前 request 使用主题 style Bundle、9 个 spec、最大 9 项和 LocaleList
 - Gboard 异步 inflate、区分 pinned/action、等待整组完成并管理失效状态
+- Gboard 直接监听 `InlineContentView` 的点击完成通知，并通过 `PressEffectPlayerImpl` 播放输入法设置控制的声音和振动
 - 普通 `FixedSizeCandidatesHolderView`不能直接承载 `InlineContentView`
 - Surface 裁剪需要显式设计和验证。
 
