@@ -7,10 +7,8 @@ import argparse
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-HELPER = "Lcom/google/android/inputmethod/pinyin/CandidateFrameRateCompat;"
-CALL = (
-    f"{HELPER}->requestForAnimation(Landroid/view/View;Z)V"
-)
+HELPER = "Lcom/google/android/inputmethod/pinyin/ViewFrameRateCompat;"
+CALL = f"{HELPER}->requestHigh(Landroid/view/View;Z)V"
 DIRECT_API = "Landroid/view/View;->setRequestedFrameRate(F)V"
 
 
@@ -23,7 +21,7 @@ def require_count(text: str, value: str, expected: int, label: str) -> None:
 
 
 def verify_sources() -> None:
-    helper = (ROOT / "patches/smali/CandidateFrameRateCompat.smali").read_text(
+    helper = (ROOT / "patches/smali/ViewFrameRateCompat.smali").read_text(
         encoding="utf-8"
     )
     for value in (
@@ -34,8 +32,7 @@ def verify_sources() -> None:
         "Ljava/lang/reflect/Method;->invoke",
         "-0x3f800000",
         "-0x40800000",
-        ".catch Ljava/lang/ReflectiveOperationException;",
-        ".catch Ljava/lang/RuntimeException;",
+        ".catch Ljava/lang/Exception;",
     ):
         if value not in helper:
             raise RuntimeError(f"API-isolated helper is missing {value!r}")
@@ -47,13 +44,13 @@ def verify_sources() -> None:
                   "expansion listener patch")
     require_count(patcher, 'collapse_listener = decoded / "smali/ast.smali"', 1,
                   "collapse listener patch")
-    require_count(patcher, "CandidateFrameRateCompat;->requestForAnimation", 4,
+    require_count(patcher, "ViewFrameRateCompat;->requestHigh", 4,
                   "bounded start/end injections")
 
 
 def verify_decoded(decoded: Path) -> None:
     helper_path = decoded / (
-        "smali/com/google/android/inputmethod/pinyin/CandidateFrameRateCompat.smali"
+        "smali/com/google/android/inputmethod/pinyin/ViewFrameRateCompat.smali"
     )
     if not helper_path.is_file():
         raise RuntimeError(f"missing generated helper: {helper_path}")

@@ -1,4 +1,4 @@
-.class public final Lcom/google/android/inputmethod/pinyin/CandidateFrameRateCompat;
+.class public final Lcom/google/android/inputmethod/pinyin/ViewFrameRateCompat;
 .super Ljava/lang/Object;
 
 
@@ -14,7 +14,7 @@
     return-void
 .end method
 
-.method public static requestForAnimation(Landroid/view/View;Z)V
+.method public static requestHigh(Landroid/view/View;Z)V
     .locals 6
 
     if-eqz p0, :done
@@ -64,8 +64,7 @@
 
     invoke-virtual {v0, p0, v1}, Ljava/lang/reflect/Method;->invoke(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;
     :try_end
-    .catch Ljava/lang/ReflectiveOperationException; {:try_start .. :try_end} :done
-    .catch Ljava/lang/RuntimeException; {:try_start .. :try_end} :done
+    .catch Ljava/lang/Exception; {:try_start .. :try_end} :done
 
     :done
     return-void

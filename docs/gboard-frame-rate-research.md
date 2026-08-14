@@ -183,10 +183,11 @@ Debug 实验结果：
 
 ### 正式实现边界
 
-正式实现使用 `CandidateFrameRateCompat`：
+正式实现使用共享的 `ViewFrameRateCompat` API 中立桥：
 
 - 仅在 `SDK_INT >= 36` 时生效
 - API 36-only 方法通过精确反射调用，legacy primary DEX 不含直接 `invoke-virtual View.setRequestedFrameRate()`
+- Candidate 动画与符号/Emoji/颜文字 pager 共用反射桥，但请求分别绑定到各自 View 和原生运动生命周期
 - 仅覆盖原生 80 ms Candidate 展开/收起动画
 - 展开和收起均在 start 请求 `HIGH (-4.0f)`
 - end 或 cancel 后释放为 `NO_PREFERENCE (-1.0f)`

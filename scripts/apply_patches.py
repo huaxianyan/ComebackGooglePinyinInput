@@ -1191,6 +1191,94 @@ def apply(
         "    invoke-static {v2}, Ljava/lang/Math;->abs(I)I",
     )
 
+    # The same symbol/emoji/emoticon pager is still classified at 60 Hz on
+    # Android 16. Reuse its native dragging and Scroller lifecycle rather than
+    # a timer or a Window-wide vote: acquire when dragging is confirmed or a
+    # settle starts, and release when the Scroller finishes or motion is
+    # aborted. PagerFrameRateCompat gates every call to the exact subclass.
+    replace_once(
+        four_directional_pager,
+        "    iput-boolean v0, p0, Llk;->d:Z\n\n"
+        "    .line 850\n",
+        "    iput-boolean v0, p0, Llk;->d:Z\n\n"
+        "    invoke-static {p0, v0}, Lcom/google/android/inputmethod/pinyin/"
+        "PagerFrameRateCompat;->requestForMotion(Landroid/view/View;Z)V\n\n"
+        "    .line 850\n",
+    )
+    replace_once(
+        four_directional_pager,
+        "    invoke-virtual/range {v0 .. v5}, Landroid/widget/Scroller;->startScroll(IIIII)V\n\n"
+        "    .line 213\n",
+        "    invoke-virtual/range {v0 .. v5}, Landroid/widget/Scroller;->startScroll(IIIII)V\n\n"
+        "    const/4 v0, 0x1\n\n"
+        "    invoke-static {p0, v0}, Lcom/google/android/inputmethod/pinyin/"
+        "PagerFrameRateCompat;->requestForMotion(Landroid/view/View;Z)V\n\n"
+        "    .line 213\n",
+    )
+    replace_once(
+        four_directional_pager,
+        "    .line 748\n"
+        "    :cond_6\n"
+        "    return-void\n"
+        ".end method\n\n"
+        ".method private final d(I)V",
+        "    .line 748\n"
+        "    :cond_6\n"
+        "    const/4 v0, 0x0\n\n"
+        "    invoke-static {p0, v0}, Lcom/google/android/inputmethod/pinyin/"
+        "PagerFrameRateCompat;->requestForMotion(Landroid/view/View;Z)V\n\n"
+        "    return-void\n"
+        ".end method\n\n"
+        ".method private final d(I)V",
+    )
+    replace_once(
+        four_directional_pager,
+        "    invoke-virtual {v0}, Landroid/widget/Scroller;->abortAnimation()V\n\n"
+        "    .line 865\n"
+        "    iput-boolean v4, p0, Llk;->c:Z",
+        "    invoke-virtual {v0}, Landroid/widget/Scroller;->abortAnimation()V\n\n"
+        "    invoke-static {p0, v4}, Lcom/google/android/inputmethod/pinyin/"
+        "PagerFrameRateCompat;->requestForMotion(Landroid/view/View;Z)V\n\n"
+        "    .line 865\n"
+        "    iput-boolean v4, p0, Llk;->c:Z",
+    )
+
+    pageable_soft_keys = decoded / (
+        "smali/com/google/android/apps/inputmethod/libs/framework/keyboard/widget/"
+        "PageableSoftKeyListHolderView.smali"
+    )
+    replace_once(
+        pageable_soft_keys,
+        "    .line 104\n"
+        "    iget-boolean v0, p0, Lcom/google/android/apps/inputmethod/libs/framework/"
+        "keyboard/widget/PageableSoftKeyListHolderView;->a:Z",
+        "    .line 104\n"
+        "    const/4 v0, 0x0\n\n"
+        "    invoke-static {p0, v0}, Lcom/google/android/inputmethod/pinyin/"
+        "PagerFrameRateCompat;->requestForMotion(Landroid/view/View;Z)V\n\n"
+        "    iget-boolean v0, p0, Lcom/google/android/apps/inputmethod/libs/framework/"
+        "keyboard/widget/PageableSoftKeyListHolderView;->a:Z",
+    )
+    replace_once(
+        pageable_soft_keys,
+        ".method protected onVisibilityChanged(Landroid/view/View;I)V\n"
+        "    .locals 0",
+        ".method protected onVisibilityChanged(Landroid/view/View;I)V\n"
+        "    .locals 1",
+    )
+    replace_once(
+        pageable_soft_keys,
+        "    .line 108\n"
+        "    if-nez p2, :cond_0",
+        "    .line 108\n"
+        "    if-eqz p2, :compat_visible\n\n"
+        "    const/4 v0, 0x0\n\n"
+        "    invoke-static {p0, v0}, Lcom/google/android/inputmethod/pinyin/"
+        "PagerFrameRateCompat;->requestForMotion(Landroid/view/View;Z)V\n\n"
+        "    :compat_visible\n"
+        "    if-nez p2, :cond_0",
+    )
+
     # Let the ScrollView receive the original UP first so it can calculate
     # fling velocity. Only afterwards cancel the outer copy before the custom
     # keyboard handler consumes it.
@@ -2686,7 +2774,7 @@ def apply(
         "    check-cast v0, Landroid/view/View;\n\n"
         "    const/4 v1, 0x1\n\n"
         "    invoke-static {v0, v1}, Lcom/google/android/inputmethod/pinyin/"
-        "CandidateFrameRateCompat;->requestForAnimation(Landroid/view/View;Z)V\n\n"
+        "ViewFrameRateCompat;->requestHigh(Landroid/view/View;Z)V\n\n"
         "    .line 3\n"
         "    if-eqz v0, :cond_0",
     )
@@ -2701,7 +2789,7 @@ def apply(
         "    check-cast v0, Landroid/view/View;\n\n"
         "    const/4 v1, 0x0\n\n"
         "    invoke-static {v0, v1}, Lcom/google/android/inputmethod/pinyin/"
-        "CandidateFrameRateCompat;->requestForAnimation(Landroid/view/View;Z)V\n\n"
+        "ViewFrameRateCompat;->requestHigh(Landroid/view/View;Z)V\n\n"
         "    .line 10",
     )
     replace_once(
@@ -2712,7 +2800,7 @@ def apply(
         "    check-cast v0, Landroid/view/View;\n\n"
         "    const/4 v1, 0x1\n\n"
         "    invoke-static {v0, v1}, Lcom/google/android/inputmethod/pinyin/"
-        "CandidateFrameRateCompat;->requestForAnimation(Landroid/view/View;Z)V\n\n"
+        "ViewFrameRateCompat;->requestHigh(Landroid/view/View;Z)V\n\n"
         "    const/4 v1, 0x0\n\n"
         "    .line 3\n"
         "    if-eqz v0, :cond_0",
@@ -2725,13 +2813,14 @@ def apply(
         "    check-cast v0, Landroid/view/View;\n\n"
         "    const/4 v1, 0x0\n\n"
         "    invoke-static {v0, v1}, Lcom/google/android/inputmethod/pinyin/"
-        "CandidateFrameRateCompat;->requestForAnimation(Landroid/view/View;Z)V\n\n"
+        "ViewFrameRateCompat;->requestHigh(Landroid/view/View;Z)V\n\n"
         "    .line 13\n"
         "    if-eqz v0, :cond_0",
     )
 
     for helper_name in (
-        "CandidateFrameRateCompat.smali",
+        "ViewFrameRateCompat.smali",
+        "PagerFrameRateCompat.smali",
         "NavigationBarCompat.smali",
         "ScrollTouchCompat.smali",
         "DictionaryRecoveryCompat.smali",
