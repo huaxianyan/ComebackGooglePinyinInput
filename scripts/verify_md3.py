@@ -146,6 +146,29 @@ def main() -> None:
         )
     ):
         raise RuntimeError("API-35 first-run buttons must not add legacy elevation")
+    for name in ("bg_first_run_md3_button.xml", "bg_first_run_md3_tonal_button.xml"):
+        disabled_background = (decoded / "res/drawable" / name).read_text(encoding="utf-8")
+        require(
+            disabled_background,
+            (
+                'android:state_enabled="false"',
+                'android:color="@android:color/transparent"',
+                'android:width="1.0dip"',
+                'android:color="@color/first_run_md3_outline"',
+            ),
+            f"visible disabled first-run button boundary in {name}",
+        )
+    for name in ("first_run_md3_button_text.xml", "first_run_md3_tonal_button_text.xml"):
+        disabled_text = (decoded / "res/color" / name).read_text(encoding="utf-8")
+        if not any(
+            value in disabled_text
+            for value in (
+                '<item android:color="@color/first_run_md3_outline" android:state_enabled="false"',
+                '<item android:state_enabled="false" android:color="@color/first_run_md3_outline"',
+            )
+        ):
+            raise RuntimeError(f"Disabled first-run button text must use outline role in {name}")
+
     step_styles = "\n".join(
         path.read_text(encoding="utf-8")
         for path in (decoded / "res/values").glob("*.xml")

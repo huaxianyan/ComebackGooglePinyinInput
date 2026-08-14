@@ -2,7 +2,8 @@
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:state_enabled="false">
         <shape android:shape="rectangle">
-            <solid android:color="@color/first_run_md3_surface_container" />
+            <solid android:color="@android:color/transparent" />
+            <stroke android:width="1dp" android:color="@color/first_run_md3_outline" />
             <corners android:radius="20dp" />
         </shape>
     </item>

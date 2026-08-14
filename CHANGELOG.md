@@ -7,6 +7,7 @@
 - API 36 的 Emoji、颜文字和标点/符号横向分页在确认 dragging 和原生 Scroller settle 期间动态请求高刷新率类别，结束、中断、隐藏或 detach 后立即释放
 - 保留已验证的 V34 fling 决策和系统最小速度，并仅为 `PageableRecentSubCategorySoftKeyListHolderView` 将非 fling settle 改为相对当前选中页的对称 12.5% 阈值。真机诊断将小于 12.5% 的误触与 12.5%–25% 的明确短滑分离，A/B 验证达到快速短滑回弹 0/20、普通点击误翻页 0/10、轻拖误翻页 0/10
 - Inline Autofill 的远端建议在 Framework 完成点击后通过 `InlineContentView.OnClickListener` 调用 Google 拼音原生按键反馈控制器，本地上一项/下一项 rails 复用同一链路。按键音开关、音量、振动开关和振动时长均保持一致，Provider 继续拥有认证与填充，IME 不读取或提交 Autofill payload
+- 首次引导中尚不可操作的后续按钮改用明确的透明容器、1 dp outline 和较弱文字色，避免按钮与步骤卡片使用同色后边界消失，并保持完成前不可点击的既有状态机
 
 ### Changed
 
