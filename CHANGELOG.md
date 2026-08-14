@@ -5,7 +5,7 @@
 ### Fixed
 
 - API 36 的 Emoji、颜文字和标点/符号横向分页在确认 dragging 和原生 Scroller settle 期间动态请求高刷新率类别，结束、中断、隐藏或 detach 后立即释放
-- 保留已验证的 V34 fling 决策、系统最小速度和原生 50% settle，不因少量回弹猜测性降低翻页阈值
+- 保留已验证的 V34 fling 决策、系统最小速度和原生 50% settle。布尔分支审计确认 2 次回弹均进入 settle，8 次成功翻页均进入 fling，没有发现 fling 后回弹
 
 ### Changed
 
