@@ -266,4 +266,17 @@ non-debuggable 隔离包在三页各完成 6 次单手滑动后：
 
 V34 目标页算法保持不变。维护者额外做了 10 次快速短滑，其中 2 次回弹。这不足以证明新的结构性缺陷，不据此降低原生 50% settle 阈值。
 
-临时布尔分支诊断包在二次重建后无法弹出键盘。最初筛选到的日志包含首次引导 Activity 被 Android 后台启动限制阻止，但后续从系统 DropBox 取得的完整记录确认直接故障是 4 次相同的 `ClassCastException`：临时包把某个键盘布局根视图构建成 `LinearLayout`，而 `GoogleInputMethodService.loadSoftKeyboardView()` 要求 `SoftKeyboardView`。异常发生在键盘视图加载阶段，尚未进入 pager 交互，不能作为 fling/settle 决策证据。故障后立即恢复正式 IME 并卸载临时包。正式实现不包含布尔诊断日志，也未采用该临时包的二次重建路径。
+临时布尔分支诊断包在二次重建后无法弹出键盘。最初筛选到的日志包含首次引导 Activity 被 Android 后台启动限制阻止，但后续从系统 DropBox 取得的完整记录确认直接故障是 4 次相同的 `ClassCastException`：临时包把某个键盘布局根视图构建成 `LinearLayout`，而 `GoogleInputMethodService.loadSoftKeyboardView()` 要求 `SoftKeyboardView`。异常发生在键盘视图加载阶段，尚未进入 pager 交互，不能作为 fling/settle 决策证据。故障后立即恢复正式 IME 并卸载临时包。
+
+随后从当前 `master` 和原始 APK 制作新的 non-debuggable 隔离包。诊断在第一次 apktool 重建前注入，之后完整经过 Compose Host 组装，不再重建已经为 AGP 规范化的目录。安装前验证所有相关键盘根视图仍为 `SoftKeyboardView`、6,633 个旧资源 ID、v1/v2/v3 签名和 16 KiB alignment。日志严格限定为每次释放手势最终进入的 `fling` 或 `settle` 分支，不记录速度、坐标、页码、页面内容、输入、候选或剪贴板正文。
+
+维护者在非首尾页完成 10 次方向明确的快速短滑，并逐次记录「翻页」或「回弹」。结果一一对应：
+
+```text
+观察：回弹   翻页  翻页  翻页  翻页  翻页  翻页  回弹   翻页  翻页
+分支：settle fling fling fling fling fling fling settle fling fling
+```
+
+两次回弹都进入保留的 `settle` 分支，8 次成功翻页都进入 `fling`，没有出现「进入 fling 后仍回弹」。因此现有证据排除目标页方向、页码钳制和 fling 分支执行错误。对这两次短手势，释放速度没有达到原生最小 fling 速度，同时位移未超过原生 50% settle 阈值，返回当前页符合既有语义。无需修改速度或距离阈值。
+
+测试后恢复正式 IME、卸载隔离包并删除一次性签名和构建产物。正式实现不包含布尔诊断日志，也未采用失败临时包的二次重建路径。
