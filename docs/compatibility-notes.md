@@ -70,7 +70,7 @@ Compatibility v20 为可变词库文件增加恢复层。原版持久化按 `主
 
 ## target SDK 策略
 
-正式 Release `v1.0.3` 冻结在 target 28。`feat/target-sdk-29` 至 `feat/target-sdk-36` 采用独立长期分支逐级完成验收，最终 target 36 V19 已合并到 `master` 并发布为正式 `v2.0.0`。后续功能分支都从该 target 36 基线创建；Android 17 仍不与 Material You/MD3、16 KiB 或预测返回混合。完整历史、风险和完成条件见 [`target-sdk-modernization-plan.md`](target-sdk-modernization-plan.md)。
+正式 Release `v1.0.3` 冻结在 target 28。`feat/target-sdk-29` 至 `feat/target-sdk-36` 采用独立长期分支逐级完成验收，最终 target 36 V19 已合并到 `master` 并发布为正式 `v2.0.0`。后续功能分支都从该 target 36 基线创建。Android 17 仍不与 Material You/MD3、16 KiB 或预测返回混合。完整历史、风险和完成条件见 [`target-sdk-modernization-plan.md`](target-sdk-modernization-plan.md)。
 
 已知边界：
 
@@ -113,7 +113,7 @@ java.lang.IllegalArgumentException: Invalid Region.Op - only INTERSECT and DIFFE
 `INTERSECT` 和 `DIFFERENCE`。Compatibility v4 将手写及滑行绘制路径中的 6 处
 `REPLACE` 改为 `INTERSECT`，避免首次落笔立即终止输入法进程。由于
 `INTERSECT` 会累积缩小离屏 Canvas 的裁剪区，手写渲染器还需要在每个点绘制前后
-配对调用 `Canvas.save()` / `Canvas.restore()`；否则识别正常但笔迹几乎完全不可见。
+配对调用 `Canvas.save()` / `Canvas.restore()`，否则识别正常但笔迹几乎完全不可见。
 
 手写路径随后会调用：
 

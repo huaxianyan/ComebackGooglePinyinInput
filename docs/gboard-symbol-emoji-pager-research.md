@@ -100,7 +100,7 @@ Gboard 中仍保留的旧候选 pager `ckq` 可以看到与 `lk` 相同的：
 - 系统 minimum fling velocity
 - 非 fling 时约 50% settle。
 
-这说明不能以「Gboard 旧候选 pager 也使用 50%」推导出现代符号/表情仍应使用旧手感；Gboard 已经把真正的表情/富符号界面迁移到 RecyclerView/ViewPager2。
+这说明不能以「Gboard 旧候选 pager 也使用 50%」推导出现代符号或表情仍应使用旧手感。Gboard 已经把真正的表情和富符号界面迁移到 RecyclerView/ViewPager2。
 
 ## 可选改进及风险
 
@@ -188,7 +188,7 @@ APK 安装后已清空 Logcat。维护者随后完成了成功翻页与回弹复
 - 成功样本 offset 范围约 0.545–0.780
 - 回弹样本 offset 范围约 0.167–0.424。
 
-结论非常明确：pager 已经进入 dragging，VelocityTracker 也产生了远高于 minimum 的速度，但旧 `lk` 的额外 distance 条件始终失败，导致 fling 路径完全不可达。所有成功翻页都来自拖过 50% 后的位置 settle；所有未超过 50% 的快速 flick 仍然回弹。
+结论非常明确：pager 已经进入 dragging，VelocityTracker 也产生了远高于 minimum 的速度，但旧 `lk` 的额外 distance 条件始终失败，导致 fling 路径完全不可达。所有成功翻页都来自拖过 50% 后的位置 settle，所有未超过 50% 的快速 flick 仍然回弹。
 
 这也解释了「需要用力拖过半屏」的手感。问题不在 paging touch slop，也不在 velocity 太低，而在旧实现把 final pointer position 与其内部基准 `c` 的差值作为额外 25 dp 门槛；在当前 Android 事件序列中该差值归零，不能代表整次手势总位移。
 
@@ -285,7 +285,7 @@ V34 目标页算法保持不变。维护者额外做了 10 次快速短滑，其
 
 维护者随后确认日常操作中的回弹仍然频繁，因此不能把第一轮「都进入旧 settle 规则」误写成「没有可用性问题」。后续隔离包仍从原始 APK 注入并经过完整 Compose Host 组装，日志只记录有界分类，不记录速度数值、坐标、方向、页码、内容或输入文本。
 
-半速阈值 A/B 将系统 minimum fling velocity 降为一半，回弹率仍为 4/20，与基线 2/10 同为 20%，因此被否决。速度分桶显示成功翻页集中在 `v_ge_100 + fling`，回弹则以 `v_lt_25 + settle` 为主，但并非都接近速度阈值。严格时序采样中所有 MOVE→UP 间隔均小于 8 ms，排除了松手前停顿是低估速度的主要原因。
+半速阈值 A/B 将系统 minimum fling velocity 降为一半，回弹率仍为 4/20，与基线 2/10 同为 20%，因此被否决。速度分桶显示成功翻页集中在 `v_ge_100 + fling`，回弹则以 `v_lt_25 + settle` 为主，但并非都接近速度阈值。严格时序采样中所有 MOVE → UP 间隔均小于 8 ms，排除了松手前停顿是低估速度的主要原因。
 
 修正后的目标页探针读取真实选中页 `Llk;->a:I`。排除用户明确报告的额外误操作后，20 次观察与日志完全一致：
 

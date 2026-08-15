@@ -272,7 +272,7 @@ system night mode=yes
 default IME=com.google.android.inputmethod.pinyin.compat/com.google.android.inputmethod.pinyin.PinyinIME
 ```
 
-设备仅保留正式包和本次 `themeaudit` 包；旧 `materialcomposehostaudit` 已卸载。
+设备仅保留正式包和本次 `themeaudit` 包，旧 `materialcomposehostaudit` 已卸载。
 
 ## 正式候选构建
 
@@ -323,7 +323,7 @@ v1/v2/v3=true
 reproducible signed build=true
 ```
 
-经用户明确授权后覆盖安装既有正式 `2.0.1`。设备实际安装的 `base.apk` 与 Actions APK 字节完全一致；默认输入法、首次引导完成状态和原固定主题均保持不变。首次迁移结果为「跟随主题」关闭、固定槽可用、浅色/深色槽保留为禁用状态，符合 absent 模式迁移契约。用户完成简单输入和设置页确认后：
+经用户明确授权后覆盖安装既有正式 `2.0.1`。设备实际安装的 `base.apk` 与 Actions APK 字节完全一致，默认输入法、首次引导完成状态和原固定主题均保持不变。首次迁移结果为「跟随主题」关闭、固定槽可用、浅色/深色槽保留为禁用状态，符合 absent 模式迁移契约。用户完成简单输入和设置页确认后：
 
 ```text
 default IME=com.google.android.inputmethod.pinyin.compat/com.google.android.inputmethod.pinyin.PinyinIME

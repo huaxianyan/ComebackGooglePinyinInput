@@ -61,8 +61,8 @@ Clipboard Candidate 出现时，Inline contribution 保持有效但不可见、�
 - 晚到的 response、inflate callback 和 render plan 必须同时匹配当前 editor、Header 和 generation。
 - `InlineSuggestion.inflate()` 使用 `WRAP_CONTENT x WRAP_CONTENT`，避免主题/方向切换后不可变 request 尺寸冲突。
 - 异步 inflate 保留 Provider 顺序、1.2 秒有界聚合，并允许发布按原索引排列的有效部分结果。
-- 只有当前 Surface 可见、可点击、可聚焦并参与无障碍；其他 Surface 保持 mounted 但 invisible、clipped、disabled、non-focusable 且不提供无障碍 action。
-- IME Window 暂时隐藏不是 editor session 结束；不会仅因 `onFinishInputView()` 或 `onWindowHidden()` 清除仍有效 editor 的 Inline 状态。真正的 `onFinishInput()`、新 editor、Header 替换和 service 销毁负责最终失效。
+- 只有当前 Surface 可见、可点击、可聚焦并参与无障碍。其他 Surface 保持 mounted 但 invisible、clipped、disabled、non-focusable 且不提供无障碍 action。
+- IME Window 暂时隐藏不是 editor session 结束，不会仅因 `onFinishInputView()` 或 `onWindowHidden()` 清除仍有效 editor 的 Inline 状态。真正的 `onFinishInput()`、新 editor、Header 替换和 service 销毁负责最终失效。
 - 嵌入 Surface 的裁剪使用 View ancestry 的局部坐标转换：
 
   ```java
@@ -91,7 +91,7 @@ Android 公共 API 没有提供把返回 Surface 可靠关联到原主题 reques
 
 ### Rails
 
-- 所有非空 Inline contribution 都保留左右 rails；一项建议时两侧保持 mounted 但 disabled、不可点击、不可聚焦且无无障碍 action。
+- 所有非空 Inline contribution 都保留左右 rails。一项建议时，两侧保持 mounted 但 disabled、不可点击、不可聚焦且无无障碍 action。
 - Clipboard 和 Autofill rails 共用真实运行时 show-more Candidate divider 的 Drawable、有效 alpha、padding、scale type 和 ancestor alpha 补偿。
 - 源 divider 尚未测量时，Clipboard rails 先 `INVISIBLE`，通过一次性 `OnPreDrawListener` 在有效尺寸后同步并显示，避免主题/方向切换后的 `1 x 1` 「两个小点」。
 
@@ -112,7 +112,7 @@ ordinary total = fixed universal Header + scaled ordinary Body
 password total = fixed universal Header + scaled ordinary Body + fixed Header-sized digit row
 ```
 
-原生 Header 不参与用户键盘高度比例缩放；方向和设备资源 qualifier 仍可选择不同的 Header 基准高度。密码数字行迁入 Body 后，由 `PasswordBodyView` 在 framework 已缩放普通 Body 后增加一个固定 Header 高度。没有 `onMeasure()` 覆盖、实验 dimension 或 `KeyboardViewHelper.scaleFrameworkHeight()` 注入。
+原生 Header 不参与用户键盘高度比例缩放，方向和设备资源 qualifier 仍可选择不同的 Header 基准高度。密码数字行迁入 Body 后，由 `PasswordBodyView` 在 framework 已缩放普通 Body 后增加一个固定 Header 高度。没有 `onMeasure()` 覆盖、实验 dimension 或 `KeyboardViewHelper.scaleFrameworkHeight()` 注入。
 
 ## 诊断版本结论
 
@@ -238,14 +238,14 @@ targetSdkVersion=36
 SHA-256=aca5d5e5a250b27a6c76ddb5be5e00dffe9bf5f9d08411ea47a636a6859ebfa1
 ```
 
-该包通过从原始 APK 开始的 apktool/Compose 完整重建、6,633 个旧资源 ID、legacy primary DEX、API 31/33/34/35/36、Header/Clipboard/Inline、v1/v2/v3 签名和 16 KiB ZIP alignment 门禁。验收结束后已恢复测试前默认输入法并卸载隔离包；Bitwarden Autofill Provider 保持不变。
+该包通过从原始 APK 开始的 apktool/Compose 完整重建、6,633 个旧资源 ID、legacy primary DEX、API 31/33/34/35/36、Header/Clipboard/Inline、v1/v2/v3 签名和 16 KiB ZIP alignment 门禁。验收结束后已恢复测试前默认输入法并卸载隔离包，Bitwarden Autofill Provider 保持不变。
 
 ## API 与上游边界
 
 - API 35+ Compose 路由已在 API 36 真机运行时通过。
-- API 17–34 继续使用旧 Preference 设置；最终 APK 的 primary DEX、Manifest gate 和 class-reference 隔离已静态通过。
+- API 17–34 继续使用旧 Preference 设置，最终 APK 的 primary DEX、Manifest gate 和 class-reference 隔离已静态通过。
 - 既有 API 34 translated ARM64 环境已验证同一 Compose Host 模型可启动旧 `SettingsActivity`，但本轮 `diag53` 未重新执行该模拟器运行测试。
-- API 17–20 没有 arm64 应用 ABI；API 17 只能作为静态门禁。
+- API 17–20 没有 arm64 应用 ABI，API 17 只能作为静态门禁。
 - API 23 x86_64 环境没有 ARM translation，ARM64 Emulator 又受当前 x86_64 主机限制，旧 ART 真机覆盖仍为环境阻塞，不能描述成运行时通过。
 - `supportsInlineSuggestionsWithTouchExploration` 继续不声明，等待独立 TalkBack 验收。
 - App/Provider/Framework 行为若可用 Gboard 复现，不增加 IME workaround。包括部分闪烁、旧 Autofill session 不刷新、填充删除后 Dataset 消失及 Bitwarden task-stack 行为。

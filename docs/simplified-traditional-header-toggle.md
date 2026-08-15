@@ -58,7 +58,7 @@ keyboard_zh_cn_stroke
 事件继续进入 `AbstractHmmChineseDecodeProcessor.onKeyboardStateChanged()`，由原实现统一处理：
 
 - keyboard state
-- `enable_sc_tc_conversion`持久化
+- `enable_sc_tc_conversion` 持久化
 - HMM 转换模式
 - 当前 composition 和 Candidate 刷新
 - 设置页「繁体中文」状态同步。
@@ -86,7 +86,7 @@ NO_MICROPHONE → softkey_hide_keyboard
 2. 当前 Header 中原生槽位空间充足
 3. Access Points 未展开。
 
-空间检查只使用中文 Header 专属布局中的明确 ID 和同一 `headerInner`局部坐标系：
+空间检查只使用中文 Header 专属布局中的明确 ID 和同一 `headerInner` 局部坐标系：
 
 ```text
 key_pos_header_access_points_menu
@@ -99,7 +99,7 @@ key_pos_header_voice
 
 ### Access Points 仲裁
 
-原生 `AccessPointsBar`在展开动画开始时把：
+原生 `AccessPointsBar` 在展开动画开始时把：
 
 ```text
 access_points_overlay_view
@@ -202,4 +202,4 @@ SHA-256=cdc77c43e726fc101d453fc2126c0089fbdbfeb7125d03f298849a4266c868a1
 com.google.android.inputmethod.pinyin.compat/com.google.android.inputmethod.pinyin.PinyinIME
 ```
 
-Bitwarden Autofill 保持不变，`audit2`和`audit3`审计包均已卸载。
+Bitwarden Autofill 保持不变，`audit2` 和 `audit3` 审计包均已卸载。

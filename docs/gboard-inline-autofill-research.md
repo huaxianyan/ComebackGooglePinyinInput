@@ -10,11 +10,11 @@
 2. **IME 不会拿到建议正文。** Autofill 服务在其他进程中渲染建议，IME 得到的是由 `SurfaceControlViewHost.SurfacePackage` 承载的 `InlineContentView`。IME 可以读取 `source`、`type`、`isPinned` 和 `autofillHints` 等元数据，但不能遍历远端 View 树取得密码文本。
 3. **IME 不负责提交 Autofill payload。** 用户点击远端建议后，Autofill Framework / Autofill 服务完成认证、字段填充或 action 启动；IME 附加的点击监听只用于本地 UI 收尾和统计，不应调用 `InputConnection.commitText()`。
 4. **现有统一 Header 是正确入口，但 `FixedSizeCandidatesHolderView` 不是正确渲染器。** Autofill 返回的是任意 `InlineContentView`，不是 Google 拼音 `Candidate`。Header 中应增加独立、可裁剪的 Inline Autofill host 层，与原生 Candidate holder 互斥显示。
-5. **API 30 以下不参与此协议。** API 17–29 继续走现有原生输入和系统旧式 Autofill 菜单；不得为旧系统引入启动期类解析风险。
+5. **API 30 以下不参与此协议。** API 17–29 继续走现有原生输入和系统旧式 Autofill 菜单，不得为旧系统引入启动期类解析风险。
 
 适用边界：本文讨论 Android 标准 Inline Suggestions 协议，不讨论让输入法自行读取密码管理器、模拟密码管理器 UI、猜测验证码、解析网页凭据或实现自有账户同步。
 
-> **实现状态更新：** 本文第 5–7 节保留了阶段 A/B 早期方案与研究推导，其中独立 process-global `InlineAutofillClipHost`、自由横向滚动和「Inline 优先于空闲 Clipboard」的提案已经被统一 Header Platform 取代。当前实现使用每个 Header 一个 `HeaderPlatformHostView`、`InlineAutofillHeaderModule`、remote-surface renderer、固定 previous/next rails 和集中仲裁；真实 Clipboard Candidate 优先于 Inline。最终契约与运行证据以 [`header-platform-design.md`](header-platform-design.md) 和 [`header-platform-runtime-acceptance.md`](header-platform-runtime-acceptance.md) 为准。
+> **实现状态更新：** 本文第 5–7 节保留了阶段 A/B 早期方案与研究推导，其中独立 process-global `InlineAutofillClipHost`、自由横向滚动和「Inline 优先于空闲 Clipboard」的提案已经被统一 Header Platform 取代。当前实现使用每个 Header 一个 `HeaderPlatformHostView`、`InlineAutofillHeaderModule`、remote-surface renderer、固定 previous/next rails 和集中仲裁。真实 Clipboard Candidate 优先于 Inline。最终契约与运行证据以 [`header-platform-design.md`](header-platform-design.md) 和 [`header-platform-runtime-acceptance.md`](header-platform-runtime-acceptance.md) 为准。
 
 ## 2. Android 官方协议
 
@@ -37,7 +37,7 @@ Gboard 17.8.4 的公开 APK 也在 `res/xml/method.xml` 中声明了同一属性
 已确认的框架流程如下：
 
 1. 用户聚焦支持 Autofill 的输入框，例如用户名、密码、信用卡或地址字段。
-2. App 通过标准 `autofillHints`、输入类型和 View structure 向 Android Autofill Framework 描述字段；IME 不直接查询 App 字段或密码管理器。
+2. App 通过标准 `autofillHints`、输入类型和 View structure 向 Android Autofill Framework 描述字段。IME 不直接查询 App 字段或密码管理器。
 3. 平台确认当前 IME 与用户选择的 Autofill 服务是否都支持 Inline Suggestions。
 4. 在 `inputStarted` 之后，平台调用 IME：
 
@@ -59,7 +59,7 @@ Gboard 17.8.4 的公开 APK 也在 `res/xml/method.xml` 中声明了同一属性
        InlineSuggestionsResponse response)
    ```
 
-8. IME 读取 `response.getInlineSuggestions()`，对每个 `InlineSuggestion`调用一次：
+8. IME 读取 `response.getInlineSuggestions()`，对每个 `InlineSuggestion` 调用一次：
 
    ```java
    suggestion.inflate(context, size, executor, callback)
@@ -84,11 +84,11 @@ Gboard 17.8.4 的公开 APK 也在 `res/xml/method.xml` 中声明了同一属性
 
 `InlineSuggestion.inflate()` 的关键规则：
 
-- 同一个 `InlineSuggestion`实例只能调用一次 `inflate()`；重复调用会抛出 `IllegalStateException`
+- 同一个 `InlineSuggestion` 实例只能调用一次 `inflate()`，重复调用会抛出 `IllegalStateException`
 - 请求尺寸的每个维度必须位于对应 spec 的 min/max 之间，或者使用 `WRAP_CONTENT`
 - 回调可能异步返回 `null`
 - `InlineContentView` 的实际 LayoutParams 由远端内容尺寸决定
-- 远端进程通过 `SurfacePackage`提供内容，View attach/detach 后的 Surface 更新由框架内部管理
+- 远端进程通过 `SurfacePackage` 提供内容，View attach/detach 后的 Surface 更新由框架内部管理
 - IME 可以设置 `OnClickListener` / `OnLongClickListener` 接收远端点击通知，但这不是 payload 提交入口。
 
 ### 2.5 隐私与信任边界
@@ -112,7 +112,7 @@ IME 本地拥有的是远端 Surface 宿主，不是包含密码文本的本地 
 - 不自行提交、保存、去重或持久化 Autofill payload
 - 只记录允许的无内容诊断，例如 response 数量、inflate 成功/失败数、尺寸和会话序号。
 
-`InlineSuggestionInfo`公开的元数据只有：
+`InlineSuggestionInfo` 公开的元数据只有：
 
 ```text
 source       android:autofill / android:platform
@@ -139,16 +139,16 @@ compileSdk=37
 
 ### 3.1 服务层只做协议转发
 
-Gboard 主 `InputMethodService` 类 `oqp`直接覆盖两个 API 30 回调：
+Gboard 主 `InputMethodService` 类 `oqp` 直接覆盖两个 API 30 回调：
 
 ```text
 onCreateInlineSuggestionsRequest(Bundle)
 onInlineSuggestionsResponse(InlineSuggestionsResponse)
 ```
 
-它没有把逻辑堆在 Service 里，而是通过 `orc`代理转发给可选实现 `opv`。没有已初始化实现时，request 返回 `null`、response 返回 `false`。这形成了清晰的「框架回调 → 生命周期代理 → Inline 组件」边界。
+它没有把逻辑堆在 Service 里，而是通过 `orc` 代理转发给可选实现 `opv`。没有已初始化实现时，request 返回 `null`、response 返回 `false`。这形成了清晰的「框架回调 → 生命周期代理 → Inline 组件」边界。
 
-对本项目的启示：`PinyinIME`只应保留极窄回调桥，request 构造、异步 inflate、Header 仲裁和清理都放在独立 `InlineAutofillCompat` 中。
+对本项目的启示：`PinyinIME` 只应保留极窄回调桥，request 构造、异步 inflate、Header 仲裁和清理都放在独立 `InlineAutofillCompat` 中。
 
 ### 3.2 Request 构造
 
@@ -179,11 +179,11 @@ Gboard 当前 `fwk.y(Context, InlineSuggestionsResponse)` 的已确认行为：
 - 在组件已激活且当前会话仍有效时才处理
 - 为 response 创建与建议数相同的 View 数组和 `AtomicInteger`
 - 读取每项 `InlineSuggestionInfo` 的 source、type、pinned、hints 和 presentation spec
-- 对普通建议使用 `WRAP_CONTENT × WRAP_CONTENT`异步 inflate
+- 对普通建议使用 `WRAP_CONTENT × WRAP_CONTENT` 异步 inflate
 - 对需要特殊布局的 pinned action 在 spec 范围内计算有界尺寸
 - 每个异步回调按原索引写回数组，全部完成后才发布一组 UI，避免异步完成顺序改变建议顺序
 - 对 `TYPE_ACTION`、pinned 项和特殊 hints 执行分类，但不读取建议正文
-- 给返回的 `InlineContentView`附加点击/长按监听，用于本地状态、交互或指标收尾
+- 给返回的 `InlineContentView` 附加点击/长按监听，用于本地状态、交互或指标收尾
 - 最终将 View 集合交给独立的 Inline Suggestion Candidate 控制器，而不是将远端内容转换成文本候选
 - 失活、替换或清空时主动撤销旧 UI 和引用。
 
@@ -202,11 +202,11 @@ Gboard 当前实现会检查 GMS 版本，并可能因 GMS 过旧禁用其 Devic
 
 ### 3.5 Surface 裁剪是必须处理的真实问题
 
-`InlineContentView`内部承载远端 Surface。普通父 View 的裁剪不一定自动约束这个 Surface。HeliBoard 从 AOSP 衍生的实现专门提供 `InlineContentClipView`：每帧将宿主可见边界换算到各个 `InlineContentView`并调用 `setClipBounds()`，同时用透明、置顶 `SurfaceView`建立正确的 Surface 层级。
+`InlineContentView` 内部承载远端 Surface。普通父 View 的裁剪不一定自动约束这个 Surface。HeliBoard 从 AOSP 衍生的实现专门提供 `InlineContentClipView`：每帧将宿主可见边界换算到各个 `InlineContentView` 并调用 `setClipBounds()`，同时用透明、置顶 `SurfaceView` 建立正确的 Surface 层级。
 
 其源码注释明确指出：如果没有这一层，远端 Surface 可能覆盖宿主 App 中预期区域之外的内容。
 
-这意味着本项目不能只在 Header 里放一个普通 `HorizontalScrollView`就宣称完成。必须在以下场景验证远端 Surface 不会越界：
+这意味着本项目不能只在 Header 里放一个普通 `HorizontalScrollView` 就宣称完成。必须在以下场景验证远端 Surface 不会越界：
 
 - 横向滚动
 - Header 左右 padding
@@ -226,7 +226,7 @@ HeliBoard：
 - 使用官方 AndroidX Autofill Inline UI style Bundle
 - 构造 3 个 presentation spec，最大请求 6 项
 - 把建议异步 inflate 后放入横向滚动容器
-- 使用专门的 `InlineContentClipView`裁剪远端 Surface
+- 使用专门的 `InlineContentClipView` 裁剪远端 Surface
 - response 到达后暂时让原单词建议退出显示。
 
 其实现证明了「独立 Inline View 层 + 横向滚动 + Surface 裁剪」是传统 View IME 中的可行路径。
@@ -240,7 +240,7 @@ FlorisBoard：
 - 设置 2 秒有界等待
 - 所有回调完成后一次性发布 View 列表
 - 清理时递增 sequence ID，阻止晚到回调重新显示旧建议
-- 根据 `isPinned`整理显示顺序。
+- 根据 `isPinned` 整理显示顺序。
 
 这验证了本项目必须建立 request/session generation，而不能让每个异步回调直接修改当前 Header。
 
@@ -303,11 +303,11 @@ SoftKeyboardView Header
 - 不清空原生候选控制器的数据，只做表现层互斥
 - response 为空或会话失效后恢复由原生 Candidate 状态决定的 Header
 - 任何时候都不隐藏或替换 Body 中的数字、QWERTY、符号、删除、空格和 action 键
-- password/PIN 目的地继续禁止语言预测和学习；Header 存在不改变输入语义。
+- 密码或 PIN 目的地继续禁止语言预测和学习，Header 存在不改变输入语义。
 
 ### 5.3 为什么不能复用 `FixedSizeCandidatesHolderView`
 
-`FixedSizeCandidatesHolderView`管理 Google 拼音 `Candidate → SoftKeyView` 的原生模型。`InlineSuggestion.inflate()`返回的是已经完成远端渲染和安全隔离的 `InlineContentView`。
+`FixedSizeCandidatesHolderView` 管理 Google 拼音 `Candidate → SoftKeyView` 的原生模型。`InlineSuggestion.inflate()` 返回的是已经完成远端渲染和安全隔离的 `InlineContentView`。
 
 把后者转换成 Candidate 会造成：
 
@@ -326,7 +326,7 @@ SoftKeyboardView Header
 - API：仅 API 30+
 - `maxSuggestionCount`：首版为 3
 - spec 数量：3 个相同 spec，以兼容部分密码管理器对多 spec 的实际依赖
-- 高度：使用当前 qualified `keyboard_header_height`减去必要的垂直 inset，不写死设备像素
+- 高度：使用当前 qualified `keyboard_header_height` 减去必要的垂直 inset，不写死设备像素
 - min width：约一个可触达 chip 的最小宽度
 - max width：以 Header 可用宽度和约 240 dp 的单 chip 上限取较小值
 - inflate 尺寸：优先 `WRAP_CONTENT × exactHeaderContentHeight`
@@ -354,7 +354,7 @@ currentInlineViews[]
 
 - 新 response
 - 空 response
-- `onStartInput`切换 editor
+- `onStartInput` 切换 editor
 - `onFinishInputView`
 - `onFinishInput`
 - IME window 隐藏
@@ -366,20 +366,20 @@ currentInlineViews[]
 ```text
 callbackGeneration == currentGeneration
 && activeInputSession
-&& currentHeader仍为同一实例
-&& response尚未被替换
+&& currentHeader == expectedHeader
+&& response == expectedResponse
 ```
 
-`inflate()`返回 `null`、部分建议失败或超时都必须有界结束；不能让一项永远不回调而永久阻塞整组显示。
+`inflate()` 返回 `null`、部分建议失败或超时都必须有界结束，不能让一项永远不回调而永久阻塞整组显示。
 
 ### 5.6 API 17–29 边界
 
-`InputMethodService`的两个回调在 API 30 引入。实现必须证明：
+`InputMethodService` 的两个回调在 API 30 引入。实现必须证明：
 
-- API 17–29 仍能加载 `PinyinIME`和 primary DEX
-- 旧系统不会在启动路径解析 `InlineSuggestion`、`InlineContentView`或 `InlinePresentationSpec`
+- API 17–29 仍能加载 `PinyinIME` 和 primary DEX
+- 旧系统不会在启动路径解析 `InlineSuggestion`、`InlineContentView` 或 `InlinePresentationSpec`
 - 所有 API 30 对象只在平台回调到达后创建
-- 不在静态字段初始化、构造器、`onCreate()`或旧路径中直接触发 API 30 类型
+- 不在静态字段初始化、构造器、`onCreate()` 或旧路径中直接触发 API 30 类型
 - input-method XML 的新属性在旧系统上安全忽略
 - API 17–29 继续由系统旧式 Autofill UI 处理，不增加自制 fallback strip。
 
@@ -423,7 +423,7 @@ android:supportsInlineSuggestionsWithTouchExploration="true"
 
 - [x] 在 input-method XML 声明 `supportsInlineSuggestions=true`，继续不声明 touch exploration 支持
 - [x] 建立带 SDK 门控的 API 30 窄桥和独立 `InlineAutofillCompat`
-- [x] 返回 3 个 presentation spec；首版最多 3 项，后续基于 Bitwarden 多匹配项证据将总请求上限修正为 6，尺寸继续使用当前 Header 高度和 `48dp..240dp`宽度范围
+- [x] 返回 3 个 presentation spec；首版最多 3 项，后续基于 Bitwarden 多匹配项证据将总请求上限修正为 6，尺寸继续使用当前 Header 高度和 48～240 dp 宽度范围
 - [x] 在尚无 Surface host 时，response 不读取数量、元数据或正文，只推进 generation 并返回未处理
 - [x] 在输入视图开始、结束和服务销毁时推进 generation，拒绝后续阶段复用旧会话结果
 - [x] 增加源码编译、最终 DEX 窄桥、API 17–29 SDK 门控和隐私边界静态验证，并接入 Release workflow
@@ -435,7 +435,7 @@ android:supportsInlineSuggestionsWithTouchExploration="true"
 - [x] 最多按 provider 原顺序异步 inflate 6 项，使用 generation、活动会话和 Header 实例身份拒绝迟到回调
 - [x] 增加 1.2 秒有界超时、null/异常/重复 callback 处理，允许按原索引发布已完成的部分结果
 - [x] 对每个远端 View 按 Header 全局可见矩形显式设置本地 clip bounds，并在 layout、scroll、attach/detach 时更新或释放
-- [x] 完成原生 Candidate > Inline Autofill > 空闲剪贴板的表现层优先级；不清空原生 Candidate 或改变 Clipboard 数据模型
+- [x] 完成原生 Candidate > Inline Autofill > 空闲剪贴板的表现层优先级，不清空原生 Candidate 或改变 Clipboard 数据模型
 - [x] 补齐 editor 开始、输入视图结束、`onFinishInput()`、IME 隐藏、服务销毁和 Header detach 清理
 - [x] 不改变任何 Body 键、密码预测/学习语义或 touch exploration 声明
 - [ ] 使用只含合成测试数据的 Autofill 服务完成真机显示、点击、横向滚动、裁剪和快速切换验收，不使用真实密码做诊断。
@@ -548,13 +548,13 @@ work/research/gboard-current-public/decoded-base/smali/com/google/android/librar
 
 ### 已确认事实
 
-- Android 11+ 通过 `InlineSuggestionsRequest` / `InlineSuggestionsResponse`在 IME 展示 Autofill
+- Android 11+ 通过 `InlineSuggestionsRequest` / `InlineSuggestionsResponse` 在 IME 展示 Autofill
 - 敏感正文对 IME 隐藏，内容由远端 Surface 提供
 - Gboard 当前声明 `supportsInlineSuggestions=true`
 - Gboard 当前 request 使用主题 style Bundle、9 个 spec、最大 9 项和 LocaleList
 - Gboard 异步 inflate、区分 pinned/action、等待整组完成并管理失效状态
 - Gboard 直接监听 `InlineContentView` 的点击完成通知，并通过 `PressEffectPlayerImpl` 播放输入法设置控制的声音和振动
-- 普通 `FixedSizeCandidatesHolderView`不能直接承载 `InlineContentView`
+- 普通 `FixedSizeCandidatesHolderView` 不能直接承载 `InlineContentView`
 - Surface 裁剪需要显式设计和验证。
 
 ### 基于事实的设计推断
@@ -562,14 +562,14 @@ work/research/gboard-current-public/decoded-base/smali/com/google/android/librar
 - 本项目应在统一 Header 内增加独立 Inline host，而不是新增键盘外 fallback strip
 - 首版请求 3 项是保守起点；真实 Bitwarden 多匹配项证据支持将当前总上限提升为 6，而不是复制 Gboard 的 9 项
 - 原生候选应优先于 Inline Autofill，Inline Autofill 优先于空闲剪贴板
-- API 30 回调应只在 `PinyinIME`保留窄桥，主体放入独立 Compat 类
+- API 30 回调应只在 `PinyinIME` 保留窄桥，主体放入独立 Compat 类
 - generation + 有界异步聚合是避免旧 Surface 回流的最低必要机制。
 
 ### 仍待验证或受环境限制
 
-- Google Password Manager 与更多第三方 Provider 的完整交叉矩阵；当前已覆盖合成 Provider 和 Bitwarden
+- Google Password Manager 与更多第三方 Provider 的完整交叉矩阵。当前已覆盖合成 Provider 和 Bitwarden
 - Provider 返回 pinned action 的更多排列
-- TalkBack 启用时平台具体回退行为；完成前继续不声明 touch-exploration Inline 支持
+- TalkBack 启用时平台具体回退行为。完成前继续不声明 touch-exploration Inline 支持
 - API 17–29 旧 ART 运行时：最终 DEX 静态隔离已通过，但当前 ARM64 ABI/模拟环境无法完成该运行矩阵
 - `sw600dp` 大屏上的最终 Header Platform 运行时覆盖。
 

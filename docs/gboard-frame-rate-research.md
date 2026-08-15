@@ -8,7 +8,7 @@
 - Gboard `17.7.5.932364120-release-arm64-v8a`
 - Pixel 10 Pro / Android 16 当前显示能力与 frame-rate category。
 
-本研究最初只复核策略；Compatibility v29 已根据结论完成第一轮修正。
+本研究最初只复核策略。Compatibility v29 已根据结论完成第一轮修正。
 
 ## 当前兼容补丁
 
@@ -74,7 +74,7 @@ Gboard 包含 `View.setFrameContentVelocity(float)` 的兼容桥。实际调用�
 1. **固定写死 120 Hz。** 90 Hz、144 Hz 或其他屏幕不能表达「使用当前设备高刷新类别」，只表达最接近 120 的精确偏好。
 2. **空闲时仍保留偏好。** 输入法可见但用户未触摸时，Window 和 decor view 仍声明 120 Hz，不利于 LTPO/ARR 降频。
 3. **两条重复请求。** Window `preferredRefreshRate` 和 decor `setFrameRate` 同时设置，缺少证据证明必须叠加。
-4. **没有释放。** `onFinishInputView()` 没有将 `preferredRefreshRate` 和 View frame rate 清回 0；Window 对象复用时状态会一直保留。
+4. **没有释放。** `onFinishInputView()` 没有将 `preferredRefreshRate` 和 View frame rate 清回 0。Window 对象复用时，状态会一直保留。
 5. **使用 DEFAULT compatibility。** 它没有声明 fixed-source 等语义，但也没有利用现代 high category 或 touch boost 策略。
 6. **与 Gboard 策略不一致。** Gboard 当前选择由系统在触摸期间 boost，并让滚动组件报告内容速度。
 7. **可能增加键盘可见期间的功耗。** 尤其是停留在输入框但没有输入时。

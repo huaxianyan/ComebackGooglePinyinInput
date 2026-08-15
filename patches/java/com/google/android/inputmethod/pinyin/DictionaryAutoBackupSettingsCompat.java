@@ -277,7 +277,7 @@ public final class DictionaryAutoBackupSettingsCompat {
             pendingTree = tree;
             validating = true;
             setControlsEnabled(false);
-            Toast.makeText(context, "正在验证备份目录…", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, "正在验证备份目录……", Toast.LENGTH_SHORT).show();
             DictionaryAutoBackupCompat.validateTreeAsync(context, tree, this);
         }
 
@@ -324,7 +324,7 @@ public final class DictionaryAutoBackupSettingsCompat {
             if (fragment == null || fragment.getActivity() == null || importLoading) return;
             importLoading = true;
             setControlsEnabled(false);
-            Toast.makeText(fragment.getActivity(), "正在读取备份目录…",
+            Toast.makeText(fragment.getActivity(), "正在读取备份目录……",
                     Toast.LENGTH_SHORT).show();
             DictionaryAutoBackupCompat.listBackupsAsync(fragment.getActivity(), this);
         }
@@ -377,7 +377,7 @@ public final class DictionaryAutoBackupSettingsCompat {
                 String status = p.getString(DictionaryAutoBackupCompat.KEY_LAST_STATUS, null);
                 long last = p.getLong(DictionaryAutoBackupCompat.KEY_LAST_SUCCESS, 0L);
                 if (DictionaryAutoBackupCompat.isInProgress()) {
-                    enabledPreference.setSummary("正在生成用户词典备份…");
+                    enabledPreference.setSummary("正在生成用户词典备份……");
                 } else if (status != null && status.length() > 0 && !"备份成功".equals(status)) {
                     enabledPreference.setSummary(status);
                 } else if (last > 0L) {
@@ -425,7 +425,7 @@ public final class DictionaryAutoBackupSettingsCompat {
             if (context == null || dictionaryStatus == null || statusLoading) return;
             statusLoading = true;
             final int generation = ++statusGeneration;
-            dictionaryStatus.setSummary("正在读取当前用户词库…");
+            dictionaryStatus.setSummary("正在读取当前用户词库……");
             DictionaryHealthStatusCompat.load(context, new DictionaryHealthStatusCompat.Callback() {
                 @Override public void onLoaded(String summary) {
                     if (generation != statusGeneration || fragment == null || dictionaryStatus == null)

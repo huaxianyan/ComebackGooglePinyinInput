@@ -42,13 +42,13 @@ v1.0.3 历史基线（target 28）
 1. 前一级没有完成前，不创建后一级实现分支。
 2. 每个分支记录该 API 新触发的问题、修复、构建和真机结论。
 3. 已完成分支推送到远端后长期保留，不因创建后继分支而删除。
-4. 中间审计版本不自动发布 GitHub Release；只产生 Actions artifact。
+4. 中间审计版本不自动发布 GitHub Release，只产生 Actions artifact。
 5. 风险测试使用独立 application ID，不覆盖正式包，也不接触正式包的用户词典：
    - API 29：`com.google.android.inputmethod.pinyin.target29audit`
    - 后续依次使用 `target30audit`、`target31audit` 等。
 6. 所有非正式 application ID 的审计包统一显示为 `Google 拼音输入法（测试版）`，便于在 Launcher、应用列表和输入法选择器中与正式版区分；正式包显示名称不变。
 7. 正式包仍保持 `com.google.android.inputmethod.pinyin.compat` 和现有签名身份。
-8. 达到选定的正式里程碑前不合并 `master`；当前预期正式里程碑为 target 36。
+8. 达到选定的正式里程碑前不合并 `master`，当前预期正式里程碑为 target 36。
 9. 如果某一级发现与 target 无关、且正式版也需要的严重修复，单独建修复分支处理，再同步到 target 分支链，避免混淆归因。
 10. 默认审计包保持非 debuggable，作为 target 验收依据；可选 debug 变体只用于诊断，禁止使用正式 application ID，详见 [`audit-debug-mode.md`](audit-debug-mode.md)。
 
@@ -66,7 +66,7 @@ v1.0.3 历史基线（target 28）
 - 分支文档记录结果并提交、推送
 - 维护者明确确认后才进入下一级。
 
-功能、视觉和破坏性词典测试仍由维护者执行；编码代理负责补丁、构建、签名、安装、哈希和日志检查。
+功能、视觉和破坏性词典测试仍由维护者执行。编码代理负责补丁、构建、签名、安装、哈希和日志检查。
 
 ## 阶段计划
 
@@ -184,7 +184,7 @@ V1 在已验收的 target 30 和基础 Debug 构建能力之上提升到 target 
 - Firebase IID 组件虽已从 Manifest 移除，其遗留不可达创建点仍补齐 immutable，避免未来代码路径恢复时失败
 - 五个带 intent-filter 的现存组件全部显式声明 `android:exported`
 - 新增 `scripts/verify_target31.py`，Actions 必须验证全部 intent-filter 组件和全部七个 PendingIntent 创建点
-- 默认构建保持非 debuggable；只有普通日志无法解释问题时才构建 debug 变体。
+- 默认构建保持非 debuggable，只有普通日志无法解释问题时才构建 debug 变体。
 
 V1 构建记录：
 
@@ -277,7 +277,7 @@ V1 构建记录：
 - 手写 native 识别实际运行，日志记录 1–3 笔请求和完成耗时，`libhmm_gesture_hwr_zh.so` 已加载
 - 没有 `.partial`、`_tmp` 或 `_unreadable` 异常残留
 - 主题预览曾先尝试读取尚未生成的 `keyboardsnapshotcache_*.png`，随后同一流程成功生成对应缓存和主题包；这是原版的惰性缓存 miss 日志，没有造成 UI 或文件异常
-- RenderScript 在无 HIDL 服务时按设计使用 fallback path；少量资源 finalizer 警告没有持续重复、崩溃或可见问题
+- RenderScript 在无 HIDL 服务时按设计使用 fallback path，少量资源 finalizer 警告没有持续重复、崩溃或可见问题
 - 安装后的 `base.apk` SHA-256 再次确认与 Actions artifact 一致。
 
 结论：target 32 / Android 12L 行为边界通过，可以在维护者确认后创建 target 33。
@@ -292,7 +292,7 @@ V1 从已验收的 target 32 创建，只提升到 Android 13 / API 33，不加�
 
 重点：
 
-- 不声明、不请求无用途的 `POST_NOTIFICATIONS`；本项目没有需要通知权限的用户功能
+- 不声明、不请求无用途的 `POST_NOTIFICATIONS`，本项目没有需要通知权限的用户功能
 - 不声明、不请求无用途的 `READ_MEDIA_*`，主题图片继续使用系统文件/照片选择器 URI
 - 复核 `RECEIVE_BOOT_COMPLETED`、联系人权限、WebView 和文件选择器行为
 - 复核剪贴板候选在 Android 13 隐私提示下仍只读取当前主剪贴项目，且不自行显示额外系统式提示
@@ -329,8 +329,8 @@ V1 构建记录：
 - Google Drive SAF 自动备份状态为「备份成功」，连续失败数为 0，持久目录授权、document URI 和备份 SHA-256 均已记录
 - 中英文用户词典、联系人词典、快捷词典和主题文件均正常存在，没有 `.partial`、`_tmp` 或 `_unreadable` 异常残留
 - DropBox 中没有 Java crash、ANR、native crash 或 tombstone，ApplicationExitInfo 没有该包异常退出记录
-- ART Dexopt 状态为 `verify` 且 oat 最新；运行进程实际加载了拼音、英文和 `libhmm_gesture_hwr_zh.so` 原生库
-- 运行日志未发现 `VerifyError`、`SecurityException`、`UnsatisfiedLinkError`、权限拒绝或隐藏 API 故障；IME/Insets/Back 日志符合正常窗口切换
+- ART Dexopt 状态为 `verify` 且 oat 最新，运行进程实际加载了拼音、英文和 `libhmm_gesture_hwr_zh.so` 原生库
+- 运行日志未发现 `VerifyError`、`SecurityException`、`UnsatisfiedLinkError`、权限拒绝或隐藏 API 故障。IME/Insets/Back 日志符合正常窗口切换
 - `keyboardsnapshotcache_*.png` 在惰性缓存生成前的 `ENOENT` 与 target 32 已分类的原版缓存 miss 一致，没有崩溃或可见影响
 - 安装后的 `base.apk` SHA-256 再次确认与 Actions artifact 完全一致。
 
@@ -383,7 +383,7 @@ V1 构建记录：
 - Google Drive SAF 自动备份状态为「备份成功」，连续失败数为 0，持久目录授权、document URI 和备份 SHA-256 均已记录
 - 没有 `.partial`、`_tmp` 或 `_unreadable` 异常残留
 - DropBox 中没有 Java crash、ANR、native crash 或 tombstone，ApplicationExitInfo 没有该包异常退出记录
-- ART Dexopt 状态为 `verify` 且 oat 最新；没有运行时 `DexClassLoader`/`DexFile` 故障
+- ART Dexopt 状态为 `verify` 且 oat 最新，没有运行时 `DexClassLoader`/`DexFile` 故障
 - 运行日志没有动态 receiver `SecurityException`、`VerifyError`、`UnsatisfiedLinkError`、权限拒绝或隐藏 API 故障；活动 receiver 表中 target 34 当前注册项均为系统广播，已移除的统计网络路径没有注册 GServices receiver
 - `keyboardsnapshotcache_*.png` 惰性 miss、RenderScript fallback、少量资源 finalizer 警告和 `SHOW_MORE_APPS` 无效键码均为此前已分类的原版遗留日志，没有崩溃或可见影响
 - 安装后的 `base.apk` SHA-256 再次确认与 Actions artifact 完全一致；采集时 170 个 FD、48 个线程，没有资源失控迹象。
@@ -561,17 +561,17 @@ V4 复测与 V5 架构修正：
 - V11 保留已确认的 InputView parent bottom margin，只把主题 bottom frame 提升到 IME Window 的 decor root；现场导航区仍未随主题绘制，而且反复切换主题会在「键盘上移/下沉」之间变化，V11 不可验收。
 - 主题切换反证暴露了生命周期竞态：旧实现从 `InputView` XML 构造函数立即注册并 `requestApplyInsets()`，此时 `InputMethodService.setInputView()` 尚未把它加入 `mInputFrame`。首次/重建后 Insets 是否重新分发取决于当次 framework traversal，因此 margin 有时生效、有时不生效；bottom frame 的 decor root 和主题 drawable 时机也不稳定。
 - V12 把 coordinator 安装点从 InputView 构造函数移到 `GoogleInputMethodService.c()` 中 `setInputView(view)` 返回之后。后续多次主题切换均保持最低行在导航栏上方，但刚安装后的第一次弹出仍出现一次下沉，说明首次创建时还存在 Window fit attributes 与首个 Insets request 的顺序窗口；应用输入区始终正确。
-- V12 的 decor frame 已开始跟随主题，但颜色与候选栏/keyboard-area 外层一致，而非用户期望的主键盘 body。原因是背景源取自 `@id/keyboard_area` 的 `?BgKeyboardArea`；Google 拼音将候选/外围和主按键区分别用 `BgKeyboardArea`、`BgKeyboardBody` 着色。
+- V12 的 decor frame 已开始跟随主题，但颜色与候选栏/keyboard-area 外层一致，而非用户期望的主键盘 body。原因是背景源取自 `@id/keyboard_area` 的 `?BgKeyboardArea`。Google 拼音将候选/外围和主按键区分别用 `BgKeyboardArea`、`BgKeyboardBody` 着色。
 - V13 在 helper 中保存当前已 attach 的 InputView，并在 `configureImeWindow()` 完成 Window attributes 后再次 `requestApplyInsets()`；主键盘 body 颜色修复已确认，后续主题切换/隐藏/重开也保持几何正常。但解锁后的第一次自动弹出仍下沉，说明同一主线程调用栈里的直接 request 仍可能早于首个 attach/layout traversal。
 - V14 保留所有已确认的几何和主题逻辑，增加隐私安全、幂等的 post-layout `ApplyInsetsRunnable`；现场首次展开仍为 `ime=[0,1607][1080,2410]`，证明单纯 `requestApplyInsets()` 即使延后执行，在系统判断 Insets 状态未变化时仍可能不重新 dispatch listener。V14 不可验收。
-- V15 的 deferred runnable 主动 dispatch root Insets；首次现场仍为 `ime=[0,1607][1080,2410]`。这证明首次 Window 尚未 attach 时 post runnable 会因 `isAttachedToWindow=false` 退出，且 InputView/root Insets 的 navigation bottom 还可能是 decor 消费后的 0；主题重建时 Window 已 attach，所以后续恢复。
+- V15 的 deferred runnable 主动 dispatch root Insets，首次现场仍为 `ime=[0,1607][1080,2410]`。这证明首次 Window 尚未 attach 时 post runnable 会因 `isAttachedToWindow=false` 退出，且 InputView/root Insets 的 navigation bottom 还可能是 decor 消费后的 0。主题重建时 Window 已 attach，所以后续恢复。
 - V16 同时增加 attach listener 和 WindowMetrics source，但首次仍下沉；在继续修改生命周期前必须确认是「callback 未执行」「metrics 为 0」「LayoutParams 不是 margin」还是「margin 写入后被 framework 覆盖」，停止无证据迭代。
-- V17 是临时 release-like geometry diagnostic：仅记录 `onViewAttached`、runnable attached 状态、root Insets 是否存在、WindowMetrics navigation bottom、listener inset、margin before/applied 等整数/布尔元数据。固定 tag 为 `GooglePinyinImeGeometry`；禁止并且不采集输入文本、候选、剪贴板、联系人、词典、手写坐标或 SharedPreferences。定位后这些日志应移除，V17 不作为最终验收包。
+- V17 是临时 release-like geometry diagnostic：仅记录 `onViewAttached`、runnable attached 状态、root Insets 是否存在、WindowMetrics navigation bottom、listener inset、margin before/applied 等整数/布尔元数据。固定 tag 为 `GooglePinyinImeGeometry`，禁止并且不采集输入文本、候选、剪贴板、联系人、词典、手写坐标或 SharedPreferences。定位后这些日志应移除，V17 不作为最终验收包。
 - V16/V17 首次问题仍复现后，维护者明确要求隔离 Debug 深入诊断。V18 使用独立 `com.google.android.inputmethod.pinyin.target35debug`、`android:debuggable=true`，不能替代 release-like 验收包；新增的 layout listener 只记录 InputView layout top/bottom/height、window Y 和 LayoutParams bottomMargin，结合既有 callback/metrics 日志判断 margin 是未写入还是写入后被 framework 覆盖。仍不记录任何输入或用户内容。
 - V18 首次展开日志只有两次 `configureImeWindow`，完全没有 `attachCalledAttached`、attach、runnable、metrics、listener 或 layout 事件；现场 `ime=[0,1670][1080,2410]`。根因由此确定：Android framework 首次创建 IME 时直接调用 `onCreateInputView()` 并自行安装返回值，不经过项目的 `GoogleInputMethodService.c()`；此前 post-`setInputView()` hook 只覆盖主题重建路径，所以切换主题后才永久恢复。
 - V19 Debug 将唯一 coordinator hook 移入 `GoogleInputMethodService.onCreateInputView()` 的新视图返回路径。首次 framework 创建与 `c()` 主题重建都会调用这个方法；listener 可在 View 尚未 attach 时注册，一次性 attach callback 在 framework 随后安装 View 后执行。
 - V19 首次展开已由用户确认正常。现场从 V18 的 `ime=[0,1670][1080,2410]` 修正为 `ime=[0,1544][1080,2410]`；导航栏仍为 `[0,2284][1080,2410]`，新增的 126 px 正好来自当次 WindowMetrics，而非硬编码。日志确认 `windowNavBottom=126`、`runnableAttached=1`、`rootInsetsPresent=1`、`layoutBottomMargin=126`，证明首次路径、动态 inset 和 parent margin 均生效且未被 framework 覆盖。随后移除固定 tag、全部 geometry log 和 layout diagnostics listener，只保留已验证的公开 API 实现与 `onCreateInputView()` hook。
-- 干净的 release-like V20 首次展开也由用户确认正常；现场为 `navigationBars=[0,2284][1080,2410]`、`ime=[0,1481][1080,2410]`、`fitSides=LEFT TOP RIGHT`、`mImeShowing=true`。这同时确认应用获得延伸至屏幕底部的完整 IME source，而原生键盘 body 通过动态导航间距停在导航栏上方。V20 不可调试、无临时 geometry 日志，覆盖安装前后 16 个私有文件哈希保持一致。
+- 干净的 release-like V20 首次展开也由用户确认正常，现场为 `navigationBars=[0,2284][1080,2410]`、`ime=[0,1481][1080,2410]`、`fitSides=LEFT TOP RIGHT`、`mImeShowing=true`。这同时确认应用获得延伸至屏幕底部的完整 IME source，而原生键盘 body 通过动态导航间距停在导航栏上方。V20 不可调试、无临时 geometry 日志，覆盖安装前后 16 个私有文件哈希保持一致。
 - V20 功能回归正常，但手势导航下系统「收回键盘」和「切换输入法」控制被键盘 surface 挡住一部分。显示现场证明 `navigationBars.bottom=63`，而 `mandatorySystemGestures.bottom=84`；IME source 为 `[0,1544][1080,2410]`，Taskbar 明确同时提供这两个公开 Insets source。V20 只预留 63 px，因此关键系统控制区域上方 21 px 仍与可触摸键盘 body 重叠。V21 不使用固定差值，而从 WindowMetrics 对 `navigationBars() | mandatorySystemGestures()` 调用 `getInsetsIgnoringVisibility()`；Android 对组合 type 返回各边最大值。三键模式两者相同，不改变已验收几何；手势模式则动态预留完整 84 px 控制/强制手势区域。刻意不使用普通 `systemGestures()`，避免把左右返回手势带误作底部键盘间距。
 - V21 中左右系统控件仍可交互但完全不可见，同时底部主题连续且应用 Insets 正确，这证明主要问题是绘制层级：decor-root 主题 frame 在创建和每次更新后调用 `bringToFront()`，覆盖了 framework/SystemUI 控件的可见像素，却不拥有其系统触摸处理。V22 将主题 frame 以 index 0 插入 decor root，并禁止 `bringToFront()`；InputView 已通过 bottom margin 结束在该 frame 上方，因此 frame 在底部仍可见，而 framework 后续/既有 decor children 和系统控制保持在它上层。
 - V22 的系统控件完整可见且可交互，但用户确认主题 surface 出现异常，且与 target 28 对比底部空间明显过宽。这修正了此前把 `mandatorySystemGestures=84` 当作视觉控制 frame 的推断：现场 Taskbar 的实际 navigation window/frame 高度是 63 px，84 px 是不可由应用排除的强制手势识别区域，不要求所有视觉内容避让。V20 控件被遮挡的原因是 frame z-order，不是 63 px 导航高度不足。V23 因此保留 index-0 主题 frame、移除 `bringToFront()`，并恢复只按 `navigationBars()` 的 63 px 动态间距；系统控件完整可见且可交互，但底部仍为上半主题色、下半灰色，且键盘比 target 28 更低。
@@ -589,10 +589,10 @@ V4 复测与 V5 架构修正：
 - V35 Debug 增加公开 WindowMetrics `WindowInsets.Type.tappableElement()` 判定：只有候选平台 View 的实际 height 精确等于正数 `tappableElement.bottom` 才同步/显示。V35 不再出现全屏白色，手势、几何和应用 Insets 正常，但切回三按钮后灰层仍在；说明所有 Insets callbacks 都发生在 decor 过渡结构阶段并被正确拒绝，而最终稳定的三按钮 color View 出现后没有新的 Insets callback。
 - V36 Debug 在当前 DecorView 上安装一次普通 `OnLayoutChangeListener`，但用户确认三按钮灰层仍在，其他路径正常。持续 layout listener 与同步操作自身的 `setBackground/setVisibility` 会互相触发布局，既可能形成反馈，也不能保证回调恰好落在平台 color View 替换后的结构，因此不进入正式实现。
 - V37 Debug 删除 layout listener，改为每次 Insets/theme callback 立即 post 一次、并对同一 Runnable 再 `postDelayed(300ms)` 一次。后续发现覆盖安装 Debug 时 Android 自动回退到了仍启用的 `target35audit`，所以此前 V35–V37「仍灰」的观察不是这些 Debug 版本的有效结果。
-- V38 使用全新 `GooglePinyinImeSync` tag，只记录 schedule、候选是否 ViewGroup、候选高度和 tappable bottom 整数。重新显式选择 `target35debug` 后，日志证明过渡/手势结构为 `candidateGroup=1` 并被拒绝，稳定三按钮为 `candidateGroup=0, candidateHeight=126, tappableBottom=126` 并正确同步。用户确认首次正常、主题切换正常、三按钮→手势→三按钮多轮往返正常，无白屏、灰层、几何、控件或应用 Insets 回归。
-- Release-like V39 将已证明的逻辑移入无日志的 `ImeNavigationColorCompat`：保留立即 post、300 ms 有界重试、非 ViewGroup/正高度/等于正数 tappable bottom 的结构守卫，以及从专用 theme frame 克隆 Drawable 到平台 color View；删除 `ImeDecorDiagnosticsCompat`、tree dump 和全部 Debug tag。覆盖安装后显式恢复 `target35audit` 并卸载 Debug。用户在首次手势→三按钮时看到一次白屏，此后多轮导航、主题和高度切换均无法复现，其他路径正常；当前 Window、ART crash buffer 和 DropBox 均无本包异常。
+- V38 使用全新 `GooglePinyinImeSync` tag，只记录 schedule、候选是否 ViewGroup、候选高度和 tappable bottom 整数。重新显式选择 `target35debug` 后，日志证明过渡/手势结构为 `candidateGroup=1` 并被拒绝，稳定三按钮为 `candidateGroup=0, candidateHeight=126, tappableBottom=126` 并正确同步。用户确认首次正常、主题切换正常、三按钮 → 手势 → 三按钮多轮往返正常，无白屏、灰层、几何、控件或应用 Insets 回归。
+- Release-like V39 将已证明的逻辑移入无日志的 `ImeNavigationColorCompat`：保留立即 post、300 ms 有界重试、非 ViewGroup/正高度/等于正数 tappable bottom 的结构守卫，以及从专用 theme frame 克隆 Drawable 到平台 color View；删除 `ImeDecorDiagnosticsCompat`、tree dump 和全部 Debug tag。覆盖安装后显式恢复 `target35audit` 并卸载 Debug。用户在首次手势 → 三按钮时看到一次白屏，此后多轮导航、主题和高度切换均无法复现，其他路径正常；当前 Window、ART crash buffer 和 DropBox 均无本包异常。
 - V38 的递归 tree dump/logging 在执行同步前引入了显著时序开销，而无日志 V39 的立即 Runnable 更早，可能在 View 仍保留旧 measured 126、但 framework 已请求下一次全屏布局的瞬间命中原守卫。V40 因此不依赖诊断延迟，增加公开稳定布局条件：root 与候选均 `!isLayoutRequested()`、候选 `isLaidOut()`、候选 bottom 等于 root height、宽度等于 root width；300 ms 有界重试保留。这样旧测量值/待布局过渡帧被拒绝，稳定三按钮背景仍满足全部条件。
-- V40 clean release-like（commit `79ed506`，workflow `30937645444`，artifact `8903797153`，APK SHA-256 `153f2ab453a35f1f565ffaf6d5057a99c62e30add7e5fb7118cc3a43e3985465`）覆盖安装前后 18 个持久私有文件 SHA-256 完全一致，签名/target/non-debug 和 target 31–35 静态门禁全部通过。用户完成首次手势→三按钮、至少五轮导航往返、主题、键盘高度、隐藏/重开及锁屏/解锁测试，确认无白屏、灰层、控件、几何或应用 Insets 回归。随后 release-like crash buffer、DropBox crash/ANR 和 ART verifier 检查均无本包命中。
+- V40 clean release-like（commit `79ed506`，workflow `30937645444`，artifact `8903797153`，APK SHA-256 `153f2ab453a35f1f565ffaf6d5057a99c62e30add7e5fb7118cc3a43e3985465`）覆盖安装前后 18 个持久私有文件 SHA-256 完全一致，签名/target/non-debug 和 target 31–35 静态门禁全部通过。用户完成首次手势 → 三按钮、至少五轮导航往返、主题、键盘高度、隐藏/重开及锁屏/解锁测试，确认无白屏、灰层、控件、几何或应用 Insets 回归。随后 release-like crash buffer、DropBox crash/ANR 和 ART verifier 检查均无本包命中。
 - 获得明确授权后，仅删除隔离 `guide_complete` 和旧安装本地 `HAD_FIRST_RUN` 标记以复测升级环境中的首次引导；18 个持久文件中只有这两个 SharedPreferences 文件按预期变化，词典、主题和备份文件全部不变。用户确认三页引导弹出，左/右按钮完整位于三按钮导航栏上方，引导页和设置页均可正常交互且无阻挡；完成后 `guide_complete` 已重新写入、默认 IME 为 `target35audit`，crash buffer 与 DropBox 仍无本包命中。现有页面不再做视觉扩建，完整 MD3 重写按决定推迟到 target 36 适配完成之后。至此 target 35 的功能、首次引导、设置、双导航、首次/解锁显示、主题、高度、Insets、ART/Root/DropBox 和数据保留验收全部通过。
 
 ### target 36 / Android 16

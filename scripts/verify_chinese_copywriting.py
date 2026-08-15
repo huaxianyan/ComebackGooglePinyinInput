@@ -25,6 +25,7 @@ TIGHT_UNIT_RE = re.compile(
 CURVED_QUOTES_RE = re.compile(r"[“”‘’]")
 REPEATED_PUNCTUATION_RE = re.compile(r"[！？?!]{2,}")
 ASCII_PUNCTUATION_RE = re.compile(f"(?:[{CJK}][!?]|[!?][{CJK}])")
+SINGLE_ELLIPSIS_RE = re.compile(r"(?<!…)…(?!…)")
 FULLWIDTH_ALNUM_RE = re.compile(r"[Ａ-Ｚａ-ｚ０-９]")
 LINK_LEFT_RE = re.compile(rf"[{CJK}]!?\[[^\]]+\]\([^)]+\)")
 LINK_RIGHT_RE = re.compile(rf"\]\([^)]+\)[{CJK}]")
@@ -34,7 +35,17 @@ MARKDOWN_TARGET_RE = re.compile(r"\]\([^)]+\)")
 HTML_TAG_RE = re.compile(r"<[^>]+>")
 XML_TEXT_RE = re.compile(r">([^<]+)<")
 
-TEXT_EXTENSIONS = {".md", ".xml", ".java", ".kt", ".py", ".yml", ".yaml", ".properties"}
+TEXT_EXTENSIONS = {
+    ".md",
+    ".xml",
+    ".java",
+    ".kt",
+    ".smali",
+    ".py",
+    ".yml",
+    ".yaml",
+    ".properties",
+}
 
 
 def tracked_files() -> list[Path]:
@@ -48,6 +59,15 @@ def mask_markdown_syntax(line: str) -> str:
     line = INLINE_CODE_RE.sub(" ", line)
     line = MARKDOWN_TARGET_RE.sub("] ", line)
     return HTML_TAG_RE.sub(" ", line)
+
+
+def has_tight_inline_code(line: str) -> bool:
+    for match in INLINE_CODE_RE.finditer(line):
+        left = line[match.start() - 1] if match.start() > 0 else ""
+        right = line[match.end()] if match.end() < len(line) else ""
+        if CJK_RE.fullmatch(left) or CJK_RE.fullmatch(right):
+            return True
+    return False
 
 
 def prose_segments(path: Path, line: str, fenced: bool) -> list[str]:
@@ -93,6 +113,8 @@ def main() -> int:
                     add_error(errors, path, line_number, "不要重复使用问号或感叹号")
                 if ASCII_PUNCTUATION_RE.search(segment):
                     add_error(errors, path, line_number, "中文语句应使用全角问号或感叹号")
+                if SINGLE_ELLIPSIS_RE.search(segment):
+                    add_error(errors, path, line_number, "中文省略号应使用六点形式……")
                 if FULLWIDTH_ALNUM_RE.search(segment):
                     add_error(errors, path, line_number, "正文数字和拉丁字母应使用半角字符")
 
@@ -104,6 +126,8 @@ def main() -> int:
                         add_error(errors, path, line_number, "数字与单位之间需要空格")
 
             if path.suffix == ".md" and not fenced:
+                if has_tight_inline_code(line):
+                    add_error(errors, path, line_number, "中文与行内代码之间需要空格")
                 if LIST_RE.match(line) and line.rstrip().endswith("；"):
                     add_error(errors, path, line_number, "列表项末尾不应机械使用分号")
                 if LINK_LEFT_RE.search(line) or LINK_RIGHT_RE.search(line):

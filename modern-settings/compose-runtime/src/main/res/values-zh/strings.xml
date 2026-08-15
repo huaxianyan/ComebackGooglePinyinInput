@@ -42,7 +42,7 @@
     <string name="modern_settings_handwriting_summary">识别速度和笔迹粗细</string>
     <string name="modern_settings_specialized_page_pending">此专用设置页面尚未迁移，现有旧版行为保持不变。</string>
     <string name="modern_settings_dictionary_health_title">当前用户词库状态</string>
-    <string name="modern_settings_dictionary_health_loading">正在读取当前用户词库…</string>
+    <string name="modern_settings_dictionary_health_loading">正在读取当前用户词库……</string>
     <string name="modern_settings_dictionary_health_refresh">点击重新检查</string>
     <string name="modern_settings_dictionary_backup_section">自动备份</string>
     <string name="modern_settings_dictionary_auto_backup_title">自动备份用户字典</string>
@@ -51,7 +51,7 @@
     <string name="modern_settings_dictionary_retention_title">保留备份版本</string>
     <string name="modern_settings_dictionary_backup_now_title">立即备份</string>
     <string name="modern_settings_dictionary_import_title">导入用户词典备份</string>
-    <string name="modern_settings_dictionary_backup_in_progress">正在生成用户词典备份…</string>
+    <string name="modern_settings_dictionary_backup_in_progress">正在生成用户词典备份……</string>
     <string name="modern_settings_dictionary_last_backup">上次备份：%1$s %2$s</string>
     <string name="modern_settings_dictionary_backup_retained">备份文件在清除数据或卸载后仍会保留</string>
     <string name="modern_settings_dictionary_location_unset">未选择（备份和导入共用）</string>
@@ -77,7 +77,7 @@
     <string name="modern_settings_dictionary_contacts_permission_denied">未授予联系人访问权限</string>
     <string name="modern_settings_dictionary_clear_title">清除用户词典</string>
     <string name="modern_settings_dictionary_clear_summary">永久清除用户词典中已经学习的字词</string>
-    <string name="modern_settings_dictionary_clear_in_progress">正在清除用户词典…</string>
+    <string name="modern_settings_dictionary_clear_in_progress">正在清除用户词典……</string>
     <string name="modern_settings_dictionary_clear_confirm_title">清除用户词典？</string>
     <string name="modern_settings_dictionary_clear_confirm_message">此操作无法撤销。请输入 %1$s 以确认。</string>
     <string name="modern_settings_dictionary_clear_code_label">确认数字</string>
