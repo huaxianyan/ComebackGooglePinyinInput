@@ -37,7 +37,7 @@ PowerShell：
 980fd0f4695f683648e6f7ab9a15a24732e8957b5b14b25d49af931176574bd7
 ```
 
-GitHub Actions 在每次构建前也会校验固定 SHA-256；不匹配时立即停止。
+GitHub Actions 在每次构建前也会校验固定 SHA-256，不匹配时立即停止。
 
 ## 正式兼容包的身份边界
 
@@ -51,4 +51,4 @@ Application ID: com.google.android.inputmethod.pinyin.compat
 
 ## 权利说明
 
-原始程序、资源、词库、Google 名称、标志和相关商标的权利归 Google LLC、Google Inc. 或其各自权利人所有。原始 APK 保持其原有版权状态；本仓库收录它不改变任何权利归属。
+原始程序、资源、词库、Google 名称、标志和相关商标的权利归 Google LLC、Google Inc. 或其各自权利人所有。原始 APK 保持其原有版权状态，本仓库收录它不改变任何权利归属。

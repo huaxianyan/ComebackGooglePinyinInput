@@ -36,7 +36,7 @@ public final class LocalBackupImportActivity extends Activity
     }
 
     private void showBackups() {
-        Toast.makeText(this, "正在读取备份目录…", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "正在读取备份目录……", Toast.LENGTH_SHORT).show();
         DictionaryAutoBackupCompat.listBackupsAsync(this, this);
     }
 

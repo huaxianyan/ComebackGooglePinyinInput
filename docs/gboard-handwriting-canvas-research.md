@@ -182,7 +182,7 @@ Gboard 另有 `LowLatencyHandwritingOverlayView`，用于现代 stylus/系统手
 
 ### 可改进但非故障
 
-1. `ayc` 仍调用带 `Region.Op.INTERSECT` 参数的 deprecated overload；Gboard 使用无 Region.Op 的 `clipRect(RectF)`。
+1. `ayc` 仍调用带 `Region.Op.INTERSECT` 参数的 deprecated overload。Gboard 使用无 Region.Op 的 `clipRect(RectF)`。
 2. `aye` 与 `HandwritingOverlayView` 两处 full-bounds clear 没有 save/restore，虽当前 clip 为完整 bounds，状态管理不完全对称。
 3. 第六处 `GestureOverlayView$a` 属于滑行轨迹而非手写；它原本已有 save/restore，只需保留 INTERSECT 替换。
 4. 16 KiB page-size 只关系后续 JNI/native 库验证，与 Canvas 修复无关。
@@ -211,4 +211,4 @@ Gboard 另有 `LowLatencyHandwritingOverlayView`，用于现代 stylus/系统手
 3. 为 `HandwritingOverlayView` 清屏/重放路径增加 save/restore，仅包围 full-bounds clip + CLEAR，再执行旧 stroke 重放
 4. 不修改 gesture overlay、绘制算法、Bitmap、MotionEvent 或 JNI。
 
-V36 没有改变绘制算法、Bitmap、MotionEvent、pressure、Stroke 或 JNI。APK 已通过 apktool 重建、zipalign、v1/v2/v3 签名校验并覆盖安装；待项目维护者验证首笔、连续多笔、多字识别、笔迹清除/淡出和候选上屏。
+V36 没有改变绘制算法、Bitmap、MotionEvent、pressure、Stroke 或 JNI。APK 已通过 apktool 重建、zipalign、v1/v2/v3 签名校验并覆盖安装。待项目维护者验证首笔、连续多笔、多字识别、笔迹清除/淡出和候选上屏。

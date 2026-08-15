@@ -14,7 +14,7 @@
 - 不注册 Worker、Job、Alarm、BroadcastReceiver 或文件观察器
 - 不写入新的状态缓存
 - 离开页面后通过 generation token 丢弃迟到的 UI 回调
-- 点击状态行可以手动重新检查；正在检查时忽略重复点击。
+- 点击状态行可以手动重新检查，正在检查时忽略重复点击。
 
 所有文件和 native accessor 查询都在单线程 IO executor 执行，结果只在主线程更新 Preference summary。
 

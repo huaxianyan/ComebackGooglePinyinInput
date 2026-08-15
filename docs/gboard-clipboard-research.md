@@ -37,7 +37,7 @@ Gboard 的剪贴板建议**不是向 IME 根视图或键盘区域临时添加覆
 2. 模块结束时移除监听器，并清理 AutoPasteSuggestionHelper、EditorInfo 和输入会话对象。
 3. `onPrimaryClipChanged()` 不直接操作 View，而是刷新结构化的剪贴板数据集合。
 4. 只有设置项 `enable_auto_paste_chips` 开启时才创建 `AutoPasteSuggestionHelper`。
-5. helper 保存当前 `EditorInfo`、输入会话和候选宿主接口；输入会话结束时统一撤下 suggestion model。
+5. helper 保存当前 `EditorInfo`、输入会话和候选宿主接口。输入会话结束时统一撤下 suggestion model。
 6. 最近项目通过时间戳去重；AutoPasteSuggestionHelper 内还定义了 2 分钟的有效期，并记录最后点击 chip 的时间戳。
 
 ## 安全和输入框过滤

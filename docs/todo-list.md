@@ -10,7 +10,7 @@
 - [x] 完成长文本摘要、居中布局、圆角边框、前置剪贴板图标和 Material 凸起阴影的 Gboard 风格交互迭代
 - [x] 真机验证动态剪贴板候选、完整文本上屏及点击去重
 - [x] V15 真机确认最终剪贴板候选视觉和功能符合预期：最大宽度 `200dp + 2 × 21sp em`、图标距左 divider 10 dp/距文字 6 dp、组合居中、END ellipsis 和回收清理均正常
-- [x] 验证中英文模式每次只显示一个剪贴板候选并保持居中；连续复制新内容不再保留旧兼容候选
+- [x] 验证中英文模式每次只显示一个剪贴板候选并保持居中，连续复制新内容不再保留旧兼容候选
 - [ ] 验证关闭按钮反馈严格遵循按键音、振动、音量和振动时长设置
 - [ ] 隔离验证候选状态机：开始输入立即隐藏剪贴板且不混入第一候选，提交/取消并回到无候选后自动恢复，输入中复制新内容不打断正常候选
 - [ ] 干净安装验证：完成进入 Google 拼音设置页、不会先显示无提示默认 26 键、下一个普通文本字段首次即显示带提示的四布局 Dashboard
@@ -26,7 +26,7 @@
 - [x] 修正页面指示器的选中/未选中视觉状态
 - [x] 优化已完成步骤的圆形勾选状态
 - [x] V38 完成/第一页返回时显式回桌面；其他页面返回上一页，不再露出应用设置
-- [x] V38 移除完成勾号的多余圆底；逐页返回和完成退出已通过真机验证
+- [x] V38 移除完成勾号的多余圆底，逐页返回和完成退出已通过真机验证
 - [x] V39 移除 PageIndicator、禁止触摸滑页，改用上一步/下一步显式导航和完成状态门控
 - [x] V40 将完成按钮统一移动到 footer 右下角的下一步位置，并通过完整三页流程真机验证
 - [x] 将 `HAD_FIRST_RUN` / `USER_SELECTED_KEYBOARD` 从跨安装恢复状态中规范化，最终完成值在退出前同步持久化
@@ -38,7 +38,7 @@
 - [x] 调整候选与符号翻页容器，在滑动结束前发送取消事件，避免松手误选
 - [x] 对照 Gboard 调查 ScrollView、分页候选、RecyclerView、ViewPager 与外层 SoftKeyboardView 的显式滚动取消协议
 - [x] V32 将分页辅助类 `aws` 接入 `ScrollTouchCompat` 外层取消桥，保持原生 pager/fling 参数不变
-- [x] V32 真机复测未发现误选或点击回归；候选展开与左侧竖向列表滑动正常
+- [x] V32 真机复测未发现误选或点击回归，候选展开与左侧竖向列表滑动正常
 - [x] 将全键盘符号/表情横向 pager 手感拆分为独立任务，并对照 Gboard ViewPager2/RecyclerView 调查旧 `lk` 的 slop、25 dp fling distance、minimum velocity 与 50% settle
 - [x] V33 诊断确认 30 次手势的旧 25 dp final-delta 全为 0，fling 分支完全不可达；21 次回弹中 16 次速度已超过 minimum
 - [x] V34 真机确认单指可轻松左右翻页且无已知回归；V35 已移除临时诊断，只保留验证通过的局部 fling 修复
@@ -132,7 +132,7 @@
 - [x] 正式 ID 候选已完成一轮简单功能测试，未发现功能问题；词典备份、真实清除、健康归零和恢复闭环通过
 - [x] 设置首页正式文案已改为「Google 拼音输入法设置」（英文为「Google Pinyin Input settings」），并移除已经完成使命的「官方 Compose Material 3 · 分阶段写入验证」说明；Verifier 禁止该验证文案重新进入正式首页。完整隔离构建、60 项单元测试、6,633 资源 ID 和 API 31/33/34/35/36 门禁通过，未覆盖当前正式候选，仍不发布并等待下一项计划功能
 - [x] 正式 `v2.0.1` 已创建签名 Tag 和 GitHub Release；Release APK 与 Actions Artifact、设备安装 `base.apk` 逐字节一致，SHA-256 为 `09061687ca67cce5879323207d2b876d90a00bbd621d96167ce9ae695ae95b1c`，正式签名身份、v1/v2/v3 和 16 KiB ZIP alignment 复核通过
-- [x] 统一键盘 Header 与敏感剪贴板候选已在隔离分支完成全键盘、浅色/深色、密码/PIN 脱敏、完整 payload 提交、关闭和无崩溃验收；提交 `8902e1f` 的 Actions run `31414951727` 全部门禁通过且只生成 Artifact
+- [x] 统一键盘 Header 与敏感剪贴板候选已在隔离分支完成全键盘、浅色/深色、密码/PIN 脱敏、完整 payload 提交、关闭和无崩溃验收。提交 `8902e1f` 的 Actions run `31414951727` 全部门禁通过且只生成 Artifact
 - [x] `v2.0.2` 正式候选由 `master` Actions run `31418998015` 从提交 `39510e5` 完整构建：Compose 测试、API 31/33/34/35/36、统一 Header、敏感剪贴板、6,633 旧资源 ID、v1/v2/v3、正式证书、16 KiB ZIP alignment 和双构建一致性全部通过。APK 为 27,550,386 bytes，SHA-256 为 `c94a12a4ea3e1f06f49dd91f127b64f02da44a5d8d3577f3db6706022026a9a9`；正式包已从 `2.0.1` 覆盖安装到 Pixel 10 Pro，默认输入法保持正式 `PinyinIME`，设备 `base.apk` 与 Artifact 逐字节一致，`headeraudit` 和敏感剪贴板测试器已卸载
 - [x] 完成 Android 官方 Inline Suggestions 协议、Gboard `17.8.4` 当前公开 APK 及 HeliBoard/FlorisBoard/AnySoftKeyboard 的静态交叉研究，形成 `docs/gboard-inline-autofill-research.md`；确认 IME 只声明 presentation spec 并托管远端 `InlineContentView`，看不到或提交 Autofill payload，现有统一 Header 需增加独立 Surface 裁剪 host 而不能把 Autofill 转换成原生文字 Candidate
 - [x] `feat/inline-autofill` 阶段 A：声明标准 Inline Suggestions 能力，建立 API 30+ 窄桥和独立 `InlineAutofillCompat`，请求 3 个有界 presentation spec 且最多 3 项建议；尚无 Surface host 时不读取 response 数量、元数据或正文，只推进 generation 并返回未处理。输入视图开始/结束及服务销毁均使 generation 失效；源码编译、最终 DEX 窄桥、API 17–29 SDK 门控和隐私边界已加入静态门禁。提交 `10e45f5` 的 Actions run `31454668628` 已通过 Compose 测试、API 31/33/34/35/36、6,633 个旧资源 ID、签名、16 KiB alignment 和双构建一致性门禁，仅上传隔离 Artifact，未创建 Release
@@ -141,12 +141,12 @@
 - [x] `feat/header-platform` 完成阶段 B 及平台化真机验收：Pixel 10 Pro / API 36 验证 0/1/多项、Framework 点击填充、稳定 rails、局部坐标 Surface 裁剪、字段/网页/Header/方向切换、Clipboard Candidate 接管与恢复、Bitwarden 解锁/认证 Activity 往返、主题和完整 Compose 组合包；诊断不采集凭据、Clipboard/Candidate/Provider 正文。详见 `docs/header-platform-runtime-acceptance.md`
 - [x] Inline Autofill 按键反馈已完成 Gboard 静态追踪和 Pixel 10 Pro / API 36 隔离验收：外层触摸包装层无法观察远端 Surface 的完整手势，但 Framework 会向直接注册在 `InlineContentView` 上的 `OnClickListener` 报告点击完成。正式实现仅在当前、可见、启用且未释放的远端建议及两个有效 rails 上调用原生 `aue`，不读取或提交 Provider payload。Bitwarden 填充正常，维护者调高后的按键音量和振动时长均反映到实际反馈
 - [x] 首次引导后续按钮禁用态对比度修复：第二步和完成按钮在前置条件未满足时使用透明容器、1 dp outline 和 outline role 文字，不再与步骤卡片背景融合。隔离 release-like 审计包通过浅色、深色视觉验收，状态机和启用态切换保持不变
-- [ ] Inline Autofill TalkBack touch-exploration 独立验收；完成前继续不声明 `supportsInlineSuggestionsWithTouchExploration`
-- [ ] 在可用 ARM64 API 17–29 环境补做旧 ART 启动；当前 API 17 静态-only、API 23 环境阻塞结论保持不变
+- [ ] Inline Autofill TalkBack touch-exploration 独立验收，完成前继续不声明 `supportsInlineSuggestionsWithTouchExploration`
+- [ ] 在可用 ARM64 API 17–29 环境补做旧 ART 启动，当前 API 17 静态-only、API 23 环境阻塞结论保持不变
 
 ## 测试约定
 
-- 编码代理负责构建、签名和安装 APK；功能验证、真机操作检查和回归测试由项目维护者执行。
+- 编码代理负责构建、签名和安装 APK，功能验证、真机操作检查和回归测试由项目维护者执行。
 
 ## 已完成
 

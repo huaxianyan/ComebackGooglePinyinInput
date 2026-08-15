@@ -123,7 +123,7 @@ Android 官方 SAF 文档：
 - rename（发布完整备份）
 - delete（失败清理和版本轮换）。
 
-APK 的 minSdk 仍为 17，而 tree picker 从 API 21 才可用。实现必须有 `SDK_INT >= 21` 保护；API 17–20 隐藏或禁用自动备份设置。
+APK 的 minSdk 仍为 17，而 tree picker 从 API 21 才可用。实现必须有 `SDK_INT >= 21` 保护。API 17–20 隐藏或禁用自动备份设置。
 
 Android 11+ 不允许选择内部存储根目录、Download 根目录、`Android/data` 或 `Android/obb`。应引导用户建立普通子目录，优先建议 `Documents/GooglePinyinBackup`。
 
@@ -220,8 +220,8 @@ Android 11+ 不允许选择内部存储根目录、Download 根目录、`Android
 
 推荐触发点：
 
-- `PinyinIME.a()` 已依次提交中文、英文 `launchTaskIfNeeded()`；在两次调用之后检查自动备份是否到期
-- `PinyinIME.h()` 已依次执行中文、英文 `saveDictionaryNow()`；在两次调用之后检查自动备份是否到期
+- `PinyinIME.a()` 已依次提交中文、英文 `launchTaskIfNeeded()`，在两次调用之后检查自动备份是否到期
+- `PinyinIME.h()` 已依次执行中文、英文 `saveDictionaryNow()`，在两次调用之后检查自动备份是否到期
 - 设置页完成首次目录配置后立即执行一次
 - 用户点击「立即备份」时强制执行一次。
 
@@ -237,8 +237,8 @@ Android 11+ 不允许选择内部存储根目录、Download 根目录、`Android
 
 到期条件：
 
-- `lastSuccess <= 0`；或
-- `now < lastSuccess`（系统时钟回拨）；或
+- `lastSuccess <= 0`
+- `now < lastSuccess`（系统时钟回拨）
 - `now - lastSuccess >= interval`。
 
 普通失败后至少退避 1 小时，避免每次显示键盘都重复失败。「立即备份」可绕过退避。
@@ -266,7 +266,7 @@ shared lock
 
 实现方式可以是：
 
-- 将 `SaveDictionaryTask.sSaveLock` 改为 exporter 可访问的共享锁；或
+- 将 `SaveDictionaryTask.sSaveLock` 改为 exporter 可访问的共享锁，或
 - 把锁迁移到独立 `DictionaryIoCompat`。
 
 不修改 native Trie、学习权重或保存格式。
@@ -408,7 +408,7 @@ XML 中相关 Preference 全部设为 `android:persistent="false"`，由 `Dictio
 - 使用任务 key `user_dict_auto_backup` 向 `aib` 提交 `beg`
 - 在 listener 中处理校验、rename、状态和轮换
 - 清理失败或过期 partial
-- 不直接访问网络；选择云端位置时 DocumentsProvider 可执行网络 I/O
+- 不直接访问网络。选择云端位置时 DocumentsProvider 可执行网络 I/O
 - 不扫描词库并自动恢复
 - 不调用 importer。
 
@@ -482,7 +482,7 @@ PinyinIME 进入保存检查
 - 清空、回滚或修改当前用户词典
 - 弹出打断输入的 Dialog/Toast
 - 持续高频重试
-- 由应用自身发起网络请求；云端 provider 的网络行为由对应存储应用负责。
+- 由应用自身发起网络请求。云端 provider 的网络行为由对应存储应用负责。
 
 错误写入偏好和日志，在设置页显示。只有用户点击「立即备份」时可以显示一次明确结果。
 
@@ -574,7 +574,7 @@ PinyinIME 进入保存检查
 - Android 系统执行应用数据 restore 时，不会重建独立的本地备份配置文件
 - 新装后的自动备份开关保持关闭，也不会扫描旧目录
 - 新装无需旧 URI grant，也能通过现有 import picker 读取文件
-- 设备本地目录不产生云端 I/O；选择云端 provider 时网络行为仅发生在对应存储应用中。
+- 设备本地目录不产生云端 I/O。选择云端 provider 时，网络行为仅发生在对应存储应用中。
 
 ### 导出内容
 
