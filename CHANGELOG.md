@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+## [2.0.8] - 2026-08-17
+
+本版本修复电话类型输入框加载 `DialKeyboard` 时的 ART 类链接崩溃，并完成第二轮中文文案复审。输入法原有电话键盘行为、统一 Header 候选控制和无障碍说明保持不变。
+
+### Fixed
+
+- 修复 `DialKeyboard` 改为继承 `PrimeKeyboard` 后，因两个类同时声明 `final a(JJ)V` 而触发的 `LinkageError`。APK 虽能正常构建，但 ART 在首次加载电话键盘类时会拒绝非法覆盖并终止输入法进程
+- 仅移除 `PrimeKeyboard.a(JJ)V` 的 `final` 修饰符，保留 `DialKeyboard` 的原有覆盖。运行时调用链继续依次执行 `Keyboard` 委托通知、`PrimeKeyboard` 候选控制器更新和 `DialKeyboard` 电话键盘专用状态处理
+
 ### Changed
 
 - 按项目中文文案规范复审文档、历史 Changelog、版本化 Release Notes 和软件界面文本，修正行内代码间距、中文省略号、普通分号、箭头及部分不自然的斜线并列
@@ -9,7 +18,9 @@
 
 ### Build
 
+- 扩展统一 Header 静态门禁，要求 `PrimeKeyboard.a(JJ)V` 可由 `DialKeyboard` 覆盖，同时确认电话键盘仍继承候选型父类并保留自己的状态回调
 - 扩展中文文案静态门禁，新增行内代码边界、六点省略号和 Smali 中文文本检查
+- Pixel 10 Pro / Android 16 隔离审计确认电话、普通数字、数字密码和日期时间输入框均可正常呼出键盘。审计输入法进程保持存活，crash buffer 和 `AndroidRuntime` 错误为空，未出现 `LinkageError` 或 `FATAL EXCEPTION`
 
 ## [2.0.7] - 2026-08-14
 
