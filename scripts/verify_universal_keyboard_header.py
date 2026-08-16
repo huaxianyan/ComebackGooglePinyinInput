@@ -151,12 +151,26 @@ def main() -> None:
         "smali/com/google/android/apps/inputmethod/libs/framework/keyboard/"
         "DialKeyboard.smali"
     )
+    prime_keyboard = decoded / (
+        "smali/com/google/android/apps/inputmethod/libs/framework/keyboard/"
+        "PrimeKeyboard.smali"
+    )
     dial_text = dial_keyboard.read_text(encoding="utf-8")
+    prime_text = prime_keyboard.read_text(encoding="utf-8")
+    require(
+        ".method protected a(JJ)V" in prime_text
+        and ".method protected final a(JJ)V" not in prime_text,
+        "PrimeKeyboard state callback is still final",
+    )
     require(
         ".super Lcom/google/android/apps/inputmethod/libs/framework/keyboard/"
         "PrimeKeyboard;" in dial_text
         and "PrimeKeyboard;-><init>()V" in dial_text,
         "DialKeyboard does not preserve phone behavior on a candidate-capable base",
+    )
+    require(
+        ".method protected final a(JJ)V" in dial_text,
+        "DialKeyboard phone-state callback is missing",
     )
 
     for variants in PASSWORD_KEYBOARDS:

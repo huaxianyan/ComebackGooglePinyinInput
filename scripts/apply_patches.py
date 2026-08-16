@@ -401,6 +401,18 @@ def apply(
         )
         replace_once(keyboard_xml, original_body, password_body)
 
+    # DialKeyboard is re-parented to PrimeKeyboard below and already overrides
+    # this state callback, so the inherited method must not remain final.
+    prime_keyboard = decoded / (
+        "smali/com/google/android/apps/inputmethod/libs/framework/keyboard/"
+        "PrimeKeyboard.smali"
+    )
+    replace_once(
+        prime_keyboard,
+        ".method protected final a(JJ)V",
+        ".method protected a(JJ)V",
+    )
+
     # DialKeyboard owns phone-specific accessibility announcements. Preserve
     # those overrides while inheriting the same candidate controller used by
     # PrimeKeyboard, instead of replacing the XML class with a generic type.
