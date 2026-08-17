@@ -6,6 +6,10 @@
 # static fields
 .field private static final KEYBOARD_HEADER_HEIGHT:I = 0x7f0d00a9
 
+.field private static attachedView:Lcom/google/android/inputmethod/pinyin/PasswordBodyView;
+
+.field private static passwordEditor:Z
+
 
 # instance fields
 .field private expanded:Z
@@ -17,129 +21,230 @@
 .method public constructor <init>(Landroid/content/Context;)V
     .registers 2
 
-    .line 17
     invoke-direct {p0, p1}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyboardView;-><init>(Landroid/content/Context;)V
 
-    .line 18
     return-void
 .end method
 
 .method public constructor <init>(Landroid/content/Context;Landroid/util/AttributeSet;)V
     .registers 3
 
-    .line 21
     invoke-direct {p0, p1, p2}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyboardView;-><init>(Landroid/content/Context;Landroid/util/AttributeSet;)V
 
-    .line 22
+    return-void
+.end method
+
+.method private collapse()V
+    .registers 3
+
+    iget-boolean v0, p0, Lcom/google/android/inputmethod/pinyin/PasswordBodyView;->expanded:Z
+
+    if-eqz v0, :done
+
+    invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/PasswordBodyView;->getLayoutParams()Landroid/view/ViewGroup$LayoutParams;
+
+    move-result-object v0
+
+    if-eqz v0, :reset
+
+    iget v1, p0, Lcom/google/android/inputmethod/pinyin/PasswordBodyView;->originalHeight:I
+
+    iput v1, v0, Landroid/view/ViewGroup$LayoutParams;->height:I
+
+    invoke-virtual {p0, v0}, Lcom/google/android/inputmethod/pinyin/PasswordBodyView;->setLayoutParams(Landroid/view/ViewGroup$LayoutParams;)V
+
+    :reset
+    const/4 v0, 0x0
+
+    iput-boolean v0, p0, Lcom/google/android/inputmethod/pinyin/PasswordBodyView;->expanded:Z
+
+    :done
+    return-void
+.end method
+
+.method private static isPasswordEditor(Landroid/view/inputmethod/EditorInfo;)Z
+    .registers 5
+
+    const/4 v0, 0x0
+
+    if-eqz p0, :done
+
+    iget v1, p0, Landroid/view/inputmethod/EditorInfo;->inputType:I
+
+    and-int/lit8 v2, v1, 0xf
+
+    and-int/lit16 v1, v1, 0xff0
+
+    const/4 v3, 0x1
+
+    if-ne v2, v3, :number
+
+    const/16 v2, 0x80
+
+    if-eq v1, v2, :password
+
+    const/16 v2, 0x90
+
+    if-eq v1, v2, :password
+
+    const/16 v2, 0xe0
+
+    if-ne v1, v2, :done
+
+    :password
+    const/4 v0, 0x1
+
+    return v0
+
+    :number
+    const/4 v3, 0x2
+
+    if-ne v2, v3, :done
+
+    const/16 v2, 0x10
+
+    if-ne v1, v2, :done
+
+    const/4 v0, 0x1
+
+    :done
+    return v0
+.end method
+
+.method private updateHeight()V
+    .registers 4
+
+    sget-boolean v0, Lcom/google/android/inputmethod/pinyin/PasswordBodyView;->passwordEditor:Z
+
+    if-eqz v0, :collapse
+
+    invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/PasswordBodyView;->isShown()Z
+
+    move-result v0
+
+    if-eqz v0, :collapse
+
+    invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/PasswordBodyView;->getWindowVisibility()I
+
+    move-result v0
+
+    if-nez v0, :collapse
+
+    iget-boolean v0, p0, Lcom/google/android/inputmethod/pinyin/PasswordBodyView;->expanded:Z
+
+    if-nez v0, :done
+
+    invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/PasswordBodyView;->getLayoutParams()Landroid/view/ViewGroup$LayoutParams;
+
+    move-result-object v0
+
+    if-eqz v0, :done
+
+    iget v1, v0, Landroid/view/ViewGroup$LayoutParams;->height:I
+
+    if-lez v1, :done
+
+    iput v1, p0, Lcom/google/android/inputmethod/pinyin/PasswordBodyView;->originalHeight:I
+
+    invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/PasswordBodyView;->getResources()Landroid/content/res/Resources;
+
+    move-result-object v1
+
+    const v2, 0x7f0d00a9
+
+    invoke-virtual {v1, v2}, Landroid/content/res/Resources;->getDimensionPixelSize(I)I
+
+    move-result v1
+
+    iget v2, p0, Lcom/google/android/inputmethod/pinyin/PasswordBodyView;->originalHeight:I
+
+    add-int/2addr v1, v2
+
+    iput v1, v0, Landroid/view/ViewGroup$LayoutParams;->height:I
+
+    invoke-virtual {p0, v0}, Lcom/google/android/inputmethod/pinyin/PasswordBodyView;->setLayoutParams(Landroid/view/ViewGroup$LayoutParams;)V
+
+    const/4 v0, 0x1
+
+    iput-boolean v0, p0, Lcom/google/android/inputmethod/pinyin/PasswordBodyView;->expanded:Z
+
+    return-void
+
+    :collapse
+    invoke-direct {p0}, Lcom/google/android/inputmethod/pinyin/PasswordBodyView;->collapse()V
+
+    :done
+    return-void
+.end method
+
+.method public static setEditorInfo(Landroid/view/inputmethod/EditorInfo;)V
+    .registers 2
+
+    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/PasswordBodyView;->isPasswordEditor(Landroid/view/inputmethod/EditorInfo;)Z
+
+    move-result v0
+
+    sput-boolean v0, Lcom/google/android/inputmethod/pinyin/PasswordBodyView;->passwordEditor:Z
+
+    sget-object v0, Lcom/google/android/inputmethod/pinyin/PasswordBodyView;->attachedView:Lcom/google/android/inputmethod/pinyin/PasswordBodyView;
+
+    if-eqz v0, :done
+
+    invoke-direct {v0}, Lcom/google/android/inputmethod/pinyin/PasswordBodyView;->updateHeight()V
+
+    :done
     return-void
 .end method
 
 
 # virtual methods
 .method protected onAttachedToWindow()V
-    .registers 5
+    .registers 1
 
-    .line 25
     invoke-super {p0}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyboardView;->onAttachedToWindow()V
 
-    .line 26
-    iget-boolean v0, p0, Lcom/google/android/inputmethod/pinyin/PasswordBodyView;->expanded:Z
+    sput-object p0, Lcom/google/android/inputmethod/pinyin/PasswordBodyView;->attachedView:Lcom/google/android/inputmethod/pinyin/PasswordBodyView;
 
-    if-eqz v0, :cond_8
+    invoke-direct {p0}, Lcom/google/android/inputmethod/pinyin/PasswordBodyView;->updateHeight()V
 
-    .line 27
-    return-void
-
-    .line 29
-    :cond_8
-    invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/PasswordBodyView;->getLayoutParams()Landroid/view/ViewGroup$LayoutParams;
-
-    move-result-object v0
-
-    .line 30
-    if-eqz v0, :cond_2e
-
-    iget v1, v0, Landroid/view/ViewGroup$LayoutParams;->height:I
-
-    if-gtz v1, :cond_13
-
-    goto :goto_2e
-
-    .line 33
-    :cond_13
-    iget v1, v0, Landroid/view/ViewGroup$LayoutParams;->height:I
-
-    iput v1, p0, Lcom/google/android/inputmethod/pinyin/PasswordBodyView;->originalHeight:I
-
-    .line 34
-    iget v1, p0, Lcom/google/android/inputmethod/pinyin/PasswordBodyView;->originalHeight:I
-
-    .line 35
-    invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/PasswordBodyView;->getResources()Landroid/content/res/Resources;
-
-    move-result-object v2
-
-    const v3, 0x7f0d00a9
-
-    invoke-virtual {v2, v3}, Landroid/content/res/Resources;->getDimensionPixelSize(I)I
-
-    move-result v2
-
-    add-int/2addr v1, v2
-
-    iput v1, v0, Landroid/view/ViewGroup$LayoutParams;->height:I
-
-    .line 36
-    invoke-virtual {p0, v0}, Lcom/google/android/inputmethod/pinyin/PasswordBodyView;->setLayoutParams(Landroid/view/ViewGroup$LayoutParams;)V
-
-    .line 37
-    const/4 v0, 0x1
-
-    iput-boolean v0, p0, Lcom/google/android/inputmethod/pinyin/PasswordBodyView;->expanded:Z
-
-    .line 38
-    return-void
-
-    .line 31
-    :cond_2e
-    :goto_2e
     return-void
 .end method
 
 .method protected onDetachedFromWindow()V
-    .registers 3
+    .registers 2
 
-    .line 41
-    iget-boolean v0, p0, Lcom/google/android/inputmethod/pinyin/PasswordBodyView;->expanded:Z
+    invoke-direct {p0}, Lcom/google/android/inputmethod/pinyin/PasswordBodyView;->collapse()V
 
-    if-eqz v0, :cond_14
+    sget-object v0, Lcom/google/android/inputmethod/pinyin/PasswordBodyView;->attachedView:Lcom/google/android/inputmethod/pinyin/PasswordBodyView;
 
-    .line 42
-    invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/PasswordBodyView;->getLayoutParams()Landroid/view/ViewGroup$LayoutParams;
+    if-ne v0, p0, :detached
 
-    move-result-object v0
-
-    .line 43
-    if-eqz v0, :cond_11
-
-    .line 44
-    iget v1, p0, Lcom/google/android/inputmethod/pinyin/PasswordBodyView;->originalHeight:I
-
-    iput v1, v0, Landroid/view/ViewGroup$LayoutParams;->height:I
-
-    .line 45
-    invoke-virtual {p0, v0}, Lcom/google/android/inputmethod/pinyin/PasswordBodyView;->setLayoutParams(Landroid/view/ViewGroup$LayoutParams;)V
-
-    .line 47
-    :cond_11
     const/4 v0, 0x0
 
-    iput-boolean v0, p0, Lcom/google/android/inputmethod/pinyin/PasswordBodyView;->expanded:Z
+    sput-object v0, Lcom/google/android/inputmethod/pinyin/PasswordBodyView;->attachedView:Lcom/google/android/inputmethod/pinyin/PasswordBodyView;
 
-    .line 49
-    :cond_14
+    :detached
     invoke-super {p0}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyboardView;->onDetachedFromWindow()V
 
-    .line 50
+    return-void
+.end method
+
+.method protected onVisibilityChanged(Landroid/view/View;I)V
+    .registers 3
+
+    invoke-super {p0, p1, p2}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyboardView;->onVisibilityChanged(Landroid/view/View;I)V
+
+    invoke-direct {p0}, Lcom/google/android/inputmethod/pinyin/PasswordBodyView;->updateHeight()V
+
+    return-void
+.end method
+
+.method protected onWindowVisibilityChanged(I)V
+    .registers 2
+
+    invoke-super {p0, p1}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyboardView;->onWindowVisibilityChanged(I)V
+
+    invoke-direct {p0}, Lcom/google/android/inputmethod/pinyin/PasswordBodyView;->updateHeight()V
+
     return-void
 .end method
