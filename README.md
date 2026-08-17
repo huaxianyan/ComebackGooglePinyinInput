@@ -8,7 +8,7 @@
 
 ## 下载
 
-正式 APK 请从 [GitHub Releases](https://github.com/huaxianyan/comeback-google-pinyin-input/releases) 下载。
+正式 APK 请从 [GitHub Releases](https://github.com/huaxianyan/ComebackGooglePinyinInput/releases) 下载。
 
 ```text
 Application ID: com.google.android.inputmethod.pinyin.compat
@@ -40,7 +40,7 @@ target SDK:     36
 
 - Android 15/API 35 及以上使用源码构建的官方 Compose Material 3 设置界面，Android 14 及以下继续使用原版 Preference 设置。
 - 现代设置保留原 Preference key、类型、默认值、依赖和业务回调，并支持动态配色、RTL、大字体、横屏、分屏和 TalkBack 语义。
-- 「关于」页面提供当前项目的 [GitHub 仓库](https://github.com/huaxianyan/comeback-google-pinyin-input) 入口。
+- 「关于」页面提供当前项目的 [GitHub 仓库](https://github.com/huaxianyan/ComebackGooglePinyinInput) 入口。
 - 首次引导整理为同页完成「启用输入法」和「选择输入法」，避免旧权限页、失效统计和重复引导状态。
 
 ### 用户词典与隐私

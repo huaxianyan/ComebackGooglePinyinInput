@@ -7,7 +7,7 @@ import android.net.Uri
 /** Explicit entry points whose implementations remain in the legacy primary DEX. */
 internal object LegacySettingsNavigation {
     const val repositoryUrl =
-        "https://github.com/huaxianyan/comeback-google-pinyin-input"
+        "https://github.com/huaxianyan/ComebackGooglePinyinInput"
 
     const val themeSelectorActivity =
         "com.google.android.apps.inputmethod.libs.theme.preference.ThemeSelectorActivity"

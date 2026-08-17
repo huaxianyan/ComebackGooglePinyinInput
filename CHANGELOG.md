@@ -2,6 +2,25 @@
 
 ## [Unreleased]
 
+## [2.0.9] - 2026-08-17
+
+本版本修复拼音组合文本在部分选词后高度轻微变化的问题，并将软件内入口和项目首页更新到重命名后的 GitHub 仓库。Candidate、输入提交、学习和其他文本视图保持原有行为。
+
+### Fixed
+
+- 修复提高 target SDK 后，拼音组合文本从纯拉丁字母变为中英文混排时，fallback font 参与行高计算并使浮层轻微增高的问题
+- 仅在 `composing_text.xml` 中设置 `android:fallbackLineSpacing="false"`，恢复原版紧凑行高，不修改 Candidate、普通输入框或其他 `TextView`
+
+### Changed
+
+- 将 README 和 API 35+ 设置「关于」页面中的项目入口更新为重命名后的 [GitHub 仓库](https://github.com/huaxianyan/ComebackGooglePinyinInput)
+
+### Build
+
+- 扩展 Android 15 静态门禁，要求 `fallbackLineSpacing` 覆盖只能出现一次，并且只能位于拼音组合文本布局
+- 最终 APK 同时保留不含新属性的基础布局和包含该覆盖的版本化布局，API 17–21 继续使用原有资源
+- Pixel 10 Pro / Android 16 隔离审计确认输入 `zhe'yang'bu'xing` 并选择「这样」后，混合中英文浮层高度保持稳定，字形没有上下裁切。审计输入法进程保持存活，`crash buffer` 中没有匹配审计包的条目
+
 ## [2.0.8] - 2026-08-17
 
 本版本修复电话类型输入框加载 `DialKeyboard` 时的 ART 类链接崩溃，并完成第二轮中文文案复审。输入法原有电话键盘行为、统一 Header 候选控制和无障碍说明保持不变。
