@@ -88,6 +88,32 @@ def apply(
         '  xmlns:android="http://schemas.android.com/apk/res/android" />',
     )
 
+    # A newly added keyboard body can still be unmeasured when the legacy
+    # Dashboard switch animation runs. Complete the switch without animation
+    # instead of passing the zero-sized view to another animator in the chain.
+    replace_once(
+        decoded / "smali/aso.smali",
+        "    .line 64\n"
+        "    :cond_1\n"
+        "    invoke-virtual {p1}, Landroid/view/View;->getScaleX()F",
+        "    .line 64\n"
+        "    :cond_1\n"
+        "    invoke-virtual {p1}, Landroid/view/View;->getWidth()I\n\n"
+        "    move-result v0\n\n"
+        "    if-gtz v0, :check_height\n\n"
+        "    :unmeasured\n"
+        "    if-eqz p4, :unmeasured_done\n\n"
+        "    invoke-interface/range {p4 .. p4}, Ljava/lang/Runnable;->run()V\n\n"
+        "    :unmeasured_done\n"
+        "    const/4 v0, 0x1\n\n"
+        "    goto/16 :goto_0\n\n"
+        "    :check_height\n"
+        "    invoke-virtual {p1}, Landroid/view/View;->getHeight()I\n\n"
+        "    move-result v0\n\n"
+        "    if-lez v0, :unmeasured\n\n"
+        "    invoke-virtual {p1}, Landroid/view/View;->getScaleX()F",
+    )
+
     # Android 12 requires every PendingIntent to declare mutability. None of
     # these seven legacy tokens is modified by its recipient (no RemoteInput,
     # bubbles, fill-in data, or location callback), so preserve the existing
