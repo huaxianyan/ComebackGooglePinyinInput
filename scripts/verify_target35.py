@@ -14,7 +14,6 @@ from pathlib import Path
 FORBIDDEN_BASELINE_REFERENCES = {
     "windowOptOutEdgeToEdgeEnforcement": "temporary edge-to-edge opt-out",
     "elegantTextHeight": "speculative TextView height compensation",
-    "fallbackLineSpacing": "speculative TextView line-spacing compensation",
 }
 
 
@@ -42,6 +41,26 @@ def main() -> None:
             "Target 35 must keep the platform behavior unmasked:\n"
             + "\n".join(findings)
         )
+
+    expected_fallback = 'android:fallbackLineSpacing="false"'
+    fallback_references = []
+    for base, pattern in ((decoded / "smali", "*.smali"), (decoded / "res", "*.xml")):
+        for path in base.rglob(pattern):
+            text = path.read_text(encoding="utf-8", errors="ignore")
+            if "fallbackLineSpacing" in text:
+                fallback_references.append((path, text))
+    if len(fallback_references) != 1:
+        raise RuntimeError(
+            "Fallback line spacing override must appear exactly once:\n"
+            + "\n".join(str(path) for path, _ in fallback_references)
+        )
+    fallback_path, fallback_text = fallback_references[0]
+    if (
+        fallback_path.name != "composing_text.xml"
+        or not fallback_path.parent.name.startswith("layout")
+        or fallback_text.count(expected_fallback) != 1
+    ):
+        raise RuntimeError("Fallback line spacing override must remain composing-text-only")
 
     # These pre-existing AppCompat layouts/listeners are part of the legacy UI,
     # not new target-35 compensation. Keep them present for an attributable

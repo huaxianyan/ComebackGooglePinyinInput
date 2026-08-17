@@ -77,6 +77,17 @@ def apply(
             '<string name="ime_name_ref">Google 拼音输入法（测试版）</string>',
         )
 
+    # Keep the composing popup stable when a Latin pinyin run becomes mixed
+    # Chinese and Latin text under modern target-SDK font measurement.
+    replace_once(
+        decoded / "res/layout/composing_text.xml",
+        '<TextView android:id="@id/composing_text" style="@style/ComposingText"\n'
+        '  xmlns:android="http://schemas.android.com/apk/res/android" />',
+        '<TextView android:id="@id/composing_text" '
+        'android:fallbackLineSpacing="false" style="@style/ComposingText"\n'
+        '  xmlns:android="http://schemas.android.com/apk/res/android" />',
+    )
+
     # Android 12 requires every PendingIntent to declare mutability. None of
     # these seven legacy tokens is modified by its recipient (no RemoteInput,
     # bubbles, fill-in data, or location callback), so preserve the existing
