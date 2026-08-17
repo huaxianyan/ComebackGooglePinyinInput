@@ -91,7 +91,7 @@ def main() -> None:
     password_body_root = ET.parse(password_body_layout).getroot()
     require(
         password_body_root.tag == PASSWORD_BODY_VIEW,
-        "Password body does not use the height-preserving SoftKeyboardView subclass",
+        "Password body does not use its editor-aware SoftKeyboardView subclass",
     )
     password_body_text = password_body_layout.read_text(encoding="utf-8")
     for digit in range(10):
@@ -108,11 +108,9 @@ def main() -> None:
         and '@layout/keyboard_prime_bottom' in password_body_text
         and 'android:layout_weight="750.0"' in password_body_text
         and 'android:layout_weight="250.0"' in password_body_text,
-        "Password QWERTY and bottom rows do not preserve the formal v2.0.2 geometry",
+        "Password QWERTY and bottom rows do not preserve their accepted geometry",
     )
-    candidate_body_include = (
-        '@layout/keyboard_candidates_body_inner_no_deletable_label'
-    )
+    candidate_body_include = '@layout/keyboard_candidates_body_inner_no_deletable_label'
     for body_layout in (
         password_body_layout,
         decoded / "res/layout/keyboard_number_body.xml",
@@ -122,25 +120,38 @@ def main() -> None:
             candidate_body_include in body_layout.read_text(encoding="utf-8"),
             f"Prime candidate controller has no pageable body holder: {body_layout}",
         )
-    require(
-        'keyboard_password_body_height' not in password_body_text,
-        "Password Body bypasses the formal v2.0.2 post-scaling expansion contract",
-    )
     helper = decoded / "smali/com/google/android/inputmethod/pinyin/PasswordBodyView.smali"
     helper_text = helper.read_text(encoding="utf-8")
     for contract in (
+        ".field private static passwordEditor:Z",
+        ".method public static setEditorInfo(Landroid/view/inputmethod/EditorInfo;)V",
+        ".method private static isPasswordEditor(Landroid/view/inputmethod/EditorInfo;)Z",
         ".method protected onAttachedToWindow()V",
         ".method protected onDetachedFromWindow()V",
+        ".method protected onVisibilityChanged(Landroid/view/View;I)V",
+        ".method protected onWindowVisibilityChanged(I)V",
+        "const/16 v2, 0x90",
         "Resources;->getDimensionPixelSize(I)I",
         "ViewGroup$LayoutParams;->height:I",
         "->setLayoutParams(Landroid/view/ViewGroup$LayoutParams;)V",
     ):
         require(contract in helper_text,
-                f"Formal v2.0.2 password height contract is missing: {contract}")
+                f"Editor-aware password height contract is missing: {contract}")
+    pinyin_ime = decoded / "smali/com/google/android/inputmethod/pinyin/PinyinIME.smali"
+    pinyin_text = pinyin_ime.read_text(encoding="utf-8")
     require(
-        "onMeasure(II)V" not in helper_text
-        and "scaleFrameworkHeight" not in helper_text,
-        "Password Body retains an experimental height formula",
+        pinyin_text.count(
+            "PasswordBodyView;->setEditorInfo(Landroid/view/inputmethod/EditorInfo;)V"
+        ) == 2,
+        "Password height state is not bounded by start/finish input",
+    )
+    start_input = pinyin_text.split(
+        ".method public onStartInput(Landroid/view/inputmethod/EditorInfo;Z)V", 1
+    )[1].split(".end method", 1)[0]
+    require(
+        start_input.index("PasswordBodyView;->setEditorInfo")
+        < start_input.index("Labp;->onStartInput"),
+        "Password editor state is published after framework keyboard selection",
     )
 
     for variants in HEADERLESS_KEYBOARDS:
