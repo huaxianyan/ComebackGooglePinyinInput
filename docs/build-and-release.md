@@ -76,6 +76,7 @@ scripts/verify_target34.py
 scripts/verify_target35.py
 scripts/verify_target36.py
 scripts/verify_universal_keyboard_header.py
+scripts/verify_keyboard_switch_animation.py
 scripts/verify_inline_autofill.py
 scripts/test_header_platform.py
 scripts/test_sensitive_clipboard_compat.py
