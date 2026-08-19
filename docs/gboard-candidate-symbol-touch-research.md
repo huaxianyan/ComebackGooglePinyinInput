@@ -178,3 +178,18 @@ V32 已按最小方案修改 `aws`：
 旧 `lk` 的目标页判定是：拖动距离超过 25 dp 且速度超过系统 minimum fling velocity 时跨页；否则必须越过约 50% 页面才进入下一页。Gboard 的旧候选 pager `ckq` 保留了相同的 25 dp、minimum velocity 和 50% settle 规则，但现代 Gboard 表情分页已经迁移到 AndroidX `ViewPager2`/RecyclerView。仅把 50% 猜测性降低会偏离现有 Gboard 证据，并可能造成轻微横移时意外翻页。
 
 因此 V32 的误选修复可以独立保留；横向分页手感应作为旧 pager 现代化的独立任务，不与点击取消补丁混合。
+
+## 后续边界修正
+
+PR #6 在 Android 16 发现了 V32 的另一个边界：分页手势超过 paging touch slop 后，`aws` 虽然在 `lk.onTouchEvent()` 返回后才把当前事件改为 `ACTION_CANCEL`，但手指移出标点或符号分页区域再松开时，子分页仍可能丢失连续手势并回弹到当前页。
+
+修正继续保留 V32 的显式状态桥，但分离子分页和外层按键事件：
+
+- `aws` 在 MOVE 或 UP 确认超过 paging touch slop 时只调用 `ScrollTouchCompat.markScrolling()`
+- 不再修改传给分页 View 的 `MotionEvent`
+- `SoftKeyboardView` 先将原始事件完整分派给子 View
+- 标记滚动后，MOVE 和 UP 才在子 View 分派完成后改为 `ACTION_CANCEL`，并且只交给外层自定义按键管线
+- DOWN 和系统 CANCEL 继续重置共享滚动状态
+- 不修改 `lk` 的 slop、velocity、fling、12.5% settle 和目标页计算
+
+该修正同时作用于复用 `aws` 的分页候选和全键盘符号列表。合并前仍需覆盖区域内普通点击、区域外松手分页、展开候选分页、左右边界、快速 fling 和现有轻拖阈值，确认不恢复松手误选，也不改变已经验收的分页目标语义。
