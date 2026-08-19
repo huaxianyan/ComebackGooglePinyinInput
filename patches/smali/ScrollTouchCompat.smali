@@ -30,16 +30,31 @@
     return-void
 .end method
 
-.method public static cancelOuterRelease(Landroid/view/MotionEvent;)V
-    .locals 3
+.method public static cancelOuterKeyEvent(Landroid/view/MotionEvent;)V
+    .locals 2
 
     invoke-virtual {p0}, Landroid/view/MotionEvent;->getActionMasked()I
 
     move-result v0
 
-    if-nez v0, :check_up
+    if-nez v0, :check_move
 
     invoke-static {}, Lcom/google/android/inputmethod/pinyin/ScrollTouchCompat;->reset()V
+
+    return-void
+
+    :check_move
+    const/4 v1, 0x2
+
+    if-ne v0, v1, :check_up
+
+    sget-boolean v1, Lcom/google/android/inputmethod/pinyin/ScrollTouchCompat;->scrolling:Z
+
+    if-eqz v1, :done
+
+    const/4 v1, 0x3
+
+    invoke-virtual {p0, v1}, Landroid/view/MotionEvent;->setAction(I)V
 
     return-void
 
@@ -48,13 +63,13 @@
 
     if-ne v0, v1, :check_cancel
 
-    sget-boolean v2, Lcom/google/android/inputmethod/pinyin/ScrollTouchCompat;->scrolling:Z
+    sget-boolean v1, Lcom/google/android/inputmethod/pinyin/ScrollTouchCompat;->scrolling:Z
 
-    if-eqz v2, :reset
+    if-eqz v1, :reset
 
-    const/4 v2, 0x3
+    const/4 v1, 0x3
 
-    invoke-virtual {p0, v2}, Landroid/view/MotionEvent;->setAction(I)V
+    invoke-virtual {p0, v1}, Landroid/view/MotionEvent;->setAction(I)V
 
     goto :reset
 

@@ -1186,11 +1186,10 @@ def apply(
     # every genuine page swipe look like ACTION_CANCEL, forcing users to drag
     # beyond half a page before the page could change.
     #
-    # Android now gives the pageable holder a transformed MotionEvent copy, so
-    # aws cancelling only that copy does not reliably cancel SoftKeyboardView's
-    # custom key pipeline. Preserve aws' own CANCEL and additionally bridge its
-    # confirmed paging-touch-slop state to the outer event, matching Gboard's
-    # ohc -> rzb -> SoftKeyboardView cancellation protocol.
+    # Android now gives the pageable holder a transformed MotionEvent copy.
+    # Mutating that copy to CANCEL breaks the pager's own touch stream when the
+    # pointer leaves its bounds. Keep the event intact and explicitly bridge the
+    # confirmed paging state to SoftKeyboardView instead.
     pageable_touch = decoded / "smali/aws.smali"
     replace_once(
         pageable_touch,
@@ -1201,7 +1200,6 @@ def apply(
         "    .line 13\n"
         "    invoke-static {}, Lcom/google/android/inputmethod/pinyin/"
         "ScrollTouchCompat;->markScrolling()V\n\n"
-        "    invoke-virtual {p1, v2}, Landroid/view/MotionEvent;->setAction(I)V\n\n"
         "    goto :goto_0\n\n"
         "    .line 14\n",
     )
@@ -1214,7 +1212,6 @@ def apply(
         "    .line 17\n"
         "    invoke-static {}, Lcom/google/android/inputmethod/pinyin/"
         "ScrollTouchCompat;->markScrolling()V\n\n"
-        "    invoke-virtual {p1, v2}, Landroid/view/MotionEvent;->setAction(I)V\n\n"
         "    goto :goto_0\n\n"
         "    .line 5\n",
     )
@@ -1348,9 +1345,9 @@ def apply(
         "    if-nez p2, :cond_0",
     )
 
-    # Let the ScrollView receive the original UP first so it can calculate
-    # fling velocity. Only afterwards cancel the outer copy before the custom
-    # keyboard handler consumes it.
+    # Let the scrolling child receive each original event first. Once it has
+    # crossed touch slop, cancel only the outer custom key pipeline so it does
+    # not synthesize a new DOWN and break the child's touch target.
     soft_keyboard = decoded / (
         "smali/com/google/android/apps/inputmethod/libs/framework/keyboard/"
         "SoftKeyboardView.smali"
@@ -1366,9 +1363,9 @@ def apply(
         "    :cond_4\n"
         "    invoke-super {p0, p1}, Landroid/widget/FrameLayout;->dispatchTouchEvent("
         "Landroid/view/MotionEvent;)Z\n\n"
-        "    # Preserve ScrollView UP/fling, then cancel only the outer key event.\n"
+        "    # Preserve child scrolling, then cancel only the outer key event.\n"
         "    invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/"
-        "ScrollTouchCompat;->cancelOuterRelease(Landroid/view/MotionEvent;)V\n\n"
+        "ScrollTouchCompat;->cancelOuterKeyEvent(Landroid/view/MotionEvent;)V\n\n"
         "    .line 100",
     )
 
