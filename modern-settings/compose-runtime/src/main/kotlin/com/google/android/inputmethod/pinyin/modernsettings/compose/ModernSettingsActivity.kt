@@ -292,6 +292,9 @@ class ModernSettingsActivity : ComponentActivity() {
                             onPinyinSchemeChange = { index ->
                                 snapshot = controller.setPinyinSchemeIndex(index)
                             },
+                            onVoiceInputImeChange = { packageName ->
+                                snapshot = controller.setVoiceInputImePackage(packageName)
+                            },
                             onGestureInputEnabledChange = { enabled ->
                                 snapshot = controller.setGestureInputEnabled(enabled)
                             },

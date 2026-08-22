@@ -18,3 +18,4 @@ rootProject.name = "GooglePinyinModernSettings"
 include(":compose-runtime")
 include(":compose-integration-prototype")
 include(":reconstructed-host-prototype")
+include(":iflytek-voice-ime")

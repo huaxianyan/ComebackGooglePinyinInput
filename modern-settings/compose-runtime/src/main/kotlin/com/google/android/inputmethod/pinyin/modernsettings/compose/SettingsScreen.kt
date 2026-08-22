@@ -99,6 +99,7 @@ data class SettingsActions(
     val onVibrationEnabledChange: (Boolean) -> Unit,
     val onOneHandedModeChange: (Int) -> Unit,
     val onPinyinSchemeChange: (Int) -> Unit,
+    val onVoiceInputImeChange: (String) -> Unit,
     val onGestureInputEnabledChange: (Boolean) -> Unit,
     val onBooleanChange: (BooleanSettingContract, Boolean) -> Unit,
     val onVibrationCommit: (Int) -> Unit,

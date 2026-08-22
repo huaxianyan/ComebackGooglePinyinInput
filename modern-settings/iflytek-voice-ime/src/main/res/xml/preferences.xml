@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory android:title="@string/settings_service_category">
+        <EditTextPreference
+            android:dialogTitle="@string/settings_app_id_title"
+            android:key="app_id"
+            android:summary="@string/settings_app_id_summary"
+            android:title="@string/settings_app_id_title" />
+        <EditTextPreference
+            android:dialogTitle="@string/settings_api_key_title"
+            android:inputType="textPassword"
+            android:key="api_key"
+            android:summary="@string/settings_api_key_summary"
+            android:title="@string/settings_api_key_title" />
+        <EditTextPreference
+            android:dialogTitle="@string/settings_api_secret_title"
+            android:inputType="textPassword"
+            android:key="api_secret"
+            android:summary="@string/settings_api_secret_summary"
+            android:title="@string/settings_api_secret_title" />
+        <ListPreference
+            android:defaultValue="zh_cn"
+            android:entries="@array/language_entries"
+            android:entryValues="@array/language_values"
+            android:key="language"
+            android:summary="@string/settings_language_summary"
+            android:title="@string/settings_language_title" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="@string/settings_about_category">
+        <Preference
+            android:selectable="false"
+            android:summary="@string/settings_about_summary"
+            android:title="@string/settings_about_title" />
+    </PreferenceCategory>
+</PreferenceScreen>

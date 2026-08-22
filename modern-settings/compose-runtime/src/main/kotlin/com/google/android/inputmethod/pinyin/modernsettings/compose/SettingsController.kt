@@ -39,6 +39,9 @@ class SettingsController(
     fun setPinyinSchemeIndex(index: Int): SettingsSnapshot =
         repository.setPinyinSchemeIndex(index)
 
+    fun setVoiceInputImePackage(packageName: String): SettingsSnapshot =
+        repository.setVoiceInputImePackage(packageName)
+
     fun setGestureInputEnabled(enabled: Boolean): SettingsSnapshot =
         repository.setGestureInputEnabled(enabled)
 

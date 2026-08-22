@@ -246,6 +246,85 @@ def apply(
         "        <item>@layout/first_run_page_done</item>",
         "        <item>@layout/first_run_page_done</item>",
     )
+
+    # Let the user select a preferred installed voice IME. The legacy
+    # implementation otherwise picks the first Google voice subtype it finds.
+    # A missing selected package is cleared and falls back to that automatic
+    # search, which makes uninstalling the selected IME harmless.
+    voice_selector = decoded / "smali/gc.smali"
+    replace_once(
+        voice_selector,
+        ".method private static a(Lajy;Lanp;)Z\n"
+        "    .locals 6\n",
+        ".method private static a(Lajy;Lanp;)Z\n"
+        "    .locals 7\n",
+    )
+    replace_once(
+        voice_selector,
+        "    .line 1181\n"
+        "    invoke-virtual {p0}, Lajy;->a()Ljava/util/List;\n",
+        "    .line 1181\n"
+        "    iget-object v0, p0, Lajy;->a:Landroid/content/Context;\n\n"
+        "    invoke-static {v0}, Landroid/preference/PreferenceManager;->getDefaultSharedPreferences(Landroid/content/Context;)Landroid/content/SharedPreferences;\n\n"
+        "    move-result-object v0\n\n"
+        "    const-string v1, \"voice_input_ime_package\"\n\n"
+        "    const-string v3, \"\"\n\n"
+        "    invoke-interface {v0, v1, v3}, Landroid/content/SharedPreferences;->getString(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;\n\n"
+        "    move-result-object v6\n\n"
+        "    invoke-virtual {p0}, Lajy;->a()Ljava/util/List;\n",
+    )
+    replace_once(
+        voice_selector,
+        "    invoke-virtual {v0}, Landroid/view/inputmethod/InputMethodInfo;->getComponent()Landroid/content/ComponentName;\n\n"
+        "    move-result-object v1\n\n"
+        "    invoke-virtual {v1}, Landroid/content/ComponentName;->getPackageName()Ljava/lang/String;\n\n"
+        "    move-result-object v1\n\n"
+        "    const-string v3, \"com.google.android\"\n\n"
+        "    invoke-virtual {v1, v3}, Ljava/lang/String;->startsWith(Ljava/lang/String;)Z\n\n"
+        "    move-result v1\n\n"
+        "    if-eqz v1, :cond_0\n",
+        "    invoke-virtual {v0}, Landroid/view/inputmethod/InputMethodInfo;->getComponent()Landroid/content/ComponentName;\n\n"
+        "    move-result-object v1\n\n"
+        "    invoke-virtual {v1}, Landroid/content/ComponentName;->getPackageName()Ljava/lang/String;\n\n"
+        "    move-result-object v1\n\n"
+        "    invoke-virtual {v6}, Ljava/lang/String;->isEmpty()Z\n\n"
+        "    move-result v3\n\n"
+        "    if-eqz v3, :voice_selected_package\n\n"
+        "    const/4 v1, 0x1\n\n"
+        "    goto :voice_package_checked\n\n"
+        "    :voice_selected_package\n"
+        "    invoke-virtual {v1, v6}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z\n\n"
+        "    move-result v1\n\n"
+        "    :voice_package_checked\n"
+        "    if-eqz v1, :cond_0\n",
+    )
+    replace_once(
+        voice_selector,
+        "    :cond_3\n"
+        "    const/4 v0, 0x0\n\n"
+        "    goto :goto_0\n"
+        ".end method",
+        "    :cond_3\n"
+        "    invoke-virtual {v6}, Ljava/lang/String;->isEmpty()Z\n\n"
+        "    move-result v0\n\n"
+        "    if-nez v0, :voice_no_selection\n\n"
+        "    iget-object v0, p0, Lajy;->a:Landroid/content/Context;\n\n"
+        "    invoke-static {v0}, Landroid/preference/PreferenceManager;->getDefaultSharedPreferences(Landroid/content/Context;)Landroid/content/SharedPreferences;\n\n"
+        "    move-result-object v0\n\n"
+        "    invoke-interface {v0}, Landroid/content/SharedPreferences;->edit()Landroid/content/SharedPreferences$Editor;\n\n"
+        "    move-result-object v0\n\n"
+        "    const-string v1, \"voice_input_ime_package\"\n\n"
+        "    invoke-interface {v0, v1}, Landroid/content/SharedPreferences$Editor;->remove(Ljava/lang/String;)Landroid/content/SharedPreferences$Editor;\n\n"
+        "    move-result-object v0\n\n"
+        "    invoke-interface {v0}, Landroid/content/SharedPreferences$Editor;->apply()V\n\n"
+        "    invoke-static {p0, p1}, Lgc;->a(Lajy;Lanp;)Z\n\n"
+        "    move-result v0\n\n"
+        "    goto :goto_0\n\n"
+        "    :voice_no_selection\n"
+        "    const/4 v0, 0x0\n\n"
+        "    goto :goto_0\n"
+        ".end method",
+    )
     replace_once(
         arrays,
         "        <item>@layout/first_run_page_select_input_method</item>\n"
@@ -312,9 +391,26 @@ def apply(
         '    <CheckBoxPreference android:persistent="true" android:title="@string/setting_voice_input_title" android:key="@string/pref_key_enable_voice_input" />\n'
         '    <CheckBoxPreference android:persistent="true" android:title="@string/setting_show_english_keyboard_title"',
         '    <CheckBoxPreference android:persistent="true" android:title="@string/setting_voice_input_title" android:key="@string/pref_key_enable_voice_input" />\n'
+        '    <ListPreference android:persistent="true" android:title="@string/setting_voice_input_ime_title" android:key="@string/pref_key_voice_input_ime" android:summary="%s" android:defaultValue="@string/pref_def_value_voice_input_ime" android:dialogTitle="@string/setting_voice_input_ime_title" />\n'
         '    <CheckBoxPreference android:persistent="true" android:title="@string/setting_show_simplified_traditional_header_toggle_title" android:key="@string/pref_key_show_simplified_traditional_header_toggle" android:summary="@string/setting_show_simplified_traditional_header_toggle_summary" android:defaultValue="@bool/pref_def_value_show_simplified_traditional_header_toggle" />\n'
         '    <CheckBoxPreference android:persistent="true" android:title="@string/setting_show_english_keyboard_title"',
     )
+
+    strings = decoded / "res/values/strings.xml"
+    replace_once(
+        strings,
+        '<string name="pref_key_enable_voice_input">enable_voice_input</string>',
+        '<string name="pref_key_enable_voice_input">enable_voice_input</string>\n'
+        '    <string name="pref_key_voice_input_ime">voice_input_ime_package</string>\n'
+        '    <string name="pref_def_value_voice_input_ime">auto</string>\n',
+    )
+    replace_once(
+        strings,
+        '<string name="setting_voice_input_title">Show voice input button</string>',
+        '<string name="setting_voice_input_title">Show voice input button</string>\n'
+        '    <string name="setting_voice_input_ime_title">Voice input method</string>',
+    )
+    arrays = decoded / "res/values/arrays.xml"
     replace_once(
         arrays,
         '        <item>@string/pref_key_enable_voice_input</item>\n'
@@ -2988,6 +3084,21 @@ def apply(
         raise RuntimeError(f"Missing dictionary settings fragment: {dictionary_fragment_dst}")
     shutil.copyfile(dictionary_fragment_src, dictionary_fragment_dst)
 
+    common_preference = decoded / (
+        "smali/com/google/android/apps/inputmethod/libs/framework/preference/"
+        "CommonPreferenceFragment.smali"
+    )
+    replace_once(
+        common_preference,
+        "    :cond_0\n"
+        "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/Md3SettingsCompat;->apply(Landroid/preference/PreferenceFragment;)V\n\n"
+        "    return-void\n.end method",
+        "    :cond_0\n"
+        "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/Md3SettingsCompat;->apply(Landroid/preference/PreferenceFragment;)V\n\n"
+        "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/VoiceInputImePreferenceCompat;->bind(Landroid/preference/PreferenceFragment;)V\n\n"
+        "    return-void\n.end method",
+    )
+
     first_run_helpers = (
         (
             "FirstRunNavigationCompat.smali",
@@ -3017,6 +3128,10 @@ def apply(
         (
             "Md3SettingsCompat.smali",
             "smali/com/google/android/inputmethod/pinyin/Md3SettingsCompat.smali",
+        ),
+        (
+            "VoiceInputImePreferenceCompat.smali",
+            "smali/com/google/android/inputmethod/pinyin/VoiceInputImePreferenceCompat.smali",
         ),
         (
             "PasswordBodyView.smali",

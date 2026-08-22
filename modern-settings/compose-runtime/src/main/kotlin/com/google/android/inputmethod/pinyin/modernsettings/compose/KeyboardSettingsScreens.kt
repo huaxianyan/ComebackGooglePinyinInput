@@ -1,5 +1,6 @@
 package com.google.android.inputmethod.pinyin.modernsettings.compose
 
+import android.view.inputmethod.InputMethodManager
 import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
@@ -214,6 +215,9 @@ internal fun androidx.compose.foundation.lazy.LazyListScope.keyboardKeysSettings
                 },
             )
         }
+        item {
+            VoiceInputMethodSetting(snapshot.voiceInputImePackage, actions.onVoiceInputImeChange)
+        }
     }
     item {
         SettingsSwitchRow(
@@ -343,6 +347,61 @@ internal fun androidx.compose.foundation.lazy.LazyListScope.keyboardKeysSettings
             millisecondsText = millisecondsText,
             onCommit = actions.onLongPressDelayChange,
             onRestoreDefault = actions.onLongPressDefault,
+        )
+    }
+}
+
+@Composable
+private fun VoiceInputMethodSetting(
+    selectedPackage: String,
+    onSelected: (String) -> Unit,
+) {
+    val context = LocalContext.current
+    var dialogVisible by rememberSaveable { mutableStateOf(false) }
+    val options = remember {
+        val manager = context.getSystemService(InputMethodManager::class.java)
+        manager.enabledInputMethodList.filter { info ->
+            (0 until info.subtypeCount).any { info.getSubtypeAt(it).mode == "voice" }
+        }.map { info ->
+            info.packageName to info.loadLabel(context.packageManager).toString()
+        }.distinctBy { it.first }
+    }
+    val selectedLabel = options.firstOrNull { it.first == selectedPackage }?.second
+        ?: "自动选择"
+    SettingsNavigationRow(
+        title = "语音输入法",
+        supporting = selectedLabel,
+        onClick = { dialogVisible = true },
+    )
+    if (dialogVisible) {
+        AlertDialog(
+            onDismissRequest = { dialogVisible = false },
+            title = { Text("语音输入法") },
+            text = {
+                Column(Modifier.selectableGroup()) {
+                    val choices = listOf("" to "自动选择") + options
+                    choices.forEach { (packageName, label) ->
+                        Row(
+                            Modifier.fillMaxWidth().selectable(
+                                selected = packageName == selectedPackage,
+                                onClick = {
+                                    onSelected(packageName)
+                                    dialogVisible = false
+                                },
+                                role = Role.RadioButton,
+                            ),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            RadioButton(
+                                selected = packageName == selectedPackage,
+                                onClick = null,
+                            )
+                            Text(label, Modifier.padding(8.dp))
+                        }
+                    }
+                }
+            },
+            confirmButton = {},
         )
     }
 }

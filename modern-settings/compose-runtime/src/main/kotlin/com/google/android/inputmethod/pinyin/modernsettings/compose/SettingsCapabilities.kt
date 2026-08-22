@@ -33,7 +33,7 @@ object SettingsCapabilityResolver {
         val vibratorService = context.getSystemService(Vibrator::class.java)
         return SettingsCapabilities(
             popupOnKeypressVisible = !isTablet,
-            voiceInputVisible = hasEnabledGoogleVoiceSubtype(inputMethods),
+            voiceInputVisible = hasEnabledVoiceSubtype(inputMethods),
             vibrationControlsVisible = vibrationControlsVisible(
                 serviceIsVibrator = vibratorService != null,
                 hasVibrator = vibratorService?.hasVibrator() == true,
@@ -57,6 +57,12 @@ object SettingsCapabilityResolver {
     ): Boolean = inputMethods.any { inputMethod ->
         inputMethod.packageName.startsWith("com.google.android") &&
             inputMethod.subtypeModes.any { it == "voice" }
+    }
+
+    internal fun hasEnabledVoiceSubtype(
+        inputMethods: Iterable<EnabledImeCapability>,
+    ): Boolean = inputMethods.any { inputMethod ->
+        inputMethod.subtypeModes.any { it == "voice" }
     }
 
     internal fun hasSettingsActivitySwitchTarget(

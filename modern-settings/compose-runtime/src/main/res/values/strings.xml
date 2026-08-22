@@ -97,6 +97,7 @@
     <string name="modern_settings_one_handed_mode_title">One-handed mode</string>
     <string name="modern_settings_popup_on_keypress_title">Popup on keypress</string>
     <string name="modern_settings_voice_input_title">Show voice input button</string>
+    <string name="modern_settings_voice_input_ime_title">Voice input method</string>
     <string name="modern_settings_fuzzy_pinyin_title">Fuzzy Pinyin</string>
     <string name="modern_settings_fuzzy_pinyin_detail_title">Fuzzy Pinyin settings</string>
     <string name="modern_settings_navigate_back">Navigate back</string>

@@ -104,6 +104,7 @@ class LegacySettingsRepository(context: Context) {
             blockOffensiveWords = readBoolean(BooleanSettingContracts.blockOffensiveWords),
             popupOnKeypress = readBoolean(BooleanSettingContracts.popupOnKeypress),
             voiceInput = readBoolean(BooleanSettingContracts.voiceInput),
+            voiceInputImePackage = preferences.getString("voice_input_ime_package", "").orEmpty(),
             showSimplifiedTraditionalHeaderToggle = readBoolean(
                 BooleanSettingContracts.showSimplifiedTraditionalHeaderToggle,
             ),
@@ -165,6 +166,11 @@ class LegacySettingsRepository(context: Context) {
             Context::class.java,
             Boolean::class.javaPrimitiveType,
         ).invoke(null, applicationContext, enabled)
+        return readSnapshot()
+    }
+
+    fun setVoiceInputImePackage(packageName: String): SettingsSnapshot {
+        preferences.edit().putString("voice_input_ime_package", packageName).apply()
         return readSnapshot()
     }
 
@@ -477,6 +483,7 @@ data class SettingsSnapshot(
     val blockOffensiveWords: BooleanSettingState,
     val popupOnKeypress: BooleanSettingState,
     val voiceInput: BooleanSettingState,
+    val voiceInputImePackage: String,
     val showSimplifiedTraditionalHeaderToggle: BooleanSettingState,
     val showEmojiSwitchKey: BooleanSettingState,
     val showLanguageSwitchKey: BooleanSettingState,

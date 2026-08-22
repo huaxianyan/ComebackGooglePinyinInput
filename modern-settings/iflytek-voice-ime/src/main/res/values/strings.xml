@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">讯飞语音输入</string>
+    <string name="ime_subtype_voice">讯飞语音</string>
+    <string name="settings_title">讯飞语音输入设置</string>
+    <string name="settings_service_category">讯飞语音服务</string>
+    <string name="settings_app_id_title">APPID</string>
+    <string name="settings_app_id_summary">讯飞开放平台应用 ID</string>
+    <string name="settings_api_key_title">API Key</string>
+    <string name="settings_api_key_summary">WebAPI 鉴权密钥</string>
+    <string name="settings_api_secret_title">API Secret</string>
+    <string name="settings_api_secret_summary">WebAPI 签名密钥</string>
+    <string name="settings_language_title">识别语言</string>
+    <string name="settings_language_summary">当前使用的语音听写语言</string>
+    <string name="settings_language_chinese">中文普通话</string>
+    <string name="settings_about_category">关于</string>
+    <string name="settings_about_title">讯飞语音输入</string>
+    <string name="settings_about_summary">使用讯飞流式 WebAPI 进行语音识别。配置会即时保存到本机。</string>
+    <string name="settings_permission_title">需要录音权限</string>
+    <string name="settings_permission_message">请允许讯飞语音输入使用麦克风，然后再次点击语音输入键。</string>
+    <string name="settings_missing_config">请先在讯飞语音输入设置中填写 APPID、API Key 和 API Secret。</string>
+    <string name="voice_start">点击开始</string>
+    <string name="voice_back">返回</string>
+    <string name="voice_recording">正在录音…</string>
+    <string name="voice_recognizing">正在识别…</string>
+    <string name="voice_cancel">取消</string>
+    <string name="voice_error">识别失败</string>
+</resources>
