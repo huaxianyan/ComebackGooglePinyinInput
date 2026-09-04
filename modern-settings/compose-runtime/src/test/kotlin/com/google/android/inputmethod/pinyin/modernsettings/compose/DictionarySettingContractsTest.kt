@@ -47,4 +47,20 @@ class DictionarySettingContractsTest {
             DictionaryHealthStateReducer.complete(loading, "new"),
         )
     }
+
+    @Test
+    fun rimeSynchronizationRequiresACompleteAccessibleConfiguration() {
+        val configured = RimeSyncSettingsSnapshot(
+            rootUri = "content://fixture/root",
+            deviceDirectory = "Bridge-Device",
+            snapshotFile = "pinyin_simp.userdb.txt",
+            locationAccessible = true,
+        )
+
+        assertEquals(true, configured.configurationComplete)
+        assertEquals(false, configured.copy(rootUri = "").configurationComplete)
+        assertEquals(false, configured.copy(deviceDirectory = "").configurationComplete)
+        assertEquals(false, configured.copy(snapshotFile = "").configurationComplete)
+        assertEquals(true, configured.copy(phase = 1).recoveryRequired)
+    }
 }

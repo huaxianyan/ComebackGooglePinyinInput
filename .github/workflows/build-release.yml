@@ -159,6 +159,17 @@ jobs:
           Assert-Sha256 work/tools/apktool.jar $env:APKTOOL_SHA256
           Assert-Sha256 $env:ORIGINAL_APK $env:ORIGINAL_APK_SHA256
 
+      - name: Verify reproducible Rime synchronization Smali
+        shell: pwsh
+        run: |
+          python scripts/generate_rime_sync_smali.py `
+            --android-jar "$env:ANDROID_SDK_ROOT\platforms\android-36\android.jar" `
+            --jdk "$env:JAVA_HOME" `
+            --build-tools "$env:ANDROID_SDK_ROOT\build-tools\36.0.0" `
+            --apktool work/tools/apktool.jar
+          git diff --exit-code -- patches/smali/rimesync
+          if ($LASTEXITCODE -ne 0) { throw "Generated Rime synchronization Smali is stale" }
+
       - name: Restore keystore and verify signing identity
         shell: pwsh
         run: |
@@ -244,6 +255,9 @@ jobs:
           python scripts/test_sensitive_clipboard_compat.py `
             --android-jar "$env:ANDROID_SDK_ROOT\platforms\android-36\android.jar" `
             --jdk "$env:JAVA_HOME" --decoded work/final-decoded
+          python scripts/test_rime_sync_protocol.py `
+            --sdk "$env:ANDROID_SDK_ROOT" --jdk "$env:JAVA_HOME" `
+            --decoded work/final-decoded
           $aapt2 = Join-Path $env:ANDROID_SDK_ROOT "build-tools\36.0.0\aapt2.exe"
           & $aapt2 dump resources "dist/$env:RELEASE_APK_NAME" | `
             Out-File work/final-resources.txt -Encoding utf8

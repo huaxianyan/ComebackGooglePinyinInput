@@ -2979,6 +2979,14 @@ def apply(
             raise RuntimeError(f"Refusing to overwrite existing helper: {helper_dst}")
         shutil.copyfile(helper_src, helper_dst)
 
+    rime_sync_src = ROOT / "patches/smali/rimesync"
+    rime_sync_dst = decoded / "smali/com/google/android/inputmethod/pinyin/rimesync"
+    if rime_sync_dst.exists():
+        raise RuntimeError(f"Refusing to overwrite existing Rime synchronization: {rime_sync_dst}")
+    if not rime_sync_src.is_dir():
+        raise RuntimeError(f"Missing generated Rime synchronization Smali: {rime_sync_src}")
+    shutil.copytree(rime_sync_src, rime_sync_dst)
+
     dictionary_fragment_src = ROOT / "patches/smali/DictionarySettingsFragment.smali"
     dictionary_fragment_dst = decoded / (
         "smali/com/google/android/apps/inputmethod/pinyin/preference/"

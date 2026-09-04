@@ -92,6 +92,7 @@ data class SettingsActions(
     val onClearDictionaryInputChange: (String) -> Unit,
     val onDismissClearDictionaryConfirmation: () -> Unit,
     val onConfirmClearDictionary: () -> Unit,
+    val rimeSync: RimeSyncActions,
     val onLauncherIconVisibleChange: (Boolean) -> Unit,
     val onSoundEnabledChange: (Boolean) -> Unit,
     val onVolumeCommit: (Int) -> Unit,
@@ -118,6 +119,7 @@ fun SettingsScreen(
     dictionaryHealth: DictionaryHealthState,
     dictionaryImport: DictionaryImportState,
     dictionaryClear: DictionaryClearState,
+    rimeSync: RimeSyncUiState,
     actions: SettingsActions,
 ) {
     var routePath by rememberSaveable { mutableStateOf(SettingsRouteStack.initialPath) }
@@ -163,6 +165,7 @@ fun SettingsScreen(
             snapshot = snapshot,
             dictionarySnapshot = dictionarySnapshot,
             dictionaryHealth = dictionaryHealth,
+            rimeSync = rimeSync,
             actions = actions,
             navigateTo = navigateTo,
             navigateBack = navigateBack,
@@ -171,6 +174,7 @@ fun SettingsScreen(
     if (route == SettingsRoute.Dictionary) {
         DictionaryImportDialog(dictionaryImport, actions)
         DictionaryClearDialog(dictionaryClear, actions)
+        RimeSyncDialogs(rimeSync, actions.rimeSync)
     }
 }
 
@@ -182,6 +186,7 @@ private fun SettingsRoutePage(
     snapshot: SettingsSnapshot,
     dictionarySnapshot: DictionarySettingsSnapshot,
     dictionaryHealth: DictionaryHealthState,
+    rimeSync: RimeSyncUiState,
     actions: SettingsActions,
     navigateTo: (SettingsRoute) -> Unit,
     navigateBack: () -> Unit,
@@ -245,11 +250,14 @@ private fun SettingsRoutePage(
                 SettingsRoute.Handwriting -> handwritingSettingsItems(
                     snapshot, actions, millisecondsText,
                 )
-                SettingsRoute.Dictionary -> dictionarySettingsItems(
-                    dictionarySnapshot,
-                    dictionaryHealth,
-                    actions,
-                )
+                SettingsRoute.Dictionary -> {
+                    dictionarySettingsItems(dictionarySnapshot, dictionaryHealth, actions)
+                    rimeSyncSettingsItems(
+                        rimeSync,
+                        dictionarySnapshot.backupInProgress || dictionarySnapshot.clearInProgress,
+                        actions.rimeSync,
+                    )
+                }
                 SettingsRoute.Other -> otherSettingsItems(snapshot, actions, navigateTo)
                 SettingsRoute.About -> aboutSettingsItems(actions)
                 SettingsRoute.FuzzyPinyin -> error("Fuzzy Pinyin uses its dedicated screen")

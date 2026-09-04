@@ -58,7 +58,7 @@
 - [ ] 在独立 `dictionarystatusaudit` 包验证空词库、已有中英文词条、有/无 `_bak`、状态行手动刷新、退出页面时迟到回调和键盘启动零扫描
 - [ ] 按自然使用时间继续观察 1/3/7/14/30 天自动备份调度及保留版本轮换
 - [ ] 使用独立 dictionaryaudit 包验证中断轮换、损坏备份、有效临时文件及显式清空场景
-- [ ] 暂缓 Rime 用户词典双向同步，不进入实现阶段。已记录格式、词频、现有数据导入、50 万条容量和可移除模块边界，后续只有重新确认优先级后才恢复调研，见 [`rime-dictionary-sync-research.md`](rime-dictionary-sync-research.md)
+- [ ] 完成 Rime 用户词典手动双向同步的真实设备和大词典验收：Bridge 核心、Primary DEX 异步门面、独立 SAF 配置、预览与删除确认、恢复和重建状态，以及「自动备份」下方的 Compose「Rime 同步」类别均已实现。API 36 隔离模拟器已验证 SAF 持久授权、SQLite 建库、Native 新增与事务性重建删除、未删除条目保留、进程重启持久化，以及 `PLANNED` 中断后的幂等恢复；测试同时发现并修复 `ExternalStorageProvider` 临时文件自动补 `.txt` 和精确单条 Native 删除失败。10 万级 translated-ARM64 基准已完成，首次预览 47.4 秒、执行 173.3 秒，零增量预览 103.4 秒，观测内存峰值最高约 426 MiB。`v4` 已验证 Native 持久化后静默少项会保留 `PLANNED` 且不发布 Bridge 快照，恢复只补齐缺失项并最终得到 10 万项零变更闭环。`v5` 已实现在本地 Profile 丢失后从唯一、有效且身份规范的既有 Bridge 快照恢复稳定 `user_id`，并通过 API 36 的 4 KiB 隔离模拟器 SAF 预览验收。Pixel 10 Pro 已完成 97,808 项真实 SAF 预览，首次执行和一次恢复都被 Native 持久化复核安全拦截，且未创建 Bridge 目录。`v7` 已增加 Native 预期数、实际数、缺失数和加盐差异指纹，`v8` 补齐总数不一致但可翻译键缺失为零的显示，`v9` / `v10` 又将复核前失败细分到 Native 阶段。Pixel 最终定位为 `DictionaryAccessor.insertOrUpdate()` 明确拒绝待补词条。`v11` 已在未持久化副本中统计全部拒绝项，并保存加盐拒绝集合指纹；首次真机结果为 303 项，第二次授权复核仍为相同的 303 项，加盐指纹一致且恢复入口已锁定。`v12` 已新增 `SUPPORTED` / `RIME_ONLY` 投影状态，并在第三次探测仍匹配同一批 303 项后完成原事务。Pixel 立即预览和冷启动预览均为五项零变更，证明这些词条保留在 Rime 且不会在每轮重复加入 Google 拼音。仍需验证真实设备 Syncthing、不可翻译 Native 条目的运行时守恒，并先优化内存再扩大到 20 万条。第一阶段不增加自动调度，见 [`rime-dictionary-sync-research.md`](rime-dictionary-sync-research.md)
 
 ## 当前任务：既有功能基础复核
 

@@ -1,6 +1,7 @@
 package com.google.android.inputmethod.pinyin.modernsettings.compose
 
 import android.Manifest
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -29,15 +30,17 @@ import java.util.Random
 
 /** API-35+-guarded host for the staged official Compose Material 3 settings runtime. */
 class ModernSettingsActivity : ComponentActivity() {
-    private enum class TreePurpose { Location, Enable, Import }
+    private enum class TreePurpose { Location, Enable, Import, RimeSync }
 
     private lateinit var controller: SettingsController
     private lateinit var dictionaryRepository: LegacyDictionarySettingsRepository
+    private lateinit var rimeRepository: LegacyRimeSyncRepository
     private var snapshot by mutableStateOf<SettingsSnapshot?>(null)
     private var dictionarySnapshot by mutableStateOf<DictionarySettingsSnapshot?>(null)
     private var dictionaryHealth by mutableStateOf(DictionaryHealthState())
     private var dictionaryImport by mutableStateOf(DictionaryImportState())
     private var dictionaryClear by mutableStateOf(DictionaryClearState())
+    private var rimeSync by mutableStateOf(RimeSyncUiState())
     private var dictionaryClearCallback: Any? = null
     private var treePurpose = TreePurpose.Location
     private val mainHandler = Handler(Looper.getMainLooper())
@@ -75,21 +78,49 @@ class ModernSettingsActivity : ComponentActivity() {
             return@registerForActivityResult
         }
         val completedPurpose = treePurpose
-        dictionaryRepository.acceptTreeAsync(
-            uri = uri,
-            enableAfterSelection = completedPurpose == TreePurpose.Enable,
-        ) { error ->
-            if (error != null) {
-                Toast.makeText(this, error, Toast.LENGTH_LONG).show()
-            } else {
-                Toast.makeText(
-                    this,
-                    R.string.modern_settings_dictionary_location_saved,
-                    Toast.LENGTH_SHORT,
-                ).show()
-                if (completedPurpose == TreePurpose.Import) openDictionaryImport()
+        if (completedPurpose == TreePurpose.RimeSync) {
+            val oldRoot = rimeSync.settings.rootUri
+                .takeIf(String::isNotEmpty)?.let(Uri::parse)
+            if (!rimeRepository.persistRootPermission(uri)) {
+                showRimeError(RimeSyncError.LocationUnavailable)
+                return@registerForActivityResult
             }
-            refreshDictionaryUntilIdle()
+            setRimeBusy()
+            rimeRepository.acceptRoot(uri, rimeRepository.describeRoot(uri)) { response ->
+                if (response.success) {
+                    if (oldRoot != null && oldRoot != uri) {
+                        rimeRepository.releaseRootPermission(oldRoot)
+                    }
+                    Toast.makeText(
+                        this,
+                        R.string.modern_settings_rime_sync_root_saved,
+                        Toast.LENGTH_SHORT,
+                    ).show()
+                } else {
+                    if (oldRoot == null || oldRoot != uri) {
+                        rimeRepository.releaseRootPermission(uri)
+                    }
+                    showRimeError(response.error)
+                }
+                rimeSync = rimeSync.copy(settings = response.settings)
+            }
+        } else {
+            dictionaryRepository.acceptTreeAsync(
+                uri = uri,
+                enableAfterSelection = completedPurpose == TreePurpose.Enable,
+            ) { error ->
+                if (error != null) {
+                    Toast.makeText(this, error, Toast.LENGTH_LONG).show()
+                } else {
+                    Toast.makeText(
+                        this,
+                        R.string.modern_settings_dictionary_location_saved,
+                        Toast.LENGTH_SHORT,
+                    ).show()
+                    if (completedPurpose == TreePurpose.Import) openDictionaryImport()
+                }
+                refreshDictionaryUntilIdle()
+            }
         }
     }
 
@@ -101,6 +132,7 @@ class ModernSettingsActivity : ComponentActivity() {
             SettingsPreviewEffects(this),
         )
         dictionaryRepository = LegacyDictionarySettingsRepository(this)
+        rimeRepository = LegacyRimeSyncRepository(this)
         dictionaryClear = when {
             savedInstanceState?.getBoolean(CLEAR_IN_PROGRESS_KEY, false) == true ->
                 DictionaryClearStateReducer.observeInProgress(true)
@@ -144,6 +176,7 @@ class ModernSettingsActivity : ComponentActivity() {
                         dictionaryHealth = dictionaryHealth,
                         dictionaryImport = dictionaryImport,
                         dictionaryClear = dictionaryClear,
+                        rimeSync = rimeSync,
                         actions = SettingsActions(
                             onSystemAutoThemeEnabledChange = { enabled ->
                                 snapshot = controller.setSystemAutoThemeEnabled(enabled)
@@ -271,6 +304,66 @@ class ModernSettingsActivity : ComponentActivity() {
                                     ).show()
                                 }
                             },
+                            rimeSync = RimeSyncActions(
+                                onChooseRoot = {
+                                    treePurpose = TreePurpose.RimeSync
+                                    treePicker.launch(null)
+                                },
+                                onOpenDeviceName = {
+                                    val value = rimeSync.settings.deviceDirectory
+                                    rimeSync = rimeSync.copy(
+                                        editDialog = RimeSyncEditDialog.DeviceName,
+                                        deviceDirectoryInput = value,
+                                        deviceNameInputValid =
+                                            rimeRepository.isDeviceNameValid(value),
+                                    )
+                                },
+                                onOpenSnapshotFile = {
+                                    rimeSync = rimeSync.copy(
+                                        editDialog = RimeSyncEditDialog.SnapshotFile,
+                                        snapshotFileInput = rimeSync.settings.snapshotFile,
+                                    )
+                                },
+                                onDeviceDirectoryInputChange = { value ->
+                                    rimeSync = rimeSync.copy(
+                                        deviceDirectoryInput = value,
+                                        deviceNameInputValid =
+                                            rimeRepository.isDeviceNameValid(value),
+                                    )
+                                },
+                                onSnapshotFileInputChange = { value ->
+                                    rimeSync = rimeSync.copy(snapshotFileInput = value)
+                                },
+                                onDismissEdit = {
+                                    rimeSync = rimeSync.copy(editDialog = null)
+                                },
+                                onSaveDeviceName = ::saveRimeConfiguration,
+                                onSaveSnapshotFile = ::saveRimeConfiguration,
+                                onPreview = ::previewRimeSync,
+                                onDismissPreview = {
+                                    rimeSync = rimeSync.copy(preview = null)
+                                },
+                                onConfirmSync = ::executeRimeSync,
+                                onRecover = ::recoverRimeSync,
+                                onOpenKeepRejectedConfirmation = {
+                                    rimeSync = rimeSync.copy(
+                                        keepRejectedConfirmationVisible = true,
+                                    )
+                                },
+                                onDismissKeepRejectedConfirmation = {
+                                    rimeSync = rimeSync.copy(
+                                        keepRejectedConfirmationVisible = false,
+                                    )
+                                },
+                                onConfirmKeepRejected = ::recoverRimeSyncKeepingRejected,
+                                onOpenResetConfirmation = {
+                                    rimeSync = rimeSync.copy(resetConfirmationVisible = true)
+                                },
+                                onDismissResetConfirmation = {
+                                    rimeSync = rimeSync.copy(resetConfirmationVisible = false)
+                                },
+                                onConfirmReset = ::resetRimeSync,
+                            ),
                             onLauncherIconVisibleChange = { visible ->
                                 snapshot = controller.setLauncherIconVisible(visible)
                             },
@@ -347,6 +440,9 @@ class ModernSettingsActivity : ComponentActivity() {
             ).show()
         }
         refreshDictionaryUntilIdle()
+        if (::rimeRepository.isInitialized && !rimeSync.settings.operationInProgress) {
+            refreshRimeSettings()
+        }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -394,6 +490,177 @@ class ModernSettingsActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    private fun refreshRimeSettings() {
+        rimeRepository.load { response ->
+            rimeSync = rimeSync.copy(settings = response.settings)
+            if (!response.success) showRimeError(response.error)
+        }
+    }
+
+    private fun saveRimeConfiguration() {
+        val editDialog = rimeSync.editDialog ?: return
+        setRimeBusy()
+        rimeRepository.saveConfiguration(
+            if (editDialog == RimeSyncEditDialog.DeviceName) {
+                rimeSync.deviceDirectoryInput
+            } else {
+                rimeSync.settings.deviceDirectory
+            },
+            if (editDialog == RimeSyncEditDialog.SnapshotFile) {
+                rimeSync.snapshotFileInput
+            } else {
+                rimeSync.settings.snapshotFile
+            },
+        ) { response ->
+            rimeSync = rimeSync.copy(
+                settings = response.settings,
+                editDialog = if (response.success) null else editDialog,
+            )
+            if (!response.success) showRimeError(response.error)
+        }
+    }
+
+    private fun previewRimeSync() {
+        setRimeBusy()
+        rimeRepository.preview { response ->
+            rimeSync = rimeSync.copy(settings = response.settings, preview = response.preview)
+            if (!response.success) showRimeError(response.error)
+        }
+    }
+
+    private fun executeRimeSync(deletionConfirmed: Boolean) {
+        val preview = rimeSync.preview ?: return
+        rimeSync = rimeSync.copy(preview = null)
+        setRimeBusy()
+        rimeRepository.execute(
+            preview.confirmationToken,
+            deletionConfirmed,
+        ) { response ->
+            rimeSync = rimeSync.copy(settings = response.settings)
+            if (response.success) {
+                Toast.makeText(
+                    this,
+                    R.string.modern_settings_rime_sync_success,
+                    Toast.LENGTH_LONG,
+                ).show()
+                refreshDictionaryHealth()
+            } else {
+                showRimeError(response.error)
+            }
+        }
+    }
+
+    private fun recoverRimeSync() {
+        setRimeBusy()
+        rimeRepository.recover { response ->
+            rimeSync = rimeSync.copy(settings = response.settings)
+            if (response.success) {
+                Toast.makeText(
+                    this,
+                    R.string.modern_settings_rime_sync_recovered,
+                    Toast.LENGTH_LONG,
+                ).show()
+                refreshDictionaryHealth()
+            } else {
+                showRimeError(response.error)
+            }
+        }
+    }
+
+    private fun recoverRimeSyncKeepingRejected() {
+        rimeSync = rimeSync.copy(keepRejectedConfirmationVisible = false)
+        setRimeBusy()
+        rimeRepository.recoverKeepingRejected { response ->
+            rimeSync = rimeSync.copy(settings = response.settings)
+            if (response.success) {
+                Toast.makeText(
+                    this,
+                    R.string.modern_settings_rime_sync_recovered,
+                    Toast.LENGTH_LONG,
+                ).show()
+                refreshDictionaryHealth()
+            } else {
+                showRimeError(response.error)
+            }
+        }
+    }
+
+    private fun resetRimeSync() {
+        rimeSync = rimeSync.copy(resetConfirmationVisible = false)
+        setRimeBusy()
+        rimeRepository.resetBaseline { response ->
+            rimeSync = rimeSync.copy(settings = response.settings)
+            if (response.success) {
+                Toast.makeText(
+                    this,
+                    R.string.modern_settings_rime_sync_reset_success,
+                    Toast.LENGTH_LONG,
+                ).show()
+            } else {
+                showRimeError(response.error)
+            }
+        }
+    }
+
+    private fun setRimeBusy() {
+        rimeSync = rimeSync.copy(
+            settings = rimeSync.settings.copy(operationInProgress = true),
+        )
+    }
+
+    private fun showRimeError(error: RimeSyncError?) {
+        val message = when (error) {
+            RimeSyncError.ConfigurationRequired -> getString(
+                R.string.modern_settings_rime_sync_error_configuration,
+            )
+            RimeSyncError.LocationUnavailable -> getString(
+                R.string.modern_settings_rime_sync_error_location,
+            )
+            RimeSyncError.OperationInProgress -> getString(
+                R.string.modern_settings_rime_sync_error_in_progress,
+            )
+            RimeSyncError.PreviewChanged -> getString(
+                R.string.modern_settings_rime_sync_error_preview_changed,
+            )
+            RimeSyncError.DeletionConfirmationRequired -> getString(
+                R.string.modern_settings_rime_sync_error_confirmation,
+            )
+            RimeSyncError.CapacityExceeded -> getString(
+                R.string.modern_settings_rime_sync_error_capacity,
+            )
+            RimeSyncError.NativePersistence -> when {
+                rimeSync.settings.nativeFailureRepeated &&
+                    rimeSync.settings.nativeRejectedCount > 0 -> getString(
+                        R.string.modern_settings_rime_sync_native_insert_stalled,
+                        rimeSync.settings.nativeRejectedCount,
+                    )
+                rimeSync.settings.nativeFailureRepeated &&
+                    rimeSync.settings.hasNativePersistenceDiagnostics -> getString(
+                        R.string.modern_settings_rime_sync_native_stalled,
+                        rimeSync.settings.nativeActualCount,
+                        rimeSync.settings.nativeExpectedCount,
+                        rimeSync.settings.nativeMissingCount,
+                    )
+                rimeSync.settings.nativeFailureRepeated -> getString(
+                    R.string.modern_settings_rime_sync_native_stalled_generic,
+                )
+                rimeSync.settings.nativeRejectedCount > 0 -> getString(
+                    R.string.modern_settings_rime_sync_native_insert_failure,
+                    rimeSync.settings.nativeRejectedCount,
+                )
+                rimeSync.settings.hasNativePersistenceDiagnostics -> getString(
+                    R.string.modern_settings_rime_sync_native_missing,
+                    rimeSync.settings.nativeActualCount,
+                    rimeSync.settings.nativeExpectedCount,
+                    rimeSync.settings.nativeMissingCount,
+                )
+                else -> getString(R.string.modern_settings_rime_sync_error_failed)
+            }
+            else -> getString(R.string.modern_settings_rime_sync_error_failed)
+        }
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
     }
 
     private companion object {

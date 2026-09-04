@@ -74,7 +74,10 @@ def prose_segments(path: Path, line: str, fenced: bool) -> list[str]:
     if path.suffix == ".md":
         return [] if fenced else [mask_markdown_syntax(line)]
     if path.suffix == ".xml":
-        return [html.unescape(part) for part in XML_TEXT_RE.findall(line)]
+        return [
+            re.sub(r"\\[nrt]", " ", html.unescape(part))
+            for part in XML_TEXT_RE.findall(line)
+        ]
     return [line]
 
 
