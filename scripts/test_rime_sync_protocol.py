@@ -458,6 +458,16 @@ def verify_native_api(decoded: Path) -> None:
         decoded / "smali/com/google/android/apps/inputmethod/libs/hmm/MutableDictionaryAccessorInterface$Entry.smali": [
             ".method public constructor <init>([Ljava/lang/String;[ILjava/lang/String;IZZI)V",
         ],
+        decoded / "smali/com/google/android/apps/inputmethod/libs/hmm/userdictionary/UserDictExportTask.smali": [
+            "SaveDictionaryTask;->sSaveLock:Ljava/lang/Object;",
+            ":try_start_export_lock",
+            "monitor-enter",
+        ],
+        decoded / "smali/com/google/android/apps/inputmethod/libs/hmm/userdictionary/UserDictImportTask.smali": [
+            "SaveDictionaryTask;->sSaveLock:Ljava/lang/Object;",
+            ":try_start_import_lock",
+            "monitor-enter",
+        ],
     }
     for path, needles in expected.items():
         text = path.read_text(encoding="utf-8")

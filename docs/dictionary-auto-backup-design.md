@@ -245,11 +245,11 @@ Android 11+ 不允许选择内部存储根目录、Download 根目录、`Android
 
 进程级静态 `inProgress` 防止快速显示/隐藏键盘产生重复文件。
 
-## 7. 保存与导出的并发
+## 7. 保存、导入与导出的并发
 
-V41 的 `SaveDictionaryTask.sSaveLock` 只覆盖保存任务。生命周期中的同步 `saveDictionaryNow()` 仍可能与后台 exporter 相遇。
+`SaveDictionaryTask.sSaveLock` 是当前进程内唯一的 Native 词典 I/O 锁。生命周期保存、自动和手动 `UserDictExportTask`、原生 `UserDictImportTask`，以及 Rime Bridge 的 Native 快照、变更和持久化均使用这把锁。
 
-实现自动备份前，应让自动/手动 `UserDictExportTask` 与保存路径共享同一把 dictionary-I/O lock：
+导出持锁范围为：
 
 ```text
 shared lock
@@ -260,16 +260,24 @@ shared lock
   → release lock
 ```
 
-最终校验、rename 和版本轮换在释放 dictionary lock 后执行。
+导入持锁范围为：
 
-云端 DocumentsProvider 可能在输出流关闭前后执行网络 I/O，因此实现不得在 UI 线程调用 provider；当前创建、校验、发布和轮换均进入单线程 I/O executor。原生 exporter 自身仍由旧任务队列执行，后续应继续观察慢速或离线 provider 的行为。
+```text
+shared lock
+  → open 中文/英文 DictionaryAccessor
+  → duplicate 并合并备份
+  → persist
+  → close accessor 并通知引擎
+  → release lock
+```
 
-实现方式可以是：
+Rime Bridge 只在读取或变更 Google Native 词典时持锁，不在读取、合并或发布 Rime SAF 快照时占用它。最终备份校验、rename 和版本轮换也在释放锁后执行。各功能保留独立的任务队列、SAF 根、配置和结果状态，不形成业务依赖；共享锁只防止两个 Native 副本交错持久化。
 
-- 将 `SaveDictionaryTask.sSaveLock` 改为 exporter 可访问的共享锁，或
-- 把锁迁移到独立 `DictionaryIoCompat`。
+云端 DocumentsProvider 可能在输出流关闭前后执行网络 I/O，因此实现不得在 UI 线程调用 provider；当前创建、校验、发布和轮换均进入单线程 I/O executor。原生 importer 和 exporter 自身仍由旧任务队列执行，后续应继续观察慢速或离线 provider 的行为。
 
-不修改 native Trie、学习权重或保存格式。
+Pixel 隔离审计包已从真实 Compose 入口覆盖 `backup → Rime`、`Rime → backup` 和 `import → Rime`。备份均完整发布且没有 partial，Rime 预览保持五项零变更；同一备份合并前后的 Native 总数和可投影数均为 97,505。任务专用备份 SAF 授权、Preferences 和目录清理后，既有 Rime 配置仍可用。
+
+不修改 Native Trie、学习权重或保存格式。
 
 ## 8. 文件发布与完整性
 

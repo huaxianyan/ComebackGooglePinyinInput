@@ -394,7 +394,11 @@ Pixel 10 Pro 的隔离审计包已进一步验证单字 Native 条目的重建�
 
 Pixel 隔离审计包随后完成了其余可构造类型的运行时验收。未持久化预检证明 Native 接受 language ID 为 `0` 的多字 `Entry`，也接受通过文本入口建立的无 tokens 英文条目，但拒绝 language ID 为 `16` 且 token 含连字符的条目。测试只持久化前两种已接受形状，排除项基线为 2；再次通过 synthetic peer 的墓碑得到 `0,1,0,0,0` 删除预览并触发生产 Bridge 全词典重建。重建后排除项仍为 2，基于临时随机盐计算的集合指纹完全相同；指纹覆盖 tokens、language IDs、词面、count、修改标志、规范化标志和 expansion type。删除事务完成后的预览为五项零变更。清理后排除项回到 0，临时 Preferences、probe、Windows 与 Pixel 两端的 synthetic peer 及设备临时文件均已移除。由此，单字、非拼音 language ID、无 tokens 英文条目和完整 Native 元数据的重建守恒均已通过 Pixel 运行时验收；Native 明确拒绝的非拼音 token 不属于可持久化词典状态。
 
-自动备份与 Rime 同步的真实串行化，以及扩大到 20 万条前的内存优化仍未验收。
+并发审计发现 `SaveDictionaryTask`、`UserDictExportTask` 和 Rime Native Bridge 已共用 `SaveDictionaryTask.sSaveLock`，但原生 `UserDictImportTask` 仍在共享锁之外打开、合并并持久化词典副本。`v15` 已把导入的完整事务纳入同一把锁，范围从打开 accessor 持续到合并、persist 和引擎通知，并增加静态协议门禁，避免导入与 Rime 同步把各自的旧副本覆盖到对方结果上。该修改不增加业务依赖，也不合并自动备份与 Rime 的线程池、SAF 根或状态。
+
+Pixel 上使用任务专用 SAF 目录和只持有共享锁、不访问数据的一次性 instrumentation，已从真实 Compose 入口覆盖 `backup → Rime`、`Rime → backup` 和 `import → Rime`。两次交错备份均发布完整 `.txt`，没有遗留 partial；三次 Rime 预览均为五项零变更。由本轮备份经原生 importer 合并后，Chinese Native 总数和可投影数均保持 `97,505 → 97,505`，随后 Rime 预览仍为零变更，未出现死锁、部分持久化、恢复事务或 Bridge 临时文件。清理阶段释放了自动备份 SAF 授权、清空专属备份 Preferences、删除任务目录并卸载 probe；自动备份恢复为「未选择」，既有 Rime 配置和授权仍可用，证明两套 SAF 状态没有串线。
+
+扩大到 20 万条前的内存优化仍未验收。
 
 ## 14. 保留的长期边界
 

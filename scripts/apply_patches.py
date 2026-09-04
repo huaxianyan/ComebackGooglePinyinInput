@@ -2094,6 +2094,52 @@ def apply(
         ".end method",
     )
 
+    # Import duplicates and persists the same native dictionaries as Rime sync.
+    # Hold the process-wide save lock for the complete import transaction so
+    # neither side can publish a stale native copy over the other.
+    import_task = decoded / (
+        "smali/com/google/android/apps/inputmethod/libs/hmm/userdictionary/"
+        "UserDictImportTask.smali"
+    )
+    replace_once(
+        import_task,
+        ".method protected varargs doInBackground([Ljava/lang/Void;)Ljava/lang/Boolean;\n"
+        "    .locals 6\n\n"
+        "    .prologue\n"
+        "    .line 7",
+        ".method protected varargs doInBackground([Ljava/lang/Void;)Ljava/lang/Boolean;\n"
+        "    .locals 8\n\n"
+        "    .prologue\n"
+        "    sget-object v6, Lcom/google/android/apps/inputmethod/libs/hmm/"
+        "SaveDictionaryTask;->sSaveLock:Ljava/lang/Object;\n\n"
+        "    monitor-enter v6\n\n"
+        "    :try_start_import_lock\n"
+        "    .line 7",
+    )
+    replace_once(
+        import_task,
+        "    .line 12\n"
+        "    :cond_0\n"
+        "    invoke-static {v1}, Ljava/lang/Boolean;->valueOf(Z)Ljava/lang/Boolean;\n\n"
+        "    move-result-object v0\n\n"
+        "    return-object v0\n"
+        ".end method",
+        "    .line 12\n"
+        "    :cond_0\n"
+        "    invoke-static {v1}, Ljava/lang/Boolean;->valueOf(Z)Ljava/lang/Boolean;\n\n"
+        "    move-result-object v0\n"
+        "    :try_end_import_lock\n"
+        "    .catchall {:try_start_import_lock .. :try_end_import_lock} "
+        ":catchall_import_lock\n\n"
+        "    monitor-exit v6\n\n"
+        "    return-object v0\n\n"
+        "    :catchall_import_lock\n"
+        "    move-exception v7\n\n"
+        "    monitor-exit v6\n\n"
+        "    throw v7\n"
+        ".end method",
+    )
+
     # Keep the original confirmed "Clear user dictionary" flow, but run only
     # its native local task. The removed second task was an obsolete remote
     # Delight sync clear and would otherwise enter the deleted account path.
