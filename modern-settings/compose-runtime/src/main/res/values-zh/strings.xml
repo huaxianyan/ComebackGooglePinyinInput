@@ -140,6 +140,14 @@
     <string name="modern_settings_rime_sync_error_preview_changed">词典内容已变化，请重新预览</string>
     <string name="modern_settings_rime_sync_error_confirmation">请查看并确认删除数量，然后同步</string>
     <string name="modern_settings_rime_sync_error_capacity">Google 拼音用户词典空间不足，请整理词典后重试</string>
+    <string name="modern_settings_rime_sync_error_source_list">无法检查同步目录，请确认 Syncthing 已完成同步后重试</string>
+    <string name="modern_settings_rime_sync_error_source_open">无法打开同步目录中的 Rime 词典，请确认 Syncthing 已完成同步后重试</string>
+    <string name="modern_settings_rime_sync_error_source_parse">同步目录中的 Rime 词典格式无效，请重新生成该文件后重试</string>
+    <string name="modern_settings_rime_sync_error_source_database">Rime 用户词典文件与当前设置不匹配，请检查文件名后重试</string>
+    <string name="modern_settings_rime_sync_error_source_close">读取同步目录中的 Rime 词典时出错，请重试</string>
+    <string name="modern_settings_rime_sync_error_rime_merge">Rime 设备词典无法合并，请检查各设备的用户词典文件后重试</string>
+    <string name="modern_settings_rime_sync_error_google_export">无法读取 Google 拼音用户词典，请重试</string>
+    <string name="modern_settings_rime_sync_error_session_plan">无法比较 Google 拼音和 Rime 词典，请重试</string>
     <string name="modern_settings_rime_sync_error_failed">同步未完成，请检查设置后重试</string>
     <string name="modern_settings_section_input">常规输入</string>
     <string name="modern_settings_section_chinese_input">中文输入</string>

@@ -140,6 +140,14 @@
     <string name="modern_settings_rime_sync_error_preview_changed">Dictionary contents changed; preview the changes again</string>
     <string name="modern_settings_rime_sync_error_confirmation">Review and confirm the deletions before synchronizing</string>
     <string name="modern_settings_rime_sync_error_capacity">The Google Pinyin user dictionary is full; remove unneeded entries and try again</string>
+    <string name="modern_settings_rime_sync_error_source_list">The synchronization directory could not be checked. Wait for Syncthing to finish, then try again.</string>
+    <string name="modern_settings_rime_sync_error_source_open">A Rime dictionary in the synchronization directory could not be opened. Wait for Syncthing to finish, then try again.</string>
+    <string name="modern_settings_rime_sync_error_source_parse">A Rime dictionary in the synchronization directory has an invalid format. Generate the file again, then retry.</string>
+    <string name="modern_settings_rime_sync_error_source_database">The Rime user dictionary does not match the current setting. Check the file name, then retry.</string>
+    <string name="modern_settings_rime_sync_error_source_close">An error occurred while reading a Rime dictionary in the synchronization directory. Try again.</string>
+    <string name="modern_settings_rime_sync_error_rime_merge">The Rime device dictionaries could not be merged. Check each device dictionary, then try again.</string>
+    <string name="modern_settings_rime_sync_error_google_export">The Google Pinyin user dictionary could not be read. Try again.</string>
+    <string name="modern_settings_rime_sync_error_session_plan">The Google Pinyin and Rime dictionaries could not be compared. Try again.</string>
     <string name="modern_settings_rime_sync_error_failed">Synchronization did not finish; check the settings and try again</string>
     <!-- These two persisted legacy status tokens intentionally remain Chinese in every locale. -->
     <string name="modern_settings_dictionary_legacy_success_status" translatable="false">备份成功</string>

@@ -69,6 +69,14 @@ internal enum class RimeSyncError {
     DeletionConfirmationRequired,
     CapacityExceeded,
     NativePersistence,
+    PreviewSourceList,
+    PreviewSourceOpen,
+    PreviewSourceParse,
+    PreviewSourceDatabase,
+    PreviewSourceClose,
+    PreviewRimeMerge,
+    PreviewGoogleExport,
+    PreviewSessionPlan,
     OperationFailed,
 }
 
@@ -287,6 +295,14 @@ internal class LegacyRimeSyncRepository(private val activity: Activity) {
             RimeSyncError.DeletionConfirmationRequired
         staticInt("ERROR_CAPACITY_EXCEEDED") -> RimeSyncError.CapacityExceeded
         staticInt("ERROR_NATIVE_PERSISTENCE") -> RimeSyncError.NativePersistence
+        staticInt("ERROR_PREVIEW_SOURCE_LIST") -> RimeSyncError.PreviewSourceList
+        staticInt("ERROR_PREVIEW_SOURCE_OPEN") -> RimeSyncError.PreviewSourceOpen
+        staticInt("ERROR_PREVIEW_SOURCE_PARSE") -> RimeSyncError.PreviewSourceParse
+        staticInt("ERROR_PREVIEW_SOURCE_DATABASE") -> RimeSyncError.PreviewSourceDatabase
+        staticInt("ERROR_PREVIEW_SOURCE_CLOSE") -> RimeSyncError.PreviewSourceClose
+        staticInt("ERROR_PREVIEW_RIME_MERGE") -> RimeSyncError.PreviewRimeMerge
+        staticInt("ERROR_PREVIEW_GOOGLE_EXPORT") -> RimeSyncError.PreviewGoogleExport
+        staticInt("ERROR_PREVIEW_SESSION_PLAN") -> RimeSyncError.PreviewSessionPlan
         else -> RimeSyncError.OperationFailed
     }
 

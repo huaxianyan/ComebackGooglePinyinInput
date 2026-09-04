@@ -23,6 +23,11 @@ import java.util.UUID;
 
 /** SAF access scoped to a Rime synchronization root and one Bridge-owned device directory. */
 public final class RimeSyncSafStore {
+    public static final int SNAPSHOT_READ_OPEN = 1;
+    public static final int SNAPSHOT_READ_PARSE = 2;
+    public static final int SNAPSHOT_READ_DATABASE = 3;
+    public static final int SNAPSHOT_READ_CLOSE = 4;
+
     private static final Charset UTF_8 = Charset.forName("UTF-8");
     private static final String MIME_DIRECTORY = DocumentsContract.Document.MIME_TYPE_DIR;
 
@@ -93,17 +98,46 @@ public final class RimeSyncSafStore {
         InputStream input = null;
         Reader reader = null;
         try {
-            input = resolver.openInputStream(document.uri);
-            if (input == null) throw new IOException("Rime snapshot could not be opened");
-            reader = new InputStreamReader(input, UTF_8);
-            RimeUserDbSnapshot snapshot = RimeUserDbSnapshot.read(reader);
-            if (!configuration.databaseName.equals(snapshot.dbName())) {
-                throw new IOException("Rime snapshot database name does not match its file");
+            try {
+                input = resolver.openInputStream(document.uri);
+            } catch (IOException failure) {
+                throw new SnapshotReadException(SNAPSHOT_READ_OPEN, failure);
+            } catch (RuntimeException failure) {
+                throw new SnapshotReadException(SNAPSHOT_READ_OPEN, failure);
             }
+            if (input == null) {
+                throw new SnapshotReadException(SNAPSHOT_READ_OPEN, null);
+            }
+            reader = new InputStreamReader(input, UTF_8);
+            RimeUserDbSnapshot snapshot;
+            try {
+                snapshot = RimeUserDbSnapshot.read(reader);
+            } catch (IOException failure) {
+                throw new SnapshotReadException(SNAPSHOT_READ_PARSE, failure);
+            }
+            if (!configuration.databaseName.equals(snapshot.dbName())) {
+                throw new SnapshotReadException(SNAPSHOT_READ_DATABASE, null);
+            }
+            try {
+                reader.close();
+            } catch (IOException failure) {
+                throw new SnapshotReadException(SNAPSHOT_READ_CLOSE, failure);
+            }
+            reader = null;
+            input = null;
             return snapshot;
         } finally {
-            if (reader != null) reader.close();
-            else if (input != null) input.close();
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (IOException ignored) {
+                }
+            } else if (input != null) {
+                try {
+                    input.close();
+                } catch (IOException ignored) {
+                }
+            }
         }
     }
 
@@ -340,6 +374,15 @@ public final class RimeSyncSafStore {
 
     private String previousName() {
         return "." + configuration.snapshotFileName + ".bridge-previous.txt";
+    }
+
+    public static final class SnapshotReadException extends IOException {
+        public final int kind;
+
+        SnapshotReadException(int kind, Throwable cause) {
+            super("Rime snapshot could not be read", cause);
+            this.kind = kind;
+        }
     }
 
     public static final class SnapshotDocument {

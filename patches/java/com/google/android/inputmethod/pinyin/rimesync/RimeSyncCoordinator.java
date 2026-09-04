@@ -8,6 +8,15 @@ import java.util.List;
 
 /** Manual synchronization coordinator with durable, resumable external-store phases. */
 public final class RimeSyncCoordinator {
+    public static final int PREVIEW_STAGE_SOURCE_LIST = 1;
+    public static final int PREVIEW_STAGE_SOURCE_OPEN = 2;
+    public static final int PREVIEW_STAGE_SOURCE_PARSE = 3;
+    public static final int PREVIEW_STAGE_SOURCE_DATABASE = 4;
+    public static final int PREVIEW_STAGE_SOURCE_CLOSE = 5;
+    public static final int PREVIEW_STAGE_RIME_MERGE = 6;
+    public static final int PREVIEW_STAGE_GOOGLE_EXPORT = 7;
+    public static final int PREVIEW_STAGE_SESSION_PLAN = 8;
+
     private final Context context;
     private final AbstractHmmEngineFactory engineFactory;
     private final RimeSyncSafStore safStore;
@@ -228,23 +237,56 @@ public final class RimeSyncCoordinator {
 
     private Session buildSession(RimeSyncStateStore.Profile profile) throws IOException {
         RimeUserDbSnapshot snapshot = loadMergedSnapshot(profile);
-        GoogleNativeDictionaryBridge.Snapshot google =
-                GoogleNativeDictionaryBridge.read(context, engineFactory);
-        RimeSyncSessionPlan plan = RimeSyncSessionPlan.build(
-                RimeSyncCore.translationEntries(snapshot), google,
-                stateStore.baselineLookup());
+        GoogleNativeDictionaryBridge.Snapshot google;
+        try {
+            google = GoogleNativeDictionaryBridge.read(context, engineFactory);
+        } catch (IOException failure) {
+            throw new PreviewStageException(PREVIEW_STAGE_GOOGLE_EXPORT, failure);
+        }
+        RimeSyncSessionPlan plan;
+        try {
+            plan = RimeSyncSessionPlan.build(
+                    RimeSyncCore.translationEntries(snapshot), google,
+                    stateStore.baselineLookup());
+        } catch (IOException failure) {
+            throw new PreviewStageException(PREVIEW_STAGE_SESSION_PLAN, failure);
+        }
         return new Session(snapshot, plan);
     }
 
     private RimeUserDbSnapshot loadMergedSnapshot(RimeSyncStateStore.Profile profile)
             throws IOException {
+        List<RimeSyncSafStore.SnapshotDocument> documents;
+        try {
+            documents = safStore.listSnapshots();
+        } catch (IOException failure) {
+            throw new PreviewStageException(PREVIEW_STAGE_SOURCE_LIST, failure);
+        }
         List<RimeSyncCore.DeviceSnapshot> devices =
                 new ArrayList<RimeSyncCore.DeviceSnapshot>();
-        for (RimeSyncSafStore.SnapshotDocument document : safStore.listSnapshots()) {
-            devices.add(new RimeSyncCore.DeviceSnapshot(document.deviceDirectoryName,
-                    document.bridgeOwned, safStore.readSnapshot(document)));
+        for (RimeSyncSafStore.SnapshotDocument document : documents) {
+            try {
+                devices.add(new RimeSyncCore.DeviceSnapshot(document.deviceDirectoryName,
+                        document.bridgeOwned, safStore.readSnapshot(document)));
+            } catch (RimeSyncSafStore.SnapshotReadException failure) {
+                int stage = PREVIEW_STAGE_SOURCE_CLOSE;
+                if (failure.kind == RimeSyncSafStore.SNAPSHOT_READ_OPEN) {
+                    stage = PREVIEW_STAGE_SOURCE_OPEN;
+                } else if (failure.kind == RimeSyncSafStore.SNAPSHOT_READ_PARSE) {
+                    stage = PREVIEW_STAGE_SOURCE_PARSE;
+                } else if (failure.kind == RimeSyncSafStore.SNAPSHOT_READ_DATABASE) {
+                    stage = PREVIEW_STAGE_SOURCE_DATABASE;
+                }
+                throw new PreviewStageException(stage, failure);
+            } catch (IOException failure) {
+                throw new PreviewStageException(PREVIEW_STAGE_SOURCE_CLOSE, failure);
+            }
         }
-        return RimeSyncCore.merge(devices, configuration, profile.bridgeUserId);
+        try {
+            return RimeSyncCore.merge(devices, configuration, profile.bridgeUserId);
+        } catch (IOException failure) {
+            throw new PreviewStageException(PREVIEW_STAGE_RIME_MERGE, failure);
+        }
     }
 
     private long stage(RimeSyncSessionPlan plan) {
@@ -338,6 +380,15 @@ public final class RimeSyncCoordinator {
             this.rimeDeletionCount = rimeDeletionCount;
             this.rimeResurrectionCount = rimeResurrectionCount;
             this.recovered = recovered;
+        }
+    }
+
+    public static final class PreviewStageException extends IOException {
+        public final int stage;
+
+        public PreviewStageException(int stage, IOException cause) {
+            super("Rime synchronization preview failed", cause);
+            this.stage = stage;
         }
     }
 

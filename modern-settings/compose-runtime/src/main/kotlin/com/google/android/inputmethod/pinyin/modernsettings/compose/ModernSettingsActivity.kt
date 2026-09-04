@@ -630,6 +630,30 @@ class ModernSettingsActivity : ComponentActivity() {
             RimeSyncError.CapacityExceeded -> getString(
                 R.string.modern_settings_rime_sync_error_capacity,
             )
+            RimeSyncError.PreviewSourceList -> getString(
+                R.string.modern_settings_rime_sync_error_source_list,
+            )
+            RimeSyncError.PreviewSourceOpen -> getString(
+                R.string.modern_settings_rime_sync_error_source_open,
+            )
+            RimeSyncError.PreviewSourceParse -> getString(
+                R.string.modern_settings_rime_sync_error_source_parse,
+            )
+            RimeSyncError.PreviewSourceDatabase -> getString(
+                R.string.modern_settings_rime_sync_error_source_database,
+            )
+            RimeSyncError.PreviewSourceClose -> getString(
+                R.string.modern_settings_rime_sync_error_source_close,
+            )
+            RimeSyncError.PreviewRimeMerge -> getString(
+                R.string.modern_settings_rime_sync_error_rime_merge,
+            )
+            RimeSyncError.PreviewGoogleExport -> getString(
+                R.string.modern_settings_rime_sync_error_google_export,
+            )
+            RimeSyncError.PreviewSessionPlan -> getString(
+                R.string.modern_settings_rime_sync_error_session_plan,
+            )
             RimeSyncError.NativePersistence -> when {
                 rimeSync.settings.nativeFailureRepeated &&
                     rimeSync.settings.nativeRejectedCount > 0 -> getString(

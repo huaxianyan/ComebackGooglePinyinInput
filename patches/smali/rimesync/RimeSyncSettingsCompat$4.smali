@@ -21,7 +21,7 @@
 .method constructor <init>()V
     .locals 0
 
-    .line 165
+    .line 173
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
     return-void
@@ -37,12 +37,12 @@
         }
     .end annotation
 
-    .line 167
+    .line 175
     invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->access$300(Landroid/content/Context;)Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$CoordinatorHandle;
 
     move-result-object v0
 
-    .line 169
+    .line 177
     :try_start_0
     iget-object v1, v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$CoordinatorHandle;->coordinator:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCoordinator;
 
@@ -50,7 +50,7 @@
 
     move-result-object v1
 
-    .line 170
+    .line 178
     invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->read(Landroid/content/Context;)Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Settings;
 
     move-result-object p1
@@ -61,18 +61,18 @@
     :try_end_0
     .catchall {:try_start_0 .. :try_end_0} :catchall_0
 
-    .line 172
+    .line 180
     invoke-virtual {v0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$CoordinatorHandle;->close()V
 
-    .line 170
+    .line 178
     return-object p1
 
-    .line 172
+    .line 180
     :catchall_0
     move-exception p1
 
     invoke-virtual {v0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$CoordinatorHandle;->close()V
 
-    .line 173
+    .line 181
     throw p1
 .end method

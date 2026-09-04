@@ -30,6 +30,14 @@ public final class RimeSyncSettingsCompat {
     public static final int ERROR_CAPACITY_EXCEEDED = 6;
     public static final int ERROR_OPERATION_FAILED = 7;
     public static final int ERROR_NATIVE_PERSISTENCE = 8;
+    public static final int ERROR_PREVIEW_SOURCE_LIST = 9;
+    public static final int ERROR_PREVIEW_SOURCE_OPEN = 10;
+    public static final int ERROR_PREVIEW_SOURCE_PARSE = 11;
+    public static final int ERROR_PREVIEW_SOURCE_DATABASE = 12;
+    public static final int ERROR_PREVIEW_SOURCE_CLOSE = 13;
+    public static final int ERROR_PREVIEW_RIME_MERGE = 14;
+    public static final int ERROR_PREVIEW_GOOGLE_EXPORT = 15;
+    public static final int ERROR_PREVIEW_SESSION_PLAN = 16;
 
     public static final int NATIVE_FAILURE_NONE = RimeSyncStateStore.NATIVE_FAILURE_NONE;
     public static final int NATIVE_FAILURE_PERSISTENCE =
@@ -250,6 +258,8 @@ public final class RimeSyncSettingsCompat {
                 Result result;
                 try {
                     result = operation.run(context);
+                } catch (RimeSyncCoordinator.PreviewStageException failure) {
+                    result = Result.error(read(context), previewError(failure.stage));
                 } catch (RimeSyncCoordinator.DeletionConfirmationException failure) {
                     result = Result.error(read(context),
                             ERROR_DELETION_CONFIRMATION_REQUIRED);
@@ -278,6 +288,34 @@ public final class RimeSyncSettingsCompat {
                 deliver(callback, result.withSettings(read(context)));
             }
         });
+    }
+
+    private static int previewError(int stage) {
+        if (stage == RimeSyncCoordinator.PREVIEW_STAGE_SOURCE_LIST) {
+            return ERROR_PREVIEW_SOURCE_LIST;
+        }
+        if (stage == RimeSyncCoordinator.PREVIEW_STAGE_SOURCE_OPEN) {
+            return ERROR_PREVIEW_SOURCE_OPEN;
+        }
+        if (stage == RimeSyncCoordinator.PREVIEW_STAGE_SOURCE_PARSE) {
+            return ERROR_PREVIEW_SOURCE_PARSE;
+        }
+        if (stage == RimeSyncCoordinator.PREVIEW_STAGE_SOURCE_DATABASE) {
+            return ERROR_PREVIEW_SOURCE_DATABASE;
+        }
+        if (stage == RimeSyncCoordinator.PREVIEW_STAGE_SOURCE_CLOSE) {
+            return ERROR_PREVIEW_SOURCE_CLOSE;
+        }
+        if (stage == RimeSyncCoordinator.PREVIEW_STAGE_RIME_MERGE) {
+            return ERROR_PREVIEW_RIME_MERGE;
+        }
+        if (stage == RimeSyncCoordinator.PREVIEW_STAGE_GOOGLE_EXPORT) {
+            return ERROR_PREVIEW_GOOGLE_EXPORT;
+        }
+        if (stage == RimeSyncCoordinator.PREVIEW_STAGE_SESSION_PLAN) {
+            return ERROR_PREVIEW_SESSION_PLAN;
+        }
+        return ERROR_OPERATION_FAILED;
     }
 
     private static void deliver(final Callback callback, final Result result) {

@@ -469,8 +469,8 @@ def verify_native_api(decoded: Path) -> None:
 def verify_smali(decoded: Path | None) -> None:
     patch_dir = ROOT / "patches/smali/rimesync"
     patch_files = sorted(patch_dir.glob("*.smali"))
-    if len(patch_files) != 63:
-        raise AssertionError(f"expected 63 generated Rime Smali files, found {len(patch_files)}")
+    if len(patch_files) != 65:
+        raise AssertionError(f"expected 65 generated Rime Smali files, found {len(patch_files)}")
     required = {
         "GoogleNativeDictionaryBridge.smali",
         "RimeSyncCoordinator.smali",

@@ -34,30 +34,30 @@
 .method constructor <init>(JIIIIIZ)V
     .locals 0
 
-    .line 333
+    .line 375
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
-    .line 334
+    .line 376
     iput-wide p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCoordinator$Result;->generation:J
 
-    .line 335
+    .line 377
     iput p3, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCoordinator$Result;->googleAdditionCount:I
 
-    .line 336
+    .line 378
     iput p4, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCoordinator$Result;->googleDeletionCount:I
 
-    .line 337
+    .line 379
     iput p5, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCoordinator$Result;->rimeAdditionCount:I
 
-    .line 338
+    .line 380
     iput p6, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCoordinator$Result;->rimeDeletionCount:I
 
-    .line 339
+    .line 381
     iput p7, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCoordinator$Result;->rimeResurrectionCount:I
 
-    .line 340
+    .line 382
     iput-boolean p8, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCoordinator$Result;->recovered:Z
 
-    .line 341
+    .line 383
     return-void
 .end method
