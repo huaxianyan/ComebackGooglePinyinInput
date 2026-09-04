@@ -390,7 +390,9 @@ Pixel 真机已从 v3 原地迁移到 v4，并在拒绝集合再次匹配 303 �
 
 真实 Syncthing 双向链路已通过 Pixel 与 Windows 上的合成 peer 验收。Bridge 的 4,720,551 字节正式快照先从 Pixel 经 Syncthing-Fork 传播到 Windows，目录中没有临时文件、恢复副本或冲突副本。反向测试最初因合成夹具误把 `db_name` 写成 `pinyin_simp` 而被安全拒绝；`v13` 和 `v14` 增加不含路径、设备身份、词面和拼音的预览阶段分类，最终精确定位为数据库名不匹配。修正为文件协议要求的 `pinyin_simp.userdb` 后，同一合成词条依次完成「peer 新增 → Google 新增 1 项 → peer 墓碑 → Google 删除 1 项 → peer 明确重新添加 → Google 复活 1 项」。每个事务均进入 `IDLE`，新增后立即和冷启动预览、删除后立即预览、复活后冷启动预览均为五项零变更。测试结束前再次传播墓碑并从隔离 Google 词典删除合成词条，随后在 Windows 和 Pixel 两端精确删除 synthetic peer 目录；Bridge 保留删除墓碑，最终冷启动预览仍为五项零变更。
 
-不可翻译 Native 条目的运行时守恒、自动备份与 Rime 同步的真实串行化，以及扩大到 20 万条前的内存优化仍未验收。
+Pixel 10 Pro 的隔离审计包已进一步验证单字 Native 条目的重建守恒。测试先确认审计词典中没有被 Rime 投影排除的既有条目，再通过同签名一次性 instrumentation 和原生 accessor 加入 1 个生成的单字条目；随后由独立 synthetic peer 完成多字词新增，并以墓碑得到 `0,1,0,0,0` 删除预览，使生产 Bridge 真实执行全词典重建和持久化。重新打开词典后，排除项仍为 1，合成单字的 tokens、language ID、count、修改标志、规范化标志和 expansion type 均与重建前完全一致。清理 probe 与两个合成条目后，排除项回到 0，最终同步预览为五项零变更；设备与 Windows 均未残留 synthetic peer、临时诊断文件、Bridge 临时文件、恢复副本或同步冲突文件。Probe 只报告数量和布尔比较结果，不输出词面、拼音或指纹。该结果直接覆盖单字及其完整 Native 元数据；其他 language ID、非拼音 token 和英文条目的独立运行时夹具仍待验证。
+
+自动备份与 Rime 同步的真实串行化、其他不可翻译 Native 类型，以及扩大到 20 万条前的内存优化仍未验收。
 
 ## 14. 保留的长期边界
 
