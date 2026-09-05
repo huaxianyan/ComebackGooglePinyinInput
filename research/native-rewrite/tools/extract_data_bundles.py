@@ -296,6 +296,12 @@ def scalar_wire_values(fields: list[tuple[int, int, Any]]) -> list[dict[str, Any
             record["float64"] = struct.unpack("<d", value)[0]
         else:
             record["size"] = len(value)
+            try:
+                text = value.decode("utf-8")
+            except UnicodeDecodeError:
+                text = ""
+            if all(character.isprintable() for character in text):
+                record["utf8"] = text
         values.append(record)
     return values
 
@@ -313,6 +319,7 @@ def marisa_region(content: bytes, offset: int, size: int | None = None) -> dict[
     return {
         "offset": offset,
         "serialized_size": len(canonical),
+        "sha256": sha256_bytes(canonical),
         "key_count": len(trie),
         "round_trip_exact": True,
     }
@@ -325,7 +332,7 @@ def analyze_in_memory_expander(content: bytes) -> dict[str, Any]:
     offset = config["data_offset"] + 4
     source_ids: list[int] = []
     target_count = 0
-    second_words: set[int] = set()
+    score_bits: set[int] = set()
     for _ in range(record_count):
         source_ids.append(read_u32(content, offset))
         item_count = read_u32(content, offset + 4)
@@ -333,7 +340,7 @@ def analyze_in_memory_expander(content: bytes) -> dict[str, Any]:
         target_count += item_count
         for _ in range(item_count):
             read_u32(content, offset)
-            second_words.add(read_u32(content, offset + 4))
+            score_bits.add(read_u32(content, offset + 4))
             offset += 8
     trailer = content[offset:]
     if trailer != b"\x00\x00\x00\x00":
@@ -345,10 +352,10 @@ def analyze_in_memory_expander(content: bytes) -> dict[str, Any]:
         "record_count": record_count,
         "unique_source_count": len(set(source_ids)),
         "target_count": target_count,
-        "second_word_uint32_values": sorted(second_words),
-        "second_word_float32_values": [
+        "expansion_score_uint32_bits": sorted(score_bits),
+        "expansion_score_float32_values": [
             struct.unpack("<f", value.to_bytes(4, "little"))[0]
-            for value in sorted(second_words)
+            for value in sorted(score_bits)
         ],
         "trailer_size": len(trailer),
         "fully_consumed": True,
@@ -380,18 +387,30 @@ def analyze_forward_dictionary(content: bytes) -> dict[str, Any]:
     marisa_offset = offset + 16
     region = marisa_region(content, marisa_offset, marisa_size)
     auxiliary_offset = marisa_offset + marisa_size
-    return {
+    result = {
         "envelope": envelope,
         "marisa": region,
         "second_header_u64": second_header_u64,
         "auxiliary_offset": auxiliary_offset,
         "auxiliary_size": len(content) - auxiliary_offset,
+        "auxiliary_sha256": sha256_bytes(content[auxiliary_offset:]),
         "auxiliary_first_u32": (
             read_u32(content, auxiliary_offset)
             if auxiliary_offset + 4 <= len(content)
             else None
         ),
     }
+    if second_header_u64 == 0:
+        token_config = analyze_length_prefixed_config(content, auxiliary_offset)
+        token_count = read_u32(content, token_config["data_offset"])
+        metadata_offset = token_config["data_offset"] + 4
+        result["token_config"] = token_config
+        result["token_count"] = token_count
+        result["token_count_matches_marisa_keys"] = token_count == region["key_count"]
+        result["token_metadata_offset"] = metadata_offset
+        result["token_metadata_size"] = len(content) - metadata_offset
+        result["token_metadata_sha256"] = sha256_bytes(content[metadata_offset:])
+    return result
 
 
 def analyze_native_container(content: bytes, classification: str) -> dict[str, Any] | None:

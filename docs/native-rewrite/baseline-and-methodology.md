@@ -216,7 +216,7 @@ AsyncChineseProcessorBasedIme
 | `liben_data_bundle.so` | 9,456 bytes | 以 start/end dynamic symbol 提供英文 token、setting 和 accessor scheme |
 | `libgnustl_shared.so` | 1,095,984 bytes | `libhwrword.so` 的 GNU C++ 运行时依赖，统一核心库没有声明依赖它 |
 
-完整 ELF 和 JNI 边界见 `native-boundary.md`，63 个命名载荷的导出与格式分类见 `data-bundle-formats.md`，setting schema 和 Marisa 区间见 `setting-and-container-formats.md`。只有 `libhmm_gesture_hwr_zh.so` 的 `PT_LOAD` alignment 为 4 KiB，其余四个库均为 64 KiB。
+完整 ELF 和 JNI 边界见 `native-boundary.md`，63 个命名载荷的导出与格式分类见 `data-bundle-formats.md`，setting schema 和 Marisa 区间见 `setting-and-container-formats.md`，token auxiliary 与 native reader 证据见 `token-dictionary-auxiliary.md`。只有 `libhmm_gesture_hwr_zh.so` 的 `PT_LOAD` alignment 为 4 KiB，其余四个库均为 64 KiB。
 
 ### raw 数据
 
@@ -299,7 +299,7 @@ JADX 输出和工具位于被忽略的 `work/` 与 `tools/`，不进入仓库。
 1. 统一库动态注册表中的 method name、signature 和函数地址映射
 2. 27,080 条 call graph 边中的核心路径子图
 3. 409 个 XML 的完整引用图，目前只确认 framework、IME、processor 和主要 keyboard 链路
-4. data bundle auxiliary data 的字段、索引和评分语义
+4. token ID、score、code、node ID 与 prefix score 辅助表的精确边界和连接语义
 5. `libhwrword.so` 实际装载与可达性的运行时验证
 6. Preference、资源和实际运行能力之间的映射
 7. Comeback 补丁到用户功能的完整追踪

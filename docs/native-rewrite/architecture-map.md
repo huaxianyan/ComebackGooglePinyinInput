@@ -351,7 +351,7 @@ setting 顶层结构、Preference 修改点和容器边界已经进一步确认�
 - field 15 保存 gesture module
 - 每套双拼同时拥有普通 token trie 和 gesture token ID trie
 
-完整证据见 `setting-and-container-formats.md`。dictionary auxiliary data 和排序权重仍未知。
+完整 schema 证据见 `setting-and-container-formats.md`。native reader 进一步确认 ForwardTokenDictionary 将 trie、token ID、score、meta、code、node ID 和 prefix score 分表保存，详见 `token-dictionary-auxiliary.md`；各表边界和排序权重仍未知。
 
 ### mutable dictionary
 
@@ -495,7 +495,7 @@ QWERTY 与九键分别有拼音 gesture handler。英文另有独立 handler，�
 ## 下一步
 
 1. 将统一库动态注册表中的 method name、JNI signature 和函数地址建立精确映射
-2. 恢复 setting 数值参数单位和原生 data reader 的字段语义
+2. 切分 ForwardTokenDictionary 与 DirectMappingTokenExpander 的辅助表
 3. 从 27,080 条 call graph 边中提取 Service、InputBundle、DecodeProcessor、HMM、词典、滑行和手写子图
 4. 建立 XML include、class、layout、keymapping 和 processor 的机器可查询引用图
 5. 运行时验证 `libhwrword.so` 是否被装载

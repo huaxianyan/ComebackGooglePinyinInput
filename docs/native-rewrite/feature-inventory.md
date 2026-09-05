@@ -56,8 +56,8 @@ Rime 双向同步尚未进入本基线。其分支完成并合并后再更新对
 | ENG-001 | `ORIGINAL` | 全拼字符输入和 composing | 部分确认 | 重建 | 建立增量输入状态样本和 Java/native 边界 |
 | ENG-002 | `ORIGINAL` | 音节切分和撇号分隔 | 待研究 | 重建 | 构造歧义音节样本 |
 | ENG-003 | `ORIGINAL` | 简拼和不完整拼音 | 待研究 | 重建 | 确认接受范围、候选和回退规则 |
-| ENG-004 | `ORIGINAL` | 七种全拼、双拼方案 | 已确认 | 重建 | 已确认普通 token 与 gesture token ID 双链路，继续调查编码映射和零声母规则 |
-| ENG-005 | `ORIGINAL` | 12 组模糊拼音规则 | 已确认 | 重建 | 已导出 12 个独立 expansion，继续解析 token pair 并建立组合优先级样本 |
+| ENG-004 | `ORIGINAL` | 七种全拼、双拼方案 | 已确认 | 重建 | 已确认八个 token count 与各自 trie key 数一致，继续恢复 token ID 映射和零声母规则 |
+| ENG-005 | `ORIGINAL` | 12 组模糊拼音规则 | 已确认 | 重建 | 已确认 494 个双向 source 和独立 expansion score，继续对齐 token ID 并建立组合样本 |
 | ENG-006 | `ORIGINAL` | 单字、词组和长句候选 | 部分确认 | 重建 | 分析候选图、分段和整句路径 |
 | ENG-007 | `ORIGINAL` | 候选排序、去重和选中项 | 部分确认 | 重建 | 分离静态词频、上下文和用户学习影响 |
 | ENG-008 | `ORIGINAL` | 候选增量请求和分页 | 已确认 | 重建 | 调查批次协议、hasMore 和稳定顺序 |
@@ -100,7 +100,7 @@ Rime 双向同步尚未进入本基线。其分支完成并合并后再更新对
 | --- | --- | --- | --- | --- | --- |
 | MOD-001 | `ORIGINAL` | 中文拼音 QWERTY | 已确认 | 重建 | 作为首个核心输入模式研究 |
 | MOD-002 | `ORIGINAL` | 中文拼音九键 | 已确认 | 重建 | 分析 T9 解码器、消歧和候选布局 |
-| MOD-003 | `ORIGINAL` | 中文笔画 | 已确认 | 重建 | 已确认复用 ForwardTokenDictionary 但 auxiliary 结构不同，继续调查五笔画、通配符和候选协议 |
+| MOD-003 | `ORIGINAL` | 中文笔画 | 已确认 | 重建 | 已确认 ForwardTokenDictionary header 与拼音类容器不同，继续定位 custom encoding 与候选协议 |
 | MOD-004 | `ORIGINAL` | 中文手写 | 已确认 | 替代 | 已发现统一库与 `libhwrword.so` 两套 JNI 痕迹，先确认实际装载，再分离画布、模型、lattice 和识别协议 |
 | MOD-005 | `ORIGINAL` | 英文 QWERTY 候选和纠错 | 已确认 | 替代 | 调查模型、候选和自动纠正 |
 | MOD-006 | `ORIGINAL` | 英文九键 | 已确认 | 重建 | 调查可达条件和 T9 行为 |
@@ -211,9 +211,9 @@ Rime 双向同步尚未进入本基线。其分支完成并合并后再更新对
 
 阶段 0 下一轮按以下顺序补强本表：
 
-1. 恢复 setting 数值参数单位和 data type factory 语义
+1. 切分 ForwardTokenDictionary 与 DirectMappingTokenExpander 的辅助表
 2. 映射统一库动态注册表中的 method name、JNI signature 和函数地址
-3. 解析 token dictionary 和 system dictionary 的 auxiliary 数据
+3. 对齐 fuzzy token ID、Marisa key ID 和内部 token table
 4. 从 27,080 条 call graph 边中提取 Service、InputBundle、DecodeProcessor、HMM、词典、滑行和手写子图
 5. 建立 XML include、class、layout、keymapping 和 processor 的机器可查询引用图
 6. 运行时验证 `libhwrword.so` 是否实际装载

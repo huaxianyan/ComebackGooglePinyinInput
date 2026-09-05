@@ -204,7 +204,7 @@ repeated record {
   uint32_le target_count
   repeated target {
     uint32_le target_token_id
-    uint32_le second_word
+    float32_le expansion_score
   }
 }
 uint32_le zero trailer
@@ -244,7 +244,7 @@ field 1 与文件职责稳定对应，可以视为模式 enum 数值。field 2�
 
 12 组可选 fuzzy 的每个 source 都有两个 target，说明它们按双向映射编码。默认 fuzzy 同时包含 1-target 和 2-target 记录，不等同于任意一组可选模糊音。
 
-目标记录的第二个 32-bit word 在绝大多数记录中为零。默认 fuzzy 的部分记录为 bit pattern `0xbdcccccd`，按 IEEE-754 float 解释为约 `-0.1`。这支持它是代价或分数修正值的推断，但在 native reader 确认前，清单仍以中性的 `second_word` 命名。
+native reader 的错误文案将目标记录的第二个 32-bit 字段称为 `expanding score`。绝大多数记录的分数为 `0.0`，默认 fuzzy 的部分记录为约 `-0.1`。因此，该字段已从推断提升为已确认的 expansion score。
 
 ## ForwardTokenDictionary
 
@@ -272,7 +272,7 @@ Marisa 区间均可精确 round-trip：
 | 自然码 | 507 | 4,856 | 4,688 |
 | 笔画 | 90,701 | 150,112 | 550,144 |
 
-全拼 trie 有 517 个 key，而 auxiliary data 的首个 uint32 为 106。六套双拼 auxiliary data 的首个 uint32 都为 109。当前不能把这个数值直接命名为 token count。
+进一步分析确认，该首个 uint32 是 length-prefixed token config 的字节数，不是 token count。config 后还有一个独立 token count，八个拼音类容器均与各自 Marisa key 数量相等。native reader 又确认 auxiliary data 包含 token ID、score、meta、code、node ID 和 prefix score 等多张表，详见 `token-dictionary-auxiliary.md`。
 
 笔画容器明显不同：第二个 header word 为 `4`，其他八个容器为 `0`，且 auxiliary data 远大于 trie。它虽然复用 `ForwardTokenDictionary` class，但不是拼音 token 表的简单变体。
 
@@ -336,7 +336,6 @@ Marisa key 数量不等于整个 dictionary 的候选条目数。prefix 和 auxi
 
 ## 推断
 
-- expansion 记录中的 second word 很可能是 float 代价或分数修正
 - system dictionary 的 prefix 和 auxiliary data 很可能承载 key 之外的 token、value 和权重
 - field 6 与 field 11 虽然都引用 `pinyin_bigram`，但应服务于不同 engine 阶段
 
@@ -362,7 +361,7 @@ Marisa key 数量不等于整个 dictionary 的候选条目数。prefix 和 auxi
 
 ## 下一步
 
-1. 对全拼和双拼 ForwardTokenDictionary auxiliary data 建立结构差分
+1. 切分 ForwardTokenDictionary auxiliary data 中的八张表
 2. 将 fuzzy token ID 与 ForwardTokenDictionary key/ID 对齐
 3. 定位 native data type factory 与各 reader 的构造入口
 4. 分析 system dictionary prefix 和 auxiliary 区域的整数表关系

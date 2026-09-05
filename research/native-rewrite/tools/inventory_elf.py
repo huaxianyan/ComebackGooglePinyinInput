@@ -23,6 +23,17 @@ PACKAGE_DECLARATION = re.compile(r"^package\s+(?P<package>[\w.]+);", re.MULTILIN
 CLASS_DECLARATION = re.compile(
     r"\b(?:class|interface|enum)\s+(?P<class_name>[A-Za-z_$][\w$]*)"
 )
+STORAGE_CLASS_NAMES = {
+    "ClassBigramModel",
+    "ClassNGramModel",
+    "ClassNGramModelReader",
+    "DirectMappingTokenExpander",
+    "DirectTokenDictionary",
+    "ForwardTokenDictionary",
+    "GenericDataModelCreator",
+    "InMemoryTokenExpander",
+    "MarisaTrie",
+}
 
 
 @dataclass(frozen=True)
@@ -117,6 +128,16 @@ def analyze_library(
     register_natives_strings = sorted(
         value for value in strings if "RegisterNatives" in value
     )
+    storage_reader_evidence = sorted(
+        value
+        for value in strings
+        if value in STORAGE_CLASS_NAMES
+        or value.startswith("[ForwardTokenDictionary]")
+        or value.startswith("[InMemoryTokenExpander]")
+        or value.startswith("[DirectMappingTokenExpander]")
+        or "i18n/input/engine/hmm/internal/storage/" in value
+        or "i18n_input.engine.hmm.proto." in value
+    )
     defined_dynamic_symbols = sorted(
         (
             symbol_record(symbol)
@@ -169,6 +190,7 @@ def analyze_library(
         "exported_functions": exports,
         "imported_functions": imports,
         "defined_dynamic_symbols": defined_dynamic_symbols,
+        "storage_reader_evidence": storage_reader_evidence,
         "jni": {
             "exports": jni_exports,
             "register_natives_strings": register_natives_strings,
