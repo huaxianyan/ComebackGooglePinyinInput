@@ -17,16 +17,17 @@ public final class RimeSyncCore {
 
     private RimeSyncCore() {}
 
-    /** Validates the database name, migrating only this device's legacy Bridge metadata. */
+    /** Matches librime UserDbHelper::GetDbName without rewriting peer files. */
     public static void normalizeSnapshotDatabase(RimeUserDbSnapshot snapshot,
             RimeSyncConfiguration configuration, boolean bridgeOwned) throws IOException {
         if (configuration.databaseName.equals(snapshot.dbName())) return;
-        String legacyName = configuration.snapshotFileName.substring(0,
-                configuration.snapshotFileName.length() - ".txt".length());
-        if (bridgeOwned && legacyName.equals(snapshot.dbName())) {
-            // The pre-release Bridge incorrectly retained the .userdb suffix.
-            // Validate the Bridge marker and stable UUID before accepting that old shape.
-            recoverBridgeUserId(snapshot);
+        String storedName = snapshot.dbName();
+        int extension = storedName.lastIndexOf(".userdb");
+        if (extension >= 0 && configuration.databaseName.equals(
+                storedName.substring(0, extension))) {
+            // librime removes the last .userdb occurrence and everything after it.
+            // An owned snapshot must still establish the existing Bridge identity.
+            if (bridgeOwned) recoverBridgeUserId(snapshot);
             snapshot.putMetadata("db_name", configuration.databaseName);
             return;
         }

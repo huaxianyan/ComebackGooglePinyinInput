@@ -313,14 +313,25 @@ public final class RimeUserDbSnapshotTest {
     legacyBridge.putMetadata("db_name", "pinyin_simp.userdb");
     legacyBridge.putMetadata("rime_version", "google-pinyin-bridge");
     legacyBridge.putMetadata("user_id", "11111111-2222-3333-4444-555555555555");
-    boolean foreignLegacyRejected = false;
-    try {
-      RimeSyncCore.normalizeSnapshotDatabase(legacyBridge, validatedConfiguration, false);
-    } catch (java.io.IOException expected) {
-      foreignLegacyRejected = true;
+    // librime 1.13.1 UserDbHelper::GetDbName removes .userdb and its suffix.
+    for (String storedName : Arrays.asList("pinyin_simp.userdb", "pinyin_simp.userdb.kct")) {
+      RimeUserDbSnapshot suffixedPeer = read(peer);
+      suffixedPeer.putMetadata("db_name", storedName);
+      RimeSyncCore.normalizeSnapshotDatabase(suffixedPeer, validatedConfiguration, false);
+      require("pinyin_simp".equals(suffixedPeer.dbName())
+              && suffixedPeer.entries().size() == 3 && suffixedPeer.tick() == 120,
+          "a Rime peer with a storage suffix previews the same dictionary and entries");
     }
-    require(foreignLegacyRejected,
-        "another device's mismatched database is not migrated by this Bridge");
+    RimeUserDbSnapshot otherDatabase = read(peer);
+    otherDatabase.putMetadata("db_name", "other.userdb");
+    boolean otherDatabaseRejected = false;
+    try {
+      RimeSyncCore.normalizeSnapshotDatabase(otherDatabase, validatedConfiguration, false);
+    } catch (java.io.IOException expected) {
+      otherDatabaseRejected = true;
+    }
+    require(otherDatabaseRejected,
+        "a different dictionary name cannot enter the configured dictionary");
     RimeSyncCore.normalizeSnapshotDatabase(legacyBridge, validatedConfiguration, true);
     require("pinyin_simp".equals(legacyBridge.dbName())
             && "11111111-2222-3333-4444-555555555555".equals(
