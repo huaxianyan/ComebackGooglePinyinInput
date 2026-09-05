@@ -300,7 +300,7 @@ Google 原生用户词典
 - 词条身份是规范化后的 `(词面, 拼音)`
 - Rime 与 Google 拼音之间不换算历史词频
 - Google 新词使用原生 importer 接受的最低有效 `count=1`
-- Rime 新词不伪造历史提交次数，初始动态值须经候选可见性实验确定
+- Rime 新词不伪造历史提交次数，使用已通过候选可见性实验的 `c=0 d=1e-8 t=0`
 - 已有词保留各自的词频和动态状态
 - 删除双向传播，同一轮冲突时删除优先
 - 已完成删除的词以后在任一侧重新添加时允许复活
@@ -397,6 +397,8 @@ Pixel 隔离审计包随后完成了其余可构造类型的运行时验收。�
 并发审计发现 `SaveDictionaryTask`、`UserDictExportTask` 和 Rime Native Bridge 已共用 `SaveDictionaryTask.sSaveLock`，但原生 `UserDictImportTask` 仍在共享锁之外打开、合并并持久化词典副本。`v15` 已把导入的完整事务纳入同一把锁，范围从打开 accessor 持续到合并、persist 和引擎通知，并增加静态协议门禁，避免导入与 Rime 同步把各自的旧副本覆盖到对方结果上。该修改不增加业务依赖，也不合并自动备份与 Rime 的线程池、SAF 根或状态。
 
 Pixel 上使用任务专用 SAF 目录和只持有共享锁、不访问数据的一次性 instrumentation，已从真实 Compose 入口覆盖 `backup → Rime`、`Rime → backup` 和 `import → Rime`。两次交错备份均发布完整 `.txt`，没有遗留 partial；三次 Rime 预览均为五项零变更。由本轮备份经原生 importer 合并后，Chinese Native 总数和可投影数均保持 `97,505 → 97,505`，随后 Rime 预览仍为零变更，未出现死锁、部分持久化、恢复事务或 Bridge 临时文件。清理阶段释放了自动备份 SAF 授权、清空专属备份 Preferences、删除任务目录并卸载 probe；自动备份恢复为「未选择」，既有 Rime 配置和授权仍可用，证明两套 SAF 状态没有串线。
+
+新词初始状态已经完成双引擎候选验收。Windows 上通过 Weasel 0.17.4／librime 1.13.1 建立完全隔离的 `pinyin_simp` user data，在同一编码下同时导入 `c=0 d=1e-8 t=0` 夹具和 `c=1` 阳性对照；同步前两者均不在 15 个候选中，同步后候选总数增至 17，两个生成词条都能在完整候选列表中精确匹配。Pixel 10 Pro 则使用从固定原始 APK 构建的全新 release-like 隔离包，将一个经过重新打开复核的生成词条以 `count=1` 写入 Native 词典；真实 IME 输入与空格提交得到精确布尔匹配，输入会话结束并切换 IME 后重新打开词典，count 从 `1` 持久化为 `2`。快速重启宿主的额外尝试受冷启动时序影响，不作为稳定交互门槛。两个探针都只输出数量、固定阶段和布尔比较，不输出候选或输入正文。清理时重新激活隔离 Native engine 后确认生成词条不存在，随后禁用并卸载全部审计包，默认输入法恢复为正式包；Windows 隔离 user data 也已删除。这证明当前两侧新词初始值均能进入真实候选和各自的后续本地学习，不意味着两种 count 可以相互换算。
 
 扩大规模前已完成第一轮规划内存优化。预览不再保留每个 unchanged key 的 `EntryPlan`，两个有序 key 引用数组替代了全量 `TreeSet` 节点；仅预览的 Native 快照逐条释放完整 `Entry`，Google 侧只保留 canonical presence；没有既有 Bridge 时，首个 peer 可在内存中按同一 tick 和删除优先规则转换为初始 Bridge，不再复制整张 map；SQLite baseline 的 32 字节加盐 hash 则按 BLOB 顺序装入连续数组，以二分查找替代 64 字符十六进制 key、`HashMap` 节点和常驻 `Baseline` 对象。执行前仍会重新读取带 code、phrase 和 source 的完整 Native 快照，因此 stale 检查、事务重建和持久化复核没有降级。生成结果仍为 65 个 Primary DEX Rime Smali 文件，现有协议测试继续通过。
 
