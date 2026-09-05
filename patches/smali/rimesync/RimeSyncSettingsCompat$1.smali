@@ -33,6 +33,9 @@
     .locals 0
 
     .line 104
+    invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeAutoSync;->reconcile(Landroid/content/Context;)Z
+
+    .line 105
     invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->read(Landroid/content/Context;)Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Settings;
 
     move-result-object p1

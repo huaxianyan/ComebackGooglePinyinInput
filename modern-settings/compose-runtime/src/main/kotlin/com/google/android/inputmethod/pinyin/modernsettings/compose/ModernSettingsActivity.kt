@@ -305,6 +305,22 @@ class ModernSettingsActivity : ComponentActivity() {
                                 }
                             },
                             rimeSync = RimeSyncActions(
+                                onAutomaticChange = { enabled ->
+                                    if (enabled) {
+                                        rimeSync = rimeSync.copy(automaticConfirmationVisible = true)
+                                    } else {
+                                        rimeSync.settings.automatic?.let { configureRimeAutomatic(false, it.intervalHours) }
+                                    }
+                                },
+                                onAutomaticConfirm = {
+                                    rimeSync.settings.automatic?.let { configureRimeAutomatic(true, it.intervalHours) }
+                                },
+                                onAutomaticDismiss = {
+                                    rimeSync = rimeSync.copy(automaticConfirmationVisible = false)
+                                },
+                                onAutomaticIntervalChange = { hours ->
+                                    rimeSync.settings.automatic?.let { configureRimeAutomatic(it.enabled, hours) }
+                                },
                                 onChooseRoot = {
                                     treePurpose = TreePurpose.RimeSync
                                     treePicker.launch(null)
@@ -494,6 +510,20 @@ class ModernSettingsActivity : ComponentActivity() {
 
     private fun refreshRimeSettings() {
         rimeRepository.load { response ->
+            rimeSync = rimeSync.copy(settings = response.settings)
+            if (!response.success) showRimeError(response.error)
+        }
+    }
+
+    private fun configureRimeAutomatic(enabled: Boolean, hours: Int) {
+        rimeSync = rimeSync.copy(automaticConfirmationVisible = false)
+        if (enabled) setRimeBusy()
+        else rimeSync.settings.automatic?.let { auto ->
+            rimeSync = rimeSync.copy(settings = rimeSync.settings.copy(
+                automatic = auto.copy(enabled = false, intervalHours = hours, lastError = 0),
+            ))
+        }
+        rimeRepository.configureAutomatic(enabled, hours) { response ->
             rimeSync = rimeSync.copy(settings = response.settings)
             if (!response.success) showRimeError(response.error)
         }

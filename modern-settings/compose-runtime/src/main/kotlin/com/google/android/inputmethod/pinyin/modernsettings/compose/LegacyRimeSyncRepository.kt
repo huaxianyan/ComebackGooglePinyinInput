@@ -7,7 +7,17 @@ import android.net.Uri
 import android.provider.DocumentsContract
 import java.lang.reflect.Proxy
 
+data class RimeAutomaticSettings(
+    val enabled: Boolean,
+    val intervalHours: Int,
+    val minHours: Int,
+    val maxHours: Int,
+    val lastError: Int,
+)
+
 data class RimeSyncSettingsSnapshot(
+    val automatic: RimeAutomaticSettings? = null,
+    val canEnableAutomatic: Boolean = false,
     val rootUri: String = "",
     val rootLabel: String = "",
     val deviceDirectory: String = "",
@@ -160,6 +170,13 @@ internal class LegacyRimeSyncRepository(private val activity: Activity) {
         ), arrayOf(context, uri, label, callback(done)), done)
     }
 
+    fun configureAutomatic(enabled: Boolean, hours: Int, done: (RimeSyncResponse) -> Unit) {
+        invokeAsync("configureAutomaticAsync", arrayOf(
+            Context::class.java, Boolean::class.javaPrimitiveType!!,
+            Int::class.javaPrimitiveType!!, callbackType,
+        ), arrayOf(context, enabled, hours, callback(done)), done)
+    }
+
     fun preview(done: (RimeSyncResponse) -> Unit) {
         invokeAsync("previewAsync", arrayOf(Context::class.java, callbackType),
             arrayOf(context, callback(done)), done)
@@ -247,8 +264,17 @@ internal class LegacyRimeSyncRepository(private val activity: Activity) {
 
     private fun settings(value: Any): RimeSyncSettingsSnapshot {
         val valueType = value.javaClass
+        val auto = requireNotNull(valueType.getField("automatic").get(value))
+        val autoType = auto.javaClass
         val snapshot = RimeSyncSettingsSnapshot(
-            rootUri = valueType.getField("rootUri").get(value) as String,
+            canEnableAutomatic = valueType.getField("canEnableAutomatic").getBoolean(value),
+            automatic = RimeAutomaticSettings(
+                enabled = autoType.getField("enabled").getBoolean(auto),
+                intervalHours = autoType.getField("intervalHours").getInt(auto),
+                minHours = autoType.getField("minHours").getInt(auto),
+                maxHours = autoType.getField("maxHours").getInt(auto),
+                lastError = autoType.getField("lastError").getInt(auto),
+            ),            rootUri = valueType.getField("rootUri").get(value) as String,
             rootLabel = valueType.getField("rootLabel").get(value) as String,
             deviceDirectory = valueType.getField("deviceDirectory").get(value) as String,
             snapshotFile = valueType.getField("snapshotFile").get(value) as String,

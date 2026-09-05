@@ -114,7 +114,7 @@ public final class DictionaryHealthStatusCompat {
             if (accessor == null) return null;
             Class<?> accessorType = Class.forName(
                     "com.google.android.apps.inputmethod.libs.hmm.MutableDictionaryAccessorInterface");
-            Object value = accessorType.getMethod("getDictionarySize").invoke(accessor);
+            Object value = accessorType.getMethod("getDictionaryCount").invoke(accessor);
             return value instanceof Integer && ((Integer) value).intValue() >= 0
                     ? (Integer) value : null;
         } catch (Throwable ignored) {

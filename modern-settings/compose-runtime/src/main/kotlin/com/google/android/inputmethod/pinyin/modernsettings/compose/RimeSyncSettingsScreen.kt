@@ -9,11 +9,13 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalContext
 
 enum class RimeSyncEditDialog { DeviceName, SnapshotFile }
 
 data class RimeSyncUiState(
     val settings: RimeSyncSettingsSnapshot = RimeSyncSettingsSnapshot(),
+    val automaticConfirmationVisible: Boolean = false,
     val editDialog: RimeSyncEditDialog? = null,
     val deviceDirectoryInput: String = "",
     val deviceNameInputValid: Boolean = true,
@@ -24,6 +26,10 @@ data class RimeSyncUiState(
 )
 
 data class RimeSyncActions(
+    val onAutomaticChange: (Boolean) -> Unit,
+    val onAutomaticConfirm: () -> Unit,
+    val onAutomaticDismiss: () -> Unit,
+    val onAutomaticIntervalChange: (Int) -> Unit,
     val onChooseRoot: () -> Unit,
     val onOpenDeviceName: () -> Unit,
     val onOpenSnapshotFile: () -> Unit,
@@ -52,6 +58,39 @@ internal fun LazyListScope.rimeSyncSettingsItems(
     val settings = state.settings
     item(key = "rime_sync_section", contentType = "section") {
         SectionTitle(stringResource(R.string.modern_settings_rime_sync_section))
+    }
+    settings.automatic?.let { auto ->
+        val ready = settings.canEnableAutomatic
+        item(key = "rime_sync_automatic", contentType = "switch") {
+            SettingsSwitchRow(
+                title = stringResource(R.string.modern_settings_rime_auto_title),
+                supporting = stringResource(when {
+                    auto.lastError != 0 && !auto.enabled -> R.string.modern_settings_rime_auto_paused
+                    auto.lastError != 0 -> R.string.modern_settings_rime_auto_retry
+                    !ready -> R.string.modern_settings_rime_auto_prerequisite
+                    else -> R.string.modern_settings_rime_auto_summary
+                }),
+                checked = auto.enabled,
+                enabled = auto.enabled || (ready && !settings.operationInProgress &&
+                    !dictionaryOperationInProgress),
+                onCheckedChange = actions.onAutomaticChange,
+            )
+        }
+        item(key = "rime_sync_automatic_interval", contentType = "slider") {
+            val context = LocalContext.current
+            DiscreteSettingsSlider(
+                title = stringResource(R.string.modern_settings_rime_auto_interval),
+                value = (auto.intervalHours - auto.minHours).toFloat(),
+                valueText = stringResource(R.string.modern_settings_rime_auto_hours, auto.intervalHours),
+                valueTextForIndex = { context.getString(
+                    R.string.modern_settings_rime_auto_hours, it + auto.minHours,
+                ) },
+                maximumIndex = auto.maxHours - auto.minHours,
+                dependencyEnabled = !settings.operationInProgress && !dictionaryOperationInProgress,
+                editable = true,
+                onValueCommit = { actions.onAutomaticIntervalChange(it + auto.minHours) },
+            )
+        }
     }
     item(key = "rime_sync_root", contentType = "action") {
         SettingsActionRow(
@@ -198,6 +237,23 @@ internal fun LazyListScope.rimeSyncSettingsItems(
 
 @Composable
 internal fun RimeSyncDialogs(state: RimeSyncUiState, actions: RimeSyncActions) {
+    if (state.automaticConfirmationVisible) {
+        AlertDialog(
+            onDismissRequest = actions.onAutomaticDismiss,
+            title = { Text(stringResource(R.string.modern_settings_rime_auto_title)) },
+            text = { Text(stringResource(R.string.modern_settings_rime_auto_consent)) },
+            confirmButton = {
+                TextButton(onClick = actions.onAutomaticConfirm) {
+                    Text(stringResource(R.string.modern_settings_rime_auto_enable))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = actions.onAutomaticDismiss) {
+                    Text(stringResource(R.string.modern_settings_cancel))
+                }
+            },
+        )
+    }
     state.editDialog?.let { dialog ->
         val editingDeviceName = dialog == RimeSyncEditDialog.DeviceName
         AlertDialog(

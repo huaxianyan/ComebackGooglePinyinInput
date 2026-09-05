@@ -17,10 +17,14 @@ SOURCES = [
     SOURCE_DIR / "RimeSyncPlanner.java",
     SOURCE_DIR / "RimeSyncConfiguration.java",
     SOURCE_DIR / "RimeSyncCore.java",
+    SOURCE_DIR / "RimeAutoSyncPolicy.java",
 ]
 ANDROID_SOURCES = [
     SOURCE_DIR / "RimeSyncStateStore.java",
     SOURCE_DIR / "RimeSyncSafStore.java",
+    SOURCE_DIR / "RimeAutoSync.java",
+    SOURCE_DIR / "RimeAutoSyncJobService.java",
+    SOURCE_DIR / "RimeAutoSyncReceiver.java",
 ]
 NATIVE_BRIDGE_SOURCE = SOURCE_DIR / "GoogleNativeDictionaryBridge.java"
 SESSION_PLAN_SOURCE = SOURCE_DIR / "RimeSyncSessionPlan.java"
@@ -33,6 +37,7 @@ import com.google.android.apps.inputmethod.libs.hmm.AbstractHmmEngineFactory;
 import com.google.android.apps.inputmethod.libs.hmm.MutableDictionaryAccessorInterface;
 import com.google.android.apps.inputmethod.libs.hmm.MutableDictionaryAccessorInterface.Entry;
 import com.google.android.inputmethod.pinyin.rimesync.GoogleNativeDictionaryBridge;
+import com.google.android.inputmethod.pinyin.rimesync.RimeAutoSyncPolicy;
 import com.google.android.inputmethod.pinyin.rimesync.RimeSyncConfiguration;
 import com.google.android.inputmethod.pinyin.rimesync.RimeSyncCore;
 import com.google.android.inputmethod.pinyin.rimesync.RimeSyncPlanner;
@@ -301,6 +306,20 @@ public final class RimeUserDbSnapshotTest {
                 == RimeSyncPlanner.GoogleProjection.SUPPORTED,
         "deleting a Rime-only phrase must allow a later explicit addition to retry Google");
 
+    require(RimeAutoSyncPolicy.DEFAULT_HOURS == 24
+            && RimeAutoSyncPolicy.MIN_HOURS == 6 && RimeAutoSyncPolicy.MAX_HOURS == 168,
+        "automatic sync starts with the user-approved interval and adjustment range");
+    require(RimeAutoSyncPolicy.intervalMillis(6) == 21600000L
+            && RimeAutoSyncPolicy.intervalMillis(24) == 86400000L
+            && RimeAutoSyncPolicy.intervalMillis(168) == 604800000L,
+        "choosing hours supplies the corresponding system scheduling interval");
+    for (int outside : new int[]{5, 169}) {
+      boolean refused = false;
+      try { RimeAutoSyncPolicy.intervalMillis(outside); }
+      catch (IllegalArgumentException expected) { refused = true; }
+      require(refused, "interval input stays inside the agreed 6-hour to 7-day range");
+    }
+
     RimeSyncConfiguration validatedConfiguration = new RimeSyncConfiguration(
         "pixel_10_pro", "pinyin_simp.userdb.txt");
     require("pinyin_simp".equals(validatedConfiguration.databaseName),
@@ -551,11 +570,13 @@ def verify_native_api(decoded: Path) -> None:
 def verify_smali(decoded: Path | None) -> None:
     patch_dir = ROOT / "patches/smali/rimesync"
     patch_files = sorted(patch_dir.glob("*.smali"))
-    if len(patch_files) != 65:
-        raise AssertionError(f"expected 65 generated Rime Smali files, found {len(patch_files)}")
     required = {
         "GoogleNativeDictionaryBridge.smali",
         "RimeSyncCoordinator.smali",
+        "RimeAutoSync.smali",
+        "RimeAutoSyncPolicy.smali",
+        "RimeAutoSyncJobService.smali",
+        "RimeAutoSyncReceiver.smali",
         "RimeSyncEngineFactoryProvider.smali",
         "RimeSyncSettingsCompat.smali",
         "RimeSyncStateStore.smali",

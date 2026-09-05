@@ -1144,7 +1144,7 @@
     move-result-object p1
 
     .line 117
-    const-string v4, "getDictionarySize"
+    const-string v4, "getDictionaryCount"
 
     new-array v5, v2, [Ljava/lang/Class;
 

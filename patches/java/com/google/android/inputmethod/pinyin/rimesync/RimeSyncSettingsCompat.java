@@ -92,7 +92,7 @@ public final class RimeSyncSettingsCompat {
         } finally {
             store.close();
         }
-        return new Settings(root, preferences.getString(KEY_ROOT_LABEL, ""),
+        return new Settings(context, root, preferences.getString(KEY_ROOT_LABEL, ""),
                 device, file, hasPersistedAccess(context, root), lastSuccess,
                 phase, BUSY.get(), nativeExpectedCount, nativeActualCount,
                 nativeMissingCount, nativeFailureRepeated, nativeFailureKind);
@@ -101,7 +101,60 @@ public final class RimeSyncSettingsCompat {
     public static void readAsync(final Context source, final Callback callback) {
         submit(source, callback, new Operation() {
             @Override public Result run(Context context) {
+                RimeAutoSync.reconcile(context);
                 return Result.success(read(context));
+            }
+        });
+    }
+
+    public static void configureAutomaticAsync(final Context source, final boolean enabled,
+            final int intervalHours, final Callback callback) {
+        RimeAutoSyncPolicy.intervalMillis(intervalHours);
+        if (!enabled) {
+            RimeAutoSync.configure(source, false, intervalHours);
+            IO.execute(new Runnable() {
+                @Override public void run() {
+                    deliver(callback, Result.success(read(source)));
+                }
+            });
+            return;
+        }
+        submit(source, callback, new Operation() {
+            @Override public Result run(Context context) {
+                Settings settings = read(context);
+                if (!settings.canEnableAutomatic) {
+                    return Result.error(settings, ERROR_CONFIGURATION_REQUIRED);
+                }
+                if (!RimeAutoSync.configure(context, true, intervalHours)) {
+                    return Result.error(read(context), ERROR_OPERATION_FAILED);
+                }
+                return Result.success(read(context));
+            }
+        });
+    }
+
+    public static void runAutomaticAsync(final Context source, final Callback callback) {
+        submit(source, callback, new Operation() {
+            @Override public Result run(Context context) throws Exception {
+                Settings settings = read(context);
+                if (!settings.automatic.enabled) return Result.success(settings);
+                if (settings.nativeFailureKind != NATIVE_FAILURE_NONE) {
+                    return Result.error(settings, ERROR_NATIVE_PERSISTENCE);
+                }
+                CoordinatorHandle handle = coordinator(context);
+                try {
+                    if (settings.phase != RimeSyncStateStore.PHASE_IDLE) {
+                        RimeSyncCoordinator.Result recovered = handle.coordinator.recover();
+                        return Result.completed(read(context), recovered);
+                    }
+                    RimeSyncCoordinator.Preview preview = handle.coordinator.preview();
+                    if (!RimeAutoSync.read(context).enabled) return Result.success(read(context));
+                    RimeSyncCoordinator.Result result = handle.coordinator.execute(
+                            preview.confirmationToken, true);
+                    return Result.completed(read(context), result);
+                } finally {
+                    handle.close();
+                }
             }
         });
     }
@@ -125,6 +178,12 @@ public final class RimeSyncSettingsCompat {
                         } catch (java.io.IOException failure) {
                             throw new LocationException(failure);
                         }
+                    }
+                    if (!configuration.deviceDirectoryName.equals(deviceName(preferences))
+                            || !configuration.snapshotFileName.equals(
+                                    preferences.getString(KEY_SNAPSHOT_FILE, DEFAULT_SNAPSHOT_FILE))) {
+                        RimeAutoSync.configure(context, false,
+                                RimeAutoSync.read(context).intervalHours);
                     }
                     preferences.edit()
                             .putString(KEY_DEVICE_DIRECTORY,
@@ -159,6 +218,10 @@ public final class RimeSyncSettingsCompat {
                     throw new LocationException(failure);
                 } finally {
                     store.close();
+                }
+                if (!root.toString().equals(preferences(context).getString(KEY_ROOT_URI, ""))) {
+                    RimeAutoSync.configure(context, false,
+                            RimeAutoSync.read(context).intervalHours);
                 }
                 preferences(context).edit()
                         .putString(KEY_ROOT_URI, root.toString())
@@ -234,6 +297,8 @@ public final class RimeSyncSettingsCompat {
             @Override public Result run(Context context) {
                 RimeSyncStateStore store = new RimeSyncStateStore(context);
                 try {
+                    RimeAutoSync.configure(context, false,
+                            RimeAutoSync.read(context).intervalHours);
                     store.resetBaseline();
                 } finally {
                     store.close();
@@ -250,7 +315,11 @@ public final class RimeSyncSettingsCompat {
         }
         final Context context = source.getApplicationContext();
         if (!BUSY.compareAndSet(false, true)) {
-            deliver(callback, Result.error(read(context), ERROR_OPERATION_IN_PROGRESS));
+            IO.execute(new Runnable() {
+                @Override public void run() {
+                    deliver(callback, Result.error(read(context), ERROR_OPERATION_IN_PROGRESS));
+                }
+            });
             return;
         }
         IO.execute(new Runnable() {
@@ -419,6 +488,8 @@ public final class RimeSyncSettingsCompat {
     }
 
     public static final class Settings {
+        public final RimeAutoSync.Settings automatic;
+        public final boolean canEnableAutomatic;
         public final String rootUri;
         public final String rootLabel;
         public final String deviceDirectory;
@@ -433,11 +504,14 @@ public final class RimeSyncSettingsCompat {
         public final boolean nativeFailureRepeated;
         public final int nativeFailureKind;
 
-        Settings(String rootUri, String rootLabel, String deviceDirectory,
+        Settings(Context context, String rootUri, String rootLabel, String deviceDirectory,
                 String snapshotFile, boolean locationAccessible, long lastSuccess,
                 int phase, boolean operationInProgress, int nativeExpectedCount,
                 int nativeActualCount, int nativeMissingCount, boolean nativeFailureRepeated,
                 int nativeFailureKind) {
+            this.automatic = RimeAutoSync.read(context);
+            this.canEnableAutomatic = locationAccessible && lastSuccess > 0L
+                    && phase == RimeSyncStateStore.PHASE_IDLE;
             this.rootUri = rootUri;
             this.rootLabel = rootLabel;
             this.deviceDirectory = deviceDirectory;

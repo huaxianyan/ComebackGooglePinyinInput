@@ -45,6 +45,19 @@ def apply(
     if debuggable and application_id == FORMAL_APPLICATION_ID:
         raise RuntimeError("Refusing to make the formal application ID debuggable")
 
+    replace_once(
+        decoded / "AndroidManifest.xml",
+        "</application>",
+        '<service android:name="com.google.android.inputmethod.pinyin.rimesync.RimeAutoSyncJobService" '
+        'android:permission="android.permission.BIND_JOB_SERVICE" android:exported="true" '
+        'android:enabled="@bool/rime_auto_sync_supported" />\n'
+        '<receiver android:name="com.google.android.inputmethod.pinyin.rimesync.RimeAutoSyncReceiver" '
+        'android:exported="false" android:enabled="@bool/rime_auto_sync_supported">'
+        '<intent-filter><action android:name="android.intent.action.BOOT_COMPLETED" />'
+        '<action android:name="android.intent.action.MY_PACKAGE_REPLACED" /></intent-filter>'
+        '</receiver>\n    </application>',
+    )
+
     # Target SDK modernization is deliberately staged one API level at a time.
     # API 35 has passed its isolated audit; this branch isolates Android 16 /
     # API 36 while retaining all previously accepted compatibility fixes.

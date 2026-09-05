@@ -1,0 +1,3 @@
+<resources>
+    <bool name="rime_auto_sync_supported">false</bool>
+</resources>
