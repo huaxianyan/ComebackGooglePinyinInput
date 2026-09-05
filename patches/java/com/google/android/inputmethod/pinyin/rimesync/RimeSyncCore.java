@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -74,31 +75,47 @@ public final class RimeSyncCore {
     /** Returns every multi-code-point key, including tombstones needed for delete propagation. */
     public static Map<String, CanonicalEntry> translationEntries(RimeUserDbSnapshot snapshot)
             throws IOException {
-        return translationEntries(snapshot, true);
-    }
-
-    /** Builds the same canonical presence and commit view without retaining duplicate details. */
-    static Map<String, CanonicalEntry> translationEntriesForPreview(
-            RimeUserDbSnapshot snapshot) throws IOException {
-        return translationEntries(snapshot, false);
-    }
-
-    private static Map<String, CanonicalEntry> translationEntries(
-            RimeUserDbSnapshot snapshot, boolean retainDetails) throws IOException {
         Map<String, CanonicalEntry> result = new LinkedHashMap<String, CanonicalEntry>();
         for (RimeUserDbSnapshot.Entry entry : snapshot.entries().values()) {
             String phrase = normalizePhrase(entry.phrase);
             if (phrase.codePointCount(0, phrase.length()) < 2) continue;
             String code = normalizeCode(entry.code);
             String key = code + '\t' + phrase;
-            CanonicalEntry canonical = retainDetails
-                    ? new CanonicalEntry(key, code, phrase, entry)
-                    : new CanonicalEntry(null, null, null, entry);
-            CanonicalEntry previous = result.put(key, canonical);
+            CanonicalEntry previous = result.put(key,
+                    new CanonicalEntry(key, code, phrase, entry));
             if (previous != null) throw new IOException("duplicate normalized Rime entry");
         }
         return result;
     }
+
+    /** Consumes a temporary snapshot and retains only canonical presence and commit values. */
+    static Map<String, CanonicalEntry> translationEntriesForPreview(
+            RimeUserDbSnapshot snapshot) throws IOException {
+        Map<String, CanonicalEntry> result = new LinkedHashMap<String, CanonicalEntry>();
+        Map<String, RimeUserDbSnapshot.Entry> sourceEntries =
+                snapshot.takeEntriesForPreview();
+        Iterator<RimeUserDbSnapshot.Entry> iterator = sourceEntries.values().iterator();
+        try {
+            while (iterator.hasNext()) {
+                RimeUserDbSnapshot.Entry entry = iterator.next();
+                String phrase = normalizePhrase(entry.phrase);
+                if (phrase.codePointCount(0, phrase.length()) >= 2) {
+                    String code = normalizeCode(entry.code);
+                    String key = code + '\t' + phrase;
+                    CanonicalEntry previous = result.put(key,
+                            new CanonicalEntry(entry.commits));
+                    if (previous != null) {
+                        throw new IOException("duplicate normalized Rime entry");
+                    }
+                }
+                iterator.remove();
+            }
+        } finally {
+            sourceEntries.clear();
+        }
+        return result;
+    }
+
 
     public static void apply(RimeUserDbSnapshot snapshot, RimeChange change) throws IOException {
         if (snapshot == null || change == null) {
@@ -188,6 +205,7 @@ public final class RimeSyncCore {
         public final String code;
         public final String phrase;
         public final RimeUserDbSnapshot.Entry source;
+        public final int commits;
 
         CanonicalEntry(String key, String code, String phrase,
                 RimeUserDbSnapshot.Entry source) {
@@ -195,6 +213,15 @@ public final class RimeSyncCore {
             this.code = code;
             this.phrase = phrase;
             this.source = source;
+            this.commits = source.commits;
+        }
+
+        CanonicalEntry(int commits) {
+            this.key = null;
+            this.code = null;
+            this.phrase = null;
+            this.source = null;
+            this.commits = commits;
         }
     }
 

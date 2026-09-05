@@ -16,7 +16,7 @@
 
 
 # instance fields
-.field private final entries:Ljava/util/Map;
+.field private entries:Ljava/util/Map;
     .annotation system Ldalvik/annotation/Signature;
         value = {
             "Ljava/util/Map<",
@@ -77,7 +77,7 @@
 .method private static empty(Ljava/lang/String;)Z
     .locals 0
 
-    .line 183
+    .line 190
     if-eqz p0, :cond_1
 
     invoke-virtual {p0}, Ljava/lang/String;->length()I
@@ -104,7 +104,7 @@
 .method private static formatError(ILjava/lang/String;)Ljava/io/IOException;
     .locals 3
 
-    .line 201
+    .line 208
     new-instance v0, Ljava/io/IOException;
 
     new-instance v1, Ljava/lang/StringBuilder;
@@ -143,7 +143,7 @@
 .method private static magnitude(I)J
     .locals 2
 
-    .line 197
+    .line 204
     const/high16 v0, -0x80000000
 
     if-ne p0, v0, :cond_0
@@ -432,7 +432,7 @@
         }
     .end annotation
 
-    .line 173
+    .line 180
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeUserDbSnapshot;->metadata:Ljava/util/Map;
 
     const-string v1, "db_type"
@@ -449,7 +449,7 @@
 
     if-eqz v0, :cond_1
 
-    .line 176
+    .line 183
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeUserDbSnapshot;->metadata:Ljava/util/Map;
 
     const-string v1, "db_name"
@@ -482,13 +482,13 @@
 
     if-nez v0, :cond_0
 
-    .line 179
+    .line 186
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeUserDbSnapshot;->tick()J
 
-    .line 180
+    .line 187
     return-void
 
-    .line 177
+    .line 184
     :cond_0
     new-instance v0, Ljava/io/IOException;
 
@@ -498,7 +498,7 @@
 
     throw v0
 
-    .line 174
+    .line 181
     :cond_1
     new-instance v0, Ljava/io/IOException;
 
@@ -517,7 +517,7 @@
         }
     .end annotation
 
-    .line 187
+    .line 194
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeUserDbSnapshot;->metadata:Ljava/util/Map;
 
     invoke-interface {v0, p2}, Ljava/util/Map;->get(Ljava/lang/Object;)Ljava/lang/Object;
@@ -526,32 +526,32 @@
 
     check-cast v0, Ljava/lang/String;
 
-    .line 188
+    .line 195
     if-eqz v0, :cond_0
 
-    .line 189
+    .line 196
     const-string v1, "#@/"
 
     invoke-virtual {p1, v1}, Ljava/io/BufferedWriter;->write(Ljava/lang/String;)V
 
-    .line 190
+    .line 197
     invoke-virtual {p1, p2}, Ljava/io/BufferedWriter;->write(Ljava/lang/String;)V
 
-    .line 191
+    .line 198
     const/16 p2, 0x9
 
     invoke-virtual {p1, p2}, Ljava/io/BufferedWriter;->write(I)V
 
-    .line 192
+    .line 199
     invoke-virtual {p1, v0}, Ljava/io/BufferedWriter;->write(Ljava/lang/String;)V
 
-    .line 193
+    .line 200
     invoke-virtual {p1}, Ljava/io/BufferedWriter;->newLine()V
 
-    .line 194
+    .line 201
     return-void
 
-    .line 188
+    .line 195
     :cond_0
     new-instance p1, Ljava/io/IOException;
 
@@ -1037,7 +1037,7 @@
 .method public put(Lcom/google/android/inputmethod/pinyin/rimesync/RimeUserDbSnapshot$Entry;)V
     .locals 2
 
-    .line 165
+    .line 172
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeUserDbSnapshot;->entries:Ljava/util/Map;
 
     invoke-virtual {p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeUserDbSnapshot$Entry;->key()Ljava/lang/String;
@@ -1046,14 +1046,14 @@
 
     invoke-interface {v0, v1, p1}, Ljava/util/Map;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 
-    .line 166
+    .line 173
     return-void
 .end method
 
 .method public putMetadata(Ljava/lang/String;Ljava/lang/String;)V
     .locals 1
 
-    .line 158
+    .line 165
     if-eqz p1, :cond_0
 
     if-eqz p2, :cond_0
@@ -1070,15 +1070,15 @@
 
     if-eqz v0, :cond_0
 
-    .line 161
+    .line 168
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeUserDbSnapshot;->metadata:Ljava/util/Map;
 
     invoke-interface {v0, p1, p2}, Ljava/util/Map;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 
-    .line 162
+    .line 169
     return-void
 
-    .line 159
+    .line 166
     :cond_0
     new-instance p1, Ljava/lang/IllegalArgumentException;
 
@@ -1092,13 +1092,39 @@
 .method remove(Ljava/lang/String;)V
     .locals 1
 
-    .line 169
+    .line 176
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeUserDbSnapshot;->entries:Ljava/util/Map;
 
     invoke-interface {v0, p1}, Ljava/util/Map;->remove(Ljava/lang/Object;)Ljava/lang/Object;
 
-    .line 170
+    .line 177
     return-void
+.end method
+
+.method takeEntriesForPreview()Ljava/util/Map;
+    .locals 2
+    .annotation system Ldalvik/annotation/Signature;
+        value = {
+            "()",
+            "Ljava/util/Map<",
+            "Ljava/lang/String;",
+            "Lcom/google/android/inputmethod/pinyin/rimesync/RimeUserDbSnapshot$Entry;",
+            ">;"
+        }
+    .end annotation
+
+    .line 159
+    iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeUserDbSnapshot;->entries:Ljava/util/Map;
+
+    .line 160
+    new-instance v1, Ljava/util/LinkedHashMap;
+
+    invoke-direct {v1}, Ljava/util/LinkedHashMap;-><init>()V
+
+    iput-object v1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeUserDbSnapshot;->entries:Ljava/util/Map;
+
+    .line 161
+    return-object v0
 .end method
 
 .method public tick()J

@@ -43,6 +43,7 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 public final class RimeUserDbSnapshotTest {
   private static RimeUserDbSnapshot read(String body) throws Exception {
@@ -218,6 +219,18 @@ public final class RimeUserDbSnapshotTest {
         configuration, "bridge");
     require(bridgeMerged.tick() == 120 && bridgeMerged.entries().size() == 3,
         "Bridge must merge its own state with every peer snapshot");
+    RimeUserDbSnapshot previewSnapshot = RimeSyncCore.merge(Arrays.asList(
+        new RimeSyncCore.DeviceSnapshot("Peer-Device", false, read(peer))),
+        configuration, "bridge");
+    java.lang.reflect.Method previewTranslation = RimeSyncCore.class.getDeclaredMethod(
+        "translationEntriesForPreview", RimeUserDbSnapshot.class);
+    previewTranslation.setAccessible(true);
+    Map<String, RimeSyncCore.CanonicalEntry> previewEntries =
+        (Map<String, RimeSyncCore.CanonicalEntry>) previewTranslation.invoke(
+            null, previewSnapshot);
+    require(previewSnapshot.entries().isEmpty() && previewEntries.size() == 3
+            && previewEntries.get("xin ci\tfixture-gamma").commits == 3,
+        "preview translation must consume its temporary snapshot and retain commit state");
     bridgeMerged.put(new RimeUserDbSnapshot.Entry("dan", "X", 100, 9.0, 120));
     require(RimeSyncCore.translationEntries(bridgeMerged).size() == 3,
         "single-code-point entries must remain in the full snapshot but leave translation");

@@ -16,7 +16,7 @@ public final class RimeUserDbSnapshot {
     public static final String DESCRIPTION = "# Rime user dictionary";
 
     private final Map<String, String> metadata = new LinkedHashMap<String, String>();
-    private final Map<String, Entry> entries = new LinkedHashMap<String, Entry>();
+    private Map<String, Entry> entries = new LinkedHashMap<String, Entry>();
 
     public static RimeUserDbSnapshot read(Reader source) throws IOException {
         BufferedReader reader = source instanceof BufferedReader
@@ -152,6 +152,13 @@ public final class RimeUserDbSnapshot {
 
     public Map<String, Entry> entries() {
         return Collections.unmodifiableMap(entries);
+    }
+
+    /** Transfers this temporary snapshot's entry map to the lightweight preview path. */
+    Map<String, Entry> takeEntriesForPreview() {
+        Map<String, Entry> result = entries;
+        entries = new LinkedHashMap<String, Entry>();
+        return result;
     }
 
     public void putMetadata(String key, String value) {

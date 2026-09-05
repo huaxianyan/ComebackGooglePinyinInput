@@ -490,9 +490,7 @@
     goto :goto_8
 
     :cond_a
-    iget-object v2, v6, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCore$CanonicalEntry;->source:Lcom/google/android/inputmethod/pinyin/rimesync/RimeUserDbSnapshot$Entry;
-
-    iget v2, v2, Lcom/google/android/inputmethod/pinyin/rimesync/RimeUserDbSnapshot$Entry;->commits:I
+    iget v2, v6, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCore$CanonicalEntry;->commits:I
 
     .line 101
     :goto_8

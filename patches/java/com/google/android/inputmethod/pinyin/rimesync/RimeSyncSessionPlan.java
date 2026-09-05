@@ -97,7 +97,7 @@ public final class RimeSyncSessionPlan {
                     || baseline.googleProjection == null || baseline.rimeAbsCount < 0) {
                 throw new IllegalArgumentException("synchronization baseline is invalid");
             }
-            int currentRimeCount = rime == null ? 0 : rime.source.commits;
+            int currentRimeCount = rime == null ? 0 : rime.commits;
             int planningMagnitude = Math.max(checkedMagnitude(currentRimeCount),
                     baseline.rimeAbsCount);
             RimeSyncPlanner.RimeState rimeState = rime == null
