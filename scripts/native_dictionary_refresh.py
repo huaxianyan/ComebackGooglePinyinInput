@@ -5,7 +5,7 @@ FACTORY = "Lcom/google/android/apps/inputmethod/libs/hmm/AbstractHmmEngineFactor
 TYPE = "Lcom/google/android/apps/inputmethod/libs/hmm/AbstractHmmEngineFactory$MutableDictionaryType;"
 
 
-def patch_native_dictionary_refresh(decoded: Path) -> None:
+def patch_native_dictionary_refresh(decoded: Path, replace_once) -> None:
     directory = decoded / "smali/com/google/android/apps/inputmethod/libs/hmm"
     path = directory / "AbstractHmmEngineFactory.smali"
     text = path.read_text(encoding="utf-8")
@@ -72,6 +72,24 @@ def patch_native_dictionary_refresh(decoded: Path) -> None:
     return-void
 .end method
 '''
+    # Native writers must publish refreshed data before handing the shared lock to a reader.
+    # The importer already closes its accessors before this notification site.
+    replace_once(
+        directory / "userdictionary/UserDictImportTask.smali",
+        f"invoke-virtual {{v4, v5}}, {FACTORY}->notifyMutableDictionaryDataChanged({TYPE})V",
+        f"invoke-virtual {{v4, v5}}, {FACTORY}->refreshMutableDictionaryData({TYPE})V",
+    )
+    replace_once(
+        directory / "SaveDictionaryTask.smali",
+        f"    .line 29\n"
+        f"    iget-object v0, p0, Lcom/google/android/apps/inputmethod/libs/hmm/SaveDictionaryTask;->mEngineFactory:{FACTORY}\n\n"
+        f"    invoke-virtual {{v0, p1}}, {FACTORY}->notifyMutableDictionaryDataChanged({TYPE})V\n\n"
+        f"    .line 30\n"
+        f"    invoke-virtual {{v1}}, Lcom/google/android/apps/inputmethod/libs/hmm/DictionaryAccessor;->close()V",
+        f"    invoke-virtual {{v1}}, Lcom/google/android/apps/inputmethod/libs/hmm/DictionaryAccessor;->close()V\n\n"
+        f"    iget-object v0, p0, Lcom/google/android/apps/inputmethod/libs/hmm/SaveDictionaryTask;->mEngineFactory:{FACTORY}\n\n"
+        f"    invoke-virtual {{v0, p1}}, {FACTORY}->refreshMutableDictionaryData({TYPE})V",
+    )
     (directory / "AbstractHmmEngineFactory$1.smali").write_text(runnable.lstrip(), encoding="utf-8")
     (directory / "MutableDictionaryDataNotification.smali").write_text(f'''.class final Lcom/google/android/apps/inputmethod/libs/hmm/MutableDictionaryDataNotification;
 .super Ljava/lang/Object;

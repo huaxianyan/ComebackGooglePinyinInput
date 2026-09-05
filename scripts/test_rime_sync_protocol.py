@@ -498,6 +498,7 @@ public final class RimeUserDbSnapshotTest {
 
 
 def verify_native_api(decoded: Path) -> None:
+    refresh_call = "->refreshMutableDictionaryData(Lcom/google/android/apps/inputmethod/libs/hmm/AbstractHmmEngineFactory$MutableDictionaryType;)V"
     expected = {
         decoded / "smali/com/google/android/apps/inputmethod/libs/hmm/DictionaryAccessor.smali": [
             ".method public clearAllEntries()Z",
@@ -514,6 +515,7 @@ def verify_native_api(decoded: Path) -> None:
         ],
         decoded / "smali/com/google/android/apps/inputmethod/libs/hmm/SaveDictionaryTask.smali": [
             ".field public static final sSaveLock:Ljava/lang/Object;",
+            refresh_call,
         ],
         decoded / "smali/com/google/android/apps/inputmethod/libs/hmm/MutableDictionaryAccessorInterface$Entry.smali": [
             ".method public constructor <init>([Ljava/lang/String;[ILjava/lang/String;IZZI)V",
@@ -527,6 +529,7 @@ def verify_native_api(decoded: Path) -> None:
             "SaveDictionaryTask;->sSaveLock:Ljava/lang/Object;",
             ":try_start_import_lock",
             "monitor-enter",
+            refresh_call,
         ],
     }
     for path, needles in expected.items():

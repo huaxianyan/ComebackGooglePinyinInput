@@ -1843,7 +1843,7 @@ def apply(
     )
 
     from native_dictionary_refresh import patch_native_dictionary_refresh
-    patch_native_dictionary_refresh(decoded)
+    patch_native_dictionary_refresh(decoded, replace_once)
 
     # Recover interrupted dictionary rotations before enrollment. If native
     # loading fails, retry once with the previous known-good rolling backup.
