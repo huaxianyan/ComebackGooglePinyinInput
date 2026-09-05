@@ -522,12 +522,10 @@ def verify_native_api(decoded: Path) -> None:
         ],
         decoded / "smali/com/google/android/apps/inputmethod/libs/hmm/userdictionary/UserDictExportTask.smali": [
             "SaveDictionaryTask;->sSaveLock:Ljava/lang/Object;",
-            ":try_start_export_lock",
             "monitor-enter",
         ],
         decoded / "smali/com/google/android/apps/inputmethod/libs/hmm/userdictionary/UserDictImportTask.smali": [
             "SaveDictionaryTask;->sSaveLock:Ljava/lang/Object;",
-            ":try_start_import_lock",
             "monitor-enter",
             refresh_call,
         ],
