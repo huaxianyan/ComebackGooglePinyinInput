@@ -1,0 +1,631 @@
+#!/usr/bin/env python3
+"""Extract named payloads from Google Pinyin ELF data bundles.
+
+The original APK stores input-engine data as ELF global symbols named
+``_binary_<name>_start`` and ``_binary_<name>_end``. This tool pairs those
+symbols, validates their ranges, exports each payload, and writes a
+machine-readable format inventory.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import math
+import re
+import struct
+import tempfile
+import zipfile
+from collections import Counter, defaultdict
+from pathlib import Path
+from typing import Any
+
+import lief
+import marisa_trie
+
+
+DATA_BUNDLE_NAMES = (
+    "liben_data_bundle.so",
+    "libpinyin_data_bundle.so",
+)
+START_PREFIX = "_binary_"
+START_SUFFIX = "_start"
+END_SUFFIX = "_end"
+SAFE_BLOB_NAME = re.compile(r"^[A-Za-z0-9_]+$")
+FORMAT_MARKERS = (
+    b"ClassNGramModel",
+    b"ClassBigramModel",
+    b"DirectMappingTokenExpander",
+    b"DirectTokenDictionary",
+    b"ForwardTokenDictionary",
+    b"InMemoryTokenExpander",
+    b"MarisaTrie",
+    b"We love Marisa.",
+)
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--apk", type=Path, required=True, help="Source APK")
+    parser.add_argument(
+        "--output-dir", type=Path, required=True, help="Directory for extracted blobs"
+    )
+    parser.add_argument(
+        "--manifest", type=Path, required=True, help="Output JSON manifest"
+    )
+    return parser.parse_args()
+
+
+def sha256_bytes(content: bytes) -> str:
+    return hashlib.sha256(content).hexdigest()
+
+
+def read_varint(content: bytes, offset: int) -> tuple[int, int]:
+    value = 0
+    shift = 0
+    for _ in range(10):
+        if offset >= len(content):
+            raise ValueError("truncated varint")
+        current = content[offset]
+        offset += 1
+        value |= (current & 0x7F) << shift
+        if current < 0x80:
+            return value, offset
+        shift += 7
+    raise ValueError("varint exceeds 10 bytes")
+
+
+def parse_protobuf_wire(content: bytes) -> list[tuple[int, int, Any]]:
+    """Parse a complete protobuf wire stream without requiring its schema."""
+    fields: list[tuple[int, int, Any]] = []
+    offset = 0
+    while offset < len(content):
+        tag, offset = read_varint(content, offset)
+        field_number = tag >> 3
+        wire_type = tag & 7
+        if field_number == 0:
+            raise ValueError("protobuf field number is zero")
+        if wire_type == 0:
+            value, offset = read_varint(content, offset)
+        elif wire_type == 1:
+            end = offset + 8
+            if end > len(content):
+                raise ValueError("truncated fixed64")
+            value = content[offset:end]
+            offset = end
+        elif wire_type == 2:
+            size, offset = read_varint(content, offset)
+            end = offset + size
+            if end > len(content):
+                raise ValueError("truncated length-delimited field")
+            value = content[offset:end]
+            offset = end
+        elif wire_type == 5:
+            end = offset + 4
+            if end > len(content):
+                raise ValueError("truncated fixed32")
+            value = content[offset:end]
+            offset = end
+        else:
+            raise ValueError(f"unsupported protobuf wire type: {wire_type}")
+        fields.append((field_number, wire_type, value))
+    if not fields:
+        raise ValueError("empty protobuf stream")
+    return fields
+
+
+def protobuf_summary(
+    fields: list[tuple[int, int, Any]], content_size: int
+) -> dict[str, Any]:
+    counts: dict[int, Counter[int]] = defaultdict(Counter)
+    for field_number, wire_type, _ in fields:
+        counts[field_number][wire_type] += 1
+    return {
+        "valid_complete_wire_stream": True,
+        "encoded_size": content_size,
+        "fields": [
+            {
+                "field_number": field_number,
+                "occurrences": sum(wire_types.values()),
+                "wire_types": dict(sorted(wire_types.items())),
+            }
+            for field_number, wire_types in sorted(counts.items())
+        ],
+    }
+
+
+def utf8_leaf_strings(content: bytes, depth: int = 0) -> list[str]:
+    """Collect readable protobuf leaf strings for bounded schema exploration."""
+    if depth > 8:
+        return []
+    try:
+        text = content.decode("utf-8")
+    except UnicodeDecodeError:
+        text = ""
+    if text and all(character.isprintable() for character in text):
+        return [text]
+    try:
+        fields = parse_protobuf_wire(content)
+    except ValueError:
+        return []
+
+    strings: list[str] = []
+    for _, wire_type, value in fields:
+        if wire_type == 2:
+            strings.extend(utf8_leaf_strings(value, depth + 1))
+    return strings
+
+
+def decode_data_scheme(
+    fields: list[tuple[int, int, Any]], known_blob_names: set[str]
+) -> dict[str, Any] | None:
+    """Decode the confirmed Data.DataScheme field layout from JADX evidence."""
+    entries: list[dict[str, Any]] = []
+    bundle_library: str | None = None
+    for field_number, wire_type, value in fields:
+        if field_number == 2 and wire_type == 2:
+            try:
+                bundle_library = value.decode("utf-8")
+            except UnicodeDecodeError:
+                return None
+        elif field_number == 1 and wire_type == 2:
+            try:
+                nested = parse_protobuf_wire(value)
+            except ValueError:
+                return None
+            values: dict[int, Any] = {}
+            for nested_number, nested_wire_type, nested_value in nested:
+                if nested_wire_type == 0:
+                    values[nested_number] = nested_value
+                elif nested_wire_type == 2:
+                    try:
+                        values[nested_number] = nested_value.decode("utf-8")
+                    except UnicodeDecodeError:
+                        return None
+            if not all(number in values for number in (1, 2, 3, 4)):
+                return None
+            entries.append(
+                {
+                    "data_type": values[1],
+                    "data_id": values[2],
+                    "storage_type": values[3],
+                    "blob_name": values[4],
+                    "blob_exists": values[4] in known_blob_names,
+                }
+            )
+        else:
+            return None
+    if not entries or bundle_library is None:
+        return None
+    return {"bundle_library": bundle_library, "entries": entries}
+
+
+def marker_records(content: bytes) -> list[dict[str, Any]]:
+    records: list[dict[str, Any]] = []
+    for marker in FORMAT_MARKERS:
+        offset = content.find(marker)
+        if offset >= 0:
+            records.append({"text": marker.decode("ascii"), "offset": offset})
+    return sorted(records, key=lambda record: (record["offset"], record["text"]))
+
+
+def classify_blob(
+    content: bytes, protobuf_fields: list[tuple[int, int, Any]] | None
+) -> str:
+    if protobuf_fields is not None:
+        return "protobuf_wire"
+    markers = {record["text"] for record in marker_records(content)}
+    if "ClassNGramModel" in markers:
+        return "class_ngram_model"
+    if "MarisaTrie" in markers:
+        return "marisa_trie_dictionary"
+    if "ForwardTokenDictionary" in markers:
+        return "forward_token_dictionary"
+    if "DirectTokenDictionary" in markers:
+        return "direct_token_dictionary"
+    if "InMemoryTokenExpander" in markers:
+        return "in_memory_token_expander"
+    if "DirectMappingTokenExpander" in markers:
+        return "direct_mapping_token_expander"
+    if "We love Marisa." in markers:
+        return "marisa_container"
+    return "unknown_binary"
+
+
+def shannon_entropy(content: bytes) -> float:
+    if not content:
+        return 0.0
+    counts = Counter(content)
+    length = len(content)
+    return round(
+        -sum((count / length) * math.log2(count / length) for count in counts.values()),
+        6,
+    )
+
+
+def align_up(value: int, alignment: int) -> int:
+    return (value + alignment - 1) // alignment * alignment
+
+
+def read_u32(content: bytes, offset: int) -> int:
+    end = offset + 4
+    if end > len(content):
+        raise ValueError(f"truncated uint32 at {offset}")
+    return int.from_bytes(content[offset:end], "little")
+
+
+def read_u64(content: bytes, offset: int) -> int:
+    end = offset + 8
+    if end > len(content):
+        raise ValueError(f"truncated uint64 at {offset}")
+    return int.from_bytes(content[offset:end], "little")
+
+
+def class_envelope(content: bytes) -> dict[str, Any]:
+    name_size = read_u32(content, 0)
+    name_end = 4 + name_size
+    try:
+        class_name = content[4:name_end].decode("ascii")
+    except UnicodeDecodeError as error:
+        raise ValueError("container class name is not ASCII") from error
+    payload_offset = align_up(name_end, 8)
+    if any(content[name_end:payload_offset]):
+        raise ValueError("container class-name padding is not zero")
+    return {
+        "class_name": class_name,
+        "class_name_size": name_size,
+        "payload_offset": payload_offset,
+    }
+
+
+def scalar_wire_values(fields: list[tuple[int, int, Any]]) -> list[dict[str, Any]]:
+    values: list[dict[str, Any]] = []
+    for field_number, wire_type, value in fields:
+        record: dict[str, Any] = {
+            "field_number": field_number,
+            "wire_type": wire_type,
+        }
+        if wire_type == 0:
+            record["value"] = value
+        elif wire_type == 5:
+            record["uint32_bits"] = int.from_bytes(value, "little")
+            record["float32"] = struct.unpack("<f", value)[0]
+        elif wire_type == 1:
+            record["uint64_bits"] = int.from_bytes(value, "little")
+            record["float64"] = struct.unpack("<d", value)[0]
+        else:
+            record["size"] = len(value)
+        values.append(record)
+    return values
+
+
+def marisa_region(content: bytes, offset: int, size: int | None = None) -> dict[str, Any]:
+    source = content[offset:] if size is None else content[offset : offset + size]
+    trie = marisa_trie.Trie().frombytes(source)
+    canonical = trie.tobytes()
+    if not source.startswith(canonical):
+        raise ValueError(f"Marisa round trip differs at offset {offset}")
+    if size is not None and len(canonical) != size:
+        raise ValueError(
+            f"Marisa size mismatch at {offset}: declared {size}, decoded {len(canonical)}"
+        )
+    return {
+        "offset": offset,
+        "serialized_size": len(canonical),
+        "key_count": len(trie),
+        "round_trip_exact": True,
+    }
+
+
+def analyze_in_memory_expander(content: bytes) -> dict[str, Any]:
+    envelope = class_envelope(content)
+    config = analyze_length_prefixed_config(content, envelope["payload_offset"])
+    record_count = read_u32(content, config["data_offset"])
+    offset = config["data_offset"] + 4
+    source_ids: list[int] = []
+    target_count = 0
+    second_words: set[int] = set()
+    for _ in range(record_count):
+        source_ids.append(read_u32(content, offset))
+        item_count = read_u32(content, offset + 4)
+        offset += 8
+        target_count += item_count
+        for _ in range(item_count):
+            read_u32(content, offset)
+            second_words.add(read_u32(content, offset + 4))
+            offset += 8
+    trailer = content[offset:]
+    if trailer != b"\x00\x00\x00\x00":
+        raise ValueError(f"unexpected expander trailer: {trailer.hex()}")
+    return {
+        "envelope": envelope,
+        "config_size": config["config_size"],
+        "config_fields": config["config_fields"],
+        "record_count": record_count,
+        "unique_source_count": len(set(source_ids)),
+        "target_count": target_count,
+        "second_word_uint32_values": sorted(second_words),
+        "second_word_float32_values": [
+            struct.unpack("<f", value.to_bytes(4, "little"))[0]
+            for value in sorted(second_words)
+        ],
+        "trailer_size": len(trailer),
+        "fully_consumed": True,
+    }
+
+
+def analyze_length_prefixed_config(
+    content: bytes, payload_offset: int
+) -> dict[str, Any]:
+    config_size = read_u32(content, payload_offset)
+    config_start = payload_offset + 4
+    config_end = config_start + config_size
+    config = parse_protobuf_wire(content[config_start:config_end])
+    data_offset = align_up(config_end, 8)
+    if any(content[config_end:data_offset]):
+        raise ValueError("container config padding is not zero")
+    return {
+        "config_size": config_size,
+        "config_fields": scalar_wire_values(config),
+        "data_offset": data_offset,
+    }
+
+
+def analyze_forward_dictionary(content: bytes) -> dict[str, Any]:
+    envelope = class_envelope(content)
+    offset = envelope["payload_offset"]
+    marisa_size = read_u64(content, offset)
+    second_header_u64 = read_u64(content, offset + 8)
+    marisa_offset = offset + 16
+    region = marisa_region(content, marisa_offset, marisa_size)
+    auxiliary_offset = marisa_offset + marisa_size
+    return {
+        "envelope": envelope,
+        "marisa": region,
+        "second_header_u64": second_header_u64,
+        "auxiliary_offset": auxiliary_offset,
+        "auxiliary_size": len(content) - auxiliary_offset,
+        "auxiliary_first_u32": (
+            read_u32(content, auxiliary_offset)
+            if auxiliary_offset + 4 <= len(content)
+            else None
+        ),
+    }
+
+
+def analyze_native_container(content: bytes, classification: str) -> dict[str, Any] | None:
+    if classification == "in_memory_token_expander":
+        return analyze_in_memory_expander(content)
+    if classification == "forward_token_dictionary":
+        return analyze_forward_dictionary(content)
+    if classification == "direct_mapping_token_expander":
+        envelope = class_envelope(content)
+        config = analyze_length_prefixed_config(content, envelope["payload_offset"])
+        return {
+            "envelope": envelope,
+            **config,
+            "data_size": len(content) - config["data_offset"],
+            "data_first_u32": read_u32(content, config["data_offset"]),
+        }
+    if classification == "direct_token_dictionary":
+        envelope = class_envelope(content)
+        return {
+            "envelope": envelope,
+            "payload_size": len(content) - envelope["payload_offset"],
+            "payload_u32_prefix": [
+                read_u32(content, offset)
+                for offset in range(
+                    envelope["payload_offset"],
+                    min(len(content), envelope["payload_offset"] + 32),
+                    4,
+                )
+            ],
+        }
+    if classification == "marisa_container":
+        marisa_size = read_u64(content, 40)
+        region = marisa_region(content, 56, marisa_size)
+        return {
+            "preamble_u32": [read_u32(content, offset) for offset in range(0, 40, 4)],
+            "header_u64_at_48": read_u64(content, 48),
+            "marisa": region,
+            "auxiliary_offset": 56 + marisa_size,
+            "auxiliary_size": len(content) - 56 - marisa_size,
+        }
+    if classification == "marisa_trie_dictionary":
+        envelope = class_envelope(content)
+        marker_offset = content.find(b"We love Marisa.")
+        if marker_offset < 0:
+            raise ValueError("missing Marisa marker")
+        region = marisa_region(content, marker_offset)
+        return {
+            "envelope": envelope,
+            "prefix_size": marker_offset - envelope["payload_offset"],
+            "marisa": region,
+            "auxiliary_offset": marker_offset + region["serialized_size"],
+            "auxiliary_size": len(content) - marker_offset - region["serialized_size"],
+        }
+    if classification == "class_ngram_model":
+        offsets = [match.start() for match in re.finditer(b"We love Marisa\\.", content)]
+        return {
+            "class_ngram_model_offset": content.find(b"ClassNGramModel"),
+            "class_bigram_model_offset": content.find(b"ClassBigramModel"),
+            "marisa_regions": [marisa_region(content, offset) for offset in offsets],
+        }
+    return None
+
+
+def containing_section(binary: Any, start: int, end: int) -> Any:
+    matches = [
+        section
+        for section in binary.sections
+        if start >= section.virtual_address
+        and end <= section.virtual_address + section.size
+    ]
+    if len(matches) != 1:
+        raise ValueError(
+            f"expected one section for virtual range {start:#x}..{end:#x}, "
+            f"found {len(matches)}"
+        )
+    return matches[0]
+
+
+def collect_symbol_pairs(binary: Any) -> list[tuple[str, int, int]]:
+    values = {
+        symbol.name: symbol.value
+        for symbol in binary.dynamic_symbols
+        if symbol.name.startswith(START_PREFIX)
+    }
+    starts = {
+        name[len(START_PREFIX) : -len(START_SUFFIX)]: value
+        for name, value in values.items()
+        if name.endswith(START_SUFFIX)
+    }
+    ends = {
+        name[len(START_PREFIX) : -len(END_SUFFIX)]: value
+        for name, value in values.items()
+        if name.endswith(END_SUFFIX)
+    }
+    if starts.keys() != ends.keys():
+        missing_end = sorted(starts.keys() - ends.keys())
+        missing_start = sorted(ends.keys() - starts.keys())
+        raise ValueError(
+            f"unpaired symbols: missing_end={missing_end}, missing_start={missing_start}"
+        )
+    pairs = sorted(
+        ((name, starts[name], ends[name]) for name in starts), key=lambda item: item[1]
+    )
+    previous_end = -1
+    for name, start, end in pairs:
+        if not SAFE_BLOB_NAME.fullmatch(name):
+            raise ValueError(f"unsafe blob name: {name!r}")
+        if start >= end:
+            raise ValueError(f"invalid range for {name}: {start:#x}..{end:#x}")
+        if start < previous_end:
+            raise ValueError(f"overlapping range at {name}: {start:#x}")
+        previous_end = end
+    return pairs
+
+
+def analyze_bundle(
+    library_name: str, library_content: bytes, output_dir: Path
+) -> dict[str, Any]:
+    with tempfile.TemporaryDirectory(prefix="pinyin-data-bundle-") as temp_dir:
+        library_path = Path(temp_dir) / library_name
+        library_path.write_bytes(library_content)
+        binary = lief.ELF.parse(str(library_path))
+        if binary is None:
+            raise ValueError(f"LIEF could not parse {library_name}")
+
+        pairs = collect_symbol_pairs(binary)
+        known_blob_names = {name for name, _, _ in pairs}
+        library_output_dir = output_dir / library_name.removesuffix(".so")
+        library_output_dir.mkdir(parents=True, exist_ok=True)
+        blobs: list[dict[str, Any]] = []
+        for name, start, end in pairs:
+            size = end - start
+            content = bytes(binary.get_content_from_virtual_address(start, size))
+            if len(content) != size:
+                raise ValueError(
+                    f"short virtual read for {name}: expected {size}, got {len(content)}"
+                )
+            section = containing_section(binary, start, end)
+            output_path = library_output_dir / f"{name}.bin"
+            output_path.write_bytes(content)
+
+            try:
+                fields = parse_protobuf_wire(content)
+            except ValueError:
+                fields = None
+            data_scheme = (
+                decode_data_scheme(fields, known_blob_names) if fields is not None else None
+            )
+            strings = sorted(set(utf8_leaf_strings(content))) if fields is not None else []
+            classification = classify_blob(content, fields)
+            blobs.append(
+                {
+                    "name": name,
+                    "start_symbol": f"{START_PREFIX}{name}{START_SUFFIX}",
+                    "end_symbol": f"{START_PREFIX}{name}{END_SUFFIX}",
+                    "virtual_address_start": start,
+                    "virtual_address_end": end,
+                    "file_offset_start": section.offset
+                    + (start - section.virtual_address),
+                    "size": size,
+                    "section": section.name,
+                    "sha256": sha256_bytes(content),
+                    "head_hex": content[:32].hex(),
+                    "shannon_entropy": shannon_entropy(content),
+                    "classification": classification,
+                    "recognized_markers": marker_records(content),
+                    "native_container": analyze_native_container(content, classification),
+                    "protobuf": (
+                        protobuf_summary(fields, len(content))
+                        if fields is not None
+                        else None
+                    ),
+                    "protobuf_utf8_leaf_strings": strings,
+                    "data_scheme": data_scheme,
+                    "output_file": output_path.relative_to(output_dir).as_posix(),
+                }
+            )
+
+    gaps = [
+        current[1] - previous[2]
+        for previous, current in zip(pairs, pairs[1:])
+        if current[1] > previous[2]
+    ]
+    classifications = Counter(blob["classification"] for blob in blobs)
+    return {
+        "file_name": library_name,
+        "size": len(library_content),
+        "sha256": sha256_bytes(library_content),
+        "blob_count": len(blobs),
+        "named_payload_bytes": sum(blob["size"] for blob in blobs),
+        "inter_blob_padding_bytes": sum(gaps),
+        "classification_counts": dict(sorted(classifications.items())),
+        "blobs": blobs,
+    }
+
+
+def main() -> None:
+    args = parse_args()
+    apk_content = args.apk.read_bytes()
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+    libraries: list[dict[str, Any]] = []
+    with zipfile.ZipFile(args.apk) as archive:
+        names = set(archive.namelist())
+        for library_name in DATA_BUNDLE_NAMES:
+            archive_name = f"lib/arm64-v8a/{library_name}"
+            if archive_name not in names:
+                raise ValueError(f"missing APK entry: {archive_name}")
+            libraries.append(
+                analyze_bundle(
+                    library_name, archive.read(archive_name), args.output_dir
+                )
+            )
+
+    manifest = {
+        "schema_version": 1,
+        "source_apk": {
+            "path": args.apk.as_posix(),
+            "size": len(apk_content),
+            "sha256": sha256_bytes(apk_content),
+        },
+        "bundle_count": len(libraries),
+        "blob_count": sum(library["blob_count"] for library in libraries),
+        "libraries": libraries,
+    }
+    args.manifest.parent.mkdir(parents=True, exist_ok=True)
+    args.manifest.write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    print(
+        f"extracted {manifest['blob_count']} blobs from "
+        f"{manifest['bundle_count']} data bundles"
+    )
+
+
+if __name__ == "__main__":
+    main()
