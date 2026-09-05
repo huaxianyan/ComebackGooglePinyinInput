@@ -278,7 +278,7 @@ meta data table
 
 后续字节研究已切分两张位压缩索引表、32-bit target word 数组和 byte 数组，详见 [DirectMapping 字节布局](direct-mapping-layout.md)。
 
-[native 查找研究](direct-mapping-native.md) 已确认 lower_bound 区间算法与最高位间接索引。byte 在间接入口处表示数量，在目标元素处表示 score code。metadata 诊断对应数组之前的消息读取与解析阶段。完整迭代推进和 score 查找表构造仍待恢复。
+[native 查找研究](direct-mapping-native.md) 已确认 lower_bound 区间算法、最高位间接索引、连续目标迭代和默认 score 表构造。byte 在间接入口处表示数量，在目标元素处表示 score code。metadata 诊断对应数组之前的消息读取与解析阶段，完整上层行为仍待验证。
 
 ## Class n-gram reader 证据
 
@@ -343,7 +343,7 @@ TensorFlowLstmModel
 - prefix count 与底层 trie node 的精确对应规则
 - config、header 中哪些字段承载 custom token encoding 和 metadata
 - 笔画 ForwardTokenDictionary 的辅助表布局
-- DirectMapping 迭代推进、score 查找表构造与 metadata 字段语义
+- DirectMapping 上层行为、target 身份对齐与 metadata 字段语义
 - 两个 class n-gram trie 的具体职责
 - data type 数值到 factory 构造函数的精确映射
 
@@ -359,7 +359,7 @@ TensorFlowLstmModel
 
 ## 下一步
 
-1. 追踪 `DirectMappingTokenExpander` 的迭代推进与 score 查找表构造
+1. DirectMapping 后续工作统一见 [native 查找研究](direct-mapping-native.md#验证与限制)
 2. 从 config 与 native reader 控制流恢复 score、meta、code 和 encoding 配置
 3. 定位 `GenericDataModelCreator` 和各 storage reader 的 ARM64 构造调用
 4. 将英文 reverse-initial ID 对齐到 `DirectTokenDictionary`

@@ -303,7 +303,7 @@ SHA-256 验证发现三组完全相同的载荷：
 
 ## 下一步
 
-1. 在 [DirectMapping native 查找证据](direct-mapping-native.md) 基础上恢复迭代推进与 score 表构造
+1. DirectMapping 后续工作统一见 [native 查找研究](direct-mapping-native.md#验证与限制)
 2. 定位 native 中 `MarisaTrie`、`ForwardTokenDictionary` 和 `ClassNGramModel` reader
 3. 将 data scheme 的 data type 数值映射到 native enum 或 factory
 4. 分析 system dictionary 的 prefix 和 auxiliary 数据

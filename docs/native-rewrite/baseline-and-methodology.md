@@ -299,7 +299,7 @@ JADX 输出和工具位于被忽略的 `work/` 与 `tools/`，不进入仓库。
 1. 统一库动态注册表中的 method name、signature 和函数地址映射
 2. 27,080 条 call graph 边中的核心路径子图
 3. 409 个 XML 的完整引用图，目前只确认 framework、IME、processor 和主要 keyboard 链路
-4. token score、meta 与 prefix score 的量化语义，以及笔画容器边界和 DirectMapping 完整迭代路径
+4. token score、meta 与 prefix score 的量化语义及笔画容器边界，DirectMapping 后续工作见 [native 查找研究](direct-mapping-native.md#验证与限制)
 5. `libhwrword.so` 实际装载与可达性的运行时验证
 6. Preference、资源和实际运行能力之间的映射
 7. Comeback 补丁到用户功能的完整追踪

@@ -10,12 +10,22 @@ from capstone import Cs, CS_ARCH_ARM64, CS_MODE_ARM
 
 # Virtual addresses recovered from the fixed 4.5.2 ARM64 library, not exported symbols.
 REGIONS = {
+    "iterator_advance": (0x19C93C, 0x19C984),
+    "iterator_exhausted": (0x19C984, 0x19C9A0),
+    "iterator_constructor": (0x19CAE8, 0x19CB30),
+    "create_iterator": (0x19CB30, 0x19CB7C),
+    "expander_constructor": (0x19CB7C, 0x19CBD0),
     "resolve_indirection": (0x19CBF8, 0x19CC2C),
     "read_target_and_score": (0x19CC2C, 0x19CC5C),
     "iterator_current": (0x19CC8C, 0x19CD88),
     "lookup_range": (0x19CFAC, 0x19D0F0),
+    "iterator_reset": (0x19D0F0, 0x19D1CC),
     "read_container": (0x19D1CC, 0x19D484),
+    "load_container": (0x19D540, 0x19D670),
+    "build_score_table": (0x1D1D80, 0x1D1E50),
+    "default_score_table": (0x1D1E50, 0x1D1E74),
 }
+ITERATOR_VTABLE = (0x67A7B0, 0x67A7E8)
 DIAGNOSTICS = {
     0x32C3CB: "[DirectMappingTokenExpander] Failed to load the key ids table.",
     0x32C40A: "[DirectMappingTokenExpander] Failed to load the start position table.",
@@ -62,6 +72,12 @@ def main():
         "labels": "research annotations, not recovered C++ symbol names",
         "diagnostics": {hex(address): text for address, text in DIAGNOSTICS.items()},
         "regions": regions,
+        "iterator_vtable_relocations": [
+            {"address": relocation.address, "type": str(relocation.type),
+             "target": relocation.addend}
+            for relocation in sorted(binary.relocations, key=lambda item: item.address)
+            if ITERATOR_VTABLE[0] <= relocation.address < ITERATOR_VTABLE[1]
+        ],
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")

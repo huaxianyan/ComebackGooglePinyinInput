@@ -4,7 +4,7 @@
 
 本文记录从固定原始 APK 的四个 `DirectMappingTokenExpander` blob 恢复存储区间的结果，不实现 reconversion 解码器。两个英文 blob 字节相同，因此四个文件只提供三种不同样本。
 
-后续 [native 查找研究](direct-mapping-native.md) 已确认 lower_bound 区间查找、最高位间接索引和前置 metadata 读取阶段。下文的字节结果继续有效，原先的语义未知项以该文档更新为准。
+后续 [native 查找研究](direct-mapping-native.md) 已确认 lower_bound 区间查找、最高位间接索引、连续目标迭代、默认 score 表公式和前置 metadata 读取阶段。下文的字节结果继续有效，语义结论与后续工作以该文档为准。
 
 工具入口仍为 `research/native-rewrite/tools/extract_data_bundles.py`，复现命令见 [容器研究](setting-and-container-formats.md)。输出 manifest 的 `native_container.tables` 记录区间、位宽、数量、SHA-256 和统计值。完整索引只保存在被忽略的 `work/` 中。
 
@@ -65,15 +65,15 @@ start positions: [0, 9]
 
 其中 1,123 个 word 设置了最高位，其低 31 位范围为 `25379`–`27698`，落在 target 数组的后部。position 表最大值为 `25378`，而 target 总数为 `27701`。
 
-后续 native 函数证据确认最高位表示间接索引：低 31 位替换当前位置，原位置的 byte 表示目标数量。完整迭代推进路径仍待验证。工具继续命名为 `target_words`，避免把位置值误当成普通 token ID。
+后续 native 函数证据确认最高位表示间接索引：低 31 位替换当前位置，原位置的 byte 表示目标数量。推进函数通过位置加一、数量减一枚举连续目标。工具继续命名为 `target_words`，避免把位置值误当成普通 token ID。
 
-byte 数组在英文和数字样本中全部为零，拼音中有 138 种字节值。它具有双重用途：间接入口处存数量，目标元素处存 score code。native 会用 score code 查 float 表并取负值，查找表的量化参数尚未恢复，不能将这些 byte 直接解释成 float32 expansion score。
+byte 数组在英文和数字样本中全部为零，拼音中有 138 种字节值。它具有双重用途：间接入口处存数量，目标元素处存 score code。native 会用 score code 查 float 表并取负值，已恢复的默认构造使用 8-bit code 和 `20.0` 上限。float32 运算顺序见 [native 查找研究](direct-mapping-native.md)，不能将这些 byte 直接解释成 float32 expansion score。
 
 ## 修正此前结论
 
 此前依据 reader 的五组诊断字符串，将结构概括为「压平 target array 加 start-position index」。这一概括不足以描述已观察到的区间索引和疑似间接值，不能用作实现协议。
 
-当前已确认四个物理数组的边界与原始值，native 研究进一步恢复了区间查找与间接寻址。仍未知的是完整目标迭代路径、score 查找表的构造及 metadata 的字段语义。metadata 错误分支对应数组之前的消息读取和解析阶段，不是第五张尾部数组。
+当前已确认四个物理数组的边界与原始值，native 研究进一步恢复了区间查找、间接寻址、连续目标迭代和默认 score 表构造。metadata 错误分支对应数组之前的消息读取和解析阶段，不是第五张尾部数组，其字段语义仍未完整恢复。
 
 ## 验证
 
@@ -90,4 +90,4 @@ PYTHONPATH=tools/python python -m unittest discover \
 
 ## 下一步
 
-沿已定位的 native 函数追踪迭代推进和 score 表构造，再将实际枚举的 target 与 ForwardTokenDictionary 的 token ID 对齐。
+后续工作统一见 [DirectMapping native 查找语义](direct-mapping-native.md#验证与限制)。

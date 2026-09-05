@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[3]
 
 
 class DirectMappingNativeTest(unittest.TestCase):
-    def test_export_original_apk_contains_lookup_indirection_and_metadata_branches(self):
+    def test_export_original_apk_recovers_lookup_iterator_and_score_table_evidence(self):
         work = ROOT / "work/native-rewrite"
         work.mkdir(parents=True, exist_ok=True)
         with tempfile.TemporaryDirectory(prefix="direct-native-test-", dir=work) as tmp:
@@ -39,11 +39,36 @@ class DirectMappingNativeTest(unittest.TestCase):
             0x19CD54: ("fneg", "s0, s0"),
             0x19D27C: ("cbz", "w0, #0x19d42c"),
             0x19D438: ("add", "x0, x0, #0x4d0"),
+            0x19C944: ("strb", "wzr, [x0, #0x48]"),
+            0x19C964: ("sub", "w0, w0, #1"),
+            0x19C970: ("add", "x0, x0, #1"),
+            0x19C98C: ("cbnz", "w2, #0x19c998"),
+            0x19C994: ("eor", "w1, w1, #1"),
+            0x19CB60: ("add", "x2, x20, #0x68"),
+            0x19CBCC: ("b", "#0x1d1e50"),
+            0x1D1E54: ("mov", "w3, #1"),
+            0x1D1E58: ("fmov", "s0, #20.00000000"),
+            0x1D1E5C: ("mov", "w1, #8"),
+            0x1D1E18: ("fdiv", "s1, s8, s1"),
+            0x1D1E30: ("fmul", "s0, s1, s0"),
         }
         for address, instruction in expected.items():
             with self.subTest(address=hex(address)):
                 self.assertEqual(instructions[address], instruction)
         self.assertIn("meta data table", evidence["diagnostics"]["0x32c4d0"])
+        relocations = {
+            row["address"]: row["target"]
+            for row in evidence["iterator_vtable_relocations"]
+        }
+        self.assertEqual(relocations, {
+            0x67A7B0: 0x19D0F0,
+            0x67A7B8: 0x19CC8C,
+            0x67A7C0: 0x19C93C,
+            0x67A7C8: 0x19C984,
+            0x67A7D0: 0x19C9A0,
+            0x67A7D8: 0x19CC5C,
+            0x67A7E0: 0x19CC6C,
+        })
 
 
 if __name__ == "__main__":

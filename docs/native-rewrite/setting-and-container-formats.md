@@ -356,7 +356,7 @@ Marisa key 数量不等于整个 dictionary 的候选条目数。prefix 和 auxi
 - system dictionary prefix 与 auxiliary value 的连接方式
 - bigram 两个 trie 的职责和权重编码
 - DirectTokenDictionary 的完整 payload 结构
-- DirectMappingTokenExpander 的完整迭代路径、score 查找表构造与 metadata 字段语义
+- DirectMappingTokenExpander 的上层组合行为、target 身份对齐与 metadata 字段语义
 
 ## 对未来实现的约束
 
@@ -369,7 +369,7 @@ Marisa key 数量不等于整个 dictionary 的候选条目数。prefix 和 auxi
 
 ## 下一步
 
-1. 沿 [DirectMapping native 查找证据](direct-mapping-native.md) 追踪迭代推进与 score 表构造
+1. DirectMapping 后续工作统一见 [native 查找研究](direct-mapping-native.md#验证与限制)
 2. 定位 native data type factory 与各 reader 的构造入口
 3. 恢复 token score、meta、code 和 prefix score 的量化配置
 4. 分析 system dictionary prefix 和 auxiliary 区域的整数表关系

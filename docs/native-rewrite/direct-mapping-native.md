@@ -14,7 +14,7 @@ PYTHONPATH=tools/python python research/native-rewrite/tools/disassemble_direct_
   --output work/native-rewrite/direct-mapping-native.json
 ```
 
-输出包含库 SHA-256、五个有界指令区间、区间 SHA-256 和 reader 诊断字符串。工具检查固定地址的字符串锚点，不将这些地址作为其他 APK 版本的通用常量。
+输出包含库 SHA-256、14 个有界指令区间、区间 SHA-256、reader 诊断字符串和迭代器虚表 relocation。工具检查固定地址的字符串锚点，不将这些地址作为其他 APK 版本的通用常量。
 
 ## 函数与证据链
 
@@ -25,6 +25,15 @@ PYTHONPATH=tools/python python research/native-rewrite/tools/disassemble_direct_
 | iterator_current | `0x19cc8c`–`0x19cd88` | 调用上述读取函数，查 float 表并取负值 |
 | lookup_range | `0x19cfac`–`0x19d0f0` | 两张位压缩表的二分查找与区间计算 |
 | read_container | `0x19d1cc`–`0x19d484` | 各读取阶段与五条错误文案相连 |
+| iterator_advance | `0x19c93c`–`0x19c984` | 数量减一、位置加一，清除回退项标记 |
+| iterator_exhausted | `0x19c984`–`0x19c9a0` | 数量为零且无回退项时结束 |
+| iterator_constructor | `0x19cae8`–`0x19cb30` | 保存 expander 和 score 表指针，初始化状态 |
+| create_iterator | `0x19cb30`–`0x19cb7c` | 将 expander 的 `+0x68` score 对象传给迭代器 |
+| expander_constructor | `0x19cb7c`–`0x19cbd0` | 构造默认 score 对象 |
+| iterator_reset | `0x19d0f0`–`0x19d1cc` | 输入类型检查、查找和回退项准备 |
+| load_container | `0x19d540`–`0x19d670` | 装载前置消息和四张数组，不重建 score 表 |
+| build_score_table | `0x1d1d80`–`0x1d1e50` | 分配并生成线性 float32 查找表 |
+| default_score_table | `0x1d1e50`–`0x1d1e74` | 参数为 `1`、8-bit 与 `20.0` |
 
 对象中的 key 表和 position 表指针分别位于 `+0x38` 与 `+0x40`。target 数据指针位于 `+0x50`，byte 数据指针位于 `+0x60`。这些偏移仅描述当前 ARM64 实现，不是未来产品接口。
 
@@ -87,7 +96,32 @@ resolve_indirection(position)
 
 同一 byte 数组并非处处表示分数。在间接入口处，它表示数量。读取目标元素时，`0x19cc2c` 才把对应 byte 作为 score code 返回。
 
-这也说明，仅清除最高位然后把结果当成普通 token ID 是错误的。它实际是另一个数组位置，需要和数量一起处理。本轮没有将完整迭代推进函数纳入证据，因此目标枚举全过程仍需后续验证，不能宣称 reconversion 已完整复现。
+这也说明，仅清除最高位然后把结果当成普通 token ID 是错误的。它实际是另一个数组位置，需要和数量一起处理。后续定位的推进函数确认，这个位置与数量描述一段连续目标，而不是需要再次查找的 key。
+
+## 迭代推进与终止
+
+迭代器构造函数将虚表 address point 设为 `0x67a7b0`。ELF 的 `AARCH64_RELATIVE` relocation 将以下 slot 连到已定位的函数，因此不是仅凭代码相邻关系猜测职责：
+
+| slot 相对偏移 | 目标地址 | 研究职责 |
+| --- | --- | --- |
+| `+0x00` | `0x19d0f0` | reset / 定位输入 |
+| `+0x08` | `0x19cc8c` | 读取当前目标与分数 |
+| `+0x10` | `0x19c93c` | 推进 |
+| `+0x18` | `0x19c984` | 检查是否耗尽 |
+
+`iterator_current` 和 `iterator_advance` 都通过 slot `+0x18` 检查耗尽状态。它的逻辑为：
+
+```text
+exhausted = (remaining == 0) and (not fallback_pending)
+```
+
+其中位置为迭代器 `+0x18` 的 64-bit 值，remaining 为 `+0x20` 的 32-bit 值，fallback_pending 为 `+0x48` 的 byte。
+
+推进函数先清除 fallback_pending，再检查耗尽状态。若尚未耗尽，就将 remaining 减一、position 加一。因此一段间接目标通过连续数组索引枚举，最后一次推进令数量变为零。不需要依靠目标值中的结束标记。
+
+查找未命中、输入类型检查通过且配置允许回退时，reset 会保存原输入，令 remaining 为零并设置 fallback_pending。current 返回这一回退项，下一次推进清除标记后结束，不会把零数量减成负数。回退分数为 `+0.0`。
+
+输入类型不匹配时 reset 会返回失败，不能把该路径等同于成功建立了空迭代器。完整调用方如何处理失败和回退，仍需沿上层 reconversion 路径验证。
 
 ## Score 不是直接浮点值
 
@@ -102,7 +136,37 @@ resolve_indirection(position)
 0x19cd54  fneg s0, s0
 ```
 
-已确认的是「byte code → float 表 → 取负值」。float 表的构造方式、数值与配置来源仍未知，不能根据 byte 大小直接换算概率，也不能把间接入口处的数量 byte 混入分数统计。
+已确认的是「byte code → float 表 → 取负值」。间接入口处的数量 byte 不经过这一分数路径，不能混入分数统计。
+
+### 默认 score 表的构造
+
+证据链为：
+
+```text
+expander_constructor
+  → 在 expander +0x68 调用 default_score_table
+  → default_score_table 设置 multiplier=1、bits=8、maximum=20.0
+  → build_score_table
+create_iterator
+  → 将 expander +0x68 传给 iterator_constructor
+  → 保存到 iterator +0x10
+iterator_current
+  → 使用 iterator +0x10 查 float 表并取负值
+```
+
+`build_score_table` 先计算 `levels = 1 << bits`，表末索引为 `multiplier * (levels - 1)`，再分配末索引加一项。在当前默认参数下，表有 256 项，索引为 `0`–`255`。
+
+生成循环使用独立的 float32 除法与乘法：
+
+```text
+step = float32(20.0 / 255.0)
+T[code] = float32(step * float32(code))
+score = -T[code]
+```
+
+证据中的 `fdiv s1, s8, s1` 位于 `0x1d1e18`，`fmul s0, s1, s0` 位于 `0x1d1e30`，取负值仍在 `0x19cd54`。不能以双精度一次性计算 `-20 * code / 255` 代替这些操作，再声称结果逐位一致。
+
+当前默认映射从 `-0.0` 到 `-20.0`，不是直接存储的概率。`load_container` 装载前置消息与四张数组，没有重建这个 score 对象。以上结论限定于已追踪的默认构造和装载路径，不宣称所有 HMM 量化器或未审计调用方都使用同一公式。
 
 ## Metadata 位于前置读取阶段
 
@@ -118,7 +182,7 @@ resolve_indirection(position)
 
 ## 验证与限制
 
-新增一个真实 APK 入口测试，固定检查独立反汇编时记录的关键指令、分支目标和 metadata 文案锚点：
+沿用一个真实 APK 入口测试，固定检查独立反汇编时记录的关键指令、分支目标、metadata 文案锚点、迭代器虚表和 score 构造参数：
 
 ```text
 PYTHONPATH=tools/python python -m unittest discover \
@@ -129,9 +193,8 @@ PYTHONPATH=tools/python python -m unittest discover \
 
 尚未完成：
 
-- 迭代器的推进与终止路径
-- float score 查找表的构造和量化参数
 - 输入类型过滤、fallback 与上层 reconversion 的组合行为
 - 将实际枚举出的 target 与 token dictionary 完整对齐
+- native 执行结果与静态恢复算法的独立对照
 
-下一轮应沿迭代器推进函数和 score 表构造函数继续追踪，而不是再次猜测已确认的最高位用途。
+下一轮应依据已确认的区间查找、连续目标枚举和默认分数公式，建立原始数据的离线语义分析。它仍属于研究工具，不替代原生执行或产品行为验收。

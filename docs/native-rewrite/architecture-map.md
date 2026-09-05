@@ -495,7 +495,7 @@ QWERTY 与九键分别有拼音 gesture handler。英文另有独立 handler，�
 ## 下一步
 
 1. 将统一库动态注册表中的 method name、JNI signature 和函数地址建立精确映射
-2. 追踪 DirectMappingTokenExpander 的迭代推进与 score 表构造，并独立分析笔画 ForwardTokenDictionary
+2. 独立分析笔画 ForwardTokenDictionary，DirectMapping 后续工作见 [native 查找研究](direct-mapping-native.md#验证与限制)
 3. 从 27,080 条 call graph 边中提取 Service、InputBundle、DecodeProcessor、HMM、词典、滑行和手写子图
 4. 建立 XML include、class、layout、keymapping 和 processor 的机器可查询引用图
 5. 运行时验证 `libhwrword.so` 是否被装载
