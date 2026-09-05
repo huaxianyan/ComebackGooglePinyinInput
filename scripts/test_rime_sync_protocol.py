@@ -409,6 +409,18 @@ public final class RimeUserDbSnapshotTest {
     require(!sessionPlan.requiresDeletionConfirmation()
             && sessionPlan.confirmationToken.length() == 64,
         "a first union must have a stable confirmation token without deletions");
+    RimeSyncSessionPlan previewPlan = RimeSyncSessionPlan.buildPreview(
+        RimeSyncCore.translationEntries(bridgeMerged), nativeSnapshot,
+        new RimeSyncSessionPlan.BaselineLookup() {
+          @Override public RimeSyncSessionPlan.Baseline get(String key) {
+            return unknown;
+          }
+        });
+    require(previewPlan.entries.isEmpty()
+            && previewPlan.googleAdditionCount == sessionPlan.googleAdditionCount
+            && previewPlan.rimeAdditionCount == sessionPlan.rimeAdditionCount
+            && previewPlan.confirmationToken.equals(sessionPlan.confirmationToken),
+        "preview planning must retain the full result without retaining entry plans");
 
     RimeSyncSessionPlan deletePlan = RimeSyncSessionPlan.build(
         RimeSyncCore.translationEntries(bridgeMerged), nativeSnapshot,

@@ -78,6 +78,31 @@ public final class RimeUserDbSnapshot {
         writer.flush();
     }
 
+    /**
+     * Converts this peer snapshot in place to the exact result of merging it into an empty
+     * tick-zero snapshot. The caller owns this parsed snapshot and may then use it as the Bridge.
+     */
+    void mergeFromEmpty(boolean deletionWinsTies) throws IOException {
+        long theirTick = tick();
+        long mergedTick = Math.max(0L, theirTick);
+        for (Map.Entry<String, Entry> item : entries.entrySet()) {
+            Entry source = item.getValue();
+            Entry other = source.atTick(theirTick);
+            int commits = 0;
+            long otherMagnitude = magnitude(other.commits);
+            if (otherMagnitude > 0L
+                    || (deletionWinsTies && other.commits < 0)) {
+                commits = other.commits;
+            }
+            double dee = Math.max(0.0, other.dee);
+            if (source.commits != commits || Double.compare(source.dee, dee) != 0
+                    || source.tick != mergedTick) {
+                item.setValue(new Entry(source.code, source.phrase, commits, dee, mergedTick));
+            }
+        }
+        metadata.put("tick", Long.toString(mergedTick));
+    }
+
     /** Merge one external device snapshot into this Bridge device snapshot. */
     public void mergeFrom(RimeUserDbSnapshot incoming, boolean deletionWinsTies) throws IOException {
         if (!dbName().equals(incoming.dbName())) {

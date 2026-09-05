@@ -30,10 +30,10 @@
 .method public constructor <init>(Ljava/lang/String;Ljava/lang/String;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$GoogleAction;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$RimeAction;I)V
     .locals 0
 
-    .line 646
+    .line 678
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
-    .line 647
+    .line 679
     if-eqz p1, :cond_0
 
     if-eqz p2, :cond_0
@@ -42,25 +42,25 @@
 
     if-eqz p4, :cond_0
 
-    .line 650
+    .line 682
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$PendingOperation;->code:Ljava/lang/String;
 
-    .line 651
+    .line 683
     iput-object p2, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$PendingOperation;->phrase:Ljava/lang/String;
 
-    .line 652
+    .line 684
     iput-object p3, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$PendingOperation;->googleAction:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$GoogleAction;
 
-    .line 653
+    .line 685
     iput-object p4, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$PendingOperation;->rimeAction:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$RimeAction;
 
-    .line 654
+    .line 686
     iput p5, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$PendingOperation;->rimeCommitValue:I
 
-    .line 655
+    .line 687
     return-void
 
-    .line 648
+    .line 680
     :cond_0
     new-instance p1, Ljava/lang/IllegalArgumentException;
 

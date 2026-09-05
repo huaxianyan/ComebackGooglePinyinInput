@@ -50,22 +50,22 @@
 .method constructor <init>(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;[BIJIJIII[BZI)V
     .locals 0
 
-    .line 604
+    .line 636
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
-    .line 605
+    .line 637
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;->rootUri:Ljava/lang/String;
 
-    .line 606
+    .line 638
     iput-object p2, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;->deviceDirectoryName:Ljava/lang/String;
 
-    .line 607
+    .line 639
     iput-object p3, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;->snapshotFileName:Ljava/lang/String;
 
-    .line 608
+    .line 640
     iput-object p4, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;->bridgeUserId:Ljava/lang/String;
 
-    .line 609
+    .line 641
     invoke-virtual {p5}, [B->clone()Ljava/lang/Object;
 
     move-result-object p1
@@ -74,31 +74,31 @@
 
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;->hashSalt:[B
 
-    .line 610
+    .line 642
     iput p6, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;->protocolVersion:I
 
-    .line 611
+    .line 643
     iput-wide p7, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;->generation:J
 
-    .line 612
+    .line 644
     iput p9, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;->phase:I
 
-    .line 613
+    .line 645
     iput-wide p10, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;->lastSuccess:J
 
-    .line 614
+    .line 646
     iput p12, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;->nativeExpectedCount:I
 
-    .line 615
+    .line 647
     iput p13, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;->nativeActualCount:I
 
-    .line 616
+    .line 648
     iput p14, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;->nativeMissingCount:I
 
-    .line 617
+    .line 649
     if-nez p15, :cond_0
 
-    .line 618
+    .line 650
     const/4 p1, 0x0
 
     goto :goto_0
@@ -113,24 +113,24 @@
     :goto_0
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;->nativeFailureFingerprint:[B
 
-    .line 619
+    .line 651
     move/from16 p1, p16
 
     iput-boolean p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;->nativeFailureRepeated:Z
 
-    .line 620
+    .line 652
     move/from16 p1, p17
 
     iput p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;->nativeFailureKind:I
 
-    .line 621
+    .line 653
     return-void
 .end method
 
 .method static synthetic access$000(Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;)[B
     .locals 0
 
-    .line 583
+    .line 615
     iget-object p0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;->hashSalt:[B
 
     return-object p0
@@ -139,7 +139,7 @@
 .method static synthetic access$300(Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;)[B
     .locals 0
 
-    .line 583
+    .line 615
     iget-object p0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;->nativeFailureFingerprint:[B
 
     return-object p0

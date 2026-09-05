@@ -36,51 +36,51 @@
 .method constructor <init>(Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan;)V
     .locals 1
 
-    .line 352
+    .line 363
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
-    .line 353
+    .line 364
     iget v0, p1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan;->googleAdditionCount:I
 
     iput v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCoordinator$Preview;->googleAdditionCount:I
 
-    .line 354
+    .line 365
     iget v0, p1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan;->googleDeletionCount:I
 
     iput v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCoordinator$Preview;->googleDeletionCount:I
 
-    .line 355
+    .line 366
     iget v0, p1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan;->rimeAdditionCount:I
 
     iput v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCoordinator$Preview;->rimeAdditionCount:I
 
-    .line 356
+    .line 367
     iget v0, p1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan;->rimeDeletionCount:I
 
     iput v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCoordinator$Preview;->rimeDeletionCount:I
 
-    .line 357
+    .line 368
     iget v0, p1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan;->rimeResurrectionCount:I
 
     iput v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCoordinator$Preview;->rimeResurrectionCount:I
 
-    .line 358
+    .line 369
     iget v0, p1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan;->projectedGoogleEntryCount:I
 
     iput v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCoordinator$Preview;->projectedGoogleEntryCount:I
 
-    .line 359
+    .line 370
     invoke-virtual {p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan;->requiresDeletionConfirmation()Z
 
     move-result v0
 
     iput-boolean v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCoordinator$Preview;->requiresDeletionConfirmation:Z
 
-    .line 360
+    .line 371
     iget-object p1, p1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan;->confirmationToken:Ljava/lang/String;
 
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCoordinator$Preview;->confirmationToken:Ljava/lang/String;
 
-    .line 361
+    .line 372
     return-void
 .end method

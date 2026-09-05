@@ -38,27 +38,27 @@
 .method public constructor <init>(Ljava/lang/String;ZLcom/google/android/inputmethod/pinyin/rimesync/RimeUserDbSnapshot;)V
     .locals 0
 
-    .line 153
+    .line 172
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
-    .line 154
+    .line 173
     if-eqz p1, :cond_0
 
     if-eqz p3, :cond_0
 
-    .line 157
+    .line 176
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCore$DeviceSnapshot;->stableId:Ljava/lang/String;
 
-    .line 158
+    .line 177
     iput-boolean p2, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCore$DeviceSnapshot;->bridgeOwned:Z
 
-    .line 159
+    .line 178
     iput-object p3, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCore$DeviceSnapshot;->snapshot:Lcom/google/android/inputmethod/pinyin/rimesync/RimeUserDbSnapshot;
 
-    .line 160
+    .line 179
     return-void
 
-    .line 155
+    .line 174
     :cond_0
     new-instance p1, Ljava/lang/IllegalArgumentException;
 
@@ -74,7 +74,7 @@
 .method public compareTo(Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCore$DeviceSnapshot;)I
     .locals 1
 
-    .line 163
+    .line 182
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCore$DeviceSnapshot;->stableId:Ljava/lang/String;
 
     iget-object p1, p1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCore$DeviceSnapshot;->stableId:Ljava/lang/String;
@@ -89,7 +89,7 @@
 .method public bridge synthetic compareTo(Ljava/lang/Object;)I
     .locals 0
 
-    .line 147
+    .line 166
     check-cast p1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCore$DeviceSnapshot;
 
     invoke-virtual {p0, p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCore$DeviceSnapshot;->compareTo(Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCore$DeviceSnapshot;)I

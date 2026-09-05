@@ -26,18 +26,18 @@
 .method constructor <init>(Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$History;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$GoogleProjection;I)V
     .locals 0
 
-    .line 630
+    .line 662
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
-    .line 631
+    .line 663
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Baseline;->history:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$History;
 
-    .line 632
+    .line 664
     iput-object p2, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Baseline;->googleProjection:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$GoogleProjection;
 
-    .line 633
+    .line 665
     iput p3, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Baseline;->rimeAbsCount:I
 
-    .line 634
+    .line 666
     return-void
 .end method

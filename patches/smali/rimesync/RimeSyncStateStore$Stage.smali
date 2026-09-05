@@ -31,16 +31,16 @@
 .method constructor <init>(Landroid/database/sqlite/SQLiteDatabase;J[B)V
     .locals 0
 
-    .line 524
+    .line 556
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
-    .line 525
+    .line 557
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Stage;->db:Landroid/database/sqlite/SQLiteDatabase;
 
-    .line 526
+    .line 558
     iput-wide p2, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Stage;->generation:J
 
-    .line 527
+    .line 559
     invoke-virtual {p4}, [B->clone()Ljava/lang/Object;
 
     move-result-object p1
@@ -49,22 +49,22 @@
 
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Stage;->hashSalt:[B
 
-    .line 528
+    .line 560
     return-void
 .end method
 
 .method private ensureOpen()V
     .locals 2
 
-    .line 579
+    .line 611
     iget-boolean v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Stage;->closed:Z
 
     if-nez v0, :cond_0
 
-    .line 580
+    .line 612
     return-void
 
-    .line 579
+    .line 611
     :cond_0
     new-instance v0, Ljava/lang/IllegalStateException;
 
@@ -80,38 +80,38 @@
 .method public close()V
     .locals 1
 
-    .line 573
+    .line 605
     iget-boolean v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Stage;->closed:Z
 
     if-eqz v0, :cond_0
 
     return-void
 
-    .line 574
+    .line 606
     :cond_0
     const/4 v0, 0x1
 
     iput-boolean v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Stage;->closed:Z
 
-    .line 575
+    .line 607
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Stage;->db:Landroid/database/sqlite/SQLiteDatabase;
 
     invoke-virtual {v0}, Landroid/database/sqlite/SQLiteDatabase;->endTransaction()V
 
-    .line 576
+    .line 608
     return-void
 .end method
 
 .method public finish()V
     .locals 5
 
-    .line 565
+    .line 597
     invoke-direct {p0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Stage;->ensureOpen()V
 
-    .line 566
+    .line 598
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Stage;->db:Landroid/database/sqlite/SQLiteDatabase;
 
-    .line 567
+    .line 599
     const/4 v1, 0x1
 
     invoke-static {v1}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
@@ -128,27 +128,27 @@
 
     aput-object v2, v3, v1
 
-    .line 566
+    .line 598
     const-string v1, "UPDATE profile SET phase=? WHERE id=?"
 
     invoke-virtual {v0, v1, v3}, Landroid/database/sqlite/SQLiteDatabase;->execSQL(Ljava/lang/String;[Ljava/lang/Object;)V
 
-    .line 568
+    .line 600
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Stage;->db:Landroid/database/sqlite/SQLiteDatabase;
 
     invoke-virtual {v0}, Landroid/database/sqlite/SQLiteDatabase;->setTransactionSuccessful()V
 
-    .line 569
+    .line 601
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Stage;->close()V
 
-    .line 570
+    .line 602
     return-void
 .end method
 
 .method public putBaseline(Ljava/lang/String;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$History;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$GoogleProjection;I)V
     .locals 1
 
-    .line 532
+    .line 564
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Stage;->hashSalt:[B
 
     invoke-static {v0, p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore;->access$100([BLjava/lang/String;)[B
@@ -157,37 +157,37 @@
 
     invoke-virtual {p0, p1, p2, p3, p4}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Stage;->putBaseline([BLcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$History;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$GoogleProjection;I)V
 
-    .line 534
+    .line 566
     return-void
 .end method
 
 .method public putBaseline([BLcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$History;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$GoogleProjection;I)V
     .locals 2
 
-    .line 538
+    .line 570
     invoke-direct {p0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Stage;->ensureOpen()V
 
-    .line 539
+    .line 571
     invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore;->access$400([B)V
 
-    .line 540
+    .line 572
     if-eqz p2, :cond_0
 
     if-eqz p3, :cond_0
 
     if-ltz p4, :cond_0
 
-    .line 543
+    .line 575
     new-instance v0, Landroid/content/ContentValues;
 
     invoke-direct {v0}, Landroid/content/ContentValues;-><init>()V
 
-    .line 544
+    .line 576
     const-string v1, "key_hash"
 
     invoke-virtual {v0, v1, p1}, Landroid/content/ContentValues;->put(Ljava/lang/String;[B)V
 
-    .line 545
+    .line 577
     const-string p1, "history"
 
     invoke-virtual {p2}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$History;->name()Ljava/lang/String;
@@ -196,7 +196,7 @@
 
     invoke-virtual {v0, p1, p2}, Landroid/content/ContentValues;->put(Ljava/lang/String;Ljava/lang/String;)V
 
-    .line 546
+    .line 578
     const-string p1, "google_projection"
 
     invoke-virtual {p3}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$GoogleProjection;->name()Ljava/lang/String;
@@ -205,7 +205,7 @@
 
     invoke-virtual {v0, p1, p2}, Landroid/content/ContentValues;->put(Ljava/lang/String;Ljava/lang/String;)V
 
-    .line 547
+    .line 579
     const-string p1, "rime_abs_count"
 
     invoke-static {p4}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
@@ -214,7 +214,7 @@
 
     invoke-virtual {v0, p1, p2}, Landroid/content/ContentValues;->put(Ljava/lang/String;Ljava/lang/Integer;)V
 
-    .line 548
+    .line 580
     iget-object p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Stage;->db:Landroid/database/sqlite/SQLiteDatabase;
 
     const/4 p2, 0x0
@@ -225,10 +225,10 @@
 
     invoke-virtual {p1, p4, p2, v0, p3}, Landroid/database/sqlite/SQLiteDatabase;->insertWithOnConflict(Ljava/lang/String;Ljava/lang/String;Landroid/content/ContentValues;I)J
 
-    .line 550
+    .line 582
     return-void
 
-    .line 541
+    .line 573
     :cond_0
     new-instance p1, Ljava/lang/IllegalArgumentException;
 
@@ -242,32 +242,32 @@
 .method public putOperation(Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$PendingOperation;)V
     .locals 3
 
-    .line 553
+    .line 585
     invoke-direct {p0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Stage;->ensureOpen()V
 
-    .line 554
+    .line 586
     if-eqz p1, :cond_0
 
-    .line 555
+    .line 587
     new-instance v0, Landroid/content/ContentValues;
 
     invoke-direct {v0}, Landroid/content/ContentValues;-><init>()V
 
-    .line 556
+    .line 588
     const-string v1, "code"
 
     iget-object v2, p1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$PendingOperation;->code:Ljava/lang/String;
 
     invoke-virtual {v0, v1, v2}, Landroid/content/ContentValues;->put(Ljava/lang/String;Ljava/lang/String;)V
 
-    .line 557
+    .line 589
     const-string v1, "phrase"
 
     iget-object v2, p1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$PendingOperation;->phrase:Ljava/lang/String;
 
     invoke-virtual {v0, v1, v2}, Landroid/content/ContentValues;->put(Ljava/lang/String;Ljava/lang/String;)V
 
-    .line 558
+    .line 590
     iget-object v1, p1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$PendingOperation;->googleAction:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$GoogleAction;
 
     invoke-virtual {v1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$GoogleAction;->name()Ljava/lang/String;
@@ -278,7 +278,7 @@
 
     invoke-virtual {v0, v2, v1}, Landroid/content/ContentValues;->put(Ljava/lang/String;Ljava/lang/String;)V
 
-    .line 559
+    .line 591
     iget-object v1, p1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$PendingOperation;->rimeAction:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$RimeAction;
 
     invoke-virtual {v1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$RimeAction;->name()Ljava/lang/String;
@@ -289,7 +289,7 @@
 
     invoke-virtual {v0, v2, v1}, Landroid/content/ContentValues;->put(Ljava/lang/String;Ljava/lang/String;)V
 
-    .line 560
+    .line 592
     iget p1, p1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$PendingOperation;->rimeCommitValue:I
 
     invoke-static {p1}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
@@ -300,7 +300,7 @@
 
     invoke-virtual {v0, v1, p1}, Landroid/content/ContentValues;->put(Ljava/lang/String;Ljava/lang/Integer;)V
 
-    .line 561
+    .line 593
     iget-object p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Stage;->db:Landroid/database/sqlite/SQLiteDatabase;
 
     const-string v1, "pending_operation"
@@ -309,10 +309,10 @@
 
     invoke-virtual {p1, v1, v2, v0}, Landroid/database/sqlite/SQLiteDatabase;->insertOrThrow(Ljava/lang/String;Ljava/lang/String;Landroid/content/ContentValues;)J
 
-    .line 562
+    .line 594
     return-void
 
-    .line 554
+    .line 586
     :cond_0
     new-instance p1, Ljava/lang/IllegalArgumentException;
 

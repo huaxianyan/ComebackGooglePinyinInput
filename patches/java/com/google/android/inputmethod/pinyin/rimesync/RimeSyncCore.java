@@ -52,7 +52,13 @@ public final class RimeSyncCore {
                 peers.add(device);
             }
         }
-        if (result == null) {
+        Collections.sort(peers);
+        if (result == null && !peers.isEmpty()) {
+            result = peers.remove(0).snapshot;
+            result.mergeFromEmpty(true);
+            result.putMetadata("rime_version", "google-pinyin-bridge");
+            result.putMetadata("user_id", bridgeUserId);
+        } else if (result == null) {
             result = new RimeUserDbSnapshot();
             result.putMetadata("db_name", configuration.databaseName);
             result.putMetadata("db_type", "userdb");
@@ -60,7 +66,6 @@ public final class RimeSyncCore {
             result.putMetadata("tick", "0");
             result.putMetadata("user_id", bridgeUserId);
         }
-        Collections.sort(peers);
         for (DeviceSnapshot peer : peers) result.mergeFrom(peer.snapshot, true);
         result.putMetadata("user_id", bridgeUserId);
         return result;
@@ -69,13 +74,27 @@ public final class RimeSyncCore {
     /** Returns every multi-code-point key, including tombstones needed for delete propagation. */
     public static Map<String, CanonicalEntry> translationEntries(RimeUserDbSnapshot snapshot)
             throws IOException {
+        return translationEntries(snapshot, true);
+    }
+
+    /** Builds the same canonical presence and commit view without retaining duplicate details. */
+    static Map<String, CanonicalEntry> translationEntriesForPreview(
+            RimeUserDbSnapshot snapshot) throws IOException {
+        return translationEntries(snapshot, false);
+    }
+
+    private static Map<String, CanonicalEntry> translationEntries(
+            RimeUserDbSnapshot snapshot, boolean retainDetails) throws IOException {
         Map<String, CanonicalEntry> result = new LinkedHashMap<String, CanonicalEntry>();
         for (RimeUserDbSnapshot.Entry entry : snapshot.entries().values()) {
             String phrase = normalizePhrase(entry.phrase);
             if (phrase.codePointCount(0, phrase.length()) < 2) continue;
             String code = normalizeCode(entry.code);
             String key = code + '\t' + phrase;
-            CanonicalEntry previous = result.put(key, new CanonicalEntry(key, code, phrase, entry));
+            CanonicalEntry canonical = retainDetails
+                    ? new CanonicalEntry(key, code, phrase, entry)
+                    : new CanonicalEntry(null, null, null, entry);
+            CanonicalEntry previous = result.put(key, canonical);
             if (previous != null) throw new IOException("duplicate normalized Rime entry");
         }
         return result;

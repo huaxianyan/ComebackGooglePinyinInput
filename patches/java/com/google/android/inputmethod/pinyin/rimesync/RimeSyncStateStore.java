@@ -13,9 +13,7 @@ import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 /** Private durable baseline and recovery journal for one configured Rime sync profile. */
@@ -172,31 +170,43 @@ public final class RimeSyncStateStore extends SQLiteOpenHelper {
     public synchronized RimeSyncSessionPlan.BaselineLookup baselineLookup() {
         final Profile current = readProfile(getReadableDatabase());
         if (current == null) throw new IllegalStateException("Rime profile is not configured");
-        final Map<String, RimeSyncSessionPlan.Baseline> baselines =
-                new HashMap<String, RimeSyncSessionPlan.Baseline>();
         Cursor cursor = getReadableDatabase().query("baseline",
                 new String[] {"key_hash", "history", "google_projection", "rime_abs_count"},
-                null, null, null, null, null);
+                null, null, null, null, "key_hash");
+        final int count = cursor.getCount();
+        final byte[] hashes = new byte[count * 32];
+        final byte[] histories = new byte[count];
+        final byte[] projections = new byte[count];
+        final int[] rimeAbsCounts = new int[count];
+        int index = 0;
         try {
             while (cursor.moveToNext()) {
-                baselines.put(hex(cursor.getBlob(0)), new RimeSyncSessionPlan.Baseline(
-                        RimeSyncPlanner.History.valueOf(cursor.getString(1)),
-                        RimeSyncPlanner.GoogleProjection.valueOf(cursor.getString(2)),
-                        cursor.getInt(3)));
+                byte[] hash = cursor.getBlob(0);
+                requireHash(hash);
+                System.arraycopy(hash, 0, hashes, index * 32, 32);
+                histories[index] = (byte) RimeSyncPlanner.History.valueOf(
+                        cursor.getString(1)).ordinal();
+                projections[index] = (byte) RimeSyncPlanner.GoogleProjection.valueOf(
+                        cursor.getString(2)).ordinal();
+                rimeAbsCounts[index] = cursor.getInt(3);
+                index++;
             }
         } finally {
             cursor.close();
         }
         final byte[] salt = current.hashSalt.clone();
+        final RimeSyncSessionPlan.Baseline unknown = new RimeSyncSessionPlan.Baseline(
+                RimeSyncPlanner.History.UNKNOWN,
+                RimeSyncPlanner.GoogleProjection.SUPPORTED, 0);
+        final RimeSyncPlanner.History[] historyValues = RimeSyncPlanner.History.values();
+        final RimeSyncPlanner.GoogleProjection[] projectionValues =
+                RimeSyncPlanner.GoogleProjection.values();
         return new RimeSyncSessionPlan.BaselineLookup() {
             @Override public RimeSyncSessionPlan.Baseline get(String canonicalKey) {
-                RimeSyncSessionPlan.Baseline baseline =
-                        baselines.get(hex(keyHash(salt, canonicalKey)));
-                return baseline == null
-                        ? new RimeSyncSessionPlan.Baseline(
-                                RimeSyncPlanner.History.UNKNOWN,
-                                RimeSyncPlanner.GoogleProjection.SUPPORTED, 0)
-                        : baseline;
+                int found = findHash(hashes, count, keyHash(salt, canonicalKey));
+                return found < 0 ? unknown : new RimeSyncSessionPlan.Baseline(
+                        historyValues[histories[found]], projectionValues[projections[found]],
+                        rimeAbsCounts[found]);
             }
         };
     }
@@ -513,6 +523,28 @@ public final class RimeSyncStateStore extends SQLiteOpenHelper {
         StringBuilder result = new StringBuilder(value.length * 2);
         for (byte item : value) result.append(String.format("%02X", item & 0xff));
         return result.toString();
+    }
+
+    private static int findHash(byte[] hashes, int count, byte[] target) {
+        int low = 0;
+        int high = count - 1;
+        while (low <= high) {
+            int middle = (low + high) >>> 1;
+            int comparison = compareHash(hashes, middle * 32, target);
+            if (comparison < 0) low = middle + 1;
+            else if (comparison > 0) high = middle - 1;
+            else return middle;
+        }
+        return -1;
+    }
+
+    private static int compareHash(byte[] hashes, int offset, byte[] target) {
+        for (int index = 0; index < 32; index++) {
+            int left = hashes[offset + index] & 0xff;
+            int right = target[index] & 0xff;
+            if (left != right) return left < right ? -1 : 1;
+        }
+        return 0;
     }
 
     public static final class Stage implements Closeable {

@@ -5,6 +5,7 @@ import com.google.android.apps.inputmethod.libs.hmm.AbstractHmmEngineFactory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /** Manual synchronization coordinator with durable, resumable external-store phases. */
 public final class RimeSyncCoordinator {
@@ -44,7 +45,7 @@ public final class RimeSyncCoordinator {
             throw new IllegalStateException(
                     "unfinished Rime synchronization must be recovered before preview");
         }
-        Session session = buildSession(profile);
+        Session session = buildSession(profile, false);
         return new Preview(session.plan);
     }
 
@@ -59,7 +60,7 @@ public final class RimeSyncCoordinator {
             throw new IllegalStateException(
                     "unfinished Rime synchronization must be recovered before execution");
         }
-        Session session = buildSession(profile);
+        Session session = buildSession(profile, true);
         if (!confirmationToken.equals(session.plan.confirmationToken)) {
             throw new PreviewChangedException();
         }
@@ -235,19 +236,29 @@ public final class RimeSyncCoordinator {
                 rimeAdds, rimeDeletes, rimeResurrections, true);
     }
 
-    private Session buildSession(RimeSyncStateStore.Profile profile) throws IOException {
+    private Session buildSession(RimeSyncStateStore.Profile profile, boolean retainEntries)
+            throws IOException {
         RimeUserDbSnapshot snapshot = loadMergedSnapshot(profile);
         GoogleNativeDictionaryBridge.Snapshot google;
         try {
-            google = GoogleNativeDictionaryBridge.read(context, engineFactory);
+            google = retainEntries
+                    ? GoogleNativeDictionaryBridge.read(context, engineFactory)
+                    : GoogleNativeDictionaryBridge.readPresence(context, engineFactory);
         } catch (IOException failure) {
             throw new PreviewStageException(PREVIEW_STAGE_GOOGLE_EXPORT, failure);
         }
         RimeSyncSessionPlan plan;
         try {
-            plan = RimeSyncSessionPlan.build(
-                    RimeSyncCore.translationEntries(snapshot), google,
-                    stateStore.baselineLookup());
+            Map<String, RimeSyncCore.CanonicalEntry> rimeEntries = retainEntries
+                    ? RimeSyncCore.translationEntries(snapshot)
+                    : RimeSyncCore.translationEntriesForPreview(snapshot);
+            if (retainEntries) {
+                plan = RimeSyncSessionPlan.build(
+                        rimeEntries, google, stateStore.baselineLookup());
+            } else {
+                plan = RimeSyncSessionPlan.buildPreview(
+                        rimeEntries, google, stateStore.baselineLookup());
+            }
         } catch (IOException failure) {
             throw new PreviewStageException(PREVIEW_STAGE_SESSION_PLAN, failure);
         }

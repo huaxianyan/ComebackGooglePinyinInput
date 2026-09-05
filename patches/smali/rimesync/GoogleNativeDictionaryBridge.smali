@@ -6,8 +6,8 @@
 # annotations
 .annotation system Ldalvik/annotation/MemberClasses;
     value = {
-        Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$NativeOperationException;,
         Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;,
+        Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$NativeOperationException;,
         Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Result;,
         Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$RejectedEntriesException;,
         Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$PreparedChanges;,
@@ -38,14 +38,39 @@
 
 .field private static final PINYIN_LANGUAGE_ID:I = 0x10
 
+.field private static final PRESENT:Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$GoogleEntry;
+
 .field public static final USER_DICTIONARY_CAPACITY:I = 0x7a120
 
 
 # direct methods
+.method static constructor <clinit>()V
+    .locals 6
+
+    .line 33
+    new-instance v0, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$GoogleEntry;
+
+    const/4 v4, 0x0
+
+    const/4 v5, 0x0
+
+    const-string v1, ""
+
+    const-string v2, ""
+
+    const-string v3, ""
+
+    invoke-direct/range {v0 .. v5}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$GoogleEntry;-><init>(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILcom/google/android/apps/inputmethod/libs/hmm/MutableDictionaryAccessorInterface$Entry;)V
+
+    sput-object v0, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge;->PRESENT:Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$GoogleEntry;
+
+    return-void
+.end method
+
 .method private constructor <init>()V
     .locals 0
 
-    .line 34
+    .line 35
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
     return-void
@@ -93,15 +118,15 @@
         }
     .end annotation
 
-    .line 65
+    .line 77
     nop
 
-    .line 66
+    .line 78
     invoke-static {}, Ljava/util/Collections;->emptySet()Ljava/util/Set;
 
     move-result-object v0
 
-    .line 65
+    .line 77
     const/4 v1, 0x0
 
     invoke-static {p0, p1, p2, v1, v0}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge;->applyInternal(Landroid/content/Context;Lcom/google/android/apps/inputmethod/libs/hmm/AbstractHmmEngineFactory;Ljava/util/List;ZLjava/util/Set;)Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Result;
@@ -112,7 +137,7 @@
 .end method
 
 .method private static applyInternal(Landroid/content/Context;Lcom/google/android/apps/inputmethod/libs/hmm/AbstractHmmEngineFactory;Ljava/util/List;ZLjava/util/Set;)Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Result;
-    .locals 7
+    .locals 9
     .annotation system Ldalvik/annotation/Signature;
         value = {
             "(",
@@ -134,18 +159,18 @@
         }
     .end annotation
 
-    .line 88
+    .line 100
     invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge;->requireArguments(Landroid/content/Context;Lcom/google/android/apps/inputmethod/libs/hmm/AbstractHmmEngineFactory;)V
 
-    .line 89
+    .line 101
     if-eqz p2, :cond_e
 
-    .line 90
+    .line 102
     sget-object v0, Lcom/google/android/apps/inputmethod/libs/hmm/SaveDictionaryTask;->sSaveLock:Ljava/lang/Object;
 
     monitor-enter v0
 
-    .line 91
+    .line 103
     :try_start_0
     invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge;->open(Landroid/content/Context;Lcom/google/android/apps/inputmethod/libs/hmm/AbstractHmmEngineFactory;)Lcom/google/android/apps/inputmethod/libs/hmm/DictionaryAccessor;
 
@@ -153,7 +178,7 @@
     :try_end_0
     .catchall {:try_start_0 .. :try_end_0} :catchall_1
 
-    .line 93
+    .line 105
     :try_start_1
     invoke-virtual {v1}, Lcom/google/android/apps/inputmethod/libs/hmm/DictionaryAccessor;->duplicateDictionary()Z
 
@@ -161,83 +186,87 @@
 
     if-eqz v2, :cond_c
 
-    .line 97
-    invoke-static {v1}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge;->snapshot(Lcom/google/android/apps/inputmethod/libs/hmm/DictionaryAccessor;)Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;
+    .line 109
+    const/4 v2, 0x1
 
-    move-result-object v2
+    const/4 v3, 0x0
 
-    .line 98
-    invoke-static {v2, p2, p3}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge;->prepare(Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;Ljava/util/List;Z)Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$PreparedChanges;
+    invoke-static {v1, v2, v3}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge;->snapshot(Lcom/google/android/apps/inputmethod/libs/hmm/DictionaryAccessor;ZZ)Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;
+
+    move-result-object v4
+
+    .line 110
+    invoke-static {v4, p2, p3}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge;->prepare(Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;Ljava/util/List;Z)Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$PreparedChanges;
 
     move-result-object p2
 
-    .line 100
+    .line 112
     invoke-interface {p4}, Ljava/util/Set;->isEmpty()Z
 
     move-result p3
 
     if-nez p3, :cond_3
 
-    .line 101
+    .line 113
     new-instance p3, Ljava/util/ArrayList;
 
     invoke-direct {p3}, Ljava/util/ArrayList;-><init>()V
 
-    .line 102
-    new-instance v3, Ljava/util/HashSet;
+    .line 114
+    new-instance v5, Ljava/util/HashSet;
 
-    invoke-direct {v3}, Ljava/util/HashSet;-><init>()V
+    invoke-direct {v5}, Ljava/util/HashSet;-><init>()V
 
-    .line 103
-    iget-object v4, p2, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$PreparedChanges;->adds:Ljava/util/List;
+    .line 115
+    iget-object v6, p2, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$PreparedChanges;->adds:Ljava/util/List;
 
-    invoke-interface {v4}, Ljava/util/List;->iterator()Ljava/util/Iterator;
+    invoke-interface {v6}, Ljava/util/List;->iterator()Ljava/util/Iterator;
 
-    move-result-object v4
+    move-result-object v6
 
     :goto_0
-    invoke-interface {v4}, Ljava/util/Iterator;->hasNext()Z
+    invoke-interface {v6}, Ljava/util/Iterator;->hasNext()Z
 
-    move-result v5
+    move-result v7
 
-    if-eqz v5, :cond_1
+    if-eqz v7, :cond_1
 
-    invoke-interface {v4}, Ljava/util/Iterator;->next()Ljava/lang/Object;
+    invoke-interface {v6}, Ljava/util/Iterator;->next()Ljava/lang/Object;
 
-    move-result-object v5
+    move-result-object v7
 
-    check-cast v5, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Change;
+    check-cast v7, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Change;
 
-    .line 104
-    iget-object v6, v5, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Change;->key:Ljava/lang/String;
+    .line 116
+    iget-object v8, v7, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Change;->key:Ljava/lang/String;
 
-    invoke-interface {v3, v6}, Ljava/util/Set;->add(Ljava/lang/Object;)Z
+    invoke-interface {v5, v8}, Ljava/util/Set;->add(Ljava/lang/Object;)Z
 
-    .line 105
-    iget-object v6, v5, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Change;->key:Ljava/lang/String;
+    .line 117
+    iget-object v8, v7, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Change;->key:Ljava/lang/String;
 
-    invoke-interface {p4, v6}, Ljava/util/Set;->contains(Ljava/lang/Object;)Z
+    invoke-interface {p4, v8}, Ljava/util/Set;->contains(Ljava/lang/Object;)Z
 
-    move-result v6
+    move-result v8
 
-    if-nez v6, :cond_0
+    if-nez v8, :cond_0
 
-    .line 106
-    invoke-interface {p3, v5}, Ljava/util/List;->add(Ljava/lang/Object;)Z
+    .line 118
+    invoke-interface {p3, v7}, Ljava/util/List;->add(Ljava/lang/Object;)Z
 
-    .line 108
+    .line 120
     :cond_0
     goto :goto_0
 
-    .line 109
+    .line 121
     :cond_1
-    invoke-interface {v3, p4}, Ljava/util/Set;->containsAll(Ljava/util/Collection;)Z
+    invoke-interface {v5, p4}, Ljava/util/Set;->containsAll(Ljava/util/Collection;)Z
 
     move-result p4
 
     if-eqz p4, :cond_2
 
-    .line 113
+    .line 125
     new-instance p4, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$PreparedChanges;
 
     iget-object p2, p2, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$PreparedChanges;->deletes:Ljava/util/List;
@@ -248,7 +277,7 @@
 
     goto :goto_1
 
-    .line 110
+    .line 122
     :cond_2
     const-string p0, "rejected Google entries changed before continuation"
 
@@ -260,7 +289,7 @@
 
     throw p0
 
-    .line 115
+    .line 127
     :cond_3
     :goto_1
     iget-object p3, p2, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$PreparedChanges;->deletes:Ljava/util/List;
@@ -279,18 +308,16 @@
 
     if-eqz p3, :cond_5
 
-    .line 116
+    .line 128
     new-instance p0, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Result;
 
-    iget p1, v2, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;->totalEntryCount:I
+    iget p1, v4, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;->totalEntryCount:I
 
-    const/4 p2, 0x0
-
-    invoke-direct {p0, p1, p2, p2, p2}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Result;-><init>(IIIZ)V
+    invoke-direct {p0, p1, v3, v3, v3}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Result;-><init>(IIIZ)V
     :try_end_1
     .catchall {:try_start_1 .. :try_end_1} :catchall_0
 
-    .line 150
+    .line 162
     if-eqz v1, :cond_4
 
     :try_start_2
@@ -301,17 +328,17 @@
     :try_end_2
     .catchall {:try_start_2 .. :try_end_2} :catchall_1
 
-    .line 116
+    .line 128
     return-object p0
 
-    .line 118
+    .line 130
     :cond_5
     :try_start_3
-    iget p3, v2, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;->totalEntryCount:I
+    iget p3, v4, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;->totalEntryCount:I
 
     iget-object p4, p2, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$PreparedChanges;->deletes:Ljava/util/List;
 
-    .line 119
+    .line 131
     invoke-interface {p4}, Ljava/util/List;->size()I
 
     move-result p4
@@ -326,12 +353,12 @@
 
     add-int/2addr p3, p4
 
-    .line 120
+    .line 132
     const p4, 0x7a120
 
     if-gt p3, p4, :cond_b
 
-    .line 124
+    .line 136
     iget-object p4, p2, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$PreparedChanges;->deletes:Ljava/util/List;
 
     invoke-interface {p4}, Ljava/util/List;->isEmpty()Z
@@ -340,18 +367,18 @@
 
     if-nez p4, :cond_6
 
-    .line 125
+    .line 137
     iget-object p4, p2, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$PreparedChanges;->deletes:Ljava/util/List;
 
-    invoke-static {v1, v2, p4}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge;->rebuildWithoutDeletedEntries(Lcom/google/android/apps/inputmethod/libs/hmm/DictionaryAccessor;Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;Ljava/util/List;)V
+    invoke-static {v1, v4, p4}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge;->rebuildWithoutDeletedEntries(Lcom/google/android/apps/inputmethod/libs/hmm/DictionaryAccessor;Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;Ljava/util/List;)V
 
-    .line 127
+    .line 139
     :cond_6
     new-instance p4, Ljava/util/ArrayList;
 
     invoke-direct {p4}, Ljava/util/ArrayList;-><init>()V
 
-    .line 128
+    .line 140
     iget-object v3, p2, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$PreparedChanges;->adds:Ljava/util/List;
 
     invoke-interface {v3}, Ljava/util/List;->iterator()Ljava/util/Iterator;
@@ -361,41 +388,41 @@
     :goto_2
     invoke-interface {v3}, Ljava/util/Iterator;->hasNext()Z
 
-    move-result v4
+    move-result v5
 
-    if-eqz v4, :cond_8
+    if-eqz v5, :cond_8
 
     invoke-interface {v3}, Ljava/util/Iterator;->next()Ljava/lang/Object;
 
-    move-result-object v4
-
-    check-cast v4, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Change;
-
-    .line 129
-    iget-object v5, v4, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Change;->code:Ljava/lang/String;
-
-    iget-object v6, v4, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Change;->phrase:Ljava/lang/String;
-
-    invoke-static {v5, v6}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge;->newEntry(Ljava/lang/String;Ljava/lang/String;)Lcom/google/android/apps/inputmethod/libs/hmm/MutableDictionaryAccessorInterface$Entry;
-
     move-result-object v5
 
-    invoke-virtual {v1, v5}, Lcom/google/android/apps/inputmethod/libs/hmm/DictionaryAccessor;->insertOrUpdate(Lcom/google/android/apps/inputmethod/libs/hmm/MutableDictionaryAccessorInterface$Entry;)Z
+    check-cast v5, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Change;
 
-    move-result v5
+    .line 141
+    iget-object v6, v5, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Change;->code:Ljava/lang/String;
 
-    if-nez v5, :cond_7
+    iget-object v7, v5, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Change;->phrase:Ljava/lang/String;
 
-    .line 130
-    iget-object v4, v4, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Change;->key:Ljava/lang/String;
+    invoke-static {v6, v7}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge;->newEntry(Ljava/lang/String;Ljava/lang/String;)Lcom/google/android/apps/inputmethod/libs/hmm/MutableDictionaryAccessorInterface$Entry;
 
-    invoke-interface {p4, v4}, Ljava/util/List;->add(Ljava/lang/Object;)Z
+    move-result-object v6
 
-    .line 132
+    invoke-virtual {v1, v6}, Lcom/google/android/apps/inputmethod/libs/hmm/DictionaryAccessor;->insertOrUpdate(Lcom/google/android/apps/inputmethod/libs/hmm/MutableDictionaryAccessorInterface$Entry;)Z
+
+    move-result v6
+
+    if-nez v6, :cond_7
+
+    .line 142
+    iget-object v5, v5, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Change;->key:Ljava/lang/String;
+
+    invoke-interface {p4, v5}, Ljava/util/List;->add(Ljava/lang/Object;)Z
+
+    .line 144
     :cond_7
     goto :goto_2
 
-    .line 133
+    .line 145
     :cond_8
     invoke-interface {p4}, Ljava/util/List;->isEmpty()Z
 
@@ -403,35 +430,35 @@
 
     if-eqz v3, :cond_a
 
-    .line 136
+    .line 148
     invoke-virtual {v1}, Lcom/google/android/apps/inputmethod/libs/hmm/DictionaryAccessor;->persist()Z
 
     move-result p4
 
     if-eqz p4, :cond_9
 
-    .line 140
+    .line 152
     sget-object p4, Lcom/google/android/apps/inputmethod/libs/hmm/AbstractHmmEngineFactory$MutableDictionaryType;->USER_DICTIONARY:Lcom/google/android/apps/inputmethod/libs/hmm/AbstractHmmEngineFactory$MutableDictionaryType;
 
     invoke-virtual {p1, p4}, Lcom/google/android/apps/inputmethod/libs/hmm/AbstractHmmEngineFactory;->notifyMutableDictionaryDataChanged(Lcom/google/android/apps/inputmethod/libs/hmm/AbstractHmmEngineFactory$MutableDictionaryType;)V
 
-    .line 142
+    .line 154
     invoke-virtual {v1}, Lcom/google/android/apps/inputmethod/libs/hmm/DictionaryAccessor;->close()V
 
-    .line 143
+    .line 155
     nop
 
-    .line 144
+    .line 156
     const/4 v1, 0x0
 
-    invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge;->read(Landroid/content/Context;Lcom/google/android/apps/inputmethod/libs/hmm/AbstractHmmEngineFactory;)Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;
+    invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge;->readComplete(Landroid/content/Context;Lcom/google/android/apps/inputmethod/libs/hmm/AbstractHmmEngineFactory;)Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;
 
     move-result-object p0
 
-    .line 145
-    invoke-static {v2, p0, p2}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge;->verifyPersisted(Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$PreparedChanges;)V
+    .line 157
+    invoke-static {v4, p0, p2}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge;->verifyPersisted(Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$PreparedChanges;)V
 
-    .line 146
+    .line 158
     new-instance p0, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Result;
 
     iget-object p1, p2, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$PreparedChanges;->adds:Ljava/util/List;
@@ -442,27 +469,25 @@
 
     iget-object p2, p2, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$PreparedChanges;->deletes:Ljava/util/List;
 
-    .line 147
+    .line 159
     invoke-interface {p2}, Ljava/util/List;->size()I
 
     move-result p2
 
-    const/4 p4, 0x1
-
-    invoke-direct {p0, p3, p1, p2, p4}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Result;-><init>(IIIZ)V
+    invoke-direct {p0, p3, p1, p2, v2}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Result;-><init>(IIIZ)V
     :try_end_3
     .catchall {:try_start_3 .. :try_end_3} :catchall_0
 
-    .line 150
+    .line 162
     :try_start_4
     monitor-exit v0
     :try_end_4
     .catchall {:try_start_4 .. :try_end_4} :catchall_1
 
-    .line 146
+    .line 158
     return-object p0
 
-    .line 137
+    .line 149
     :cond_9
     :try_start_5
     const-string p0, "Google user dictionary persistence failed"
@@ -475,7 +500,7 @@
 
     throw p0
 
-    .line 134
+    .line 146
     :cond_a
     new-instance p0, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$RejectedEntriesException;
 
@@ -483,15 +508,15 @@
 
     throw p0
 
-    .line 121
+    .line 133
     :cond_b
     new-instance p0, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$CapacityException;
 
-    iget p1, v2, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;->totalEntryCount:I
+    iget p1, v4, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;->totalEntryCount:I
 
     iget-object p3, p2, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$PreparedChanges;->adds:Ljava/util/List;
 
-    .line 122
+    .line 134
     invoke-interface {p3}, Ljava/util/List;->size()I
 
     move-result p3
@@ -506,7 +531,7 @@
 
     throw p0
 
-    .line 94
+    .line 106
     :cond_c
     const-string p0, "Google user dictionary could not be duplicated"
 
@@ -520,7 +545,7 @@
     :try_end_5
     .catchall {:try_start_5 .. :try_end_5} :catchall_0
 
-    .line 150
+    .line 162
     :catchall_0
     move-exception p0
 
@@ -529,11 +554,11 @@
     :try_start_6
     invoke-virtual {v1}, Lcom/google/android/apps/inputmethod/libs/hmm/DictionaryAccessor;->close()V
 
-    .line 151
+    .line 163
     :cond_d
     throw p0
 
-    .line 152
+    .line 164
     :catchall_1
     move-exception p0
 
@@ -543,7 +568,7 @@
 
     throw p0
 
-    .line 89
+    .line 101
     :cond_e
     new-instance p0, Ljava/lang/IllegalArgumentException;
 
@@ -561,6 +586,24 @@
 .end method
 
 .method private static canonicalEntry(Lcom/google/android/apps/inputmethod/libs/hmm/MutableDictionaryAccessorInterface$Entry;)Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$GoogleEntry;
+    .locals 1
+    .annotation system Ldalvik/annotation/Throws;
+        value = {
+            Ljava/io/IOException;
+        }
+    .end annotation
+
+    .line 293
+    const/4 v0, 0x1
+
+    invoke-static {p0, v0}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge;->canonicalEntry(Lcom/google/android/apps/inputmethod/libs/hmm/MutableDictionaryAccessorInterface$Entry;Z)Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$GoogleEntry;
+
+    move-result-object p0
+
+    return-object p0
+.end method
+
+.method private static canonicalEntry(Lcom/google/android/apps/inputmethod/libs/hmm/MutableDictionaryAccessorInterface$Entry;Z)Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$GoogleEntry;
     .locals 8
     .annotation system Ldalvik/annotation/Throws;
         value = {
@@ -568,24 +611,24 @@
         }
     .end annotation
 
-    .line 258
+    .line 299
     const/4 v1, 0x0
 
-    if-eqz p0, :cond_5
+    if-eqz p0, :cond_6
 
     iget-object v0, p0, Lcom/google/android/apps/inputmethod/libs/hmm/MutableDictionaryAccessorInterface$Entry;->tokens:[Ljava/lang/String;
 
-    if-eqz v0, :cond_5
+    if-eqz v0, :cond_6
 
     iget-object v0, p0, Lcom/google/android/apps/inputmethod/libs/hmm/MutableDictionaryAccessorInterface$Entry;->tokens:[Ljava/lang/String;
 
     array-length v0, v0
 
-    if-eqz v0, :cond_5
+    if-eqz v0, :cond_6
 
     iget-object v0, p0, Lcom/google/android/apps/inputmethod/libs/hmm/MutableDictionaryAccessorInterface$Entry;->languageIds:[I
 
-    if-eqz v0, :cond_5
+    if-eqz v0, :cond_6
 
     iget-object v0, p0, Lcom/google/android/apps/inputmethod/libs/hmm/MutableDictionaryAccessorInterface$Entry;->languageIds:[I
 
@@ -595,15 +638,15 @@
 
     array-length v2, v2
 
-    if-ne v0, v2, :cond_5
+    if-ne v0, v2, :cond_6
 
     iget-object v0, p0, Lcom/google/android/apps/inputmethod/libs/hmm/MutableDictionaryAccessorInterface$Entry;->value:Ljava/lang/String;
 
     if-nez v0, :cond_0
 
-    goto :goto_1
+    goto :goto_2
 
-    .line 266
+    .line 307
     :cond_0
     :try_start_0
     iget-object v0, p0, Lcom/google/android/apps/inputmethod/libs/hmm/MutableDictionaryAccessorInterface$Entry;->value:Ljava/lang/String;
@@ -614,10 +657,10 @@
     :try_end_0
     .catch Ljava/lang/IllegalArgumentException; {:try_start_0 .. :try_end_0} :catch_1
 
-    .line 269
+    .line 310
     nop
 
-    .line 270
+    .line 311
     invoke-virtual {v5}, Ljava/lang/String;->length()I
 
     move-result v0
@@ -634,13 +677,13 @@
 
     return-object v1
 
-    .line 271
+    .line 312
     :cond_1
     new-instance v0, Ljava/lang/StringBuilder;
 
     invoke-direct {v0}, Ljava/lang/StringBuilder;-><init>()V
 
-    .line 272
+    .line 313
     nop
 
     :goto_0
@@ -650,7 +693,7 @@
 
     if-ge v2, v3, :cond_4
 
-    .line 273
+    .line 314
     iget-object v3, p0, Lcom/google/android/apps/inputmethod/libs/hmm/MutableDictionaryAccessorInterface$Entry;->languageIds:[I
 
     aget v3, v3, v2
@@ -661,7 +704,7 @@
 
     return-object v1
 
-    .line 276
+    .line 317
     :cond_2
     :try_start_1
     iget-object v3, p0, Lcom/google/android/apps/inputmethod/libs/hmm/MutableDictionaryAccessorInterface$Entry;->tokens:[Ljava/lang/String;
@@ -674,10 +717,10 @@
     :try_end_1
     .catch Ljava/lang/IllegalArgumentException; {:try_start_1 .. :try_end_1} :catch_0
 
-    .line 279
+    .line 320
     nop
 
-    .line 280
+    .line 321
     invoke-virtual {v0}, Ljava/lang/StringBuilder;->length()I
 
     move-result v4
@@ -688,29 +731,29 @@
 
     invoke-virtual {v0, v4}, Ljava/lang/StringBuilder;->append(C)Ljava/lang/StringBuilder;
 
-    .line 281
+    .line 322
     :cond_3
     invoke-virtual {v0, v3}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 
-    .line 272
+    .line 313
     add-int/lit8 v2, v2, 0x1
 
     goto :goto_0
 
-    .line 277
+    .line 318
     :catch_0
     move-exception v0
 
-    .line 278
+    .line 319
     return-object v1
 
-    .line 283
+    .line 324
     :cond_4
     invoke-virtual {v0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
 
     move-result-object v4
 
-    .line 284
+    .line 325
     new-instance v2, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$GoogleEntry;
 
     new-instance v0, Ljava/lang/StringBuilder;
@@ -721,9 +764,9 @@
 
     move-result-object v0
 
-    const/16 v1, 0x9
+    const/16 v3, 0x9
 
-    invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;->append(C)Ljava/lang/StringBuilder;
+    invoke-virtual {v0, v3}, Ljava/lang/StringBuilder;->append(C)Ljava/lang/StringBuilder;
 
     move-result-object v0
 
@@ -737,29 +780,39 @@
 
     iget v6, p0, Lcom/google/android/apps/inputmethod/libs/hmm/MutableDictionaryAccessorInterface$Entry;->count:I
 
+    .line 326
+    if-eqz p1, :cond_5
+
     move-object v7, p0
 
+    goto :goto_1
+
+    :cond_5
+    move-object v7, v1
+
+    :goto_1
     invoke-direct/range {v2 .. v7}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$GoogleEntry;-><init>(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILcom/google/android/apps/inputmethod/libs/hmm/MutableDictionaryAccessorInterface$Entry;)V
 
+    .line 325
     return-object v2
 
-    .line 267
+    .line 308
     :catch_1
     move-exception v0
 
-    .line 268
+    .line 309
     return-object v1
 
-    .line 262
-    :cond_5
-    :goto_1
+    .line 303
+    :cond_6
+    :goto_2
     return-object v1
 .end method
 
 .method private static nativeFailure(ILjava/lang/String;)Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$NativeOperationException;
     .locals 1
 
-    .line 350
+    .line 391
     new-instance v0, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$NativeOperationException;
 
     invoke-direct {v0, p0, p1}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$NativeOperationException;-><init>(ILjava/lang/String;)V
@@ -770,45 +823,45 @@
 .method private static newEntry(Ljava/lang/String;Ljava/lang/String;)Lcom/google/android/apps/inputmethod/libs/hmm/MutableDictionaryAccessorInterface$Entry;
     .locals 8
 
-    .line 289
+    .line 330
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge;->normalizeCode(Ljava/lang/String;)Ljava/lang/String;
 
     move-result-object p0
 
-    .line 290
+    .line 331
     invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge;->normalizePhrase(Ljava/lang/String;)Ljava/lang/String;
 
     move-result-object v3
 
-    .line 291
+    .line 332
     const-string p1, " "
 
     invoke-virtual {p0, p1}, Ljava/lang/String;->split(Ljava/lang/String;)[Ljava/lang/String;
 
     move-result-object v1
 
-    .line 292
+    .line 333
     array-length p0, v1
 
     new-array v2, p0, [I
 
-    .line 293
+    .line 334
     const/4 p1, 0x0
 
     :goto_0
     if-ge p1, p0, :cond_0
 
-    .line 294
+    .line 335
     const/16 v0, 0x10
 
     aput v0, v2, p1
 
-    .line 293
+    .line 334
     add-int/lit8 p1, p1, 0x1
 
     goto :goto_0
 
-    .line 296
+    .line 337
     :cond_0
     new-instance v0, Lcom/google/android/apps/inputmethod/libs/hmm/MutableDictionaryAccessorInterface$Entry;
 
@@ -828,10 +881,10 @@
 .method private static normalizeCode(Ljava/lang/String;)Ljava/lang/String;
     .locals 6
 
-    .line 302
+    .line 343
     if-eqz p0, :cond_6
 
-    .line 303
+    .line 344
     invoke-virtual {p0}, Ljava/lang/String;->trim()Ljava/lang/String;
 
     move-result-object p0
@@ -842,14 +895,14 @@
 
     move-result-object p0
 
-    .line 304
+    .line 345
     invoke-virtual {p0}, Ljava/lang/String;->length()I
 
     move-result v0
 
     if-eqz v0, :cond_5
 
-    .line 307
+    .line 348
     new-instance v0, Ljava/lang/StringBuilder;
 
     invoke-virtual {p0}, Ljava/lang/String;->length()I
@@ -858,10 +911,10 @@
 
     invoke-direct {v0, v1}, Ljava/lang/StringBuilder;-><init>(I)V
 
-    .line 308
+    .line 349
     nop
 
-    .line 309
+    .line 350
     const/4 v1, 0x0
 
     const/4 v2, 0x0
@@ -875,19 +928,19 @@
 
     if-ge v2, v4, :cond_4
 
-    .line 310
+    .line 351
     invoke-virtual {p0, v2}, Ljava/lang/String;->charAt(I)C
 
     move-result v4
 
-    .line 311
+    .line 352
     invoke-static {v4}, Ljava/lang/Character;->isWhitespace(C)Z
 
     move-result v5
 
     if-eqz v5, :cond_1
 
-    .line 312
+    .line 353
     invoke-virtual {v0}, Ljava/lang/StringBuilder;->length()I
 
     move-result v3
@@ -903,7 +956,7 @@
 
     goto :goto_1
 
-    .line 314
+    .line 355
     :cond_1
     const/16 v5, 0x61
 
@@ -913,27 +966,27 @@
 
     if-gt v4, v5, :cond_3
 
-    .line 317
+    .line 358
     if-eqz v3, :cond_2
 
     const/16 v3, 0x20
 
     invoke-virtual {v0, v3}, Ljava/lang/StringBuilder;->append(C)Ljava/lang/StringBuilder;
 
-    .line 318
+    .line 359
     :cond_2
     invoke-virtual {v0, v4}, Ljava/lang/StringBuilder;->append(C)Ljava/lang/StringBuilder;
 
-    .line 319
+    .line 360
     const/4 v3, 0x0
 
-    .line 309
+    .line 350
     :goto_1
     add-int/lit8 v2, v2, 0x1
 
     goto :goto_0
 
-    .line 315
+    .line 356
     :cond_3
     new-instance p0, Ljava/lang/IllegalArgumentException;
 
@@ -943,7 +996,7 @@
 
     throw p0
 
-    .line 322
+    .line 363
     :cond_4
     invoke-virtual {v0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
 
@@ -951,7 +1004,7 @@
 
     return-object p0
 
-    .line 305
+    .line 346
     :cond_5
     new-instance p0, Ljava/lang/IllegalArgumentException;
 
@@ -961,7 +1014,7 @@
 
     throw p0
 
-    .line 302
+    .line 343
     :cond_6
     new-instance p0, Ljava/lang/IllegalArgumentException;
 
@@ -981,17 +1034,17 @@
 .method private static normalizePhrase(Ljava/lang/String;)Ljava/lang/String;
     .locals 3
 
-    .line 334
+    .line 375
     if-eqz p0, :cond_3
 
-    .line 335
+    .line 376
     sget-object v0, Ljava/text/Normalizer$Form;->NFC:Ljava/text/Normalizer$Form;
 
     invoke-static {p0, v0}, Ljava/text/Normalizer;->normalize(Ljava/lang/CharSequence;Ljava/text/Normalizer$Form;)Ljava/lang/String;
 
     move-result-object p0
 
-    .line 336
+    .line 377
     invoke-virtual {p0}, Ljava/lang/String;->length()I
 
     move-result v0
@@ -1008,7 +1061,7 @@
 
     if-eqz v0, :cond_2
 
-    .line 339
+    .line 380
     const/4 v0, 0x0
 
     :goto_0
@@ -1018,29 +1071,29 @@
 
     if-ge v0, v1, :cond_1
 
-    .line 340
+    .line 381
     invoke-virtual {p0, v0}, Ljava/lang/String;->codePointAt(I)I
 
     move-result v1
 
-    .line 341
+    .line 382
     invoke-static {v1}, Ljava/lang/Character;->isISOControl(I)Z
 
     move-result v2
 
     if-nez v2, :cond_0
 
-    .line 344
+    .line 385
     invoke-static {v1}, Ljava/lang/Character;->charCount(I)I
 
     move-result v1
 
     add-int/2addr v0, v1
 
-    .line 345
+    .line 386
     goto :goto_0
 
-    .line 342
+    .line 383
     :cond_0
     new-instance p0, Ljava/lang/IllegalArgumentException;
 
@@ -1050,11 +1103,11 @@
 
     throw p0
 
-    .line 346
+    .line 387
     :cond_1
     return-object p0
 
-    .line 337
+    .line 378
     :cond_2
     new-instance p0, Ljava/lang/IllegalArgumentException;
 
@@ -1064,7 +1117,7 @@
 
     throw p0
 
-    .line 334
+    .line 375
     :cond_3
     new-instance p0, Ljava/lang/IllegalArgumentException;
 
@@ -1084,12 +1137,12 @@
 .method private static normalizeToken(Ljava/lang/String;)Ljava/lang/String;
     .locals 1
 
-    .line 326
+    .line 367
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge;->normalizeCode(Ljava/lang/String;)Ljava/lang/String;
 
     move-result-object p0
 
-    .line 327
+    .line 368
     const/16 v0, 0x20
 
     invoke-virtual {p0, v0}, Ljava/lang/String;->indexOf(I)I
@@ -1098,10 +1151,10 @@
 
     if-gez v0, :cond_0
 
-    .line 330
+    .line 371
     return-object p0
 
-    .line 328
+    .line 369
     :cond_0
     new-instance p0, Ljava/lang/IllegalArgumentException;
 
@@ -1115,7 +1168,7 @@
 .method private static open(Landroid/content/Context;Lcom/google/android/apps/inputmethod/libs/hmm/AbstractHmmEngineFactory;)Lcom/google/android/apps/inputmethod/libs/hmm/DictionaryAccessor;
     .locals 2
 
-    .line 194
+    .line 206
     new-instance v0, Lcom/google/android/apps/inputmethod/libs/hmm/DictionaryAccessor;
 
     sget-object v1, Lcom/google/android/apps/inputmethod/libs/hmm/AbstractHmmEngineFactory$MutableDictionaryType;->USER_DICTIONARY:Lcom/google/android/apps/inputmethod/libs/hmm/AbstractHmmEngineFactory$MutableDictionaryType;
@@ -1144,12 +1197,12 @@
         }
     .end annotation
 
-    .line 221
+    .line 256
     new-instance v0, Ljava/util/LinkedHashMap;
 
     invoke-direct {v0}, Ljava/util/LinkedHashMap;-><init>()V
 
-    .line 222
+    .line 257
     invoke-interface {p1}, Ljava/util/List;->iterator()Ljava/util/Iterator;
 
     move-result-object p1
@@ -1167,10 +1220,10 @@
 
     check-cast v1, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Change;
 
-    .line 223
+    .line 258
     if-eqz v1, :cond_1
 
-    .line 224
+    .line 259
     new-instance v2, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Change;
 
     iget-object v3, v1, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Change;->code:Ljava/lang/String;
@@ -1181,7 +1234,7 @@
 
     invoke-direct {v2, v3, v4, v1}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Change;-><init>(Ljava/lang/String;Ljava/lang/String;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$GoogleAction;)V
 
-    .line 225
+    .line 260
     iget-object v1, v2, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Change;->key:Ljava/lang/String;
 
     invoke-interface {v0, v1, v2}, Ljava/util/Map;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1190,10 +1243,10 @@
 
     if-nez v1, :cond_0
 
-    .line 228
+    .line 263
     goto :goto_0
 
-    .line 226
+    .line 261
     :cond_0
     new-instance p0, Ljava/lang/IllegalArgumentException;
 
@@ -1203,7 +1256,7 @@
 
     throw p0
 
-    .line 223
+    .line 258
     :cond_1
     new-instance p0, Ljava/lang/IllegalArgumentException;
 
@@ -1213,18 +1266,18 @@
 
     throw p0
 
-    .line 229
+    .line 264
     :cond_2
     new-instance p1, Ljava/util/ArrayList;
 
     invoke-direct {p1}, Ljava/util/ArrayList;-><init>()V
 
-    .line 230
+    .line 265
     new-instance v1, Ljava/util/ArrayList;
 
     invoke-direct {v1}, Ljava/util/ArrayList;-><init>()V
 
-    .line 231
+    .line 266
     invoke-interface {v0}, Ljava/util/Map;->values()Ljava/util/Collection;
 
     move-result-object v0
@@ -1246,7 +1299,7 @@
 
     check-cast v2, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Change;
 
-    .line 232
+    .line 267
     iget-object v3, p0, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;->entries:Ljava/util/Map;
 
     iget-object v4, v2, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Change;->key:Ljava/lang/String;
@@ -1257,7 +1310,7 @@
 
     check-cast v3, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$GoogleEntry;
 
-    .line 233
+    .line 268
     iget-object v4, v2, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Change;->action:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$GoogleAction;
 
     sget-object v5, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$GoogleAction;->DELETE:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$GoogleAction;
@@ -1268,15 +1321,15 @@
 
     if-ne v4, v5, :cond_5
 
-    .line 234
+    .line 269
     if-nez v3, :cond_4
 
-    .line 235
+    .line 270
     if-eqz p2, :cond_3
 
     goto :goto_2
 
-    .line 236
+    .line 271
     :cond_3
     invoke-static {v7, v6}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge;->nativeFailure(ILjava/lang/String;)Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$NativeOperationException;
 
@@ -1284,13 +1337,13 @@
 
     throw p0
 
-    .line 240
+    .line 275
     :cond_4
     invoke-interface {p1, v3}, Ljava/util/List;->add(Ljava/lang/Object;)Z
 
     goto :goto_2
 
-    .line 242
+    .line 277
     :cond_5
     iget-object v4, v2, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Change;->action:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$GoogleAction;
 
@@ -1298,15 +1351,15 @@
 
     if-ne v4, v5, :cond_8
 
-    .line 243
+    .line 278
     if-eqz v3, :cond_7
 
-    .line 244
+    .line 279
     if-eqz p2, :cond_6
 
     goto :goto_2
 
-    .line 245
+    .line 280
     :cond_6
     invoke-static {v7, v6}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge;->nativeFailure(ILjava/lang/String;)Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$NativeOperationException;
 
@@ -1314,16 +1367,16 @@
 
     throw p0
 
-    .line 249
+    .line 284
     :cond_7
     invoke-interface {v1, v2}, Ljava/util/List;->add(Ljava/lang/Object;)Z
 
-    .line 252
+    .line 287
     :cond_8
     :goto_2
     goto :goto_1
 
-    .line 253
+    .line 288
     :cond_9
     new-instance p0, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$PreparedChanges;
 
@@ -1333,6 +1386,24 @@
 .end method
 
 .method public static read(Landroid/content/Context;Lcom/google/android/apps/inputmethod/libs/hmm/AbstractHmmEngineFactory;)Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;
+    .locals 1
+    .annotation system Ldalvik/annotation/Throws;
+        value = {
+            Ljava/io/IOException;
+        }
+    .end annotation
+
+    .line 44
+    const/4 v0, 0x0
+
+    invoke-static {p0, p1, v0}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge;->readSnapshot(Landroid/content/Context;Lcom/google/android/apps/inputmethod/libs/hmm/AbstractHmmEngineFactory;Z)Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;
+
+    move-result-object p0
+
+    return-object p0
+.end method
+
+.method private static readComplete(Landroid/content/Context;Lcom/google/android/apps/inputmethod/libs/hmm/AbstractHmmEngineFactory;)Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;
     .locals 2
     .annotation system Ldalvik/annotation/Throws;
         value = {
@@ -1340,15 +1411,12 @@
         }
     .end annotation
 
-    .line 43
-    invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge;->requireArguments(Landroid/content/Context;Lcom/google/android/apps/inputmethod/libs/hmm/AbstractHmmEngineFactory;)V
-
-    .line 44
+    .line 212
     sget-object v0, Lcom/google/android/apps/inputmethod/libs/hmm/SaveDictionaryTask;->sSaveLock:Ljava/lang/Object;
 
     monitor-enter v0
 
-    .line 45
+    .line 213
     :try_start_0
     invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge;->open(Landroid/content/Context;Lcom/google/android/apps/inputmethod/libs/hmm/AbstractHmmEngineFactory;)Lcom/google/android/apps/inputmethod/libs/hmm/DictionaryAccessor;
 
@@ -1356,7 +1424,7 @@
     :try_end_0
     .catchall {:try_start_0 .. :try_end_0} :catchall_1
 
-    .line 47
+    .line 215
     :try_start_1
     invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/libs/hmm/DictionaryAccessor;->duplicateDictionary()Z
 
@@ -1364,14 +1432,18 @@
 
     if-eqz p1, :cond_0
 
-    .line 51
-    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge;->snapshot(Lcom/google/android/apps/inputmethod/libs/hmm/DictionaryAccessor;)Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;
+    .line 219
+    const/4 p1, 0x1
+
+    const/4 v1, 0x0
+
+    invoke-static {p0, p1, v1}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge;->snapshot(Lcom/google/android/apps/inputmethod/libs/hmm/DictionaryAccessor;ZZ)Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;
 
     move-result-object p1
     :try_end_1
     .catchall {:try_start_1 .. :try_end_1} :catchall_0
 
-    .line 53
+    .line 221
     :try_start_2
     invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/libs/hmm/DictionaryAccessor;->close()V
 
@@ -1379,10 +1451,10 @@
     :try_end_2
     .catchall {:try_start_2 .. :try_end_2} :catchall_1
 
-    .line 51
+    .line 219
     return-object p1
 
-    .line 48
+    .line 216
     :cond_0
     :try_start_3
     const-string p1, "Google user dictionary could not be duplicated"
@@ -1397,17 +1469,123 @@
     :try_end_3
     .catchall {:try_start_3 .. :try_end_3} :catchall_0
 
-    .line 53
+    .line 221
     :catchall_0
     move-exception p1
 
     :try_start_4
     invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/libs/hmm/DictionaryAccessor;->close()V
 
-    .line 54
+    .line 222
     throw p1
 
+    .line 223
+    :catchall_1
+    move-exception p0
+
+    monitor-exit v0
+    :try_end_4
+    .catchall {:try_start_4 .. :try_end_4} :catchall_1
+
+    throw p0
+.end method
+
+.method static readPresence(Landroid/content/Context;Lcom/google/android/apps/inputmethod/libs/hmm/AbstractHmmEngineFactory;)Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;
+    .locals 1
+    .annotation system Ldalvik/annotation/Throws;
+        value = {
+            Ljava/io/IOException;
+        }
+    .end annotation
+
+    .line 50
+    const/4 v0, 0x1
+
+    invoke-static {p0, p1, v0}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge;->readSnapshot(Landroid/content/Context;Lcom/google/android/apps/inputmethod/libs/hmm/AbstractHmmEngineFactory;Z)Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;
+
+    move-result-object p0
+
+    return-object p0
+.end method
+
+.method private static readSnapshot(Landroid/content/Context;Lcom/google/android/apps/inputmethod/libs/hmm/AbstractHmmEngineFactory;Z)Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;
+    .locals 1
+    .annotation system Ldalvik/annotation/Throws;
+        value = {
+            Ljava/io/IOException;
+        }
+    .end annotation
+
     .line 55
+    invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge;->requireArguments(Landroid/content/Context;Lcom/google/android/apps/inputmethod/libs/hmm/AbstractHmmEngineFactory;)V
+
+    .line 56
+    sget-object v0, Lcom/google/android/apps/inputmethod/libs/hmm/SaveDictionaryTask;->sSaveLock:Ljava/lang/Object;
+
+    monitor-enter v0
+
+    .line 57
+    :try_start_0
+    invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge;->open(Landroid/content/Context;Lcom/google/android/apps/inputmethod/libs/hmm/AbstractHmmEngineFactory;)Lcom/google/android/apps/inputmethod/libs/hmm/DictionaryAccessor;
+
+    move-result-object p0
+    :try_end_0
+    .catchall {:try_start_0 .. :try_end_0} :catchall_1
+
+    .line 59
+    :try_start_1
+    invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/libs/hmm/DictionaryAccessor;->duplicateDictionary()Z
+
+    move-result p1
+
+    if-eqz p1, :cond_0
+
+    .line 63
+    const/4 p1, 0x0
+
+    invoke-static {p0, p1, p2}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge;->snapshot(Lcom/google/android/apps/inputmethod/libs/hmm/DictionaryAccessor;ZZ)Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;
+
+    move-result-object p1
+    :try_end_1
+    .catchall {:try_start_1 .. :try_end_1} :catchall_0
+
+    .line 65
+    :try_start_2
+    invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/libs/hmm/DictionaryAccessor;->close()V
+
+    monitor-exit v0
+    :try_end_2
+    .catchall {:try_start_2 .. :try_end_2} :catchall_1
+
+    .line 63
+    return-object p1
+
+    .line 60
+    :cond_0
+    :try_start_3
+    const-string p1, "Google user dictionary could not be duplicated"
+
+    const/4 p2, 0x5
+
+    invoke-static {p2, p1}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge;->nativeFailure(ILjava/lang/String;)Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$NativeOperationException;
+
+    move-result-object p1
+
+    throw p1
+    :try_end_3
+    .catchall {:try_start_3 .. :try_end_3} :catchall_0
+
+    .line 65
+    :catchall_0
+    move-exception p1
+
+    :try_start_4
+    invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/libs/hmm/DictionaryAccessor;->close()V
+
+    .line 66
+    throw p1
+
+    .line 67
     :catchall_1
     move-exception p0
 
@@ -1437,17 +1615,17 @@
         }
     .end annotation
 
-    .line 176
+    .line 188
     new-instance v0, Ljava/util/IdentityHashMap;
 
     invoke-direct {v0}, Ljava/util/IdentityHashMap;-><init>()V
 
-    .line 177
+    .line 189
     invoke-static {v0}, Ljava/util/Collections;->newSetFromMap(Ljava/util/Map;)Ljava/util/Set;
 
     move-result-object v0
 
-    .line 179
+    .line 191
     invoke-interface {p2}, Ljava/util/List;->iterator()Ljava/util/Iterator;
 
     move-result-object p2
@@ -1473,7 +1651,7 @@
 
     goto :goto_0
 
-    .line 180
+    .line 192
     :cond_0
     invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/libs/hmm/DictionaryAccessor;->clearAllEntries()Z
 
@@ -1483,7 +1661,7 @@
 
     if-eqz p2, :cond_4
 
-    .line 184
+    .line 196
     invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;->access$000(Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;)Ljava/util/List;
 
     move-result-object p1
@@ -1505,7 +1683,7 @@
 
     check-cast p2, Lcom/google/android/apps/inputmethod/libs/hmm/MutableDictionaryAccessorInterface$Entry;
 
-    .line 185
+    .line 197
     invoke-interface {v0, p2}, Ljava/util/Set;->contains(Ljava/lang/Object;)Z
 
     move-result v2
@@ -1520,7 +1698,7 @@
 
     goto :goto_2
 
-    .line 186
+    .line 198
     :cond_1
     const-string p0, "Google user dictionary rebuild failed"
 
@@ -1530,16 +1708,16 @@
 
     throw p0
 
-    .line 189
+    .line 201
     :cond_2
     :goto_2
     goto :goto_1
 
-    .line 190
+    .line 202
     :cond_3
     return-void
 
-    .line 181
+    .line 193
     :cond_4
     const-string p0, "Google user dictionary rebuild could not start"
 
@@ -1576,15 +1754,15 @@
         }
     .end annotation
 
-    .line 72
+    .line 84
     nop
 
-    .line 73
+    .line 85
     invoke-static {}, Ljava/util/Collections;->emptySet()Ljava/util/Set;
 
     move-result-object v0
 
-    .line 72
+    .line 84
     const/4 v1, 0x1
 
     invoke-static {p0, p1, p2, v1, v0}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge;->applyInternal(Landroid/content/Context;Lcom/google/android/apps/inputmethod/libs/hmm/AbstractHmmEngineFactory;Ljava/util/List;ZLjava/util/Set;)Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Result;
@@ -1616,10 +1794,10 @@
         }
     .end annotation
 
-    .line 80
+    .line 92
     if-eqz p3, :cond_0
 
-    .line 81
+    .line 93
     new-instance v0, Ljava/util/HashSet;
 
     iget-object p3, p3, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$RejectedEntriesException;->rejectedKeys:Ljava/util/List;
@@ -1634,7 +1812,7 @@
 
     return-object p0
 
-    .line 80
+    .line 92
     :cond_0
     new-instance p0, Ljava/lang/IllegalArgumentException;
 
@@ -1648,15 +1826,15 @@
 .method private static requireArguments(Landroid/content/Context;Lcom/google/android/apps/inputmethod/libs/hmm/AbstractHmmEngineFactory;)V
     .locals 0
 
-    .line 355
+    .line 396
     if-eqz p0, :cond_0
 
     if-eqz p1, :cond_0
 
-    .line 358
+    .line 399
     return-void
 
-    .line 356
+    .line 397
     :cond_0
     new-instance p0, Ljava/lang/IllegalArgumentException;
 
@@ -1667,7 +1845,7 @@
     throw p0
 .end method
 
-.method private static snapshot(Lcom/google/android/apps/inputmethod/libs/hmm/DictionaryAccessor;)Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;
+.method private static snapshot(Lcom/google/android/apps/inputmethod/libs/hmm/DictionaryAccessor;ZZ)Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;
     .locals 6
     .annotation system Ldalvik/annotation/Throws;
         value = {
@@ -1675,117 +1853,141 @@
         }
     .end annotation
 
-    .line 199
+    .line 228
     invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/libs/hmm/DictionaryAccessor;->getAllEntries()[Lcom/google/android/apps/inputmethod/libs/hmm/MutableDictionaryAccessorInterface$Entry;
 
     move-result-object v0
 
-    .line 200
-    if-eqz v0, :cond_3
+    .line 229
+    if-eqz v0, :cond_6
 
-    .line 204
+    .line 233
     new-instance v1, Ljava/util/LinkedHashMap;
 
     invoke-direct {v1}, Ljava/util/LinkedHashMap;-><init>()V
 
-    .line 205
+    .line 234
     array-length v2, v0
 
+    .line 235
     const/4 v3, 0x0
 
     :goto_0
-    if-ge v3, v2, :cond_2
+    array-length v4, v0
 
+    if-ge v3, v4, :cond_4
+
+    .line 236
     aget-object v4, v0, v3
 
-    .line 206
-    invoke-static {v4}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge;->canonicalEntry(Lcom/google/android/apps/inputmethod/libs/hmm/MutableDictionaryAccessorInterface$Entry;)Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$GoogleEntry;
+    .line 237
+    invoke-static {v4, p1}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge;->canonicalEntry(Lcom/google/android/apps/inputmethod/libs/hmm/MutableDictionaryAccessorInterface$Entry;Z)Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$GoogleEntry;
 
     move-result-object v4
 
-    .line 207
-    if-nez v4, :cond_0
+    .line 238
+    if-nez p1, :cond_0
+
+    const/4 v5, 0x0
+
+    aput-object v5, v0, v3
+
+    .line 239
+    :cond_0
+    if-nez v4, :cond_1
 
     goto :goto_1
 
-    .line 208
-    :cond_0
+    .line 240
+    :cond_1
     iget-object v5, v4, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$GoogleEntry;->key:Ljava/lang/String;
 
+    if-eqz p2, :cond_2
+
+    sget-object v4, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge;->PRESENT:Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$GoogleEntry;
+
+    :cond_2
     invoke-interface {v1, v5, v4}, Ljava/util/Map;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 
     move-result-object v4
 
     check-cast v4, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$GoogleEntry;
 
-    .line 209
-    if-nez v4, :cond_1
+    .line 241
+    if-nez v4, :cond_3
 
-    .line 205
+    .line 235
     :goto_1
     add-int/lit8 v3, v3, 0x1
 
     goto :goto_0
 
-    .line 210
-    :cond_1
+    .line 242
+    :cond_3
     const/16 p0, 0xa
 
-    const-string v0, "Google user dictionary has a duplicate normalized key"
+    const-string p1, "Google user dictionary has a duplicate normalized key"
 
-    invoke-static {p0, v0}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge;->nativeFailure(ILjava/lang/String;)Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$NativeOperationException;
+    invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge;->nativeFailure(ILjava/lang/String;)Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$NativeOperationException;
 
     move-result-object p0
 
     throw p0
 
-    .line 214
-    :cond_2
+    .line 246
+    :cond_4
     invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/libs/hmm/DictionaryAccessor;->getDictionaryCount()I
 
     move-result p0
 
-    .line 215
-    array-length v2, v0
-
+    .line 247
     invoke-static {v2, p0}, Ljava/lang/Math;->max(II)I
 
     move-result p0
 
-    .line 216
-    new-instance v2, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;
+    .line 248
+    if-eqz p1, :cond_5
 
-    invoke-virtual {v0}, [Lcom/google/android/apps/inputmethod/libs/hmm/MutableDictionaryAccessorInterface$Entry;->clone()Ljava/lang/Object;
-
-    move-result-object v0
-
-    check-cast v0, [Ljava/lang/Object;
-
+    .line 249
     invoke-static {v0}, Ljava/util/Arrays;->asList([Ljava/lang/Object;)Ljava/util/List;
 
-    move-result-object v0
+    move-result-object p1
 
-    invoke-direct {v2, p0, v1, v0}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;-><init>(ILjava/util/Map;Ljava/util/List;)V
+    goto :goto_2
 
-    return-object v2
+    .line 250
+    :cond_5
+    invoke-static {}, Ljava/util/Collections;->emptyList()Ljava/util/List;
 
-    .line 201
-    :cond_3
+    move-result-object p1
+
+    .line 251
+    :goto_2
+    new-instance p2, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;
+
+    const/4 v0, 0x1
+
+    invoke-direct {p2, p0, v1, p1, v0}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;-><init>(ILjava/util/Map;Ljava/util/List;Z)V
+
+    return-object p2
+
+    .line 230
+    :cond_6
     const/16 p0, 0x9
 
-    const-string v0, "Google user dictionary export failed"
+    const-string p1, "Google user dictionary export failed"
 
-    invoke-static {p0, v0}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge;->nativeFailure(ILjava/lang/String;)Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$NativeOperationException;
+    invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge;->nativeFailure(ILjava/lang/String;)Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$NativeOperationException;
 
     move-result-object p0
 
-    goto :goto_3
-
-    :goto_2
-    throw p0
+    goto :goto_4
 
     :goto_3
-    goto :goto_2
+    throw p0
+
+    :goto_4
+    goto :goto_3
 .end method
 
 .method private static verifyPersisted(Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$PreparedChanges;)V
@@ -1796,7 +1998,7 @@
         }
     .end annotation
 
-    .line 157
+    .line 169
     new-instance v0, Ljava/util/HashSet;
 
     iget-object v1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;->entries:Ljava/util/Map;
@@ -1807,7 +2009,7 @@
 
     invoke-direct {v0, v1}, Ljava/util/HashSet;-><init>(Ljava/util/Collection;)V
 
-    .line 158
+    .line 170
     iget-object v1, p2, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$PreparedChanges;->deletes:Ljava/util/List;
 
     invoke-interface {v1}, Ljava/util/List;->iterator()Ljava/util/Iterator;
@@ -1833,7 +2035,7 @@
 
     goto :goto_0
 
-    .line 159
+    .line 171
     :cond_0
     iget-object v1, p2, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$PreparedChanges;->adds:Ljava/util/List;
 
@@ -1860,7 +2062,7 @@
 
     goto :goto_1
 
-    .line 160
+    .line 172
     :cond_1
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;->access$000(Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;)Ljava/util/List;
 
@@ -1872,7 +2074,7 @@
 
     iget-object v1, p2, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$PreparedChanges;->deletes:Ljava/util/List;
 
-    .line 161
+    .line 173
     invoke-interface {v1}, Ljava/util/List;->size()I
 
     move-result v1
@@ -1887,12 +2089,12 @@
 
     add-int/2addr p0, p2
 
-    .line 162
+    .line 174
     new-instance p2, Ljava/util/HashSet;
 
     invoke-direct {p2, v0}, Ljava/util/HashSet;-><init>(Ljava/util/Collection;)V
 
-    .line 163
+    .line 175
     iget-object v1, p1, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;->entries:Ljava/util/Map;
 
     invoke-interface {v1}, Ljava/util/Map;->keySet()Ljava/util/Set;
@@ -1901,7 +2103,7 @@
 
     invoke-interface {p2, v1}, Ljava/util/Set;->removeAll(Ljava/util/Collection;)Z
 
-    .line 164
+    .line 176
     new-instance v1, Ljava/util/HashSet;
 
     iget-object v2, p1, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;->entries:Ljava/util/Map;
@@ -1912,10 +2114,10 @@
 
     invoke-direct {v1, v2}, Ljava/util/HashSet;-><init>(Ljava/util/Collection;)V
 
-    .line 165
+    .line 177
     invoke-interface {v1, v0}, Ljava/util/Set;->removeAll(Ljava/util/Collection;)Z
 
-    .line 166
+    .line 178
     invoke-interface {p2}, Ljava/util/Set;->isEmpty()Z
 
     move-result v0
@@ -1928,7 +2130,7 @@
 
     if-eqz v0, :cond_2
 
-    .line 167
+    .line 179
     invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;->access$000(Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;)Ljava/util/List;
 
     move-result-object v0
@@ -1939,14 +2141,14 @@
 
     if-ne v0, p0, :cond_2
 
-    .line 172
+    .line 184
     return-void
 
-    .line 168
+    .line 180
     :cond_2
     new-instance v0, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$PersistenceVerificationException;
 
-    .line 169
+    .line 181
     invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;->access$000(Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;)Ljava/util/List;
 
     move-result-object p1

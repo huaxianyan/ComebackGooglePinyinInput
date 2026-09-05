@@ -398,7 +398,9 @@ Pixel 隔离审计包随后完成了其余可构造类型的运行时验收。�
 
 Pixel 上使用任务专用 SAF 目录和只持有共享锁、不访问数据的一次性 instrumentation，已从真实 Compose 入口覆盖 `backup → Rime`、`Rime → backup` 和 `import → Rime`。两次交错备份均发布完整 `.txt`，没有遗留 partial；三次 Rime 预览均为五项零变更。由本轮备份经原生 importer 合并后，Chinese Native 总数和可投影数均保持 `97,505 → 97,505`，随后 Rime 预览仍为零变更，未出现死锁、部分持久化、恢复事务或 Bridge 临时文件。清理阶段释放了自动备份 SAF 授权、清空专属备份 Preferences、删除任务目录并卸载 probe；自动备份恢复为「未选择」，既有 Rime 配置和授权仍可用，证明两套 SAF 状态没有串线。
 
-扩大到 20 万条前的内存优化仍未验收。
+扩大规模前已完成第一轮规划内存优化。预览不再保留每个 unchanged key 的 `EntryPlan`，两个有序 key 引用数组替代了全量 `TreeSet` 节点；仅预览的 Native 快照逐条释放完整 `Entry`，Google 侧只保留 canonical presence；没有既有 Bridge 时，首个 peer 可在内存中按同一 tick 和删除优先规则转换为初始 Bridge，不再复制整张 map；SQLite baseline 的 32 字节加盐 hash 则按 BLOB 顺序装入连续数组，以二分查找替代 64 字符十六进制 key、`HashMap` 节点和常驻 `Baseline` 对象。执行前仍会重新读取带 code、phrase 和 source 的完整 Native 快照，因此 stale 检查、事务重建和持久化复核没有降级。生成结果仍为 65 个 Primary DEX Rime Smali 文件，现有协议测试继续通过。
+
+API 36 的 4 KiB translated-ARM64 隔离模拟器使用同一 100,000 条合成快照完成最终零变更规划测量。为隔离规划内存，测试 Profile 使用任务专用合成 baseline，把 100,000 项标为 `RIME_ONLY`；Native 中已经存在的 99,998 项会由规划器自然恢复为 `SUPPORTED`，其余 2 项保持 `RIME_ONLY`，最终预览为 `0,0,0,0,0`。该基线不作为同步正确性证据。冷启动初始 RSS 为 209,928 KiB，预览耗时 11.8 秒，峰值 RSS 为 359,712 KiB（约 351.3 MiB），结束时 RSS 为 310,972 KiB，Java Heap PSS 为 64,636 KiB。与早期零增量约 103.4 秒、峰值约 426 MiB 相比，耗时和对象驻留均明显下降；但峰值仍高于早期首次预览约 328 MiB，因此暂不进入 200,000 条和接近 500,000 条的测试。下一轮应继续减少 Rime snapshot、canonical map 与 Native presence map 的同时驻留，并以相同夹具和冷启动采样口径复核。
 
 ## 14. 保留的长期边界
 

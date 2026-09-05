@@ -30,6 +30,7 @@ public final class GoogleNativeDictionaryBridge {
     public static final int FAILURE_STALE = 11;
     private static final int PINYIN_LANGUAGE_ID = 16;
     private static final int NEW_ENTRY_COUNT = 1;
+    private static final GoogleEntry PRESENT = new GoogleEntry("", "", "", 0, null);
 
     private GoogleNativeDictionaryBridge() {}
 
@@ -40,6 +41,17 @@ public final class GoogleNativeDictionaryBridge {
      */
     public static Snapshot read(Context context, AbstractHmmEngineFactory engineFactory)
             throws IOException {
+        return readSnapshot(context, engineFactory, false);
+    }
+
+    /** Reads only canonical presence for a preview that will not retain executable entries. */
+    static Snapshot readPresence(Context context, AbstractHmmEngineFactory engineFactory)
+            throws IOException {
+        return readSnapshot(context, engineFactory, true);
+    }
+
+    private static Snapshot readSnapshot(Context context,
+            AbstractHmmEngineFactory engineFactory, boolean presenceOnly) throws IOException {
         requireArguments(context, engineFactory);
         synchronized (SaveDictionaryTask.sSaveLock) {
             DictionaryAccessor accessor = open(context, engineFactory);
@@ -48,7 +60,7 @@ public final class GoogleNativeDictionaryBridge {
                     throw nativeFailure(FAILURE_DUPLICATE,
                             "Google user dictionary could not be duplicated");
                 }
-                return snapshot(accessor);
+                return snapshot(accessor, false, presenceOnly);
             } finally {
                 accessor.close();
             }
@@ -94,7 +106,7 @@ public final class GoogleNativeDictionaryBridge {
                     throw nativeFailure(FAILURE_DUPLICATE,
                             "Google user dictionary could not be duplicated");
                 }
-                Snapshot before = snapshot(accessor);
+                Snapshot before = snapshot(accessor, true, false);
                 PreparedChanges prepared = prepare(
                         before, changes, tolerateAppliedChanges);
                 if (!skippedAdditionKeys.isEmpty()) {
@@ -141,7 +153,7 @@ public final class GoogleNativeDictionaryBridge {
                         AbstractHmmEngineFactory.MutableDictionaryType.USER_DICTIONARY);
                 accessor.close();
                 accessor = null;
-                Snapshot persisted = read(context, engineFactory);
+                Snapshot persisted = readComplete(context, engineFactory);
                 verifyPersisted(before, persisted, prepared);
                 return new Result(projectedCount, prepared.adds.size(),
                         prepared.deletes.size(), true);
@@ -195,25 +207,48 @@ public final class GoogleNativeDictionaryBridge {
                 AbstractHmmEngineFactory.MutableDictionaryType.USER_DICTIONARY);
     }
 
-    private static Snapshot snapshot(DictionaryAccessor accessor) throws IOException {
+    private static Snapshot readComplete(Context context,
+            AbstractHmmEngineFactory engineFactory) throws IOException {
+        synchronized (SaveDictionaryTask.sSaveLock) {
+            DictionaryAccessor accessor = open(context, engineFactory);
+            try {
+                if (!accessor.duplicateDictionary()) {
+                    throw nativeFailure(FAILURE_DUPLICATE,
+                            "Google user dictionary could not be duplicated");
+                }
+                return snapshot(accessor, true, false);
+            } finally {
+                accessor.close();
+            }
+        }
+    }
+
+    private static Snapshot snapshot(DictionaryAccessor accessor, boolean retainSources,
+            boolean presenceOnly) throws IOException {
         MutableDictionaryAccessorInterface.Entry[] nativeEntries = accessor.getAllEntries();
         if (nativeEntries == null) {
             throw nativeFailure(FAILURE_EXPORT,
                     "Google user dictionary export failed");
         }
         Map<String, GoogleEntry> entries = new LinkedHashMap<String, GoogleEntry>();
-        for (MutableDictionaryAccessorInterface.Entry source : nativeEntries) {
-            GoogleEntry entry = canonicalEntry(source);
+        int exportedEntryCount = nativeEntries.length;
+        for (int index = 0; index < nativeEntries.length; index++) {
+            MutableDictionaryAccessorInterface.Entry source = nativeEntries[index];
+            GoogleEntry entry = canonicalEntry(source, retainSources);
+            if (!retainSources) nativeEntries[index] = null;
             if (entry == null) continue;
-            GoogleEntry previous = entries.put(entry.key, entry);
+            GoogleEntry previous = entries.put(entry.key, presenceOnly ? PRESENT : entry);
             if (previous != null) {
                 throw nativeFailure(FAILURE_DATA,
                         "Google user dictionary has a duplicate normalized key");
             }
         }
         int nativeCount = accessor.getDictionaryCount();
-        int totalCount = Math.max(nativeEntries.length, nativeCount);
-        return new Snapshot(totalCount, entries, Arrays.asList(nativeEntries.clone()));
+        int totalCount = Math.max(exportedEntryCount, nativeCount);
+        List<MutableDictionaryAccessorInterface.Entry> allEntries = retainSources
+                ? Arrays.asList(nativeEntries)
+                : Collections.<MutableDictionaryAccessorInterface.Entry>emptyList();
+        return new Snapshot(totalCount, entries, allEntries, true);
     }
 
     private static PreparedChanges prepare(Snapshot before, List<Change> changes,
@@ -255,6 +290,12 @@ public final class GoogleNativeDictionaryBridge {
 
     private static GoogleEntry canonicalEntry(
             MutableDictionaryAccessorInterface.Entry source) throws IOException {
+        return canonicalEntry(source, true);
+    }
+
+    private static GoogleEntry canonicalEntry(
+            MutableDictionaryAccessorInterface.Entry source, boolean retainSource)
+            throws IOException {
         if (source == null || source.tokens == null || source.tokens.length == 0
                 || source.languageIds == null
                 || source.languageIds.length != source.tokens.length
@@ -282,7 +323,7 @@ public final class GoogleNativeDictionaryBridge {
         }
         String normalizedCode = code.toString();
         return new GoogleEntry(normalizedCode + '\t' + phrase,
-                normalizedCode, phrase, source.count, source);
+                normalizedCode, phrase, source.count, retainSource ? source : null);
     }
 
     private static MutableDictionaryAccessorInterface.Entry newEntry(String code, String phrase) {
@@ -410,11 +451,17 @@ public final class GoogleNativeDictionaryBridge {
 
         Snapshot(int totalEntryCount, Map<String, GoogleEntry> entries,
                 List<MutableDictionaryAccessorInterface.Entry> allEntries) {
+            this(totalEntryCount, new LinkedHashMap<String, GoogleEntry>(entries),
+                    new ArrayList<MutableDictionaryAccessorInterface.Entry>(allEntries), true);
+        }
+
+        Snapshot(int totalEntryCount, Map<String, GoogleEntry> entries,
+                List<MutableDictionaryAccessorInterface.Entry> allEntries,
+                boolean ownedContainers) {
             this.totalEntryCount = totalEntryCount;
-            this.entries = Collections.unmodifiableMap(
-                    new LinkedHashMap<String, GoogleEntry>(entries));
-            this.allEntries = Collections.unmodifiableList(
-                    new ArrayList<MutableDictionaryAccessorInterface.Entry>(allEntries));
+            // snapshot() owns both containers; wrapping avoids duplicate full-size storage.
+            this.entries = Collections.unmodifiableMap(entries);
+            this.allEntries = Collections.unmodifiableList(allEntries);
         }
     }
 

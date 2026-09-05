@@ -7,8 +7,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
 
 /** Immutable full-session plan shared by preview, execution, and crash recovery. */
 public final class RimeSyncSessionPlan {
@@ -27,7 +25,8 @@ public final class RimeSyncSessionPlan {
             int googleDeletionCount, int rimeAdditionCount, int rimeDeletionCount,
             int rimeResurrectionCount, int projectedGoogleEntryCount,
             String confirmationToken) {
-        this.entries = Collections.unmodifiableList(new ArrayList<EntryPlan>(entries));
+        // buildInternal owns this list; wrapping it avoids a second full-size backing array.
+        this.entries = Collections.unmodifiableList(entries);
         this.googleAdditionCount = googleAdditionCount;
         this.googleDeletionCount = googleDeletionCount;
         this.rimeAdditionCount = rimeAdditionCount;
@@ -41,20 +40,56 @@ public final class RimeSyncSessionPlan {
             Map<String, RimeSyncCore.CanonicalEntry> rimeEntries,
             GoogleNativeDictionaryBridge.Snapshot googleSnapshot,
             BaselineLookup baselines) throws IOException {
+        return buildInternal(rimeEntries, googleSnapshot, baselines, true);
+    }
+
+    /** Builds the same counts and token without retaining one EntryPlan per unchanged key. */
+    public static RimeSyncSessionPlan buildPreview(
+            Map<String, RimeSyncCore.CanonicalEntry> rimeEntries,
+            GoogleNativeDictionaryBridge.Snapshot googleSnapshot,
+            BaselineLookup baselines) throws IOException {
+        return buildInternal(rimeEntries, googleSnapshot, baselines, false);
+    }
+
+    private static RimeSyncSessionPlan buildInternal(
+            Map<String, RimeSyncCore.CanonicalEntry> rimeEntries,
+            GoogleNativeDictionaryBridge.Snapshot googleSnapshot,
+            BaselineLookup baselines, boolean retainEntries) throws IOException {
         if (rimeEntries == null || googleSnapshot == null || baselines == null) {
             throw new IllegalArgumentException("synchronization plan inputs are required");
         }
-        Set<String> keys = new TreeSet<String>();
-        keys.addAll(rimeEntries.keySet());
-        keys.addAll(googleSnapshot.entries.keySet());
-        List<EntryPlan> plans = new ArrayList<EntryPlan>(keys.size());
+        // Two sorted reference arrays are cheaper than one TreeSet node per dictionary key.
+        List<String> rimeKeys = new ArrayList<String>(rimeEntries.keySet());
+        List<String> googleKeys = new ArrayList<String>(googleSnapshot.entries.keySet());
+        Collections.sort(rimeKeys);
+        Collections.sort(googleKeys);
+        List<EntryPlan> plans = retainEntries
+                ? new ArrayList<EntryPlan>(rimeKeys.size() + googleKeys.size())
+                : Collections.<EntryPlan>emptyList();
         int googleAdds = 0;
         int googleDeletes = 0;
         int rimeAdds = 0;
         int rimeDeletes = 0;
         int rimeResurrections = 0;
+        int rimeIndex = 0;
+        int googleIndex = 0;
         MessageDigest digest = sha256();
-        for (String key : keys) {
+        while (rimeIndex < rimeKeys.size() || googleIndex < googleKeys.size()) {
+            String rimeKey = rimeIndex < rimeKeys.size() ? rimeKeys.get(rimeIndex) : null;
+            String googleKey = googleIndex < googleKeys.size()
+                    ? googleKeys.get(googleIndex) : null;
+            String key;
+            if (googleKey == null || (rimeKey != null && rimeKey.compareTo(googleKey) < 0)) {
+                key = rimeKey;
+                rimeIndex++;
+            } else if (rimeKey == null || googleKey.compareTo(rimeKey) < 0) {
+                key = googleKey;
+                googleIndex++;
+            } else {
+                key = rimeKey;
+                rimeIndex++;
+                googleIndex++;
+            }
             RimeSyncCore.CanonicalEntry rime = rimeEntries.get(key);
             GoogleNativeDictionaryBridge.GoogleEntry google = googleSnapshot.entries.get(key);
             Baseline baseline = baselines.get(key);
@@ -73,17 +108,18 @@ public final class RimeSyncSessionPlan {
             RimeSyncPlanner.Plan decision = RimeSyncPlanner.plan(
                     baseline.history, baseline.googleProjection,
                     google != null, rimeState, planningMagnitude);
-            String code = rime != null ? rime.code : google.code;
-            String phrase = rime != null ? rime.phrase : google.phrase;
             int nextMagnitude = decision.rimeAction == RimeSyncPlanner.RimeAction.DELETE
                             || decision.rimeAction == RimeSyncPlanner.RimeAction.RESURRECT
                     ? checkedMagnitude(decision.rimeCommitValue)
                     : decision.rimeAction == RimeSyncPlanner.RimeAction.ADD
                             ? 0 : planningMagnitude;
-            EntryPlan plan = new EntryPlan(key, code, phrase, decision.googleAction,
-                    decision.rimeAction, decision.rimeCommitValue,
-                    decision.nextHistory, decision.nextGoogleProjection, nextMagnitude);
-            plans.add(plan);
+            if (retainEntries) {
+                String code = rime != null ? rime.code : google.code;
+                String phrase = rime != null ? rime.phrase : google.phrase;
+                plans.add(new EntryPlan(key, code, phrase, decision.googleAction,
+                        decision.rimeAction, decision.rimeCommitValue,
+                        decision.nextHistory, decision.nextGoogleProjection, nextMagnitude));
+            }
             if (decision.googleAction == RimeSyncPlanner.GoogleAction.ADD) googleAdds++;
             if (decision.googleAction == RimeSyncPlanner.GoogleAction.DELETE) googleDeletes++;
             if (decision.rimeAction == RimeSyncPlanner.RimeAction.ADD) rimeAdds++;
@@ -91,7 +127,7 @@ public final class RimeSyncSessionPlan {
             if (decision.rimeAction == RimeSyncPlanner.RimeAction.RESURRECT) {
                 rimeResurrections++;
             }
-            updateDigest(digest, plan);
+            updateDigest(digest, key, decision, nextMagnitude);
         }
         int projectedCount = googleSnapshot.totalEntryCount - googleDeletes + googleAdds;
         if (projectedCount > GoogleNativeDictionaryBridge.USER_DICTIONARY_CAPACITY) {
@@ -144,14 +180,15 @@ public final class RimeSyncSessionPlan {
         }
     }
 
-    private static void updateDigest(MessageDigest digest, EntryPlan plan) {
-        updateDigest(digest, plan.key);
-        updateDigest(digest, plan.googleAction.name());
-        updateDigest(digest, plan.rimeAction.name());
-        updateDigest(digest, Integer.toString(plan.rimeCommitValue));
-        updateDigest(digest, plan.nextHistory.name());
-        updateDigest(digest, plan.nextGoogleProjection.name());
-        updateDigest(digest, Integer.toString(plan.nextRimeAbsCount));
+    private static void updateDigest(MessageDigest digest, String key,
+            RimeSyncPlanner.Plan decision, int nextRimeAbsCount) {
+        updateDigest(digest, key);
+        updateDigest(digest, decision.googleAction.name());
+        updateDigest(digest, decision.rimeAction.name());
+        updateDigest(digest, Integer.toString(decision.rimeCommitValue));
+        updateDigest(digest, decision.nextHistory.name());
+        updateDigest(digest, decision.nextGoogleProjection.name());
+        updateDigest(digest, Integer.toString(nextRimeAbsCount));
     }
 
     private static void updateDigest(MessageDigest digest, String value) {
