@@ -211,7 +211,7 @@ Rime 双向同步尚未进入本基线。其分支完成并合并后再更新对
 
 阶段 0 下一轮按以下顺序补强本表：
 
-1. 恢复 DirectMappingTokenExpander 的索引查找语义，并切分笔画 ForwardTokenDictionary 的辅助表
+1. 恢复 DirectMappingTokenExpander 的迭代推进与 score 表构造，并切分笔画 ForwardTokenDictionary 的辅助表
 2. 映射统一库动态注册表中的 method name、JNI signature 和函数地址
 3. 恢复 token score、meta 和 prefix score 的量化语义
 4. 从 27,080 条 call graph 边中提取 Service、InputBundle、DecodeProcessor、HMM、词典、滑行和手写子图

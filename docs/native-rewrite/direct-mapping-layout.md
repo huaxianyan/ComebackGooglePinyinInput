@@ -2,7 +2,9 @@
 
 ## 范围与证据
 
-本轮从固定原始 APK 的四个 `DirectMappingTokenExpander` blob 恢复存储区间，不实现 reconversion 解码器。两个英文 blob 字节相同，因此四个文件只提供三种不同样本。
+本文记录从固定原始 APK 的四个 `DirectMappingTokenExpander` blob 恢复存储区间的结果，不实现 reconversion 解码器。两个英文 blob 字节相同，因此四个文件只提供三种不同样本。
+
+后续 [native 查找研究](direct-mapping-native.md) 已确认 lower_bound 区间查找、最高位间接索引和前置 metadata 读取阶段。下文的字节结果继续有效，原先的语义未知项以该文档更新为准。
 
 工具入口仍为 `research/native-rewrite/tools/extract_data_bundles.py`，复现命令见 [容器研究](setting-and-container-formats.md)。输出 manifest 的 `native_container.tables` 记录区间、位宽、数量、SHA-256 和统计值。完整索引只保存在被忽略的 `work/` 中。
 
@@ -29,7 +31,7 @@
 
 表中 target 与 score 的 offset 均指向长度头，数据从 offset 加 8 开始。target 的 count 为 word 数，长度头记录的值为其四倍。拼音 target 数据占 110,804 bytes，score 数据占 27,701 bytes。
 
-四段数据加填充完整覆盖 config 后的全部字节。没有剩余的独立非零区间可直接命名为第五张 metadata 表。reader 字符串中的 `meta data table` 究竟对应前置配置、零字段还是其他结构，仍需函数控制流确认。
+四段数据加填充完整覆盖 config 后的全部字节。没有剩余的独立非零区间可直接命名为第五张 metadata 表。后续函数控制流已确认 `meta data table` 错误分支来自数组之前的消息读取和解析阶段。
 
 ## 索引不是普通 CSR 起始位置表
 
@@ -49,7 +51,7 @@ start positions: [0, 9]
 
 数字有 10 个 target word，却只有 2 个 key 索引值。英文有 52 个 target word，却只有 3 个 key 索引值。不能把每个索引值解释为一个独立 source，再用相邻 position 之差当作该 source 的 target 数量。
 
-这些数值与字符范围边界相符，提示可能存在区间压缩。但当前尚未恢复区间的起止约定、间隙处理与查找算法，因此工具只输出存储索引，不生成猜测性的 source-to-target 映射。
+后续 native 函数证据确认，它使用 lower_bound 和前一项 anchor 的差值计算位置，并通过下一项 position 排除空洞。具体公式见 [native 查找研究](direct-mapping-native.md)。当前导出工具仍只输出存储索引，不承担完整 reconversion 解码。
 
 ## 拼音 target 含高位标记值
 
@@ -63,21 +65,15 @@ start positions: [0, 9]
 
 其中 1,123 个 word 设置了最高位，其低 31 位范围为 `25379`–`27698`，落在 target 数组的后部。position 表最大值为 `25378`，而 target 总数为 `27701`。
 
-**推断：** 最高位可能区分直接 token 值与间接索引，后部可能承载多目标记录。但仅凭值域还不能证明跳转规则或记录终止条件。工具因此命名为 `target_words`，保留统计中的最高位，不将它们全部伪装成普通 token ID，也不擅自掩码后查词。
+后续 native 函数证据确认最高位表示间接索引：低 31 位替换当前位置，原位置的 byte 表示目标数量。完整迭代推进路径仍待验证。工具继续命名为 `target_words`，避免把位置值误当成普通 token ID。
 
-score 数组在英文和数字样本中全部为零，拼音中有 138 种字节值。其量化公式、符号与间接记录之间的对应关系尚未确认，不能将这些 byte 直接解释成 float32 expansion score。
+byte 数组在英文和数字样本中全部为零，拼音中有 138 种字节值。它具有双重用途：间接入口处存数量，目标元素处存 score code。native 会用 score code 查 float 表并取负值，查找表的量化参数尚未恢复，不能将这些 byte 直接解释成 float32 expansion score。
 
 ## 修正此前结论
 
 此前依据 reader 的五组诊断字符串，将结构概括为「压平 target array 加 start-position index」。这一概括不足以描述已观察到的区间索引和疑似间接值，不能用作实现协议。
 
-当前可确认四个物理数组的边界与原始值。以下内容继续保持未知：
-
-- key 索引如何恢复完整 source 集合
-- start-position 索引的查找及区间语义
-- 高位标记的意义和间接 target 记录的终止规则
-- score 量化公式与原始 token ID 的关系
-- metadata 的具体位置
+当前已确认四个物理数组的边界与原始值，native 研究进一步恢复了区间查找与间接寻址。仍未知的是完整目标迭代路径、score 查找表的构造及 metadata 的字段语义。metadata 错误分支对应数组之前的消息读取和解析阶段，不是第五张尾部数组。
 
 ## 验证
 
@@ -94,4 +90,4 @@ PYTHONPATH=tools/python python -m unittest discover \
 
 ## 下一步
 
-优先定位 native reader 与查找函数，验证 key/position 的区间算法及最高位标记的用途。只有这两项得到证据后，才尝试将 target 原始 word 与 ForwardTokenDictionary 的 token ID 对齐。
+沿已定位的 native 函数追踪迭代推进和 score 表构造，再将实际枚举的 target 与 ForwardTokenDictionary 的 token ID 对齐。

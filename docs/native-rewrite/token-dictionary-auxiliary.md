@@ -276,9 +276,9 @@ meta data table
 - 数字 reconversion
 - 拼音 reconversion
 
-后续字节研究已切分两张位压缩索引表、32-bit target word 数组和 8-bit score 数组，详见 [DirectMapping 字节布局](direct-mapping-layout.md)。这些区间完整覆盖 payload，但不能据此认定第五张 metadata 表不存在，其位置仍未知。
+后续字节研究已切分两张位压缩索引表、32-bit target word 数组和 byte 数组，详见 [DirectMapping 字节布局](direct-mapping-layout.md)。
 
-英文和数字的索引数量小于 target 数量，拼音 target 中还出现疑似间接索引的最高位标记。因此，之前「压平 target array 加 start-position index」的概括不足以作为查找协议，source-to-target 语义仍需 native 函数证据。
+[native 查找研究](direct-mapping-native.md) 已确认 lower_bound 区间算法与最高位间接索引。byte 在间接入口处表示数量，在目标元素处表示 score code。metadata 诊断对应数组之前的消息读取与解析阶段。完整迭代推进和 score 查找表构造仍待恢复。
 
 ## Class n-gram reader 证据
 
@@ -343,7 +343,7 @@ TensorFlowLstmModel
 - prefix count 与底层 trie node 的精确对应规则
 - config、header 中哪些字段承载 custom token encoding 和 metadata
 - 笔画 ForwardTokenDictionary 的辅助表布局
-- DirectMapping 区间索引、高位标记、score 量化与 metadata 位置
+- DirectMapping 迭代推进、score 查找表构造与 metadata 字段语义
 - 两个 class n-gram trie 的具体职责
 - data type 数值到 factory 构造函数的精确映射
 
@@ -359,7 +359,7 @@ TensorFlowLstmModel
 
 ## 下一步
 
-1. 定位 `DirectMappingTokenExpander` 查找函数，恢复区间索引与高位标记语义
+1. 追踪 `DirectMappingTokenExpander` 的迭代推进与 score 查找表构造
 2. 从 config 与 native reader 控制流恢复 score、meta、code 和 encoding 配置
 3. 定位 `GenericDataModelCreator` 和各 storage reader 的 ARM64 构造调用
 4. 将英文 reverse-initial ID 对齐到 `DirectTokenDictionary`

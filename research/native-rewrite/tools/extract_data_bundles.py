@@ -566,7 +566,7 @@ def analyze_forward_dictionary(content: bytes) -> dict[str, Any]:
 
 
 def analyze_direct_mapping_expander(content: bytes) -> dict[str, Any]:
-    """Recover stored arrays, not the still-unknown lookup/indirection algorithm."""
+    """Recover stored arrays; native lookup evidence is documented separately."""
     envelope = class_envelope(content)
     config = analyze_length_prefixed_config(content, envelope["payload_offset"])
     offset = config["data_offset"]
@@ -609,8 +609,8 @@ def analyze_direct_mapping_expander(content: bytes) -> dict[str, Any]:
         "data_first_u32": read_u32(content, config["data_offset"]),
         "tables": tables,
         "fully_consumed": True,
-        "lookup_semantics": "unresolved",
-        "metadata_location": "unresolved",
+        "lookup_semantics": "not_evaluated_by_exporter",
+        "metadata_location": "leading_length_prefixed_message",
     }
 
 
