@@ -314,7 +314,7 @@ Google TSV 导入本身不能表达单条删除，但原生 `MutableDictionaryAc
 
 ## 13. Bridge 作为 Rime 设备
 
-Bridge 不等待或判断某台 PC 是否已经同步完成。用户通过 SAF 授权 Rime 同步根目录，并手动填写 Bridge 设备目录名；应用在该根目录中创建或复用对应的稳定设备子目录和 `user_id`。Bridge 的行为等价于一个只通过文件参与同步的 Rime 设备：
+Bridge 不检测 Syncthing 或其他同步软件是否在线，也不等待或判断其他设备是否已经同步完成。每次手动同步只读取 SAF 根目录中当时可见的直接子目录快照；其他设备以后带来的文件变化留到下一次手动同步处理。用户通过 SAF 授权 Rime 同步根目录，并手动填写 Bridge 设备目录名；应用在该根目录中创建或复用对应的稳定设备子目录和 `user_id`。Bridge 的行为等价于一个只通过文件参与同步的 Rime 设备：
 
 ```text
 Rime 各设备快照
@@ -369,6 +369,8 @@ Rime 同步与现有自动备份分别保存 SAF 目录、配置、状态和结�
 当前实现已加入 Primary DEX 单线程异步门面和 API 35+ Compose 设置入口。Compose 只通过反射安全的窄契约读取状态和发起异步操作，不直接链接混淆后的 Native 类型。同步固定执行「预览 → 必要时确认删除 → 复核确认令牌 → 执行」，配置不完整、恢复事务未完成或其他词典操作进行中时不会开始新的同步。该实现已从固定原始 APK 完成 Compose Host 重建，并验证 65 个 Rime Smali 文件位于 Primary DEX。
 
 Pixel 10 Pro 已通过全新 release-like 隔离包完成 SAF 持久授权丢失与恢复验收。任务专用空目录首次 Preview 为五项零变更；同签名一次性 probe 随后精确释放该包持有的 URI 读写授权，并立即调用与 Compose 相同的异步 Preview 边界。修复前，`RimeSyncSafStore` 构造阶段的授权异常会落入通用操作失败；现在该阶段的 `IOException` 映射为既有 `ERROR_LOCATION_UNAVAILABLE`。运行时返回 `permission_before=true`、`permission_after=false`、`error_code=2` 和 `location_accessible=false`。重新打开 Compose 后显示「目录无法访问，请重新选择」，「立即同步」不可操作；通过「同步目录」重新选择同一目录后恢复授权，再次 Preview 仍为五项零变更。全程没有建立同步事务、访问 Native 词典、创建 Bridge 文件或出现 crash／ANR。测试结束后授权随隔离包卸载释放，任务目录和 probe 均已删除，正式默认输入法保持不变。
+
+同一设备随后用另一个 release-like 隔离包验证了 `ExternalStorageProvider` 上的两个 Bridge 发布中断窗口。第一种状态只有有效 `.bridge-previous.txt` 和未完成 `.partial.txt`，没有正式快照；选择 SAF 根目录时，恢复逻辑删除 partial、把 previous 恢复为正式文件，随后 Preview 为五项零变更。第二种状态同时存在正式快照、previous 和 partial；Preview 前恢复逻辑删除 previous 与 partial，保留的正式文件 SHA-256 不变，结果仍为五项零变更。两种状态最终都只保留一个正式快照，没有恢复副本、临时文件、重复文档、事务或 Native 变更。该验收只覆盖输入法自己的可恢复发布协议；Syncthing 在线状态和其他设备进度不属于 Bridge 状态机。
 
 API 36 隔离模拟器的首轮运行时验收发现并修正了两个仅靠主机测试无法发现的问题。`ExternalStorageProvider` 会按 `text/plain` MIME 类型为不以 `.txt` 结尾的临时名称自动补扩展名，因此临时文件和恢复副本现在都显式以 `.txt` 结尾，同时清理首版遗留的两种临时名称。修复后的升级安装成功从 `PLANNED` 阶段恢复，创建固定名称 Bridge 快照并提交基线。首轮 Native 新增、进程重启持久化和再次预览零变更均已通过。
 
