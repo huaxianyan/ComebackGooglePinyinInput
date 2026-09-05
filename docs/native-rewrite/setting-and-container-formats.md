@@ -10,6 +10,7 @@
 - 9 个 `ForwardTokenDictionary` 的 Marisa trie 边界
 - 8 个拼音类 `ForwardTokenDictionary` 的位压缩辅助表边界
 - 16 个拼音和数字 expansion 到 token key 的完整 ID 对齐
+- 4 个 DirectMappingTokenExpander 的四段数组边界，见 [DirectMapping 字节布局](direct-mapping-layout.md)
 - 7 个 gesture Marisa container 的 trie 边界
 - 4 个 system dictionary 中 Marisa trie 的精确区间
 - `pinyin_bigram` 内的两个 Marisa trie
@@ -354,7 +355,8 @@ Marisa key 数量不等于整个 dictionary 的候选条目数。prefix 和 auxi
 - 笔画 ForwardTokenDictionary auxiliary data 的具体 schema
 - system dictionary prefix 与 auxiliary value 的连接方式
 - bigram 两个 trie 的职责和权重编码
-- DirectTokenDictionary 与 DirectMappingTokenExpander 的完整 payload 结构
+- DirectTokenDictionary 的完整 payload 结构
+- DirectMappingTokenExpander 的索引查找、间接记录与 metadata 语义
 
 ## 对未来实现的约束
 
@@ -367,7 +369,7 @@ Marisa key 数量不等于整个 dictionary 的候选条目数。prefix 和 auxi
 
 ## 下一步
 
-1. 切分 DirectMappingTokenExpander 的五张表
+1. 恢复 DirectMappingTokenExpander 的区间索引和高位标记查找语义
 2. 定位 native data type factory 与各 reader 的构造入口
 3. 恢复 token score、meta、code 和 prefix score 的量化配置
 4. 分析 system dictionary prefix 和 auxiliary 区域的整数表关系

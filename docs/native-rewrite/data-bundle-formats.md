@@ -303,7 +303,7 @@ SHA-256 验证发现三组完全相同的载荷：
 
 ## 下一步
 
-1. 切分 DirectMappingTokenExpander 的五张辅助表
+1. 在 [DirectMapping 字节布局](direct-mapping-layout.md) 基础上恢复索引查找与间接记录语义
 2. 定位 native 中 `MarisaTrie`、`ForwardTokenDictionary` 和 `ClassNGramModel` reader
 3. 将 data scheme 的 data type 数值映射到 native enum 或 factory
 4. 分析 system dictionary 的 prefix 和 auxiliary 数据

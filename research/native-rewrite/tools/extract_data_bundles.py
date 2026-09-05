@@ -565,20 +565,63 @@ def analyze_forward_dictionary(content: bytes) -> dict[str, Any]:
     return result
 
 
+def analyze_direct_mapping_expander(content: bytes) -> dict[str, Any]:
+    """Recover stored arrays, not the still-unknown lookup/indirection algorithm."""
+    envelope = class_envelope(content)
+    config = analyze_length_prefixed_config(content, envelope["payload_offset"])
+    offset = config["data_offset"]
+    tables = {}
+    for name in ("key_ids", "start_positions"):
+        count = read_u32(content, offset)
+        width = read_u32(content, offset + 4)
+        table, values, offset = packed_table(content, offset, count, width, 8)
+        table["values"] = values
+        tables[name] = table
+
+    for name, width in (("target_words", 32), ("score_bytes", 8)):
+        byte_size = read_u64(content, offset)
+        element_size = width // 8
+        if byte_size % element_size:
+            raise ValueError(f"unaligned {name} byte size: {byte_size}")
+        table, values, offset = packed_table(
+            content, offset, byte_size // element_size, width, 8
+        )
+        table["length_header_unit"] = "bytes"
+        if name == "target_words":
+            # Raw words include high-bit values; do not silently mask them into IDs.
+            table["high_byte_counts"] = dict(sorted(Counter(
+                value >> 24 for value in values
+            ).items()))
+            flagged = [value & 0x7FFFFFFF for value in values if value & 0x80000000]
+            table["high_bit_low31_range"] = (
+                [min(flagged), max(flagged)] if flagged else None
+            )
+        else:
+            table["value_counts"] = dict(sorted(Counter(values).items()))
+        tables[name] = table
+
+    if offset != len(content):
+        raise ValueError(f"unconsumed direct mapping bytes at {offset}")
+    return {
+        "envelope": envelope,
+        **config,
+        "data_size": len(content) - config["data_offset"],
+        "data_first_u32": read_u32(content, config["data_offset"]),
+        "tables": tables,
+        "fully_consumed": True,
+        "lookup_semantics": "unresolved",
+        "metadata_location": "unresolved",
+    }
+
+
 def analyze_native_container(content: bytes, classification: str) -> dict[str, Any] | None:
     if classification == "in_memory_token_expander":
         return analyze_in_memory_expander(content)
     if classification == "forward_token_dictionary":
         return analyze_forward_dictionary(content)
     if classification == "direct_mapping_token_expander":
-        envelope = class_envelope(content)
-        config = analyze_length_prefixed_config(content, envelope["payload_offset"])
-        return {
-            "envelope": envelope,
-            **config,
-            "data_size": len(content) - config["data_offset"],
-            "data_first_u32": read_u32(content, config["data_offset"]),
-        }
+        return analyze_direct_mapping_expander(content)
+
     if classification == "direct_token_dictionary":
         envelope = class_envelope(content)
         return {
