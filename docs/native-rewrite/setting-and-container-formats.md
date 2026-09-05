@@ -8,6 +8,8 @@
 - Preference 对关键 setting 字段的修改路径
 - 17 个 `InMemoryTokenExpander` 的完整记录边界
 - 9 个 `ForwardTokenDictionary` 的 Marisa trie 边界
+- 8 个拼音类 `ForwardTokenDictionary` 的位压缩辅助表边界
+- 16 个拼音和数字 expansion 到 token key 的完整 ID 对齐
 - 7 个 gesture Marisa container 的 trie 边界
 - 4 个 system dictionary 中 Marisa trie 的精确区间
 - `pinyin_bigram` 内的两个 Marisa trie
@@ -272,7 +274,9 @@ Marisa 区间均可精确 round-trip：
 | 自然码 | 507 | 4,856 | 4,688 |
 | 笔画 | 90,701 | 150,112 | 550,144 |
 
-进一步分析确认，该首个 uint32 是 length-prefixed token config 的字节数，不是 token count。config 后还有一个独立 token count，八个拼音类容器均与各自 Marisa key 数量相等。native reader 又确认 auxiliary data 包含 token ID、score、meta、code、node ID 和 prefix score 等多张表，详见 `token-dictionary-auxiliary.md`。
+进一步分析确认，该首个 uint32 是 length-prefixed token config 的字节数，不是 token count。config 后还有一个独立 token count，八个拼音类容器均与各自 Marisa key 数量相等。
+
+全拼和六套双拼的 token ID、score、meta、code、node ID 与 prefix score 表已按 8-byte 对齐边界完整切分。数字词典包含 ID、score、meta 和 code 表，不含独立 node ID 或 prefix score。各表使用 little-endian、低位优先的连续位流。拼音加加、微软双拼和自然码还确认存在多 key 对一内部 token 的 alias，详见 `token-dictionary-auxiliary.md`。
 
 笔画容器明显不同：第二个 header word 为 `4`，其他八个容器为 `0`，且 auxiliary data 远大于 trie。它虽然复用 `ForwardTokenDictionary` class，但不是拼音 token 表的简单变体。
 
@@ -329,6 +333,8 @@ Marisa key 数量不等于整个 dictionary 的候选条目数。prefix 和 auxi
 - token、fuzzy、dictionary 和 gesture 的 Preference 修改点已经定位
 - 17 个 `InMemoryTokenExpander` 可按统一记录结构完整消费
 - 9 个 `ForwardTokenDictionary` 的 Marisa 区间和 key 数量已经确定
+- 8 个拼音类 `ForwardTokenDictionary` 的位压缩辅助表已经切分
+- 全拼和数字对应的 16 个 expansion，其 source 与 target ID 已全部对齐到 token key
 - 7 个 gesture Marisa container 的 trie 区间已经确定
 - 4 个 system dictionary 都包含一个可精确 round-trip 的 Marisa trie
 - `pinyin_bigram` 包含两个独立 Marisa trie
@@ -344,10 +350,10 @@ Marisa key 数量不等于整个 dictionary 的候选条目数。prefix 和 auxi
 ## 未知
 
 - `cda` 大多数数值字段的原始名称和单位
-- ForwardTokenDictionary auxiliary data 的具体 schema
+- token score、meta 与 prefix score 的量化语义
+- 笔画 ForwardTokenDictionary auxiliary data 的具体 schema
 - system dictionary prefix 与 auxiliary value 的连接方式
 - bigram 两个 trie 的职责和权重编码
-- Marisa ID 是否直接等于 HMM token ID
 - DirectTokenDictionary 与 DirectMappingTokenExpander 的完整 payload 结构
 
 ## 对未来实现的约束
@@ -361,8 +367,8 @@ Marisa key 数量不等于整个 dictionary 的候选条目数。prefix 和 auxi
 
 ## 下一步
 
-1. 切分 ForwardTokenDictionary auxiliary data 中的八张表
-2. 将 fuzzy token ID 与 ForwardTokenDictionary key/ID 对齐
-3. 定位 native data type factory 与各 reader 的构造入口
+1. 切分 DirectMappingTokenExpander 的五张表
+2. 定位 native data type factory 与各 reader 的构造入口
+3. 恢复 token score、meta、code 和 prefix score 的量化配置
 4. 分析 system dictionary prefix 和 auxiliary 区域的整数表关系
 5. 将动态 JNI 注册表映射到函数地址，并连接 DataManager 与 SettingManager reader

@@ -56,8 +56,8 @@ Rime 双向同步尚未进入本基线。其分支完成并合并后再更新对
 | ENG-001 | `ORIGINAL` | 全拼字符输入和 composing | 部分确认 | 重建 | 建立增量输入状态样本和 Java/native 边界 |
 | ENG-002 | `ORIGINAL` | 音节切分和撇号分隔 | 待研究 | 重建 | 构造歧义音节样本 |
 | ENG-003 | `ORIGINAL` | 简拼和不完整拼音 | 待研究 | 重建 | 确认接受范围、候选和回退规则 |
-| ENG-004 | `ORIGINAL` | 七种全拼、双拼方案 | 已确认 | 重建 | 已确认八个 token count 与各自 trie key 数一致，继续恢复 token ID 映射和零声母规则 |
-| ENG-005 | `ORIGINAL` | 12 组模糊拼音规则 | 已确认 | 重建 | 已确认 494 个双向 source 和独立 expansion score，继续对齐 token ID 并建立组合样本 |
+| ENG-004 | `ORIGINAL` | 七种全拼、双拼方案 | 已确认 | 重建 | 已恢复六套双拼的 key、token ID、code 和 node ID 映射，并确认三套方案存在 alias，继续研究零声母规则 |
+| ENG-005 | `ORIGINAL` | 12 组模糊拼音规则 | 已确认 | 重建 | 494 个 source 和 988 个 target 已全部对齐到全拼 key，并保留独立 expansion score，继续建立组合样本 |
 | ENG-006 | `ORIGINAL` | 单字、词组和长句候选 | 部分确认 | 重建 | 分析候选图、分段和整句路径 |
 | ENG-007 | `ORIGINAL` | 候选排序、去重和选中项 | 部分确认 | 重建 | 分离静态词频、上下文和用户学习影响 |
 | ENG-008 | `ORIGINAL` | 候选增量请求和分页 | 已确认 | 重建 | 调查批次协议、hasMore 和稳定顺序 |
@@ -211,9 +211,9 @@ Rime 双向同步尚未进入本基线。其分支完成并合并后再更新对
 
 阶段 0 下一轮按以下顺序补强本表：
 
-1. 切分 ForwardTokenDictionary 与 DirectMappingTokenExpander 的辅助表
+1. 切分 DirectMappingTokenExpander 与笔画 ForwardTokenDictionary 的辅助表
 2. 映射统一库动态注册表中的 method name、JNI signature 和函数地址
-3. 对齐 fuzzy token ID、Marisa key ID 和内部 token table
+3. 恢复 token score、meta 和 prefix score 的量化语义
 4. 从 27,080 条 call graph 边中提取 Service、InputBundle、DecodeProcessor、HMM、词典、滑行和手写子图
 5. 建立 XML include、class、layout、keymapping 和 processor 的机器可查询引用图
 6. 运行时验证 `libhwrword.so` 是否实际装载

@@ -34,7 +34,7 @@ JADX 报告 2 个方法无法完整反编译：
 - `defpackage.bnr` 中一个 566 instruction unit 的方法
 - `defpackage.xw` 中一个 411 instruction unit 的方法
 
-`defpackage.bnr` 另有一个 IfRegionVisitor 错误。当前尚未判断这两个类是否位于核心输入路径。涉及它们的结论需要回到 Smali 或控制流图验证。
+`defpackage.bnr` 另有一个 IfRegionVisitor 错误。结合类引用和方法职责复核后，`bnr.handleMessage()` 属于 Google Play services API manager，`xw.run()` 属于旧 RecyclerView GapWorker。两者都不在核心输入路径，因此不阻塞当前输入引擎研究。
 
 ## 总体数据流
 
@@ -351,7 +351,7 @@ setting 顶层结构、Preference 修改点和容器边界已经进一步确认�
 - field 15 保存 gesture module
 - 每套双拼同时拥有普通 token trie 和 gesture token ID trie
 
-完整 schema 证据见 `setting-and-container-formats.md`。native reader 进一步确认 ForwardTokenDictionary 将 trie、token ID、score、meta、code、node ID 和 prefix score 分表保存，详见 `token-dictionary-auxiliary.md`；各表边界和排序权重仍未知。
+完整 schema 证据见 `setting-and-container-formats.md`。全拼和六套双拼的 token ID、score、meta、code、node ID 和 prefix score 表边界已经恢复，数字词典则不含独立 node ID 和 prefix score。expansion token ID 也已对齐到相应 key，详见 `token-dictionary-auxiliary.md`。各类 score 和 meta 的量化语义仍未知。
 
 ### mutable dictionary
 
@@ -487,7 +487,7 @@ QWERTY 与九键分别有拼音 gesture handler。英文另有独立 handler，�
 - 拼音 system dictionary 和 bigram 的内部索引及概率模型
 - 候选最终分数如何组合
 - 用户学习 count 的更新公式
-- token、expansion 和 Marisa 容器的内部字段语义
+- token score、meta、prefix score 和系统词典容器的内部字段语义
 - 中文与英文滑行共享到什么程度
 - 手写模型与拼音语言模型如何联合排序
 - native 是否还有 Java 声明之外的内部模块
@@ -495,7 +495,7 @@ QWERTY 与九键分别有拼音 gesture handler。英文另有独立 handler，�
 ## 下一步
 
 1. 将统一库动态注册表中的 method name、JNI signature 和函数地址建立精确映射
-2. 切分 ForwardTokenDictionary 与 DirectMappingTokenExpander 的辅助表
+2. 切分 DirectMappingTokenExpander 的辅助表，并独立分析笔画 ForwardTokenDictionary
 3. 从 27,080 条 call graph 边中提取 Service、InputBundle、DecodeProcessor、HMM、词典、滑行和手写子图
 4. 建立 XML include、class、layout、keymapping 和 processor 的机器可查询引用图
 5. 运行时验证 `libhwrword.so` 是否被装载

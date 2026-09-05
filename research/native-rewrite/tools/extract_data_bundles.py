@@ -331,17 +331,33 @@ def analyze_in_memory_expander(content: bytes) -> dict[str, Any]:
     record_count = read_u32(content, config["data_offset"])
     offset = config["data_offset"] + 4
     source_ids: list[int] = []
+    target_ids: list[int] = []
+    records: list[dict[str, Any]] = []
     target_count = 0
     score_bits: set[int] = set()
     for _ in range(record_count):
-        source_ids.append(read_u32(content, offset))
+        source_id = read_u32(content, offset)
         item_count = read_u32(content, offset + 4)
+        source_ids.append(source_id)
         offset += 8
         target_count += item_count
+        targets = []
         for _ in range(item_count):
-            read_u32(content, offset)
-            score_bits.add(read_u32(content, offset + 4))
+            target_id = read_u32(content, offset)
+            score_value_bits = read_u32(content, offset + 4)
+            target_ids.append(target_id)
+            score_bits.add(score_value_bits)
+            targets.append(
+                {
+                    "target_token_id": target_id,
+                    "score_uint32_bits": score_value_bits,
+                    "score_float32": struct.unpack(
+                        "<f", score_value_bits.to_bytes(4, "little")
+                    )[0],
+                }
+            )
             offset += 8
+        records.append({"source_token_id": source_id, "targets": targets})
     trailer = content[offset:]
     if trailer != b"\x00\x00\x00\x00":
         raise ValueError(f"unexpected expander trailer: {trailer.hex()}")
@@ -351,7 +367,10 @@ def analyze_in_memory_expander(content: bytes) -> dict[str, Any]:
         "config_fields": config["config_fields"],
         "record_count": record_count,
         "unique_source_count": len(set(source_ids)),
+        "source_token_ids": sorted(set(source_ids)),
         "target_count": target_count,
+        "target_token_ids": sorted(set(target_ids)),
+        "records": records,
         "expansion_score_uint32_bits": sorted(score_bits),
         "expansion_score_float32_values": [
             struct.unpack("<f", value.to_bytes(4, "little"))[0]
@@ -377,6 +396,69 @@ def analyze_length_prefixed_config(
         "config_fields": scalar_wire_values(config),
         "data_offset": data_offset,
     }
+
+
+def unpack_lsb_bits(content: bytes, count: int, bit_width: int) -> list[int]:
+    if not 0 < bit_width <= 32:
+        raise ValueError(f"invalid packed bit width: {bit_width}")
+    required_size = (count * bit_width + 7) // 8
+    if len(content) < required_size:
+        raise ValueError(
+            f"packed array needs {required_size} bytes, only {len(content)} available"
+        )
+    packed = int.from_bytes(content[:required_size], "little")
+    mask = (1 << bit_width) - 1
+    return [(packed >> (index * bit_width)) & mask for index in range(count)]
+
+
+def packed_table(
+    content: bytes,
+    offset: int,
+    count: int,
+    bit_width: int,
+    header_size: int,
+) -> tuple[dict[str, Any], list[int], int]:
+    data_offset = offset + header_size
+    data_size = (count * bit_width + 7) // 8
+    data_end = data_offset + data_size
+    values = unpack_lsb_bits(content[data_offset:data_end], count, bit_width)
+    aligned_end = align_up(data_end, 8)
+    if any(content[data_end:aligned_end]):
+        raise ValueError(f"packed table padding is not zero at {data_end}")
+    return (
+        {
+            "offset": offset,
+            "count": count,
+            "bit_width": bit_width,
+            "data_offset": data_offset,
+            "data_size": data_size,
+            "aligned_end": aligned_end,
+            "sha256": sha256_bytes(content[data_offset:data_end]),
+            "minimum": min(values) if values else None,
+            "maximum": max(values) if values else None,
+            "unique_count": len(set(values)),
+        },
+        values,
+        aligned_end,
+    )
+
+
+def find_counted_packed_table(
+    content: bytes, start: int, count: int, expected_bit_width: int
+) -> tuple[dict[str, Any], list[int], int]:
+    for offset in range(start, min(start + 8, len(content) - 8) + 1, 8):
+        if any(content[start:offset]):
+            continue
+        if read_u32(content, offset) != count:
+            continue
+        bit_width = read_u32(content, offset + 4)
+        if bit_width != expected_bit_width:
+            continue
+        return packed_table(content, offset, count, bit_width, 8)
+    raise ValueError(
+        f"no {expected_bit_width}-bit packed table for {count} items "
+        f"after offset {start}"
+    )
 
 
 def analyze_forward_dictionary(content: bytes) -> dict[str, Any]:
@@ -407,9 +489,79 @@ def analyze_forward_dictionary(content: bytes) -> dict[str, Any]:
         result["token_config"] = token_config
         result["token_count"] = token_count
         result["token_count_matches_marisa_keys"] = token_count == region["key_count"]
+        if not result["token_count_matches_marisa_keys"]:
+            raise ValueError("token count does not match Marisa key count")
         result["token_metadata_offset"] = metadata_offset
         result["token_metadata_size"] = len(content) - metadata_offset
         result["token_metadata_sha256"] = sha256_bytes(content[metadata_offset:])
+
+        first_width = read_u32(content, metadata_offset)
+        expected_first_width = 28 if token_count == 10 else 26
+        if first_width != expected_first_width:
+            raise ValueError(f"unexpected token ID bit width: {first_width}")
+        first_table, token_ids, table_end = packed_table(
+            content, metadata_offset, token_count, first_width, 4
+        )
+        table_names = ["token_scores", "token_meta", "token_codes", "token_node_ids"]
+        expected_widths = (
+            [1, 6, 4]
+            if token_count == 10
+            else [8, 4, 16, 10 if token_count > 512 else 9]
+        )
+        table_records = {"token_ids": first_table}
+        table_values = {"token_ids": token_ids}
+        for table_name, expected_width in zip(table_names, expected_widths):
+            table, values, table_end = find_counted_packed_table(
+                content, table_end, token_count, expected_width
+            )
+            table_records[table_name] = table
+            table_values[table_name] = values
+
+        prefix_scores = None
+        if token_count != 10:
+            prefix_count_offset = table_end
+            prefix_count = read_u32(content, prefix_count_offset)
+            if not token_count <= prefix_count <= token_count + 32:
+                raise ValueError(f"invalid prefix score count: {prefix_count}")
+            if read_u32(content, prefix_count_offset + 4) != 0:
+                raise ValueError("non-zero prefix score reserved word")
+            score_offset = prefix_count_offset + 8
+            score_end = score_offset + prefix_count
+            if score_end > len(content) or any(content[score_end:]):
+                raise ValueError("invalid prefix score payload or trailing padding")
+            values = list(content[score_offset:score_end])
+            prefix_scores = {
+                "offset": prefix_count_offset,
+                "count": prefix_count,
+                "bit_width": 8,
+                "data_offset": score_offset,
+                "data_size": prefix_count,
+                "sha256": sha256_bytes(content[score_offset:score_end]),
+                "minimum": min(values) if values else None,
+                "maximum": max(values) if values else None,
+                "unique_count": len(set(values)),
+                "trailing_zero_bytes": len(content) - score_end,
+            }
+        elif any(content[table_end:]):
+            raise ValueError("non-zero digits token dictionary trailer")
+
+        trie = marisa_trie.Trie().frombytes(
+            content[marisa_offset : marisa_offset + marisa_size]
+        )
+        entries = []
+        for key_id in range(token_count):
+            entry = {
+                "marisa_key_id": key_id,
+                "key": trie.restore_key(key_id),
+                "token_id": table_values["token_ids"][key_id],
+            }
+            for table_name in table_names:
+                if table_name in table_values:
+                    entry[table_name.removesuffix("s")] = table_values[table_name][key_id]
+            entries.append(entry)
+        result["packed_tables"] = table_records
+        result["prefix_scores"] = prefix_scores
+        result["token_entries"] = entries
     return result
 
 
@@ -526,6 +678,72 @@ def collect_symbol_pairs(binary: Any) -> list[tuple[str, int, int]]:
     return pairs
 
 
+def add_expansion_token_references(blobs: list[dict[str, Any]]) -> None:
+    by_name = {blob["name"]: blob for blob in blobs}
+    reference_names = {
+        "digits_reverse_initial_token_expansion": "pinyin_digits_token_v_2",
+        "pinyin_initial_token_expansion": "pinyin_token_v_2",
+        "pinyin_reverse_initial_token_expansion": "pinyin_token_v_2",
+    }
+    for name in by_name:
+        if name.startswith("pinyin_fuzzy_expansion_"):
+            reference_names[name] = "pinyin_token_v_2"
+
+    for expansion_name, dictionary_name in reference_names.items():
+        expansion = by_name.get(expansion_name)
+        dictionary = by_name.get(dictionary_name)
+        if expansion is None or dictionary is None:
+            continue
+        entries = dictionary["native_container"].get("token_entries", [])
+        token_to_key: dict[int, str] = {}
+        duplicate_token_ids: set[int] = set()
+        for entry in entries:
+            token_id = entry["token_id"]
+            if token_id in token_to_key:
+                duplicate_token_ids.add(token_id)
+            token_to_key[token_id] = entry["key"]
+        container = expansion["native_container"]
+        source_ids = container["source_token_ids"]
+        target_ids = container["target_token_ids"]
+        unresolved_source_ids = sorted(set(source_ids) - token_to_key.keys())
+        unresolved_target_ids = sorted(set(target_ids) - token_to_key.keys())
+        container["token_reference"] = {
+            "dictionary_name": dictionary_name,
+            "dictionary_token_id_count": len(token_to_key),
+            "duplicate_dictionary_token_ids": sorted(duplicate_token_ids),
+            "resolved_source_token_id_count": len(source_ids)
+            - len(unresolved_source_ids),
+            "resolved_target_token_id_count": len(target_ids)
+            - len(unresolved_target_ids),
+            "unresolved_source_token_ids": unresolved_source_ids,
+            "unresolved_target_token_ids": unresolved_target_ids,
+            "resolved_source_keys": sorted(
+                token_to_key[token_id]
+                for token_id in source_ids
+                if token_id in token_to_key
+            ),
+            "resolved_target_keys": sorted(
+                token_to_key[token_id]
+                for token_id in target_ids
+                if token_id in token_to_key
+            ),
+            "resolved_records": [
+                {
+                    "source_token_id": record["source_token_id"],
+                    "source_key": token_to_key.get(record["source_token_id"]),
+                    "targets": [
+                        {
+                            **target,
+                            "target_key": token_to_key.get(target["target_token_id"]),
+                        }
+                        for target in record["targets"]
+                    ],
+                }
+                for record in container["records"]
+            ],
+        }
+
+
 def analyze_bundle(
     library_name: str, library_content: bytes, output_dir: Path
 ) -> dict[str, Any]:
@@ -589,6 +807,8 @@ def analyze_bundle(
                 }
             )
 
+        add_expansion_token_references(blobs)
+
     gaps = [
         current[1] - previous[2]
         for previous, current in zip(pairs, pairs[1:])
@@ -625,7 +845,7 @@ def main() -> None:
             )
 
     manifest = {
-        "schema_version": 1,
+        "schema_version": 2,
         "source_apk": {
             "path": args.apk.as_posix(),
             "size": len(apk_content),

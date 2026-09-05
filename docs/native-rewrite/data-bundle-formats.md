@@ -26,7 +26,9 @@ PYTHONPATH=tools/python python research/native-rewrite/tools/extract_data_bundle
 5. 记录大小、地址、文件偏移、SHA-256、entropy 和格式 marker
 6. 验证完整 protobuf wire stream
 7. 按已恢复的 `Data.DataScheme` 字段布局解析数据注册关系
-8. 将 63 个 blob 分别写入被忽略的输出目录
+8. 切分拼音类 ForwardTokenDictionary 的位压缩辅助表
+9. 将拼音和数字 expansion token ID 对齐到 Marisa key
+10. 将 63 个 blob 分别写入被忽略的输出目录
 
 脚本不依赖原先手工提取的 `.so`，输入只需要原始 APK。
 
@@ -268,6 +270,9 @@ SHA-256 验证发现三组完全相同的载荷：
 - 双拼同时拥有普通 token dictionary 和 gesture token ID table
 - 模糊音由独立 expansion 数据驱动
 - setting scheme 会被 Java Preference 逻辑动态修改
+- 拼音类 ForwardTokenDictionary 的 token ID、score、meta、code、node ID 和 prefix score 已分表切分
+- 拼音和数字 expansion 的内部 token ID 已全部对齐到对应 Marisa key
+- 部分双拼方案允许多个输入 key 指向同一内部 token
 
 ## 推断
 
@@ -279,10 +284,11 @@ SHA-256 验证发现三组完全相同的载荷：
 
 ## 未知
 
-- Marisa key ID 与辅助 value 数据的连接方式
+- token score、meta 和 prefix score 的量化语义
+- 笔画 token dictionary 的辅助表布局
 - system dictionary 中词、拼音、词频和属性的排列方式
 - bigram 权重、量化和 backoff 规则
-- token ID 的稳定性及其与 dictionary key 的连接方式
+- token ID 的位级语义及其跨数据版本稳定性
 - `cda` field 2–21 的原始 proto 字段名称和多数数值参数单位
 - data type 和 storage type enum 的原始符号名称
 - 原版数据的许可证和未来可分发性
@@ -297,9 +303,8 @@ SHA-256 验证发现三组完全相同的载荷：
 
 ## 下一步
 
-1. 对全拼和双拼 auxiliary data 建立结构差分
-2. 将 fuzzy expansion token ID 与 token dictionary key/ID 对齐
-3. 定位 native 中 `MarisaTrie`、`ForwardTokenDictionary` 和 `ClassNGramModel` reader
-4. 将 data scheme 的 data type 数值映射到 native enum 或 factory
-5. 分析 system dictionary 的 prefix 和 auxiliary 数据
-6. 建立 token dictionary、system dictionary 和 bigram 之间的 ID 一致性检查
+1. 切分 DirectMappingTokenExpander 的五张辅助表
+2. 定位 native 中 `MarisaTrie`、`ForwardTokenDictionary` 和 `ClassNGramModel` reader
+3. 将 data scheme 的 data type 数值映射到 native enum 或 factory
+4. 分析 system dictionary 的 prefix 和 auxiliary 数据
+5. 建立 token dictionary、system dictionary 和 bigram 之间的 ID 一致性检查
