@@ -404,7 +404,11 @@ API 36 的 4 KiB translated-ARM64 隔离模拟器使用同一 100,000 条合成�
 
 第二轮又让仅 Preview 使用的 canonicalization 消费其私有临时 Rime snapshot：每条记录只保留 canonical key 和 commit 数值，处理后立即移除 raw map 节点、`Entry`、code 和 phrase；完整执行、恢复与发布仍保留原 snapshot。有效冷启动预览继续得到 `0,0,0,0,0`，耗时 10.6 秒，初始 RSS 为 212,696 KiB，峰值 RSS 为 364,212 KiB，结束时 RSS 为 307,564 KiB，Java Heap PSS 为 44,132 KiB。峰值 RSS 在约第 5 秒发生，随后回收约 60 MiB；同一时点的分类为 Java Heap PSS 44,836 KiB、Native Heap PSS 124,672 KiB、总 PSS 250,494 KiB 和总 RSS 372,492 KiB。由此可见，消费 snapshot 继续减少了约 20 MiB 的存活 Java 堆，但 RSS 高水位主要受完整 Native 导出和 ART 已分配页影响。
 
-早期约 328 MiB 来自 Google Native 词典为空的首次预览，不能作为 Native 已有约 100,000 项时零变更预览必须低于的硬门槛。即便如此，当前总 PSS 与 Native Heap 仍会随实际 Google 词条增长，因此本轮不直接进入 200,000 条或接近 500,000 条测试。下一步应先建立按 Java Heap、Native Heap 和总 PSS 分类的有界扩容门槛，再执行只读 200,000 条规划预检；不得只用进程 RSS 高水位作放行依据。
+早期约 328 MiB 来自 Google Native 词典为空的首次预览，不能作为 Native 已有约 100,000 项时零变更预览必须低于的硬门槛。后续扩容因此按 Java Heap、Native Heap、总 PSS、回收后状态、完成时间和进程存活共同判断，不再只用进程 RSS 高水位放行。
+
+同一 API 36 的 4 KiB translated-ARM64 隔离模拟器随后完成 200,000 条只读规划预检。夹具由已验证的 100,000 条快照和另外 100,000 条生成记录组成，共 9,173,644 字节，SHA-256 为 `8a1e874b28e5e7f3c6edf69466450a48da5a46cff89e60ed25f09ce7cb0c9669`。测试 Profile 使用 200,000 行任务专用合成 baseline，Google Native 保持约 99,998 项；所有记录标为 `RIME_ONLY`，使本轮只覆盖解析、合并、Native presence、baseline 查找和规划，不执行 Native 写入。真实 Compose 入口在 19.2 秒内得到 `0,0,0,0,0`，进程没有重启，也没有 OOM 或 ANR。采样峰值为 Java Heap PSS 76,476 KiB、Native Heap PSS 102,708 KiB、总 PSS 253,615 KiB 和 RSS 407,456 KiB；30 秒回收后分别为 57,648 KiB、82,796 KiB、219,430 KiB 和 347,264 KiB。相较 100,000 条，耗时约线性增长，额外 Rime 和 baseline 数据没有使保持不变的 Google Native Heap 同比翻倍，临时 Java 对象也能回落。
+
+该结果只放行「200,000 条 Rime + 约 100,000 条 Google」的只读规划，不证明 Google Native 可持久化 200,000 条，也不放行 200,000 条写入、删除重建或接近 500,000 条压力测试。后续若扩大 Native 侧规模，必须分阶段增加生成条目，并在每阶段重新检查插入拒绝、持久化后总数、分类 PSS 和恢复收敛。
 
 ## 14. 保留的长期边界
 
