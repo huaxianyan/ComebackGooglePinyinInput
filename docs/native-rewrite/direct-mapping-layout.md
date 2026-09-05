@@ -51,7 +51,7 @@ start positions: [0, 9]
 
 数字有 10 个 target word，却只有 2 个 key 索引值。英文有 52 个 target word，却只有 3 个 key 索引值。不能把每个索引值解释为一个独立 source，再用相邻 position 之差当作该 source 的 target 数量。
 
-后续 native 函数证据确认，它使用 lower_bound 和前一项 anchor 的差值计算位置，并通过下一项 position 排除空洞。具体公式见 [native 查找研究](direct-mapping-native.md)。当前导出工具仍只输出存储索引，不承担完整 reconversion 解码。
+后续 native 函数证据确认，它使用 lower_bound 和前一项 anchor 的差值计算位置，并通过下一项 position 排除空洞。具体公式见 [native 查找研究](direct-mapping-native.md)。导出工具现已增加 [离线语义分析](direct-mapping-semantics.md)，恢复索引接受的 source 与目标，不模拟上层类型过滤或回退。
 
 ## 拼音 target 含高位标记值
 

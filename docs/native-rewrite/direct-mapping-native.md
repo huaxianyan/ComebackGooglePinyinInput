@@ -191,10 +191,12 @@ PYTHONPATH=tools/python python -m unittest discover \
 
 该测试验证证据导出可复现，不是 native 执行或行为等价性测试。本轮没有修改输入法功能、APK 补丁或数据，也没有进行设备验收。
 
+后续 [离线语义分析](direct-mapping-semantics.md) 已恢复四个 blob 的 source-to-target 枚举，拼音和数字的实际目标均通过完整 token ID 精确匹配到相应词典。该结果是静态模型输出，不替代 native 执行或产品行为验收。
+
 尚未完成：
 
-- 输入类型过滤、fallback 与上层 reconversion 的组合行为
-- 将实际枚举出的 target 与 token dictionary 完整对齐
+- 输入类型过滤、metadata 各字段、fallback 与上层 reconversion 的组合行为
+- 英文 target 与 DirectTokenDictionary 的完整身份对齐
 - native 执行结果与静态恢复算法的独立对照
 
-下一轮应依据已确认的区间查找、连续目标枚举和默认分数公式，建立原始数据的离线语义分析。它仍属于研究工具，不替代原生执行或产品行为验收。
+下一轮优先追踪输入类型、metadata 和上层调用语义，再选择最小范围进行独立执行对照。

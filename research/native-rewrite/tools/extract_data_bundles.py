@@ -17,6 +17,7 @@ import re
 import struct
 import tempfile
 import zipfile
+from bisect import bisect_left
 from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
@@ -565,8 +566,86 @@ def analyze_forward_dictionary(content: bytes) -> dict[str, Any]:
     return result
 
 
+def direct_mapping_position(
+    input_token: int, keys: list[int], positions: list[int]
+) -> int | None:
+    """Offline model of 0x19cfac; excludes iterator type checks and fallback."""
+    query = input_token & 0x1FFFFF
+    index = bisect_left(keys, query)
+    if index == len(keys):
+        return None
+    if keys[index] == query:
+        return positions[index]
+    if index == 0:
+        return None
+    position = (positions[index - 1] + query - keys[index - 1]) & 0xFFFFFFFF
+    return position if position < positions[index] else None
+
+
+def analyze_direct_mapping_lookup(
+    keys: list[int], positions: list[int], targets: list[int], codes: list[int]
+) -> dict[str, Any]:
+    """Static-data interpretation using documented native paths, not native execution."""
+    if len(keys) != len(positions) or keys != sorted(set(keys)):
+        raise ValueError("direct mapping key/position index mismatch")
+    if len(targets) != len(codes):
+        raise ValueError("direct mapping target/byte count mismatch")
+    # The constructor at 0x1d1e50 selects this table; preserve separate FP32 steps.
+    step = struct.unpack("<f", struct.pack("<f", 20.0 / 255.0))[0]
+    scores = [-struct.unpack("<f", struct.pack("<f", step * code))[0]
+              for code in range(256)]
+    records = []
+    base_positions: set[int] = set()
+    target_positions: set[int] = set()
+    indirect_positions: set[int] = set()
+    for source in range(keys[0], keys[-1] + 1) if keys else ():
+        position = direct_mapping_position(source, keys, positions)
+        if position is None:
+            continue
+        base_positions.add(position)
+        word = targets[position]
+        if word & 0x80000000:
+            indirect_positions.add(position)
+            start, count = word & 0x7FFFFFFF, codes[position]
+        else:
+            start, count = position, 1
+        if start + count > len(targets):
+            raise ValueError(f"direct mapping target range exceeds array at {position}")
+        resolved = []
+        for index in range(start, start + count):
+            target_positions.add(index)
+            resolved.append({
+                "target_token_id": targets[index],
+                "score_code": codes[index],
+                "score_float32": scores[codes[index]],
+            })
+        records.append({
+            "source_key_id": source,
+            "base_position": position,
+            "target_start": start,
+            "targets": resolved,
+        })
+    return {
+        "scope": "offline_default_lookup_without_type_filter_or_fallback",
+        "source_count": len(records),
+        "target_count": sum(len(record["targets"]) for record in records),
+        "target_count_histogram": dict(sorted(Counter(
+            len(record["targets"]) for record in records
+        ).items())),
+        "base_position_count": len(base_positions),
+        "indirect_position_count": len(indirect_positions),
+        "target_position_count": len(target_positions),
+        "unreferenced_word_count": len(targets) - len(base_positions | target_positions),
+        "count_and_score_position_overlap": len(indirect_positions & target_positions),
+        "target_score_code_counts": dict(sorted(Counter(
+            codes[index] for index in target_positions
+        ).items())),
+        "records": records,
+    }
+
+
 def analyze_direct_mapping_expander(content: bytes) -> dict[str, Any]:
-    """Recover stored arrays; native lookup evidence is documented separately."""
+    """Recover arrays and apply the statically recovered default lookup path."""
     envelope = class_envelope(content)
     config = analyze_length_prefixed_config(content, envelope["payload_offset"])
     offset = config["data_offset"]
@@ -578,6 +657,7 @@ def analyze_direct_mapping_expander(content: bytes) -> dict[str, Any]:
         table["values"] = values
         tables[name] = table
 
+    raw_values = {}
     for name, width in (("target_words", 32), ("score_bytes", 8)):
         byte_size = read_u64(content, offset)
         element_size = width // 8
@@ -587,6 +667,7 @@ def analyze_direct_mapping_expander(content: bytes) -> dict[str, Any]:
             content, offset, byte_size // element_size, width, 8
         )
         table["length_header_unit"] = "bytes"
+        raw_values[name] = values
         if name == "target_words":
             # Raw words include high-bit values; do not silently mask them into IDs.
             table["high_byte_counts"] = dict(sorted(Counter(
@@ -609,7 +690,11 @@ def analyze_direct_mapping_expander(content: bytes) -> dict[str, Any]:
         "data_first_u32": read_u32(content, config["data_offset"]),
         "tables": tables,
         "fully_consumed": True,
-        "lookup_semantics": "not_evaluated_by_exporter",
+        "lookup_semantics": "static_native_default_model",
+        "lookup_analysis": analyze_direct_mapping_lookup(
+            tables["key_ids"]["values"], tables["start_positions"]["values"],
+            raw_values["target_words"], raw_values["score_bytes"],
+        ),
         "metadata_location": "leading_length_prefixed_message",
     }
 
@@ -725,6 +810,8 @@ def add_expansion_token_references(blobs: list[dict[str, Any]]) -> None:
     by_name = {blob["name"]: blob for blob in blobs}
     reference_names = {
         "digits_reverse_initial_token_expansion": "pinyin_digits_token_v_2",
+        "digits_reconversion_expansion": "pinyin_digits_token_v_2",
+        "pinyin_reconversion_expansion": "pinyin_token_v_2",
         "pinyin_initial_token_expansion": "pinyin_token_v_2",
         "pinyin_reverse_initial_token_expansion": "pinyin_token_v_2",
     }
@@ -746,6 +833,21 @@ def add_expansion_token_references(blobs: list[dict[str, Any]]) -> None:
                 duplicate_token_ids.add(token_id)
             token_to_key[token_id] = entry["key"]
         container = expansion["native_container"]
+        if expansion["classification"] == "direct_mapping_token_expander":
+            target_ids = set()
+            for record in container["lookup_analysis"]["records"]:
+                for target in record["targets"]:
+                    token_id = target["target_token_id"]
+                    target_ids.add(token_id)
+                    target["target_key"] = token_to_key.get(token_id)
+            container["token_reference"] = {
+                "dictionary_name": dictionary_name,
+                "match_kind": "exact_full_token_id",
+                "duplicate_dictionary_token_ids": sorted(duplicate_token_ids),
+                "unique_target_token_id_count": len(target_ids),
+                "unresolved_target_token_ids": sorted(target_ids - token_to_key.keys()),
+            }
+            continue
         source_ids = container["source_token_ids"]
         target_ids = container["target_token_ids"]
         unresolved_source_ids = sorted(set(source_ids) - token_to_key.keys())
