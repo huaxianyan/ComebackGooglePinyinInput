@@ -62,6 +62,8 @@
 
 ### Rime 发布前收尾
 
+- [ ] 修复用户词库状态页的计数错误：当前把 `getDictionarySize()` 误当成词条数，应改为 `getDictionaryCount()`。Pixel 只读对照确认中文实际为 97,534、英文为 0，状态页却显示合计 533,347；这不是大规模测试词条注入，也不是容量上限。详见 [`dictionary-health-status-design.md`](dictionary-health-status-design.md)
+
 - [x] 修复数据库名称兼容：配置和 Bridge 发布使用规范名称 `pinyin_simp`，peer 名称按 librime 官方规则去掉最后一个 `.userdb` 及其后缀后匹配。本机带后缀 Bridge 仍须验证标记和 UUID，不重建 Profile 或 baseline。此前只接受无后缀 peer 的限制误拒绝了真实 Rime 快照，现已修正；不同数据库仍被拒绝，peer 文件保持原样。已有非空 Profile 和未完成事务迁移仍需在最终回归中核对
 - [x] 修复 Native 同进程复核时序：共享工厂刷新入口同步载入数据，监听器仍只在主线程通知。Bridge 在原共享锁内持久化、关闭、刷新后完整复核，不等待主线程。Pixel 生产 API 新增／删除的即时复核和真实 Compose 新增、零变更 Preview、墓碑删除均通过，清理后新进程总数为 0。未使用固定延时、引擎重启或移除复核
 - [x] 补齐保存／导入的刷新边界：两者均在关闭 accessor 后、解锁前复用同步刷新入口。Pixel 上暂停隔离主线程通知的对照实验，修复前复现导入后读旧版本，修复后原生导出／导入、Bridge 读取／新增及保存任务连续执行通过，两项均保留，清理后新进程总数为 0。未复现或宣称数据丢失，测试不等于活跃键盘或自动备份调度验收

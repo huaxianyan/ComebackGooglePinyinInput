@@ -43,7 +43,9 @@
 - `bdt`：中文
 - `agb`：英文。
 
-通过公开的 `AbstractHmmEngineFactory.createMutableDictionaryAccessor(USER_DICTIONARY)` 获取短生命周期 accessor，调用 `getDictionarySize()` 后立即 `close()`。这是现有 `UserDictExportTask` 创建并关闭 `DictionaryAccessor` 的同一底层机制，但不调用 `exportAllEntries()`，因此不会为大词库分配完整词条数组。
+通过公开的 `AbstractHmmEngineFactory.createMutableDictionaryAccessor(USER_DICTIONARY)` 获取短生命周期 accessor，词条数应读取 `getDictionaryCount()`，并在查询后立即 `close()`，不调用 `exportAllEntries()` 或分配完整词条数组。
+
+**已确认、待修复的显示缺陷：** 当前实现仍误用 `getDictionarySize()`。Pixel 当前审计词库的只读对照中，中文 size 为 533,345，count 为 97,534；英文 size 为 2，count 为 0。创建未持久化副本前后的结果一致，证明两项 API 不是同一统计值。状态页因此把 533,347 错误显示成合计词条数，实际合计为 97,534。size 的具体内部单位未确认，不将其解释为词条数、容量上限或内置词库数量。探针只读取整数，不枚举词条，不调用 persist，结束后已卸载。
 
 查询通过反射完成，以避免新 Java helper 对混淆类名产生编译期依赖。任何反射或 native 异常都被降级为「无法读取」，不得传播到设置页主线程。
 
