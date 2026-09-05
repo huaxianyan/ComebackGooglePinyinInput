@@ -149,10 +149,12 @@ public final class GoogleNativeDictionaryBridge {
                     throw nativeFailure(FAILURE_PERSIST,
                             "Google user dictionary persistence failed");
                 }
-                engineFactory.notifyMutableDictionaryDataChanged(
-                        AbstractHmmEngineFactory.MutableDictionaryType.USER_DICTIONARY);
                 accessor.close();
                 accessor = null;
+                // Reload the durable data before taking another copy. Listener delivery remains
+                // on the main thread, but verification never waits for that thread under the lock.
+                engineFactory.refreshMutableDictionaryData(
+                        AbstractHmmEngineFactory.MutableDictionaryType.USER_DICTIONARY);
                 Snapshot persisted = readComplete(context, engineFactory);
                 verifyPersisted(before, persisted, prepared);
                 return new Result(projectedCount, prepared.adds.size(),

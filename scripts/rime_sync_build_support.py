@@ -48,7 +48,7 @@ public abstract class AbstractHmmEngineFactory {
   public enum MutableDictionaryType { USER_DICTIONARY }
   public abstract MutableDictionaryAccessorInterface createMutableDictionaryAccessor(
       MutableDictionaryType type);
-  public abstract void notifyMutableDictionaryDataChanged(MutableDictionaryType type);
+  public abstract void refreshMutableDictionaryData(MutableDictionaryType type);
 }
 ''',
     "com/google/android/apps/inputmethod/libs/hmm/DictionaryAccessor.java": r'''

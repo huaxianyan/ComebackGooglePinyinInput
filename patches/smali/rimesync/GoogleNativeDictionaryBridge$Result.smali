@@ -28,21 +28,21 @@
 .method constructor <init>(IIIZ)V
     .locals 0
 
-    .line 511
+    .line 513
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
-    .line 512
+    .line 514
     iput p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Result;->totalEntryCount:I
 
-    .line 513
+    .line 515
     iput p2, p0, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Result;->addedCount:I
 
-    .line 514
+    .line 516
     iput p3, p0, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Result;->deletedCount:I
 
-    .line 515
+    .line 517
     iput-boolean p4, p0, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Result;->persisted:Z
 
-    .line 516
+    .line 518
     return-void
 .end method

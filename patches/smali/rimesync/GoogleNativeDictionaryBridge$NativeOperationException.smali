@@ -22,12 +22,12 @@
 .method constructor <init>(ILjava/lang/String;)V
     .locals 0
 
-    .line 405
+    .line 407
     invoke-direct {p0, p2}, Ljava/io/IOException;-><init>(Ljava/lang/String;)V
 
-    .line 406
+    .line 408
     iput p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$NativeOperationException;->failureKind:I
 
-    .line 407
+    .line 409
     return-void
 .end method

@@ -77,13 +77,15 @@ public final class RimeUserDbSnapshotTest {
       return dictionary;
     }
 
-    @Override public void notifyMutableDictionaryDataChanged(MutableDictionaryType type) {
+    @Override public void refreshMutableDictionaryData(MutableDictionaryType type) {
+      dictionary.loaded = new ArrayList<Entry>(dictionary.durable);
       notifications++;
     }
   }
 
   private static final class FakeDictionary implements MutableDictionaryAccessorInterface {
     List<Entry> durable;
+    List<Entry> loaded;
     List<Entry> staged;
     final int reportedCount;
     boolean failInsert;
@@ -93,11 +95,12 @@ public final class RimeUserDbSnapshotTest {
 
     FakeDictionary(List<Entry> entries, int reportedCount) {
       durable = new ArrayList<Entry>(entries);
+      loaded = new ArrayList<Entry>(entries);
       this.reportedCount = reportedCount;
     }
 
     @Override public boolean duplicateDictionary() {
-      staged = new ArrayList<Entry>(durable);
+      staged = new ArrayList<Entry>(loaded);
       persisted = false;
       return true;
     }
@@ -108,7 +111,7 @@ public final class RimeUserDbSnapshotTest {
     }
 
     @Override public Entry[] exportAllEntries() {
-      List<Entry> source = staged == null ? durable : staged;
+      List<Entry> source = staged == null ? loaded : staged;
       return source.toArray(new Entry[source.size()]);
     }
 
@@ -139,7 +142,7 @@ public final class RimeUserDbSnapshotTest {
     }
 
     @Override public void close() {
-      if (!persisted) staged = null;
+      staged = null;
     }
   }
 
@@ -507,7 +510,7 @@ def verify_native_api(decoded: Path) -> None:
         ],
         decoded / "smali/com/google/android/apps/inputmethod/libs/hmm/AbstractHmmEngineFactory.smali": [
             ".field public static final USER_DICTIONARY_CAPACITY:I = 0x7a120",
-            ".method public final notifyMutableDictionaryDataChanged(Lcom/google/android/apps/inputmethod/libs/hmm/AbstractHmmEngineFactory$MutableDictionaryType;)V",
+            ".method public final refreshMutableDictionaryData(Lcom/google/android/apps/inputmethod/libs/hmm/AbstractHmmEngineFactory$MutableDictionaryType;)V",
         ],
         decoded / "smali/com/google/android/apps/inputmethod/libs/hmm/SaveDictionaryTask.smali": [
             ".field public static final sSaveLock:Ljava/lang/Object;",
