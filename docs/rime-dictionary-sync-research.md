@@ -368,6 +368,8 @@ Rime 同步与现有自动备份分别保存 SAF 目录、配置、状态和结�
 
 当前实现已加入 Primary DEX 单线程异步门面和 API 35+ Compose 设置入口。Compose 只通过反射安全的窄契约读取状态和发起异步操作，不直接链接混淆后的 Native 类型。同步固定执行「预览 → 必要时确认删除 → 复核确认令牌 → 执行」，配置不完整、恢复事务未完成或其他词典操作进行中时不会开始新的同步。该实现已从固定原始 APK 完成 Compose Host 重建，并验证 65 个 Rime Smali 文件位于 Primary DEX。
 
+Pixel 10 Pro 已通过全新 release-like 隔离包完成 SAF 持久授权丢失与恢复验收。任务专用空目录首次 Preview 为五项零变更；同签名一次性 probe 随后精确释放该包持有的 URI 读写授权，并立即调用与 Compose 相同的异步 Preview 边界。修复前，`RimeSyncSafStore` 构造阶段的授权异常会落入通用操作失败；现在该阶段的 `IOException` 映射为既有 `ERROR_LOCATION_UNAVAILABLE`。运行时返回 `permission_before=true`、`permission_after=false`、`error_code=2` 和 `location_accessible=false`。重新打开 Compose 后显示「目录无法访问，请重新选择」，「立即同步」不可操作；通过「同步目录」重新选择同一目录后恢复授权，再次 Preview 仍为五项零变更。全程没有建立同步事务、访问 Native 词典、创建 Bridge 文件或出现 crash／ANR。测试结束后授权随隔离包卸载释放，任务目录和 probe 均已删除，正式默认输入法保持不变。
+
 API 36 隔离模拟器的首轮运行时验收发现并修正了两个仅靠主机测试无法发现的问题。`ExternalStorageProvider` 会按 `text/plain` MIME 类型为不以 `.txt` 结尾的临时名称自动补扩展名，因此临时文件和恢复副本现在都显式以 `.txt` 结尾，同时清理首版遗留的两种临时名称。修复后的升级安装成功从 `PLANNED` 阶段恢复，创建固定名称 Bridge 快照并提交基线。首轮 Native 新增、进程重启持久化和再次预览零变更均已通过。
 
 同一环境还证明，`DictionaryAccessor.remove(Entry)` 对刚通过 accessor 写入并可重新导出的精确条目返回失败。原版在线词典更新代码同样不依赖该返回值，但无法提供删除已持久化的证据。Bridge 因此不再使用该单条删除入口，而是在 Native 副本内清空后按原始 `Entry` 重建全部保留项，再加入计划中的新项，最后只持久化一次。该路径保留无法翻译到 Rime 的单字和其他条目，并保持失败时丢弃未持久化副本。

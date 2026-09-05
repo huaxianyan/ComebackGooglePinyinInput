@@ -336,7 +336,12 @@ public final class RimeSyncSettingsCompat {
         Uri root = Uri.parse(rootValue);
         RimeSyncStateStore state = new RimeSyncStateStore(context);
         try {
-            RimeSyncSafStore saf = new RimeSyncSafStore(context, root, configuration);
+            RimeSyncSafStore saf;
+            try {
+                saf = new RimeSyncSafStore(context, root, configuration);
+            } catch (java.io.IOException failure) {
+                throw new LocationException(failure);
+            }
             configureState(state, rootValue, configuration, saf);
             AbstractHmmEngineFactory factory = RimeSyncEngineFactoryProvider.get(context);
             return new CoordinatorHandle(state, new RimeSyncCoordinator(
