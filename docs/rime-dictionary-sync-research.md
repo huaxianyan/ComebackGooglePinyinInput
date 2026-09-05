@@ -310,7 +310,7 @@ Google 原生用户词典
 
 基线使用每个 Profile 的随机盐对规范化词条键计算 SHA-256，只长期保存摘要、`PRESENT`／`DELETED` 状态和 Rime 计数绝对值，不长期复制词面与拼音。尚未完成的操作日志可以临时保存恢复操作所需的词面和拼音；双方持久化并提交新基线后立即清除。存在未完成操作时不得更换目录、设备名、词典文件或重建状态。
 
-Google TSV 导入本身不能表达单条删除，但原生 `MutableDictionaryAccessorInterface.remove()` 和 `DictionaryAccessor.remove(Entry)` 已提供精确删除能力，原版 `NewWordsUpdateTask` 也使用 `count=0 → remove` 的模式。正式实现应在一次原生词典副本事务中完成新增和删除并持久化，不清空或重建完整 Trie，也不恢复旧网络同步。
+Google TSV 导入本身不能表达单条删除。虽然原生接口包含 `remove()`，运行时验收已经证明精确 `Entry` 删除不可靠。当前实现是在未持久化的 Native 副本中重建保留条目，再统一持久化并复核，不直接操作私有 Trie，也不恢复旧网络同步。
 
 ## 13. Bridge 作为 Rime 设备
 
@@ -364,13 +364,13 @@ Rime 合并继续保留原生主体语义：`c` 取绝对值较大的记录，`d
 
 SAF 授权根固定在同步目录。应用通过该授权读取根目录下所有直接子目录中的同名快照，只创建和更新用户指定的设备目录，不修改或删除其他设备目录。设备名必须符合 `[a-z0-9_-]+`；创建后应通过 Document ID 验证对应目录确实是所选根目录的直接子目录。
 
-Rime 同步与现有自动备份分别保存 SAF 目录、配置、状态和结果，可以单独使用或同时启用。它们不形成业务依赖，但所有 Google Native 词典变更继续通过同一任务队列串行执行。
+Rime 同步与现有自动备份分别保存 SAF 目录、配置、状态和结果，可以单独使用或同时启用。它们不形成业务依赖，各自保留任务队列，通过同一把 `SaveDictionaryTask.sSaveLock` 串行访问 Google Native 词典。
 
 当前实现已加入 Primary DEX 单线程异步门面和 API 35+ Compose 设置入口。Compose 只通过反射安全的窄契约读取状态和发起异步操作，不直接链接混淆后的 Native 类型。同步固定执行「预览 → 必要时确认删除 → 复核确认令牌 → 执行」，配置不完整、恢复事务未完成或其他词典操作进行中时不会开始新的同步。该实现已从固定原始 APK 完成 Compose Host 重建，并验证 65 个 Rime Smali 文件位于 Primary DEX。
 
-Pixel 10 Pro 已通过全新 release-like 隔离包完成 SAF 持久授权丢失与恢复验收。任务专用空目录首次 Preview 为五项零变更；同签名一次性 probe 随后精确释放该包持有的 URI 读写授权，并立即调用与 Compose 相同的异步 Preview 边界。修复前，`RimeSyncSafStore` 构造阶段的授权异常会落入通用操作失败；现在该阶段的 `IOException` 映射为既有 `ERROR_LOCATION_UNAVAILABLE`。运行时返回 `permission_before=true`、`permission_after=false`、`error_code=2` 和 `location_accessible=false`。重新打开 Compose 后显示「目录无法访问，请重新选择」，「立即同步」不可操作；通过「同步目录」重新选择同一目录后恢复授权，再次 Preview 仍为五项零变更。全程没有建立同步事务、访问 Native 词典、创建 Bridge 文件或出现 crash／ANR。测试结束后授权随隔离包卸载释放，任务目录和 probe 均已删除，正式默认输入法保持不变。
+Pixel 10 Pro 已通过全新 release-like 隔离包完成 SAF 持久授权丢失与恢复验收。任务专用空目录首次 Preview 为五项零变更；同签名一次性 probe 随后精确释放该包持有的 URI 读写授权，并立即调用与 Compose 相同的异步 Preview 边界。修复前，`RimeSyncSafStore` 构造阶段的授权异常会落入通用操作失败；现在该阶段的 `IOException` 映射为既有 `ERROR_LOCATION_UNAVAILABLE`。运行时返回 `permission_before=true`、`permission_after=false`、`error_code=2` 和 `location_accessible=false`。重新打开 Compose 后显示「目录无法访问，请重新选择」，「立即同步」不可操作；通过「同步目录」重新选择同一目录后恢复授权，再次 Preview 仍为五项零变更。授权失效的 Preview 在 Native 访问前被拦截。正常基线和重新授权后的 Preview 仍会读取 Native 词典，全程未执行同步写入或创建 Bridge 文件，也未观察到 crash／ANR。测试结束后授权随隔离包卸载释放，任务目录和 probe 均已删除，正式默认输入法保持不变。
 
-同一设备随后用另一个 release-like 隔离包验证了 `ExternalStorageProvider` 上的两个 Bridge 发布中断窗口。第一种状态只有有效 `.bridge-previous.txt` 和未完成 `.partial.txt`，没有正式快照；选择 SAF 根目录时，恢复逻辑删除 partial、把 previous 恢复为正式文件，随后 Preview 为五项零变更。第二种状态同时存在正式快照、previous 和 partial；Preview 前恢复逻辑删除 previous 与 partial，保留的正式文件 SHA-256 不变，结果仍为五项零变更。两种状态最终都只保留一个正式快照，没有恢复副本、临时文件、重复文档、事务或 Native 变更。该验收只覆盖输入法自己的可恢复发布协议；Syncthing 在线状态和其他设备进度不属于 Bridge 状态机。
+同一设备随后用另一个 release-like 隔离包验证了 `ExternalStorageProvider` 上的两个 Bridge 发布中断窗口。第一种状态只有有效 `.bridge-previous.txt` 和未完成 `.partial.txt`，没有正式快照；选择 SAF 根目录时，恢复逻辑删除 partial、把 previous 恢复为正式文件，随后 Preview 为五项零变更。第二种状态同时存在正式快照、previous 和 partial；Preview 前恢复逻辑删除 previous 与 partial，保留的正式文件 SHA-256 不变，结果仍为五项零变更。两种状态最终都只保留一个正式快照，没有恢复副本、临时文件、重复文档、事务或 Native 变更。该验收使用人工构造的中断后文件状态，证明恢复入口能处理这两种状态，不代表已经在 `publish()` 执行途中终止进程并验证完整事务恢复。Syncthing 在线状态和其他设备进度不属于 Bridge 状态机。
 
 API 36 隔离模拟器的首轮运行时验收发现并修正了两个仅靠主机测试无法发现的问题。`ExternalStorageProvider` 会按 `text/plain` MIME 类型为不以 `.txt` 结尾的临时名称自动补扩展名，因此临时文件和恢复副本现在都显式以 `.txt` 结尾，同时清理首版遗留的两种临时名称。修复后的升级安装成功从 `PLANNED` 阶段恢复，创建固定名称 Bridge 快照并提交基线。首轮 Native 新增、进程重启持久化和再次预览零变更均已通过。
 
@@ -402,7 +402,7 @@ Pixel 隔离审计包随后完成了其余可构造类型的运行时验收。�
 
 Pixel 上使用任务专用 SAF 目录和只持有共享锁、不访问数据的一次性 instrumentation，已从真实 Compose 入口覆盖 `backup → Rime`、`Rime → backup` 和 `import → Rime`。两次交错备份均发布完整 `.txt`，没有遗留 partial；三次 Rime 预览均为五项零变更。由本轮备份经原生 importer 合并后，Chinese Native 总数和可投影数均保持 `97,505 → 97,505`，随后 Rime 预览仍为零变更，未出现死锁、部分持久化、恢复事务或 Bridge 临时文件。清理阶段释放了自动备份 SAF 授权、清空专属备份 Preferences、删除任务目录并卸载 probe；自动备份恢复为「未选择」，既有 Rime 配置和授权仍可用，证明两套 SAF 状态没有串线。
 
-新词初始状态已经完成双引擎候选验收。Windows 上通过 Weasel 0.17.4／librime 1.13.1 建立完全隔离的 `pinyin_simp` user data，在同一编码下同时导入 `c=0 d=1e-8 t=0` 夹具和 `c=1` 阳性对照；同步前两者均不在 15 个候选中，同步后候选总数增至 17，两个生成词条都能在完整候选列表中精确匹配。Pixel 10 Pro 则使用从固定原始 APK 构建的全新 release-like 隔离包，将一个经过重新打开复核的生成词条以 `count=1` 写入 Native 词典；真实 IME 输入与空格提交得到精确布尔匹配，输入会话结束并切换 IME 后重新打开词典，count 从 `1` 持久化为 `2`。快速重启宿主的额外尝试受冷启动时序影响，不作为稳定交互门槛。两个探针都只输出数量、固定阶段和布尔比较，不输出候选或输入正文。清理时重新激活隔离 Native engine 后确认生成词条不存在，随后禁用并卸载全部审计包，默认输入法恢复为正式包；Windows 隔离 user data 也已删除。这证明当前两侧新词初始值均能进入真实候选和各自的后续本地学习，不意味着两种 count 可以相互换算。
+新词初始状态已经完成双引擎候选验收。Windows 上通过 Weasel 0.17.4／librime 1.13.1 建立完全隔离的 `pinyin_simp` user data，在同一编码下同时导入 `c=0 d=1e-8 t=0` 夹具和 `c=1` 阳性对照；同步前两者均不在 15 个候选中，同步后候选总数增至 17，两个生成词条都能在完整候选列表中精确匹配。Pixel 10 Pro 则使用从固定原始 APK 构建的全新 release-like 隔离包，将一个经过重新打开复核的生成词条以 `count=1` 写入 Native 词典；真实 IME 输入与空格提交得到精确布尔匹配，输入会话结束并切换 IME 后重新打开词典，count 从 `1` 持久化为 `2`。快速重启宿主的额外尝试受冷启动时序影响，不作为稳定交互门槛。两个探针都只输出数量、固定阶段和布尔比较，不输出候选或输入正文。清理时重新激活隔离 Native engine 后确认生成词条不存在，随后禁用并卸载全部审计包，默认输入法恢复为正式包；Windows 隔离 user data 也已删除。该实验分别证明了 Rime 完整候选列表可见性，以及 Google 首选提交与本地 count 增长。Rime 的候选提交和学习增长未在本轮测量，两种 count 也不能据此相互换算。
 
 扩大规模前已完成第一轮规划内存优化。预览不再保留每个 unchanged key 的 `EntryPlan`，两个有序 key 引用数组替代了全量 `TreeSet` 节点；仅预览的 Native 快照逐条释放完整 `Entry`，Google 侧只保留 canonical presence；没有既有 Bridge 时，首个 peer 可在内存中按同一 tick 和删除优先规则转换为初始 Bridge，不再复制整张 map；SQLite baseline 的 32 字节加盐 hash 则按 BLOB 顺序装入连续数组，以二分查找替代 64 字符十六进制 key、`HashMap` 节点和常驻 `Baseline` 对象。执行前仍会重新读取带 code、phrase 和 source 的完整 Native 快照，因此 stale 检查、事务重建和持久化复核没有降级。生成结果仍为 65 个 Primary DEX Rime Smali 文件，现有协议测试继续通过。
 
@@ -416,7 +416,14 @@ API 36 的 4 KiB translated-ARM64 隔离模拟器使用同一 100,000 条合成�
 
 该结果只放行「200,000 条 Rime + 约 100,000 条 Google」的只读规划，不证明 Google Native 可持久化 200,000 条，也不放行 200,000 条写入、删除重建或接近 500,000 条压力测试。后续若扩大 Native 侧规模，必须分阶段增加生成条目，并在每阶段重新检查插入拒绝、持久化后总数、分类 PSS 和恢复收敛。
 
-## 14. 保留的长期边界
+## 14. 最终一致性审阅：待解决项
+
+- **数据库名称兼容已修复：** `RimeSyncConfiguration` 现在去掉完整的 `.userdb.txt` 后缀，从 `pinyin_simp.userdb.txt` 得到 `pinyin_simp`，与 Weasel 0.17.4／librime 1.13.1 的实际导出一致。此前称 `pinyin_simp.userdb` 为统一文件协议要求的说法不成立。旧名称只在配置中的本机 Bridge 目录内、快照带 `google-pinyin-bridge` 标记且具有有效稳定 UUID 时迁移：读取时在内存中修正，下一次成功发布时写回。其他设备的错误数据库名仍被拒绝，不修改其文件。
+- **迁移与运行时证据：** Profile 的配置身份、哈希盐和操作日志不含派生数据库名，修复不升级协议版本、不重建 baseline，也不修改 generation 或未完成阶段。已有事务恢复时沿用原阶段，重新读入的本机旧 Bridge 快照按上述规则迁移。模块测试覆盖标准名称、保留身份与记录的本机迁移，以及非本机和无标记快照拒绝。Pixel 10 Pro 的全新非 Debug 隔离包通过真实 SAF 和 Compose 入口，读取标准空 peer 与旧名称空 Bridge，得到五项零变更 Preview；确认后发布 `db_name=pinyin_simp`，原 Bridge UUID 保持不变，peer 文件逐字节不变。该运行时实验覆盖首次恢复身份与重新发布，不代表已有非空 Profile 和每个未完成阶段均已重新实测。
+- **Native probe 证据边界：** 候选实验的一次性 probe 在新建 accessor 后直接调用 `getAllEntries()`，省略了 `duplicateDictionary()`。生产 `readSnapshot()` 和 `readComplete()` 则会先复制词典再导出，后者在共享锁内用于持久化复核。两条读取路径不等价，probe 读旧状态不能证明生产复核存在同一缺陷，也不能证明原因就是引擎未初始化。必要复测应复用生产读取入口，不增加引擎重启 workaround。
+- **最终整合包未验收：** 当前 Pixel 上保留的 `rimesyncaudit v15` 不包含后来的 Preview 内存优化和授权错误分类修复。解决数据库名称阻塞后，应以最终提交构建一次隔离候选包并完成整合回归。
+
+## 15. 保留的长期边界
 
 - 基于现有 Google 原生词典和 Native accessor，不替换输入引擎
 - Bridge 是可移除的独立功能模块

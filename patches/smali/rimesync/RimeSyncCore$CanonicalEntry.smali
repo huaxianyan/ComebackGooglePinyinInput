@@ -30,53 +30,53 @@
 .method constructor <init>(I)V
     .locals 1
 
-    .line 219
+    .line 235
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
-    .line 220
+    .line 236
     const/4 v0, 0x0
 
     iput-object v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCore$CanonicalEntry;->key:Ljava/lang/String;
 
-    .line 221
+    .line 237
     iput-object v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCore$CanonicalEntry;->code:Ljava/lang/String;
 
-    .line 222
+    .line 238
     iput-object v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCore$CanonicalEntry;->phrase:Ljava/lang/String;
 
-    .line 223
+    .line 239
     iput-object v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCore$CanonicalEntry;->source:Lcom/google/android/inputmethod/pinyin/rimesync/RimeUserDbSnapshot$Entry;
 
-    .line 224
+    .line 240
     iput p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCore$CanonicalEntry;->commits:I
 
-    .line 225
+    .line 241
     return-void
 .end method
 
 .method constructor <init>(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/google/android/inputmethod/pinyin/rimesync/RimeUserDbSnapshot$Entry;)V
     .locals 0
 
-    .line 211
+    .line 227
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
-    .line 212
+    .line 228
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCore$CanonicalEntry;->key:Ljava/lang/String;
 
-    .line 213
+    .line 229
     iput-object p2, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCore$CanonicalEntry;->code:Ljava/lang/String;
 
-    .line 214
+    .line 230
     iput-object p3, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCore$CanonicalEntry;->phrase:Ljava/lang/String;
 
-    .line 215
+    .line 231
     iput-object p4, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCore$CanonicalEntry;->source:Lcom/google/android/inputmethod/pinyin/rimesync/RimeUserDbSnapshot$Entry;
 
-    .line 216
+    .line 232
     iget p1, p4, Lcom/google/android/inputmethod/pinyin/rimesync/RimeUserDbSnapshot$Entry;->commits:I
 
     iput p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCore$CanonicalEntry;->commits:I
 
-    .line 217
+    .line 233
     return-void
 .end method

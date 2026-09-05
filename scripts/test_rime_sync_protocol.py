@@ -145,7 +145,7 @@ public final class RimeUserDbSnapshotTest {
 
   public static void main(String[] args) throws Exception {
     String own = "# Rime user dictionary\n"
-        + "#@/db_name\tpinyin_simp.userdb\n"
+        + "#@/db_name\tpinyin_simp\n"
         + "#@/db_type\tuserdb\n"
         + "#@/rime_version\t1.0\n"
         + "#@/tick\t100\n"
@@ -153,7 +153,7 @@ public final class RimeUserDbSnapshotTest {
         + "ce shi\tfixture-alpha\tc=8 d=4.0 t=80\n"
         + "ping ju\tfixture-beta\tc=5 d=2.0 t=100\n";
     String peer = "# Rime user dictionary\n"
-        + "#@/db_name\tpinyin_simp.userdb\n"
+        + "#@/db_name\tpinyin_simp\n"
         + "#@/db_type\tuserdb\n"
         + "#@/rime_version\t1.0\n"
         + "#@/tick\t120\n"
@@ -300,8 +300,40 @@ public final class RimeUserDbSnapshotTest {
 
     RimeSyncConfiguration validatedConfiguration = new RimeSyncConfiguration(
         "pixel_10_pro", "pinyin_simp.userdb.txt");
-    require("pinyin_simp.userdb".equals(validatedConfiguration.databaseName),
-        "the snapshot file name must map to its Rime database name");
+    require("pinyin_simp".equals(validatedConfiguration.databaseName),
+        "a Weasel snapshot uses the dictionary name without .userdb.txt");
+    RimeUserDbSnapshot standardPeer = read(peer);
+    RimeSyncCore.normalizeSnapshotDatabase(standardPeer, validatedConfiguration, false);
+    require("pinyin_simp".equals(standardPeer.dbName()),
+        "a standard Weasel snapshot is accepted unchanged");
+    RimeUserDbSnapshot legacyBridge = read(own);
+    legacyBridge.putMetadata("db_name", "pinyin_simp.userdb");
+    legacyBridge.putMetadata("rime_version", "google-pinyin-bridge");
+    legacyBridge.putMetadata("user_id", "11111111-2222-3333-4444-555555555555");
+    boolean foreignLegacyRejected = false;
+    try {
+      RimeSyncCore.normalizeSnapshotDatabase(legacyBridge, validatedConfiguration, false);
+    } catch (java.io.IOException expected) {
+      foreignLegacyRejected = true;
+    }
+    require(foreignLegacyRejected,
+        "another device's mismatched database is not migrated by this Bridge");
+    RimeSyncCore.normalizeSnapshotDatabase(legacyBridge, validatedConfiguration, true);
+    require("pinyin_simp".equals(legacyBridge.dbName())
+            && "11111111-2222-3333-4444-555555555555".equals(
+                RimeSyncCore.recoverBridgeUserId(legacyBridge))
+            && legacyBridge.entries().size() == 2 && legacyBridge.tick() == 100,
+        "the old Bridge name migrates while identity, entries, and tick survive");
+    RimeUserDbSnapshot ordinaryLegacy = read(own);
+    ordinaryLegacy.putMetadata("db_name", "pinyin_simp.userdb");
+    boolean unmarkedRejected = false;
+    try {
+      RimeSyncCore.normalizeSnapshotDatabase(ordinaryLegacy, validatedConfiguration, true);
+    } catch (java.io.IOException expected) {
+      unmarkedRejected = true;
+    }
+    require(unmarkedRejected,
+        "an unmarked snapshot in the Bridge directory is not migrated");
     require("pixel_10_pro".equals(
             RimeSyncConfiguration.defaultDeviceName("Pixel 10 Pro")),
         "the default device name must normalize the Android model");

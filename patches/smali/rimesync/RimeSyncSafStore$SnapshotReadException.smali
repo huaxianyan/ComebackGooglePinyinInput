@@ -22,14 +22,14 @@
 .method constructor <init>(ILjava/lang/Throwable;)V
     .locals 1
 
-    .line 383
+    .line 386
     const-string v0, "Rime snapshot could not be read"
 
     invoke-direct {p0, v0, p2}, Ljava/io/IOException;-><init>(Ljava/lang/String;Ljava/lang/Throwable;)V
 
-    .line 384
+    .line 387
     iput p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore$SnapshotReadException;->kind:I
 
-    .line 385
+    .line 388
     return-void
 .end method

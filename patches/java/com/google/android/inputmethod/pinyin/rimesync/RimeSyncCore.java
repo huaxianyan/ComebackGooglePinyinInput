@@ -17,6 +17,22 @@ public final class RimeSyncCore {
 
     private RimeSyncCore() {}
 
+    /** Validates the database name, migrating only this device's legacy Bridge metadata. */
+    public static void normalizeSnapshotDatabase(RimeUserDbSnapshot snapshot,
+            RimeSyncConfiguration configuration, boolean bridgeOwned) throws IOException {
+        if (configuration.databaseName.equals(snapshot.dbName())) return;
+        String legacyName = configuration.snapshotFileName.substring(0,
+                configuration.snapshotFileName.length() - ".txt".length());
+        if (bridgeOwned && legacyName.equals(snapshot.dbName())) {
+            // The pre-release Bridge incorrectly retained the .userdb suffix.
+            // Validate the Bridge marker and stable UUID before accepting that old shape.
+            recoverBridgeUserId(snapshot);
+            snapshot.putMetadata("db_name", configuration.databaseName);
+            return;
+        }
+        throw new IOException("Rime dictionary name mismatch");
+    }
+
     /** Returns the stable identity from a snapshot previously published by this Bridge. */
     public static String recoverBridgeUserId(RimeUserDbSnapshot snapshot) throws IOException {
         if (snapshot == null

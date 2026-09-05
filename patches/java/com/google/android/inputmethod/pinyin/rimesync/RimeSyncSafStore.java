@@ -115,8 +115,11 @@ public final class RimeSyncSafStore {
             } catch (IOException failure) {
                 throw new SnapshotReadException(SNAPSHOT_READ_PARSE, failure);
             }
-            if (!configuration.databaseName.equals(snapshot.dbName())) {
-                throw new SnapshotReadException(SNAPSHOT_READ_DATABASE, null);
+            try {
+                RimeSyncCore.normalizeSnapshotDatabase(snapshot, configuration,
+                        document.bridgeOwned);
+            } catch (IOException failure) {
+                throw new SnapshotReadException(SNAPSHOT_READ_DATABASE, failure);
             }
             try {
                 reader.close();

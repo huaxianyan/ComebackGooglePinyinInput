@@ -21,7 +21,7 @@ public final class RimeSyncConfiguration {
             throw new IllegalArgumentException("Rime snapshot must end with .userdb.txt");
         }
         this.databaseName = this.snapshotFileName.substring(0,
-                this.snapshotFileName.length() - ".txt".length());
+                this.snapshotFileName.length() - SNAPSHOT_SUFFIX.length());
     }
 
     public static boolean isValidDeviceName(String value) {

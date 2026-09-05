@@ -28,32 +28,32 @@
 .method public constructor <init>(Ljava/lang/String;Ljava/lang/String;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$RimeAction;I)V
     .locals 0
 
-    .line 235
+    .line 251
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
-    .line 236
+    .line 252
     if-eqz p1, :cond_0
 
     if-eqz p2, :cond_0
 
     if-eqz p3, :cond_0
 
-    .line 239
+    .line 255
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCore$RimeChange;->code:Ljava/lang/String;
 
-    .line 240
+    .line 256
     iput-object p2, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCore$RimeChange;->phrase:Ljava/lang/String;
 
-    .line 241
+    .line 257
     iput-object p3, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCore$RimeChange;->action:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$RimeAction;
 
-    .line 242
+    .line 258
     iput p4, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCore$RimeChange;->commitValue:I
 
-    .line 243
+    .line 259
     return-void
 
-    .line 237
+    .line 253
     :cond_0
     new-instance p1, Ljava/lang/IllegalArgumentException;
 

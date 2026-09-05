@@ -61,32 +61,30 @@
 
     invoke-virtual {p2}, Ljava/lang/String;->length()I
 
-    move-result p2
+    move-result v0
 
-    if-eq p1, p2, :cond_0
+    if-eq p1, v0, :cond_0
 
     .line 23
     iget-object p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncConfiguration;->snapshotFileName:Ljava/lang/String;
 
-    iget-object p2, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncConfiguration;->snapshotFileName:Ljava/lang/String;
+    iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncConfiguration;->snapshotFileName:Ljava/lang/String;
 
     .line 24
-    invoke-virtual {p2}, Ljava/lang/String;->length()I
-
-    move-result p2
-
-    const-string v0, ".txt"
-
     invoke-virtual {v0}, Ljava/lang/String;->length()I
 
     move-result v0
 
-    sub-int/2addr p2, v0
+    invoke-virtual {p2}, Ljava/lang/String;->length()I
+
+    move-result p2
+
+    sub-int/2addr v0, p2
 
     .line 23
-    const/4 v0, 0x0
+    const/4 p2, 0x0
 
-    invoke-virtual {p1, v0, p2}, Ljava/lang/String;->substring(II)Ljava/lang/String;
+    invoke-virtual {p1, p2, v0}, Ljava/lang/String;->substring(II)Ljava/lang/String;
 
     move-result-object p1
 

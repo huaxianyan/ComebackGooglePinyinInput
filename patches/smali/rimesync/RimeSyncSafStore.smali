@@ -182,7 +182,7 @@
         }
     .end annotation
 
-    .line 261
+    .line 264
     const-string v0, "Bridge temporary snapshot was not created"
 
     :try_start_0
@@ -198,16 +198,16 @@
 
     move-result-object p1
 
-    .line 263
+    .line 266
     if-eqz p1, :cond_0
 
-    .line 264
+    .line 267
     invoke-direct {p0, p1, p2}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;->verifyDisplayName(Landroid/net/Uri;Ljava/lang/String;)V
 
-    .line 265
+    .line 268
     return-object p1
 
-    .line 263
+    .line 266
     :cond_0
     new-instance p1, Ljava/io/IOException;
 
@@ -217,11 +217,11 @@
     :try_end_0
     .catch Ljava/lang/RuntimeException; {:try_start_0 .. :try_end_0} :catch_0
 
-    .line 266
+    .line 269
     :catch_0
     move-exception p1
 
-    .line 267
+    .line 270
     new-instance p2, Ljava/io/IOException;
 
     invoke-direct {p2, v0, p1}, Ljava/io/IOException;-><init>(Ljava/lang/String;Ljava/lang/Throwable;)V
@@ -237,7 +237,7 @@
         }
     .end annotation
 
-    .line 284
+    .line 287
     const-string v0, "Rime snapshot cleanup failed"
 
     :try_start_0
@@ -249,13 +249,13 @@
 
     if-eqz p1, :cond_0
 
-    .line 289
+    .line 292
     nop
 
-    .line 290
+    .line 293
     return-void
 
-    .line 285
+    .line 288
     :cond_0
     new-instance p1, Ljava/io/IOException;
 
@@ -265,11 +265,11 @@
     :try_end_0
     .catch Ljava/lang/RuntimeException; {:try_start_0 .. :try_end_0} :catch_0
 
-    .line 287
+    .line 290
     :catch_0
     move-exception p1
 
-    .line 288
+    .line 291
     new-instance v1, Ljava/io/IOException;
 
     invoke-direct {v1, v0, p1}, Ljava/io/IOException;-><init>(Ljava/lang/String;Ljava/lang/Throwable;)V
@@ -280,7 +280,7 @@
 .method private deleteQuietly(Landroid/net/Uri;)V
     .locals 1
 
-    .line 294
+    .line 297
     :try_start_0
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;->resolver:Landroid/content/ContentResolver;
 
@@ -288,14 +288,14 @@
     :try_end_0
     .catch Ljava/lang/Exception; {:try_start_0 .. :try_end_0} :catch_0
 
-    .line 296
+    .line 299
     goto :goto_0
 
-    .line 295
+    .line 298
     :catch_0
     move-exception p1
 
-    .line 297
+    .line 300
     :goto_0
     return-void
 .end method
@@ -303,7 +303,7 @@
 .method private documentUri(Ljava/lang/String;)Landroid/net/Uri;
     .locals 1
 
-    .line 345
+    .line 348
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;->rootTree:Landroid/net/Uri;
 
     invoke-static {v0, p1}, Landroid/provider/DocumentsContract;->buildDocumentUriUsingTree(Landroid/net/Uri;Ljava/lang/String;)Landroid/net/Uri;
@@ -321,7 +321,7 @@
         }
     .end annotation
 
-    .line 207
+    .line 210
     const-string v0, "Bridge device directory could not be created"
 
     const-string v1, "vnd.android.document/directory"
@@ -330,12 +330,12 @@
 
     move-result-object v2
 
-    .line 208
+    .line 211
     if-eqz v2, :cond_0
 
     return-object v2
 
-    .line 209
+    .line 212
     :cond_0
     iget-object v2, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;->rootDocumentId:Ljava/lang/String;
 
@@ -343,7 +343,7 @@
 
     move-result-object v2
 
-    .line 212
+    .line 215
     :try_start_0
     iget-object v3, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;->resolver:Landroid/content/ContentResolver;
 
@@ -357,20 +357,20 @@
     :try_end_0
     .catch Ljava/lang/RuntimeException; {:try_start_0 .. :try_end_0} :catch_0
 
-    .line 216
+    .line 219
     nop
 
-    .line 217
+    .line 220
     if-eqz v2, :cond_2
 
-    .line 218
+    .line 221
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;->configuration:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncConfiguration;
 
     iget-object v0, v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncConfiguration;->deviceDirectoryName:Ljava/lang/String;
 
     invoke-direct {p0, v2, v0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;->verifyDisplayName(Landroid/net/Uri;Ljava/lang/String;)V
 
-    .line 219
+    .line 222
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;->rootDocumentId:Ljava/lang/String;
 
     iget-object v2, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;->configuration:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncConfiguration;
@@ -381,7 +381,7 @@
 
     move-result-object v0
 
-    .line 221
+    .line 224
     if-eqz v0, :cond_1
 
     iget-object v2, v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore$DocumentInfo;->mimeType:Ljava/lang/String;
@@ -392,10 +392,10 @@
 
     if-eqz v1, :cond_1
 
-    .line 224
+    .line 227
     return-object v0
 
-    .line 222
+    .line 225
     :cond_1
     new-instance v0, Ljava/io/IOException;
 
@@ -405,7 +405,7 @@
 
     throw v0
 
-    .line 217
+    .line 220
     :cond_2
     new-instance v1, Ljava/io/IOException;
 
@@ -413,11 +413,11 @@
 
     throw v1
 
-    .line 214
+    .line 217
     :catch_0
     move-exception v1
 
-    .line 215
+    .line 218
     new-instance v2, Ljava/io/IOException;
 
     invoke-direct {v2, v0, v1}, Ljava/io/IOException;-><init>(Ljava/lang/String;Ljava/lang/Throwable;)V
@@ -433,7 +433,7 @@
         }
     .end annotation
 
-    .line 301
+    .line 304
     invoke-direct {p0, p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;->listChildren(Ljava/lang/String;)Ljava/util/List;
 
     move-result-object p1
@@ -448,7 +448,7 @@
 .method private hasPersistedReadWriteAccess()Z
     .locals 4
 
-    .line 366
+    .line 369
     :try_start_0
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;->resolver:Landroid/content/ContentResolver;
 
@@ -473,7 +473,7 @@
 
     check-cast v1, Landroid/content/UriPermission;
 
-    .line 367
+    .line 370
     iget-object v2, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;->rootTree:Landroid/net/Uri;
 
     invoke-virtual {v1}, Landroid/content/UriPermission;->getUri()Landroid/net/Uri;
@@ -492,7 +492,7 @@
 
     if-eqz v2, :cond_0
 
-    .line 368
+    .line 371
     invoke-virtual {v1}, Landroid/content/UriPermission;->isWritePermission()Z
 
     move-result v1
@@ -505,19 +505,19 @@
 
     return v0
 
-    .line 369
+    .line 372
     :cond_0
     goto :goto_0
 
-    .line 371
+    .line 374
     :cond_1
     goto :goto_1
 
-    .line 370
+    .line 373
     :catch_0
     move-exception v0
 
-    .line 372
+    .line 375
     :goto_1
     const/4 v0, 0x0
 
@@ -543,17 +543,17 @@
         }
     .end annotation
 
-    .line 316
+    .line 319
     const-string v1, "Rime directory could not be listed"
 
     new-instance v0, Ljava/util/ArrayList;
 
     invoke-direct {v0}, Ljava/util/ArrayList;-><init>()V
 
-    .line 317
+    .line 320
     nop
 
-    .line 319
+    .line 322
     const/4 v2, 0x0
 
     :try_start_0
@@ -563,7 +563,7 @@
 
     move-result-object v5
 
-    .line 321
+    .line 324
     iget-object v4, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;->resolver:Landroid/content/ContentResolver;
 
     const/4 p1, 0x3
@@ -598,10 +598,10 @@
 
     move-result-object v2
 
-    .line 326
+    .line 329
     if-eqz v2, :cond_3
 
-    .line 327
+    .line 330
     :goto_0
     invoke-interface {v2}, Landroid/database/Cursor;->moveToNext()Z
 
@@ -609,39 +609,39 @@
 
     if-eqz p1, :cond_1
 
-    .line 328
+    .line 331
     invoke-interface {v2, v3}, Landroid/database/Cursor;->getString(I)Ljava/lang/String;
 
     move-result-object p1
 
-    .line 329
+    .line 332
     invoke-interface {v2, v10}, Landroid/database/Cursor;->getString(I)Ljava/lang/String;
 
     move-result-object v4
 
-    .line 330
+    .line 333
     invoke-interface {v2, v11}, Landroid/database/Cursor;->getString(I)Ljava/lang/String;
 
     move-result-object v5
 
-    .line 331
+    .line 334
     if-eqz p1, :cond_0
 
     if-eqz v4, :cond_0
 
     if-eqz v5, :cond_0
 
-    .line 334
+    .line 337
     new-instance v6, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore$DocumentInfo;
 
     invoke-direct {v6, p1, v4, v5}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore$DocumentInfo;-><init>(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
 
     invoke-interface {v0, v6}, Ljava/util/List;->add(Ljava/lang/Object;)Z
 
-    .line 335
+    .line 338
     goto :goto_0
 
-    .line 332
+    .line 335
     :cond_0
     new-instance p1, Ljava/io/IOException;
 
@@ -654,17 +654,17 @@
     .catch Ljava/lang/RuntimeException; {:try_start_0 .. :try_end_0} :catch_0
     .catchall {:try_start_0 .. :try_end_0} :catchall_0
 
-    .line 339
+    .line 342
     :cond_1
     if-eqz v2, :cond_2
 
     invoke-interface {v2}, Landroid/database/Cursor;->close()V
 
-    .line 341
+    .line 344
     :cond_2
     return-object v0
 
-    .line 326
+    .line 329
     :cond_3
     :try_start_1
     new-instance p1, Ljava/io/IOException;
@@ -676,7 +676,7 @@
     .catch Ljava/lang/RuntimeException; {:try_start_1 .. :try_end_1} :catch_0
     .catchall {:try_start_1 .. :try_end_1} :catchall_0
 
-    .line 339
+    .line 342
     :catchall_0
     move-exception v0
 
@@ -684,13 +684,13 @@
 
     goto :goto_1
 
-    .line 336
+    .line 339
     :catch_0
     move-exception v0
 
     move-object p1, v0
 
-    .line 337
+    .line 340
     :try_start_2
     new-instance v0, Ljava/io/IOException;
 
@@ -700,13 +700,13 @@
     :try_end_2
     .catchall {:try_start_2 .. :try_end_2} :catchall_0
 
-    .line 339
+    .line 342
     :goto_1
     if-eqz v2, :cond_4
 
     invoke-interface {v2}, Landroid/database/Cursor;->close()V
 
-    .line 340
+    .line 343
     :cond_4
     goto :goto_3
 
@@ -720,7 +720,7 @@
 .method private previousName()Ljava/lang/String;
     .locals 2
 
-    .line 376
+    .line 379
     new-instance v0, Ljava/lang/StringBuilder;
 
     invoke-direct {v0}, Ljava/lang/StringBuilder;-><init>()V
@@ -760,12 +760,12 @@
         }
     .end annotation
 
-    .line 228
+    .line 231
     invoke-direct {p0, p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;->listChildren(Ljava/lang/String;)Ljava/util/List;
 
     move-result-object p1
 
-    .line 229
+    .line 232
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;->configuration:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncConfiguration;
 
     iget-object v0, v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncConfiguration;->snapshotFileName:Ljava/lang/String;
@@ -774,7 +774,7 @@
 
     move-result-object v0
 
-    .line 230
+    .line 233
     invoke-direct {p0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;->previousName()Ljava/lang/String;
 
     move-result-object v1
@@ -783,7 +783,7 @@
 
     move-result-object v1
 
-    .line 231
+    .line 234
     invoke-interface {p1}, Ljava/util/List;->iterator()Ljava/util/Iterator;
 
     move-result-object p1
@@ -801,7 +801,7 @@
 
     check-cast v2, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore$DocumentInfo;
 
-    .line 232
+    .line 235
     iget-object v3, v2, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore$DocumentInfo;->displayName:Ljava/lang/String;
 
     new-instance v4, Ljava/lang/StringBuilder;
@@ -840,7 +840,7 @@
 
     iget-object v3, v2, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore$DocumentInfo;->displayName:Ljava/lang/String;
 
-    .line 233
+    .line 236
     const-string v4, ".partial"
 
     invoke-virtual {v3, v4}, Ljava/lang/String;->endsWith(Ljava/lang/String;)Z
@@ -851,7 +851,7 @@
 
     iget-object v3, v2, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore$DocumentInfo;->displayName:Ljava/lang/String;
 
-    .line 234
+    .line 237
     const-string v4, ".partial.txt"
 
     invoke-virtual {v3, v4}, Ljava/lang/String;->endsWith(Ljava/lang/String;)Z
@@ -860,7 +860,7 @@
 
     if-eqz v3, :cond_1
 
-    .line 235
+    .line 238
     :cond_0
     iget-object v2, v2, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore$DocumentInfo;->documentId:Ljava/lang/String;
 
@@ -870,17 +870,17 @@
 
     invoke-direct {p0, v2}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;->deleteQuietly(Landroid/net/Uri;)V
 
-    .line 237
+    .line 240
     :cond_1
     goto :goto_0
 
-    .line 238
+    .line 241
     :cond_2
     if-nez v0, :cond_3
 
     if-eqz v1, :cond_3
 
-    .line 239
+    .line 242
     iget-object p1, v1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore$DocumentInfo;->documentId:Ljava/lang/String;
 
     invoke-direct {p0, p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;->documentUri(Ljava/lang/String;)Landroid/net/Uri;
@@ -895,13 +895,13 @@
 
     goto :goto_1
 
-    .line 240
+    .line 243
     :cond_3
     if-eqz v0, :cond_4
 
     if-eqz v1, :cond_4
 
-    .line 241
+    .line 244
     iget-object p1, v1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore$DocumentInfo;->documentId:Ljava/lang/String;
 
     invoke-direct {p0, p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;->documentUri(Ljava/lang/String;)Landroid/net/Uri;
@@ -910,7 +910,7 @@
 
     invoke-direct {p0, p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;->delete(Landroid/net/Uri;)V
 
-    .line 243
+    .line 246
     :cond_4
     :goto_1
     return-void
@@ -924,7 +924,7 @@
         }
     .end annotation
 
-    .line 273
+    .line 276
     const-string v0, "Rime snapshot rename failed"
 
     :try_start_0
@@ -934,16 +934,16 @@
 
     move-result-object p1
 
-    .line 274
+    .line 277
     if-eqz p1, :cond_0
 
-    .line 275
+    .line 278
     invoke-direct {p0, p1, p2}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;->verifyDisplayName(Landroid/net/Uri;Ljava/lang/String;)V
 
-    .line 276
+    .line 279
     return-object p1
 
-    .line 274
+    .line 277
     :cond_0
     new-instance p1, Ljava/io/IOException;
 
@@ -953,11 +953,11 @@
     :try_end_0
     .catch Ljava/lang/RuntimeException; {:try_start_0 .. :try_end_0} :catch_0
 
-    .line 277
+    .line 280
     :catch_0
     move-exception p1
 
-    .line 278
+    .line 281
     new-instance p2, Ljava/io/IOException;
 
     invoke-direct {p2, v0, p1}, Ljava/io/IOException;-><init>(Ljava/lang/String;Ljava/lang/Throwable;)V
@@ -985,10 +985,10 @@
         }
     .end annotation
 
-    .line 306
+    .line 309
     nop
 
-    .line 307
+    .line 310
     invoke-interface {p0}, Ljava/util/List;->iterator()Ljava/util/Iterator;
 
     move-result-object p0
@@ -1008,7 +1008,7 @@
 
     check-cast v1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore$DocumentInfo;
 
-    .line 308
+    .line 311
     iget-object v2, v1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore$DocumentInfo;->displayName:Ljava/lang/String;
 
     invoke-virtual {p1, v2}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
@@ -1019,19 +1019,19 @@
 
     goto :goto_0
 
-    .line 309
+    .line 312
     :cond_0
     if-nez v0, :cond_1
 
-    .line 310
+    .line 313
     nop
 
-    .line 311
+    .line 314
     move-object v0, v1
 
     goto :goto_0
 
-    .line 309
+    .line 312
     :cond_1
     new-instance p0, Ljava/io/IOException;
 
@@ -1041,7 +1041,7 @@
 
     throw p0
 
-    .line 312
+    .line 315
     :cond_2
     return-object v0
 .end method
@@ -1054,10 +1054,10 @@
         }
     .end annotation
 
-    .line 349
+    .line 352
     nop
 
-    .line 351
+    .line 354
     const/4 v1, 0x0
 
     :try_start_0
@@ -1085,7 +1085,7 @@
 
     move-result-object v1
 
-    .line 354
+    .line 357
     if-eqz v1, :cond_1
 
     invoke-interface {v1}, Landroid/database/Cursor;->moveToFirst()Z
@@ -1107,16 +1107,16 @@
 
     if-eqz p1, :cond_1
 
-    .line 360
+    .line 363
     if-eqz v1, :cond_0
 
     invoke-interface {v1}, Landroid/database/Cursor;->close()V
 
-    .line 362
+    .line 365
     :cond_0
     return-void
 
-    .line 355
+    .line 358
     :cond_1
     :try_start_1
     new-instance p1, Ljava/io/IOException;
@@ -1130,7 +1130,7 @@
     .catch Ljava/lang/RuntimeException; {:try_start_1 .. :try_end_1} :catch_0
     .catchall {:try_start_1 .. :try_end_1} :catchall_0
 
-    .line 360
+    .line 363
     :catchall_0
     move-exception v0
 
@@ -1138,13 +1138,13 @@
 
     goto :goto_0
 
-    .line 357
+    .line 360
     :catch_0
     move-exception v0
 
     move-object p1, v0
 
-    .line 358
+    .line 361
     :try_start_2
     new-instance p2, Ljava/io/IOException;
 
@@ -1156,13 +1156,13 @@
     :try_end_2
     .catchall {:try_start_2 .. :try_end_2} :catchall_0
 
-    .line 360
+    .line 363
     :goto_0
     if-eqz v1, :cond_2
 
     invoke-interface {v1}, Landroid/database/Cursor;->close()V
 
-    .line 361
+    .line 364
     :cond_2
     throw p1
 .end method
@@ -1175,13 +1175,13 @@
         }
     .end annotation
 
-    .line 246
-    nop
-
-    .line 247
-    nop
-
     .line 249
+    nop
+
+    .line 250
+    nop
+
+    .line 252
     const/4 v0, 0x0
 
     :try_start_0
@@ -1195,10 +1195,10 @@
     :try_end_0
     .catchall {:try_start_0 .. :try_end_0} :catchall_2
 
-    .line 250
+    .line 253
     if-eqz p1, :cond_0
 
-    .line 251
+    .line 254
     :try_start_1
     new-instance v1, Ljava/io/OutputStreamWriter;
 
@@ -1208,19 +1208,19 @@
     :try_end_1
     .catchall {:try_start_1 .. :try_end_1} :catchall_1
 
-    .line 252
+    .line 255
     :try_start_2
     invoke-virtual {p2, v1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeUserDbSnapshot;->write(Ljava/io/Writer;)V
     :try_end_2
     .catchall {:try_start_2 .. :try_end_2} :catchall_0
 
-    .line 254
+    .line 257
     invoke-virtual {v1}, Ljava/io/OutputStreamWriter;->close()V
 
-    .line 257
+    .line 260
     return-void
 
-    .line 254
+    .line 257
     :catchall_0
     move-exception p2
 
@@ -1233,7 +1233,7 @@
 
     goto :goto_0
 
-    .line 250
+    .line 253
     :cond_0
     :try_start_3
     new-instance p2, Ljava/io/IOException;
@@ -1246,7 +1246,7 @@
     :try_end_3
     .catchall {:try_start_3 .. :try_end_3} :catchall_1
 
-    .line 254
+    .line 257
     :catchall_2
     move-exception p2
 
@@ -1255,18 +1255,18 @@
     :goto_0
     if-nez v0, :cond_1
 
-    .line 255
+    .line 258
     if-eqz p1, :cond_2
 
     invoke-virtual {p1}, Ljava/io/OutputStream;->close()V
 
     goto :goto_1
 
-    .line 254
+    .line 257
     :cond_1
     invoke-virtual {v0}, Ljava/io/OutputStreamWriter;->close()V
 
-    .line 256
+    .line 259
     :cond_2
     :goto_1
     throw p2
@@ -1403,7 +1403,7 @@
         }
     .end annotation
 
-    .line 147
+    .line 150
     if-eqz p1, :cond_6
 
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;->configuration:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncConfiguration;
@@ -1420,7 +1420,7 @@
 
     if-eqz v0, :cond_6
 
-    .line 148
+    .line 151
     invoke-virtual {p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeUserDbSnapshot;->metadata()Ljava/util/Map;
 
     move-result-object v0
@@ -1437,17 +1437,17 @@
 
     if-eqz v0, :cond_6
 
-    .line 151
+    .line 154
     invoke-direct {p0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;->ensureBridgeDirectory()Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore$DocumentInfo;
 
     move-result-object v0
 
-    .line 152
+    .line 155
     iget-object v2, v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore$DocumentInfo;->documentId:Ljava/lang/String;
 
     invoke-direct {p0, v2}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;->recoverPublishedFile(Ljava/lang/String;)V
 
-    .line 153
+    .line 156
     new-instance v2, Ljava/lang/StringBuilder;
 
     invoke-direct {v2}, Ljava/lang/StringBuilder;-><init>()V
@@ -1472,7 +1472,7 @@
 
     move-result-object v2
 
-    .line 154
+    .line 157
     invoke-static {}, Ljava/util/UUID;->randomUUID()Ljava/util/UUID;
 
     move-result-object v3
@@ -1495,21 +1495,21 @@
 
     move-result-object v2
 
-    .line 155
+    .line 158
     iget-object v3, v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore$DocumentInfo;->documentId:Ljava/lang/String;
 
     invoke-direct {p0, v3, v2}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;->createFile(Ljava/lang/String;Ljava/lang/String;)Landroid/net/Uri;
 
     move-result-object v2
 
-    .line 156
+    .line 159
     nop
 
-    .line 158
+    .line 161
     :try_start_0
     invoke-direct {p0, v2, p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;->writeSnapshot(Landroid/net/Uri;Lcom/google/android/inputmethod/pinyin/rimesync/RimeUserDbSnapshot;)V
 
-    .line 159
+    .line 162
     new-instance p1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore$SnapshotDocument;
 
     iget-object v3, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;->configuration:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncConfiguration;
@@ -1520,12 +1520,12 @@
 
     invoke-direct {p1, v3, v2, v4}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore$SnapshotDocument;-><init>(Ljava/lang/String;Landroid/net/Uri;Z)V
 
-    .line 161
+    .line 164
     invoke-virtual {p0, p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;->readSnapshot(Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore$SnapshotDocument;)Lcom/google/android/inputmethod/pinyin/rimesync/RimeUserDbSnapshot;
 
     move-result-object p1
 
-    .line 162
+    .line 165
     invoke-virtual {p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeUserDbSnapshot;->metadata()Ljava/util/Map;
 
     move-result-object p1
@@ -1540,7 +1540,7 @@
 
     if-eqz p1, :cond_4
 
-    .line 166
+    .line 169
     iget-object p1, v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore$DocumentInfo;->documentId:Ljava/lang/String;
 
     iget-object p2, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;->configuration:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncConfiguration;
@@ -1551,7 +1551,7 @@
 
     move-result-object p1
 
-    .line 168
+    .line 171
     iget-object p2, v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore$DocumentInfo;->documentId:Ljava/lang/String;
 
     invoke-direct {p0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;->previousName()Ljava/lang/String;
@@ -1562,7 +1562,7 @@
 
     move-result-object p2
 
-    .line 169
+    .line 172
     if-eqz p2, :cond_0
 
     iget-object p2, p2, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore$DocumentInfo;->documentId:Ljava/lang/String;
@@ -1573,13 +1573,13 @@
 
     invoke-direct {p0, p2}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;->delete(Landroid/net/Uri;)V
 
-    .line 170
+    .line 173
     :cond_0
     const/4 p2, 0x0
 
     if-eqz p1, :cond_1
 
-    .line 171
+    .line 174
     iget-object p1, p1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore$DocumentInfo;->documentId:Ljava/lang/String;
 
     invoke-direct {p0, p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;->documentUri(Ljava/lang/String;)Landroid/net/Uri;
@@ -1598,11 +1598,11 @@
 
     goto :goto_0
 
-    .line 170
+    .line 173
     :cond_1
     move-object p1, p2
 
-    .line 175
+    .line 178
     :goto_0
     :try_start_1
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;->configuration:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncConfiguration;
@@ -1616,13 +1616,13 @@
     .catch Ljava/io/IOException; {:try_start_1 .. :try_end_1} :catch_0
     .catchall {:try_start_1 .. :try_end_1} :catchall_1
 
-    .line 176
+    .line 179
     nop
 
-    .line 183
+    .line 186
     nop
 
-    .line 184
+    .line 187
     :try_start_2
     iget-object v1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;->configuration:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncConfiguration;
 
@@ -1630,25 +1630,25 @@
 
     invoke-direct {p0, v0, v1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;->verifyDisplayName(Landroid/net/Uri;Ljava/lang/String;)V
 
-    .line 185
+    .line 188
     if-eqz p1, :cond_2
 
-    .line 186
+    .line 189
     invoke-direct {p0, p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;->delete(Landroid/net/Uri;)V
     :try_end_2
     .catchall {:try_start_2 .. :try_end_2} :catchall_0
 
-    .line 187
+    .line 190
     nop
 
-    .line 190
+    .line 193
     :cond_2
     nop
 
-    .line 192
+    .line 195
     return-void
 
-    .line 190
+    .line 193
     :catchall_0
     move-exception p1
 
@@ -1656,14 +1656,14 @@
 
     goto :goto_1
 
-    .line 177
+    .line 180
     :catch_0
     move-exception p2
 
-    .line 178
+    .line 181
     if-eqz p1, :cond_3
 
-    .line 179
+    .line 182
     :try_start_3
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;->configuration:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncConfiguration;
 
@@ -1671,14 +1671,14 @@
 
     invoke-direct {p0, p1, v0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;->rename(Landroid/net/Uri;Ljava/lang/String;)Landroid/net/Uri;
 
-    .line 180
+    .line 183
     nop
 
-    .line 182
+    .line 185
     :cond_3
     throw p2
 
-    .line 163
+    .line 166
     :cond_4
     new-instance p1, Ljava/io/IOException;
 
@@ -1690,7 +1690,7 @@
     :try_end_3
     .catchall {:try_start_3 .. :try_end_3} :catchall_1
 
-    .line 190
+    .line 193
     :catchall_1
     move-exception p1
 
@@ -1699,11 +1699,11 @@
 
     invoke-direct {p0, v2}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;->deleteQuietly(Landroid/net/Uri;)V
 
-    .line 191
+    .line 194
     :cond_5
     throw p1
 
-    .line 149
+    .line 152
     :cond_6
     new-instance p1, Ljava/io/IOException;
 
@@ -1715,7 +1715,7 @@
 .end method
 
 .method public readSnapshot(Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore$SnapshotDocument;)Lcom/google/android/inputmethod/pinyin/rimesync/RimeUserDbSnapshot;
-    .locals 6
+    .locals 4
     .annotation system Ldalvik/annotation/Throws;
         value = {
             Ljava/io/IOException;
@@ -1736,29 +1736,29 @@
     :try_start_0
     iget-object v2, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;->resolver:Landroid/content/ContentResolver;
 
-    iget-object p1, p1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore$SnapshotDocument;->uri:Landroid/net/Uri;
+    iget-object v3, p1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore$SnapshotDocument;->uri:Landroid/net/Uri;
 
-    invoke-virtual {v2, p1}, Landroid/content/ContentResolver;->openInputStream(Landroid/net/Uri;)Ljava/io/InputStream;
+    invoke-virtual {v2, v3}, Landroid/content/ContentResolver;->openInputStream(Landroid/net/Uri;)Ljava/io/InputStream;
 
-    move-result-object p1
+    move-result-object v2
     :try_end_0
-    .catch Ljava/io/IOException; {:try_start_0 .. :try_end_0} :catch_3
-    .catch Ljava/lang/RuntimeException; {:try_start_0 .. :try_end_0} :catch_2
+    .catch Ljava/io/IOException; {:try_start_0 .. :try_end_0} :catch_4
+    .catch Ljava/lang/RuntimeException; {:try_start_0 .. :try_end_0} :catch_3
     .catchall {:try_start_0 .. :try_end_0} :catchall_2
 
     .line 107
     nop
 
     .line 108
-    if-eqz p1, :cond_1
+    if-eqz v2, :cond_0
 
     .line 111
     :try_start_1
     new-instance v0, Ljava/io/InputStreamReader;
 
-    sget-object v2, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;->UTF_8:Ljava/nio/charset/Charset;
+    sget-object v3, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;->UTF_8:Ljava/nio/charset/Charset;
 
-    invoke-direct {v0, p1, v2}, Ljava/io/InputStreamReader;-><init>(Ljava/io/InputStream;Ljava/nio/charset/Charset;)V
+    invoke-direct {v0, v2, v3}, Ljava/io/InputStreamReader;-><init>(Ljava/io/InputStream;Ljava/nio/charset/Charset;)V
     :try_end_1
     .catchall {:try_start_1 .. :try_end_1} :catchall_1
 
@@ -1766,142 +1766,133 @@
     :try_start_2
     invoke-static {v0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeUserDbSnapshot;->read(Ljava/io/Reader;)Lcom/google/android/inputmethod/pinyin/rimesync/RimeUserDbSnapshot;
 
-    move-result-object v2
+    move-result-object v1
     :try_end_2
-    .catch Ljava/io/IOException; {:try_start_2 .. :try_end_2} :catch_1
+    .catch Ljava/io/IOException; {:try_start_2 .. :try_end_2} :catch_2
     .catchall {:try_start_2 .. :try_end_2} :catchall_0
 
     .line 117
     nop
 
-    .line 118
+    .line 119
     :try_start_3
     iget-object v3, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;->configuration:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncConfiguration;
 
-    iget-object v3, v3, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncConfiguration;->databaseName:Ljava/lang/String;
+    iget-boolean p1, p1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore$SnapshotDocument;->bridgeOwned:Z
 
-    invoke-virtual {v2}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeUserDbSnapshot;->dbName()Ljava/lang/String;
-
-    move-result-object v4
-
-    invoke-virtual {v3, v4}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
-
-    move-result v3
+    invoke-static {v1, v3, p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCore;->normalizeSnapshotDatabase(Lcom/google/android/inputmethod/pinyin/rimesync/RimeUserDbSnapshot;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncConfiguration;Z)V
     :try_end_3
+    .catch Ljava/io/IOException; {:try_start_3 .. :try_end_3} :catch_1
     .catchall {:try_start_3 .. :try_end_3} :catchall_0
 
-    if-eqz v3, :cond_0
+    .line 123
+    nop
 
-    .line 122
+    .line 125
     :try_start_4
     invoke-virtual {v0}, Ljava/io/Reader;->close()V
     :try_end_4
     .catch Ljava/io/IOException; {:try_start_4 .. :try_end_4} :catch_0
     .catchall {:try_start_4 .. :try_end_4} :catchall_0
 
-    .line 125
-    nop
-
-    .line 126
-    nop
-
-    .line 127
-    nop
-
     .line 128
+    nop
+
+    .line 129
     nop
 
     .line 130
     nop
 
-    .line 135
+    .line 131
     nop
 
-    .line 128
-    return-object v2
+    .line 133
+    nop
 
-    .line 123
+    .line 138
+    nop
+
+    .line 131
+    return-object v1
+
+    .line 126
     :catch_0
-    move-exception v1
+    move-exception p1
 
-    .line 124
+    .line 127
     :try_start_5
-    new-instance v2, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore$SnapshotReadException;
+    new-instance v1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore$SnapshotReadException;
 
     const/4 v3, 0x4
 
-    invoke-direct {v2, v3, v1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore$SnapshotReadException;-><init>(ILjava/lang/Throwable;)V
+    invoke-direct {v1, v3, p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore$SnapshotReadException;-><init>(ILjava/lang/Throwable;)V
 
-    throw v2
+    throw v1
 
-    .line 119
-    :cond_0
-    new-instance v2, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore$SnapshotReadException;
+    .line 121
+    :catch_1
+    move-exception p1
+
+    .line 122
+    new-instance v1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore$SnapshotReadException;
 
     const/4 v3, 0x3
 
-    invoke-direct {v2, v3, v1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore$SnapshotReadException;-><init>(ILjava/lang/Throwable;)V
+    invoke-direct {v1, v3, p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore$SnapshotReadException;-><init>(ILjava/lang/Throwable;)V
 
-    throw v2
+    throw v1
 
-    .line 130
+    .line 133
     :catchall_0
-    move-exception v1
+    move-exception p1
+
+    move-object v1, v0
 
     goto :goto_0
 
     .line 115
-    :catch_1
-    move-exception v1
+    :catch_2
+    move-exception p1
 
     .line 116
-    new-instance v2, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore$SnapshotReadException;
+    new-instance v1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore$SnapshotReadException;
 
     const/4 v3, 0x2
 
-    invoke-direct {v2, v3, v1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore$SnapshotReadException;-><init>(ILjava/lang/Throwable;)V
+    invoke-direct {v1, v3, p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore$SnapshotReadException;-><init>(ILjava/lang/Throwable;)V
 
-    throw v2
+    throw v1
     :try_end_5
     .catchall {:try_start_5 .. :try_end_5} :catchall_0
 
-    .line 130
+    .line 133
     :catchall_1
-    move-exception v0
-
-    move-object v5, v1
-
-    move-object v1, v0
-
-    move-object v0, v5
+    move-exception p1
 
     goto :goto_0
 
     .line 109
-    :cond_1
+    :cond_0
     :try_start_6
-    new-instance v2, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore$SnapshotReadException;
+    new-instance p1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore$SnapshotReadException;
 
-    invoke-direct {v2, v0, v1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore$SnapshotReadException;-><init>(ILjava/lang/Throwable;)V
+    invoke-direct {p1, v0, v1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore$SnapshotReadException;-><init>(ILjava/lang/Throwable;)V
 
-    throw v2
+    throw p1
     :try_end_6
     .catchall {:try_start_6 .. :try_end_6} :catchall_1
 
-    .line 130
+    .line 133
     :catchall_2
     move-exception p1
 
-    move-object v0, v1
-
-    move-object v1, p1
-
-    move-object p1, v0
+    move-object v2, v1
 
     goto :goto_0
 
     .line 105
-    :catch_2
+    :catch_3
     move-exception p1
 
     .line 106
@@ -1913,7 +1904,7 @@
     throw v2
 
     .line 103
-    :catch_3
+    :catch_4
     move-exception p1
 
     .line 104
@@ -1925,52 +1916,52 @@
     :try_end_7
     .catchall {:try_start_7 .. :try_end_7} :catchall_2
 
-    .line 130
+    .line 133
     :goto_0
-    if-nez v0, :cond_2
-
-    .line 135
-    if-eqz p1, :cond_3
-
-    .line 137
-    :try_start_8
-    invoke-virtual {p1}, Ljava/io/InputStream;->close()V
-    :try_end_8
-    .catch Ljava/io/IOException; {:try_start_8 .. :try_end_8} :catch_4
-
-    .line 139
-    goto :goto_2
+    if-nez v1, :cond_1
 
     .line 138
-    :catch_4
-    move-exception p1
+    if-eqz v2, :cond_2
+
+    .line 140
+    :try_start_8
+    invoke-virtual {v2}, Ljava/io/InputStream;->close()V
+    :try_end_8
+    .catch Ljava/io/IOException; {:try_start_8 .. :try_end_8} :catch_5
+
+    .line 142
+    goto :goto_2
+
+    .line 141
+    :catch_5
+    move-exception v0
 
     goto :goto_2
 
-    .line 132
-    :cond_2
+    .line 135
+    :cond_1
     :try_start_9
-    invoke-virtual {v0}, Ljava/io/Reader;->close()V
+    invoke-virtual {v1}, Ljava/io/Reader;->close()V
     :try_end_9
-    .catch Ljava/io/IOException; {:try_start_9 .. :try_end_9} :catch_5
+    .catch Ljava/io/IOException; {:try_start_9 .. :try_end_9} :catch_6
 
-    .line 134
+    .line 137
     :goto_1
     goto :goto_2
 
-    .line 133
-    :catch_5
-    move-exception p1
+    .line 136
+    :catch_6
+    move-exception v0
 
     goto :goto_1
 
-    .line 141
-    :cond_3
+    .line 144
+    :cond_2
     :goto_2
     goto :goto_4
 
     :goto_3
-    throw v1
+    throw p1
 
     :goto_4
     goto :goto_3
@@ -1984,7 +1975,7 @@
         }
     .end annotation
 
-    .line 196
+    .line 199
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;->rootDocumentId:Ljava/lang/String;
 
     iget-object v1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;->configuration:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncConfiguration;
@@ -1995,14 +1986,14 @@
 
     move-result-object v0
 
-    .line 198
+    .line 201
     if-nez v0, :cond_0
 
     const/4 v0, 0x0
 
     return-object v0
 
-    .line 199
+    .line 202
     :cond_0
     const-string v1, "vnd.android.document/directory"
 
@@ -2014,15 +2005,15 @@
 
     if-eqz v1, :cond_1
 
-    .line 202
+    .line 205
     iget-object v1, v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore$DocumentInfo;->documentId:Ljava/lang/String;
 
     invoke-direct {p0, v1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;->recoverPublishedFile(Ljava/lang/String;)V
 
-    .line 203
+    .line 206
     return-object v0
 
-    .line 200
+    .line 203
     :cond_1
     new-instance v0, Ljava/io/IOException;
 
