@@ -257,6 +257,7 @@ private fun SettingsRoutePage(
                         dictionarySnapshot.backupInProgress || dictionarySnapshot.clearInProgress,
                         actions.rimeSync,
                     )
+                    dictionaryShortcutSettingsItems(dictionarySnapshot, actions)
                 }
                 SettingsRoute.Other -> otherSettingsItems(snapshot, actions, navigateTo)
                 SettingsRoute.About -> aboutSettingsItems(actions)

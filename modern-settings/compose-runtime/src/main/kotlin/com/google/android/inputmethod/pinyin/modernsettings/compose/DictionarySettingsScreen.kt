@@ -152,6 +152,12 @@ internal fun LazyListScope.dictionarySettingsItems(
             onClick = actions.onImportBackup,
         )
     }
+}
+
+internal fun LazyListScope.dictionaryShortcutSettingsItems(
+    snapshot: DictionarySettingsSnapshot,
+    actions: SettingsActions,
+) {
     item(key = "dictionary_shortcuts_section", contentType = "section") {
         SectionTitle(
             legacyString(
