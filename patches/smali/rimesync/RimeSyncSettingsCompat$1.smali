@@ -3,12 +3,12 @@
 .source "RimeSyncSettingsCompat.java"
 
 # interfaces
-.implements Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Operation;
+.implements Ljava/lang/Runnable;
 
 
 # annotations
-.annotation system Ldalvik/annotation/EnclosingMethod;
-    value = Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->readAsync(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Callback;)V
+.annotation system Ldalvik/annotation/EnclosingClass;
+    value = Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;
 .end annotation
 
 .annotation system Ldalvik/annotation/InnerClass;
@@ -21,7 +21,7 @@
 .method constructor <init>()V
     .locals 0
 
-    .line 102
+    .line 62
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
     return-void
@@ -29,20 +29,36 @@
 
 
 # virtual methods
-.method public run(Landroid/content/Context;)Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;
-    .locals 0
+.method public run()V
+    .locals 2
 
-    .line 104
-    invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeAutoSync;->reconcile(Landroid/content/Context;)Z
+    .line 64
+    invoke-static {}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->access$000()Ljava/util/concurrent/CopyOnWriteArraySet;
 
-    .line 105
-    invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->read(Landroid/content/Context;)Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Settings;
+    move-result-object v0
 
-    move-result-object p1
+    invoke-virtual {v0}, Ljava/util/concurrent/CopyOnWriteArraySet;->iterator()Ljava/util/Iterator;
 
-    invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;->success(Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Settings;)Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;
+    move-result-object v0
 
-    move-result-object p1
+    :goto_0
+    invoke-interface {v0}, Ljava/util/Iterator;->hasNext()Z
 
-    return-object p1
+    move-result v1
+
+    if-eqz v1, :cond_0
+
+    invoke-interface {v0}, Ljava/util/Iterator;->next()Ljava/lang/Object;
+
+    move-result-object v1
+
+    check-cast v1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$StateListener;
+
+    invoke-interface {v1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$StateListener;->onChanged()V
+
+    goto :goto_0
+
+    .line 65
+    :cond_0
+    return-void
 .end method

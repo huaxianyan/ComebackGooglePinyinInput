@@ -76,19 +76,23 @@ internal fun LazyListScope.rimeSyncSettingsItems(
                 onCheckedChange = actions.onAutomaticChange,
             )
         }
-        item(key = "rime_sync_automatic_interval", contentType = "slider") {
+        item(key = "rime_sync_automatic_interval", contentType = "list") {
             val context = LocalContext.current
-            DiscreteSettingsSlider(
+            val labels = auto.intervalOptions.map { hours ->
+                if (hours > 24 && hours % 24 == 0) {
+                    context.getString(R.string.modern_settings_rime_auto_days, hours / 24)
+                } else {
+                    context.getString(R.string.modern_settings_rime_auto_hours, hours)
+                }
+            }
+            val selectedIndex = auto.intervalOptions.indexOf(auto.intervalHours)
+            EnumeratedListSetting(
                 title = stringResource(R.string.modern_settings_rime_auto_interval),
-                value = (auto.intervalHours - auto.minHours).toFloat(),
-                valueText = stringResource(R.string.modern_settings_rime_auto_hours, auto.intervalHours),
-                valueTextForIndex = { context.getString(
-                    R.string.modern_settings_rime_auto_hours, it + auto.minHours,
-                ) },
-                maximumIndex = auto.maxHours - auto.minHours,
-                dependencyEnabled = !settings.operationInProgress && !dictionaryOperationInProgress,
-                editable = true,
-                onValueCommit = { actions.onAutomaticIntervalChange(it + auto.minHours) },
+                selectedIndex = selectedIndex,
+                selectedLabel = labels[selectedIndex],
+                labels = labels,
+                enabled = auto.enabled && !settings.operationInProgress && !dictionaryOperationInProgress,
+                onSelect = { actions.onAutomaticIntervalChange(auto.intervalOptions[it]) },
             )
         }
     }

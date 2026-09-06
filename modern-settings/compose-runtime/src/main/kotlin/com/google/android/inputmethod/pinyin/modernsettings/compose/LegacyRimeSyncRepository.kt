@@ -10,8 +10,7 @@ import java.lang.reflect.Proxy
 data class RimeAutomaticSettings(
     val enabled: Boolean,
     val intervalHours: Int,
-    val minHours: Int,
-    val maxHours: Int,
+    val intervalOptions: List<Int>,
     val lastError: Int,
 )
 
@@ -170,6 +169,21 @@ internal class LegacyRimeSyncRepository(private val activity: Activity) {
         ), arrayOf(context, uri, label, callback(done)), done)
     }
 
+    fun observeChanges(changed: () -> Unit): () -> Unit {
+        val listenerType = Class.forName(type.name + "\$StateListener")
+        val listener = Proxy.newProxyInstance(listenerType.classLoader, arrayOf(listenerType)) { proxy, method, args ->
+            when (method.name) {
+                "onChanged" -> { changed(); null }
+                "hashCode" -> System.identityHashCode(proxy)
+                "equals" -> proxy === args?.firstOrNull()
+                "toString" -> "RimeSettingsStateListener"
+                else -> null
+            }
+        }
+        type.getMethod("addStateListener", listenerType).invoke(null, listener)
+        return { type.getMethod("removeStateListener", listenerType).invoke(null, listener); Unit }
+    }
+
     fun configureAutomatic(enabled: Boolean, hours: Int, done: (RimeSyncResponse) -> Unit) {
         invokeAsync("configureAutomaticAsync", arrayOf(
             Context::class.java, Boolean::class.javaPrimitiveType!!,
@@ -271,8 +285,7 @@ internal class LegacyRimeSyncRepository(private val activity: Activity) {
             automatic = RimeAutomaticSettings(
                 enabled = autoType.getField("enabled").getBoolean(auto),
                 intervalHours = autoType.getField("intervalHours").getInt(auto),
-                minHours = autoType.getField("minHours").getInt(auto),
-                maxHours = autoType.getField("maxHours").getInt(auto),
+                intervalOptions = (autoType.getField("intervalOptions").get(auto) as IntArray).toList(),
                 lastError = autoType.getField("lastError").getInt(auto),
             ),            rootUri = valueType.getField("rootUri").get(value) as String,
             rootLabel = valueType.getField("rootLabel").get(value) as String,

@@ -44,53 +44,53 @@
 .method private constructor <init>(Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Settings;ZIZLjava/lang/String;IIIIIIZ)V
     .locals 0
 
-    .line 548
+    .line 572
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
-    .line 549
+    .line 573
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;->settings:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Settings;
 
-    .line 550
+    .line 574
     iput-boolean p2, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;->success:Z
 
-    .line 551
+    .line 575
     iput p3, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;->errorCode:I
 
-    .line 552
+    .line 576
     iput-boolean p4, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;->preview:Z
 
-    .line 553
+    .line 577
     iput-object p5, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;->confirmationToken:Ljava/lang/String;
 
-    .line 554
+    .line 578
     iput p6, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;->googleAdditionCount:I
 
-    .line 555
+    .line 579
     iput p7, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;->googleDeletionCount:I
 
-    .line 556
+    .line 580
     iput p8, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;->rimeAdditionCount:I
 
-    .line 557
+    .line 581
     iput p9, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;->rimeDeletionCount:I
 
-    .line 558
+    .line 582
     iput p10, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;->rimeResurrectionCount:I
 
-    .line 559
+    .line 583
     iput p11, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;->projectedGoogleEntryCount:I
 
-    .line 560
+    .line 584
     iput-boolean p12, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;->requiresDeletionConfirmation:Z
 
-    .line 561
+    .line 585
     return-void
 .end method
 
 .method static completed(Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Settings;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCoordinator$Result;)Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;
     .locals 13
 
-    .line 582
+    .line 606
     new-instance v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;
 
     iget v6, p1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCoordinator$Result;->googleAdditionCount:I
@@ -125,7 +125,7 @@
 .method static error(Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Settings;I)Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;
     .locals 13
 
-    .line 569
+    .line 593
     new-instance v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;
 
     const/4 v11, 0x0
@@ -160,7 +160,7 @@
 .method static preview(Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Settings;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCoordinator$Preview;)Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;
     .locals 13
 
-    .line 574
+    .line 598
     new-instance v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;
 
     iget-object v5, p1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCoordinator$Preview;->confirmationToken:Ljava/lang/String;
@@ -195,7 +195,7 @@
 .method static success(Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Settings;)Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;
     .locals 13
 
-    .line 564
+    .line 588
     new-instance v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;
 
     const/4 v11, 0x0
@@ -232,7 +232,7 @@
 .method withSettings(Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Settings;)Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;
     .locals 13
 
-    .line 589
+    .line 613
     new-instance v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;
 
     iget-boolean v2, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;->success:Z

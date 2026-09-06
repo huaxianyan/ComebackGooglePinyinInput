@@ -57,6 +57,23 @@ public final class RimeSyncSettingsCompat {
     private static final ExecutorService IO = Executors.newSingleThreadExecutor();
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
     private static final AtomicBoolean BUSY = new AtomicBoolean();
+    private static final java.util.concurrent.CopyOnWriteArraySet<StateListener> LISTENERS =
+            new java.util.concurrent.CopyOnWriteArraySet<StateListener>();
+    private static final Runnable STATE_CHANGED = new Runnable() {
+        @Override public void run() {
+            for (StateListener listener : LISTENERS) listener.onChanged();
+        }
+    };
+
+    public interface StateListener { void onChanged(); }
+
+    public static void addStateListener(StateListener listener) { LISTENERS.add(listener); }
+    public static void removeStateListener(StateListener listener) { LISTENERS.remove(listener); }
+
+    static synchronized void notifyStateChanged() {
+        MAIN.removeCallbacks(STATE_CHANGED);
+        MAIN.post(STATE_CHANGED);
+    }
 
     private RimeSyncSettingsCompat() {}
 
@@ -99,10 +116,16 @@ public final class RimeSyncSettingsCompat {
     }
 
     public static void readAsync(final Context source, final Callback callback) {
-        submit(source, callback, new Operation() {
-            @Override public Result run(Context context) {
-                RimeAutoSync.reconcile(context);
-                return Result.success(read(context));
+        final Context context = source.getApplicationContext();
+        // Reading state does not begin a synchronization or emit another state change.
+        IO.execute(new Runnable() {
+            @Override public void run() {
+                try {
+                    RimeAutoSync.reconcile(context);
+                    deliver(callback, Result.success(read(context)));
+                } catch (RuntimeException failure) {
+                    deliver(callback, Result.error(read(context), ERROR_OPERATION_FAILED));
+                }
             }
         });
     }
@@ -354,6 +377,7 @@ public final class RimeSyncSettingsCompat {
                     result = Result.error(read(context), ERROR_OPERATION_FAILED);
                 }
                 BUSY.set(false);
+                notifyStateChanged();
                 deliver(callback, result.withSettings(read(context)));
             }
         });

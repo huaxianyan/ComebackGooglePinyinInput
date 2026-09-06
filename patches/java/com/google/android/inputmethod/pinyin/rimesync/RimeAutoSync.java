@@ -24,13 +24,13 @@ public final class RimeAutoSync {
     public static final class Settings {
         public final boolean enabled;
         public final int intervalHours;
-        public final int minHours = RimeAutoSyncPolicy.MIN_HOURS;
-        public final int maxHours = RimeAutoSyncPolicy.MAX_HOURS;
+        public final int[] intervalOptions;
         public final int lastError;
 
         Settings(boolean enabled, int intervalHours, int lastError) {
             this.enabled = enabled;
             this.intervalHours = intervalHours;
+            this.intervalOptions = RimeAutoSyncPolicy.intervalOptions(intervalHours);
             this.lastError = lastError;
         }
     }
@@ -46,7 +46,9 @@ public final class RimeAutoSync {
         RimeAutoSyncPolicy.intervalMillis(hours);
         preferences(context).edit().putInt(INTERVAL, hours).putBoolean(ENABLED, enabled)
                 .putInt(LAST_ERROR, 0).apply();
-        return reconcile(context);
+        boolean scheduled = reconcile(context);
+        RimeSyncSettingsCompat.notifyStateChanged();
+        return scheduled;
     }
 
     public static boolean reconcile(Context context) {
@@ -71,6 +73,7 @@ public final class RimeAutoSync {
         if (scheduler.schedule(job) != JobScheduler.RESULT_SUCCESS) {
             preferences(context).edit().putBoolean(ENABLED, false)
                     .putInt(LAST_ERROR, RimeSyncSettingsCompat.ERROR_OPERATION_FAILED).apply();
+            RimeSyncSettingsCompat.notifyStateChanged();
             return false;
         }
         return true;
@@ -85,6 +88,7 @@ public final class RimeAutoSync {
         if (pause) editor.putBoolean(ENABLED, false);
         editor.apply();
         if (pause) reconcile(context);
+        RimeSyncSettingsCompat.notifyStateChanged();
         return !result.success && !pause;
     }
 

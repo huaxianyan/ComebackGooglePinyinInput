@@ -36,7 +36,7 @@
 .method static completed(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;)Z
     .locals 5
 
-    .line 81
+    .line 84
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeAutoSync;->read(Landroid/content/Context;)Lcom/google/android/inputmethod/pinyin/rimesync/RimeAutoSync$Settings;
 
     move-result-object v0
@@ -49,13 +49,13 @@
 
     return v1
 
-    .line 82
+    .line 85
     :cond_0
     invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeAutoSync;->requiresAttention(Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;)Z
 
     move-result v0
 
-    .line 83
+    .line 86
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeAutoSync;->preferences(Landroid/content/Context;)Landroid/content/SharedPreferences;
 
     move-result-object v2
@@ -66,31 +66,34 @@
 
     iget v3, p1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;->errorCode:I
 
-    .line 84
+    .line 87
     const-string v4, "last_error"
 
     invoke-interface {v2, v4, v3}, Landroid/content/SharedPreferences$Editor;->putInt(Ljava/lang/String;I)Landroid/content/SharedPreferences$Editor;
 
     move-result-object v2
 
-    .line 85
+    .line 88
     if-eqz v0, :cond_1
 
     const-string v3, "enabled"
 
     invoke-interface {v2, v3, v1}, Landroid/content/SharedPreferences$Editor;->putBoolean(Ljava/lang/String;Z)Landroid/content/SharedPreferences$Editor;
 
-    .line 86
+    .line 89
     :cond_1
     invoke-interface {v2}, Landroid/content/SharedPreferences$Editor;->apply()V
 
-    .line 87
+    .line 90
     if-eqz v0, :cond_2
 
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeAutoSync;->reconcile(Landroid/content/Context;)Z
 
-    .line 88
+    .line 91
     :cond_2
+    invoke-static {}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->notifyStateChanged()V
+
+    .line 92
     iget-boolean p0, p1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;->success:Z
 
     if-nez p0, :cond_3
@@ -146,6 +149,10 @@
 
     move-result p0
 
+    .line 50
+    invoke-static {}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->notifyStateChanged()V
+
+    .line 51
     return p0
 .end method
 
@@ -187,12 +194,12 @@
 
     move-result v1
 
+    sget v3, Lcom/google/android/inputmethod/pinyin/rimesync/RimeAutoSyncPolicy;->DEFAULT_HOURS:I
+
     .line 41
-    const-string v3, "interval_hours"
+    const-string v4, "interval_hours"
 
-    const/16 v4, 0x18
-
-    invoke-interface {p0, v3, v4}, Landroid/content/SharedPreferences;->getInt(Ljava/lang/String;I)I
+    invoke-interface {p0, v4, v3}, Landroid/content/SharedPreferences;->getInt(Ljava/lang/String;I)I
 
     move-result v3
 
@@ -211,7 +218,7 @@
 .method public static reconcile(Landroid/content/Context;)Z
     .locals 12
 
-    .line 53
+    .line 55
     sget v0, Landroid/os/Build$VERSION;->SDK_INT:I
 
     const/16 v1, 0x15
@@ -222,13 +229,13 @@
 
     return v2
 
-    .line 54
+    .line 56
     :cond_0
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeAutoSync;->read(Landroid/content/Context;)Lcom/google/android/inputmethod/pinyin/rimesync/RimeAutoSync$Settings;
 
     move-result-object v0
 
-    .line 55
+    .line 57
     const-string v1, "jobscheduler"
 
     invoke-virtual {p0, v1}, Landroid/content/Context;->getSystemService(Ljava/lang/String;)Ljava/lang/Object;
@@ -237,7 +244,7 @@
 
     check-cast v1, Landroid/app/job/JobScheduler;
 
-    .line 56
+    .line 58
     iget-boolean v3, v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeAutoSync$Settings;->enabled:Z
 
     const v4, 0x52494d45
@@ -246,13 +253,13 @@
 
     if-nez v3, :cond_1
 
-    .line 57
+    .line 59
     invoke-virtual {v1, v4}, Landroid/app/job/JobScheduler;->cancel(I)V
 
-    .line 58
+    .line 60
     return v5
 
-    .line 60
+    .line 62
     :cond_1
     iget v0, v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeAutoSync$Settings;->intervalHours:I
 
@@ -260,14 +267,14 @@
 
     move-result-wide v6
 
-    .line 61
+    .line 63
     new-instance v0, Landroid/content/ComponentName;
 
     const-class v3, Lcom/google/android/inputmethod/pinyin/rimesync/RimeAutoSyncJobService;
 
     invoke-direct {v0, p0, v3}, Landroid/content/ComponentName;-><init>(Landroid/content/Context;Ljava/lang/Class;)V
 
-    .line 62
+    .line 64
     invoke-virtual {v1}, Landroid/app/job/JobScheduler;->getAllPendingJobs()Ljava/util/List;
 
     move-result-object v3
@@ -289,7 +296,7 @@
 
     check-cast v8, Landroid/app/job/JobInfo;
 
-    .line 63
+    .line 65
     invoke-virtual {v8}, Landroid/app/job/JobInfo;->getId()I
 
     move-result v9
@@ -304,7 +311,7 @@
 
     if-nez v11, :cond_2
 
-    .line 64
+    .line 66
     invoke-virtual {v8}, Landroid/app/job/JobInfo;->getService()Landroid/content/ComponentName;
 
     move-result-object v8
@@ -317,11 +324,11 @@
 
     return v5
 
-    .line 65
+    .line 67
     :cond_2
     goto :goto_0
 
-    .line 66
+    .line 68
     :cond_3
     new-instance v3, Landroid/app/job/JobInfo$Builder;
 
@@ -331,31 +338,31 @@
 
     move-result-object v0
 
-    .line 67
+    .line 69
     invoke-virtual {v0, v6, v7}, Landroid/app/job/JobInfo$Builder;->setPeriodic(J)Landroid/app/job/JobInfo$Builder;
 
     move-result-object v0
 
-    .line 68
+    .line 70
     const-wide/32 v3, 0x1b7740
 
     invoke-virtual {v0, v3, v4, v5}, Landroid/app/job/JobInfo$Builder;->setBackoffCriteria(JI)Landroid/app/job/JobInfo$Builder;
 
     move-result-object v0
 
-    .line 70
+    .line 72
     invoke-virtual {v0}, Landroid/app/job/JobInfo$Builder;->build()Landroid/app/job/JobInfo;
 
     move-result-object v0
 
-    .line 71
+    .line 73
     invoke-virtual {v1, v0}, Landroid/app/job/JobScheduler;->schedule(Landroid/app/job/JobInfo;)I
 
     move-result v0
 
     if-eq v0, v5, :cond_4
 
-    .line 72
+    .line 74
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeAutoSync;->preferences(Landroid/content/Context;)Landroid/content/SharedPreferences;
 
     move-result-object p0
@@ -370,7 +377,7 @@
 
     move-result-object p0
 
-    .line 73
+    .line 75
     const-string v0, "last_error"
 
     const/4 v1, 0x7
@@ -381,10 +388,13 @@
 
     invoke-interface {p0}, Landroid/content/SharedPreferences$Editor;->apply()V
 
-    .line 74
+    .line 76
+    invoke-static {}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->notifyStateChanged()V
+
+    .line 77
     return v2
 
-    .line 76
+    .line 79
     :cond_4
     return v5
 .end method
@@ -392,19 +402,19 @@
 .method static requiresAttention(Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;)Z
     .locals 2
 
-    .line 92
+    .line 96
     iget v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;->errorCode:I
 
     const/4 v1, 0x1
 
     sparse-switch v0, :sswitch_data_0
 
-    .line 101
+    .line 105
     const/4 p0, 0x0
 
     return p0
 
-    .line 99
+    .line 103
     :sswitch_0
     iget-object p0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;->settings:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Settings;
 
@@ -414,7 +424,7 @@
 
     return p0
 
-    .line 97
+    .line 101
     :sswitch_1
     return v1
 

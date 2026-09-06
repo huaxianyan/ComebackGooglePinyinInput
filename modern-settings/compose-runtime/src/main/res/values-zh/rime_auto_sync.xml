@@ -3,6 +3,7 @@
     <string name="modern_settings_rime_auto_summary">按设定间隔同步所选目录中的词条变化，执行时间可能由系统延后</string>
     <string name="modern_settings_rime_auto_interval">同步间隔</string>
     <string name="modern_settings_rime_auto_hours">%1$d 小时</string>
+    <string name="modern_settings_rime_auto_days">%1$d 天</string>
     <string name="modern_settings_rime_auto_prerequisite">请先完成一次手动同步，再开启自动同步</string>
     <string name="modern_settings_rime_auto_retry">上次同步未完成，应用会稍后再试</string>
     <string name="modern_settings_rime_auto_paused">自动同步已暂停，请手动同步查看原因，处理后重新开启</string>

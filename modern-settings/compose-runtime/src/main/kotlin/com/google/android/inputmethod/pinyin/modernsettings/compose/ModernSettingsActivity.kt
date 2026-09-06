@@ -439,6 +439,19 @@ class ModernSettingsActivity : ComponentActivity() {
         }
     }
 
+    private var detachRimeObserver: (() -> Unit)? = null
+
+    override fun onStart() {
+        super.onStart()
+        detachRimeObserver = rimeRepository.observeChanges { refreshRimeSettings() }
+    }
+
+    override fun onStop() {
+        detachRimeObserver?.invoke()
+        detachRimeObserver = null
+        super.onStop()
+    }
+
     override fun onResume() {
         super.onResume()
         snapshot = controller.read()
@@ -456,7 +469,7 @@ class ModernSettingsActivity : ComponentActivity() {
             ).show()
         }
         refreshDictionaryUntilIdle()
-        if (::rimeRepository.isInitialized && !rimeSync.settings.operationInProgress) {
+        if (::rimeRepository.isInitialized) {
             refreshRimeSettings()
         }
     }
@@ -510,8 +523,9 @@ class ModernSettingsActivity : ComponentActivity() {
 
     private fun refreshRimeSettings() {
         rimeRepository.load { response ->
-            rimeSync = rimeSync.copy(settings = response.settings)
-            if (!response.success) showRimeError(response.error)
+            if (detachRimeObserver != null && !isFinishing && !isDestroyed) {
+                rimeSync = rimeSync.copy(settings = response.settings)
+            }
         }
     }
 

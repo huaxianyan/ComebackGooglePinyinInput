@@ -11,7 +11,8 @@
         Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;,
         Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Settings;,
         Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Operation;,
-        Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$LocationException;
+        Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$LocationException;,
+        Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$StateListener;
     }
 .end annotation
 
@@ -65,6 +66,16 @@
 
 .field private static final KEY_SNAPSHOT_FILE:Ljava/lang/String; = "rime_sync_snapshot_file"
 
+.field private static final LISTENERS:Ljava/util/concurrent/CopyOnWriteArraySet;
+    .annotation system Ldalvik/annotation/Signature;
+        value = {
+            "Ljava/util/concurrent/CopyOnWriteArraySet<",
+            "Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$StateListener;",
+            ">;"
+        }
+    .end annotation
+.end field
+
 .field private static final MAIN:Landroid/os/Handler;
 
 .field public static final NATIVE_FAILURE_DATA:I = 0xa
@@ -94,6 +105,8 @@
 .field private static final PREFERENCES:Ljava/lang/String; = "rime_dictionary_sync_preferences"
 
 .field private static final PROTOCOL_VERSION:I = 0x1
+
+.field private static final STATE_CHANGED:Ljava/lang/Runnable;
 
 
 # direct methods
@@ -125,13 +138,27 @@
 
     sput-object v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->BUSY:Ljava/util/concurrent/atomic/AtomicBoolean;
 
+    .line 60
+    new-instance v0, Ljava/util/concurrent/CopyOnWriteArraySet;
+
+    invoke-direct {v0}, Ljava/util/concurrent/CopyOnWriteArraySet;-><init>()V
+
+    sput-object v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->LISTENERS:Ljava/util/concurrent/CopyOnWriteArraySet;
+
+    .line 62
+    new-instance v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$1;
+
+    invoke-direct {v0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$1;-><init>()V
+
+    sput-object v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->STATE_CHANGED:Ljava/lang/Runnable;
+
     return-void
 .end method
 
 .method private constructor <init>()V
     .locals 0
 
-    .line 61
+    .line 78
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
     return-void
@@ -140,18 +167,27 @@
 .method public static acceptRootAsync(Landroid/content/Context;Landroid/net/Uri;Ljava/lang/String;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Callback;)V
     .locals 1
 
-    .line 204
-    new-instance v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$6;
+    .line 227
+    new-instance v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$7;
 
-    invoke-direct {v0, p1, p2}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$6;-><init>(Landroid/net/Uri;Ljava/lang/String;)V
+    invoke-direct {v0, p1, p2}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$7;-><init>(Landroid/net/Uri;Ljava/lang/String;)V
 
     invoke-static {p0, p3, v0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->submit(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Callback;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Operation;)V
 
-    .line 233
+    .line 256
     return-void
 .end method
 
-.method static synthetic access$000(Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Callback;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;)V
+.method static synthetic access$000()Ljava/util/concurrent/CopyOnWriteArraySet;
+    .locals 1
+
+    .line 15
+    sget-object v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->LISTENERS:Ljava/util/concurrent/CopyOnWriteArraySet;
+
+    return-object v0
+.end method
+
+.method static synthetic access$100(Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Callback;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;)V
     .locals 0
 
     .line 15
@@ -160,7 +196,7 @@
     return-void
 .end method
 
-.method static synthetic access$100(Landroid/content/Context;)Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$CoordinatorHandle;
+.method static synthetic access$200(Landroid/content/Context;)Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$CoordinatorHandle;
     .locals 0
     .annotation system Ldalvik/annotation/Throws;
         value = {
@@ -176,7 +212,7 @@
     return-object p0
 .end method
 
-.method static synthetic access$200(Landroid/content/Context;)Landroid/content/SharedPreferences;
+.method static synthetic access$300(Landroid/content/Context;)Landroid/content/SharedPreferences;
     .locals 0
 
     .line 15
@@ -187,7 +223,7 @@
     return-object p0
 .end method
 
-.method static synthetic access$300(Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore;Ljava/lang/String;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncConfiguration;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;)Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;
+.method static synthetic access$400(Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore;Ljava/lang/String;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncConfiguration;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;)Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;
     .locals 0
     .annotation system Ldalvik/annotation/Throws;
         value = {
@@ -203,7 +239,7 @@
     return-object p0
 .end method
 
-.method static synthetic access$400(Landroid/content/SharedPreferences;)Ljava/lang/String;
+.method static synthetic access$500(Landroid/content/SharedPreferences;)Ljava/lang/String;
     .locals 0
 
     .line 15
@@ -214,7 +250,7 @@
     return-object p0
 .end method
 
-.method static synthetic access$500(Landroid/content/Context;)Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncConfiguration;
+.method static synthetic access$600(Landroid/content/Context;)Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncConfiguration;
     .locals 0
 
     .line 15
@@ -225,7 +261,7 @@
     return-object p0
 .end method
 
-.method static synthetic access$600(I)I
+.method static synthetic access$700(I)I
     .locals 0
 
     .line 15
@@ -236,7 +272,7 @@
     return p0
 .end method
 
-.method static synthetic access$700()Ljava/util/concurrent/atomic/AtomicBoolean;
+.method static synthetic access$800()Ljava/util/concurrent/atomic/AtomicBoolean;
     .locals 1
 
     .line 15
@@ -245,23 +281,34 @@
     return-object v0
 .end method
 
+.method public static addStateListener(Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$StateListener;)V
+    .locals 1
+
+    .line 70
+    sget-object v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->LISTENERS:Ljava/util/concurrent/CopyOnWriteArraySet;
+
+    invoke-virtual {v0, p0}, Ljava/util/concurrent/CopyOnWriteArraySet;->add(Ljava/lang/Object;)Z
+
+    return-void
+.end method
+
 .method private static configuration(Landroid/content/Context;)Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncConfiguration;
     .locals 4
 
-    .line 434
+    .line 458
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->preferences(Landroid/content/Context;)Landroid/content/SharedPreferences;
 
     move-result-object p0
 
-    .line 435
+    .line 459
     new-instance v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncConfiguration;
 
-    .line 436
+    .line 460
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->deviceName(Landroid/content/SharedPreferences;)Ljava/lang/String;
 
     move-result-object v1
 
-    .line 437
+    .line 461
     const-string v2, "rime_sync_snapshot_file"
 
     const-string v3, "pinyin_simp.userdb.txt"
@@ -272,45 +319,45 @@
 
     invoke-direct {v0, v1, p0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncConfiguration;-><init>(Ljava/lang/String;Ljava/lang/String;)V
 
-    .line 435
+    .line 459
     return-object v0
 .end method
 
 .method public static configureAutomaticAsync(Landroid/content/Context;ZILcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Callback;)V
     .locals 0
 
-    .line 112
+    .line 135
     invoke-static {p2}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeAutoSyncPolicy;->intervalMillis(I)J
 
-    .line 113
+    .line 136
     if-nez p1, :cond_0
 
-    .line 114
+    .line 137
     const/4 p1, 0x0
 
     invoke-static {p0, p1, p2}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeAutoSync;->configure(Landroid/content/Context;ZI)Z
 
-    .line 115
+    .line 138
     sget-object p1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->IO:Ljava/util/concurrent/ExecutorService;
 
-    new-instance p2, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$2;
+    new-instance p2, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$3;
 
-    invoke-direct {p2, p3, p0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$2;-><init>(Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Callback;Landroid/content/Context;)V
+    invoke-direct {p2, p3, p0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$3;-><init>(Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Callback;Landroid/content/Context;)V
 
     invoke-interface {p1, p2}, Ljava/util/concurrent/ExecutorService;->execute(Ljava/lang/Runnable;)V
 
-    .line 120
+    .line 143
     return-void
 
-    .line 122
+    .line 145
     :cond_0
-    new-instance p1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$3;
+    new-instance p1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$4;
 
-    invoke-direct {p1, p2}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$3;-><init>(I)V
+    invoke-direct {p1, p2}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$4;-><init>(I)V
 
     invoke-static {p0, p3, p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->submit(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Callback;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Operation;)V
 
-    .line 134
+    .line 157
     return-void
 .end method
 
@@ -322,14 +369,14 @@
         }
     .end annotation
 
-    .line 427
+    .line 451
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore;->profile()Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;
 
     move-result-object v0
 
     if-nez v0, :cond_0
 
-    .line 428
+    .line 452
     invoke-virtual {p3}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;->recoverBridgeUserId()Ljava/lang/String;
 
     move-result-object p3
@@ -339,7 +386,7 @@
     :cond_0
     const/4 p3, 0x0
 
-    .line 429
+    .line 453
     :goto_0
     const/4 v0, 0x1
 
@@ -358,12 +405,12 @@
         }
     .end annotation
 
-    .line 399
+    .line 423
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->preferences(Landroid/content/Context;)Landroid/content/SharedPreferences;
 
     move-result-object v0
 
-    .line 400
+    .line 424
     const-string v1, "rime_sync_root_uri"
 
     const-string v2, ""
@@ -372,29 +419,29 @@
 
     move-result-object v0
 
-    .line 401
+    .line 425
     invoke-virtual {v0}, Ljava/lang/String;->length()I
 
     move-result v1
 
     if-eqz v1, :cond_0
 
-    .line 404
+    .line 428
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->configuration(Landroid/content/Context;)Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncConfiguration;
 
     move-result-object v7
 
-    .line 405
+    .line 429
     invoke-static {v0}, Landroid/net/Uri;->parse(Ljava/lang/String;)Landroid/net/Uri;
 
     move-result-object v1
 
-    .line 406
+    .line 430
     new-instance v6, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore;
 
     invoke-direct {v6, p0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore;-><init>(Landroid/content/Context;)V
 
-    .line 410
+    .line 434
     :try_start_0
     new-instance v5, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;
 
@@ -403,19 +450,19 @@
     .catch Ljava/io/IOException; {:try_start_0 .. :try_end_0} :catch_1
     .catch Ljava/lang/Exception; {:try_start_0 .. :try_end_0} :catch_0
 
-    .line 413
+    .line 437
     nop
 
-    .line 414
+    .line 438
     :try_start_1
     invoke-static {v6, v0, v7, v5}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->configureState(Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore;Ljava/lang/String;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncConfiguration;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSafStore;)Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;
 
-    .line 415
+    .line 439
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncEngineFactoryProvider;->get(Landroid/content/Context;)Lcom/google/android/apps/inputmethod/libs/hmm/AbstractHmmEngineFactory;
 
     move-result-object v4
 
-    .line 416
+    .line 440
     new-instance v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$CoordinatorHandle;
 
     new-instance v2, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCoordinator;
@@ -428,7 +475,7 @@
 
     return-object v0
 
-    .line 418
+    .line 442
     :catch_0
     move-exception v0
 
@@ -436,13 +483,13 @@
 
     goto :goto_0
 
-    .line 411
+    .line 435
     :catch_1
     move-exception v0
 
     move-object p0, v0
 
-    .line 412
+    .line 436
     new-instance v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$LocationException;
 
     invoke-direct {v0, p0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$LocationException;-><init>(Ljava/lang/Throwable;)V
@@ -451,14 +498,14 @@
     :try_end_1
     .catch Ljava/lang/Exception; {:try_start_1 .. :try_end_1} :catch_0
 
-    .line 419
+    .line 443
     :goto_0
     invoke-virtual {v6}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore;->close()V
 
-    .line 420
+    .line 444
     throw p0
 
-    .line 402
+    .line 426
     :cond_0
     new-instance p0, Ljava/lang/IllegalArgumentException;
 
@@ -472,23 +519,23 @@
 .method private static deliver(Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Callback;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;)V
     .locals 2
 
-    .line 391
+    .line 415
     sget-object v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->MAIN:Landroid/os/Handler;
 
-    new-instance v1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$14;
+    new-instance v1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$15;
 
-    invoke-direct {v1, p0, p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$14;-><init>(Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Callback;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;)V
+    invoke-direct {v1, p0, p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$15;-><init>(Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Callback;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;)V
 
     invoke-virtual {v0, v1}, Landroid/os/Handler;->post(Ljava/lang/Runnable;)Z
 
-    .line 396
+    .line 420
     return-void
 .end method
 
 .method private static deviceName(Landroid/content/SharedPreferences;)Ljava/lang/String;
     .locals 2
 
-    .line 441
+    .line 465
     const-string v0, "rime_sync_device_directory"
 
     invoke-interface {p0, v0}, Landroid/content/SharedPreferences;->contains(Ljava/lang/String;)Z
@@ -497,7 +544,7 @@
 
     if-eqz v1, :cond_0
 
-    .line 442
+    .line 466
     const-string v1, ""
 
     invoke-interface {p0, v0, v1}, Landroid/content/SharedPreferences;->getString(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
@@ -506,7 +553,7 @@
 
     return-object p0
 
-    .line 444
+    .line 468
     :cond_0
     sget-object p0, Landroid/os/Build;->MODEL:Ljava/lang/String;
 
@@ -520,21 +567,21 @@
 .method public static executeAsync(Landroid/content/Context;Ljava/lang/String;ZLcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Callback;)V
     .locals 1
 
-    .line 251
-    new-instance v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$8;
+    .line 274
+    new-instance v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$9;
 
-    invoke-direct {v0, p1, p2}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$8;-><init>(Ljava/lang/String;Z)V
+    invoke-direct {v0, p1, p2}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$9;-><init>(Ljava/lang/String;Z)V
 
     invoke-static {p0, p3, v0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->submit(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Callback;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Operation;)V
 
-    .line 263
+    .line 286
     return-void
 .end method
 
 .method private static hasPersistedAccess(Landroid/content/Context;Ljava/lang/String;)Z
     .locals 3
 
-    .line 452
+    .line 476
     const/4 v0, 0x0
 
     if-eqz p1, :cond_3
@@ -547,14 +594,14 @@
 
     goto :goto_2
 
-    .line 455
+    .line 479
     :cond_0
     :try_start_0
     invoke-static {p1}, Landroid/net/Uri;->parse(Ljava/lang/String;)Landroid/net/Uri;
 
     move-result-object p1
 
-    .line 457
+    .line 481
     invoke-virtual {p0}, Landroid/content/Context;->getContentResolver()Landroid/content/ContentResolver;
 
     move-result-object p0
@@ -580,7 +627,7 @@
 
     check-cast v1, Landroid/content/UriPermission;
 
-    .line 458
+    .line 482
     invoke-virtual {v1}, Landroid/content/UriPermission;->getUri()Landroid/net/Uri;
 
     move-result-object v2
@@ -597,7 +644,7 @@
 
     if-eqz v2, :cond_1
 
-    .line 459
+    .line 483
     invoke-virtual {v1}, Landroid/content/UriPermission;->isWritePermission()Z
 
     move-result v1
@@ -610,32 +657,73 @@
 
     return p0
 
-    .line 460
+    .line 484
     :cond_1
     goto :goto_0
 
-    .line 462
+    .line 486
     :cond_2
     goto :goto_1
 
-    .line 461
+    .line 485
     :catch_0
     move-exception p0
 
-    .line 463
+    .line 487
     :goto_1
     return v0
 
-    .line 452
+    .line 476
     :cond_3
     :goto_2
     return v0
 .end method
 
+.method static declared-synchronized notifyStateChanged()V
+    .locals 3
+
+    const-class v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;
+
+    monitor-enter v0
+
+    .line 74
+    :try_start_0
+    sget-object v1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->MAIN:Landroid/os/Handler;
+
+    sget-object v2, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->STATE_CHANGED:Ljava/lang/Runnable;
+
+    invoke-virtual {v1, v2}, Landroid/os/Handler;->removeCallbacks(Ljava/lang/Runnable;)V
+
+    .line 75
+    sget-object v1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->MAIN:Landroid/os/Handler;
+
+    sget-object v2, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->STATE_CHANGED:Ljava/lang/Runnable;
+
+    invoke-virtual {v1, v2}, Landroid/os/Handler;->post(Ljava/lang/Runnable;)Z
+    :try_end_0
+    .catchall {:try_start_0 .. :try_end_0} :catchall_0
+
+    .line 76
+    monitor-exit v0
+
+    return-void
+
+    .line 73
+    :catchall_0
+    move-exception v1
+
+    :try_start_1
+    monitor-exit v0
+    :try_end_1
+    .catchall {:try_start_1 .. :try_end_1} :catchall_0
+
+    throw v1
+.end method
+
 .method private static preferences(Landroid/content/Context;)Landroid/content/SharedPreferences;
     .locals 2
 
-    .line 448
+    .line 472
     const-string v0, "rime_dictionary_sync_preferences"
 
     const/4 v1, 0x0
@@ -650,108 +738,108 @@
 .method public static previewAsync(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Callback;)V
     .locals 1
 
-    .line 236
-    new-instance v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$7;
+    .line 259
+    new-instance v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$8;
 
-    invoke-direct {v0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$7;-><init>()V
+    invoke-direct {v0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$8;-><init>()V
 
     invoke-static {p0, p1, v0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->submit(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Callback;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Operation;)V
 
-    .line 247
+    .line 270
     return-void
 .end method
 
 .method private static previewError(I)I
     .locals 2
 
-    .line 363
+    .line 387
     const/4 v0, 0x1
 
     if-ne p0, v0, :cond_0
 
-    .line 364
+    .line 388
     const/16 p0, 0x9
 
     return p0
 
-    .line 366
+    .line 390
     :cond_0
     const/4 v0, 0x2
 
     if-ne p0, v0, :cond_1
 
-    .line 367
+    .line 391
     const/16 p0, 0xa
 
     return p0
 
-    .line 369
+    .line 393
     :cond_1
     const/4 v0, 0x3
 
     if-ne p0, v0, :cond_2
 
-    .line 370
+    .line 394
     const/16 p0, 0xb
 
     return p0
 
-    .line 372
+    .line 396
     :cond_2
     const/4 v0, 0x4
 
     if-ne p0, v0, :cond_3
 
-    .line 373
+    .line 397
     const/16 p0, 0xc
 
     return p0
 
-    .line 375
+    .line 399
     :cond_3
     const/4 v0, 0x5
 
     if-ne p0, v0, :cond_4
 
-    .line 376
+    .line 400
     const/16 p0, 0xd
 
     return p0
 
-    .line 378
+    .line 402
     :cond_4
     const/4 v0, 0x6
 
     if-ne p0, v0, :cond_5
 
-    .line 379
+    .line 403
     const/16 p0, 0xe
 
     return p0
 
-    .line 381
+    .line 405
     :cond_5
     const/4 v0, 0x7
 
     if-ne p0, v0, :cond_6
 
-    .line 382
+    .line 406
     const/16 p0, 0xf
 
     return p0
 
-    .line 384
+    .line 408
     :cond_6
     const/16 v1, 0x8
 
     if-ne p0, v1, :cond_7
 
-    .line 385
+    .line 409
     const/16 p0, 0x10
 
     return p0
 
-    .line 387
+    .line 411
     :cond_7
     return v0
 .end method
@@ -759,17 +847,17 @@
 .method public static read(Landroid/content/Context;)Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Settings;
     .locals 16
 
-    .line 68
+    .line 85
     invoke-virtual/range {p0 .. p0}, Landroid/content/Context;->getApplicationContext()Landroid/content/Context;
 
     move-result-object v1
 
-    .line 69
+    .line 86
     invoke-static {v1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->preferences(Landroid/content/Context;)Landroid/content/SharedPreferences;
 
     move-result-object v0
 
-    .line 70
+    .line 87
     const-string v2, "rime_sync_root_uri"
 
     const-string v3, ""
@@ -778,12 +866,12 @@
 
     move-result-object v2
 
-    .line 71
+    .line 88
     invoke-static {v0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->deviceName(Landroid/content/SharedPreferences;)Ljava/lang/String;
 
     move-result-object v4
 
-    .line 72
+    .line 89
     const-string v5, "rime_sync_snapshot_file"
 
     const-string v6, "pinyin_simp.userdb.txt"
@@ -792,60 +880,60 @@
 
     move-result-object v5
 
-    .line 73
+    .line 90
     nop
 
-    .line 74
+    .line 91
     nop
 
-    .line 75
+    .line 92
     nop
 
-    .line 76
+    .line 93
     nop
 
-    .line 77
+    .line 94
     nop
 
-    .line 78
+    .line 95
     nop
 
-    .line 79
+    .line 96
     nop
 
-    .line 80
+    .line 97
     new-instance v6, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore;
 
     invoke-direct {v6, v1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore;-><init>(Landroid/content/Context;)V
 
-    .line 82
+    .line 99
     :try_start_0
     invoke-virtual {v6}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore;->profile()Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;
 
     move-result-object v7
 
-    .line 83
+    .line 100
     if-eqz v7, :cond_0
 
-    .line 84
+    .line 101
     iget-wide v8, v7, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;->lastSuccess:J
 
-    .line 85
+    .line 102
     iget v10, v7, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;->phase:I
 
-    .line 86
+    .line 103
     iget v11, v7, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;->nativeExpectedCount:I
 
-    .line 87
+    .line 104
     iget v12, v7, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;->nativeActualCount:I
 
-    .line 88
+    .line 105
     iget v13, v7, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;->nativeMissingCount:I
 
-    .line 89
+    .line 106
     iget-boolean v14, v7, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;->nativeFailureRepeated:Z
 
-    .line 90
+    .line 107
     iget v7, v7, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;->nativeFailureKind:I
     :try_end_0
     .catchall {:try_start_0 .. :try_end_0} :catchall_0
@@ -858,7 +946,7 @@
 
     goto :goto_0
 
-    .line 83
+    .line 100
     :cond_0
     const-wide/16 v8, 0x0
 
@@ -878,14 +966,14 @@
 
     const/4 v15, 0x0
 
-    .line 93
+    .line 110
     :goto_0
     invoke-virtual {v6}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore;->close()V
 
-    .line 94
+    .line 111
     nop
 
-    .line 95
+    .line 112
     new-instance v6, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Settings;
 
     const-string v10, "rime_sync_root_label"
@@ -894,7 +982,7 @@
 
     move-result-object v3
 
-    .line 96
+    .line 113
     move-object v0, v6
 
     invoke-static {v1, v2}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->hasPersistedAccess(Landroid/content/Context;Ljava/lang/String;)Z
@@ -903,126 +991,144 @@
 
     sget-object v10, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->BUSY:Ljava/util/concurrent/atomic/AtomicBoolean;
 
-    .line 97
+    .line 114
     invoke-virtual {v10}, Ljava/util/concurrent/atomic/AtomicBoolean;->get()Z
 
     move-result v10
 
     invoke-direct/range {v0 .. v15}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Settings;-><init>(Landroid/content/Context;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZJIZIIIZI)V
 
-    .line 95
+    .line 112
     return-object v0
 
-    .line 93
+    .line 110
     :catchall_0
     move-exception v0
 
     invoke-virtual {v6}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore;->close()V
 
-    .line 94
+    .line 111
     throw v0
 .end method
 
 .method public static readAsync(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Callback;)V
-    .locals 1
+    .locals 2
 
-    .line 102
-    new-instance v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$1;
+    .line 119
+    invoke-virtual {p0}, Landroid/content/Context;->getApplicationContext()Landroid/content/Context;
 
-    invoke-direct {v0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$1;-><init>()V
+    move-result-object p0
 
-    invoke-static {p0, p1, v0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->submit(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Callback;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Operation;)V
+    .line 121
+    sget-object v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->IO:Ljava/util/concurrent/ExecutorService;
 
-    .line 108
+    new-instance v1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$2;
+
+    invoke-direct {v1, p0, p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$2;-><init>(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Callback;)V
+
+    invoke-interface {v0, v1}, Ljava/util/concurrent/ExecutorService;->execute(Ljava/lang/Runnable;)V
+
+    .line 131
     return-void
 .end method
 
 .method public static recoverAsync(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Callback;)V
     .locals 1
 
-    .line 266
-    new-instance v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$9;
-
-    invoke-direct {v0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$9;-><init>()V
-
-    invoke-static {p0, p1, v0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->submit(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Callback;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Operation;)V
-
-    .line 277
-    return-void
-.end method
-
-.method public static recoverKeepingRejectedAsync(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Callback;)V
-    .locals 1
-
-    .line 281
+    .line 289
     new-instance v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$10;
 
     invoke-direct {v0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$10;-><init>()V
 
     invoke-static {p0, p1, v0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->submit(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Callback;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Operation;)V
 
-    .line 293
+    .line 300
     return-void
 .end method
 
-.method public static resetBaselineAsync(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Callback;)V
+.method public static recoverKeepingRejectedAsync(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Callback;)V
     .locals 1
 
-    .line 296
+    .line 304
     new-instance v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$11;
 
     invoke-direct {v0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$11;-><init>()V
 
     invoke-static {p0, p1, v0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->submit(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Callback;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Operation;)V
 
-    .line 309
+    .line 316
+    return-void
+.end method
+
+.method public static removeStateListener(Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$StateListener;)V
+    .locals 1
+
+    .line 71
+    sget-object v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->LISTENERS:Ljava/util/concurrent/CopyOnWriteArraySet;
+
+    invoke-virtual {v0, p0}, Ljava/util/concurrent/CopyOnWriteArraySet;->remove(Ljava/lang/Object;)Z
+
+    return-void
+.end method
+
+.method public static resetBaselineAsync(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Callback;)V
+    .locals 1
+
+    .line 319
+    new-instance v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$12;
+
+    invoke-direct {v0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$12;-><init>()V
+
+    invoke-static {p0, p1, v0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->submit(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Callback;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Operation;)V
+
+    .line 332
     return-void
 .end method
 
 .method public static runAutomaticAsync(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Callback;)V
     .locals 1
 
-    .line 137
-    new-instance v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$4;
+    .line 160
+    new-instance v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$5;
 
-    invoke-direct {v0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$4;-><init>()V
+    invoke-direct {v0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$5;-><init>()V
 
     invoke-static {p0, p1, v0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->submit(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Callback;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Operation;)V
 
-    .line 160
+    .line 183
     return-void
 .end method
 
 .method public static saveConfigurationAsync(Landroid/content/Context;Ljava/lang/String;Ljava/lang/String;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Callback;)V
     .locals 1
 
-    .line 165
-    new-instance v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$5;
+    .line 188
+    new-instance v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$6;
 
-    invoke-direct {v0, p1, p2}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$5;-><init>(Ljava/lang/String;Ljava/lang/String;)V
+    invoke-direct {v0, p1, p2}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$6;-><init>(Ljava/lang/String;Ljava/lang/String;)V
 
     invoke-static {p0, p3, v0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->submit(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Callback;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Operation;)V
 
-    .line 200
+    .line 223
     return-void
 .end method
 
 .method private static submit(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Callback;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Operation;)V
     .locals 3
 
-    .line 313
+    .line 336
     if-eqz p0, :cond_1
 
     if-eqz p1, :cond_1
 
     if-eqz p2, :cond_1
 
-    .line 316
+    .line 339
     invoke-virtual {p0}, Landroid/content/Context;->getApplicationContext()Landroid/content/Context;
 
     move-result-object p0
 
-    .line 317
+    .line 340
     sget-object v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->BUSY:Ljava/util/concurrent/atomic/AtomicBoolean;
 
     const/4 v1, 0x0
@@ -1035,32 +1141,32 @@
 
     if-nez v0, :cond_0
 
-    .line 318
+    .line 341
     sget-object p2, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->IO:Ljava/util/concurrent/ExecutorService;
 
-    new-instance v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$12;
+    new-instance v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$13;
 
-    invoke-direct {v0, p1, p0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$12;-><init>(Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Callback;Landroid/content/Context;)V
+    invoke-direct {v0, p1, p0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$13;-><init>(Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Callback;Landroid/content/Context;)V
 
     invoke-interface {p2, v0}, Ljava/util/concurrent/ExecutorService;->execute(Ljava/lang/Runnable;)V
 
-    .line 323
+    .line 346
     return-void
 
-    .line 325
+    .line 348
     :cond_0
     sget-object v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->IO:Ljava/util/concurrent/ExecutorService;
 
-    new-instance v1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$13;
+    new-instance v1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$14;
 
-    invoke-direct {v1, p2, p0, p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$13;-><init>(Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Operation;Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Callback;)V
+    invoke-direct {v1, p2, p0, p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$14;-><init>(Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Operation;Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Callback;)V
 
     invoke-interface {v0, v1}, Ljava/util/concurrent/ExecutorService;->execute(Ljava/lang/Runnable;)V
 
-    .line 360
+    .line 384
     return-void
 
-    .line 314
+    .line 337
     :cond_1
     new-instance p0, Ljava/lang/IllegalArgumentException;
 

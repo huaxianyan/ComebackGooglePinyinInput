@@ -3,6 +3,7 @@
     <string name="modern_settings_rime_auto_summary">Synchronize changes in the selected directory at the chosen interval. Android may delay execution.</string>
     <string name="modern_settings_rime_auto_interval">Synchronization interval</string>
     <string name="modern_settings_rime_auto_hours">%1$d hours</string>
+    <string name="modern_settings_rime_auto_days">%1$d days</string>
     <string name="modern_settings_rime_auto_prerequisite">Complete a manual synchronization before enabling automatic synchronization.</string>
     <string name="modern_settings_rime_auto_retry">The last synchronization did not finish. The app will try again later.</string>
     <string name="modern_settings_rime_auto_paused">Automatic synchronization is paused. Run a manual synchronization to review the issue, then enable it again.</string>

@@ -306,6 +306,12 @@ public final class RimeUserDbSnapshotTest {
                 == RimeSyncPlanner.GoogleProjection.SUPPORTED,
         "deleting a Rime-only phrase must allow a later explicit addition to retry Google");
 
+    require(java.util.Arrays.equals(RimeAutoSyncPolicy.intervalOptions(24),
+            new int[]{6, 12, 24, 48, 72, 168}),
+        "automatic sync offers the agreed list of intervals");
+    require(java.util.Arrays.equals(RimeAutoSyncPolicy.intervalOptions(39),
+            new int[]{6, 12, 24, 39, 48, 72, 168}),
+        "the observed slider interval stays selected until the user changes it");
     require(RimeAutoSyncPolicy.DEFAULT_HOURS == 24
             && RimeAutoSyncPolicy.MIN_HOURS == 6 && RimeAutoSyncPolicy.MAX_HOURS == 168,
         "automatic sync starts with the user-approved interval and adjustment range");

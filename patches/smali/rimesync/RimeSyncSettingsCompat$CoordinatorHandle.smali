@@ -24,16 +24,16 @@
 .method constructor <init>(Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCoordinator;)V
     .locals 0
 
-    .line 480
+    .line 504
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
-    .line 481
+    .line 505
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$CoordinatorHandle;->stateStore:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore;
 
-    .line 482
+    .line 506
     iput-object p2, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$CoordinatorHandle;->coordinator:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCoordinator;
 
-    .line 483
+    .line 507
     return-void
 .end method
 
@@ -42,11 +42,11 @@
 .method close()V
     .locals 1
 
-    .line 486
+    .line 510
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$CoordinatorHandle;->stateStore:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore;
 
     invoke-virtual {v0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore;->close()V
 
-    .line 487
+    .line 511
     return-void
 .end method

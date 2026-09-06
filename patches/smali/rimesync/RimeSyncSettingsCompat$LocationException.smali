@@ -18,9 +18,9 @@
 .method constructor <init>(Ljava/lang/Throwable;)V
     .locals 0
 
-    .line 472
+    .line 496
     invoke-direct {p0, p1}, Ljava/lang/Exception;-><init>(Ljava/lang/Throwable;)V
 
-    .line 473
+    .line 497
     return-void
 .end method
