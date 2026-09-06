@@ -45,7 +45,9 @@
 
 通过公开的 `AbstractHmmEngineFactory.createMutableDictionaryAccessor(USER_DICTIONARY)` 获取短生命周期 accessor，词条数应读取 `getDictionaryCount()`，并在查询后立即 `close()`，不调用 `exportAllEntries()` 或分配完整词条数组。
 
-**已确认、待修复的显示缺陷：** 当前实现仍误用 `getDictionarySize()`。Pixel 当前审计词库的只读对照中，中文 size 为 533,345，count 为 97,534；英文 size 为 2，count 为 0。创建未持久化副本前后的结果一致，证明两项 API 不是同一统计值。状态页因此把 533,347 错误显示成合计词条数，实际合计为 97,534。size 的具体内部单位未确认，不将其解释为词条数、容量上限或内置词库数量。探针只读取整数，不枚举词条，不调用 persist，结束后已卸载。
+**已修复的显示缺陷：** 旧实现误用 `getDictionarySize()`。当时 Pixel 审计词库的只读对照中，中文 size 为 533,345，count 为 97,534，英文 size 为 2，count 为 0。创建未持久化副本前后的结果一致，证明两项 API 不是同一统计值。状态页因此把 533,347 错误显示成合计词条数，实际合计为 97,534。size 的具体内部单位未确认，不将其解释为词条数、容量上限或内置词库数量。探针只读取整数，不枚举词条，不调用 persist，结束后已卸载。
+
+Java 与最终 APK 已改用 `getDictionaryCount()`。`4520424` 隔离包在 Pixel 上通过真实状态接口验证 0、200、240 条，实际 Compose 页面也分别显示中文／英文／合计为 240／0／240 和 0／0／0。空词库结果排除了此前英文 size 为 2 却被当成 2 条词条的问题，非空结果与独立生成的样本数量一致。本轮没有修改用户保留的候选包或其词库。
 
 查询通过反射完成，以避免新 Java helper 对混淆类名产生编译期依赖。任何反射或 native 异常都被降级为「无法读取」，不得传播到设置页主线程。
 
