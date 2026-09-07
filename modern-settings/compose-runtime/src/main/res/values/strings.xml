@@ -43,7 +43,10 @@
     <string name="modern_settings_specialized_page_pending">This specialized settings page has not yet been migrated. Its existing legacy behavior remains unchanged.</string>
     <string name="modern_settings_dictionary_health_title">Current user dictionary status</string>
     <string name="modern_settings_dictionary_health_loading">Reading the current user dictionary…</string>
-    <string name="modern_settings_dictionary_health_refresh">Tap to check again</string>
+    <string name="modern_settings_dictionary_health_refresh">Check again</string>
+    <string name="modern_settings_health_readable">Readable</string>
+    <string name="modern_settings_health_notice">Needs attention</string>
+    <string name="modern_settings_health_unconfirmed">Unable to confirm</string>
     <string name="modern_settings_dictionary_backup_section">Automatic backup</string>
     <string name="modern_settings_dictionary_auto_backup_title">Automatically back up user dictionary</string>
     <string name="modern_settings_dictionary_location_title">Backup and import location</string>
@@ -272,6 +275,6 @@
     <string name="modern_settings_rime_health_auto_on">Automatic sync: on</string>
     <string name="modern_settings_rime_health_auto_off">Automatic sync: off</string>
     <string name="modern_settings_rime_health_counts">Last successful sync: %1$d shared entries, %2$d kept only in Rime</string>
-    <string name="modern_settings_health_details">File details</string>
+    <string name="modern_settings_health_details">Show details</string>
     <string name="modern_settings_health_hide_details">Hide details</string>
 </resources>

@@ -43,7 +43,10 @@
     <string name="modern_settings_specialized_page_pending">此专用设置页面尚未迁移，现有旧版行为保持不变。</string>
     <string name="modern_settings_dictionary_health_title">当前用户词库状态</string>
     <string name="modern_settings_dictionary_health_loading">正在读取当前用户词库……</string>
-    <string name="modern_settings_dictionary_health_refresh">点击重新检查</string>
+    <string name="modern_settings_dictionary_health_refresh">重新检查</string>
+    <string name="modern_settings_health_readable">可正常读取</string>
+    <string name="modern_settings_health_notice">需要注意</string>
+    <string name="modern_settings_health_unconfirmed">暂时无法确认</string>
     <string name="modern_settings_dictionary_backup_section">自动备份</string>
     <string name="modern_settings_dictionary_auto_backup_title">自动备份用户字典</string>
     <string name="modern_settings_dictionary_location_title">备份和导入位置</string>
@@ -269,6 +272,6 @@
     <string name="modern_settings_rime_health_auto_on">自动同步：已开启</string>
     <string name="modern_settings_rime_health_auto_off">自动同步：已关闭</string>
     <string name="modern_settings_rime_health_counts">上次成功同步：双方共有 %1$d 条，仅保留在 Rime 的有 %2$d 条</string>
-    <string name="modern_settings_health_details">文件详情</string>
+    <string name="modern_settings_health_details">展开详情</string>
     <string name="modern_settings_health_hide_details">收起详情</string>
 </resources>

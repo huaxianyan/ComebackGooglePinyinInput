@@ -2,6 +2,21 @@ package com.google.android.inputmethod.pinyin.modernsettings.compose
 
 import androidx.compose.foundation.clickable
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.ui.draw.rotate
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.size
@@ -338,17 +353,18 @@ private fun DictionaryHealthRow(
     LaunchedEffect(state.summary, state.loading) {
         if (state.summary.isEmpty() && !state.loading) onRefresh()
     }
-    val supporting = when {
-        state.summary.isEmpty() -> stringResource(
-            R.string.modern_settings_dictionary_health_loading,
-        )
-        state.loading -> state.summary + "\n" + stringResource(
-            R.string.modern_settings_dictionary_health_loading,
-        )
-        else -> state.summary + "\n" + stringResource(
-            R.string.modern_settings_dictionary_health_refresh,
-        )
-    }
+    val statusLabel = stringResource(when {
+        state.loading || state.summary.isEmpty() -> R.string.modern_settings_dictionary_health_loading
+        state.tone == DictionaryHealthTone.Healthy -> R.string.modern_settings_health_readable
+        state.tone == DictionaryHealthTone.Notice -> R.string.modern_settings_health_notice
+        else -> R.string.modern_settings_health_unconfirmed
+    })
+    val detailsEnter = expandVertically() + fadeIn()
+    val detailsExit = shrinkVertically() + fadeOut()
+    val expansionRotation by animateFloatAsState(
+        targetValue = if (expanded) 180f else 0f,
+        label = "dictionary details expansion",
+    )
     ListItem(
         headlineContent = {
             Text(
@@ -359,30 +375,66 @@ private fun DictionaryHealthRow(
                 modifier = Modifier.padding(start = 8.dp),
             )
         },
-        leadingContent = { Box(Modifier.size(16.dp).background(color, CircleShape)) },
         supportingContent = {
             Column(Modifier.padding(start = 8.dp)) {
-                Text(supporting)
-                Text(stringResource(R.string.modern_settings_rime_sync_section),
-                    modifier = Modifier.padding(top = 12.dp),
-                    style = MaterialTheme.typography.titleSmall)
-                Text(rimeStatusText(rime))
-                Text(stringResource(if (rime.automatic?.enabled == true)
-                    R.string.modern_settings_rime_health_auto_on
-                    else R.string.modern_settings_rime_health_auto_off))
-                if (rime.lastSuccess > 0L) {
-                    Text(stringResource(R.string.modern_settings_rime_health_counts,
-                        rime.sharedEntryCount, rime.rimeOnlyCount))
+                // Only this status line contains an indicator; all other text keeps the page inset.
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Box(Modifier.size(10.dp).background(color, CircleShape))
+                    Text(statusLabel)
                 }
-                if (expanded && state.details.isNotEmpty()) {
-                    Text(state.details, modifier = Modifier.padding(top = 12.dp))
+                if (!state.loading && state.summary.isNotEmpty()) Text(state.summary)
+                AnimatedVisibility(
+                    visible = expanded && state.details.isNotEmpty(),
+                    enter = detailsEnter,
+                    exit = detailsExit,
+                ) {
+                    Text(state.details, modifier = Modifier.padding(top = 8.dp))
                 }
-                TextButton(onClick = { expanded = !expanded }) {
-                    Text(stringResource(if (expanded) R.string.modern_settings_health_hide_details
-                        else R.string.modern_settings_health_details))
+                // An unused optional sync feature must not crowd out the local dictionary.
+                if (rime.configurationComplete) {
+                    Text(stringResource(R.string.modern_settings_rime_sync_section),
+                        modifier = Modifier.padding(top = 12.dp),
+                        style = MaterialTheme.typography.titleSmall)
+                    Text(rimeStatusText(rime))
+                    AnimatedVisibility(
+                        visible = expanded,
+                        enter = detailsEnter,
+                        exit = detailsExit,
+                    ) {
+                        Column {
+                            Text(stringResource(if (rime.automatic?.enabled == true)
+                                R.string.modern_settings_rime_health_auto_on
+                                else R.string.modern_settings_rime_health_auto_off))
+                            if (rime.lastSuccess > 0L) {
+                                Text(stringResource(R.string.modern_settings_rime_health_counts,
+                                    rime.sharedEntryCount, rime.rimeOnlyCount))
+                            }
+                        }
+                    }
+                }
+                FlowRow(
+                    modifier = Modifier.padding(top = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    OutlinedButton(
+                        onClick = { expanded = !expanded },
+                        enabled = state.details.isNotEmpty() || rime.configurationComplete,
+                    ) {
+                        Text(stringResource(if (expanded) R.string.modern_settings_health_hide_details
+                            else R.string.modern_settings_health_details))
+                        Icon(Icons.Default.KeyboardArrowDown, contentDescription = null,
+                            modifier = Modifier.padding(start = 4.dp).rotate(expansionRotation))
+                    }
+                    OutlinedButton(onClick = onRefresh, enabled = !state.loading) {
+                        Icon(Icons.Default.Refresh, contentDescription = null,
+                            modifier = Modifier.padding(end = 4.dp))
+                        Text(stringResource(R.string.modern_settings_dictionary_health_refresh))
+                    }
                 }
             }
         },
-        modifier = Modifier.clickable(enabled = !state.loading, onClick = onRefresh),
     )
 }
