@@ -245,8 +245,9 @@ public final class GoogleNativeDictionaryBridge {
                         "Google user dictionary has a duplicate normalized key");
             }
         }
-        int nativeCount = accessor.getDictionaryCount();
-        int totalCount = Math.max(exportedEntryCount, nativeCount);
+        // Native getDictionaryCount() sums entry weights, not distinct records.
+        // The export is already required here and includes unprojectable records.
+        int totalCount = exportedEntryCount;
         List<MutableDictionaryAccessorInterface.Entry> allEntries = retainSources
                 ? Arrays.asList(nativeEntries)
                 : Collections.<MutableDictionaryAccessorInterface.Entry>emptyList();

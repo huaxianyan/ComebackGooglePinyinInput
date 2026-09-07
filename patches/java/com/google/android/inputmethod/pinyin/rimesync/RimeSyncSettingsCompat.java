@@ -38,6 +38,8 @@ public final class RimeSyncSettingsCompat {
     public static final int ERROR_PREVIEW_RIME_MERGE = 14;
     public static final int ERROR_PREVIEW_GOOGLE_EXPORT = 15;
     public static final int ERROR_PREVIEW_SESSION_PLAN = 16;
+    public static final int ERROR_DIRECTORY_IDENTITY = 17;
+    public static final int ERROR_BRIDGE_SNAPSHOT_MISSING = 18;
 
     public static final int NATIVE_FAILURE_NONE = RimeSyncStateStore.NATIVE_FAILURE_NONE;
     public static final int NATIVE_FAILURE_PERSISTENCE =
@@ -242,14 +244,13 @@ public final class RimeSyncSettingsCompat {
                 } finally {
                     store.close();
                 }
-                if (!root.toString().equals(preferences(context).getString(KEY_ROOT_URI, ""))) {
-                    RimeAutoSync.configure(context, false,
-                            RimeAutoSync.read(context).intervalHours);
-                }
-                preferences(context).edit()
+                if (!preferences(context).edit()
                         .putString(KEY_ROOT_URI, root.toString())
                         .putString(KEY_ROOT_LABEL, label == null ? "" : label)
-                        .apply();
+                        .commit()) {
+                    throw new java.io.IOException("Rime directory selection was not saved");
+                }
+                RimeAutoSync.reconcile(context);
                 return Result.success(read(context));
             }
         });
@@ -365,6 +366,8 @@ public final class RimeSyncSettingsCompat {
                     result = Result.error(read(context), ERROR_NATIVE_PERSISTENCE);
                 } catch (RimeSyncCoordinator.PersistenceStalledException failure) {
                     result = Result.error(read(context), ERROR_NATIVE_PERSISTENCE);
+                } catch (RimeSyncStateStore.IdentityConflictException failure) {
+                    result = Result.error(read(context), ERROR_DIRECTORY_IDENTITY);
                 } catch (IllegalArgumentException failure) {
                     result = Result.error(read(context), ERROR_CONFIGURATION_REQUIRED);
                 } catch (IllegalStateException failure) {
@@ -384,6 +387,9 @@ public final class RimeSyncSettingsCompat {
     }
 
     private static int previewError(int stage) {
+        if (stage == RimeSyncCoordinator.PREVIEW_STAGE_BRIDGE_MISSING) {
+            return ERROR_BRIDGE_SNAPSHOT_MISSING;
+        }
         if (stage == RimeSyncCoordinator.PREVIEW_STAGE_SOURCE_LIST) {
             return ERROR_PREVIEW_SOURCE_LIST;
         }
@@ -448,8 +454,12 @@ public final class RimeSyncSettingsCompat {
     private static RimeSyncStateStore.Profile configureState(RimeSyncStateStore state,
             String root, RimeSyncConfiguration configuration, RimeSyncSafStore saf)
             throws java.io.IOException {
-        String recoveredBridgeUserId = state.profile() == null
-                ? saf.recoverBridgeUserId() : null;
+        RimeSyncStateStore.Profile current = state.profile();
+        boolean unchanged = current != null && current.rootUri.equals(root)
+                && current.deviceDirectoryName.equals(configuration.deviceDirectoryName)
+                && current.snapshotFileName.equals(configuration.snapshotFileName)
+                && current.protocolVersion == PROTOCOL_VERSION;
+        String recoveredBridgeUserId = unchanged ? null : saf.recoverBridgeUserId();
         return state.configure(root, configuration, PROTOCOL_VERSION,
                 recoveredBridgeUserId);
     }

@@ -262,4 +262,6 @@
     <string name="modern_settings_milliseconds_format">%1$d ms</string>
     <string name="modern_settings_value_read_only">%1$s, %2$s, read only</string>
     <string name="modern_settings_value_adjustable">%1$s, %2$s, adjustable</string>
+    <string name="modern_settings_rime_sync_error_directory_identity">This location contains data from a different local sync setup. Select the original location or copy its contents to the new location and try again.</string>
+    <string name="modern_settings_rime_sync_error_bridge_missing">The previous sync file for this device is missing. Copy the original folder contents to this location. Automatic sync will retry if enabled.</string>
 </resources>

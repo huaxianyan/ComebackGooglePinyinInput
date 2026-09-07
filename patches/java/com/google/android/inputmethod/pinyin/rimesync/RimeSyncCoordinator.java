@@ -17,6 +17,7 @@ public final class RimeSyncCoordinator {
     public static final int PREVIEW_STAGE_RIME_MERGE = 6;
     public static final int PREVIEW_STAGE_GOOGLE_EXPORT = 7;
     public static final int PREVIEW_STAGE_SESSION_PLAN = 8;
+    public static final int PREVIEW_STAGE_BRIDGE_MISSING = 9;
 
     private final Context context;
     private final AbstractHmmEngineFactory engineFactory;
@@ -272,6 +273,16 @@ public final class RimeSyncCoordinator {
             documents = safStore.listSnapshots();
         } catch (IOException failure) {
             throw new PreviewStageException(PREVIEW_STAGE_SOURCE_LIST, failure);
+        }
+        boolean hasBridgeSnapshot = false;
+        for (RimeSyncSafStore.SnapshotDocument document : documents) {
+            if (document.bridgeOwned) hasBridgeSnapshot = true;
+        }
+        // A missing relocated snapshot must not turn the existing baseline into
+        // mass deletions. Retry against files present on the next invocation.
+        if (profile.lastSuccess > 0L && !hasBridgeSnapshot) {
+            throw new PreviewStageException(PREVIEW_STAGE_BRIDGE_MISSING,
+                    new IOException("previously synchronized Bridge snapshot is missing"));
         }
         List<RimeSyncCore.DeviceSnapshot> devices =
                 new ArrayList<RimeSyncCore.DeviceSnapshot>();

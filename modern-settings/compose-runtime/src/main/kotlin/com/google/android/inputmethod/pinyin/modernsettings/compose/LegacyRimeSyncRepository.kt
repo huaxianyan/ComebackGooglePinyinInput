@@ -86,6 +86,8 @@ internal enum class RimeSyncError {
     PreviewRimeMerge,
     PreviewGoogleExport,
     PreviewSessionPlan,
+    DirectoryIdentity,
+    BridgeSnapshotMissing,
     OperationFailed,
 }
 
@@ -342,6 +344,8 @@ internal class LegacyRimeSyncRepository(private val activity: Activity) {
         staticInt("ERROR_PREVIEW_RIME_MERGE") -> RimeSyncError.PreviewRimeMerge
         staticInt("ERROR_PREVIEW_GOOGLE_EXPORT") -> RimeSyncError.PreviewGoogleExport
         staticInt("ERROR_PREVIEW_SESSION_PLAN") -> RimeSyncError.PreviewSessionPlan
+        staticInt("ERROR_DIRECTORY_IDENTITY") -> RimeSyncError.DirectoryIdentity
+        staticInt("ERROR_BRIDGE_SNAPSHOT_MISSING") -> RimeSyncError.BridgeSnapshotMissing
         else -> RimeSyncError.OperationFailed
     }
 

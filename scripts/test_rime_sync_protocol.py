@@ -466,7 +466,20 @@ public final class RimeUserDbSnapshotTest {
             && lossyFailure.unexpectedCount == 0,
         "a silent Native loss must report privacy-safe counts without committing the baseline");
 
-    FakeFactory fullFactory = new FakeFactory(nativeFactory.dictionary.durable, 500000);
+    FakeFactory weightedFactory = new FakeFactory(nativeFactory.dictionary.durable, 500000);
+    int recordsBefore = weightedFactory.dictionary.durable.size();
+    GoogleNativeDictionaryBridge.Result weightedResult = GoogleNativeDictionaryBridge.apply(
+        new FakeContext(), weightedFactory,
+        Arrays.asList(new GoogleNativeDictionaryBridge.Change(
+            "quan zhong", "fixture-weighted", RimeSyncPlanner.GoogleAction.ADD)));
+    require(weightedResult.persisted
+            && weightedFactory.dictionary.durable.size() == recordsBefore + 1,
+        "entry weight sums must not trigger the distinct-record capacity limit");
+
+    // Opaque rows stand for records outside the canonical multi-character projection.
+    List<MutableDictionaryAccessorInterface.Entry> capacityRows =
+        java.util.Collections.nCopies(500000, nativeEntry(new String[] {"dan"}, "单", 1));
+    FakeFactory fullFactory = new FakeFactory(capacityRows, 500000);
     boolean capacityRejected = false;
     try {
       GoogleNativeDictionaryBridge.apply(new FakeContext(), fullFactory,

@@ -32,7 +32,7 @@
         }
     .end annotation
 
-    .line 274
+    .line 275
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$9;->val$confirmationToken:Ljava/lang/String;
 
     iput-boolean p2, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$9;->val$deletionConfirmed:Z
@@ -52,12 +52,12 @@
         }
     .end annotation
 
-    .line 276
+    .line 277
     invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->access$200(Landroid/content/Context;)Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$CoordinatorHandle;
 
     move-result-object v0
 
-    .line 278
+    .line 279
     :try_start_0
     iget-object v1, v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$CoordinatorHandle;->coordinator:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCoordinator;
 
@@ -69,7 +69,7 @@
 
     move-result-object v1
 
-    .line 280
+    .line 281
     invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->read(Landroid/content/Context;)Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Settings;
 
     move-result-object p1
@@ -80,18 +80,18 @@
     :try_end_0
     .catchall {:try_start_0 .. :try_end_0} :catchall_0
 
-    .line 282
+    .line 283
     invoke-virtual {v0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$CoordinatorHandle;->close()V
 
-    .line 280
+    .line 281
     return-object p1
 
-    .line 282
+    .line 283
     :catchall_0
     move-exception p1
 
     invoke-virtual {v0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$CoordinatorHandle;->close()V
 
-    .line 283
+    .line 284
     throw p1
 .end method

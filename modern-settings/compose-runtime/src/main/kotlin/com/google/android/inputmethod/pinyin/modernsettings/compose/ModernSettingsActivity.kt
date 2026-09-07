@@ -698,6 +698,12 @@ class ModernSettingsActivity : ComponentActivity() {
             RimeSyncError.PreviewSessionPlan -> getString(
                 R.string.modern_settings_rime_sync_error_session_plan,
             )
+            RimeSyncError.DirectoryIdentity -> getString(
+                R.string.modern_settings_rime_sync_error_directory_identity,
+            )
+            RimeSyncError.BridgeSnapshotMissing -> getString(
+                R.string.modern_settings_rime_sync_error_bridge_missing,
+            )
             RimeSyncError.NativePersistence -> when {
                 rimeSync.settings.nativeFailureRepeated &&
                     rimeSync.settings.nativeRejectedCount > 0 -> getString(

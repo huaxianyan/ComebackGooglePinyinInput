@@ -22,14 +22,14 @@
 .method public constructor <init>(ILjava/io/IOException;)V
     .locals 1
 
-    .line 401
+    .line 412
     const-string v0, "Rime synchronization preview failed"
 
     invoke-direct {p0, v0, p2}, Ljava/io/IOException;-><init>(Ljava/lang/String;Ljava/lang/Throwable;)V
 
-    .line 402
+    .line 413
     iput p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCoordinator$PreviewStageException;->stage:I
 
-    .line 403
+    .line 414
     return-void
 .end method

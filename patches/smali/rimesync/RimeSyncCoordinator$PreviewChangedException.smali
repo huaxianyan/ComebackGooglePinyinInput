@@ -18,11 +18,11 @@
 .method constructor <init>()V
     .locals 1
 
-    .line 417
+    .line 428
     const-string v0, "Rime synchronization preview changed"
 
     invoke-direct {p0, v0}, Ljava/io/IOException;-><init>(Ljava/lang/String;)V
 
-    .line 418
+    .line 429
     return-void
 .end method

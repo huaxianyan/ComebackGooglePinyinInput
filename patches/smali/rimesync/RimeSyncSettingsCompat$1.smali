@@ -21,7 +21,7 @@
 .method constructor <init>()V
     .locals 0
 
-    .line 62
+    .line 64
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
     return-void
@@ -32,7 +32,7 @@
 .method public run()V
     .locals 2
 
-    .line 64
+    .line 66
     invoke-static {}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->access$000()Ljava/util/concurrent/CopyOnWriteArraySet;
 
     move-result-object v0
@@ -58,7 +58,7 @@
 
     goto :goto_0
 
-    .line 65
+    .line 67
     :cond_0
     return-void
 .end method

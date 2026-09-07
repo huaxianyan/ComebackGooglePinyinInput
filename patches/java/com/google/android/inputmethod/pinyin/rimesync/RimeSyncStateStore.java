@@ -97,11 +97,24 @@ public final class RimeSyncStateStore extends SQLiteOpenHelper {
         }
         SQLiteDatabase db = getWritableDatabase();
         Profile current = readProfile(db);
-        if (current != null && current.rootUri.equals(rootUri)
+        if (current != null
                 && current.deviceDirectoryName.equals(configuration.deviceDirectoryName)
                 && current.snapshotFileName.equals(configuration.snapshotFileName)
                 && current.protocolVersion == protocolVersion) {
-            return current;
+            if (recoveredBridgeUserId != null
+                    && !current.bridgeUserId.equals(recoveredBridgeUserId)) {
+                throw new IdentityConflictException();
+            }
+            if (current.rootUri.equals(rootUri)) return current;
+            if (current.phase != PHASE_IDLE) {
+                throw new IllegalStateException(
+                        "unfinished Rime synchronization must be recovered before relocation");
+            }
+            // A storage location is not a synchronization identity. Keep the complete
+            // baseline (including RIME_ONLY), salt, generation and successful-sync time.
+            db.execSQL("UPDATE profile SET root_uri=? WHERE id=?",
+                    new Object[] {rootUri, PROFILE_ID});
+            return readProfile(db);
         }
         if (current != null && current.phase != PHASE_IDLE) {
             throw new IllegalStateException(
@@ -110,7 +123,7 @@ public final class RimeSyncStateStore extends SQLiteOpenHelper {
         byte[] salt = new byte[32];
         new SecureRandom().nextBytes(salt);
         String bridgeUserId = UUID.randomUUID().toString();
-        if (current == null && recoveredBridgeUserId != null) {
+        if (recoveredBridgeUserId != null) {
             try {
                 if (!UUID.fromString(recoveredBridgeUserId).toString()
                         .equals(recoveredBridgeUserId)) {
@@ -135,6 +148,12 @@ public final class RimeSyncStateStore extends SQLiteOpenHelper {
             db.endTransaction();
         }
         return replacement;
+    }
+
+    public static final class IdentityConflictException extends IllegalArgumentException {
+        IdentityConflictException() {
+            super("selected directory belongs to a different Bridge identity");
+        }
     }
 
     public synchronized Profile profile() {

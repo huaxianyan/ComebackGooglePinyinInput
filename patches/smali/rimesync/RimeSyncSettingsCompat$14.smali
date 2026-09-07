@@ -34,7 +34,7 @@
         }
     .end annotation
 
-    .line 348
+    .line 349
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$14;->val$operation:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Operation;
 
     iput-object p2, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$14;->val$context:Landroid/content/Context;
@@ -51,7 +51,7 @@
 .method public run()V
     .locals 4
 
-    .line 352
+    .line 353
     const/4 v0, 0x7
 
     const/16 v1, 0x8
@@ -65,13 +65,14 @@
 
     move-result-object v0
     :try_end_0
-    .catch Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCoordinator$PreviewStageException; {:try_start_0 .. :try_end_0} :catch_a
-    .catch Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCoordinator$DeletionConfirmationException; {:try_start_0 .. :try_end_0} :catch_9
-    .catch Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCoordinator$PreviewChangedException; {:try_start_0 .. :try_end_0} :catch_8
-    .catch Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$CapacityException; {:try_start_0 .. :try_end_0} :catch_7
-    .catch Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$RejectedEntriesException; {:try_start_0 .. :try_end_0} :catch_6
-    .catch Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$PersistenceVerificationException; {:try_start_0 .. :try_end_0} :catch_5
-    .catch Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCoordinator$PersistenceStalledException; {:try_start_0 .. :try_end_0} :catch_4
+    .catch Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCoordinator$PreviewStageException; {:try_start_0 .. :try_end_0} :catch_b
+    .catch Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCoordinator$DeletionConfirmationException; {:try_start_0 .. :try_end_0} :catch_a
+    .catch Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCoordinator$PreviewChangedException; {:try_start_0 .. :try_end_0} :catch_9
+    .catch Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$CapacityException; {:try_start_0 .. :try_end_0} :catch_8
+    .catch Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$RejectedEntriesException; {:try_start_0 .. :try_end_0} :catch_7
+    .catch Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$PersistenceVerificationException; {:try_start_0 .. :try_end_0} :catch_6
+    .catch Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCoordinator$PersistenceStalledException; {:try_start_0 .. :try_end_0} :catch_5
+    .catch Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$IdentityConflictException; {:try_start_0 .. :try_end_0} :catch_4
     .catch Ljava/lang/IllegalArgumentException; {:try_start_0 .. :try_end_0} :catch_3
     .catch Ljava/lang/IllegalStateException; {:try_start_0 .. :try_end_0} :catch_2
     .catch Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$LocationException; {:try_start_0 .. :try_end_0} :catch_1
@@ -80,11 +81,11 @@
 
     goto/16 :goto_0
 
-    .line 376
+    .line 379
     :catchall_0
     move-exception v1
 
-    .line 377
+    .line 380
     iget-object v1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$14;->val$context:Landroid/content/Context;
 
     invoke-static {v1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->read(Landroid/content/Context;)Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Settings;
@@ -97,11 +98,11 @@
 
     goto/16 :goto_1
 
-    .line 374
+    .line 377
     :catch_0
     move-exception v1
 
-    .line 375
+    .line 378
     iget-object v1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$14;->val$context:Landroid/content/Context;
 
     invoke-static {v1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->read(Landroid/content/Context;)Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Settings;
@@ -114,11 +115,11 @@
 
     goto/16 :goto_0
 
-    .line 372
+    .line 375
     :catch_1
     move-exception v0
 
-    .line 373
+    .line 376
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$14;->val$context:Landroid/content/Context;
 
     invoke-static {v0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->read(Landroid/content/Context;)Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Settings;
@@ -133,11 +134,11 @@
 
     goto/16 :goto_0
 
-    .line 370
+    .line 373
     :catch_2
     move-exception v0
 
-    .line 371
+    .line 374
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$14;->val$context:Landroid/content/Context;
 
     invoke-static {v0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->read(Landroid/content/Context;)Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Settings;
@@ -150,13 +151,13 @@
 
     move-result-object v0
 
-    goto :goto_0
+    goto/16 :goto_0
 
-    .line 368
+    .line 371
     :catch_3
     move-exception v0
 
-    .line 369
+    .line 372
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$14;->val$context:Landroid/content/Context;
 
     invoke-static {v0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->read(Landroid/content/Context;)Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Settings;
@@ -171,16 +172,18 @@
 
     goto :goto_0
 
-    .line 366
+    .line 369
     :catch_4
     move-exception v0
 
-    .line 367
+    .line 370
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$14;->val$context:Landroid/content/Context;
 
     invoke-static {v0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->read(Landroid/content/Context;)Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Settings;
 
     move-result-object v0
+
+    const/16 v1, 0x11
 
     invoke-static {v0, v1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;->error(Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Settings;I)Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;
 
@@ -188,11 +191,11 @@
 
     goto :goto_0
 
-    .line 364
+    .line 367
     :catch_5
     move-exception v0
 
-    .line 365
+    .line 368
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$14;->val$context:Landroid/content/Context;
 
     invoke-static {v0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->read(Landroid/content/Context;)Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Settings;
@@ -205,11 +208,11 @@
 
     goto :goto_0
 
-    .line 362
+    .line 365
     :catch_6
     move-exception v0
 
-    .line 363
+    .line 366
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$14;->val$context:Landroid/content/Context;
 
     invoke-static {v0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->read(Landroid/content/Context;)Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Settings;
@@ -222,11 +225,28 @@
 
     goto :goto_0
 
-    .line 360
+    .line 363
     :catch_7
     move-exception v0
 
+    .line 364
+    iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$14;->val$context:Landroid/content/Context;
+
+    invoke-static {v0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->read(Landroid/content/Context;)Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Settings;
+
+    move-result-object v0
+
+    invoke-static {v0, v1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;->error(Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Settings;I)Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;
+
+    move-result-object v0
+
+    goto :goto_0
+
     .line 361
+    :catch_8
+    move-exception v0
+
+    .line 362
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$14;->val$context:Landroid/content/Context;
 
     invoke-static {v0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->read(Landroid/content/Context;)Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Settings;
@@ -241,11 +261,11 @@
 
     goto :goto_0
 
-    .line 358
-    :catch_8
+    .line 359
+    :catch_9
     move-exception v0
 
-    .line 359
+    .line 360
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$14;->val$context:Landroid/content/Context;
 
     invoke-static {v0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->read(Landroid/content/Context;)Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Settings;
@@ -260,11 +280,11 @@
 
     goto :goto_0
 
-    .line 355
-    :catch_9
+    .line 356
+    :catch_a
     move-exception v0
 
-    .line 356
+    .line 357
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$14;->val$context:Landroid/content/Context;
 
     invoke-static {v0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->read(Landroid/content/Context;)Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Settings;
@@ -279,11 +299,11 @@
 
     goto :goto_0
 
-    .line 353
-    :catch_a
+    .line 354
+    :catch_b
     move-exception v0
 
-    .line 354
+    .line 355
     iget-object v1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$14;->val$context:Landroid/content/Context;
 
     invoke-static {v1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->read(Landroid/content/Context;)Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Settings;
@@ -300,11 +320,11 @@
 
     move-result-object v0
 
-    .line 378
+    .line 381
     :goto_0
     nop
 
-    .line 379
+    .line 382
     :goto_1
     invoke-static {}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->access$800()Ljava/util/concurrent/atomic/AtomicBoolean;
 
@@ -314,10 +334,10 @@
 
     invoke-virtual {v1, v2}, Ljava/util/concurrent/atomic/AtomicBoolean;->set(Z)V
 
-    .line 380
+    .line 383
     invoke-static {}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->notifyStateChanged()V
 
-    .line 381
+    .line 384
     iget-object v1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$14;->val$callback:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Callback;
 
     iget-object v2, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$14;->val$context:Landroid/content/Context;
@@ -332,6 +352,6 @@
 
     invoke-static {v1, v0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->access$100(Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Callback;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;)V
 
-    .line 382
+    .line 385
     return-void
 .end method
