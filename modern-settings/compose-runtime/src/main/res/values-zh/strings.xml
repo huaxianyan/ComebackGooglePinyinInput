@@ -110,9 +110,9 @@
     <string name="modern_settings_rime_sync_native_duplicate_failure">无法准备 Google 拼音用户词典，点击重试</string>
     <string name="modern_settings_rime_sync_native_insert_failure">有 %1$d 个词条无法加入 Google 拼音，点击继续检查</string>
     <string name="modern_settings_rime_sync_native_insert_stalled">同一批 %1$d 个词条仍无法加入 Google 拼音，可以保留在 Rime 后继续</string>
-    <string name="modern_settings_rime_sync_keep_rejected_confirm_title">保留这些词条并继续？</string>
-    <string name="modern_settings_rime_sync_keep_rejected_confirm_message">%1$d 个词条将仅保留在 Rime，其他词条继续同步。重新建立同步状态后，可以再次检查这些词条。</string>
-    <string name="modern_settings_rime_sync_keep_rejected_action">保留并继续</string>
+    <string name="modern_settings_rime_sync_keep_rejected_confirm_title">同步词条的处理规则</string>
+    <string name="modern_settings_rime_sync_keep_rejected_confirm_message">确认暂时无法由谷歌拼音接收的词条会保留在 Rime，其他词条继续同步。以后按同一规则处理，不再逐批询问。\n\n读写或保存检查出现异常时，同步会暂停并提示处理。手动同步涉及删除时仍会先询问。</string>
+    <string name="modern_settings_rime_sync_keep_rejected_action">同意并同步</string>
     <string name="modern_settings_rime_sync_native_persist_failure">无法保存 Google 拼音用户词典，点击重试</string>
     <string name="modern_settings_rime_sync_native_rebuild_failure">无法更新 Google 拼音用户词典，点击重试</string>
     <string name="modern_settings_rime_sync_native_export_failure">无法读取 Google 拼音用户词典，点击重试</string>
@@ -121,7 +121,8 @@
     <string name="modern_settings_rime_sync_completed">上次同步已完成</string>
     <string name="modern_settings_rime_sync_not_run">尚未同步</string>
     <string name="modern_settings_rime_sync_now_title">立即同步</string>
-    <string name="modern_settings_rime_sync_now_summary">同步前预览双方新增和删除数量</string>
+    <string name="modern_settings_rime_sync_now_summary">同步双方词条，涉及删除时先确认</string>
+    <string name="modern_settings_rime_sync_last_success">上次同步：%1$s %2$s</string>
     <string name="modern_settings_rime_sync_reset_title">重新建立同步状态</string>
     <string name="modern_settings_rime_sync_reset_summary">下次同步时重新比较双方当前词条</string>
     <string name="modern_settings_rime_sync_preview_title">同步这些变更？</string>
@@ -261,4 +262,13 @@
     <string name="modern_settings_value_adjustable">%1$s，%2$s，可调整</string>
     <string name="modern_settings_rime_sync_error_directory_identity">所选目录包含另一份本设备同步数据，请选择原目录，或将原目录内容复制到新位置后重试</string>
     <string name="modern_settings_rime_sync_error_bridge_missing">尚未找到本设备之前的同步文件，请将原目录内容复制到所选位置。已开启的自动同步会稍后重试</string>
+    <string name="modern_settings_rime_health_unconfigured">尚未设置同步目录</string>
+    <string name="modern_settings_rime_health_location">同步目录暂时无法访问，请检查目录权限</string>
+    <string name="modern_settings_rime_health_paused">同步未完成，请先备份词库，再点击「立即同步」重试</string>
+    <string name="modern_settings_rime_health_unfinished">上次同步尚未完成，可点击「立即同步」继续</string>
+    <string name="modern_settings_rime_health_auto_on">自动同步：已开启</string>
+    <string name="modern_settings_rime_health_auto_off">自动同步：已关闭</string>
+    <string name="modern_settings_rime_health_counts">上次成功同步：双方共有 %1$d 条，仅保留在 Rime 的有 %2$d 条</string>
+    <string name="modern_settings_health_details">文件详情</string>
+    <string name="modern_settings_health_hide_details">收起详情</string>
 </resources>

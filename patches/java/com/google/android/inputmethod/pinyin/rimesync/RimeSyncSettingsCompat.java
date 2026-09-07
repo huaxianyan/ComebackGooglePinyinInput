@@ -16,6 +16,7 @@ public final class RimeSyncSettingsCompat {
     private static final String PREFERENCES = "rime_dictionary_sync_preferences";
     private static final String KEY_ROOT_URI = "rime_sync_root_uri";
     private static final String KEY_ROOT_LABEL = "rime_sync_root_label";
+    private static final String KEY_COMPATIBILITY_ACCEPTED = "compatibility_policy_accepted";
     private static final String KEY_DEVICE_DIRECTORY = "rime_sync_device_directory";
     private static final String KEY_SNAPSHOT_FILE = "rime_sync_snapshot_file";
     private static final String DEFAULT_SNAPSHOT_FILE = "pinyin_simp.userdb.txt";
@@ -40,6 +41,7 @@ public final class RimeSyncSettingsCompat {
     public static final int ERROR_PREVIEW_SESSION_PLAN = 16;
     public static final int ERROR_DIRECTORY_IDENTITY = 17;
     public static final int ERROR_BRIDGE_SNAPSHOT_MISSING = 18;
+    public static final int ERROR_COMPATIBILITY_CONSENT = 19;
 
     public static final int NATIVE_FAILURE_NONE = RimeSyncStateStore.NATIVE_FAILURE_NONE;
     public static final int NATIVE_FAILURE_PERSISTENCE =
@@ -63,11 +65,11 @@ public final class RimeSyncSettingsCompat {
             new java.util.concurrent.CopyOnWriteArraySet<StateListener>();
     private static final Runnable STATE_CHANGED = new Runnable() {
         @Override public void run() {
-            for (StateListener listener : LISTENERS) listener.onChanged();
+            for (StateListener listener : LISTENERS) listener.onChanged(BUSY.get());
         }
     };
 
-    public interface StateListener { void onChanged(); }
+    public interface StateListener { void onChanged(boolean busy); }
 
     public static void addStateListener(StateListener listener) { LISTENERS.add(listener); }
     public static void removeStateListener(StateListener listener) { LISTENERS.remove(listener); }
@@ -96,8 +98,10 @@ public final class RimeSyncSettingsCompat {
         int nativeMissingCount = 0;
         boolean nativeFailureRepeated = false;
         int nativeFailureKind = RimeSyncStateStore.NATIVE_FAILURE_NONE;
+        RimeSyncStateStore.BaselineCounts counts;
         RimeSyncStateStore store = new RimeSyncStateStore(context);
         try {
+            counts = store.baselineCounts();
             RimeSyncStateStore.Profile profile = store.profile();
             if (profile != null) {
                 lastSuccess = profile.lastSuccess;
@@ -114,7 +118,7 @@ public final class RimeSyncSettingsCompat {
         return new Settings(context, root, preferences.getString(KEY_ROOT_LABEL, ""),
                 device, file, hasPersistedAccess(context, root), lastSuccess,
                 phase, BUSY.get(), nativeExpectedCount, nativeActualCount,
-                nativeMissingCount, nativeFailureRepeated, nativeFailureKind);
+                nativeMissingCount, nativeFailureRepeated, nativeFailureKind, counts);
     }
 
     public static void readAsync(final Context source, final Callback callback) {
@@ -159,29 +163,57 @@ public final class RimeSyncSettingsCompat {
     }
 
     public static void runAutomaticAsync(final Context source, final Callback callback) {
-        submit(source, callback, new Operation() {
+        synchronizeAsync(source, true, callback);
+    }
+
+    private static void synchronizeAsync(final Context source, final boolean automatic,
+            final Callback callback) {
+        submit(source, callback, new Operation(true) {
             @Override public Result run(Context context) throws Exception {
                 Settings settings = read(context);
-                if (!settings.automatic.enabled) return Result.success(settings);
-                if (settings.nativeFailureKind != NATIVE_FAILURE_NONE) {
+                if (automatic && !settings.automatic.enabled) return Result.success(settings);
+                if (automatic && settings.nativeFailureKind != NATIVE_FAILURE_NONE
+                        && !(settings.nativeFailureKind == NATIVE_FAILURE_INSERT
+                            && settings.nativeMissingCount > 0)) {
                     return Result.error(settings, ERROR_NATIVE_PERSISTENCE);
                 }
                 CoordinatorHandle handle = coordinator(context);
                 try {
                     if (settings.phase != RimeSyncStateStore.PHASE_IDLE) {
-                        RimeSyncCoordinator.Result recovered = handle.coordinator.recover();
+                        RimeSyncCoordinator.Result recovered = handle.coordinator.synchronize(
+                                null, false, settings.compatibilityAccepted);
                         return Result.completed(read(context), recovered);
                     }
                     RimeSyncCoordinator.Preview preview = handle.coordinator.preview();
-                    if (!RimeAutoSync.read(context).enabled) return Result.success(read(context));
-                    RimeSyncCoordinator.Result result = handle.coordinator.execute(
-                            preview.confirmationToken, true);
+                    if (automatic && !RimeAutoSync.read(context).enabled) {
+                        return Result.success(read(context));
+                    }
+                    if (!automatic && preview.requiresDeletionConfirmation) {
+                        return Result.preview(read(context), preview);
+                    }
+                    RimeSyncCoordinator.Result result = handle.coordinator.synchronize(
+                            preview.confirmationToken, automatic, settings.compatibilityAccepted);
                     return Result.completed(read(context), result);
                 } finally {
                     handle.close();
                 }
             }
         });
+    }
+
+    public static void acceptCompatibilityAsync(final Context source, final Callback callback) {
+        submit(source, callback, new Operation() {
+            @Override public Result run(Context context) throws Exception {
+                acceptCompatibility(context);
+                return Result.success(read(context));
+            }
+        });
+    }
+
+    private static void acceptCompatibility(Context context) throws java.io.IOException {
+        if (!preferences(context).edit().putBoolean(KEY_COMPATIBILITY_ACCEPTED, true).commit()) {
+            throw new java.io.IOException("compatibility policy could not be saved");
+        }
     }
 
     public static void saveConfigurationAsync(final Context source,
@@ -256,13 +288,18 @@ public final class RimeSyncSettingsCompat {
         });
     }
 
+    /** Manual entry: preview only when deletion needs approval, otherwise finish in one call. */
+    public static void synchronizeAsync(final Context source, final Callback callback) {
+        synchronizeAsync(source, false, callback);
+    }
+
+    /** Explicit read-only preview for diagnostics; it never starts synchronization. */
     public static void previewAsync(final Context source, final Callback callback) {
         submit(source, callback, new Operation() {
             @Override public Result run(Context context) throws Exception {
                 CoordinatorHandle handle = coordinator(context);
                 try {
-                    RimeSyncCoordinator.Preview preview = handle.coordinator.preview();
-                    return Result.preview(read(context), preview);
+                    return Result.preview(read(context), handle.coordinator.preview());
                 } finally {
                     handle.close();
                 }
@@ -272,42 +309,12 @@ public final class RimeSyncSettingsCompat {
 
     public static void executeAsync(final Context source, final String confirmationToken,
             final boolean deletionConfirmed, final Callback callback) {
-        submit(source, callback, new Operation() {
+        submit(source, callback, new Operation(true) {
             @Override public Result run(Context context) throws Exception {
                 CoordinatorHandle handle = coordinator(context);
                 try {
-                    RimeSyncCoordinator.Result result = handle.coordinator.execute(
-                            confirmationToken, deletionConfirmed);
-                    return Result.completed(read(context), result);
-                } finally {
-                    handle.close();
-                }
-            }
-        });
-    }
-
-    public static void recoverAsync(final Context source, final Callback callback) {
-        submit(source, callback, new Operation() {
-            @Override public Result run(Context context) throws Exception {
-                CoordinatorHandle handle = coordinator(context);
-                try {
-                    RimeSyncCoordinator.Result result = handle.coordinator.recover();
-                    return Result.completed(read(context), result);
-                } finally {
-                    handle.close();
-                }
-            }
-        });
-    }
-
-    public static void recoverKeepingRejectedAsync(
-            final Context source, final Callback callback) {
-        submit(source, callback, new Operation() {
-            @Override public Result run(Context context) throws Exception {
-                CoordinatorHandle handle = coordinator(context);
-                try {
-                    RimeSyncCoordinator.Result result =
-                            handle.coordinator.recoverKeepingRejected();
+                    RimeSyncCoordinator.Result result = handle.coordinator.synchronize(
+                            confirmationToken, deletionConfirmed, read(context).compatibilityAccepted);
                     return Result.completed(read(context), result);
                 } finally {
                     handle.close();
@@ -346,11 +353,14 @@ public final class RimeSyncSettingsCompat {
             });
             return;
         }
+        notifyStateChanged();
         IO.execute(new Runnable() {
             @Override public void run() {
                 Result result;
                 try {
                     result = operation.run(context);
+                } catch (RimeSyncCoordinator.CompatibilityConsentException failure) {
+                    result = Result.error(read(context), ERROR_COMPATIBILITY_CONSENT);
                 } catch (RimeSyncCoordinator.PreviewStageException failure) {
                     result = Result.error(read(context), previewError(failure.stage));
                 } catch (RimeSyncCoordinator.DeletionConfirmationException failure) {
@@ -366,18 +376,23 @@ public final class RimeSyncSettingsCompat {
                     result = Result.error(read(context), ERROR_NATIVE_PERSISTENCE);
                 } catch (RimeSyncCoordinator.PersistenceStalledException failure) {
                     result = Result.error(read(context), ERROR_NATIVE_PERSISTENCE);
-                } catch (RimeSyncStateStore.IdentityConflictException failure) {
+                } catch (RimeSyncCore.IdentityConflictException failure) {
                     result = Result.error(read(context), ERROR_DIRECTORY_IDENTITY);
                 } catch (IllegalArgumentException failure) {
                     result = Result.error(read(context), ERROR_CONFIGURATION_REQUIRED);
                 } catch (IllegalStateException failure) {
                     result = Result.error(read(context), ERROR_OPERATION_IN_PROGRESS);
                 } catch (LocationException failure) {
-                    result = Result.error(read(context), ERROR_LOCATION_UNAVAILABLE);
+                    result = Result.error(read(context),
+                            failure.getCause() instanceof RimeSyncCore.IdentityConflictException
+                                    ? ERROR_DIRECTORY_IDENTITY : ERROR_LOCATION_UNAVAILABLE);
                 } catch (java.io.IOException failure) {
                     result = Result.error(read(context), ERROR_OPERATION_FAILED);
                 } catch (Throwable failure) {
                     result = Result.error(read(context), ERROR_OPERATION_FAILED);
+                }
+                if (operation.synchronization && (!result.success || result.completed)) {
+                    RimeAutoSync.recordResult(context, result);
                 }
                 BUSY.set(false);
                 notifyStateChanged();
@@ -387,6 +402,9 @@ public final class RimeSyncSettingsCompat {
     }
 
     private static int previewError(int stage) {
+        if (stage == RimeSyncCoordinator.PREVIEW_STAGE_BRIDGE_IDENTITY) {
+            return ERROR_DIRECTORY_IDENTITY;
+        }
         if (stage == RimeSyncCoordinator.PREVIEW_STAGE_BRIDGE_MISSING) {
             return ERROR_BRIDGE_SNAPSHOT_MISSING;
         }
@@ -497,8 +515,11 @@ public final class RimeSyncSettingsCompat {
         return false;
     }
 
-    private interface Operation {
-        Result run(Context context) throws Exception;
+    private abstract static class Operation {
+        final boolean synchronization;
+        Operation() { this(false); }
+        Operation(boolean synchronization) { this.synchronization = synchronization; }
+        abstract Result run(Context context) throws Exception;
     }
 
     private static final class LocationException extends Exception {
@@ -524,12 +545,14 @@ public final class RimeSyncSettingsCompat {
     public static final class Settings {
         public final RimeAutoSync.Settings automatic;
         public final boolean canEnableAutomatic;
+        public final boolean compatibilityAccepted;
         public final String rootUri;
         public final String rootLabel;
         public final String deviceDirectory;
         public final String snapshotFile;
         public final boolean locationAccessible;
         public final long lastSuccess;
+        public final RimeSyncStateStore.BaselineCounts counts;
         public final int phase;
         public final boolean operationInProgress;
         public final int nativeExpectedCount;
@@ -542,7 +565,9 @@ public final class RimeSyncSettingsCompat {
                 String snapshotFile, boolean locationAccessible, long lastSuccess,
                 int phase, boolean operationInProgress, int nativeExpectedCount,
                 int nativeActualCount, int nativeMissingCount, boolean nativeFailureRepeated,
-                int nativeFailureKind) {
+                int nativeFailureKind, RimeSyncStateStore.BaselineCounts counts) {
+            this.counts = counts;
+            this.compatibilityAccepted = preferences(context).getBoolean(KEY_COMPATIBILITY_ACCEPTED, false);
             this.automatic = RimeAutoSync.read(context);
             this.canEnableAutomatic = locationAccessible && lastSuccess > 0L
                     && phase == RimeSyncStateStore.PHASE_IDLE;
@@ -567,6 +592,7 @@ public final class RimeSyncSettingsCompat {
         public final boolean success;
         public final int errorCode;
         public final boolean preview;
+        public final boolean completed;
         public final String confirmationToken;
         public final int googleAdditionCount;
         public final int googleDeletionCount;
@@ -579,7 +605,9 @@ public final class RimeSyncSettingsCompat {
         private Result(Settings settings, boolean success, int errorCode, boolean preview,
                 String confirmationToken, int googleAdditionCount, int googleDeletionCount,
                 int rimeAdditionCount, int rimeDeletionCount, int rimeResurrectionCount,
-                int projectedGoogleEntryCount, boolean requiresDeletionConfirmation) {
+                int projectedGoogleEntryCount, boolean requiresDeletionConfirmation,
+                boolean completed) {
+            this.completed = completed;
             this.settings = settings;
             this.success = success;
             this.errorCode = errorCode;
@@ -596,12 +624,12 @@ public final class RimeSyncSettingsCompat {
 
         static Result success(Settings settings) {
             return new Result(settings, true, ERROR_NONE, false, "",
-                    0, 0, 0, 0, 0, 0, false);
+                    0, 0, 0, 0, 0, 0, false, false);
         }
 
         static Result error(Settings settings, int errorCode) {
             return new Result(settings, false, errorCode, false, "",
-                    0, 0, 0, 0, 0, 0, false);
+                    0, 0, 0, 0, 0, 0, false, false);
         }
 
         static Result preview(Settings settings, RimeSyncCoordinator.Preview preview) {
@@ -609,21 +637,21 @@ public final class RimeSyncSettingsCompat {
                     preview.googleAdditionCount, preview.googleDeletionCount,
                     preview.rimeAdditionCount, preview.rimeDeletionCount,
                     preview.rimeResurrectionCount, preview.projectedGoogleEntryCount,
-                    preview.requiresDeletionConfirmation);
+                    preview.requiresDeletionConfirmation, false);
         }
 
         static Result completed(Settings settings, RimeSyncCoordinator.Result result) {
             return new Result(settings, true, ERROR_NONE, false, "",
                     result.googleAdditionCount, result.googleDeletionCount,
                     result.rimeAdditionCount, result.rimeDeletionCount,
-                    result.rimeResurrectionCount, 0, false);
+                    result.rimeResurrectionCount, 0, false, true);
         }
 
         Result withSettings(Settings replacement) {
             return new Result(replacement, success, errorCode, preview,
                     confirmationToken, googleAdditionCount, googleDeletionCount,
                     rimeAdditionCount, rimeDeletionCount, rimeResurrectionCount,
-                    projectedGoogleEntryCount, requiresDeletionConfirmation);
+                    projectedGoogleEntryCount, requiresDeletionConfirmation, completed);
         }
     }
 }

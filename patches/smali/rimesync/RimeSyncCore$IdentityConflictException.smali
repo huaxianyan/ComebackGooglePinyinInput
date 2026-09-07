@@ -1,16 +1,16 @@
-.class public final Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCoordinator$PreviewChangedException;
+.class public final Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCore$IdentityConflictException;
 .super Ljava/io/IOException;
-.source "RimeSyncCoordinator.java"
+.source "RimeSyncCore.java"
 
 
 # annotations
 .annotation system Ldalvik/annotation/EnclosingClass;
-    value = Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCoordinator;
+    value = Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCore;
 .end annotation
 
 .annotation system Ldalvik/annotation/InnerClass;
     accessFlags = 0x19
-    name = "PreviewChangedException"
+    name = "IdentityConflictException"
 .end annotation
 
 
@@ -18,11 +18,10 @@
 .method constructor <init>()V
     .locals 1
 
-    .line 461
-    const-string v0, "Rime synchronization preview changed"
+    .line 17
+    const-string v0, "Bridge snapshot user identity changed"
 
     invoke-direct {p0, v0}, Ljava/io/IOException;-><init>(Ljava/lang/String;)V
 
-    .line 462
     return-void
 .end method

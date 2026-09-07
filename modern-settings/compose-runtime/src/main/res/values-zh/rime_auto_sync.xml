@@ -6,7 +6,7 @@
     <string name="modern_settings_rime_auto_days">%1$d 天</string>
     <string name="modern_settings_rime_auto_prerequisite">请先完成一次手动同步，再开启自动同步</string>
     <string name="modern_settings_rime_auto_retry">上次同步未完成，应用会稍后再试</string>
-    <string name="modern_settings_rime_auto_paused">自动同步已暂停，请手动同步查看原因，处理后重新开启</string>
+    <string name="modern_settings_rime_auto_paused">上次同步未完成，自动同步未开启，请手动同步查看原因</string>
     <string name="modern_settings_rime_auto_consent">开启后，将自动同步 Google 拼音与所选目录中的词条，包括新增、删除和重新添加。\n\n任务被系统中断或文件暂时无法读取时，应用会稍后再试。已确认仅保留在 Rime 的词条继续保留于 Rime。需要你处理的问题会显示在同步状态中。</string>
     <string name="modern_settings_rime_auto_enable">开启自动同步</string>
 </resources>

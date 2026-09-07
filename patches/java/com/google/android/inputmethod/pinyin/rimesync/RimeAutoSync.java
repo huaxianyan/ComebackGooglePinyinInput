@@ -79,21 +79,27 @@ public final class RimeAutoSync {
         return true;
     }
 
+    /** One outcome source for manual and automatic synchronization, not previews/configuration. */
+    static void recordResult(Context context, RimeSyncSettingsCompat.Result result) {
+        preferences(context).edit().putInt(LAST_ERROR, result.errorCode).apply();
+    }
+
     /** Returns true only for a framework-managed, delayed retry, never a local retry loop. */
     static boolean completed(Context context, RimeSyncSettingsCompat.Result result) {
         if (!read(context).enabled) return false;
         boolean pause = requiresAttention(result);
-        SharedPreferences.Editor editor = preferences(context).edit()
-                .putInt(LAST_ERROR, result.errorCode);
-        if (pause) editor.putBoolean(ENABLED, false);
-        editor.apply();
-        if (pause) reconcile(context);
+        if (pause) {
+            preferences(context).edit().putBoolean(ENABLED, false).apply();
+            reconcile(context);
+        }
         RimeSyncSettingsCompat.notifyStateChanged();
         return !result.success && !pause;
     }
 
     static boolean requiresAttention(RimeSyncSettingsCompat.Result result) {
         switch (result.errorCode) {
+            case RimeSyncSettingsCompat.ERROR_DIRECTORY_IDENTITY:
+            case RimeSyncSettingsCompat.ERROR_COMPATIBILITY_CONSENT:
             case RimeSyncSettingsCompat.ERROR_CONFIGURATION_REQUIRED:
             case RimeSyncSettingsCompat.ERROR_DELETION_CONFIRMATION_REQUIRED:
             case RimeSyncSettingsCompat.ERROR_NATIVE_PERSISTENCE:

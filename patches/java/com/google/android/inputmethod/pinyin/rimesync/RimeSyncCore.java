@@ -13,6 +13,10 @@ import java.util.UUID;
 
 /** Rime-side merge and translation view; full snapshots retain entries excluded from translation. */
 public final class RimeSyncCore {
+    public static final class IdentityConflictException extends IOException {
+        IdentityConflictException() { super("Bridge snapshot user identity changed"); }
+    }
+
     public static final double NEW_ENTRY_DEE = 1.0e-8;
 
     private RimeSyncCore() {}
@@ -63,7 +67,7 @@ public final class RimeSyncCore {
             if (device.bridgeOwned) {
                 if (result != null) throw new IOException("multiple Bridge snapshots were found");
                 if (!bridgeUserId.equals(device.snapshot.metadata().get("user_id"))) {
-                    throw new IOException("Bridge snapshot user identity changed");
+                    throw new IdentityConflictException();
                 }
                 result = device.snapshot;
             } else {

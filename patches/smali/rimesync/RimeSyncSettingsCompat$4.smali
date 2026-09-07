@@ -1,9 +1,6 @@
 .class Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$4;
-.super Ljava/lang/Object;
+.super Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Operation;
 .source "RimeSyncSettingsCompat.java"
-
-# interfaces
-.implements Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Operation;
 
 
 # annotations
@@ -24,16 +21,11 @@
 # direct methods
 .method constructor <init>(I)V
     .locals 0
-    .annotation system Ldalvik/annotation/Signature;
-        value = {
-            "()V"
-        }
-    .end annotation
 
-    .line 147
+    .line 151
     iput p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$4;->val$intervalHours:I
 
-    invoke-direct {p0}, Ljava/lang/Object;-><init>()V
+    invoke-direct {p0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Operation;-><init>()V
 
     return-void
 .end method
@@ -43,26 +35,26 @@
 .method public run(Landroid/content/Context;)Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;
     .locals 3
 
-    .line 149
+    .line 153
     invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->read(Landroid/content/Context;)Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Settings;
 
     move-result-object v0
 
-    .line 150
+    .line 154
     iget-boolean v1, v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Settings;->canEnableAutomatic:Z
 
     const/4 v2, 0x1
 
     if-nez v1, :cond_0
 
-    .line 151
+    .line 155
     invoke-static {v0, v2}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;->error(Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Settings;I)Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;
 
     move-result-object p1
 
     return-object p1
 
-    .line 153
+    .line 157
     :cond_0
     iget v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$4;->val$intervalHours:I
 
@@ -72,7 +64,7 @@
 
     if-nez v0, :cond_1
 
-    .line 154
+    .line 158
     invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->read(Landroid/content/Context;)Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Settings;
 
     move-result-object p1
@@ -85,7 +77,7 @@
 
     return-object p1
 
-    .line 156
+    .line 160
     :cond_1
     invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->read(Landroid/content/Context;)Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Settings;
 

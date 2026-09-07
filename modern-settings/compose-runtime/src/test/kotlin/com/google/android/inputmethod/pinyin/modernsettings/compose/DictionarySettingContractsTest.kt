@@ -39,16 +39,6 @@ class DictionarySettingContractsTest {
     }
 
     @Test
-    fun healthCompletionAtomicallyPublishesTheNewSummary() {
-        val loading = DictionaryHealthState(summary = "old", loading = true)
-
-        assertEquals(
-            DictionaryHealthState(summary = "new", loading = false),
-            DictionaryHealthStateReducer.complete(loading, "new"),
-        )
-    }
-
-    @Test
     fun rimeSynchronizationRequiresACompleteAccessibleConfiguration() {
         val configured = RimeSyncSettingsSnapshot(
             rootUri = "content://fixture/root",

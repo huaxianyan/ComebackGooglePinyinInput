@@ -90,7 +90,8 @@ public final class RimeSyncStateStore extends SQLiteOpenHelper {
 
     /** Configure exactly one profile. A changed identity starts with an empty safe baseline. */
     public synchronized Profile configure(String rootUri, RimeSyncConfiguration configuration,
-            int protocolVersion, String recoveredBridgeUserId) {
+            int protocolVersion, String recoveredBridgeUserId)
+            throws RimeSyncCore.IdentityConflictException {
         if (rootUri == null || rootUri.length() == 0 || configuration == null
                 || protocolVersion <= 0) {
             throw new IllegalArgumentException("Rime synchronization profile is invalid");
@@ -103,7 +104,7 @@ public final class RimeSyncStateStore extends SQLiteOpenHelper {
                 && current.protocolVersion == protocolVersion) {
             if (recoveredBridgeUserId != null
                     && !current.bridgeUserId.equals(recoveredBridgeUserId)) {
-                throw new IdentityConflictException();
+                throw new RimeSyncCore.IdentityConflictException();
             }
             if (current.rootUri.equals(rootUri)) return current;
             if (current.phase != PHASE_IDLE) {
@@ -150,14 +151,40 @@ public final class RimeSyncStateStore extends SQLiteOpenHelper {
         return replacement;
     }
 
-    public static final class IdentityConflictException extends IllegalArgumentException {
-        IdentityConflictException() {
-            super("selected directory belongs to a different Bridge identity");
+    public synchronized Profile profile() {
+        return readProfile(getReadableDatabase());
+    }
+
+    public static final class BaselineCounts {
+        public final int shared;
+        public final int rimeOnly;
+        BaselineCounts(int shared, int rimeOnly) {
+            this.shared = shared; this.rimeOnly = rimeOnly;
         }
     }
 
-    public synchronized Profile profile() {
-        return readProfile(getReadableDatabase());
+    /** Counts committed metadata, without loading dictionary words or SAF snapshots. */
+    public synchronized BaselineCounts baselineCounts() {
+        Cursor cursor = getReadableDatabase().rawQuery(
+                "SELECT google_projection, COUNT(*) FROM baseline WHERE history=? "
+                + "GROUP BY google_projection",
+                new String[] {RimeSyncPlanner.History.PRESENT.name()});
+        int shared = 0;
+        int rimeOnly = 0;
+        try {
+            while (cursor.moveToNext()) {
+                RimeSyncPlanner.GoogleProjection projection =
+                        RimeSyncPlanner.GoogleProjection.valueOf(cursor.getString(0));
+                if (projection == RimeSyncPlanner.GoogleProjection.RIME_ONLY) {
+                    rimeOnly = cursor.getInt(1);
+                } else {
+                    shared = cursor.getInt(1);
+                }
+            }
+            return new BaselineCounts(shared, rimeOnly);
+        } finally {
+            cursor.close();
+        }
     }
 
     public synchronized Baseline baseline(byte[] keyHash) {

@@ -34,9 +34,9 @@
 .end method
 
 .method static completed(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;)Z
-    .locals 5
+    .locals 4
 
-    .line 84
+    .line 89
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeAutoSync;->read(Landroid/content/Context;)Lcom/google/android/inputmethod/pinyin/rimesync/RimeAutoSync$Settings;
 
     move-result-object v0
@@ -49,13 +49,16 @@
 
     return v1
 
-    .line 85
+    .line 90
     :cond_0
     invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeAutoSync;->requiresAttention(Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;)Z
 
     move-result v0
 
-    .line 86
+    .line 91
+    if-eqz v0, :cond_1
+
+    .line 92
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeAutoSync;->preferences(Landroid/content/Context;)Landroid/content/SharedPreferences;
 
     move-result-object v2
@@ -64,45 +67,31 @@
 
     move-result-object v2
 
-    iget v3, p1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;->errorCode:I
-
-    .line 87
-    const-string v4, "last_error"
-
-    invoke-interface {v2, v4, v3}, Landroid/content/SharedPreferences$Editor;->putInt(Ljava/lang/String;I)Landroid/content/SharedPreferences$Editor;
-
-    move-result-object v2
-
-    .line 88
-    if-eqz v0, :cond_1
-
     const-string v3, "enabled"
 
     invoke-interface {v2, v3, v1}, Landroid/content/SharedPreferences$Editor;->putBoolean(Ljava/lang/String;Z)Landroid/content/SharedPreferences$Editor;
 
-    .line 89
-    :cond_1
+    move-result-object v2
+
     invoke-interface {v2}, Landroid/content/SharedPreferences$Editor;->apply()V
 
-    .line 90
-    if-eqz v0, :cond_2
-
+    .line 93
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeAutoSync;->reconcile(Landroid/content/Context;)Z
 
-    .line 91
-    :cond_2
+    .line 95
+    :cond_1
     invoke-static {}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->notifyStateChanged()V
 
-    .line 92
+    .line 96
     iget-boolean p0, p1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;->success:Z
 
-    if-nez p0, :cond_3
+    if-nez p0, :cond_2
 
-    if-nez v0, :cond_3
+    if-nez v0, :cond_2
 
     const/4 v1, 0x1
 
-    :cond_3
+    :cond_2
     return v1
 .end method
 
@@ -399,22 +388,48 @@
     return v5
 .end method
 
+.method static recordResult(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;)V
+    .locals 1
+
+    .line 84
+    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeAutoSync;->preferences(Landroid/content/Context;)Landroid/content/SharedPreferences;
+
+    move-result-object p0
+
+    invoke-interface {p0}, Landroid/content/SharedPreferences;->edit()Landroid/content/SharedPreferences$Editor;
+
+    move-result-object p0
+
+    const-string v0, "last_error"
+
+    iget p1, p1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;->errorCode:I
+
+    invoke-interface {p0, v0, p1}, Landroid/content/SharedPreferences$Editor;->putInt(Ljava/lang/String;I)Landroid/content/SharedPreferences$Editor;
+
+    move-result-object p0
+
+    invoke-interface {p0}, Landroid/content/SharedPreferences$Editor;->apply()V
+
+    .line 85
+    return-void
+.end method
+
 .method static requiresAttention(Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;)Z
     .locals 2
 
-    .line 96
+    .line 100
     iget v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;->errorCode:I
 
     const/4 v1, 0x1
 
     sparse-switch v0, :sswitch_data_0
 
-    .line 105
+    .line 111
     const/4 p0, 0x0
 
     return p0
 
-    .line 103
+    .line 109
     :sswitch_0
     iget-object p0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;->settings:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Settings;
 
@@ -424,7 +439,7 @@
 
     return p0
 
-    .line 101
+    .line 107
     :sswitch_1
     return v1
 
@@ -437,5 +452,7 @@
         0x5 -> :sswitch_1
         0x8 -> :sswitch_1
         0xc -> :sswitch_1
+        0x11 -> :sswitch_1
+        0x13 -> :sswitch_1
     .end sparse-switch
 .end method

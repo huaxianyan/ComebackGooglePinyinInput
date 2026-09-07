@@ -28,31 +28,31 @@
 .method public constructor <init>(Ljava/lang/String;Ljava/lang/String;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$GoogleAction;)V
     .locals 1
 
-    .line 494
+    .line 534
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
-    .line 495
+    .line 535
     if-eqz p3, :cond_1
 
     sget-object v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$GoogleAction;->NONE:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$GoogleAction;
 
     if-eq p3, v0, :cond_1
 
-    .line 498
+    .line 538
     invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge;->access$200(Ljava/lang/String;)Ljava/lang/String;
 
     move-result-object p1
 
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Change;->code:Ljava/lang/String;
 
-    .line 499
+    .line 539
     invoke-static {p2}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge;->access$300(Ljava/lang/String;)Ljava/lang/String;
 
     move-result-object p1
 
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Change;->phrase:Ljava/lang/String;
 
-    .line 500
+    .line 540
     iget-object p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Change;->phrase:Ljava/lang/String;
 
     iget-object p2, p0, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Change;->phrase:Ljava/lang/String;
@@ -71,7 +71,7 @@
 
     if-lt p1, p2, :cond_0
 
-    .line 503
+    .line 543
     new-instance p1, Ljava/lang/StringBuilder;
 
     invoke-direct {p1}, Ljava/lang/StringBuilder;-><init>()V
@@ -100,13 +100,13 @@
 
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Change;->key:Ljava/lang/String;
 
-    .line 504
+    .line 544
     iput-object p3, p0, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Change;->action:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$GoogleAction;
 
-    .line 505
+    .line 545
     return-void
 
-    .line 501
+    .line 541
     :cond_0
     new-instance p1, Ljava/lang/IllegalArgumentException;
 
@@ -116,7 +116,7 @@
 
     throw p1
 
-    .line 496
+    .line 536
     :cond_1
     new-instance p1, Ljava/lang/IllegalArgumentException;
 

@@ -1,6 +1,17 @@
 package com.google.android.inputmethod.pinyin.modernsettings.compose
 
 import androidx.compose.foundation.clickable
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -29,9 +40,10 @@ internal fun LazyListScope.dictionarySettingsItems(
     snapshot: DictionarySettingsSnapshot,
     health: DictionaryHealthState,
     actions: SettingsActions,
+    rime: RimeSyncSettingsSnapshot,
 ) {
     item(key = "dictionary_health", contentType = "status") {
-        DictionaryHealthRow(health, actions.onRefreshDictionaryHealth)
+        DictionaryHealthRow(health, rime, actions.onRefreshDictionaryHealth)
     }
     item(key = "dictionary_personalization_section", contentType = "section") {
         SectionTitle(stringResource(R.string.modern_settings_dictionary_personalization_section))
@@ -309,8 +321,20 @@ internal fun DictionaryImportDialog(
 @Composable
 private fun DictionaryHealthRow(
     state: DictionaryHealthState,
+    rime: RimeSyncSettingsSnapshot,
     onRefresh: () -> Unit,
 ) {
+    var expanded by rememberSaveable { mutableStateOf(false) }
+    val dark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
+    val color by animateColorAsState(
+        targetValue = when {
+            state.loading || state.tone == DictionaryHealthTone.Unknown -> MaterialTheme.colorScheme.outline
+            state.tone == DictionaryHealthTone.Healthy -> if (dark) Color(0xFF81C784) else Color(0xFF2E7D32)
+            state.tone == DictionaryHealthTone.Notice -> if (dark) Color(0xFFFFD54F) else Color(0xFF8D6500)
+            else -> MaterialTheme.colorScheme.error
+        },
+        label = "dictionary health indicator",
+    )
     LaunchedEffect(state.summary, state.loading) {
         if (state.summary.isEmpty() && !state.loading) onRefresh()
     }
@@ -335,11 +359,29 @@ private fun DictionaryHealthRow(
                 modifier = Modifier.padding(start = 8.dp),
             )
         },
+        leadingContent = { Box(Modifier.size(16.dp).background(color, CircleShape)) },
         supportingContent = {
-            Text(
-                supporting,
-                modifier = Modifier.padding(start = 8.dp),
-            )
+            Column(Modifier.padding(start = 8.dp)) {
+                Text(supporting)
+                Text(stringResource(R.string.modern_settings_rime_sync_section),
+                    modifier = Modifier.padding(top = 12.dp),
+                    style = MaterialTheme.typography.titleSmall)
+                Text(rimeStatusText(rime))
+                Text(stringResource(if (rime.automatic?.enabled == true)
+                    R.string.modern_settings_rime_health_auto_on
+                    else R.string.modern_settings_rime_health_auto_off))
+                if (rime.lastSuccess > 0L) {
+                    Text(stringResource(R.string.modern_settings_rime_health_counts,
+                        rime.sharedEntryCount, rime.rimeOnlyCount))
+                }
+                if (expanded && state.details.isNotEmpty()) {
+                    Text(state.details, modifier = Modifier.padding(top = 12.dp))
+                }
+                TextButton(onClick = { expanded = !expanded }) {
+                    Text(stringResource(if (expanded) R.string.modern_settings_health_hide_details
+                        else R.string.modern_settings_health_details))
+                }
+            }
         },
         modifier = Modifier.clickable(enabled = !state.loading, onClick = onRefresh),
     )

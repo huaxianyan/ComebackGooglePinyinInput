@@ -24,15 +24,15 @@
 .method constructor <init>(Lcom/google/android/inputmethod/pinyin/rimesync/RimeUserDbSnapshot;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan;)V
     .locals 0
 
-    .line 358
+    .line 391
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
-    .line 359
+    .line 392
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCoordinator$Session;->snapshot:Lcom/google/android/inputmethod/pinyin/rimesync/RimeUserDbSnapshot;
 
-    .line 360
+    .line 393
     iput-object p2, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCoordinator$Session;->plan:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan;
 
-    .line 361
+    .line 394
     return-void
 .end method

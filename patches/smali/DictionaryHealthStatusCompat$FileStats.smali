@@ -32,12 +32,12 @@
 
 # direct methods
 .method constructor <init>(ZJJZJZZ)V
-    .registers 11
+    .locals 0
 
-    .line 171
+    .line 159
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
-    .line 172
+    .line 160
     iput-boolean p1, p0, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$FileStats;->main:Z
 
     iput-wide p2, p0, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$FileStats;->mainBytes:J
@@ -48,11 +48,11 @@
 
     iput-wide p7, p0, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$FileStats;->backupBytes:J
 
-    .line 173
+    .line 161
     iput-boolean p9, p0, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$FileStats;->temporary:Z
 
     iput-boolean p10, p0, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$FileStats;->unreadable:Z
 
-    .line 174
+    .line 162
     return-void
 .end method

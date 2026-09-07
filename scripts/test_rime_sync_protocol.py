@@ -94,6 +94,7 @@ public final class RimeUserDbSnapshotTest {
     List<Entry> staged;
     final int reportedCount;
     boolean failInsert;
+    final java.util.Set<String> incompatibleValues = new java.util.HashSet<String>();
     int insertAttempts;
     boolean dropLastOnPersist;
     boolean persisted;
@@ -127,7 +128,7 @@ public final class RimeUserDbSnapshotTest {
     @Override public boolean insertOrUpdate(String[] tokens, int[] languageIds, String value,
         int count, boolean isModified, boolean isNormalizedToken) {
       insertAttempts++;
-      if (failInsert) return false;
+      if (failInsert || incompatibleValues.contains(value)) return false;
       staged.add(new Entry(tokens, languageIds, value, count,
           isModified, isNormalizedToken, 0));
       return true;
@@ -441,7 +442,27 @@ public final class RimeUserDbSnapshotTest {
             && failingFactory.dictionary.durable.size() == 2
             && failingFactory.notifications == 0,
         "rejected native entries must all be counted without persistence or refresh");
+    boolean controlFailureStopped = false;
+    try {
+      GoogleNativeDictionaryBridge.recoverKeepingRejected(
+          new FakeContext(), failingFactory, rejectedChanges, rejectedEntries);
+    } catch (GoogleNativeDictionaryBridge.NativeOperationException expected) {
+      controlFailureStopped = true;
+    }
+    require(controlFailureStopped && failingFactory.dictionary.durable.size() == 2,
+        "global native failure must not become a compatibility exclusion");
     failingFactory.dictionary.failInsert = false;
+    boolean contextDependentFailureStopped = false;
+    try {
+      GoogleNativeDictionaryBridge.recoverKeepingRejected(
+          new FakeContext(), failingFactory, rejectedChanges, rejectedEntries);
+    } catch (GoogleNativeDictionaryBridge.NativeOperationException expected) {
+      contextDependentFailureStopped = true;
+    }
+    require(contextDependentFailureStopped && failingFactory.dictionary.durable.size() == 2,
+        "an entry accepted in an empty copy must not be excluded as incompatible");
+    failingFactory.dictionary.incompatibleValues.add("fixture-zeta");
+    failingFactory.dictionary.incompatibleValues.add("fixture-theta");
     GoogleNativeDictionaryBridge.Result keptInRime =
         GoogleNativeDictionaryBridge.recoverKeepingRejected(
             new FakeContext(), failingFactory, rejectedChanges, rejectedEntries);

@@ -1,4 +1,4 @@
-.class public final Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCoordinator$PreviewChangedException;
+.class public final Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCoordinator$CompatibilityConsentException;
 .super Ljava/io/IOException;
 .source "RimeSyncCoordinator.java"
 
@@ -10,7 +10,7 @@
 
 .annotation system Ldalvik/annotation/InnerClass;
     accessFlags = 0x19
-    name = "PreviewChangedException"
+    name = "CompatibilityConsentException"
 .end annotation
 
 
@@ -18,11 +18,10 @@
 .method constructor <init>()V
     .locals 1
 
-    .line 461
-    const-string v0, "Rime synchronization preview changed"
+    .line 134
+    const-string v0, "compatibility policy approval is required"
 
     invoke-direct {p0, v0}, Ljava/io/IOException;-><init>(Ljava/lang/String;)V
 
-    .line 462
     return-void
 .end method

@@ -24,17 +24,17 @@
 .method constructor <init>(II)V
     .locals 1
 
-    .line 437
+    .line 470
     const-string v0, "Rime synchronization deletion confirmation is required"
 
     invoke-direct {p0, v0}, Ljava/io/IOException;-><init>(Ljava/lang/String;)V
 
-    .line 438
+    .line 471
     iput p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCoordinator$DeletionConfirmationException;->googleDeletionCount:I
 
-    .line 439
+    .line 472
     iput p2, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCoordinator$DeletionConfirmationException;->rimeDeletionCount:I
 
-    .line 440
+    .line 473
     return-void
 .end method

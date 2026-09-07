@@ -201,10 +201,10 @@ internal class LegacyDictionarySettingsRepository(private val activity: Activity
         activity.startActivity(Intent("android.settings.USER_DICTIONARY_SETTINGS"))
     }
 
-    fun loadHealth(onLoaded: (String) -> Unit) {
+    fun loadHealth(onLoaded: (DictionaryHealthState) -> Unit) {
         val type = Class.forName("com.google.android.inputmethod.pinyin.DictionaryHealthStatusCompat")
         val callbackType = Class.forName(
-            "com.google.android.inputmethod.pinyin.DictionaryHealthStatusCompat\$Callback",
+            "com.google.android.inputmethod.pinyin.DictionaryHealthStatusCompat\$SnapshotCallback",
         )
         val callback = Proxy.newProxyInstance(
             callbackType.classLoader,
@@ -212,7 +212,18 @@ internal class LegacyDictionarySettingsRepository(private val activity: Activity
         ) { proxy, method, arguments ->
             when (method.name) {
                 "onLoaded" -> {
-                    onLoaded(arguments?.firstOrNull() as? String ?: "")
+                    val snapshot = requireNotNull(arguments?.firstOrNull())
+                    val fields = snapshot.javaClass
+                    val status = fields.getField("status").getInt(snapshot)
+                    onLoaded(DictionaryHealthState(
+                        summary = fields.getField("summary").get(snapshot) as String,
+                        details = fields.getField("details").get(snapshot) as String,
+                        tone = when (status) {
+                            type.getField("HEALTH_OK").getInt(null) -> DictionaryHealthTone.Healthy
+                            type.getField("HEALTH_NOTICE").getInt(null) -> DictionaryHealthTone.Notice
+                            else -> DictionaryHealthTone.Error
+                        },
+                    ))
                     null
                 }
                 "toString" -> "ModernDictionaryHealthCallback"
@@ -221,7 +232,7 @@ internal class LegacyDictionarySettingsRepository(private val activity: Activity
                 else -> null
             }
         }
-        type.getMethod("load", Context::class.java, callbackType).invoke(null, context, callback)
+        type.getMethod("loadSnapshot", Context::class.java, callbackType).invoke(null, context, callback)
     }
 
     /** Persist the grant only after the primary-DEX validator has exercised create/read/rename/delete. */

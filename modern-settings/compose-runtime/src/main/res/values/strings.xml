@@ -110,9 +110,9 @@
     <string name="modern_settings_rime_sync_native_duplicate_failure">The Google Pinyin user dictionary could not be prepared. Tap to retry.</string>
     <string name="modern_settings_rime_sync_native_insert_failure">%1$d entries could not be added to Google Pinyin. Tap to check again.</string>
     <string name="modern_settings_rime_sync_native_insert_stalled">The same %1$d entries still cannot be added to Google Pinyin. You can keep them in Rime and continue.</string>
-    <string name="modern_settings_rime_sync_keep_rejected_confirm_title">Keep these entries and continue?</string>
-    <string name="modern_settings_rime_sync_keep_rejected_confirm_message">%1$d entries will remain available only in Rime while the other entries continue syncing. Rebuilding synchronization state will check them again.</string>
-    <string name="modern_settings_rime_sync_keep_rejected_action">Keep and continue</string>
+    <string name="modern_settings_rime_sync_keep_rejected_confirm_title">Entry synchronization rules</string>
+    <string name="modern_settings_rime_sync_keep_rejected_confirm_message">Entries verified as currently unsupported by Google Pinyin will remain in Rime while other entries synchronize. Future syncs use this rule without asking for each batch.\n\nRead, write or persistence verification failures still pause synchronization. Manual sync still asks before deletions.</string>
+    <string name="modern_settings_rime_sync_keep_rejected_action">Agree and synchronize</string>
     <string name="modern_settings_rime_sync_native_persist_failure">The Google Pinyin user dictionary could not be saved. Tap to retry.</string>
     <string name="modern_settings_rime_sync_native_rebuild_failure">The Google Pinyin user dictionary could not be updated. Tap to retry.</string>
     <string name="modern_settings_rime_sync_native_export_failure">The Google Pinyin user dictionary could not be read. Tap to retry.</string>
@@ -121,7 +121,8 @@
     <string name="modern_settings_rime_sync_completed">The previous synchronization completed</string>
     <string name="modern_settings_rime_sync_not_run">Not synchronized yet</string>
     <string name="modern_settings_rime_sync_now_title">Synchronize now</string>
-    <string name="modern_settings_rime_sync_now_summary">Preview additions and deletions before synchronizing</string>
+    <string name="modern_settings_rime_sync_now_summary">Synchronize entries on both sides, with confirmation before deletions</string>
+    <string name="modern_settings_rime_sync_last_success">Last sync: %1$s %2$s</string>
     <string name="modern_settings_rime_sync_reset_title">Rebuild synchronization state</string>
     <string name="modern_settings_rime_sync_reset_summary">Compare both dictionaries again during the next synchronization</string>
     <string name="modern_settings_rime_sync_preview_title">Synchronize these changes?</string>
@@ -264,4 +265,13 @@
     <string name="modern_settings_value_adjustable">%1$s, %2$s, adjustable</string>
     <string name="modern_settings_rime_sync_error_directory_identity">This location contains data from a different local sync setup. Select the original location or copy its contents to the new location and try again.</string>
     <string name="modern_settings_rime_sync_error_bridge_missing">The previous sync file for this device is missing. Copy the original folder contents to this location. Automatic sync will retry if enabled.</string>
+    <string name="modern_settings_rime_health_unconfigured">No synchronization location selected</string>
+    <string name="modern_settings_rime_health_location">The sync location is unavailable. Check its access permissions.</string>
+    <string name="modern_settings_rime_health_paused">Sync is incomplete. Back up the dictionary, then tap Synchronize now to retry.</string>
+    <string name="modern_settings_rime_health_unfinished">The previous sync is incomplete. Tap Synchronize now to continue.</string>
+    <string name="modern_settings_rime_health_auto_on">Automatic sync: on</string>
+    <string name="modern_settings_rime_health_auto_off">Automatic sync: off</string>
+    <string name="modern_settings_rime_health_counts">Last successful sync: %1$d shared entries, %2$d kept only in Rime</string>
+    <string name="modern_settings_health_details">File details</string>
+    <string name="modern_settings_health_hide_details">Hide details</string>
 </resources>

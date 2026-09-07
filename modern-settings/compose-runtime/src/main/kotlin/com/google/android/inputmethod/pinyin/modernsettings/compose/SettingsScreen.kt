@@ -251,7 +251,7 @@ private fun SettingsRoutePage(
                     snapshot, actions, millisecondsText,
                 )
                 SettingsRoute.Dictionary -> {
-                    dictionarySettingsItems(dictionarySnapshot, dictionaryHealth, actions)
+                    dictionarySettingsItems(dictionarySnapshot, dictionaryHealth, actions, rimeSync.settings)
                     rimeSyncSettingsItems(
                         rimeSync,
                         dictionarySnapshot.backupInProgress || dictionarySnapshot.clearInProgress,

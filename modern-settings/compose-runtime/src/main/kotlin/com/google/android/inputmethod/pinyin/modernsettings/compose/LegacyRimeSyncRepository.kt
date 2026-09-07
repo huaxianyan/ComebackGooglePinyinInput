@@ -22,7 +22,10 @@ data class RimeSyncSettingsSnapshot(
     val deviceDirectory: String = "",
     val snapshotFile: String = "pinyin_simp.userdb.txt",
     val locationAccessible: Boolean = false,
+    val compatibilityAccepted: Boolean = false,
     val lastSuccess: Long = 0L,
+    val sharedEntryCount: Int = 0,
+    val rimeOnlyCount: Int = 0,
     val phase: Int = 0,
     val operationInProgress: Boolean = false,
     val nativeExpectedCount: Int = 0,
@@ -78,6 +81,7 @@ internal enum class RimeSyncError {
     DeletionConfirmationRequired,
     CapacityExceeded,
     NativePersistence,
+    CompatibilityConsent,
     PreviewSourceList,
     PreviewSourceOpen,
     PreviewSourceParse,
@@ -171,11 +175,11 @@ internal class LegacyRimeSyncRepository(private val activity: Activity) {
         ), arrayOf(context, uri, label, callback(done)), done)
     }
 
-    fun observeChanges(changed: () -> Unit): () -> Unit {
+    fun observeChanges(changed: (Boolean) -> Unit): () -> Unit {
         val listenerType = Class.forName(type.name + "\$StateListener")
         val listener = Proxy.newProxyInstance(listenerType.classLoader, arrayOf(listenerType)) { proxy, method, args ->
             when (method.name) {
-                "onChanged" -> { changed(); null }
+                "onChanged" -> { changed(args?.firstOrNull() as? Boolean == true); null }
                 "hashCode" -> System.identityHashCode(proxy)
                 "equals" -> proxy === args?.firstOrNull()
                 "toString" -> "RimeSettingsStateListener"
@@ -193,8 +197,13 @@ internal class LegacyRimeSyncRepository(private val activity: Activity) {
         ), arrayOf(context, enabled, hours, callback(done)), done)
     }
 
-    fun preview(done: (RimeSyncResponse) -> Unit) {
-        invokeAsync("previewAsync", arrayOf(Context::class.java, callbackType),
+    fun acceptCompatibility(done: (RimeSyncResponse) -> Unit) {
+        invokeAsync("acceptCompatibilityAsync", arrayOf(Context::class.java, callbackType),
+            arrayOf(context, callback(done)), done)
+    }
+
+    fun synchronize(done: (RimeSyncResponse) -> Unit) {
+        invokeAsync("synchronizeAsync", arrayOf(Context::class.java, callbackType),
             arrayOf(context, callback(done)), done)
     }
 
@@ -205,16 +214,6 @@ internal class LegacyRimeSyncRepository(private val activity: Activity) {
             Boolean::class.javaPrimitiveType!!,
             callbackType,
         ), arrayOf(context, token, deletionConfirmed, callback(done)), done)
-    }
-
-    fun recover(done: (RimeSyncResponse) -> Unit) {
-        invokeAsync("recoverAsync", arrayOf(Context::class.java, callbackType),
-            arrayOf(context, callback(done)), done)
-    }
-
-    fun recoverKeepingRejected(done: (RimeSyncResponse) -> Unit) {
-        invokeAsync("recoverKeepingRejectedAsync", arrayOf(Context::class.java, callbackType),
-            arrayOf(context, callback(done)), done)
     }
 
     fun resetBaseline(done: (RimeSyncResponse) -> Unit) {
@@ -282,8 +281,10 @@ internal class LegacyRimeSyncRepository(private val activity: Activity) {
         val valueType = value.javaClass
         val auto = requireNotNull(valueType.getField("automatic").get(value))
         val autoType = auto.javaClass
+        val counts = requireNotNull(valueType.getField("counts").get(value))
         val snapshot = RimeSyncSettingsSnapshot(
             canEnableAutomatic = valueType.getField("canEnableAutomatic").getBoolean(value),
+            compatibilityAccepted = valueType.getField("compatibilityAccepted").getBoolean(value),
             automatic = RimeAutomaticSettings(
                 enabled = autoType.getField("enabled").getBoolean(auto),
                 intervalHours = autoType.getField("intervalHours").getInt(auto),
@@ -295,6 +296,8 @@ internal class LegacyRimeSyncRepository(private val activity: Activity) {
             snapshotFile = valueType.getField("snapshotFile").get(value) as String,
             locationAccessible = valueType.getField("locationAccessible").getBoolean(value),
             lastSuccess = valueType.getField("lastSuccess").getLong(value),
+            sharedEntryCount = counts.javaClass.getField("shared").getInt(counts),
+            rimeOnlyCount = counts.javaClass.getField("rimeOnly").getInt(counts),
             phase = valueType.getField("phase").getInt(value),
             operationInProgress = valueType.getField("operationInProgress").getBoolean(value),
             nativeExpectedCount = valueType.getField("nativeExpectedCount").getInt(value),
@@ -336,6 +339,7 @@ internal class LegacyRimeSyncRepository(private val activity: Activity) {
             RimeSyncError.DeletionConfirmationRequired
         staticInt("ERROR_CAPACITY_EXCEEDED") -> RimeSyncError.CapacityExceeded
         staticInt("ERROR_NATIVE_PERSISTENCE") -> RimeSyncError.NativePersistence
+        staticInt("ERROR_COMPATIBILITY_CONSENT") -> RimeSyncError.CompatibilityConsent
         staticInt("ERROR_PREVIEW_SOURCE_LIST") -> RimeSyncError.PreviewSourceList
         staticInt("ERROR_PREVIEW_SOURCE_OPEN") -> RimeSyncError.PreviewSourceOpen
         staticInt("ERROR_PREVIEW_SOURCE_PARSE") -> RimeSyncError.PreviewSourceParse

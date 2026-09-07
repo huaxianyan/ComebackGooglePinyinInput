@@ -33,7 +33,9 @@ def main() -> int:
     jar = jdk / "bin/jar.exe"
     d8 = args.build_tools.resolve() / "d8.bat"
     apktool = args.apktool.resolve()
-    sources = sorted(SOURCE_DIR.glob("*.java"))
+    sources = sorted(SOURCE_DIR.glob("*.java")) + [
+        SOURCE_DIR.parent / "DictionaryHealthStatusCompat.java",
+    ]
     for path in (android_jar, javac, jar, d8, apktool, FACTORY_PROVIDER, *sources):
         if not path.exists():
             raise FileNotFoundError(path)
@@ -77,7 +79,7 @@ def main() -> int:
         compiled = root / "rime-sync.jar"
         subprocess.run(
             [str(jar), "cf", str(compiled), "-C", str(classes),
-             "com/google/android/inputmethod/pinyin/rimesync"],
+             "com/google/android/inputmethod/pinyin"],
             check=True,
             env=environment,
         )
@@ -105,6 +107,14 @@ def main() -> int:
             shutil.rmtree(OUTPUT_DIR)
         shutil.copytree(generated, OUTPUT_DIR)
         FACTORY_PROVIDER.write_bytes(provider_smali)
+        # Health has legacy and Compose callers, but only one Java implementation.
+        health_files = sorted(generated.parent.glob("DictionaryHealthStatusCompat*.smali"))
+        if not health_files:
+            raise RuntimeError("Dictionary health Smali was not generated")
+        for path in OUTPUT_DIR.parent.glob("DictionaryHealthStatusCompat*.smali"):
+            path.unlink()
+        for path in health_files:
+            shutil.copy2(path, OUTPUT_DIR.parent / path.name)
 
     print(f"Generated {len(list(OUTPUT_DIR.glob('*.smali')))} Rime synchronization Smali files")
     return 0

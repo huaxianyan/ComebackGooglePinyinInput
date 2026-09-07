@@ -110,6 +110,7 @@ public final class GoogleNativeDictionaryBridge {
                 PreparedChanges prepared = prepare(
                         before, changes, tolerateAppliedChanges);
                 if (!skippedAdditionKeys.isEmpty()) {
+                    verifyRejectedInEmptyCopy(accessor, before, prepared.adds, skippedAdditionKeys);
                     List<Change> supportedAdds = new ArrayList<Change>();
                     Set<String> pendingAddKeys = new HashSet<String>();
                     for (Change addition : prepared.adds) {
@@ -164,6 +165,45 @@ public final class GoogleNativeDictionaryBridge {
                 if (accessor != null) accessor.close();
             }
         }
+    }
+
+    /**
+     * A repeated failure in a populated dictionary alone is insufficient. Probe an
+     * unpersisted empty copy, then verify a known-good synthetic positive control.
+     * The control is discarded, and every original record is restored before apply.
+     */
+    private static void verifyRejectedInEmptyCopy(DictionaryAccessor accessor, Snapshot before,
+            List<Change> additions, Set<String> rejected) throws IOException {
+        Set<String> verified = new HashSet<String>();
+        MutableDictionaryAccessorInterface.Entry control = newEntry("ce shi", "测试");
+        for (Change addition : additions) {
+            if (!rejected.contains(addition.key)) continue;
+            if (!accessor.clearAllEntries()) {
+                throw nativeFailure(FAILURE_REBUILD, "compatibility copy could not be emptied");
+            }
+            boolean accepted = accessor.insertOrUpdate(newEntry(addition.code, addition.phrase));
+            MutableDictionaryAccessorInterface.Entry[] empty = accessor.getAllEntries();
+            if (accepted || empty == null || empty.length != 0) {
+                throw nativeFailure(FAILURE_INSERT,
+                        "rejection is not reproducible in an empty dictionary");
+            }
+            if (!accessor.insertOrUpdate(control)) {
+                throw nativeFailure(FAILURE_INSERT, "native compatibility control failed");
+            }
+            MutableDictionaryAccessorInterface.Entry[] checked = accessor.getAllEntries();
+            if (checked == null || checked.length != 1 || checked[0] == null
+                    || !control.value.equals(checked[0].value)
+                    || !Arrays.equals(control.tokens, checked[0].tokens)
+                    || !Arrays.equals(control.languageIds, checked[0].languageIds)
+                    || checked[0].count != control.count) {
+                throw nativeFailure(FAILURE_EXPORT, "native compatibility control did not round trip");
+            }
+            verified.add(addition.key);
+        }
+        if (!verified.equals(rejected)) {
+            throw nativeFailure(FAILURE_STALE, "rejected entries changed before verification");
+        }
+        rebuildWithoutDeletedEntries(accessor, before, Collections.<GoogleEntry>emptyList());
     }
 
     private static void verifyPersisted(Snapshot before, Snapshot persisted,

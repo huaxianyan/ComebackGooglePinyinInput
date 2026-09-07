@@ -18,6 +18,7 @@ public final class RimeSyncCoordinator {
     public static final int PREVIEW_STAGE_GOOGLE_EXPORT = 7;
     public static final int PREVIEW_STAGE_SESSION_PLAN = 8;
     public static final int PREVIEW_STAGE_BRIDGE_MISSING = 9;
+    public static final int PREVIEW_STAGE_BRIDGE_IDENTITY = 10;
 
     private final Context context;
     private final AbstractHmmEngineFactory engineFactory;
@@ -101,6 +102,36 @@ public final class RimeSyncCoordinator {
         return new Result(generation, googleResult.addedCount, googleResult.deletedCount,
                 session.plan.rimeAdditionCount, session.plan.rimeDeletionCount,
                 session.plan.rimeResurrectionCount, false);
+    }
+
+    /** Shared manual/automatic execution, including bounded compatibility verification. */
+    public Result synchronize(String confirmationToken, boolean deletionConfirmed,
+            boolean allowCompatibleExclusions) throws IOException {
+        RimeSyncStateStore.Profile profile = requireProfile();
+        if (profile.nativeFailureRepeated && profile.nativeMissingCount > 0
+                && profile.nativeFailureKind == GoogleNativeDictionaryBridge.FAILURE_INSERT) {
+            if (!allowCompatibleExclusions) throw new CompatibilityConsentException();
+            return recoverKeepingRejected();
+        }
+        try {
+            return profile.phase == RimeSyncStateStore.PHASE_IDLE
+                    ? execute(confirmationToken, deletionConfirmed) : recover();
+        } catch (GoogleNativeDictionaryBridge.RejectedEntriesException first) {
+            if (!allowCompatibleExclusions) throw new CompatibilityConsentException();
+            if (requireProfile().nativeFailureRepeated) return recoverKeepingRejected();
+            // One fresh full attempt establishes the exact stable set. This is not
+            // a retry loop: changed sets or any other fault stop this invocation.
+            try {
+                return recover();
+            } catch (GoogleNativeDictionaryBridge.RejectedEntriesException repeated) {
+                if (!requireProfile().nativeFailureRepeated) throw repeated;
+                return recoverKeepingRejected();
+            }
+        }
+    }
+
+    public static final class CompatibilityConsentException extends IOException {
+        CompatibilityConsentException() { super("compatibility policy approval is required"); }
     }
 
     /** Completes a locked transaction while retaining one verified rejected set in Rime. */
@@ -306,6 +337,8 @@ public final class RimeSyncCoordinator {
         }
         try {
             return RimeSyncCore.merge(devices, configuration, profile.bridgeUserId);
+        } catch (RimeSyncCore.IdentityConflictException failure) {
+            throw new PreviewStageException(PREVIEW_STAGE_BRIDGE_IDENTITY, failure);
         } catch (IOException failure) {
             throw new PreviewStageException(PREVIEW_STAGE_RIME_MERGE, failure);
         }

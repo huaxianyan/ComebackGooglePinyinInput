@@ -20,17 +20,19 @@ internal object DictionarySettingContracts {
         ?: retentionValues.indexOf(10)
 }
 
+enum class DictionaryHealthTone { Unknown, Healthy, Notice, Error }
+
 data class DictionaryHealthState(
     val summary: String = "",
     val loading: Boolean = false,
+    val details: String = "",
+    val tone: DictionaryHealthTone = DictionaryHealthTone.Unknown,
 )
 
 internal object DictionaryHealthStateReducer {
     fun start(state: DictionaryHealthState): DictionaryHealthState =
         if (state.loading) state else state.copy(loading = true)
 
-    fun complete(state: DictionaryHealthState, summary: String): DictionaryHealthState =
-        state.copy(summary = summary, loading = false)
 }
 
 data class DictionarySettingsSnapshot(

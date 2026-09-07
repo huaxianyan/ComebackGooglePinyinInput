@@ -48,7 +48,7 @@
         }
     .end annotation
 
-    .line 223
+    .line 250
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$1;->this$0:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore;
 
     iput-object p2, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$1;->val$hashes:[B
@@ -79,7 +79,7 @@
 .method public get(Ljava/lang/String;)Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan$Baseline;
     .locals 4
 
-    .line 225
+    .line 252
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$1;->val$hashes:[B
 
     iget v1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$1;->val$count:I
@@ -94,7 +94,7 @@
 
     move-result p1
 
-    .line 226
+    .line 253
     if-gez p1, :cond_0
 
     iget-object p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$1;->val$unknown:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan$Baseline;

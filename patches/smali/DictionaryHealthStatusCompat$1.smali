@@ -3,7 +3,7 @@
 .source "DictionaryHealthStatusCompat.java"
 
 # interfaces
-.implements Ljava/lang/Runnable;
+.implements Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$SnapshotCallback;
 
 
 # annotations
@@ -20,17 +20,18 @@
 # instance fields
 .field final synthetic val$callback:Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$Callback;
 
-.field final synthetic val$context:Landroid/content/Context;
-
 
 # direct methods
-.method constructor <init>(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$Callback;)V
-    .registers 3
+.method constructor <init>(Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$Callback;)V
+    .locals 0
+    .annotation system Ldalvik/annotation/Signature;
+        value = {
+            "()V"
+        }
+    .end annotation
 
-    .line 30
-    iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$1;->val$context:Landroid/content/Context;
-
-    iput-object p2, p0, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$1;->val$callback:Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$Callback;
+    .line 36
+    iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$1;->val$callback:Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$Callback;
 
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
@@ -39,29 +40,40 @@
 
 
 # virtual methods
-.method public run()V
-    .registers 4
+.method public onLoaded(Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$Snapshot;)V
+    .locals 3
 
-    .line 32
-    iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$1;->val$context:Landroid/content/Context;
+    .line 38
+    iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$1;->val$callback:Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$Callback;
 
-    # invokes: Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat;->inspect(Landroid/content/Context;)Ljava/lang/String;
-    invoke-static {v0}, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat;->access$000(Landroid/content/Context;)Ljava/lang/String;
+    new-instance v1, Ljava/lang/StringBuilder;
 
-    move-result-object v0
+    invoke-direct {v1}, Ljava/lang/StringBuilder;-><init>()V
 
-    .line 33
-    # getter for: Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat;->MAIN:Landroid/os/Handler;
-    invoke-static {}, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat;->access$100()Landroid/os/Handler;
+    iget-object v2, p1, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$Snapshot;->summary:Ljava/lang/String;
+
+    invoke-virtual {v1, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 
     move-result-object v1
 
-    new-instance v2, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$1$1;
+    const-string v2, "\n"
 
-    invoke-direct {v2, p0, v0}, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$1$1;-><init>(Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$1;Ljava/lang/String;)V
+    invoke-virtual {v1, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 
-    invoke-virtual {v1, v2}, Landroid/os/Handler;->post(Ljava/lang/Runnable;)Z
+    move-result-object v1
 
-    .line 36
+    iget-object p1, p1, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$Snapshot;->details:Ljava/lang/String;
+
+    invoke-virtual {v1, p1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+
+    move-result-object p1
+
+    invoke-virtual {p1}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
+
+    move-result-object p1
+
+    invoke-interface {v0, p1}, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$Callback;->onLoaded(Ljava/lang/String;)V
+
+    .line 39
     return-void
 .end method

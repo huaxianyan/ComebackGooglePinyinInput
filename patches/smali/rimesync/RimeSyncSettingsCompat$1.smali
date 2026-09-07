@@ -21,7 +21,7 @@
 .method constructor <init>()V
     .locals 0
 
-    .line 64
+    .line 66
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
     return-void
@@ -30,9 +30,9 @@
 
 # virtual methods
 .method public run()V
-    .locals 2
+    .locals 3
 
-    .line 66
+    .line 68
     invoke-static {}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->access$000()Ljava/util/concurrent/CopyOnWriteArraySet;
 
     move-result-object v0
@@ -54,11 +54,19 @@
 
     check-cast v1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$StateListener;
 
-    invoke-interface {v1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$StateListener;->onChanged()V
+    invoke-static {}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat;->access$100()Ljava/util/concurrent/atomic/AtomicBoolean;
+
+    move-result-object v2
+
+    invoke-virtual {v2}, Ljava/util/concurrent/atomic/AtomicBoolean;->get()Z
+
+    move-result v2
+
+    invoke-interface {v1, v2}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$StateListener;->onChanged(Z)V
 
     goto :goto_0
 
-    .line 67
+    .line 69
     :cond_0
     return-void
 .end method

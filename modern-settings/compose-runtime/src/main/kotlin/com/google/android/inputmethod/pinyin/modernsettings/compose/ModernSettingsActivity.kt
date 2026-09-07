@@ -313,7 +313,9 @@ class ModernSettingsActivity : ComponentActivity() {
                                     }
                                 },
                                 onAutomaticConfirm = {
-                                    rimeSync.settings.automatic?.let { configureRimeAutomatic(true, it.intervalHours) }
+                                    acceptRimeCompatibility {
+                                        rimeSync.settings.automatic?.let { configureRimeAutomatic(true, it.intervalHours) }
+                                    }
                                 },
                                 onAutomaticDismiss = {
                                     rimeSync = rimeSync.copy(automaticConfirmationVisible = false)
@@ -355,23 +357,17 @@ class ModernSettingsActivity : ComponentActivity() {
                                 },
                                 onSaveDeviceName = ::saveRimeConfiguration,
                                 onSaveSnapshotFile = ::saveRimeConfiguration,
-                                onPreview = ::previewRimeSync,
+                                onSynchronize = ::synchronizeRimeSync,
                                 onDismissPreview = {
                                     rimeSync = rimeSync.copy(preview = null)
                                 },
                                 onConfirmSync = ::executeRimeSync,
-                                onRecover = ::recoverRimeSync,
-                                onOpenKeepRejectedConfirmation = {
-                                    rimeSync = rimeSync.copy(
-                                        keepRejectedConfirmationVisible = true,
-                                    )
-                                },
                                 onDismissKeepRejectedConfirmation = {
                                     rimeSync = rimeSync.copy(
                                         keepRejectedConfirmationVisible = false,
                                     )
                                 },
-                                onConfirmKeepRejected = ::recoverRimeSyncKeepingRejected,
+                                onConfirmKeepRejected = { acceptRimeCompatibility(::synchronizeRimeSync) },
                                 onOpenResetConfirmation = {
                                     rimeSync = rimeSync.copy(resetConfirmationVisible = true)
                                 },
@@ -443,7 +439,10 @@ class ModernSettingsActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
-        detachRimeObserver = rimeRepository.observeChanges { refreshRimeSettings() }
+        detachRimeObserver = rimeRepository.observeChanges { busy ->
+            rimeSync = rimeSync.copy(settings = rimeSync.settings.copy(operationInProgress = busy))
+            if (!busy) refreshRimeSettings()
+        }
     }
 
     override fun onStop() {
@@ -497,10 +496,7 @@ class ModernSettingsActivity : ComponentActivity() {
         dictionaryHealth = started
         dictionaryRepository.loadHealth { result ->
             runOnUiThread {
-                dictionaryHealth = DictionaryHealthStateReducer.complete(
-                    dictionaryHealth,
-                    result,
-                )
+                dictionaryHealth = result
             }
         }
     }
@@ -566,11 +562,21 @@ class ModernSettingsActivity : ComponentActivity() {
         }
     }
 
-    private fun previewRimeSync() {
+    private fun synchronizeRimeSync() {
+        if (!rimeSync.settings.compatibilityAccepted) {
+            rimeSync = rimeSync.copy(keepRejectedConfirmationVisible = true)
+            return
+        }
         setRimeBusy()
-        rimeRepository.preview { response ->
+        rimeRepository.synchronize { response ->
             rimeSync = rimeSync.copy(settings = response.settings, preview = response.preview)
-            if (!response.success) showRimeError(response.error)
+            if (!response.success) {
+                showRimeError(response.error)
+            } else if (response.preview == null) {
+                Toast.makeText(this, R.string.modern_settings_rime_sync_success,
+                    Toast.LENGTH_LONG).show()
+                refreshDictionaryHealth()
+            }
         }
     }
 
@@ -596,38 +602,13 @@ class ModernSettingsActivity : ComponentActivity() {
         }
     }
 
-    private fun recoverRimeSync() {
+    private fun acceptRimeCompatibility(onAccepted: () -> Unit) {
+        rimeSync = rimeSync.copy(keepRejectedConfirmationVisible = false,
+            automaticConfirmationVisible = false)
         setRimeBusy()
-        rimeRepository.recover { response ->
+        rimeRepository.acceptCompatibility { response ->
             rimeSync = rimeSync.copy(settings = response.settings)
-            if (response.success) {
-                Toast.makeText(
-                    this,
-                    R.string.modern_settings_rime_sync_recovered,
-                    Toast.LENGTH_LONG,
-                ).show()
-                refreshDictionaryHealth()
-            } else {
-                showRimeError(response.error)
-            }
-        }
-    }
-
-    private fun recoverRimeSyncKeepingRejected() {
-        rimeSync = rimeSync.copy(keepRejectedConfirmationVisible = false)
-        setRimeBusy()
-        rimeRepository.recoverKeepingRejected { response ->
-            rimeSync = rimeSync.copy(settings = response.settings)
-            if (response.success) {
-                Toast.makeText(
-                    this,
-                    R.string.modern_settings_rime_sync_recovered,
-                    Toast.LENGTH_LONG,
-                ).show()
-                refreshDictionaryHealth()
-            } else {
-                showRimeError(response.error)
-            }
+            if (response.success) onAccepted() else showRimeError(response.error)
         }
     }
 
@@ -704,6 +685,10 @@ class ModernSettingsActivity : ComponentActivity() {
             RimeSyncError.BridgeSnapshotMissing -> getString(
                 R.string.modern_settings_rime_sync_error_bridge_missing,
             )
+            RimeSyncError.CompatibilityConsent -> {
+                rimeSync = rimeSync.copy(keepRejectedConfirmationVisible = true)
+                return
+            }
             RimeSyncError.NativePersistence -> when {
                 rimeSync.settings.nativeFailureRepeated &&
                     rimeSync.settings.nativeRejectedCount > 0 -> getString(
