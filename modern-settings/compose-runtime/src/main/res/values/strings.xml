@@ -56,7 +56,7 @@
     <string name="modern_settings_dictionary_import_title">Import a user dictionary backup</string>
     <string name="modern_settings_dictionary_backup_in_progress">Creating a user dictionary backup…</string>
     <string name="modern_settings_dictionary_last_backup">Last backup: %1$s %2$s</string>
-    <string name="modern_settings_dictionary_backup_retained">Backup files remain after app data is cleared or the app is uninstalled</string>
+    <string name="modern_settings_dictionary_backup_not_run">No successful backup recorded yet</string>
     <string name="modern_settings_dictionary_location_unset">Not selected (shared by backup and import)</string>
     <string name="modern_settings_dictionary_location_inaccessible">Location is inaccessible; select it again</string>
     <string name="modern_settings_dictionary_location_selected">Backup directory selected</string>
@@ -101,7 +101,6 @@
     <string name="modern_settings_rime_sync_device_unset">Enter a name for this device</string>
     <string name="modern_settings_rime_sync_device_invalid">Use lowercase letters, numbers, underscores (_), and hyphens (-) only</string>
     <string name="modern_settings_rime_sync_file_title">Rime user dictionary file</string>
-    <string name="modern_settings_rime_sync_status_title">Current synchronization status</string>
     <string name="modern_settings_rime_sync_in_progress">Synchronizing dictionaries…</string>
     <string name="modern_settings_rime_sync_recovery_required">The previous synchronization did not finish; tap to continue</string>
     <string name="modern_settings_rime_sync_native_missing">Google Pinyin saved %1$d of %2$d dictionary entries, leaving %3$d synchronization entries unsaved. Tap to continue.</string>

@@ -37,7 +37,7 @@ internal class LegacyDictionarySettingsRepository(private val activity: Activity
                 DateFormat.getDateFormat(context).format(lastSuccess),
                 DateFormat.getTimeFormat(context).format(lastSuccess),
             )
-            else -> activity.getString(R.string.modern_settings_dictionary_backup_retained)
+            else -> activity.getString(R.string.modern_settings_dictionary_backup_not_run)
         }
         val label = preferences.getString(DictionarySettingContracts.treeLabelKey, null)
         val locationSummary = when {

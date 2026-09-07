@@ -58,7 +58,7 @@ internal fun LazyListScope.dictionarySettingsItems(
     rime: RimeSyncSettingsSnapshot,
 ) {
     item(key = "dictionary_health", contentType = "status") {
-        DictionaryHealthRow(health, rime, actions.onRefreshDictionaryHealth)
+        DictionaryHealthRow(health, snapshot, rime, actions.onRefreshDictionaryHealth)
     }
     item(key = "dictionary_personalization_section", contentType = "section") {
         SectionTitle(stringResource(R.string.modern_settings_dictionary_personalization_section))
@@ -336,6 +336,7 @@ internal fun DictionaryImportDialog(
 @Composable
 private fun DictionaryHealthRow(
     state: DictionaryHealthState,
+    dictionary: DictionarySettingsSnapshot,
     rime: RimeSyncSettingsSnapshot,
     onRefresh: () -> Unit,
 ) {
@@ -354,7 +355,7 @@ private fun DictionaryHealthRow(
         if (state.summary.isEmpty() && !state.loading) onRefresh()
     }
     val statusLabel = stringResource(when {
-        state.loading || state.summary.isEmpty() -> R.string.modern_settings_dictionary_health_loading
+        state.summary.isEmpty() -> R.string.modern_settings_dictionary_health_loading
         state.tone == DictionaryHealthTone.Healthy -> R.string.modern_settings_health_readable
         state.tone == DictionaryHealthTone.Notice -> R.string.modern_settings_health_notice
         else -> R.string.modern_settings_health_unconfirmed
@@ -385,7 +386,8 @@ private fun DictionaryHealthRow(
                     Box(Modifier.size(10.dp).background(color, CircleShape))
                     Text(statusLabel)
                 }
-                if (!state.loading && state.summary.isNotEmpty()) Text(state.summary)
+                // Retain the previous result while checking so the surrounding list does not jump.
+                if (state.summary.isNotEmpty()) Text(state.summary)
                 AnimatedVisibility(
                     visible = expanded && state.details.isNotEmpty(),
                     enter = detailsEnter,
@@ -393,24 +395,36 @@ private fun DictionaryHealthRow(
                 ) {
                     Text(state.details, modifier = Modifier.padding(top = 8.dp))
                 }
-                // An unused optional sync feature must not crowd out the local dictionary.
-                if (rime.configurationComplete) {
-                    Text(stringResource(R.string.modern_settings_rime_sync_section),
+                if (dictionary.automaticBackupEnabled) {
+                    Text(stringResource(R.string.modern_settings_dictionary_auto_backup_title),
                         modifier = Modifier.padding(top = 12.dp),
                         style = MaterialTheme.typography.titleSmall)
-                    Text(rimeStatusText(rime))
-                    AnimatedVisibility(
-                        visible = expanded,
-                        enter = detailsEnter,
-                        exit = detailsExit,
-                    ) {
-                        Column {
-                            Text(stringResource(if (rime.automatic?.enabled == true)
-                                R.string.modern_settings_rime_health_auto_on
-                                else R.string.modern_settings_rime_health_auto_off))
-                            if (rime.lastSuccess > 0L) {
-                                Text(stringResource(R.string.modern_settings_rime_health_counts,
-                                    rime.sharedEntryCount, rime.rimeOnlyCount))
+                    Text(dictionary.automaticBackupSummary)
+                }
+                // Collapsed summaries follow enabled automation; manual sync details remain expandable.
+                AnimatedVisibility(
+                    visible = rime.configurationComplete && (expanded || rime.automatic?.enabled == true),
+                    enter = detailsEnter,
+                    exit = detailsExit,
+                ) {
+                    Column {
+                        Text(stringResource(R.string.modern_settings_rime_sync_section),
+                            modifier = Modifier.padding(top = 12.dp),
+                            style = MaterialTheme.typography.titleSmall)
+                        Text(rimeStatusText(rime))
+                        AnimatedVisibility(
+                            visible = expanded,
+                            enter = detailsEnter,
+                            exit = detailsExit,
+                        ) {
+                            Column {
+                                Text(stringResource(if (rime.automatic?.enabled == true)
+                                    R.string.modern_settings_rime_health_auto_on
+                                    else R.string.modern_settings_rime_health_auto_off))
+                                if (rime.lastSuccess > 0L) {
+                                    Text(stringResource(R.string.modern_settings_rime_health_counts,
+                                        rime.sharedEntryCount, rime.rimeOnlyCount))
+                                }
                             }
                         }
                     }
@@ -429,8 +443,15 @@ private fun DictionaryHealthRow(
                             modifier = Modifier.padding(start = 4.dp).rotate(expansionRotation))
                     }
                     OutlinedButton(onClick = onRefresh, enabled = !state.loading) {
-                        Icon(Icons.Default.Refresh, contentDescription = null,
-                            modifier = Modifier.padding(end = 4.dp))
+                        Box(Modifier.padding(end = 4.dp).size(24.dp),
+                            contentAlignment = Alignment.Center) {
+                            if (state.loading) {
+                                CircularProgressIndicator(modifier = Modifier.size(24.dp),
+                                    strokeWidth = 2.dp)
+                            } else {
+                                Icon(Icons.Default.Refresh, contentDescription = null)
+                            }
+                        }
                         Text(stringResource(R.string.modern_settings_dictionary_health_refresh))
                     }
                 }

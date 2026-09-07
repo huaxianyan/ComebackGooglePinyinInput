@@ -158,12 +158,6 @@ internal fun LazyListScope.rimeSyncSettingsItems(
             onClick = actions.onOpenSnapshotFile,
         )
     }
-    item(key = "rime_sync_status", contentType = "status") {
-        androidx.compose.material3.ListItem(
-            headlineContent = { Text(stringResource(R.string.modern_settings_rime_sync_status_title)) },
-            supportingContent = { Text(rimeStatusText(settings)) },
-        )
-    }
     item(key = "rime_sync_now", contentType = "action") {
         SettingsActionRow(
             title = stringResource(R.string.modern_settings_rime_sync_now_title),

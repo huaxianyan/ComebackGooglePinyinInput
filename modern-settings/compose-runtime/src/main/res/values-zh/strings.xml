@@ -56,7 +56,7 @@
     <string name="modern_settings_dictionary_import_title">导入用户词典备份</string>
     <string name="modern_settings_dictionary_backup_in_progress">正在生成用户词典备份……</string>
     <string name="modern_settings_dictionary_last_backup">上次备份：%1$s %2$s</string>
-    <string name="modern_settings_dictionary_backup_retained">备份文件在清除数据或卸载后仍会保留</string>
+    <string name="modern_settings_dictionary_backup_not_run">尚无成功备份记录</string>
     <string name="modern_settings_dictionary_location_unset">未选择（备份和导入共用）</string>
     <string name="modern_settings_dictionary_location_inaccessible">位置不可访问，请重新选择</string>
     <string name="modern_settings_dictionary_location_selected">已选择备份目录</string>
@@ -101,7 +101,6 @@
     <string name="modern_settings_rime_sync_device_unset">填写这台设备的名称</string>
     <string name="modern_settings_rime_sync_device_invalid">只能使用小写字母、数字、下划线（_）和连字符（-）</string>
     <string name="modern_settings_rime_sync_file_title">Rime 用户词典文件</string>
-    <string name="modern_settings_rime_sync_status_title">当前同步状态</string>
     <string name="modern_settings_rime_sync_in_progress">正在同步词典……</string>
     <string name="modern_settings_rime_sync_recovery_required">上次同步未完成，点击继续</string>
     <string name="modern_settings_rime_sync_native_missing">Google 拼音词典保存后共有 %1$d / %2$d 项，其中 %3$d 个同步词条没有保存，点击继续</string>
