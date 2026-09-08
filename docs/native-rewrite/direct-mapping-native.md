@@ -14,7 +14,7 @@ PYTHONPATH=tools/python python research/native-rewrite/tools/disassemble_direct_
   --output work/native-rewrite/direct-mapping-native.json
 ```
 
-输出包含库 SHA-256、14 个有界指令区间、区间 SHA-256、reader 诊断字符串和迭代器虚表 relocation。工具检查固定地址的字符串锚点，不将这些地址作为其他 APK 版本的通用常量。
+输出包含库 SHA-256、24 个有界指令区间、区间 SHA-256、字符串锚点和分组 relocation。当前字段为 `string_anchors` 与 `relocation_regions`，覆盖 DirectMapping、metadata 和管理器证据。工具检查固定地址的字符串锚点，不将这些地址作为其他 APK 版本的通用常量。
 
 ## 函数与证据链
 
@@ -178,7 +178,7 @@ score = -T[code]
 - 该分支引用的正是 `0x32c4d0` 的 `meta data table` 文案
 - 成功后才开始读取 key、position、target 和 byte 数组
 
-因此五条诊断字符串不代表五张依次排列在 config 后的表。metadata 失败对应前置消息读取或解析阶段，与上轮发现的前置 length-prefixed config 相符。其原始 protobuf 类型名及各 field 的完整业务语义仍待恢复。
+因此五条诊断字符串不代表五张依次排列在 config 后的表。metadata 失败对应前置消息读取或解析阶段，与前置 length-prefixed config 相符。后续已确认类型名为 `TokenExpanderMetaData`，四个字段的匹配、回退和分组职责见 [metadata 与管理器研究](direct-mapping-metadata.md)。
 
 ## 验证与限制
 
@@ -193,10 +193,13 @@ PYTHONPATH=tools/python python -m unittest discover \
 
 后续 [离线语义分析](direct-mapping-semantics.md) 已恢复四个 blob 的 source-to-target 枚举，拼音和数字的实际目标均通过完整 token ID 精确匹配到相应词典。该结果是静态模型输出，不替代 native 执行或产品行为验收。
 
+后续 [metadata 与管理器研究](direct-mapping-metadata.md) 已连接字段号、输入匹配、回退和顺序应用路径。附加短整型标识的原始名称仍未知，不能擅自称为语言 ID。
+
 尚未完成：
 
-- 输入类型过滤、metadata 各字段、fallback 与上层 reconversion 的组合行为
+- 管理器比较器的等价规则及实际类别请求调用方
+- 管理器与 Java composing、最终候选排序的完整连接
 - 英文 target 与 DirectTokenDictionary 的完整身份对齐
 - native 执行结果与静态恢复算法的独立对照
 
-下一轮优先追踪输入类型、metadata 和上层调用语义，再选择最小范围进行独立执行对照。
+下一轮优先追踪管理器比较器与类别请求入口，再选择最小范围进行独立执行对照。

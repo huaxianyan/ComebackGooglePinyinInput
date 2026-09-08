@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[3]
 
 
 class DirectMappingNativeTest(unittest.TestCase):
-    def test_export_original_apk_recovers_lookup_iterator_and_score_table_evidence(self):
+    def test_export_original_apk_recovers_lookup_metadata_and_manager_evidence(self):
         work = ROOT / "work/native-rewrite"
         work.mkdir(parents=True, exist_ok=True)
         with tempfile.TemporaryDirectory(prefix="direct-native-test-", dir=work) as tmp:
@@ -51,14 +51,36 @@ class DirectMappingNativeTest(unittest.TestCase):
             0x1D1E5C: ("mov", "w1, #8"),
             0x1D1E18: ("fdiv", "s1, s8, s1"),
             0x1D1E30: ("fmul", "s0, s1, s0"),
+            0x19F534: ("ldr", "w1, [x19, #0x18]"),
+            0x19F550: ("mov", "w0, #2"),
+            0x19F568: ("mov", "w0, #3"),
+            0x19F580: ("mov", "w0, #4"),
+            0x19F79C: ("cmp", "w0, #4"),
+            0x19FB24: ("str", "w24, [x20, #0x18]"),
+            0x19FBA8: ("str", "w0, [x20, #0x1c]"),
+            0x19FBDC: ("str", "w0, [x20, #0x20]"),
+            0x19FC38: ("strb", "w0, [x20, #0x24]"),
+            0x19D114: ("ubfx", "x3, x1, #0x1c, #3"),
+            0x19D120: ("cmn", "w2, #1"),
+            0x19D13C: ("cset", "w20, eq"),
+            0x19D148: ("cmp", "w3, #0x1a"),
+            0x19D178: ("ldrb", "w0, [x0, #0x34]"),
+            0x196E4C: ("ldr", "x1, [x1, #0x38]"),
+            0x196E58: ("cbnz", "w0, #0x196ea8"),
+            0x196BAC: ("bl", "#0x196874"),
+            0x196A2C: ("fadd", "s8, s0, s8"),
+            0x196A84: ("b.mi", "#0x196ac8"),
+            0x196AC8: ("str", "s8, [x1, #0x20]"),
         }
         for address, instruction in expected.items():
             with self.subTest(address=hex(address)):
                 self.assertEqual(instructions[address], instruction)
-        self.assertIn("meta data table", evidence["diagnostics"]["0x32c4d0"])
+        self.assertIn("meta data table", evidence["string_anchors"]["0x32c4d0"])
+        self.assertEqual(evidence["string_anchors"]["0x32c89d"],
+                         "i18n_input.engine.hmm.proto.TokenExpanderMetaData")
         relocations = {
             row["address"]: row["target"]
-            for row in evidence["iterator_vtable_relocations"]
+            for row in evidence["relocation_regions"]["direct_iterator"]
         }
         self.assertEqual(relocations, {
             0x67A7B0: 0x19D0F0,
@@ -69,6 +91,13 @@ class DirectMappingNativeTest(unittest.TestCase):
             0x67A7D8: 0x19CC5C,
             0x67A7E0: 0x19CC6C,
         })
+        manager = {row["address"]: row["target"]
+                   for row in evidence["relocation_regions"]["manager_iterator"]}
+        self.assertEqual(manager[0x67A488], 0x68AF40)
+        self.assertEqual(manager[0x67A490], 0x196AF0)
+        typeinfo = {row["address"]: row["target"]
+                    for row in evidence["relocation_regions"]["manager_typeinfo"]}
+        self.assertEqual(typeinfo[0x68AF48], 0x34A9E0)
 
 
 if __name__ == "__main__":

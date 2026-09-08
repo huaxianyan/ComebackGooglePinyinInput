@@ -109,8 +109,8 @@ PYTHONPATH=tools/python python -m unittest discover \
 
 ## 未验证边界
 
-- 输入类型过滤与 metadata 各字段的业务含义
-- lookup 未找到后的上层回退和 composing 行为
+- 输入类型过滤和回退尚未纳入离线模型，已恢复职责见 [metadata 与管理器研究](direct-mapping-metadata.md)
+- metadata 附加短整型标识的原始名称，以及更上层 composing 行为
 - 英文 target 到 DirectTokenDictionary 的完整身份对齐
 - 默认 float32 计算与实际 native 执行结果的逐位对照
 - reconversion 分数在最终候选排序中的权重
