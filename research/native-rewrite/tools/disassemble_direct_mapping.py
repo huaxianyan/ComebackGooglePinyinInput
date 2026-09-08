@@ -2,6 +2,7 @@
 import argparse
 import hashlib
 import json
+import struct
 from pathlib import Path
 import zipfile
 
@@ -34,13 +35,23 @@ REGIONS = {
     "manager_reset": (0x196AF0, 0x196BEC),
     "manager_register": (0x196D30, 0x196FF0),
     "manager_create_iterator": (0x197348, 0x1974A4),
+    "manager_compare_insert": (0x196684, 0x1967CC),
+    "manager_current": (0x196074, 0x196224),
+    "manager_advance": (0x196650, 0x196684),
+    "triple_category_client": (0x18CAA0, 0x18CBAC),
+    "token_decoder_constructor": (0x1751AC, 0x17522C),
+    "decoder_configure_categories": (0x17522C, 0x1752F8),
+    "fuzzy_client_prefix": (0x130044, 0x130190),
 }
+DECODER_CATEGORY_TABLE = (0x349D10, 0x349D18)
 RELOCATION_REGIONS = {
     "direct_iterator": (0x67A7B0, 0x67A7E8),
     "manager_iterator": (0x67A488, 0x67A4C8),
     "manager": (0x67A4D8, 0x67A500),
     "manager_typeinfo": (0x68AF28, 0x68AF58),
     "metadata": (0x68B278, 0x68B300),
+    "token_decoder_typeinfo": (0x68AA90, 0x68AAA8),
+    "token_decoder_vtable": (0x68AAB8, 0x68AAF8),
 }
 STRING_ANCHORS = {
     0x32C3CB: "[DirectMappingTokenExpander] Failed to load the key ids table.",
@@ -51,7 +62,30 @@ STRING_ANCHORS = {
     0x32C89D: "i18n_input.engine.hmm.proto.TokenExpanderMetaData",
     0x34A9B0: "N10i18n_input6engine3hmm20TokenExpanderManagerE",
     0x34A9E0: "N10i18n_input6engine3hmm20TokenExpanderManager15ManagerIteratorE",
+    0x349CE0: "N10i18n_input6engine3hmm16TokenDecoderBaseE",
 }
+
+
+def find_direct_branches(binary, targets):
+    """List immediate B/BL references, not indirect calls or runtime reachability."""
+    section = binary.get_section(".text")
+    content = bytes(section.content)
+    names = {address: name for name, address in targets.items()}
+    result = {name: [] for name in targets}
+    for offset, (word,) in enumerate(struct.iter_unpack("<I", content)):
+        if word & 0x7C000000 != 0x14000000:
+            continue
+        immediate = word & 0x3FFFFFF
+        if immediate & (1 << 25):
+            immediate -= 1 << 26
+        address = section.virtual_address + offset * 4
+        target = address + immediate * 4
+        if target in names:
+            result[names[target]].append({
+                "address": address, "target": target,
+                "kind": "bl" if word & 0x80000000 else "b",
+            })
+    return result
 
 
 def main():
@@ -85,6 +119,8 @@ def main():
             "instructions": instructions,
         }
     relocations = sorted(binary.relocations, key=lambda item: item.address)
+    start, end = DECODER_CATEGORY_TABLE
+    category_bytes = bytes(binary.get_content_from_virtual_address(start, end - start))
     result = {
         "library_entry": entry,
         "library_sha256": hashlib.sha256(content).hexdigest(),
@@ -92,6 +128,17 @@ def main():
         "labels": "research annotations, not recovered C++ symbol names",
         "string_anchors": {hex(address): text for address, text in STRING_ANCHORS.items()},
         "regions": regions,
+        "decoder_category_table": {
+            "address": start,
+            "u32_values": list(struct.unpack("<II", category_bytes)),
+            "sha256": hashlib.sha256(category_bytes).hexdigest(),
+        },
+        "direct_branch_references": find_direct_branches(binary, {
+            name: REGIONS[name][0] for name in (
+                "manager_create_iterator", "decoder_configure_categories",
+                "triple_category_client",
+            )
+        }),
         "relocation_regions": {
             label: [
                 {"address": relocation.address, "type": str(relocation.type),

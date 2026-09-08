@@ -4,7 +4,7 @@
 
 本轮将 DirectMapping 前置消息的字段号、对象偏移、输入匹配条件和管理器调用路径连接起来。证据仍来自固定原始 APK 的 ARM64 ELF，不涉及设备用户数据或正式输入法实现。
 
-复用 `research/native-rewrite/tools/disassemble_direct_mapping.py`，新增 metadata 序列化、解析、默认值与管理器指令区间。工具现在导出 24 个有界区间，字符串锚点与分组 relocation 分别位于 `string_anchors` 和 `relocation_regions`。
+复用 `research/native-rewrite/tools/disassemble_direct_mapping.py`，新增 metadata 序列化、解析、默认值与管理器指令区间。字符串锚点与分组 relocation 分别位于 `string_anchors` 和 `relocation_regions`，完整区间集合以工具导出清单为准。
 
 地址均为 ELF 虚拟地址，函数职责名是研究标签，不是原始 C++ 符号。复现命令见 [native 查找研究](direct-mapping-native.md)。完整反汇编输出继续保存在 `work/`，不提交。
 
@@ -89,7 +89,7 @@ field 3 不仅用于输入匹配。正常目标读取在 `0x19cd68`–`0x19cd6c`
 
 注册函数在 `0x196e4c` 调用 expander 虚表 slot `+0x38`。DirectMapping 的该 slot 对应 `0x19c9c4`，返回 `expander +0x28`，因此 field 1 的分组职责有直接调用证据。
 
-管理器收到的类别请求顺序、哪个 engine 阶段请求类别 `3`，以及它与 Java composing 入口的完整连接仍未恢复。
+后续已定位五个直接类别请求点，包括独立的类别 `3` 请求，详见 [结果身份与类别请求研究](expander-manager-identity.md)。相关客户端的完整业务身份及 Java composing 连接仍未恢复。
 
 ## 管理器不是简单并集
 
@@ -106,7 +106,7 @@ apply 函数先把当前结果容器移到临时集合，并清空当前集合�
 
 这里确认的是新扩展目标的重复处理。拒绝输入后保留原项的分支只看到插入和重复项释放，没有相同的分数更新代码，因此不能把前述行为推广为任何插入路径都执行全局取最大值。
 
-比较器究竟用哪些 token 字段判定重复仍未知，不能把它直接描述为「按文本去重」或「只按 token ID 去重」。
+后续 [结果身份研究](expander-manager-identity.md#结果身份是三元组) 已确认比较器使用附加标识、完整 token ID 和一个标志位，不按文本或 score 比较。因此「按文本去重」与「只按 token ID 去重」都不准确。
 
 这也解释了拒绝与接受但无目标的区别：拒绝时由管理器保留原项，而接受但迭代器为空时，该项不会因管理器自动保留而继续传递。后者是否需要原输入，取决于扩展器自己的回退配置。
 
@@ -123,4 +123,4 @@ PYTHONPATH=tools/python python -m unittest discover \
 
 测试核对固定原始指令，不执行 native 代码，也不把复现出的控制流当成真机行为验收。本轮没有扩大离线模型范围，没有修改 APK、用户词典或正式输入法功能。
 
-后续应优先恢复管理器比较器和类别请求调用方。只有补齐这些路径，才能讨论多扩展组合后的可见结果和最终排序。统一进度入口见 [native 查找研究](direct-mapping-native.md#验证与限制)。
+后续工作统一见 [native 查找研究](direct-mapping-native.md#验证与限制)。静态请求点和比较器证据仍不足以替代完整输入行为与最终排序验收。
