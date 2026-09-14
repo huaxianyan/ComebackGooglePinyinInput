@@ -103,8 +103,8 @@ target SDK:     36
       Android 15 及以上使用官方 Compose Material 3 设置界面
     </td>
     <td width="50%" align="center">
-      <img src="images/dictionary-and-backup.png" alt="词典健康状态与自动备份设置" width="270"><br>
-      集中查看词典健康状态，并配置自动备份、版本保留和导入位置
+      <img src="images/dictionary-and-backup.png" alt="词典健康状态、Rime 同步与自动备份设置" width="270"><br>
+      集中查看词典健康状态和 Rime 同步情况，并配置自动备份、版本保留和导入位置
     </td>
   </tr>
 </table>
