@@ -47,8 +47,18 @@ target SDK:     36
 
 - 加固用户词典滚动备份和故障恢复，覆盖 `_bak`、中断 `_tmp`、不可读主文件隔离及并发保存保护。
 - 支持通过 Storage Access Framework 选择本地、SD 卡或云端文档目录，进行自动备份、立即备份、版本轮换和原生合并导入。
+- 词典状态区以颜色和文字共同显示词库可读取性，并显示自动备份与 Rime 同步的上次成功时间。
 - 移除失效的 Google 账户词典同步、Firebase、反馈上传、统计和在线词典更新入口。
 - 输入法不申请 Google 账户，不读取 Autofill 凭据正文，不把敏感剪贴板明文写入候选显示、无障碍文本、日志或持久化。
+
+### Rime 用户词典同步
+
+- 在「词典与备份」中授权一个同步目录后，可以在 Google 拼音与 Rime 各设备的用户词典之间同步词条的新增、删除和重新添加。
+- 手动「立即同步」与自动同步共用同一套执行、恢复和安全校验逻辑，正常路径点击一次即可完成，只有首次接受处理规则或涉及删除时才需要确认。
+- 自动同步默认关闭，开启后按所选间隔在后台运行，默认 24 小时，可选 6 小时、12 小时、24 小时、2 天、3 天和 7 天。
+- 同步只处理多字词条的存在与删除，不换算历史词频，也不改写 Rime 的词频记录。
+- 暂时无法由 Google 拼音直接接收的词条保留在 Rime，不阻塞其他词条，不修改原编码，也不转写英文用户词典。
+- 更换同步目录时延续原有设备身份、盐、基线和保留标记，迁移完整合法的原有数据不需要删除任何设备文件夹。
 
 完整版本变化见 [CHANGELOG.md](CHANGELOG.md)。设计、研究和验收记录见 [docs/](docs/)。
 
@@ -105,6 +115,7 @@ target SDK:     36
 
 - APK 只包含 `arm64-v8a` 原生库。Manifest 的 `minSdkVersion` 为 17，但 ARM64 Android 应用实际从 API 21 才存在。
 - API 35+ 设置使用 Compose Material 3，API 17–34 保持旧设置路径，启动时不解析 Compose/AndroidX 设置类。
+- Rime 同步设置位于 Android 15/API 35 及以上的现代设置界面。自动同步依赖系统 JobScheduler，从 Android 5.0/API 21 起可用，执行时机由系统后台调度安排。
 - Inline Autofill 需要 Android 11/API 30 及以上，并取决于当前 App、Android Autofill Framework 和用户选择的 Autofill Provider。
 - TalkBack touch exploration 下的 Inline Suggestions 尚未声明支持，系统会采用自身回退路径。
 - Android 17/API 37、Predictive Back 和最终 16 KiB native page-size 运行时验收属于独立后续工作。
@@ -116,6 +127,19 @@ target SDK:     36
 恢复时重新授权原备份目录，从内置列表选择备份并确认导入即可。云端同步、离线和保留能力由所选 DocumentsProvider 管理。
 
 详细设计见 [用户词典自动备份设计](docs/dictionary-auto-backup-design.md)。
+
+## Rime 用户词典同步
+
+Rime 同步让 Google 拼音的用户词典与 Rime 生成的 `pinyin_simp.userdb.txt` 快照双向互通，适合手机与电脑共用一份词库。
+
+1. 在 Rime 一端确认已经生成用户词典快照，并让快照与其他设备位于同一个同步目录中。
+2. 打开「设置 → 词典与备份 → Rime 同步」，选择同步目录，填写本设备名称和 Rime 用户词典文件名。
+3. 点击「立即同步」完成第一次同步。首次会出现一次处理规则说明，确认后按同一规则处理后续条目。
+4. 需要自动同步时打开「自动同步」开关并选择间隔。开启说明会指出同步包含删除行为。
+
+同步只处理多字词条的存在与删除，不换算历史词频。逐条查看仅保留在 Rime 的条目不是完成同步的前置步骤。目录授权、文件到达时机和离线能力由所选 DocumentsProvider 与外部同步软件负责，应用只处理执行时目录中已有的快照。
+
+Rime 同步位于 Android 15 及以上的现代设置界面。详细设计见 [Rime 自动同步设计](docs/rime-auto-sync-design.md)。
 
 ## 开发与审计
 
