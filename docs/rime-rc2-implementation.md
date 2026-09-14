@@ -137,3 +137,17 @@
 另外记录一项观察，不作为缺陷：`setPeriodic` 未指定浮动时间时，系统取得的浮动窗口等于一个完整间隔，因此 24 小时间隔的实际运行窗口是 24 至 48 小时。这与设计中「不要求整点执行」一致，如果希望更接近每天一次，可以在后续版本明确指定更小的浮动时间。
 
 证据为 `work/rime-soak-check/summary.json` 与 `work/dictionary-soak-ui/` 下的截图和界面 dump。为控制词典正文副本，导出的三方快照在此次复核后已删除，仅保留只含加盐哈希和聚合统计的状态库副本。
+
+## 正式发布 2.1.0
+
+七日的只读复核没有发现阻塞问题，用户确认那批删除确属本人在 Rime 端的清理，随后授权把 Rime 同步分支合并进主线并发布正式版本。
+
+- `feat/rime-dictionary-sync` 以快进方式合并进 `master`，合并后主线为 `6edefde`，分支引用随后删除。该分支一直是本地分支，从未推送到远端。
+- 版本更新为 `2.1.0`，versionCode 为 `4520400`，target SDK 36，标签为 `v2.1.0`。发布说明为 [2.1.0 发布说明](releases/v2.1.0.md)。
+- README 增加了 Rime 同步的功能介绍和简短使用讲解，并补充 Android 15 及以上的界面可用范围。
+- 本地助手工作目录 `.workbuddy/` 同时加入 `.gitignore`，避免本地复核记录进入版本库。
+- GitHub Actions 运行 `34814587505` 全部步骤通过，产物为 `ComebackGooglePinyinInput-arm64-v8a-2.1.0.apk`，大小 27,735,247 字节，SHA-256 为 `fa58d6a1145b516f011af2abaa5007abf78538f4129d808078436a79edd98450`。
+- 重新下载的 Release 资产已复核：包名 `com.google.android.inputmethod.pinyin.compat`，versionName `2.1.0`，versionCode `4520400`，target SDK 36，非 Debug，仅 `arm64-v8a`，v1/v2/v3 签名通过，证书 SHA-256 为 `985cbf843a362169b129aeac5e153d13095f0923231936d1486a20c8332cde2f`，`zipalign -c -P 16 4` 通过。
+- 本次没有在设备上安装 Release 产物。设备上仍是覆盖安装的 `2.0.11-rc.4` 体验包，是否升级由用户决定。
+
+证据在 `work/release-verify/`，分支归档记录在 `work/branch-audit/rime-branch-archival.json`。
