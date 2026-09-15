@@ -39,6 +39,9 @@ class SettingsController(
     fun setPinyinSchemeIndex(index: Int): SettingsSnapshot =
         repository.setPinyinSchemeIndex(index)
 
+    fun setEnglishT9MultitapIntervalIndex(index: Int): SettingsSnapshot =
+        repository.setEnglishT9MultitapIntervalIndex(index)
+
     fun setGestureInputEnabled(enabled: Boolean): SettingsSnapshot =
         repository.setGestureInputEnabled(enabled)
 

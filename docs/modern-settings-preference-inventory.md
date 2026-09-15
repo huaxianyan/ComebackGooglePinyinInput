@@ -264,6 +264,11 @@ existing effects before migration.
   and dismiss-without-write behavior. Device acceptance confirms persistence,
   Full Pinyin and flyPY phrase input, unchanged glide input, cancel semantics,
   and alignment with the page's 24 dp content edge.
+- `en_t9_multitap_interval_ms`: the multi-tap window of the additive English T9
+  multi-tap keyboard. It is a String list preference with absent default `600`
+  and values `300`, `400`, `500`, `600`, `800`, `1000`. The Compose row reuses
+  the legacy key, order and labels, and is placed first in the English input
+  page. See [English T9 multi-tap keyboard](english-t9-multitap-design.md).
 
 ## Remaining Keyboard page inventory
 

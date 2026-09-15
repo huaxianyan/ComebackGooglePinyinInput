@@ -844,7 +844,7 @@ def main() -> int:
     expected_write_counts = {
         "putBoolean(": 6,
         "putFloat(": 1,
-        "putString(": 5,
+        "putString(": 6,
         ".remove(": 3,
     }
     for operation, expected_count in expected_write_counts.items():

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="english_t9_multitap_ime_label">English T9 multi-tap</string>
+    <string name="pref_key_en_t9_multitap_interval_ms">en_t9_multitap_interval_ms</string>
+    <string name="pref_def_value_en_t9_multitap_interval_ms">600</string>
+    <string name="setting_en_t9_multitap_interval_title">Multi-tap interval</string>
+    <string name="setting_en_t9_multitap_interval_summary">Time window that keeps repeated taps on the same key in one letter-selection run</string>
+    <string-array name="entries_en_t9_multitap_interval_ms">
+        <item>300 ms</item>
+        <item>400 ms</item>
+        <item>500 ms</item>
+        <item>600 ms</item>
+        <item>800 ms</item>
+        <item>1000 ms</item>
+    </string-array>
+    <string-array name="values_en_t9_multitap_interval_ms">
+        <item>300</item>
+        <item>400</item>
+        <item>500</item>
+        <item>600</item>
+        <item>800</item>
+        <item>1000</item>
+    </string-array>
+    <item type="id" name="keyboard_en_t9_multitap" />
+</resources>

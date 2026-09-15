@@ -37,4 +37,11 @@ object ListSettingContracts {
             "shuangpin_flypy",
         ),
     )
+
+    /** Window that keeps repeated taps on one English T9 multi-tap key in one run. */
+    val englishT9MultitapInterval = EnumeratedListContract(
+        key = "en_t9_multitap_interval_ms",
+        defaultValue = "600",
+        values = listOf("300", "400", "500", "600", "800", "1000"),
+    )
 }

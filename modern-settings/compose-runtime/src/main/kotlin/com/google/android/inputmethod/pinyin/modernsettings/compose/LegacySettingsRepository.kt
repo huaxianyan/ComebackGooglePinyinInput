@@ -43,6 +43,9 @@ class LegacySettingsRepository(context: Context) {
 
         val oneHandedModeIndex = readListIndex(ListSettingContracts.oneHandedMode)
         val pinyinSchemeIndex = readListIndex(ListSettingContracts.pinyinScheme)
+        val englishT9MultitapIntervalIndex = readListIndex(
+            ListSettingContracts.englishT9MultitapInterval,
+        )
         val showEmojiSwitchKey = readBoolean(BooleanSettingContracts.showEmojiSwitchKey)
         val showLanguageSwitchKey = readBoolean(BooleanSettingContracts.showLanguageSwitchKey)
         val showEnglishKeyboard = readBoolean(BooleanSettingContracts.showEnglishKeyboard)
@@ -120,6 +123,14 @@ class LegacySettingsRepository(context: Context) {
             pinyinSchemeIndex = pinyinSchemeIndex,
             pinyinSchemeLabel = readEntryLabel("entries_pinyin_scheme", pinyinSchemeIndex),
             pinyinSchemeLabels = readEntryLabels("entries_pinyin_scheme"),
+            englishT9MultitapIntervalIndex = englishT9MultitapIntervalIndex,
+            englishT9MultitapIntervalLabel = readEntryLabel(
+                "entries_en_t9_multitap_interval_ms",
+                englishT9MultitapIntervalIndex,
+            ),
+            englishT9MultitapIntervalLabels = readEntryLabels(
+                "entries_en_t9_multitap_interval_ms",
+            ),
             showEnglishKeyboard = showEnglishKeyboard,
             emojiAltPhysicalKey = readBoolean(BooleanSettingContracts.emojiAltPhysicalKey),
             keyboardHeightIndex = keyboardHeightIndex,
@@ -219,6 +230,12 @@ class LegacySettingsRepository(context: Context) {
 
     fun setPinyinSchemeIndex(index: Int): SettingsSnapshot {
         val contract = ListSettingContracts.pinyinScheme
+        preferences.edit().putString(contract.key, contract.valueAt(index)).apply()
+        return readSnapshot()
+    }
+
+    fun setEnglishT9MultitapIntervalIndex(index: Int): SettingsSnapshot {
+        val contract = ListSettingContracts.englishT9MultitapInterval
         preferences.edit().putString(contract.key, contract.valueAt(index)).apply()
         return readSnapshot()
     }
@@ -488,6 +505,9 @@ data class SettingsSnapshot(
     val pinyinSchemeIndex: Int,
     val pinyinSchemeLabel: String,
     val pinyinSchemeLabels: List<String>,
+    val englishT9MultitapIntervalIndex: Int,
+    val englishT9MultitapIntervalLabel: String,
+    val englishT9MultitapIntervalLabels: List<String>,
     val showEnglishKeyboard: BooleanSettingState,
     val emojiAltPhysicalKey: BooleanSettingState,
     val keyboardHeightIndex: Int,

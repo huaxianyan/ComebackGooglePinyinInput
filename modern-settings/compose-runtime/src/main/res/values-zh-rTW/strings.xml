@@ -2,4 +2,5 @@
 <resources>
     <string name="modern_settings_show_simplified_traditional_header_toggle_title">顯示簡繁切換按鈕</string>
     <string name="modern_settings_show_simplified_traditional_header_toggle_summary">在語音輸入或收合鍵左側顯示快速切換按鈕</string>
+    <string name="modern_settings_english_t9_multitap_interval_title">多擊間隔</string>
 </resources>

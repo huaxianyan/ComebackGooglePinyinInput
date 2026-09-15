@@ -329,8 +329,20 @@ internal fun androidx.compose.foundation.lazy.LazyListScope.englishInputSettings
     snapshot: SettingsSnapshot,
     actions: SettingsActions,
 ) {
-        item {
-            SettingsSwitchRow(
+    item {
+        EnumeratedListSetting(
+            title = legacyString(
+                "setting_en_t9_multitap_interval_title",
+                R.string.modern_settings_english_t9_multitap_interval_title,
+            ),
+            selectedIndex = snapshot.englishT9MultitapIntervalIndex,
+            selectedLabel = snapshot.englishT9MultitapIntervalLabel,
+            labels = snapshot.englishT9MultitapIntervalLabels,
+            onSelect = actions.onEnglishT9MultitapIntervalChange,
+        )
+    }
+    item {
+        SettingsSwitchRow(
             title = legacyString(
                 "setting_spell_correction_title",
                 R.string.modern_settings_latin_auto_correction_title,

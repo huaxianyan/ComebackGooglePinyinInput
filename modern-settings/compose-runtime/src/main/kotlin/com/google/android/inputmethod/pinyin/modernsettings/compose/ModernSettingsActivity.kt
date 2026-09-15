@@ -397,6 +397,9 @@ class ModernSettingsActivity : ComponentActivity() {
                             onPinyinSchemeChange = { index ->
                                 snapshot = controller.setPinyinSchemeIndex(index)
                             },
+                            onEnglishT9MultitapIntervalChange = { index ->
+                                snapshot = controller.setEnglishT9MultitapIntervalIndex(index)
+                            },
                             onGestureInputEnabledChange = { enabled ->
                                 snapshot = controller.setGestureInputEnabled(enabled)
                             },

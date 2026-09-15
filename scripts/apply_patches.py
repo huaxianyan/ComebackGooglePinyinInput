@@ -340,6 +340,38 @@ def apply(
         '        <item>@string/pref_key_keyboard_slide_sensitivity_ratio</item>',
     )
 
+    # English T9 multi-tap keyboard. This is an additive English IME: the
+    # original English 9-key IME, its keyboard and its soft keys stay untouched.
+    # The new IME definition only needs to be registered next to the existing
+    # English entries in the software-keyboard framework list, which is what the
+    # native keyboard-layout dashboard enumerates.
+    framework_english_soft = decoded / "res/xml/framework_english_soft.xml"
+    replace_once(
+        framework_english_soft,
+        '@xml/ime_en_9key"',
+        '@xml/ime_en_9key" />\n'
+        '    <include href="@xml/ime_en_t9_multitap"',
+    )
+
+    # The multi-tap window is an ordinary list preference in the original
+    # English input category. Its key, list type and 600 ms default are shared
+    # with the API 35+ Compose settings through the same preference name.
+    setting_input = decoded / "res/xml/setting_input.xml"
+    replace_once(
+        setting_input,
+        '<PreferenceCategory android:title="@string/setting_english_input" '
+        'android:key="@string/setting_english_input_key">',
+        '<PreferenceCategory android:title="@string/setting_english_input" '
+        'android:key="@string/setting_english_input_key">\n'
+        '        <ListPreference android:persistent="true" '
+        'android:title="@string/setting_en_t9_multitap_interval_title" '
+        'android:key="@string/pref_key_en_t9_multitap_interval_ms" '
+        'android:summary="@string/setting_en_t9_multitap_interval_summary" '
+        'android:entries="@array/entries_en_t9_multitap_interval_ms" '
+        'android:entryValues="@array/values_en_t9_multitap_interval_ms" '
+        'android:defaultValue="@string/pref_def_value_en_t9_multitap_interval_ms" />',
+    )
+
     # Only the three original Chinese soft-key layouts that already expose the
     # ENABLE_SC_TC_CONVERSION action receive the new Header slot. English,
     # handwriting, password, numeric, PIN, phone and date/time layouts retain
@@ -2974,6 +3006,7 @@ def apply(
         "SystemAutoThemeCompat.smali",
         "SensitiveClipboardCompat.smali",
         "SimplifiedTraditionalToggleKeyView.smali",
+        "EnglishT9MultiTapIme.smali",
     ):
         helper_src = ROOT / "patches/smali" / helper_name
         helper_dst = decoded / "smali/com/google/android/inputmethod/pinyin" / helper_name

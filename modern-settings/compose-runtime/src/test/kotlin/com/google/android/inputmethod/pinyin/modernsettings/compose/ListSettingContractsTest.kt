@@ -40,6 +40,16 @@ class ListSettingContractsTest {
     }
 
     @Test
+    fun englishT9MultitapIntervalPreservesExactLegacyKeyDefaultAndOrder() {
+        val interval = ListSettingContracts.englishT9MultitapInterval
+        assertEquals("en_t9_multitap_interval_ms", interval.key)
+        assertEquals("600", interval.defaultValue)
+        assertEquals(listOf("300", "400", "500", "600", "800", "1000"), interval.values)
+        assertEquals(3, interval.indexOf(null))
+        assertEquals("600", interval.valueAt(interval.indexOf(null)))
+    }
+
+    @Test
     fun unsupportedValueAndIndexAreRejected() {
         assertFailsWith<IllegalArgumentException> { contract.indexOf("unknown") }
         assertFailsWith<IllegalArgumentException> { contract.valueAt(-1) }

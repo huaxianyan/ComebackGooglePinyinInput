@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="english_t9_multitap_ime_label">英文 T9 多击键盘</string>
+    <string name="setting_en_t9_multitap_interval_title">多击间隔</string>
+    <string name="setting_en_t9_multitap_interval_summary">在同一个按键上连续点击时，仍算作同一次选字的时间窗口</string>
+</resources>
