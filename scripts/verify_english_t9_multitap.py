@@ -38,6 +38,7 @@ def verify_sources() -> None:
             f".class public L{IME_CLASS.replace('.', '/')};",
             ".super Lcom/google/android/apps/inputmethod/libs/english/ime/"
             "English9KeyIme;",
+            ".implements Ljava/lang/Runnable;",
             "Lcom/google/android/apps/inputmethod/libs/english/ime/"
             "English9KeyIme;-><init>()V",
             "Lcom/google/android/apps/inputmethod/libs/english/ime/"
@@ -53,29 +54,43 @@ def verify_sources() -> None:
             'const-string v2, "wxyz"',
             "rem-int v15, v15, v14",
             '"en_t9_multitap_interval_ms"',
-            "Lcom/google/android/apps/inputmethod/libs/framework/core/KeyData$a;->"
-            "COMMIT:Lcom/google/android/apps/inputmethod/libs/framework/core/"
-            "KeyData$a;",
-            "const/16 v14, 0x43",
             ".method public requestCandidates(I)V",
             "Landroid/os/SystemClock;->uptimeMillis()J",
-            "Lcom/google/android/apps/inputmethod/libs/framework/core/Event;->b("
-            "Lcom/google/android/apps/inputmethod/libs/framework/core/KeyData;)"
-            "Lcom/google/android/apps/inputmethod/libs/framework/core/Event;",
+            # The pending letter must be composing text so the editor draws its
+            # wait-window underline, and the run must be finished when the window
+            # expires or another key takes over.
+            "Lcom/google/android/apps/inputmethod/libs/framework/ime/"
+            "AbstractIme;->mImeDelegate:Lcom/google/android/apps/inputmethod/libs/"
+            "framework/core/IImeDelegate;",
+            "Lcom/google/android/apps/inputmethod/libs/framework/core/"
+            "IImeDelegate;->setComposingText(Ljava/lang/CharSequence;I)V",
+            "Lcom/google/android/apps/inputmethod/libs/framework/core/"
+            "IImeDelegate;->finishComposingText()V",
+            "Landroid/os/Handler;->postDelayed(Ljava/lang/Runnable;J)Z",
+            ".method public run()V",
+            ".method private finishRun()V",
+            # The 100..2000 ms clamp must skip the assignment while the parsed
+            # value is already in range.
+            "if-ge v0, v1, :compat_interval_low",
+            "if-le v0, v1, :compat_interval_high",
         ),
         "English T9 multi-tap Smali",
     )
-    # The new keyboard must not bypass the native commit path with raw
-    # InputConnection writes, and it must not touch the Chinese 9-key path.
+    # The keyboard must compose through the native IImeActionDelegate, exactly
+    # like its English, Latin and 9-key parents, and never touch raw
+    # InputConnection writes or the Chinese 9-key path.
     for forbidden in (
+        "getCurrentInputConnection",
         "commitText(",
-        "setComposingText(",
         "Pinyin9Key",
         "HmmPinyinT9",
+        # These inverted clamp branches silently pinned every interval to 2000 ms.
+        "if-lt v0, v1, :compat_interval_low",
+        "if-gt v0, v1, :compat_interval_high",
     ):
         if forbidden in smali:
             raise RuntimeError(
-                f"multi-tap IME leaves the audited commit path: {forbidden}"
+                f"multi-tap IME leaves the audited composing path: {forbidden}"
             )
     # The letter table must stay aligned with the native digit order.
     if smali.index('"abc"') >= smali.index('"wxyz"'):
