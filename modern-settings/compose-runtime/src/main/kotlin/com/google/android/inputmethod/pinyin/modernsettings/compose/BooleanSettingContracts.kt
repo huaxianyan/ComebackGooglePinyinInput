@@ -108,6 +108,13 @@ object BooleanSettingContracts {
         key = "enable_auto_capitalization",
         defaultValue = true,
     )
+    // Master opt-in of the additive English T9 multi-tap keyboard. The window
+    // is a list preference rather than a Boolean, so its dependency on this
+    // switch is enforced in the repository and rendered as a disabled row.
+    val enT9MultitapEnabled = BooleanSettingContract(
+        key = "en_t9_multitap_enabled",
+        defaultValue = false,
+    )
     val gestureInput = BooleanSettingContract(
         key = "enable_gesture_input",
         defaultValue = true,
@@ -179,6 +186,9 @@ object BooleanSettingContracts {
         nextWordPrediction,
         autoCapitalization,
     )
+    val englishMultiTapBatch = listOf(
+        enT9MultitapEnabled,
+    )
     val gestureDependencyBatch = listOf(
         incrementalGesturePreview,
         gestureAutoCommit,
@@ -199,7 +209,8 @@ object BooleanSettingContracts {
     )
     val writable = firstPlainBatch + secondPlainBatch + thirdPlainBatch +
         capabilityGatedKeyboardBatch + headerShortcutBatch +
-        languageSwitchDependencyBatch + englishDependencyBatch + gestureDependencyBatch + fuzzyPinyin +
+        languageSwitchDependencyBatch + englishDependencyBatch +
+        englishMultiTapBatch + gestureDependencyBatch + fuzzyPinyin +
         fuzzyPinyinOptionBatch
 
     private fun fuzzyOption(key: String, defaultValue: Boolean) =

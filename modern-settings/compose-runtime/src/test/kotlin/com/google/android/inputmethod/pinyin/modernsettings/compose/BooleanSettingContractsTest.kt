@@ -106,6 +106,16 @@ class BooleanSettingContractsTest {
     }
 
     @Test
+    fun englishMultiTapSwitchPreservesExactKeyAndOffByDefault() {
+        assertEquals(
+            listOf("en_t9_multitap_enabled"),
+            BooleanSettingContracts.englishMultiTapBatch.map { it.key },
+        )
+        assertEquals(false, BooleanSettingContracts.enT9MultitapEnabled.defaultValue)
+        assertEquals(null, BooleanSettingContracts.enT9MultitapEnabled.dependency)
+    }
+
+    @Test
     fun gestureGroupPreservesMirroredKeyDefaultsAndDependencies() {
         assertEquals("enable_gesture_input", BooleanSettingContracts.gestureInput.key)
         assertEquals(

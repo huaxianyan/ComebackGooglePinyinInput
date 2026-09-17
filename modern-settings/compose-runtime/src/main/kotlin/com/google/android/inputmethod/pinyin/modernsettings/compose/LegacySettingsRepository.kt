@@ -123,6 +123,9 @@ class LegacySettingsRepository(context: Context) {
             pinyinSchemeIndex = pinyinSchemeIndex,
             pinyinSchemeLabel = readEntryLabel("entries_pinyin_scheme", pinyinSchemeIndex),
             pinyinSchemeLabels = readEntryLabels("entries_pinyin_scheme"),
+            englishT9MultitapEnabled = readBoolean(
+                BooleanSettingContracts.enT9MultitapEnabled,
+            ),
             englishT9MultitapIntervalIndex = englishT9MultitapIntervalIndex,
             englishT9MultitapIntervalLabel = readEntryLabel(
                 "entries_en_t9_multitap_interval_ms",
@@ -235,6 +238,9 @@ class LegacySettingsRepository(context: Context) {
     }
 
     fun setEnglishT9MultitapIntervalIndex(index: Int): SettingsSnapshot {
+        require(readBoolean(BooleanSettingContracts.enT9MultitapEnabled).value) {
+            "Multi-tap letter selection is disabled"
+        }
         val contract = ListSettingContracts.englishT9MultitapInterval
         preferences.edit().putString(contract.key, contract.valueAt(index)).apply()
         return readSnapshot()
@@ -505,6 +511,7 @@ data class SettingsSnapshot(
     val pinyinSchemeIndex: Int,
     val pinyinSchemeLabel: String,
     val pinyinSchemeLabels: List<String>,
+    val englishT9MultitapEnabled: BooleanSettingState,
     val englishT9MultitapIntervalIndex: Int,
     val englishT9MultitapIntervalLabel: String,
     val englishT9MultitapIntervalLabels: List<String>,

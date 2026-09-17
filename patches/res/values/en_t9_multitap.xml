@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="english_t9_multitap_ime_label">English T9 multi-tap</string>
+    <string name="pref_key_en_t9_multitap_enabled">en_t9_multitap_enabled</string>
+    <bool name="pref_def_value_en_t9_multitap_enabled">false</bool>
+    <string name="setting_en_t9_multitap_enabled_title">Multi-tap letter selection</string>
+    <string name="setting_en_t9_multitap_enabled_summary">Select a letter by tapping the same digit key repeatedly</string>
     <string name="pref_key_en_t9_multitap_interval_ms">en_t9_multitap_interval_ms</string>
     <string name="pref_def_value_en_t9_multitap_interval_ms">600</string>
     <string name="setting_en_t9_multitap_interval_title">Multi-tap interval</string>
@@ -21,5 +24,4 @@
         <item>800</item>
         <item>1000</item>
     </string-array>
-    <item type="id" name="keyboard_en_t9_multitap" />
 </resources>

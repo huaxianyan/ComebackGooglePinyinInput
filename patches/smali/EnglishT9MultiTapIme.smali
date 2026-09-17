@@ -4,20 +4,21 @@
 .source "EnglishT9MultiTapIme.java"
 
 
-# English T9 multi-tap keyboard.
+# English 9-key keyboard with an optional multi-tap letter-selection mode.
 #
-# The original English9KeyIme.handle() already maps a digit keycode to the first
-# letter of its group and forwards the rewritten key data to EnglishIme. This
-# subclass keeps that contract but remembers how often the same digit key was
-# tapped inside a bounded window, so repeated taps cycle through the whole group
-# instead of always producing the first letter.
+# This class backs the single English 9-key keyboard. It is a subclass of the
+# original English9KeyIme and adds nothing unless the user turns on the
+# "multi-tap letter selection" preference:
 #
-# The pending letter is written as composing text through the native
-# IImeActionDelegate, which is the same path English9KeyIme, EnglishIme and
-# LatinIme use for their own composition. The editor draws its standard composing
-# underline while the tap run is still open, so the user can see that the current
-# key is still waiting for more taps. When the run ends the pending letter is
-# finished, the underline disappears and the letter stays in the text.
+#   * option off (the shipped default) - every overridden entry point delegates
+#     to English9KeyIme, so the keyboard is byte-for-byte the stock behaviour,
+#     including word candidates, auto-correction and punctuation candidates.
+#   * option on - digit keys are consumed and turned into the Nth letter of the
+#     group, where N is the number of taps on the same key inside the configured
+#     window. The pending letter is written as composing text through the native
+#     IImeActionDelegate, so the editor draws its standard composing underline
+#     while the run is still open; when the run ends the letter is finished and
+#     the underline disappears. Word association stays off in this mode.
 #
 # Cycling replaces the composing letter in place instead of deleting and
 # re-committing it, so no KEYCODE_DEL round trip and no cursor assumption are
@@ -119,29 +120,70 @@
 .end method
 
 
+# With multi-tap off the stock English 9-key suggestion behaviour stays in
+# place; with it on the keyboard commits single letters and never associates
+# words, so suggestions and auto-correction are switched off.
 .method public computeShouldShowSuggestions(Landroid/view/inputmethod/EditorInfo;)Z
-    .locals 1
+    .locals 2
+
+    invoke-direct {p0}, Lcom/google/android/inputmethod/pinyin/EnglishT9MultiTapIme;->enabled()Z
+
+    move-result v0
+
+    if-eqz v0, :compat_stock_suggestions
 
     const/4 v0, 0x0
+
+    return v0
+
+    :compat_stock_suggestions
+    invoke-super {p0, p1}, Lcom/google/android/apps/inputmethod/libs/english/ime/English9KeyIme;->computeShouldShowSuggestions(Landroid/view/inputmethod/EditorInfo;)Z
+
+    move-result v0
 
     return v0
 .end method
 
 
 .method public computeShouldEnableAutoCorrection(Landroid/view/inputmethod/EditorInfo;)Z
-    .locals 1
+    .locals 2
+
+    invoke-direct {p0}, Lcom/google/android/inputmethod/pinyin/EnglishT9MultiTapIme;->enabled()Z
+
+    move-result v0
+
+    if-eqz v0, :compat_stock_correction
 
     const/4 v0, 0x0
+
+    return v0
+
+    :compat_stock_correction
+    invoke-super {p0, p1}, Lcom/google/android/apps/inputmethod/libs/english/ime/EnglishIme;->computeShouldEnableAutoCorrection(Landroid/view/inputmethod/EditorInfo;)Z
+
+    move-result v0
 
     return v0
 .end method
 
 
 # The inherited English 9-key implementation appends its punctuation reading
-# text candidates whenever no word candidate is active. This keyboard does not
-# associate anything, so it leaves the candidate list to the framework.
+# text candidates whenever no word candidate is active. Multi-tap does not
+# associate anything, so it leaves the candidate list untouched; with the option
+# off the stock behaviour is kept.
 .method public requestCandidates(I)V
-    .locals 0
+    .locals 2
+
+    invoke-direct {p0}, Lcom/google/android/inputmethod/pinyin/EnglishT9MultiTapIme;->enabled()Z
+
+    move-result v0
+
+    if-eqz v0, :compat_stock_candidates
+
+    return-void
+
+    :compat_stock_candidates
+    invoke-super {p0, p1}, Lcom/google/android/apps/inputmethod/libs/english/ime/English9KeyIme;->requestCandidates(I)V
 
     return-void
 .end method
@@ -213,6 +255,14 @@
     move-object/from16 v11, p0
 
     move-object/from16 v1, p1
+
+    # Multi-tap is an option of this 9-key keyboard. With the option off every
+    # event is handed to the original English9KeyIme unchanged.
+    invoke-direct {v11}, Lcom/google/android/inputmethod/pinyin/EnglishT9MultiTapIme;->enabled()Z
+
+    move-result v3
+
+    if-eqz v3, :compat_delegate
 
     const/4 v3, 0x0
 
@@ -390,6 +440,30 @@
 
     :compat_finish_done
     return-void
+.end method
+
+
+# Master opt-in of multi-tap letter selection. An absent key means off, which is
+# the shipped default: the keyboard then behaves exactly like the stock English
+# 9-key.
+.method private enabled()Z
+    .locals 3
+
+    iget-object v0, p0, Lcom/google/android/apps/inputmethod/libs/framework/ime/AbstractIme;->mContext:Landroid/content/Context;
+
+    invoke-static {v0}, Landroid/preference/PreferenceManager;->getDefaultSharedPreferences(Landroid/content/Context;)Landroid/content/SharedPreferences;
+
+    move-result-object v0
+
+    const-string v1, "en_t9_multitap_enabled"
+
+    const/4 v2, 0x0
+
+    invoke-interface {v0, v1, v2}, Landroid/content/SharedPreferences;->getBoolean(Ljava/lang/String;Z)Z
+
+    move-result v0
+
+    return v0
 .end method
 
 

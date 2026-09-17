@@ -340,22 +340,26 @@ def apply(
         '        <item>@string/pref_key_keyboard_slide_sensitivity_ratio</item>',
     )
 
-    # English T9 multi-tap keyboard. This is an additive English IME: the
-    # original English 9-key IME, its keyboard and its soft keys stay untouched.
-    # The new IME definition only needs to be registered next to the existing
-    # English entries in the software-keyboard framework list, which is what the
-    # native keyboard-layout dashboard enumerates.
-    framework_english_soft = decoded / "res/xml/framework_english_soft.xml"
+    # Multi-tap letter selection is an option of the single English 9-key
+    # keyboard, not a separate layout. The 9-key IME definition keeps its
+    # string id, keyboard group and label, and only its IME class is redirected
+    # to the compat subclass. With the option off that subclass delegates every
+    # call to the original English9KeyIme, so the stock behaviour, the keyboard
+    # definition and the soft keys stay unchanged, and the native
+    # keyboard-layout dashboard keeps listing the same two English entries.
+    ime_en_9key = decoded / "res/xml/ime_en_9key.xml"
     replace_once(
-        framework_english_soft,
-        '@xml/ime_en_9key"',
-        '@xml/ime_en_9key" />\n'
-        '    <include href="@xml/ime_en_t9_multitap"',
+        ime_en_9key,
+        'class="com.google.android.apps.inputmethod.libs.english.ime.English9KeyIme"',
+        'class="com.google.android.inputmethod.pinyin.EnglishT9MultiTapIme"',
     )
 
-    # The multi-tap window is an ordinary list preference in the original
-    # English input category. Its key, list type and 600 ms default are shared
-    # with the API 35+ Compose settings through the same preference name.
+    # Multi-tap letter selection and its window are ordinary preferences in the
+    # original English input category. The switch is the master opt-in, so the
+    # window list hangs off it through the platform dependency contract:
+    # disabled while the switch is off, and the previously chosen value is kept.
+    # Keys, types and defaults are shared with the API 35+ Compose settings
+    # through the same preference names.
     setting_input = decoded / "res/xml/setting_input.xml"
     replace_once(
         setting_input,
@@ -363,9 +367,15 @@ def apply(
         'android:key="@string/setting_english_input_key">',
         '<PreferenceCategory android:title="@string/setting_english_input" '
         'android:key="@string/setting_english_input_key">\n'
+        '        <CheckBoxPreference android:persistent="true" '
+        'android:title="@string/setting_en_t9_multitap_enabled_title" '
+        'android:key="@string/pref_key_en_t9_multitap_enabled" '
+        'android:summary="@string/setting_en_t9_multitap_enabled_summary" '
+        'android:defaultValue="@bool/pref_def_value_en_t9_multitap_enabled" />\n'
         '        <ListPreference android:persistent="true" '
         'android:title="@string/setting_en_t9_multitap_interval_title" '
         'android:key="@string/pref_key_en_t9_multitap_interval_ms" '
+        'android:dependency="@string/pref_key_en_t9_multitap_enabled" '
         'android:summary="@string/setting_en_t9_multitap_interval_summary" '
         'android:entries="@array/entries_en_t9_multitap_interval_ms" '
         'android:entryValues="@array/values_en_t9_multitap_interval_ms" '

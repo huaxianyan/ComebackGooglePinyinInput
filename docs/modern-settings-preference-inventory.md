@@ -264,11 +264,19 @@ existing effects before migration.
   and dismiss-without-write behavior. Device acceptance confirms persistence,
   Full Pinyin and flyPY phrase input, unchanged glide input, cancel semantics,
   and alignment with the page's 24 dp content edge.
-- `en_t9_multitap_interval_ms`: the multi-tap window of the additive English T9
-  multi-tap keyboard. It is a String list preference with absent default `600`
-  and values `300`, `400`, `500`, `600`, `800`, `1000`. The Compose row reuses
-  the legacy key, order and labels, and is placed first in the English input
-  page. See [English T9 multi-tap keyboard](english-t9-multitap-design.md).
+- `en_t9_multitap_enabled`: the multi-tap letter-selection option of the single
+  English 9-key keyboard. Boolean, absent default `false`. It is rendered as the
+  first row of the English input page with the legacy `CheckBoxPreference` key
+  and labels. With the option off the redirected 9-key IME class delegates every
+  call to the original `English9KeyIme`, so no separate keyboard layout exists.
+- `en_t9_multitap_interval_ms`: the multi-tap window of that option. It is a
+  String list preference with absent default `600` and values `300`, `400`,
+  `500`, `600`, `800`, `1000`. The Compose row reuses the legacy key, order and
+  labels, and sits directly below the switch. The switch is its parent: the
+  legacy `ListPreference` declares `android:dependency` and the Compose row is
+  disabled while the switch is off. Both keep the chosen value and the repository
+  rejects window writes while the switch is off. See
+  [English 9-key multi-tap](english-t9-multitap-design.md).
 
 ## Remaining Keyboard page inventory
 

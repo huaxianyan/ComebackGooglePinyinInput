@@ -330,6 +330,22 @@ internal fun androidx.compose.foundation.lazy.LazyListScope.englishInputSettings
     actions: SettingsActions,
 ) {
     item {
+        SettingsSwitchRow(
+            title = legacyString(
+                "setting_en_t9_multitap_enabled_title",
+                R.string.modern_settings_english_t9_multitap_enabled_title,
+            ),
+            supporting = legacyString(
+                "setting_en_t9_multitap_enabled_summary",
+                R.string.modern_settings_english_t9_multitap_enabled_summary,
+            ),
+            checked = snapshot.englishT9MultitapEnabled.value,
+            onCheckedChange = {
+                actions.onBooleanChange(BooleanSettingContracts.enT9MultitapEnabled, it)
+            },
+        )
+    }
+    item {
         EnumeratedListSetting(
             title = legacyString(
                 "setting_en_t9_multitap_interval_title",
@@ -338,6 +354,7 @@ internal fun androidx.compose.foundation.lazy.LazyListScope.englishInputSettings
             selectedIndex = snapshot.englishT9MultitapIntervalIndex,
             selectedLabel = snapshot.englishT9MultitapIntervalLabel,
             labels = snapshot.englishT9MultitapIntervalLabels,
+            enabled = snapshot.englishT9MultitapEnabled.value,
             onSelect = actions.onEnglishT9MultitapIntervalChange,
         )
     }
