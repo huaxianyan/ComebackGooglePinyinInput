@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="setting_en_t9_multitap_enabled_title">多击选字</string>
+    <string name="setting_en_t9_multitap_enabled_title">复古 9 键</string>
     <string name="setting_en_t9_multitap_enabled_summary">在同一数字键上连续点击，按点击次数选择字母</string>
     <string name="setting_en_t9_multitap_interval_title">多击间隔</string>
     <string name="setting_en_t9_multitap_interval_summary">在同一个按键上连续点击时，仍算作同一次选字的时间窗口</string>

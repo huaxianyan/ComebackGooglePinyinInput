@@ -2,7 +2,7 @@
 <resources>
     <string name="pref_key_en_t9_multitap_enabled">en_t9_multitap_enabled</string>
     <bool name="pref_def_value_en_t9_multitap_enabled">false</bool>
-    <string name="setting_en_t9_multitap_enabled_title">Multi-tap letter selection</string>
+    <string name="setting_en_t9_multitap_enabled_title">Retro nine-key input</string>
     <string name="setting_en_t9_multitap_enabled_summary">Select a letter by tapping the same digit key repeatedly</string>
     <string name="pref_key_en_t9_multitap_interval_ms">en_t9_multitap_interval_ms</string>
     <string name="pref_def_value_en_t9_multitap_interval_ms">600</string>
