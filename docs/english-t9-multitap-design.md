@@ -57,6 +57,8 @@ KEYCODE_2 + DECODE
 
 ## 设置项
 
+开关在界面上的显示名是「复古 9 键」，英文为 `Retro nine-key input`；本文其余部分用「多击」指代这一机制。
+
 ```text
 pref_key_en_t9_multitap_enabled      Boolean 默认 false
 pref_key_en_t9_multitap_interval_ms  String  默认 600，依赖上面的开关
