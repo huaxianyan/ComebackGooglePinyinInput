@@ -72,6 +72,7 @@ pref_key_en_t9_multitap_interval_ms  String  默认 600，依赖上面的开关
 ## 边界与取舍
 
 - 只影响英文 9 键。英文 26 键、中文九宫格、全键盘、手写与密码键盘不受影响。
+- 不写入英文用户词库。英文输入法的 `computeShouldEnableLearning()` 恒返回 false，多击又通过 `IImeDelegate.setComposingText()` 直写编辑器、不经过 `EnglishIme.handle()`，因此打开开关也不会把字母学进用户词典。
 - 打开后该键盘不联想，所以英文 T9 词组联想只保留在关闭状态下。
 - 开关默认关闭，全新安装或升级后英文 9 键就是原版行为；要用多击需要先到「输入设置 → 英文」打开「复古 9 键」。
 - 连击超过分组字母数时循环回第一个字母。
