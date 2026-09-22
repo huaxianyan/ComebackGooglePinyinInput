@@ -125,3 +125,14 @@ java.lang.IllegalArgumentException: Invalid Region.Op - only INTERSECT and DIFFE
 已在 Pixel 10 Pro / Android 16（系统报告 4 KiB page size）上验证笔迹显示、
 中文识别和候选上屏均正常，未发现后续 JNI 或模型兼容问题。16 KiB page-size
 设备仍需单独验证。
+
+## 遗留声明边界
+
+以下限制在多个版本中反复出现，统一记录在这里，版本化 Release Notes 不再重复：
+
+- **架构**：APK 仅提供 `arm64-v8a`。Manifest 的 `minSdkVersion` 为 17，但 Android 在 API 21 之前不存在 ARM64 应用 ABI，因此 API 17 只能做静态门禁，不能描述为真实安装或启动验收。
+- **旧 ART 隔离**：API 17–29 不解析 API 30 的 Inline Autofill 类，API 17–35 不解析 API 36 的帧率方法。旧运行时保持静态隔离结论，不描述为真机运行时验收。
+- **Inline Autofill 依赖**：需要 Android 11/API 30 及以上，实际能力取决于当前 App、Android Autofill Framework 和用户选择的 Autofill Provider。
+- **TalkBack 与 Inline Suggestions**：touch exploration 下尚未完成独立验收，因此继续不声明 `supportsInlineSuggestionsWithTouchExploration`。
+- **16 KiB native page-size**：`libhmm_gesture_hwr_zh.so` 的 `PT_LOAD Align 0x1000` 仍未解决，ZIP alignment 不能代替 native 运行时验收，目前只有 4 KiB 真机回归和模拟器结论。
+- **Android 17 / API 37**、预测返回和 Material You 后续阶段均为独立工作，不与已发布版本混合。

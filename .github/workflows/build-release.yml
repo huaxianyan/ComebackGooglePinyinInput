@@ -225,6 +225,10 @@ jobs:
         shell: pwsh
         run: python scripts/verify_chinese_copywriting.py
 
+      - name: Verify versioned release notes
+        shell: pwsh
+        run: python scripts/verify_release_notes.py
+
       - name: Decode and verify final APK
         shell: pwsh
         run: |

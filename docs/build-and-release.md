@@ -156,7 +156,7 @@ RELEASE_TITLE=<feature-first title without version prefix>
 
 同时更新：
 
-- `CHANGELOG.md`
+- `CHANGELOG.md`，包含完整实现、逐级验收记录和兼容边界
 - README 中面向用户的当前能力（如有变化）
 - `docs/releases/v$VERSION_NAME.md` 中的版本化 Release Notes
 
@@ -165,6 +165,36 @@ Tag 必须精确等于：
 ```text
 v$VERSION_NAME
 ```
+
+## 版本化 Release Notes 约定
+
+Release 页面只保留开头概括、主要更新、版本身份和链接，不重复放使用说明、真机验收、构建与兼容范围。详细内容统一进入 `CHANGELOG.md`，仓库不再新增每版一个的详情文件。
+
+`docs/releases/v$VERSION_NAME.md` 的结构：
+
+1. 不写 `# Google 拼音输入法 X.X.X` 标题，直接以一段概括开头
+2. `## 主要更新`，用少量要点说明用户能感受到的变化
+3. 指向 `CHANGELOG.md` 对应条目及相关文档的链接，链接指向该版本标签
+4. 非商业兼容维护声明的固定段末
+
+版本身份只保留一份，不重复：
+
+- 新版本不再手写「版本信息」，版本身份由发布工作流构建后追加的「构建信息」小节提供，此时 SHA-256 和源提交才是最终值
+- `v1.0.0–v2.0.2` 的历史文件保留已有的「版本信息」，不回填工作流后来才追加的构建信息
+- 静态门禁 `scripts/verify_release_notes.py` 会拒绝同一文件里同时出现两份身份小节
+
+固定内容不需要每版重复：
+
+- 跨版本不变的遗留边界（架构、旧 ART 隔离、Inline Autofill 依赖、TalkBack Inline Suggestions、16 KiB page size）统一记录在 [Android 16/17 兼容性记录](compatibility-notes.md)，每版不再重复
+- 用户使用步骤写入 README，Release Notes 只链接过去
+- 真机验收的详细记录写入 `CHANGELOG.md` 对应条目和各专项设计文档
+
+发布前核对：
+
+- `docs/releases/v$VERSION_NAME.md` 不以 `# ` 标题开头
+- 不包含 `## 使用说明`、`## 真机验收`、`## 构建与兼容范围` 等冗长小节
+- 至少有一个指向 `CHANGELOG.md` 对应条目的链接
+- 静态门禁通过：`python scripts/verify_release_notes.py`
 
 ## 正式发布步骤
 
