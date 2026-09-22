@@ -16,14 +16,16 @@ import re
 import sys
 from pathlib import Path
 
-SUMMARY_HEADING = "## 主要更新"
+# These heading literals are matched against the note files, not printed as
+# Chinese output, so the script keeps ASCII-only stdout for Windows runners.
+SUMMARY_HEADING = "## \u4e3b\u8981\u66f4\u65b0"
 FORBIDDEN_HEADINGS = (
-    "## 使用说明",
-    "## 真机验收",
-    "## 构建与兼容范围",
-    "## 兼容边界",
+    "## \u4f7f\u7528\u8bf4\u660e",
+    "## \u771f\u673a\u9a8c\u6536",
+    "## \u6784\u5efa\u4e0e\u517c\u5bb9\u8303\u56f4",
+    "## \u517c\u5bb9\u8fb9\u754c",
 )
-IDENTITY_HEADINGS = ("## 版本信息", "## 构建信息")
+IDENTITY_HEADINGS = ("## \u7248\u672c\u4fe1\u606f", "## \u6784\u5efa\u4fe1\u606f")
 CHANGELOG_LINK = re.compile(r"CHANGELOG\.md#\d")
 MAX_LINES = 40
 
@@ -34,21 +36,30 @@ def check(path: Path) -> list[str]:
     lines = text.splitlines()
 
     if not lines:
-        return [f"{path}: 文件为空"]
+        return [f"{path}: file is empty"]
     if lines[0].startswith("# "):
-        errors.append(f"{path}: 不得以一级标题开头，去掉「# Google 拼音输入法 X.X.X」")
+        errors.append(
+            f"{path}: must not start with an H1 heading; drop the product/version title line"
+        )
     for heading in FORBIDDEN_HEADINGS:
         if any(line.strip() == heading for line in lines):
-            errors.append(f"{path}: 不应包含「{heading}」小节，完整内容写入 CHANGELOG.md")
-    # 版本身份可以写在文件里，也可以由发布工作流追加，但两者不能重复。
-    if sum(heading in text for heading in IDENTITY_HEADINGS) > 1:
-        errors.append(f"{path}: 「版本信息」与「构建信息」只能保留一份")
+            errors.append(
+                f"{path}: must not contain the section {heading!r}; full details belong in CHANGELOG.md"
+            )
+    # Version identity may be written inline or appended by the release workflow,
+    # but the two must never appear together. Compare by heading position so the
+    # check itself stays ASCII-only and encoding-safe on Windows consoles.
+    identity_hits = [line.strip() for line in lines if line.strip() in IDENTITY_HEADINGS]
+    if len(identity_hits) > 1:
+        errors.append(
+            f"{path}: keep only one version/build identity section, found {identity_hits!r}"
+        )
     if SUMMARY_HEADING not in text:
-        errors.append(f"{path}: 缺少「{SUMMARY_HEADING}」小节")
+        errors.append(f"{path}: missing the summary section {SUMMARY_HEADING!r}")
     if not CHANGELOG_LINK.search(text):
-        errors.append(f"{path}: 缺少指向 CHANGELOG.md 对应条目的链接")
+        errors.append(f"{path}: missing a link to the matching CHANGELOG.md entry")
     if len(lines) > MAX_LINES:
-        errors.append(f"{path}: 共 {len(lines)} 行，超过 {MAX_LINES} 行的简短约定")
+        errors.append(f"{path}: {len(lines)} lines exceeds the {MAX_LINES}-line brevity limit")
     return errors
 
 
@@ -61,18 +72,18 @@ def main() -> int:
     if not paths:
         paths = sorted(Path("docs/releases").glob("*.md"))
     if not paths:
-        print("没有可检查的版本化 Release Notes", file=sys.stderr)
+        print("no versioned release notes found to check", file=sys.stderr)
         return 1
 
     errors: list[str] = []
     for path in paths:
         errors.extend(check(path))
     if errors:
-        print("发布说明格式检查未通过：", file=sys.stderr)
+        print("release note format check failed:", file=sys.stderr)
         for error in errors:
             print(f"- {error}", file=sys.stderr)
         return 1
-    print(f"发布说明格式检查通过，共 {len(paths)} 个文件")
+    print(f"release note format contract verified across {len(paths)} files")
     return 0
 
 
