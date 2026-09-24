@@ -132,17 +132,13 @@ c(int codepoint):
 
 ### 对本功能的影响与规避
 
-补全后的状态是 `（|）`，光标位于两个符号之间。此时若触发提交事件：
+补全后的状态是 `（|）`，光标位于两个符号之间。逐项核对：
 
-- 提交文本（如后续输入的字符）会先走自动空格判定
-- 由于括号不属于 ASCII 字母，`c(int)` 返回 false，不会插入空格
+1. **自动空格本身不会插入多余空格**。它的字符判定 `c(int)` 要求 codepoint `< 0x7F` 且为字母，括号不满足
+2. **暂挂状态的一致性校验会自然阻止它**。它依赖缓冲与光标前文本一致才提交空格，补全插入两个字符后两者不一致
+3. **补全引起的光标变化不会被当成用户操作**。上面已核实 `offsetSelection` 上报的是 `Reason.IME`，而自动空格只在原因**不是** `IME` 时才清理暂挂状态
 
-不过仍需注意两点：
-
-1. **`SELECTION_CHANGED` 的清理**：补全后的光标移动若被判定为非 `IME` 原因，会清理暂挂状态。这是无害的（只是少插一个空格），但要确认不会反过来影响补全本身
-2. **`d`/`e` 暂挂状态的时序**：自动空格依赖缓冲与光标前文本一致才提交空格。补全插入两个字符后，缓冲内容与实际文本会不一致，这会自然阻止空格的插入
-
-结论：冲突存在但可控。建议实现时在补全后主动清理暂挂状态，或直接依赖上述一致性校验。
+因此冲突可控，甚至可以说几乎不存在。仍建议最小验证时顺便观察一次实际行为，作为实证。
 
 ## 三、删除与跳过的处理原则
 
@@ -169,20 +165,20 @@ c(int codepoint):
 | `a(CharSequence, ProcessMessage$a, Object)` | `REPLACE_TEXT` | 替换文本 |
 | `a(int, int, Object)` | `OFFSET_SELECTION` | 按偏移移动光标 |
 
+`REPLACE_TEXT` 写入字段 `f`（起）、`g`（止）、`a(CharSequence)`（新文本）、`a(ProcessMessage$a)`（动作）；两个工厂都把 `f`、`g` 分别置为 1 和 0。
+
 `OFFSET_SELECTION` 把两个整数写入字段 `h`、`i`。
 
-### 落地点
+### 落地点（已逐行核实）
 
-`OutputProcessor.doProcess` 把消息分派到 `IImeActionDelegate`，已确认的目标包括：
+`OutputProcessor.doProcess` 用 `packed-switch` 从 `ordinal 0x3` 开始分派。与文本、光标相关的分支：
 
-```text
-commitText(CharSequence, boolean, int)
-replaceText(int, int, CharSequence, boolean)
-setComposingText(CharSequence, int)
-setComposingRegion(int, int)
-offsetSelection(int, int)
-finishComposingText()
-```
+| ordinal | 枚举 | 参数来源 | 调用 |
+| --- | --- | --- | --- |
+| 21 | `REPLACE_TEXT` | `f`、`g`、`a` | `replaceText(int, int, CharSequence, boolean)` |
+| 26 | `OFFSET_SELECTION` | `h`、`i` | `offsetSelection(int, int)` |
+
+`REPLACE_TEXT` 分支里还做了一件事：布尔参数取 `a(ProcessMessage$a) != NONE`。也就是说，`ProcessMessage$a` 的三个值（`CONVERTED`、`NONE`、`ORIGINAL`）在这里只用作「是否为 `NONE`」的布尔判断，只有 `NONE` 为 false，其余两个都为 true。
 
 处理器不接触 `InputConnection`，由框架完成实际写入。
 
@@ -195,6 +191,24 @@ finishComposingText()
 ### 事件拦截时机
 
 `ProcessorBasedIme.shouldHandle(Event)` 遍历所有处理器，任一 `shouldHandle` 返回 true 即认为该事件可被 IME 处理。这是识别「左半括号按键」的入口。
+
+### offsetSelection 的语义（已逐行核实）
+
+`GoogleInputMethodService.offsetSelection(int, int)` 的实际实现：
+
+1. 若 `InputConnection` 为空，直接返回，不做任何事
+2. 从 `SelectionChangeTracker` 取当前选区起止位置
+3. 把两个参数当作**相对偏移**分别加到起止位置上，并用 `Math.max(0, …)` 保证不为负
+4. 若相加后起大于止，则交换两者，保证传入 `setSelection` 时起小于止
+5. 通过 `SelectionChangeTracker.a(Reason.IME, …)` 上报这次变化，**原因为 `IME`**
+6. 调用 `InputConnection.setSelection(start, end)`
+
+对本功能的意义：
+
+- 补全 `（|）` 时，可用偏移 `(-1, -1)` 把光标从右半边之后移到两符号之间，不需要自己计算绝对位置
+- 负偏移**可用**，底层会做非负钳位
+- 光标变化会被标记为 `IME` 原因，因此不会触发自动空格处理器在 `SELECTION_CHANGED` 分支里的清理逻辑
+- `InputConnection` 为空时静默无操作，不会抛异常，但也不会完成光标移动，属于需要验证的边界
 
 ## 成对标点分布
 
@@ -230,13 +244,15 @@ shouldHandle(Event): boolean
 
 ## 待确认问题
 
-1. `ProcessMessage$a` 的 `CONVERTED`、`NONE`、`ORIGINAL` 在 `REPLACE_TEXT` 下的具体语义，尚未验证
-2. `OFFSET_SELECTION` 两个整数的确切语义（是否可为负、是否受选区内影响），尚未验证
-3. 补全应在 `shouldHandle` 阶段识别按键，还是在 `HANDLE_EVENT` 消息分支处理
-4. 处理器应继承现有基类还是直接实现 `IImeProcessor`
-5. 需要注册到哪些 processors 文件（中文拼音、手写、笔画、英文）
-6. 成对符号的覆盖范围，是否包含罕见符号
-7. 是否需要同时处理右半符号的输入（按用户原则不跳过，则不处理）
+1. 处理器应继承现有基类还是直接实现 `IImeProcessor`
+2. 需要注册到哪些 processors 文件（中文拼音、手写、笔画、英文）
+3. 成对符号的覆盖范围，是否包含罕见符号
+4. 补全后是否需要主动清理自动空格的暂挂状态，还是依赖一致性校验自然阻止
+
+已解决的两项（原为未验证）：
+
+- `ProcessMessage$a` 在 `REPLACE_TEXT` 下只用作 `!= NONE` 的布尔判断，见上一节
+- `OFFSET_SELECTION` 参数确实为相对偏移，见下一节
 
 ## 建议的调研顺序
 
