@@ -52,7 +52,7 @@
 .method static constructor <clinit>()V
     .locals 1
 
-    .line 49
+    .line 50
     new-instance v0, Ljava/util/WeakHashMap;
 
     invoke-direct {v0}, Ljava/util/WeakHashMap;-><init>()V
@@ -65,16 +65,16 @@
 .method private constructor <init>()V
     .locals 0
 
-    .line 52
+    .line 53
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
     return-void
 .end method
 
-.method static synthetic access$300(Landroid/content/Context;Ljava/lang/String;)V
+.method static synthetic access$000(Landroid/content/Context;Ljava/lang/String;)V
     .locals 0
 
-    .line 34
+    .line 35
     invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncLegacySettingsCompat;->toast(Landroid/content/Context;Ljava/lang/String;)V
 
     return-void
@@ -83,7 +83,7 @@
 .method static synthetic access$400(Landroid/content/Context;Landroid/net/Uri;)Ljava/lang/String;
     .locals 0
 
-    .line 34
+    .line 35
     invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncLegacySettingsCompat;->describeRoot(Landroid/content/Context;Landroid/net/Uri;)Ljava/lang/String;
 
     move-result-object p0
@@ -94,7 +94,7 @@
 .method static synthetic access$700(I)Ljava/lang/String;
     .locals 0
 
-    .line 34
+    .line 35
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncLegacySettingsCompat;->errorName(I)Ljava/lang/String;
 
     move-result-object p0
@@ -105,7 +105,7 @@
 .method static synthetic access$800(Landroid/content/Context;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;
     .locals 0
 
-    .line 34
+    .line 35
     invoke-static {p0, p1, p2}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncLegacySettingsCompat;->text(Landroid/content/Context;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;
 
     move-result-object p0
@@ -116,7 +116,7 @@
 .method static synthetic access$900(Ljava/lang/String;)Z
     .locals 0
 
-    .line 34
+    .line 35
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncLegacySettingsCompat;->isValidSnapshot(Ljava/lang/String;)Z
 
     move-result p0
@@ -127,7 +127,7 @@
 .method public static bind(Landroid/preference/PreferenceFragment;)V
     .locals 3
 
-    .line 55
+    .line 56
     if-eqz p0, :cond_2
 
     invoke-virtual {p0}, Landroid/preference/PreferenceFragment;->getActivity()Landroid/app/Activity;
@@ -138,13 +138,13 @@
 
     goto :goto_0
 
-    .line 56
+    .line 57
     :cond_0
     sget-object v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncLegacySettingsCompat;->CONTROLLERS:Ljava/util/Map;
 
     monitor-enter v0
 
-    .line 57
+    .line 58
     :try_start_0
     sget-object v1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncLegacySettingsCompat;->CONTROLLERS:Ljava/util/Map;
 
@@ -154,32 +154,32 @@
 
     check-cast v1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncLegacySettingsCompat$Controller;
 
-    .line 58
+    .line 59
     if-eqz v1, :cond_1
 
     invoke-virtual {v1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncLegacySettingsCompat$Controller;->destroy()V
 
-    .line 59
+    .line 60
     :cond_1
     new-instance v1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncLegacySettingsCompat$Controller;
 
     invoke-direct {v1, p0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncLegacySettingsCompat$Controller;-><init>(Landroid/preference/PreferenceFragment;)V
 
-    .line 60
+    .line 61
     sget-object v2, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncLegacySettingsCompat;->CONTROLLERS:Ljava/util/Map;
 
     invoke-interface {v2, p0, v1}, Ljava/util/Map;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 
-    .line 61
+    .line 62
     invoke-virtual {v1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncLegacySettingsCompat$Controller;->bind()V
 
-    .line 62
+    .line 63
     monitor-exit v0
 
-    .line 63
+    .line 64
     return-void
 
-    .line 62
+    .line 63
     :catchall_0
     move-exception p0
 
@@ -189,7 +189,7 @@
 
     throw p0
 
-    .line 55
+    .line 56
     :cond_2
     :goto_0
     return-void
@@ -198,12 +198,12 @@
 .method private static describeRoot(Landroid/content/Context;Landroid/net/Uri;)Ljava/lang/String;
     .locals 6
 
-    .line 131
+    .line 132
     invoke-virtual {p1}, Landroid/net/Uri;->getAuthority()Ljava/lang/String;
 
     move-result-object v0
 
-    .line 132
+    .line 133
     const-string v1, "com.android.externalstorage.documents"
 
     invoke-virtual {v1, v0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
@@ -216,20 +216,20 @@
 
     if-eqz v1, :cond_4
 
-    .line 134
+    .line 135
     :try_start_0
     invoke-static {p1}, Landroid/provider/DocumentsContract;->getTreeDocumentId(Landroid/net/Uri;)Ljava/lang/String;
 
     move-result-object p1
 
-    .line 135
+    .line 136
     const/16 v1, 0x3a
 
     invoke-virtual {p1, v1}, Ljava/lang/String;->indexOf(I)I
 
     move-result v1
 
-    .line 136
+    .line 137
     if-gez v1, :cond_0
 
     move-object v4, p1
@@ -241,7 +241,7 @@
 
     move-result-object v4
 
-    .line 137
+    .line 138
     :goto_0
     const/4 v5, 0x1
 
@@ -258,7 +258,7 @@
 
     move-result-object p1
 
-    .line 138
+    .line 139
     :goto_1
     const-string v1, "primary"
 
@@ -268,7 +268,7 @@
 
     if-eqz v1, :cond_2
 
-    .line 139
+    .line 140
     const-string v1, "rime_sync_root_internal"
 
     new-array v4, v3, [Ljava/lang/Object;
@@ -279,7 +279,7 @@
 
     goto :goto_2
 
-    .line 140
+    .line 141
     :cond_2
     const-string v1, "rime_sync_root_removable"
 
@@ -291,7 +291,7 @@
 
     move-result-object v1
 
-    .line 141
+    .line 142
     :goto_2
     invoke-virtual {p1}, Ljava/lang/String;->length()I
 
@@ -332,18 +332,18 @@
     :goto_4
     return-object v1
 
-    .line 142
+    .line 143
     :catch_0
     move-exception p1
 
-    .line 146
+    .line 147
     :cond_4
     :try_start_1
     invoke-virtual {p0}, Landroid/content/Context;->getPackageManager()Landroid/content/pm/PackageManager;
 
     move-result-object p1
 
-    .line 147
+    .line 148
     if-nez v0, :cond_5
 
     move-object v0, v2
@@ -353,10 +353,10 @@
 
     move-result-object p1
 
-    .line 148
+    .line 149
     if-eqz p1, :cond_6
 
-    .line 149
+    .line 150
     invoke-virtual {p0}, Landroid/content/Context;->getPackageManager()Landroid/content/pm/PackageManager;
 
     move-result-object v0
@@ -365,7 +365,7 @@
 
     move-result-object p1
 
-    .line 150
+    .line 151
     if-eqz p1, :cond_6
 
     invoke-interface {p1}, Ljava/lang/CharSequence;->length()I
@@ -382,15 +382,15 @@
 
     return-object p0
 
-    .line 153
+    .line 154
     :cond_6
     goto :goto_5
 
-    .line 152
+    .line 153
     :catch_1
     move-exception p1
 
-    .line 154
+    .line 155
     :goto_5
     const-string p1, "rime_sync_root_selected"
 
@@ -406,27 +406,27 @@
 .method private static errorName(I)Ljava/lang/String;
     .locals 0
 
-    .line 107
+    .line 108
     sparse-switch p0, :sswitch_data_0
 
-    .line 116
+    .line 117
     const-string p0, "rime_sync_error_failed"
 
     return-object p0
 
-    .line 114
+    .line 115
     :sswitch_0
     const-string p0, "rime_sync_error_in_progress"
 
     return-object p0
 
-    .line 112
+    .line 113
     :sswitch_1
     const-string p0, "rime_sync_error_location"
 
     return-object p0
 
-    .line 109
+    .line 110
     :sswitch_2
     const-string p0, "rime_sync_error_configuration"
 
@@ -446,7 +446,7 @@
 .method public static handleActivityResult(Landroid/preference/PreferenceFragment;IILandroid/content/Intent;)Z
     .locals 1
 
-    .line 68
+    .line 69
     const/16 v0, 0x6b02
 
     if-eq p1, v0, :cond_0
@@ -455,7 +455,7 @@
 
     return p0
 
-    .line 70
+    .line 71
     :cond_0
     sget-object p1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncLegacySettingsCompat;->CONTROLLERS:Ljava/util/Map;
 
@@ -474,18 +474,18 @@
     :try_end_0
     .catchall {:try_start_0 .. :try_end_0} :catchall_0
 
-    .line 71
+    .line 72
     if-eqz p0, :cond_1
 
     invoke-virtual {p0, p2, p3}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncLegacySettingsCompat$Controller;->onTreeResult(ILandroid/content/Intent;)V
 
-    .line 72
+    .line 73
     :cond_1
     const/4 p0, 0x1
 
     return p0
 
-    .line 70
+    .line 71
     :catchall_0
     move-exception p0
 
@@ -500,7 +500,7 @@
 .method public static handleRequestPermissionsResult(Landroid/preference/PreferenceFragment;I[Ljava/lang/String;[I)Z
     .locals 0
 
-    .line 77
+    .line 78
     const/4 p0, 0x0
 
     return p0
@@ -509,7 +509,7 @@
 .method private static isValidSnapshot(Ljava/lang/String;)Z
     .locals 2
 
-    .line 123
+    .line 124
     :try_start_0
     new-instance v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncConfiguration;
 
@@ -519,16 +519,16 @@
     :try_end_0
     .catch Ljava/lang/IllegalArgumentException; {:try_start_0 .. :try_end_0} :catch_0
 
-    .line 124
+    .line 125
     const/4 p0, 0x1
 
     return p0
 
-    .line 125
+    .line 126
     :catch_0
     move-exception p0
 
-    .line 126
+    .line 127
     const/4 p0, 0x0
 
     return p0
@@ -537,7 +537,7 @@
 .method public static refresh(Landroid/preference/PreferenceFragment;)V
     .locals 2
 
-    .line 82
+    .line 83
     sget-object v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncLegacySettingsCompat;->CONTROLLERS:Ljava/util/Map;
 
     monitor-enter v0
@@ -555,16 +555,16 @@
     :try_end_0
     .catchall {:try_start_0 .. :try_end_0} :catchall_0
 
-    .line 83
+    .line 84
     if-eqz p0, :cond_0
 
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncLegacySettingsCompat$Controller;->reload()V
 
-    .line 84
+    .line 85
     :cond_0
     return-void
 
-    .line 82
+    .line 83
     :catchall_0
     move-exception p0
 
@@ -579,29 +579,29 @@
 .method private static varargs text(Landroid/content/Context;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;
     .locals 3
 
-    .line 94
+    .line 95
     invoke-virtual {p0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
 
     move-result-object v0
 
-    .line 95
+    .line 96
     invoke-virtual {p0}, Landroid/content/Context;->getPackageName()Ljava/lang/String;
 
     move-result-object v1
 
-    .line 94
+    .line 95
     const-string v2, "string"
 
     invoke-virtual {v0, p1, v2, v1}, Landroid/content/res/Resources;->getIdentifier(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I
 
     move-result v0
 
-    .line 96
+    .line 97
     if-nez v0, :cond_0
 
     return-object p1
 
-    .line 97
+    .line 98
     :cond_0
     array-length p1, p2
 
@@ -613,7 +613,7 @@
 
     return-object p0
 
-    .line 98
+    .line 99
     :cond_1
     invoke-virtual {p0, v0, p2}, Landroid/content/Context;->getString(I[Ljava/lang/Object;)Ljava/lang/String;
 
@@ -625,12 +625,12 @@
 .method private static toast(Landroid/content/Context;Ljava/lang/String;)V
     .locals 2
 
-    .line 102
+    .line 103
     if-nez p0, :cond_0
 
     return-void
 
-    .line 103
+    .line 104
     :cond_0
     const/4 v0, 0x0
 
@@ -646,19 +646,19 @@
 
     invoke-virtual {p0}, Landroid/widget/Toast;->show()V
 
-    .line 104
+    .line 105
     return-void
 .end method
 
 .method public static unbind(Landroid/preference/PreferenceFragment;)V
     .locals 2
 
-    .line 87
+    .line 88
     sget-object v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncLegacySettingsCompat;->CONTROLLERS:Ljava/util/Map;
 
     monitor-enter v0
 
-    .line 88
+    .line 89
     :try_start_0
     sget-object v1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncLegacySettingsCompat;->CONTROLLERS:Ljava/util/Map;
 
@@ -668,19 +668,19 @@
 
     check-cast p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncLegacySettingsCompat$Controller;
 
-    .line 89
+    .line 90
     if-eqz p0, :cond_0
 
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncLegacySettingsCompat$Controller;->destroy()V
 
-    .line 90
+    .line 91
     :cond_0
     monitor-exit v0
 
-    .line 91
+    .line 92
     return-void
 
-    .line 90
+    .line 91
     :catchall_0
     move-exception p0
 

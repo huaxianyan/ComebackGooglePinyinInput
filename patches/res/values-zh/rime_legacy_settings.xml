@@ -39,6 +39,10 @@
     <string name="rime_sync_status_last_success">上次同步：%1$s %2$s</string>
     <string name="rime_sync_status_counts">上次成功同步：双方共有 %1$d 条，仅保留在 Rime 的有 %2$d 条</string>
     <string name="rime_sync_auto_summary">按设定间隔同步所选目录中的词条变化，执行时间可能由系统延后</string>
+    <string name="rime_sync_auto_hours">%1$d 小时</string>
+    <string name="rime_sync_auto_days">%1$d 天</string>
+    <string name="rime_sync_auto_consent">开启后，将按设定间隔自动比较 Google 拼音与所选目录中的词条，包括新增、删除和重新添加。\n\n任务被系统中断或文件暂时无法读取时，应用会稍后再试。Google 拼音无法接受的词条继续保留在 Rime，后续同步沿用这条规则。读取、写入或保存校验失败会暂停自动同步，手动同步仍会先确认删除。</string>
+    <string name="rime_sync_auto_enable">开启自动同步</string>
 
     <string-array name="rime_sync_auto_interval_entries">
         <item>6 小时</item>

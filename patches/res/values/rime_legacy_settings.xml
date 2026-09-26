@@ -39,6 +39,10 @@
     <string name="rime_sync_status_last_success">Last sync: %1$s %2$s</string>
     <string name="rime_sync_status_counts">Last successful sync: %1$d shared entries, %2$d kept only in Rime</string>
     <string name="rime_sync_auto_summary">Synchronize changes in the selected directory at the chosen interval. Android may delay execution.</string>
+    <string name="rime_sync_auto_hours">%1$d hours</string>
+    <string name="rime_sync_auto_days">%1$d days</string>
+    <string name="rime_sync_auto_consent">Automatic synchronization compares Google Pinyin with the selected directory at the chosen interval, covering added, deleted and re-added entries.\n\nAfter a system interruption or a temporary file access failure the app tries again later. Entries Google Pinyin cannot accept remain in Rime, and later syncs reuse that rule. Failed read, write or save verification pauses automatic synchronization, and manual synchronization still asks before deletions.</string>
+    <string name="rime_sync_auto_enable">Enable automatic synchronization</string>
 
     <string-array name="rime_sync_auto_interval_entries">
         <item>6 hours</item>

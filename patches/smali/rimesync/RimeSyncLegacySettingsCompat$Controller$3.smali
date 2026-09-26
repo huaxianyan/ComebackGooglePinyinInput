@@ -36,7 +36,7 @@
         }
     .end annotation
 
-    .line 353
+    .line 397
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncLegacySettingsCompat$Controller$3;->this$0:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncLegacySettingsCompat$Controller;
 
     iput-object p2, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncLegacySettingsCompat$Controller$3;->val$dialog:Landroid/app/AlertDialog;
@@ -55,7 +55,7 @@
 .method public onShow(Landroid/content/DialogInterface;)V
     .locals 1
 
-    .line 355
+    .line 399
     iget-object p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncLegacySettingsCompat$Controller$3;->val$dialog:Landroid/app/AlertDialog;
 
     const/4 v0, -0x1
@@ -64,12 +64,12 @@
 
     move-result-object p1
 
-    .line 356
+    .line 400
     if-nez p1, :cond_0
 
     return-void
 
-    .line 357
+    .line 401
     :cond_0
     new-instance v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncLegacySettingsCompat$Controller$3$1;
 
@@ -77,6 +77,6 @@
 
     invoke-virtual {p1, v0}, Landroid/widget/Button;->setOnClickListener(Landroid/view/View$OnClickListener;)V
 
-    .line 373
+    .line 417
     return-void
 .end method

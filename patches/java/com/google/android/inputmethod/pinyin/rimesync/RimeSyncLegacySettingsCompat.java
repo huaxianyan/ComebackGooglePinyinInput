@@ -24,8 +24,9 @@ import java.util.WeakHashMap;
 
 /**
  * Bridges the legacy dictionary page to the same manual synchronization boundary the modern
- * settings page calls. This block binds the page, displays real state, and persists the
- * synchronization directory, device name, and snapshot file. Operations follow in later blocks.
+ * settings page calls. This block binds the page, displays real state, persists the
+ * synchronization directory, device name and snapshot file, and configures automatic
+ * synchronization. Operations follow in later blocks.
  *
  * <p>Legacy callers cannot reference the host R class, so resource names are resolved through
  * {@link android.content.res.Resources#getIdentifier}. Missing strings degrade to the resource
@@ -155,7 +156,7 @@ public final class RimeSyncLegacySettingsCompat {
     }
 
     private static final class Controller implements Preference.OnPreferenceClickListener,
-            RimeSyncSettingsCompat.StateListener {
+            Preference.OnPreferenceChangeListener, RimeSyncSettingsCompat.StateListener {
         private PreferenceFragment fragment;
         private Preference statusPreference;
         private TwoStatePreference automaticPreference;
@@ -169,6 +170,8 @@ public final class RimeSyncLegacySettingsCompat {
         private int statusGeneration;
         private boolean picking;
         private boolean editing;
+        private int[] populatedOptions;
+        private boolean applyingInterval;
 
         Controller(PreferenceFragment fragment) { this.fragment = fragment; }
 
@@ -188,6 +191,14 @@ public final class RimeSyncLegacySettingsCompat {
             if (rootPreference != null) rootPreference.setOnPreferenceClickListener(this);
             if (devicePreference != null) devicePreference.setOnPreferenceClickListener(this);
             if (snapshotPreference != null) snapshotPreference.setOnPreferenceClickListener(this);
+            // Both entries change scheduling rather than a stored value, so the controller
+            // answers each change and writes through the facade itself.
+            if (automaticPreference != null) {
+                automaticPreference.setOnPreferenceChangeListener(this);
+            }
+            if (intervalPreference != null) {
+                intervalPreference.setOnPreferenceChangeListener(this);
+            }
 
             RimeSyncSettingsCompat.addStateListener(this);
             reload();
@@ -197,6 +208,8 @@ public final class RimeSyncLegacySettingsCompat {
             statusGeneration++;
             picking = false;
             editing = false;
+            applyingInterval = false;
+            populatedOptions = null;
             RimeSyncSettingsCompat.removeStateListener(this);
             fragment = null;
             statusPreference = null;
@@ -224,6 +237,37 @@ public final class RimeSyncLegacySettingsCompat {
                 showEditDialog(true);
             } else if (preference == snapshotPreference) {
                 showEditDialog(false);
+            }
+            return true;
+        }
+
+        @Override public boolean onPreferenceChange(Preference preference, Object value) {
+            RimeSyncSettingsCompat.Settings settings = latest;
+            if (settings == null) return false;
+            if (preference == automaticPreference) {
+                if (!Boolean.TRUE.equals(value)) {
+                    configureAutomatic(false, settings.automatic.intervalHours);
+                    return true;
+                }
+                if (!settings.canEnableAutomatic) {
+                    toast(context(), "rime_sync_auto_prerequisite");
+                    return false;
+                }
+                // Enabling keeps the switch in place until the consent dialog is answered.
+                showAutomaticConsentDialog(settings.automatic.intervalHours);
+                return false;
+            }
+            if (preference == intervalPreference) {
+                if (applyingInterval) return true;
+                int hours;
+                try {
+                    hours = Integer.parseInt(String.valueOf(value));
+                } catch (NumberFormatException failure) {
+                    return false;
+                }
+                if (hours == settings.automatic.intervalHours) return true;
+                configureAutomatic(settings.automatic.enabled, hours);
+                return true;
             }
             return true;
         }
@@ -397,6 +441,73 @@ public final class RimeSyncLegacySettingsCompat {
             });
         }
 
+        /** Enabling scheduling changes what runs in the background, so it asks first. */
+        private void showAutomaticConsentDialog(final int hours) {
+            if (fragment == null || fragment.getActivity() == null || editing) return;
+            final Activity activity = fragment.getActivity();
+            editing = true;
+            new AlertDialog.Builder(activity)
+                    .setTitle(text(activity, "rime_sync_auto_title"))
+                    .setMessage(text(activity, "rime_sync_auto_consent"))
+                    .setPositiveButton(text(activity, "rime_sync_auto_enable"),
+                            new DialogInterface.OnClickListener() {
+                        @Override public void onClick(DialogInterface dialog, int which) {
+                            configureAutomatic(true, hours);
+                        }
+                    })
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .setOnDismissListener(new DialogInterface.OnDismissListener() {
+                        @Override public void onDismiss(DialogInterface dialog) {
+                            editing = false;
+                            applyState();
+                        }
+                    })
+                    .show();
+        }
+
+        private void configureAutomatic(boolean enabled, int hours) {
+            final Context context = context();
+            if (context == null) return;
+            RimeSyncSettingsCompat.configureAutomaticAsync(context, enabled, hours,
+                    new RimeSyncSettingsCompat.Callback() {
+                @Override public void onFinished(RimeSyncSettingsCompat.Result result) {
+                    Context current = context();
+                    if (current == null || fragment == null) return;
+                    if (result.settings != null) latest = result.settings;
+                    if (!result.success) toast(current, errorName(result.errorCode));
+                    applyState();
+                }
+            });
+        }
+
+        /**
+         * Builds the interval list from the engine contract. An interval stored by the earlier
+         * slider stays selectable as an extra option, which the static XML default cannot express.
+         */
+        private void populateIntervalOptions(Context context, RimeAutoSync.Settings automatic) {
+            if (context == null || intervalPreference == null) return;
+            int[] options = automatic.intervalOptions;
+            if (populatedOptions != null && java.util.Arrays.equals(populatedOptions, options)) {
+                return;
+            }
+            CharSequence[] entries = new CharSequence[options.length];
+            CharSequence[] values = new CharSequence[options.length];
+            for (int index = 0; index < options.length; index++) {
+                entries[index] = intervalLabel(context, options[index]);
+                values[index] = String.valueOf(options[index]);
+            }
+            intervalPreference.setEntries(entries);
+            intervalPreference.setEntryValues(values);
+            populatedOptions = options.clone();
+        }
+
+        private String intervalLabel(Context context, int hours) {
+            if (hours > 24 && hours % 24 == 0) {
+                return text(context, "rime_sync_auto_days", hours / 24);
+            }
+            return text(context, "rime_sync_auto_hours", hours);
+        }
+
         void applyState() {
             Context context = context();
             RimeSyncSettingsCompat.Settings settings = latest;
@@ -423,8 +534,16 @@ public final class RimeSyncLegacySettingsCompat {
                 automaticPreference.setEnabled(automatic.enabled
                         || (settings.canEnableAutomatic && !busy));
             }
-            if (intervalPreference != null) {
-                intervalPreference.setEnabled(automatic != null && automatic.enabled && !busy);
+            if (intervalPreference != null && automatic != null) {
+                populateIntervalOptions(context, automatic);
+                String value = String.valueOf(automatic.intervalHours);
+                if (!value.equals(intervalPreference.getValue())) {
+                    applyingInterval = true;
+                    intervalPreference.setValue(value);
+                    applyingInterval = false;
+                }
+                intervalPreference.setSummary(intervalLabel(context, automatic.intervalHours));
+                intervalPreference.setEnabled(automatic.enabled && !busy);
             }
             if (rootPreference != null) {
                 rootPreference.setSummary(rootText(context, settings));
