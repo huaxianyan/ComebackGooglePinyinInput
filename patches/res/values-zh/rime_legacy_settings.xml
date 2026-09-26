@@ -24,9 +24,32 @@
     <string name="rime_sync_snapshot_invalid">文件名需要以 .userdb.txt 结尾</string>
     <string name="rime_sync_picker_unavailable">无法打开目录选择器</string>
 
+    <string name="rime_sync_keep_rejected_title">同步词条的处理规则</string>
+    <string name="rime_sync_keep_rejected_message">确认暂时无法由谷歌拼音接收的词条会保留在 Rime，其他词条继续同步。以后按同一规则处理，不再逐批询问。\n\n读写或保存检查出现异常时，同步会暂停并提示处理。手动同步涉及删除时仍会先询问。</string>
+    <string name="rime_sync_keep_rejected_action">同意并同步</string>
+    <string name="rime_sync_preview_title">同步这些变更？</string>
+    <string name="rime_sync_preview_message">加入 Google 拼音：%1$d\n从 Google 拼音删除：%2$d\n加入 Rime：%3$d\n从 Rime 删除：%4$d\n在 Rime 中恢复：%5$d</string>
+    <string name="rime_sync_confirm">同步</string>
+    <string name="rime_sync_confirm_deletions">同步并删除</string>
+    <string name="rime_sync_success">词典同步已完成</string>
+
     <string name="rime_sync_error_configuration">请检查设备名与 Rime 用户词典文件后重试</string>
     <string name="rime_sync_error_location">同步目录无法访问，请重新选择</string>
     <string name="rime_sync_error_in_progress">词典操作正在进行，请稍后重试</string>
+    <string name="rime_sync_error_preview_changed">词典内容已变化，请重新预览</string>
+    <string name="rime_sync_error_confirmation">请查看并确认删除数量，然后同步</string>
+    <string name="rime_sync_error_capacity">Google 拼音用户词典空间不足，请整理词典后重试</string>
+    <string name="rime_sync_error_native_persistence">谷歌拼音未能保存词库变更，请重试</string>
+    <string name="rime_sync_error_source_list">无法检查同步目录，请确认目录可以访问后重试</string>
+    <string name="rime_sync_error_source_open">无法打开同步目录中的 Rime 词典，请确认文件存在且可以读取后重试</string>
+    <string name="rime_sync_error_source_parse">同步目录中的 Rime 词典格式无效，请重新生成该文件后重试</string>
+    <string name="rime_sync_error_source_database">Rime 用户词典文件与当前设置不匹配，请检查文件名后重试</string>
+    <string name="rime_sync_error_source_close">读取同步目录中的 Rime 词典时出错，请重试</string>
+    <string name="rime_sync_error_rime_merge">Rime 设备词典无法合并，请检查各设备的用户词典文件后重试</string>
+    <string name="rime_sync_error_google_export">无法读取 Google 拼音用户词典，请重试</string>
+    <string name="rime_sync_error_session_plan">无法比较 Google 拼音和 Rime 词典，请重试</string>
+    <string name="rime_sync_error_directory_identity">所选目录包含另一份本设备同步数据，请选择原目录，或将原目录内容复制到新位置后重试</string>
+    <string name="rime_sync_error_bridge_missing">尚未找到本设备之前的同步文件，请将原目录内容复制到所选位置。已开启的自动同步会稍后重试</string>
     <string name="rime_sync_error_failed">同步未能完成</string>
 
     <string name="rime_sync_status_in_progress">正在同步词典……</string>

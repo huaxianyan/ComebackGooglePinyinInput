@@ -24,9 +24,32 @@
     <string name="rime_sync_snapshot_invalid">Use a file name that ends with .userdb.txt</string>
     <string name="rime_sync_picker_unavailable">Cannot open the directory picker</string>
 
+    <string name="rime_sync_keep_rejected_title">Entry synchronization rules</string>
+    <string name="rime_sync_keep_rejected_message">Entries verified as currently unsupported by Google Pinyin will remain in Rime while other entries synchronize. Future syncs use this rule without asking for each batch.\n\nRead, write or persistence verification failures still pause synchronization. Manual sync still asks before deletions.</string>
+    <string name="rime_sync_keep_rejected_action">Agree and synchronize</string>
+    <string name="rime_sync_preview_title">Synchronize these changes?</string>
+    <string name="rime_sync_preview_message">Add to Google Pinyin: %1$d\nDelete from Google Pinyin: %2$d\nAdd to Rime: %3$d\nDelete from Rime: %4$d\nRestore in Rime: %5$d</string>
+    <string name="rime_sync_confirm">Synchronize</string>
+    <string name="rime_sync_confirm_deletions">Synchronize and delete</string>
+    <string name="rime_sync_success">Dictionary synchronization completed</string>
+
     <string name="rime_sync_error_configuration">Check the device name and Rime user dictionary file, then try again</string>
     <string name="rime_sync_error_location">The synchronization directory cannot be accessed; select it again</string>
     <string name="rime_sync_error_in_progress">A dictionary operation is in progress; try again when it finishes</string>
+    <string name="rime_sync_error_preview_changed">Dictionary contents changed; preview the changes again</string>
+    <string name="rime_sync_error_confirmation">Review and confirm the deletions before synchronizing</string>
+    <string name="rime_sync_error_capacity">The Google Pinyin user dictionary is full; remove unneeded entries and try again</string>
+    <string name="rime_sync_error_native_persistence">Google Pinyin could not save the dictionary changes; try again</string>
+    <string name="rime_sync_error_source_list">The synchronization directory could not be checked. Make sure the directory is accessible, then try again.</string>
+    <string name="rime_sync_error_source_open">A Rime dictionary in the synchronization directory could not be opened. Make sure the file exists and is readable, then try again.</string>
+    <string name="rime_sync_error_source_parse">A Rime dictionary in the synchronization directory has an invalid format. Generate the file again, then retry.</string>
+    <string name="rime_sync_error_source_database">The Rime user dictionary does not match the current setting. Check the file name, then retry.</string>
+    <string name="rime_sync_error_source_close">An error occurred while reading a Rime dictionary in the synchronization directory. Try again.</string>
+    <string name="rime_sync_error_rime_merge">The Rime device dictionaries could not be merged. Check each device dictionary, then try again.</string>
+    <string name="rime_sync_error_google_export">The Google Pinyin user dictionary could not be read. Try again.</string>
+    <string name="rime_sync_error_session_plan">The Google Pinyin and Rime dictionaries could not be compared. Try again.</string>
+    <string name="rime_sync_error_directory_identity">This location contains data from another local sync setup. Select the original location, or copy its contents to the new location and try again</string>
+    <string name="rime_sync_error_bridge_missing">The previous sync file for this device was not found. Copy the original folder contents to this location. Automatic synchronization will retry later</string>
     <string name="rime_sync_error_failed">Synchronization could not be completed</string>
 
     <string name="rime_sync_status_in_progress">Synchronizing dictionaries…</string>

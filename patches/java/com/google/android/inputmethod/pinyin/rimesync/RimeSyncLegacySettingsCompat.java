@@ -23,10 +23,10 @@ import java.util.Map;
 import java.util.WeakHashMap;
 
 /**
- * Bridges the legacy dictionary page to the same manual synchronization boundary the modern
- * settings page calls. This block binds the page, displays real state, persists the
- * synchronization directory, device name and snapshot file, and configures automatic
- * synchronization. Operations follow in later blocks.
+ * Bridges the legacy dictionary page to the same synchronization boundaries the modern settings
+ * page calls. The page displays real state, persists the synchronization directory, device name
+ * and snapshot file, configures automatic synchronization, and runs manual synchronization with
+ * the compatibility rule and the deletion plan confirmed first.
  *
  * <p>Legacy callers cannot reference the host R class, so resource names are resolved through
  * {@link android.content.res.Resources#getIdentifier}. Missing strings degrade to the resource
@@ -109,10 +109,37 @@ public final class RimeSyncLegacySettingsCompat {
             case RimeSyncSettingsCompat.ERROR_CONFIGURATION_REQUIRED:
                 return "rime_sync_error_configuration";
             case RimeSyncSettingsCompat.ERROR_LOCATION_UNAVAILABLE:
-            case RimeSyncSettingsCompat.ERROR_DIRECTORY_IDENTITY:
                 return "rime_sync_error_location";
             case RimeSyncSettingsCompat.ERROR_OPERATION_IN_PROGRESS:
                 return "rime_sync_error_in_progress";
+            case RimeSyncSettingsCompat.ERROR_PREVIEW_CHANGED:
+                return "rime_sync_error_preview_changed";
+            case RimeSyncSettingsCompat.ERROR_DELETION_CONFIRMATION_REQUIRED:
+                return "rime_sync_error_confirmation";
+            case RimeSyncSettingsCompat.ERROR_CAPACITY_EXCEEDED:
+                return "rime_sync_error_capacity";
+            case RimeSyncSettingsCompat.ERROR_NATIVE_PERSISTENCE:
+                return "rime_sync_error_native_persistence";
+            case RimeSyncSettingsCompat.ERROR_PREVIEW_SOURCE_LIST:
+                return "rime_sync_error_source_list";
+            case RimeSyncSettingsCompat.ERROR_PREVIEW_SOURCE_OPEN:
+                return "rime_sync_error_source_open";
+            case RimeSyncSettingsCompat.ERROR_PREVIEW_SOURCE_PARSE:
+                return "rime_sync_error_source_parse";
+            case RimeSyncSettingsCompat.ERROR_PREVIEW_SOURCE_DATABASE:
+                return "rime_sync_error_source_database";
+            case RimeSyncSettingsCompat.ERROR_PREVIEW_SOURCE_CLOSE:
+                return "rime_sync_error_source_close";
+            case RimeSyncSettingsCompat.ERROR_PREVIEW_RIME_MERGE:
+                return "rime_sync_error_rime_merge";
+            case RimeSyncSettingsCompat.ERROR_PREVIEW_GOOGLE_EXPORT:
+                return "rime_sync_error_google_export";
+            case RimeSyncSettingsCompat.ERROR_PREVIEW_SESSION_PLAN:
+                return "rime_sync_error_session_plan";
+            case RimeSyncSettingsCompat.ERROR_DIRECTORY_IDENTITY:
+                return "rime_sync_error_directory_identity";
+            case RimeSyncSettingsCompat.ERROR_BRIDGE_SNAPSHOT_MISSING:
+                return "rime_sync_error_bridge_missing";
             default:
                 return "rime_sync_error_failed";
         }
@@ -191,6 +218,9 @@ public final class RimeSyncLegacySettingsCompat {
             if (rootPreference != null) rootPreference.setOnPreferenceClickListener(this);
             if (devicePreference != null) devicePreference.setOnPreferenceClickListener(this);
             if (snapshotPreference != null) snapshotPreference.setOnPreferenceClickListener(this);
+            if (synchronizePreference != null) {
+                synchronizePreference.setOnPreferenceClickListener(this);
+            }
             // Both entries change scheduling rather than a stored value, so the controller
             // answers each change and writes through the facade itself.
             if (automaticPreference != null) {
@@ -237,6 +267,8 @@ public final class RimeSyncLegacySettingsCompat {
                 showEditDialog(true);
             } else if (preference == snapshotPreference) {
                 showEditDialog(false);
+            } else if (preference == synchronizePreference) {
+                requestSynchronization();
             }
             return true;
         }
@@ -436,6 +468,145 @@ public final class RimeSyncLegacySettingsCompat {
                     if (current == null || fragment == null) return;
                     if (result.settings != null) latest = result.settings;
                     if (!result.success) toast(current, errorName(result.errorCode));
+                    applyState();
+                }
+            });
+        }
+
+        /**
+         * Manual synchronization keeps the two gates the modern page uses. The compatibility
+         * rule is accepted once, and a plan that deletes entries is approved before it runs.
+         */
+        private void requestSynchronization() {
+            RimeSyncSettingsCompat.Settings settings = latest;
+            if (fragment == null || settings == null || settings.operationInProgress) return;
+            if (!settings.compatibilityAccepted) {
+                showKeepRejectedDialog();
+                return;
+            }
+            synchronize();
+        }
+
+        private void synchronize() {
+            final Context context = context();
+            if (context == null) return;
+            RimeSyncSettingsCompat.synchronizeAsync(context,
+                    new RimeSyncSettingsCompat.Callback() {
+                @Override public void onFinished(RimeSyncSettingsCompat.Result result) {
+                    Context current = context();
+                    if (current == null || fragment == null) return;
+                    if (result.settings != null) latest = result.settings;
+                    if (!result.success) {
+                        // The rule can also be missing when the stored answer was cleared.
+                        if (result.errorCode
+                                == RimeSyncSettingsCompat.ERROR_COMPATIBILITY_CONSENT) {
+                            showKeepRejectedDialog();
+                            return;
+                        }
+                        toast(current, errorName(result.errorCode));
+                        applyState();
+                        return;
+                    }
+                    if (result.preview) {
+                        applyState();
+                        showPreviewDialog(result);
+                        return;
+                    }
+                    toast(current, "rime_sync_success");
+                    applyState();
+                }
+            });
+        }
+
+        private void showKeepRejectedDialog() {
+            if (fragment == null || fragment.getActivity() == null || editing) return;
+            final Activity activity = fragment.getActivity();
+            editing = true;
+            new AlertDialog.Builder(activity)
+                    .setTitle(text(activity, "rime_sync_keep_rejected_title"))
+                    .setMessage(text(activity, "rime_sync_keep_rejected_message"))
+                    .setPositiveButton(text(activity, "rime_sync_keep_rejected_action"),
+                            new DialogInterface.OnClickListener() {
+                        @Override public void onClick(DialogInterface dialog, int which) {
+                            // Dismissing first releases the dialog guard, because accepting the
+                            // rule starts a synchronization that can ask for a preview at once.
+                            dialog.dismiss();
+                            acceptCompatibility();
+                        }
+                    })
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .setOnDismissListener(new DialogInterface.OnDismissListener() {
+                        @Override public void onDismiss(DialogInterface dialog) {
+                            editing = false;
+                            applyState();
+                        }
+                    })
+                    .show();
+        }
+
+        private void acceptCompatibility() {
+            final Context context = context();
+            if (context == null) return;
+            RimeSyncSettingsCompat.acceptCompatibilityAsync(context,
+                    new RimeSyncSettingsCompat.Callback() {
+                @Override public void onFinished(RimeSyncSettingsCompat.Result result) {
+                    Context current = context();
+                    if (current == null || fragment == null) return;
+                    if (result.settings != null) latest = result.settings;
+                    if (!result.success) {
+                        toast(current, errorName(result.errorCode));
+                        applyState();
+                        return;
+                    }
+                    synchronize();
+                }
+            });
+        }
+
+        /** Deletions are shown as counts, because the plan itself belongs to the engine. */
+        private void showPreviewDialog(final RimeSyncSettingsCompat.Result preview) {
+            if (fragment == null || fragment.getActivity() == null) return;
+            final Activity activity = fragment.getActivity();
+            editing = true;
+            new AlertDialog.Builder(activity)
+                    .setTitle(text(activity, "rime_sync_preview_title"))
+                    .setMessage(text(activity, "rime_sync_preview_message",
+                            preview.googleAdditionCount, preview.googleDeletionCount,
+                            preview.rimeAdditionCount, preview.rimeDeletionCount,
+                            preview.rimeResurrectionCount))
+                    .setPositiveButton(text(activity, preview.requiresDeletionConfirmation
+                                    ? "rime_sync_confirm_deletions" : "rime_sync_confirm"),
+                            new DialogInterface.OnClickListener() {
+                        @Override public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                            execute(preview.confirmationToken,
+                                    preview.requiresDeletionConfirmation);
+                        }
+                    })
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .setOnDismissListener(new DialogInterface.OnDismissListener() {
+                        @Override public void onDismiss(DialogInterface dialog) {
+                            editing = false;
+                            applyState();
+                        }
+                    })
+                    .show();
+        }
+
+        private void execute(String confirmationToken, boolean deletionConfirmed) {
+            final Context context = context();
+            if (context == null) return;
+            RimeSyncSettingsCompat.executeAsync(context, confirmationToken, deletionConfirmed,
+                    new RimeSyncSettingsCompat.Callback() {
+                @Override public void onFinished(RimeSyncSettingsCompat.Result result) {
+                    Context current = context();
+                    if (current == null || fragment == null) return;
+                    if (result.settings != null) latest = result.settings;
+                    if (result.success) {
+                        toast(current, "rime_sync_success");
+                    } else {
+                        toast(current, errorName(result.errorCode));
+                    }
                     applyState();
                 }
             });
