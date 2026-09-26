@@ -12,6 +12,23 @@
     <string name="rime_sync_now_summary">同步双方词条，涉及删除时先确认</string>
     <string name="rime_sync_reset_title">重新建立同步状态</string>
     <string name="rime_sync_reset_summary">下次同步时重新比较双方当前词条</string>
+
+    <string name="rime_sync_root_unset">尚未选择</string>
+    <string name="rime_sync_root_inaccessible">目录无法访问，请重新选择</string>
+    <string name="rime_sync_root_selected">已选择同步目录</string>
+    <string name="rime_sync_root_internal">内部存储</string>
+    <string name="rime_sync_root_removable">SD 卡（%1$s）</string>
+    <string name="rime_sync_root_saved">同步目录已保存</string>
+    <string name="rime_sync_device_unset">请为这台设备起个名字</string>
+    <string name="rime_sync_device_invalid">只能使用小写字母、数字、下划线（_）与连字符（-）</string>
+    <string name="rime_sync_snapshot_invalid">文件名需要以 .userdb.txt 结尾</string>
+    <string name="rime_sync_picker_unavailable">无法打开目录选择器</string>
+
+    <string name="rime_sync_error_configuration">请检查设备名与 Rime 用户词典文件后重试</string>
+    <string name="rime_sync_error_location">同步目录无法访问，请重新选择</string>
+    <string name="rime_sync_error_in_progress">词典操作正在进行，请稍后重试</string>
+    <string name="rime_sync_error_failed">同步未能完成</string>
+
     <string name="rime_sync_status_in_progress">正在同步词典……</string>
     <string name="rime_sync_status_location">同步目录暂时无法访问，请检查目录权限</string>
     <string name="rime_sync_status_paused">同步未完成，请先备份词库，再点击「立即同步」重试</string>

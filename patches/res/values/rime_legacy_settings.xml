@@ -12,6 +12,23 @@
     <string name="rime_sync_now_summary">Synchronize entries on both sides, with confirmation before deletions</string>
     <string name="rime_sync_reset_title">Rebuild synchronization state</string>
     <string name="rime_sync_reset_summary">Compare both dictionaries again during the next synchronization</string>
+
+    <string name="rime_sync_root_unset">Not selected</string>
+    <string name="rime_sync_root_inaccessible">Location is inaccessible; select it again</string>
+    <string name="rime_sync_root_selected">Synchronization directory selected</string>
+    <string name="rime_sync_root_internal">Internal storage</string>
+    <string name="rime_sync_root_removable">SD card (%1$s)</string>
+    <string name="rime_sync_root_saved">Synchronization directory saved</string>
+    <string name="rime_sync_device_unset">Enter a name for this device</string>
+    <string name="rime_sync_device_invalid">Use lowercase letters, numbers, underscores (_), and hyphens (-) only</string>
+    <string name="rime_sync_snapshot_invalid">Use a file name that ends with .userdb.txt</string>
+    <string name="rime_sync_picker_unavailable">Cannot open the directory picker</string>
+
+    <string name="rime_sync_error_configuration">Check the device name and Rime user dictionary file, then try again</string>
+    <string name="rime_sync_error_location">The synchronization directory cannot be accessed; select it again</string>
+    <string name="rime_sync_error_in_progress">A dictionary operation is in progress; try again when it finishes</string>
+    <string name="rime_sync_error_failed">Synchronization could not be completed</string>
+
     <string name="rime_sync_status_in_progress">Synchronizing dictionaries…</string>
     <string name="rime_sync_status_location">The sync location is unavailable. Check its access permissions.</string>
     <string name="rime_sync_status_paused">Sync is incomplete. Back up the dictionary, then tap Synchronize now to retry.</string>
