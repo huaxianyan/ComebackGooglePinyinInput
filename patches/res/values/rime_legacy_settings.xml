@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="rime_sync_status_title">Rime synchronization</string>
+    <string name="rime_sync_status_unconfigured">No synchronization directory selected. Tap to choose one.</string>
+    <string name="rime_sync_auto_title">Automatic synchronization</string>
+    <string name="rime_sync_auto_prerequisite">Complete a manual synchronization before enabling automatic synchronization.</string>
+    <string name="rime_sync_auto_interval_title">Synchronization interval</string>
+    <string name="rime_sync_root_title">Synchronization directory</string>
+    <string name="rime_sync_device_title">Device name</string>
+    <string name="rime_sync_snapshot_title">Rime user dictionary file</string>
+    <string name="rime_sync_now_title">Synchronize now</string>
+    <string name="rime_sync_now_summary">Synchronize entries on both sides, with confirmation before deletions</string>
+    <string name="rime_sync_reset_title">Rebuild synchronization state</string>
+    <string name="rime_sync_reset_summary">Compare both dictionaries again during the next synchronization</string>
+
+    <string-array name="rime_sync_auto_interval_entries">
+        <item>6 hours</item>
+        <item>12 hours</item>
+        <item>24 hours</item>
+        <item>2 days</item>
+        <item>3 days</item>
+        <item>7 days</item>
+    </string-array>
+    <string-array name="rime_sync_auto_interval_values">
+        <item>6</item>
+        <item>12</item>
+        <item>24</item>
+        <item>48</item>
+        <item>72</item>
+        <item>168</item>
+    </string-array>
+</resources>

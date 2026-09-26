@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="rime_sync_status_title">Rime 双向同步</string>
+    <string name="rime_sync_status_unconfigured">尚未选择同步目录，点击选择</string>
+    <string name="rime_sync_auto_title">自动同步</string>
+    <string name="rime_sync_auto_prerequisite">请先完成一次手动同步，再开启自动同步</string>
+    <string name="rime_sync_auto_interval_title">自动同步间隔</string>
+    <string name="rime_sync_root_title">同步目录</string>
+    <string name="rime_sync_device_title">设备名</string>
+    <string name="rime_sync_snapshot_title">Rime 用户词典文件</string>
+    <string name="rime_sync_now_title">立即同步</string>
+    <string name="rime_sync_now_summary">同步双方词条，涉及删除时先确认</string>
+    <string name="rime_sync_reset_title">重新建立同步状态</string>
+    <string name="rime_sync_reset_summary">下次同步时重新比较双方当前词条</string>
+
+    <string-array name="rime_sync_auto_interval_entries">
+        <item>6 小时</item>
+        <item>12 小时</item>
+        <item>24 小时</item>
+        <item>2 天</item>
+        <item>3 天</item>
+        <item>7 天</item>
+    </string-array>
+    <string-array name="rime_sync_auto_interval_values">
+        <item>6</item>
+        <item>12</item>
+        <item>24</item>
+        <item>48</item>
+        <item>72</item>
+        <item>168</item>
+    </string-array>
+</resources>

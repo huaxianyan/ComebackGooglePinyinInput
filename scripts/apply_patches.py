@@ -1522,6 +1522,9 @@ def apply(
     # User-selected local SAF exports survive clear-data/uninstall. Backup and
     # the integrated import list share one persisted tree URI; configuration
     # remains outside the preferences registered with BackupAgent.
+    # The Rime synchronization group sits on the same page. Its status entry is
+    # the only entrance for API 17-34 users, so it stays visible before the
+    # synchronization directory is configured.
     replace_once(
         dictionary_settings_xml,
         '        <Preference android:persistent="false" '
@@ -1556,7 +1559,38 @@ def apply(
         'android:key="dictionary_auto_backup_now" />\n'
         '        <Preference android:persistent="false" '
         'android:title="@string/dictionary_auto_backup_import_title" '
-        'android:key="dictionary_auto_backup_import" />',
+        'android:key="dictionary_auto_backup_import" />\n'
+        '        <Preference android:persistent="false" '
+        'android:title="@string/rime_sync_status_title" '
+        'android:key="rime_sync_current_status" '
+        'android:summary="@string/rime_sync_status_unconfigured" />\n'
+        '        <CheckBoxPreference android:persistent="false" '
+        'android:title="@string/rime_sync_auto_title" '
+        'android:key="rime_sync_auto_enabled" '
+        'android:summary="@string/rime_sync_auto_prerequisite" />\n'
+        '        <ListPreference android:persistent="false" '
+        'android:title="@string/rime_sync_auto_interval_title" '
+        'android:key="rime_sync_auto_interval_hours" '
+        'android:entries="@array/rime_sync_auto_interval_entries" '
+        'android:entryValues="@array/rime_sync_auto_interval_values" '
+        'android:defaultValue="24" />\n'
+        '        <Preference android:persistent="false" '
+        'android:title="@string/rime_sync_root_title" '
+        'android:key="rime_sync_root" />\n'
+        '        <Preference android:persistent="false" '
+        'android:title="@string/rime_sync_device_title" '
+        'android:key="rime_sync_device" />\n'
+        '        <Preference android:persistent="false" '
+        'android:title="@string/rime_sync_snapshot_title" '
+        'android:key="rime_sync_snapshot_file" />\n'
+        '        <Preference android:persistent="false" '
+        'android:title="@string/rime_sync_now_title" '
+        'android:key="rime_sync_now" '
+        'android:summary="@string/rime_sync_now_summary" />\n'
+        '        <Preference android:persistent="false" '
+        'android:title="@string/rime_sync_reset_title" '
+        'android:key="rime_sync_reset" '
+        'android:summary="@string/rime_sync_reset_summary" />',
     )
 
     # Restored setup flags are installation-local. Keeping HAD_FIRST_RUN or
