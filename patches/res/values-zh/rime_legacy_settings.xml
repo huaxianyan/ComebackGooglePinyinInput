@@ -12,6 +12,16 @@
     <string name="rime_sync_now_summary">同步双方词条，涉及删除时先确认</string>
     <string name="rime_sync_reset_title">重新建立同步状态</string>
     <string name="rime_sync_reset_summary">下次同步时重新比较双方当前词条</string>
+    <string name="rime_sync_status_in_progress">正在同步词典……</string>
+    <string name="rime_sync_status_location">同步目录暂时无法访问，请检查目录权限</string>
+    <string name="rime_sync_status_paused">同步未完成，请先备份词库，再点击「立即同步」重试</string>
+    <string name="rime_sync_status_unfinished">上次同步尚未完成，可点击「立即同步」继续</string>
+    <string name="rime_sync_status_not_run">尚未同步</string>
+    <string name="rime_sync_status_auto_retry">上次同步未完成，应用会稍后再试</string>
+    <string name="rime_sync_status_auto_paused">上次同步未完成，自动同步未开启，请手动同步查看原因</string>
+    <string name="rime_sync_status_last_success">上次同步：%1$s %2$s</string>
+    <string name="rime_sync_status_counts">上次成功同步：双方共有 %1$d 条，仅保留在 Rime 的有 %2$d 条</string>
+    <string name="rime_sync_auto_summary">按设定间隔同步所选目录中的词条变化，执行时间可能由系统延后</string>
 
     <string-array name="rime_sync_auto_interval_entries">
         <item>6 小时</item>

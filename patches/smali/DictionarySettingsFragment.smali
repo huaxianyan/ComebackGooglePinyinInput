@@ -33,15 +33,23 @@
 
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupSettingsCompat;->bind(Landroid/preference/PreferenceFragment;)V
 
+    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncLegacySettingsCompat;->bind(Landroid/preference/PreferenceFragment;)V
+
     return-void
 .end method
 
 .method public onActivityResult(IILandroid/content/Intent;)V
-    .locals 1
+    .locals 2
 
     invoke-static {p0, p1, p2, p3}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupSettingsCompat;->handleActivityResult(Landroid/preference/PreferenceFragment;IILandroid/content/Intent;)Z
 
     move-result v0
+
+    invoke-static {p0, p1, p2, p3}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncLegacySettingsCompat;->handleActivityResult(Landroid/preference/PreferenceFragment;IILandroid/content/Intent;)Z
+
+    move-result v1
+
+    or-int/2addr v0, v1
 
     if-nez v0, :handled
 
@@ -52,11 +60,17 @@
 .end method
 
 .method public onRequestPermissionsResult(I[Ljava/lang/String;[I)V
-    .locals 1
+    .locals 2
 
     invoke-static {p0, p1, p2, p3}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupSettingsCompat;->handleRequestPermissionsResult(Landroid/preference/PreferenceFragment;I[Ljava/lang/String;[I)Z
 
     move-result v0
+
+    invoke-static {p0, p1, p2, p3}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncLegacySettingsCompat;->handleRequestPermissionsResult(Landroid/preference/PreferenceFragment;I[Ljava/lang/String;[I)Z
+
+    move-result v1
+
+    or-int/2addr v0, v1
 
     if-nez v0, :permission_handled
 
@@ -73,6 +87,8 @@
 
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupSettingsCompat;->refresh(Landroid/preference/PreferenceFragment;)V
 
+    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncLegacySettingsCompat;->refresh(Landroid/preference/PreferenceFragment;)V
+
     return-void
 .end method
 
@@ -80,6 +96,8 @@
     .locals 0
 
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupSettingsCompat;->unbind(Landroid/preference/PreferenceFragment;)V
+
+    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncLegacySettingsCompat;->unbind(Landroid/preference/PreferenceFragment;)V
 
     invoke-super {p0}, Lado;->onDestroy()V
 

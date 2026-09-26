@@ -12,6 +12,16 @@
     <string name="rime_sync_now_summary">Synchronize entries on both sides, with confirmation before deletions</string>
     <string name="rime_sync_reset_title">Rebuild synchronization state</string>
     <string name="rime_sync_reset_summary">Compare both dictionaries again during the next synchronization</string>
+    <string name="rime_sync_status_in_progress">Synchronizing dictionaries…</string>
+    <string name="rime_sync_status_location">The sync location is unavailable. Check its access permissions.</string>
+    <string name="rime_sync_status_paused">Sync is incomplete. Back up the dictionary, then tap Synchronize now to retry.</string>
+    <string name="rime_sync_status_unfinished">The previous sync is incomplete. Tap Synchronize now to continue.</string>
+    <string name="rime_sync_status_not_run">Not synchronized yet</string>
+    <string name="rime_sync_status_auto_retry">The last synchronization did not finish. The app will try again later.</string>
+    <string name="rime_sync_status_auto_paused">The last sync did not finish and automatic sync is off. Run a manual sync to review the issue.</string>
+    <string name="rime_sync_status_last_success">Last sync: %1$s %2$s</string>
+    <string name="rime_sync_status_counts">Last successful sync: %1$d shared entries, %2$d kept only in Rime</string>
+    <string name="rime_sync_auto_summary">Synchronize changes in the selected directory at the chosen interval. Android may delay execution.</string>
 
     <string-array name="rime_sync_auto_interval_entries">
         <item>6 hours</item>
