@@ -32,6 +32,10 @@
     <string name="rime_sync_confirm">同步</string>
     <string name="rime_sync_confirm_deletions">同步并删除</string>
     <string name="rime_sync_success">词典同步已完成</string>
+    <string name="rime_sync_reset_confirm_title">重新建立同步状态？</string>
+    <string name="rime_sync_reset_confirm_message">下次同步会将 Google 拼音和 Rime 的当前词典作为新的比较起点。</string>
+    <string name="rime_sync_reset_action">重新建立</string>
+    <string name="rime_sync_reset_success">已重新建立同步状态</string>
 
     <string name="rime_sync_error_configuration">请检查设备名与 Rime 用户词典文件后重试</string>
     <string name="rime_sync_error_location">同步目录无法访问，请重新选择</string>

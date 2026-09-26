@@ -25,8 +25,9 @@ import java.util.WeakHashMap;
 /**
  * Bridges the legacy dictionary page to the same synchronization boundaries the modern settings
  * page calls. The page displays real state, persists the synchronization directory, device name
- * and snapshot file, configures automatic synchronization, and runs manual synchronization with
- * the compatibility rule and the deletion plan confirmed first.
+ * and snapshot file, configures automatic synchronization, runs manual synchronization with the
+ * compatibility rule and the deletion plan confirmed first, and rebuilds the comparison baseline
+ * after a confirmation.
  *
  * <p>Legacy callers cannot reference the host R class, so resource names are resolved through
  * {@link android.content.res.Resources#getIdentifier}. Missing strings degrade to the resource
@@ -221,6 +222,7 @@ public final class RimeSyncLegacySettingsCompat {
             if (synchronizePreference != null) {
                 synchronizePreference.setOnPreferenceClickListener(this);
             }
+            if (resetPreference != null) resetPreference.setOnPreferenceClickListener(this);
             // Both entries change scheduling rather than a stored value, so the controller
             // answers each change and writes through the facade itself.
             if (automaticPreference != null) {
@@ -269,6 +271,8 @@ public final class RimeSyncLegacySettingsCompat {
                 showEditDialog(false);
             } else if (preference == synchronizePreference) {
                 requestSynchronization();
+            } else if (preference == resetPreference) {
+                showResetDialog();
             }
             return true;
         }
@@ -604,6 +608,56 @@ public final class RimeSyncLegacySettingsCompat {
                     if (result.settings != null) latest = result.settings;
                     if (result.success) {
                         toast(current, "rime_sync_success");
+                    } else {
+                        toast(current, errorName(result.errorCode));
+                    }
+                    applyState();
+                }
+            });
+        }
+
+        /**
+         * Rebuilding the baseline discards what the next comparison starts from, so it is done
+         * only after an explicit confirmation. Automatic synchronization is switched off as part
+         * of the same step, which is why the entry is disabled while an operation is running.
+         */
+        private void showResetDialog() {
+            RimeSyncSettingsCompat.Settings settings = latest;
+            if (fragment == null || settings == null || settings.operationInProgress) return;
+            final Activity activity = fragment.getActivity();
+            if (activity == null || editing) return;
+            editing = true;
+            new AlertDialog.Builder(activity)
+                    .setTitle(text(activity, "rime_sync_reset_confirm_title"))
+                    .setMessage(text(activity, "rime_sync_reset_confirm_message"))
+                    .setPositiveButton(text(activity, "rime_sync_reset_action"),
+                            new DialogInterface.OnClickListener() {
+                        @Override public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                            reset();
+                        }
+                    })
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .setOnDismissListener(new DialogInterface.OnDismissListener() {
+                        @Override public void onDismiss(DialogInterface dialog) {
+                            editing = false;
+                            applyState();
+                        }
+                    })
+                    .show();
+        }
+
+        private void reset() {
+            final Context context = context();
+            if (context == null) return;
+            RimeSyncSettingsCompat.resetBaselineAsync(context,
+                    new RimeSyncSettingsCompat.Callback() {
+                @Override public void onFinished(RimeSyncSettingsCompat.Result result) {
+                    Context current = context();
+                    if (current == null || fragment == null) return;
+                    if (result.settings != null) latest = result.settings;
+                    if (result.success) {
+                        toast(current, "rime_sync_reset_success");
                     } else {
                         toast(current, errorName(result.errorCode));
                     }

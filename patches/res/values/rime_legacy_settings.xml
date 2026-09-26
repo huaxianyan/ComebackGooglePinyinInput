@@ -32,6 +32,10 @@
     <string name="rime_sync_confirm">Synchronize</string>
     <string name="rime_sync_confirm_deletions">Synchronize and delete</string>
     <string name="rime_sync_success">Dictionary synchronization completed</string>
+    <string name="rime_sync_reset_confirm_title">Rebuild synchronization state?</string>
+    <string name="rime_sync_reset_confirm_message">The next synchronization will compare the current Google Pinyin and Rime dictionaries as a new starting point.</string>
+    <string name="rime_sync_reset_action">Rebuild</string>
+    <string name="rime_sync_reset_success">Synchronization state rebuilt</string>
 
     <string name="rime_sync_error_configuration">Check the device name and Rime user dictionary file, then try again</string>
     <string name="rime_sync_error_location">The synchronization directory cannot be accessed; select it again</string>
