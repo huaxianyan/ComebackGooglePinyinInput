@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="pref_key_enable_paired_punctuation">enable_paired_punctuation_completion</string>
+    <bool name="pref_def_value_enable_paired_punctuation">true</bool>
+    <string name="setting_paired_punctuation_title">Auto-close paired symbols</string>
+    <string name="setting_paired_punctuation_summary">Insert the closing bracket or quote and move the cursor between them</string>
+    <item type="id" name="ime_paired_punctuation_processor" />
+</resources>

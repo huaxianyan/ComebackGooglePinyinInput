@@ -242,6 +242,80 @@ shouldHandle(Event): boolean
 
 `apply_patches.py` 已有直接修改 `res/xml` 文件的先例。
 
+## 实现进度
+
+已开分支 `feat/paired-punctuation-autocomplete`。以下为实现阶段的核实结果与已定方案。
+
+### 为何用 Smali 而不是 Java
+
+项目的主流做法是写 Java、再用 `generate_*_smali.py` 编译成 Smali。本功能**不能用这条路**：
+
+`ProcessMessage` 和 `Event` 都有大量**同名不同类型的字段**。`ProcessMessage` 的字段 `a` 有 13 种类型（`I`、`J`、`CharSequence`、`Event`、`Candidate`、`List`、`Z` 等），`b` 有 4 种，`c`、`d`、`e` 各有多于一种。Java 语言不允许同一类里存在同名不同类型的字段，`javac` 无法编译这种类。
+
+`patches/smali/pairauto/` 采用手写 Smali，像 `patches/smali/androidx-inline/` 一样直接复制进解码树。
+
+### 已确认的控制流
+
+`InputBundle.a(Event)Z` 是软键事件的入口，700 多行，控制流已逐段核实：
+
+1. 先做一系列状态判定，结果存入局部寄存器
+2. 行 265 判定后，若可以交给 IME，则调 `IIme.handle(Event)`（行 271）
+3. 若 `handle` 返回 true，跳到 `:goto_6`，**跳过 `sendKeyData`**
+4. `sendKeyData` 在行 676，位于 `:cond_18` 分支，只有当 `handle` 未处理该事件时才会执行
+
+关键结论：**处理器返回 true 就能阻止原始提交**。这是整个方案的基础。
+
+另需注意：`ProcessorBasedIme` 实现的是自有接口 `IIme`，不直接实现处理器的 `shouldHandle`；`shouldHandle(Event)` 是 `IIme` 上的方法，内部遍历处理器数组。
+
+### 消息工厂的真实映射
+
+逐一核实了 `ProcessMessage` 的静态工厂，之前文档里的猜测需要修正：
+
+| 工厂签名 | 真实消息类型 |
+| --- | --- |
+| `a(int, int, Object)` | `OFFSET_SELECTION` |
+| `a(CharSequence, ProcessMessage$a, Object)` | `REPLACE_TEXT` |
+| `a(CharSequence, ProcessMessage$a, boolean, int, Object)` | `COMMIT_TEXT` |
+| `a(CharSequence, int, Object)` | `SET_COMPOSING` |
+| `a(Object)` | `IME_CLOSE` |
+
+全仓库只有三处构造这三类消息：
+
+- `COMMIT_TEXT`：`AbstractAutoSpaceProcessor`、`BaseDecodeProcessor`
+- `REPLACE_TEXT`：`AbstractDoubleSpaceProcessor`
+- `OFFSET_SELECTION`：`ScrubMoveProcessor`
+
+可直接照搬 `ScrubMoveProcessor` 的 `OFFSET_SELECTION` 构造方式。
+
+### 处理器顺序的来源
+
+`ProcessorBasedIme.initialize` 从 `ImeDef` 的处理器列表逐个实例化，同时填充两张表：
+
+- `ard.a[..]`：按 XML 声明顺序的全部处理器
+- `SparseArray`：消息类型 → 处理者数组，由 `message_order` 定义决定
+
+`processors_*.xml` 里只有平铺的 `<processor>` 节点，没有 `message_order`，因此顺序回退为声明顺序。
+
+这带来一个重要约束：**`OutputProcessor` 声明在最后，对 `COMMIT_TEXT` 等消息返回 true 并短路**。因此如果走 `doProcess` 路线，新处理器必须声明在 `OutputProcessor` 之前；如果走 `shouldHandle` 路线（本方案），则不受这个顺序影响。
+
+### 已定方案
+
+结合以上事实，采用 `shouldHandle` 拦截：
+
+1. 在 `shouldHandle(Event)` 里识别「单字符、且是成对标点左半边」的按键
+2. 返回 true，阻止原始提交
+3. 提交左右两个符号，再用偏移 `(-1, -1)` 把光标移到中间
+
+好处是不依赖处理器顺序，也不与 `OutputProcessor` 的短路逻辑交互。
+
+### 待验证
+
+以下要等隔离包实机验证，不能只看代码就当成立：
+
+1. `shouldHandle` 返回 true 后，`InputBundle` 是否确实跳过 `sendKeyData`（控制流上成立，需实测）
+2. 处理器自发的 `COMMIT_TEXT` 与 `OFFSET_SELECTION` 消息是否会被 `ImeDef` 的掩码过滤
+3. 密码输入框是否会自动禁用该功能（预计需要，尚未确认）
+
 ## 待确认问题
 
 1. 处理器应继承现有基类还是直接实现 `IImeProcessor`

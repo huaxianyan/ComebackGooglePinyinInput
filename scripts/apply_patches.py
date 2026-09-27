@@ -337,7 +337,19 @@ def apply(
         '        <item>@bool/pref_def_value_enable_voice_input</item>\n'
         '        <item>@string/pref_key_show_simplified_traditional_header_toggle</item>\n'
         '        <item>@bool/pref_def_value_show_simplified_traditional_header_toggle</item>\n'
+        '        <item>@string/pref_key_enable_paired_punctuation</item>\n'
+        '        <item>@bool/pref_def_value_enable_paired_punctuation</item>\n'
         '        <item>@string/pref_key_keyboard_slide_sensitivity_ratio</item>',
+    )
+
+    # Paired-symbol completion is an input-behaviour switch, so it sits next to
+    # the existing voice-input option in the keyboard category. Turning it off
+    # makes the processor a no-op and leaves the symbol keys untouched.
+    replace_once(
+        setting_keyboard,
+        '    <CheckBoxPreference android:persistent="true" android:title="@string/setting_voice_input_title" android:key="@string/pref_key_enable_voice_input" />\n',
+        '    <CheckBoxPreference android:persistent="true" android:title="@string/setting_voice_input_title" android:key="@string/pref_key_enable_voice_input" />\n'
+        '    <CheckBoxPreference android:persistent="true" android:title="@string/setting_paired_punctuation_title" android:key="@string/pref_key_enable_paired_punctuation" android:summary="@string/setting_paired_punctuation_summary" android:defaultValue="@bool/pref_def_value_enable_paired_punctuation" />\n',
     )
 
     # Multi-tap letter selection is an option of the single English 9-key
@@ -3091,6 +3103,39 @@ def apply(
     if not rime_sync_src.is_dir():
         raise RuntimeError(f"Missing generated Rime synchronization Smali: {rime_sync_src}")
     shutil.copytree(rime_sync_src, rime_sync_dst)
+
+    paired_punctuation_src = ROOT / "patches/smali/pairauto"
+    paired_punctuation_dst = decoded / (
+        "smali/com/google/android/inputmethod/pinyin/pairauto"
+    )
+    if paired_punctuation_dst.exists():
+        raise RuntimeError(
+            f"Refusing to overwrite existing paired punctuation: {paired_punctuation_dst}"
+        )
+    if not paired_punctuation_src.is_dir():
+        raise RuntimeError(f"Missing paired punctuation Smali: {paired_punctuation_src}")
+    shutil.copytree(paired_punctuation_src, paired_punctuation_dst)
+
+    # Register the paired-symbol processor ahead of every existing processor so it
+    # sees the soft-key event before the decode and output processors. Without a
+    # message_order table, the framework hands every message to all processors in
+    # declaration order and stops at the first one that consumes it.
+    paired_punctuation_processor = (
+        '        <processor id="@id/ime_paired_punctuation_processor" '
+        'class="com.google.android.inputmethod.pinyin.pairauto.PairedPunctuationProcessor" />\n'
+    )
+    for processor_name in (
+        "processors_zh_cn_pinyin_qwerty.xml",
+        "processors_zh_cn_pinyin_9key.xml",
+        "processors_zh_cn_handwriting.xml",
+        "processors_zh_cn_stroke.xml",
+    ):
+        processor_xml = decoded / "res/xml" / processor_name
+        replace_once(
+            processor_xml,
+            '    <processors>\n',
+            '    <processors>\n' + paired_punctuation_processor,
+        )
 
     dictionary_fragment_src = ROOT / "patches/smali/DictionarySettingsFragment.smali"
     dictionary_fragment_dst = decoded / (
