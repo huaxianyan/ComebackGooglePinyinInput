@@ -2,7 +2,7 @@
 
 ## 状态
 
-调研阶段，**尚未开分支、尚未实现**。开发等用户查看本文件后再决定是否启动。
+已实现。分支 `feat/paired-punctuation-autocomplete`，实现提交 `51bca8c`，设置页接线与中文文案随后补齐。**真机运行时验证尚未完成**，见「实现进度」一节。
 
 本版补充了三项用户指定的结论：候选期间输入符号的现状、自动空格的完整运作逻辑、删除与跳过的处理原则。
 
@@ -250,51 +250,75 @@ shouldHandle(Event): boolean
 
 新增文件：
 
-- `patches/smali/pairauto/PairedPunctuationProcessor.smali`：处理器本体
+- `patches/smali/pairauto/PairedPunctuationProcessor.smali`：中文处理器本体，并对外提供两语共用的配对表
+- `patches/smali/pairauto/PairedPunctuationHook.smali`：英文侧调用的补全步骤，与处理器共用配对表和开关
+- `patches/smali/PairedPunctuationEnglishIme.smali`：英文 QWERTY 的 IME 子类，只在 `handle()` 里插补全
 - `patches/res/values/paired_punctuation.xml`：开关文案、默认值与处理器 id
+- `patches/res/values-zh/paired_punctuation.xml`、`values-zh-rHK`、`values-zh-rTW` 同名文件：开关的中文文案
 - `scripts/verify_paired_punctuation.py`：契约门禁，已接入发布流程
 
 修改文件：
 
-- `scripts/apply_patches.py`：复制 Smali、注册处理器到 4 个中文 IME 定义、插入设置项与默认值
+- `scripts/apply_patches.py`：复制 Smali、注册处理器到 4 个中文 IME 定义、把英文 QWERTY 的 IME class 指向新子类、插入设置项与默认值
+- `modern-settings/compose-runtime/…/BooleanSettingContracts.kt`：新增 `pairedPunctuation` 契约并纳入 `writable`
+- `modern-settings/compose-runtime/…/LegacySettingsRepository.kt`：读入该开关并加入 `SettingsSnapshot`
+- `modern-settings/compose-runtime/…/InputSettingsScreens.kt`：在「输入设置 → 常规输入」渲染该开关
+- `modern-settings/compose-runtime/src/main/res/values*/strings.xml`：四种语言的开关文案
+- `scripts/verify_modern_settings_runtime.py`：把契约与界面接线纳入既有清单，并钉死两颗开关的前后顺序
+- `scripts/verify_paired_punctuation.py`：除配对表外，新增英文 IME 接线与开关位置的断言
 
 实现要点：
 
 - 处理器响应 `HANDLE_EVENT`，不靠 `shouldHandle`，因此不依赖处理器顺序
 - 只处理 `COMMIT` 意图的单字符字符串按键，`DECODE` 意图的字母键完全不受影响
-- 覆盖 12 对符号：`()[]{}<>` 与全角形式、`〈〉《》【】〔〕`、`''""`
+- 覆盖 15 对符号：`()[]{}<>` 与全角形式、`〈〉《》【】〔〕`、`‘’“”`、`「」『』`
 - 先提交左右两个符号，再用偏移 `(-1, -1)` 把光标移到中间
 - 提交完成即结束，不保留任何状态
-- 开关位于「键盘 → 按键」，默认开启；关闭后处理器直接返回 false
+- 中文走处理器链，英文在 IME 自身的 `handle()` 里补全；两条路径共用同一个配对表与同一个开关，因此一开全开、一关全关
+- 开关位于「输入设置 → 常规输入」，紧跟双击空格键，旧设置页与现代设置页各有一处，默认开启；关闭后两条路径都不再介入
 
 ### 已通过的验证
 
 - 从原始 APK 完整重建：apktool 解码 → 应用补丁 → 重新打包 → 再次反编译，均成功
 - 6,633 个旧公开资源 ID 全部保留，无缺失、无改变
 - 9 个现有静态门禁全部通过（target 31/33/34/35/36、MD3、统一 Header、简繁开关、英文 9 键）
-- 新增契约门禁通过
+- 新增契约门禁通过，并已钉死 15 对符号、英文 QWERTY 的 class 指向、两个英文 IME 都调用共用 helper、helper 复用同一张配对表与同一个开关 key
+- 开关位置也被钉死：旧页必须在「双击空格键」之后且不再出现在键盘设置页，Compose 侧必须在 `InputSettingsScreens.kt` 且按同一顺序
+- Compose 模块 `:compose-runtime:testDebugUnitTest` 通过，设置页接线与四种语言的文案均可编译
 
-### 未完成：真机运行时验证
+### 真机运行时验证
 
-设备两种连接方式均不可用（本机 USB 无设备，`192.168.17.77:15037` 超时），因此未安装、未实测。
+体验包 `com.google.android.inputmethod.pinyin.pairauto`（`2.1.1-pairauto`，27.7 MB，正式签名、非 Debug）已装机并设为默认输入法，在系统设置的搜索框里实测。
 
-以下三点目前只有静态依据，没有实证：
+已通过：
 
-1. `doProcess` 返回 true 后，`InputBundle` 是否确实跳过原始提交
-2. 处理器自发的 `COMMIT_TEXT` 与 `OFFSET_SELECTION` 消息是否被正确执行
-3. 密码、数字等输入类型是否需要额外屏蔽
+1. 输入 `(` 得到 `()`，右半边自动补上
+2. 补全后接着输入 `*` 得到 `(*)`，确认光标落在两个符号之间
+3. `()` 后不动光标按退格，只剩 `)`，退格只删左半边
+4. `()` 后手动点 `)` 得到 `())`，重复符合既定取舍
+5. 中文状态下补全均正常（用户实测）
+6. 补上直角引号后重新构建并覆盖安装，用户复测通过
 
-设备可用后的验证步骤：
+首轮遗漏并已修复：
 
-1. 构建隔离体验包（正式包名、正式签名、非 Debug）
-2. 覆盖安装并验证默认输入法保持
-3. 实测输入 `（` 是否得到 `（|）`
-4. 确认退格只删除左半边
-5. 确认手动输入右半边会产生重复，符合已定取舍
-6. 关闭开关后，确认 `（` 只提交 `（`
-7. 确认英文、数字、密码键盘不受影响
+- `「」` 与 `『』`（直角引号）不在配对表里，中文状态下同样不补全。已补进 Smali，并把 15 对符号钉进契约门禁。`〈〉`（单书名号）本来就在表里，实测正常。
 
-代码审阅中曾发现自己写反两处分支条件（字符长度判定误用 `if-ne`），已修正。这类问题能通过重新构建和契约门禁发现，但无法替代真机验证。
+英文原本不补全，且这件事**不能靠处理器链解决**：处理器只注册在 4 个 `processors_zh_cn_*.xml` 上，而 `EnglishIme` 继承 `LatinIme`、`LatinIme` 继承 `AbstractIme`。全 APK 里只有 `ProcessorBasedIme` 会读 IME 定义的 `<processors>` 元素，`LatinIme` 对 `ProcessorBasedIme` 的引用数为 0。给英文 `<ime>` 加 `<include href="@xml/processors_*" />` 会被静默忽略。
+
+改用 IME 自身的入口做补全：
+
+- 新增 `PairedPunctuationEnglishIme`（继承 `EnglishIme`，只覆盖 `handle`，其余全部继承），`ime_en_qwerty.xml` 的 class 指向它，string id、键盘组与标签都不动
+- 英文 9 键的 `EnglishT9MultiTapIme` 已在覆写 `handle`，在既有方法开头调同一个 helper
+- 补全逻辑集中在 `PairedPunctuationHook`，配对表仍是处理器里的那一份（改成 `public static` 后共用），所以两语不可能漂移
+- 命中后 `commitText` 提交左右两个符号，再 `offsetSelection(-1, -1)` 把光标移到中间，与中文处理器的语义一致
+
+尚未覆盖：
+
+- 英文补全与共享开关的实际行为，本轮的实现尚未真机验证
+- 开关关闭后的行为。中文侧的处理器只在 `initialize()` 读一次偏好，改完要把输入法切走再切回；英文侧每次 `handle` 都读一次，立即生效，两边的生效时机不同
+- 密码、数字等受限输入类型是否需要额外屏蔽
+
+代码审阅中曾发现自己写反两处分支条件（字符长度判定误用 `if-ne`），已修正。
 
 ### 为何用 Smali 而不是 Java
 

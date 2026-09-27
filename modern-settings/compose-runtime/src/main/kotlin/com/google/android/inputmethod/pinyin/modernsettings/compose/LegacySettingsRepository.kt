@@ -107,6 +107,7 @@ class LegacySettingsRepository(context: Context) {
             blockOffensiveWords = readBoolean(BooleanSettingContracts.blockOffensiveWords),
             popupOnKeypress = readBoolean(BooleanSettingContracts.popupOnKeypress),
             voiceInput = readBoolean(BooleanSettingContracts.voiceInput),
+            pairedPunctuation = readBoolean(BooleanSettingContracts.pairedPunctuation),
             showSimplifiedTraditionalHeaderToggle = readBoolean(
                 BooleanSettingContracts.showSimplifiedTraditionalHeaderToggle,
             ),
@@ -500,6 +501,7 @@ data class SettingsSnapshot(
     val blockOffensiveWords: BooleanSettingState,
     val popupOnKeypress: BooleanSettingState,
     val voiceInput: BooleanSettingState,
+    val pairedPunctuation: BooleanSettingState,
     val showSimplifiedTraditionalHeaderToggle: BooleanSettingState,
     val showEmojiSwitchKey: BooleanSettingState,
     val showLanguageSwitchKey: BooleanSettingState,

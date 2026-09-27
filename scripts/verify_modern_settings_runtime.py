@@ -170,6 +170,10 @@ def main() -> int:
             "snapshot.capabilities.oneHandedModeVisible",
             "BooleanSettingContracts.popupOnKeypress",
             "BooleanSettingContracts.voiceInput",
+            "BooleanSettingContracts.pairedPunctuation",
+            "snapshot.pairedPunctuation.value",
+            "modern_settings_paired_punctuation_title",
+            "modern_settings_paired_punctuation_summary",
             "BooleanSettingContracts.showSimplifiedTraditionalHeaderToggle",
             "snapshot.showSimplifiedTraditionalHeaderToggle.value",
             "modern_settings_show_simplified_traditional_header_toggle_title",
@@ -209,6 +213,35 @@ def main() -> int:
     for forbidden in ("android.widget.SeekBar", "onDraw(", "Md3SliderView"):
         if forbidden in kotlin_text:
             raise RuntimeError(f"modern settings must not simulate Slider: {forbidden}")
+    # Paired-symbol completion is a general input option, so the Compose switch
+    # belongs to the input-settings screen right below "double-space period" and
+    # must not stay on the keyboard-settings screen.
+    input_settings_text = next(
+        kotlin_root.rglob("InputSettingsScreens.kt")
+    ).read_text(encoding="utf-8")
+    keyboard_settings_text = next(
+        kotlin_root.rglob("KeyboardSettingsScreens.kt")
+    ).read_text(encoding="utf-8")
+    require(
+        input_settings_text,
+        (
+            "BooleanSettingContracts.pairedPunctuation",
+            "snapshot.pairedPunctuation.value",
+            "modern_settings_paired_punctuation_title",
+            "modern_settings_paired_punctuation_summary",
+        ),
+        "paired punctuation switch on the input-settings screen",
+    )
+    if input_settings_text.index(
+        "setting_paired_punctuation_title"
+    ) < input_settings_text.index("setting_double_space_period_title"):
+        raise RuntimeError(
+            "the paired punctuation switch must sit below the double-space switch"
+        )
+    if "pairedPunctuation" in keyboard_settings_text:
+        raise RuntimeError(
+            "the paired punctuation switch must not stay on the keyboard-settings screen"
+        )
     adjustment_controls = next(
         kotlin_root.rglob("AdjustmentControls.kt")
     ).read_text(encoding="utf-8")

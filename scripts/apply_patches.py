@@ -342,13 +342,17 @@ def apply(
         '        <item>@string/pref_key_keyboard_slide_sensitivity_ratio</item>',
     )
 
-    # Paired-symbol completion is an input-behaviour switch, so it sits next to
-    # the existing voice-input option in the keyboard category. Turning it off
-    # makes the processor a no-op and leaves the symbol keys untouched.
+    # Paired-symbol completion is a general input-behaviour switch, so it lives
+    # on the input-settings screen directly below "double-space period", the
+    # first entry of the general-input section. Everything that only affects one
+    # language sits inside its own category; this switch drives both the Chinese
+    # processor and the English IME hook at once, so it stays outside them.
+    # Turning it off makes both hooks a no-op and leaves the symbol keys
+    # untouched.
     replace_once(
-        setting_keyboard,
-        '    <CheckBoxPreference android:persistent="true" android:title="@string/setting_voice_input_title" android:key="@string/pref_key_enable_voice_input" />\n',
-        '    <CheckBoxPreference android:persistent="true" android:title="@string/setting_voice_input_title" android:key="@string/pref_key_enable_voice_input" />\n'
+        decoded / "res/xml/setting_input.xml",
+        '    <CheckBoxPreference android:persistent="true" android:title="@string/setting_double_space_period_title" android:key="@string/pref_key_enable_double_space_period" android:summary="@string/setting_double_space_period_summary_cn" />\n',
+        '    <CheckBoxPreference android:persistent="true" android:title="@string/setting_double_space_period_title" android:key="@string/pref_key_enable_double_space_period" android:summary="@string/setting_double_space_period_summary_cn" />\n'
         '    <CheckBoxPreference android:persistent="true" android:title="@string/setting_paired_punctuation_title" android:key="@string/pref_key_enable_paired_punctuation" android:summary="@string/setting_paired_punctuation_summary" android:defaultValue="@bool/pref_def_value_enable_paired_punctuation" />\n',
     )
 
@@ -364,6 +368,19 @@ def apply(
         ime_en_9key,
         'class="com.google.android.apps.inputmethod.libs.english.ime.English9KeyIme"',
         'class="com.google.android.inputmethod.pinyin.EnglishT9MultiTapIme"',
+    )
+
+    # Paired-symbol completion for English cannot ride on the processor chain:
+    # EnglishIme extends LatinIme, and only ProcessorBasedIme reads the
+    # "<processors>" element, so the completion step runs inside the IME itself.
+    # The QWERTY definition only swaps its class name; its string id, keyboard
+    # group and label stay untouched. The 9-key definition keeps its multi-tap
+    # subclass, which calls the same shared helper.
+    ime_en_qwerty = decoded / "res/xml/ime_en_qwerty.xml"
+    replace_once(
+        ime_en_qwerty,
+        'class="com.google.android.apps.inputmethod.libs.english.ime.EnglishIme"',
+        'class="com.google.android.inputmethod.pinyin.PairedPunctuationEnglishIme"',
     )
 
     # Multi-tap letter selection and its window are ordinary preferences in the
@@ -3029,6 +3046,7 @@ def apply(
         "SensitiveClipboardCompat.smali",
         "SimplifiedTraditionalToggleKeyView.smali",
         "EnglishT9MultiTapIme.smali",
+        "PairedPunctuationEnglishIme.smali",
     ):
         helper_src = ROOT / "patches/smali" / helper_name
         helper_dst = decoded / "smali/com/google/android/inputmethod/pinyin" / helper_name

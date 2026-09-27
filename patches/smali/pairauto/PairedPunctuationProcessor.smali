@@ -29,7 +29,8 @@
     return-void
 .end method
 
-.method private static a(Ljava/lang/String;)Ljava/lang/String;
+# Character table shared by the Chinese processor and the English IME hook.
+.method public static a(Ljava/lang/String;)Ljava/lang/String;
     .locals 1
 
     const-string v0, "("
@@ -201,6 +202,32 @@
     return-object v0
 
     :cond_c
+    const-string v0, "「"
+
+    invoke-virtual {v0, p0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+
+    move-result v0
+
+    if-eqz v0, :cond_d
+
+    const-string v0, "」"
+
+    return-object v0
+
+    :cond_d
+    const-string v0, "『"
+
+    invoke-virtual {v0, p0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+
+    move-result v0
+
+    if-eqz v0, :cond_e
+
+    const-string v0, "』"
+
+    return-object v0
+
+    :cond_e
     const/4 v0, 0x0
 
     return-object v0

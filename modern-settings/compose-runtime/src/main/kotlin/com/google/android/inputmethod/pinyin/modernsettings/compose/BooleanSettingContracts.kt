@@ -115,6 +115,12 @@ object BooleanSettingContracts {
         key = "en_t9_multitap_enabled",
         defaultValue = false,
     )
+    // Completes a paired opening symbol and moves the caret between the two.
+    // Kept as a plain Boolean so it needs no dependency wiring.
+    val pairedPunctuation = BooleanSettingContract(
+        key = "enable_paired_punctuation_completion",
+        defaultValue = true,
+    )
     val gestureInput = BooleanSettingContract(
         key = "enable_gesture_input",
         defaultValue = true,
@@ -189,6 +195,9 @@ object BooleanSettingContracts {
     val englishMultiTapBatch = listOf(
         enT9MultitapEnabled,
     )
+    val pairedPunctuationBatch = listOf(
+        pairedPunctuation,
+    )
     val gestureDependencyBatch = listOf(
         incrementalGesturePreview,
         gestureAutoCommit,
@@ -211,6 +220,7 @@ object BooleanSettingContracts {
         capabilityGatedKeyboardBatch + headerShortcutBatch +
         languageSwitchDependencyBatch + englishDependencyBatch +
         englishMultiTapBatch + gestureDependencyBatch + fuzzyPinyin +
+        pairedPunctuationBatch +
         fuzzyPinyinOptionBatch
 
     private fun fuzzyOption(key: String, defaultValue: Boolean) =

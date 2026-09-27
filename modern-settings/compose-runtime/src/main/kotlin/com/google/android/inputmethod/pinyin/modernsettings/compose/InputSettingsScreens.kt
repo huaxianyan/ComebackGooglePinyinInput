@@ -77,6 +77,22 @@ internal fun androidx.compose.foundation.lazy.LazyListScope.inputSettingsItems(s
     item {
         SettingsSwitchRow(
             title = legacyString(
+                "setting_paired_punctuation_title",
+                R.string.modern_settings_paired_punctuation_title,
+            ),
+            supporting = legacyString(
+                "setting_paired_punctuation_summary",
+                R.string.modern_settings_paired_punctuation_summary,
+            ),
+            checked = snapshot.pairedPunctuation.value,
+            onCheckedChange = {
+                actions.onBooleanChange(BooleanSettingContracts.pairedPunctuation, it)
+            },
+        )
+    }
+    item {
+        SettingsSwitchRow(
+            title = legacyString(
                 "setting_gesture_input_title",
                 R.string.modern_settings_gesture_input_title,
             ),

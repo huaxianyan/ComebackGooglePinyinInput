@@ -65,6 +65,31 @@ def main() -> int:
     if "KeyData$a;->DECODE" in text:
         fail("processor must not handle DECODE-intent key presses")
 
+    # Pin the symbol table. Every pair below is reachable from the shipped symbol
+    # keyboard, so dropping one is a user-visible regression. The vertical
+    # quotation marks 「」 and 『』 were missing from the first cut and had to be
+    # added after a device test.
+    for opening, closing in (
+        ("(", ")"),
+        ("[", "]"),
+        ("{", "}"),
+        ("<", ">"),
+        ("（", "）"),
+        ("［", "］"),
+        ("｛", "｝"),
+        ("〈", "〉"),
+        ("《", "》"),
+        ("【", "】"),
+        ("〔", "〕"),
+        ("‘", "’"),
+        ("“", "”"),
+        ("「", "」"),
+        ("『", "』"),
+    ):
+        for symbol in (opening, closing):
+            if f'const-string v0, "{symbol}"' not in text:
+                fail(f"processor does not complete the {opening}{closing} pair")
+
     # Both the preference gate and the read of the preference must be present.
     if PREFERENCE_KEY not in text:
         fail(f"processor does not read the {PREFERENCE_KEY} preference")
@@ -87,12 +112,20 @@ def main() -> int:
             if existing in body and body.index(existing) < ours:
                 fail(f"{relative} places the paired punctuation processor after {existing}")
 
-    # The preference must be reachable and default to on. In a rebuilt APK the
-    # per-feature resource file is merged into the aggregate resource files, so
-    # look for the names rather than for one specific file.
-    settings = (decoded / "res/xml/setting_keyboard.xml").read_text(encoding="utf-8")
-    if "@string/pref_key_enable_paired_punctuation" not in settings:
-        fail("setting_keyboard.xml does not expose the preference")
+    # The switch is a general input option, so it belongs to the input-settings
+    # screen right below "double-space period", and it must not stay on the
+    # keyboard-settings screen. In a rebuilt APK the per-feature resource file is
+    # merged into the aggregate resource files, so look for the names rather than
+    # for one specific file.
+    marker = "@string/pref_key_enable_paired_punctuation"
+    settings = (decoded / "res/xml/setting_input.xml").read_text(encoding="utf-8")
+    if marker not in settings:
+        fail("setting_input.xml does not expose the preference")
+    if settings.index(marker) < settings.index("@string/pref_key_enable_double_space_period"):
+        fail("the paired punctuation switch must sit below the double-space switch")
+    keyboard_settings = (decoded / "res/xml/setting_keyboard.xml").read_text(encoding="utf-8")
+    if marker in keyboard_settings:
+        fail("the paired punctuation switch must not stay in setting_keyboard.xml")
     defaults = (decoded / "res/values/arrays.xml").read_text(encoding="utf-8")
     if "@string/pref_key_enable_paired_punctuation" not in defaults:
         fail("arrays.xml does not carry the preference default")
@@ -102,6 +135,19 @@ def main() -> int:
     strings = (decoded / "res/values/strings.xml").read_text(encoding="utf-8")
     if f'>{PREFERENCE_KEY}<' not in strings:
         fail("the stored preference value must be the raw key, not a resource name")
+    # The switch is user-facing, so every shipped Chinese locale must translate
+    # it instead of falling back to the English label.
+    for relative in (
+        "res/values-zh/strings.xml",
+        "res/values-zh-rHK/strings.xml",
+        "res/values-zh-rTW/strings.xml",
+    ):
+        path = decoded / relative
+        if not path.is_file():
+            fail(f"missing localized resource file: {relative}")
+        body = path.read_text(encoding="utf-8")
+        if 'name="setting_paired_punctuation_title"' not in body:
+            fail(f"{relative} does not translate the paired punctuation switch")
 
     # The paired symbols themselves must keep their original soft-key data: the
     # processor adds the closing symbol at runtime and must not rewrite them.
@@ -112,6 +158,56 @@ def main() -> int:
         path = decoded / relative
         if not path.is_file():
             fail(f"missing symbol definition: {relative}")
+
+    # English keyboards never read a processor chain: EnglishIme extends
+    # LatinIme, and only ProcessorBasedIme reads the "<processors>" element. The
+    # completion step therefore runs inside the IME, so the definition must point
+    # at the subclass and both English IMEs must call the shared hook.
+    hook_class = "com/google/android/inputmethod/pinyin/pairauto/PairedPunctuationHook"
+    english_ime = (decoded / "res/xml/ime_en_qwerty.xml").read_text(encoding="utf-8")
+    if (
+        'class="com.google.android.inputmethod.pinyin.PairedPunctuationEnglishIme"'
+        not in english_ime
+    ):
+        fail("ime_en_qwerty.xml does not use the paired punctuation IME class")
+    if 'string_id="en_qwerty"' not in english_ime:
+        fail("ime_en_qwerty.xml must keep its string id")
+
+    english_ime_source = decoded / (
+        "smali/com/google/android/inputmethod/pinyin/PairedPunctuationEnglishIme.smali"
+    )
+    if not english_ime_source.is_file():
+        fail("missing the English paired punctuation IME class")
+    english_text = english_ime_source.read_text(encoding="utf-8")
+    if (
+        "handle(Lcom/google/android/apps/inputmethod/libs/framework/core/Event;)Z"
+        not in english_text
+    ):
+        fail("the English IME class does not override handle")
+    if f"L{hook_class};->a(" not in english_text:
+        fail("the English IME class does not call the shared completion hook")
+
+    ninth_key_source = decoded / (
+        "smali/com/google/android/inputmethod/pinyin/EnglishT9MultiTapIme.smali"
+    )
+    if not ninth_key_source.is_file():
+        fail("missing the English 9-key IME class")
+    if f"L{hook_class};->a(" not in ninth_key_source.read_text(encoding="utf-8"):
+        fail("the English 9-key IME class does not call the shared completion hook")
+
+    hook_source = decoded / f"smali/{hook_class}.smali"
+    if not hook_source.is_file():
+        fail("missing the shared paired punctuation hook")
+    hook_text = hook_source.read_text(encoding="utf-8")
+    if PREFERENCE_KEY not in hook_text:
+        fail(f"the shared hook does not read the {PREFERENCE_KEY} preference")
+    if f"L{CLASS};->a(Ljava/lang/String;)Ljava/lang/String;" not in hook_text:
+        fail("the shared hook must reuse the processor character table")
+    if "offsetSelection(II)V" not in hook_text:
+        fail("the shared hook does not offset the caret to sit between the symbols")
+    # One switch drives both languages only while the table stays shared.
+    if ".method public static a(Ljava/lang/String;)Ljava/lang/String;" not in text:
+        fail("the character table must stay public so the hook can reuse it")
 
     print("paired punctuation completion contracts verified")
     return 0

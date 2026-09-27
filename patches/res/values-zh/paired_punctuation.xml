@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="setting_paired_punctuation_title">自动补全成对标点</string>
+    <string name="setting_paired_punctuation_summary">输入左半边的标点后补上右半边，光标停在两者之间</string>
+</resources>

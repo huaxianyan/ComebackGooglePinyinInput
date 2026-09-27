@@ -250,11 +250,33 @@
 .method public handle(Lcom/google/android/apps/inputmethod/libs/framework/core/Event;)Z
     .locals 16
 
+    const-string v0, "t9-handle"
+
+    invoke-static {v0}, Lcom/google/android/inputmethod/pinyin/pairauto/PairedPunctuationHook;->log(Ljava/lang/String;)V
+
     # p0 and p1 live in v16/v17, which iget/iput (22c) and invoke (35c) cannot
     # address. Keep low-register aliases for the whole method instead.
     move-object/from16 v11, p0
 
     move-object/from16 v1, p1
+
+    # The shared paired-symbol completion runs before the multi-tap logic. A
+    # consumed event closes the pending letter run and is not forwarded.
+    iget-object v0, v11, Lcom/google/android/apps/inputmethod/libs/framework/ime/AbstractIme;->mContext:Landroid/content/Context;
+
+    iget-object v2, v11, Lcom/google/android/apps/inputmethod/libs/framework/ime/AbstractIme;->mImeDelegate:Lcom/google/android/apps/inputmethod/libs/framework/core/IImeDelegate;
+
+    invoke-static {v0, v2, v1}, Lcom/google/android/inputmethod/pinyin/pairauto/PairedPunctuationHook;->a(Landroid/content/Context;Lcom/google/android/apps/inputmethod/libs/framework/core/IImeDelegate;Lcom/google/android/apps/inputmethod/libs/framework/core/Event;)Z
+
+    move-result v0
+
+    if-eqz v0, :compat_delegate
+
+    invoke-direct {v11}, Lcom/google/android/inputmethod/pinyin/EnglishT9MultiTapIme;->finishRun()V
+
+    const/4 v0, 0x1
+
+    return v0
 
     # Multi-tap is an option of this 9-key keyboard. With the option off every
     # event is handed to the original English9KeyIme unchanged.

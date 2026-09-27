@@ -5,4 +5,6 @@
     <string name="modern_settings_english_t9_multitap_enabled_title">復古 9 鍵</string>
     <string name="modern_settings_english_t9_multitap_enabled_summary">在同一數字鍵上連續點擊，按點擊次數選擇字母</string>
     <string name="modern_settings_english_t9_multitap_interval_title">多擊間隔</string>
+    <string name="modern_settings_paired_punctuation_title">自動補全成對標點</string>
+    <string name="modern_settings_paired_punctuation_summary">輸入左半邊的標點後補上右半邊，游標停在兩者之間</string>
 </resources>
