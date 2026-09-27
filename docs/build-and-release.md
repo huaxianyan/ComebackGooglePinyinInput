@@ -82,6 +82,7 @@ scripts/test_header_platform.py
 scripts/test_sensitive_clipboard_compat.py
 scripts/generate_rime_sync_smali.py
 scripts/test_rime_sync_protocol.py
+scripts/verify_rime_legacy_settings.py
 scripts/verify_stable_resource_ids.py
 ```
 
