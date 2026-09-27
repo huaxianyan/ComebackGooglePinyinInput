@@ -81,6 +81,22 @@ def smali_body(text: str, signature: str) -> str:
     return match.group(1)
 
 
+def verify_artifacts(decoded: Path, project: Path) -> None:
+    artifacts = (
+        FRAGMENT,
+        RIME_OUTER,
+        RIME_CONTROLLER,
+        AUTO_BACKUP,
+        SETTING_XML,
+        *LOCALIZED_STRINGS,
+    )
+    missing = [name for name in artifacts if not (decoded / name).is_file()]
+    if missing:
+        raise RuntimeError(f"Legacy Rime artifacts are missing from the build: {missing}")
+    if not (project / SOURCE).is_file():
+        raise RuntimeError(f"Legacy Rime facade source is missing: {project / SOURCE}")
+
+
 def verify_injection(decoded: Path) -> None:
     xml = read(decoded / SETTING_XML)
     keys = set(re.findall(r'android:key="(rime_sync_[a-z_]+)"', xml))
@@ -118,10 +134,7 @@ def verify_request_code(decoded: Path) -> None:
 
 
 def verify_unconfigured_guard(project: Path) -> None:
-    source = project / SOURCE
-    if not source.is_file():
-        raise RuntimeError(f"Legacy Rime facade source is missing: {source}")
-    java = read(source)
+    java = read(project / SOURCE)
 
     invocations = java.count("synchronizeAsync(")
     if invocations != 1:
@@ -202,6 +215,7 @@ def main() -> int:
     decoded = args.decoded.resolve()
     project = args.project.resolve()
 
+    verify_artifacts(decoded, project)
     verify_injection(decoded)
     verify_request_code(decoded)
     verify_unconfigured_guard(project)
