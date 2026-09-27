@@ -26,9 +26,13 @@ AUTO_BACKUP = (
     "smali/com/google/android/inputmethod/pinyin/DictionaryAutoBackupSettingsCompat.smali"
 )
 SETTING_XML = "res/xml/setting_dictionary.xml"
-LOCALIZED_STRINGS = (
-    "res/values/rime_legacy_settings.xml",
-    "res/values-zh/rime_legacy_settings.xml",
+# apktool merges every values file of one configuration into a single file per
+# resource type when it decodes an APK, so the per-file names used by the patch
+# sources never reach work/final-decoded. The contract is about the declared
+# names, not about which file carries them.
+LOCALE_RESOURCE_DIRS = (
+    "res/values",
+    "res/values-zh",
 )
 SOURCE = (
     "patches/java/com/google/android/inputmethod/pinyin/rimesync/"
@@ -88,11 +92,18 @@ def verify_artifacts(decoded: Path, project: Path) -> None:
         RIME_CONTROLLER,
         AUTO_BACKUP,
         SETTING_XML,
-        *LOCALIZED_STRINGS,
     )
     missing = [name for name in artifacts if not (decoded / name).is_file()]
     if missing:
         raise RuntimeError(f"Legacy Rime artifacts are missing from the build: {missing}")
+    missing_dirs = [
+        name for name in LOCALE_RESOURCE_DIRS if not (decoded / name).is_dir()
+    ]
+    if missing_dirs:
+        raise RuntimeError(
+            "Legacy Rime locale resource directories are missing from the build: "
+            f"{missing_dirs}"
+        )
     if not (project / SOURCE).is_file():
         raise RuntimeError(f"Legacy Rime facade source is missing: {project / SOURCE}")
 
@@ -161,15 +172,24 @@ def verify_unconfigured_guard(project: Path) -> None:
         )
 
 
+def declared_locale_names(directory: Path) -> set[str]:
+    """Collect the Rime resource names a locale directory declares."""
+
+    names: set[str] = set()
+    for path in sorted(directory.rglob("*.xml")):
+        names |= set(RESOURCE_NAME.findall(read(path)))
+    return names
+
+
 def verify_localized_resources(decoded: Path, project: Path) -> None:
     declared: dict[str, set[str]] = {}
-    for relative in LOCALIZED_STRINGS:
-        path = decoded / relative
-        if not path.is_file():
+    for relative in LOCALE_RESOURCE_DIRS:
+        directory = decoded / relative
+        if not directory.is_dir():
             raise RuntimeError(f"Localized Rime resources are missing: {relative}")
-        declared[relative] = set(RESOURCE_NAME.findall(read(path)))
+        declared[relative] = declared_locale_names(directory)
 
-    default = declared[LOCALIZED_STRINGS[0]]
+    default = declared[LOCALE_RESOURCE_DIRS[0]]
     if not default:
         raise RuntimeError("The default locale declares no Rime resource")
     for relative, names in declared.items():
