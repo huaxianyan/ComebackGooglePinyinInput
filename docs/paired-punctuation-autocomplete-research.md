@@ -2,7 +2,7 @@
 
 ## 状态
 
-已实现。分支 `feat/paired-punctuation-autocomplete`，实现提交 `51bca8c`，设置页接线与中文文案随后补齐。**真机运行时验证尚未完成**，见「实现进度」一节。
+已实现。分支 `feat/paired-punctuation-autocomplete`，实现提交 `51bca8c`，设置页接线与中文文案随后补齐，英文侧的缺陷修复为 `0fa0ca0`。**中文与英文两条路径均已完成真机运行时验证**，见「实现进度」一节。
 
 本版补充了三项用户指定的结论：候选期间输入符号的现状、自动空格的完整运作逻辑、删除与跳过的处理原则。
 
@@ -312,10 +312,22 @@ shouldHandle(Event): boolean
 - 补全逻辑集中在 `PairedPunctuationHook`，配对表仍是处理器里的那一份（改成 `public static` 后共用），所以两语不可能漂移
 - 命中后 `commitText` 提交左右两个符号，再 `offsetSelection(-1, -1)` 把光标移到中间，与中文处理器的语义一致
 
+英文侧曾有两个互相叠加的缺陷，都靠真机日志定位：
+
+1. **`mContext` 在英文路径上是 null**。`AbstractIme.mContext` 只有 `initialize()` 一处赋值，英文继承链 `EnglishIme → LatinIme → AbstractIme` 落到该字段的时机晚于 `handle()`。中文侧不受影响，因为 `ProcessorBasedIme` 是把**它自己 `initialize` 收到的参数**透传给处理器，从来没读这个字段。修法是让两个英文 IME 各自覆盖 `initialize()`，把框架给的 Context 交给 helper 保存成静态字段。
+2. **helper 里 11 处守卫的条件极性全写反**。`if-nez` 处应为 `if-eqz`、`if-gtz` 处应为 `if-lez`，其余同类。极性错的反向结构要求「条件不满足才失败」，写成「条件满足才失败」后，`handle()` 对**任何**事件都直接走失败分支，连修好的 Context 都用不上。
+
+另外，框架在键盘就绪时会派发一个软键事件，**该事件没有任何 intent**（`KeyData.a` 为 null）。守卫把「值缺失」当作普通拒绝处理，不对它调用任何方法。
+
+已通过：
+
+1. 英文 QWERTY（`ime_en_qwerty.xml` → `PairedPunctuationEnglishIme`）：点符号页的 `(` 得到 `()`，日志为 `qwerty-handle → hit`
+2. 英文 9 键（`ime_en_9key.xml` → `EnglishT9MultiTapIme`）：同样得到 `()`，日志为 `t9-handle → hit`
+3. 补全后按一次退格，`9()` 变成 `9)`，只删左半边，说明光标确实落在两个符号之间
+4. 共享开关：把 `enable_paired_punctuation_completion` 置为关闭后重新拉起输入法，日志为 `exit:pref-off`，输入框只落下 `(`，与中文侧一致
+
 尚未覆盖：
 
-- 英文补全与共享开关的实际行为，本轮的实现尚未真机验证
-- 开关关闭后的行为。中文侧的处理器只在 `initialize()` 读一次偏好，改完要把输入法切走再切回；英文侧每次 `handle` 都读一次，立即生效，两边的生效时机不同
 - 密码、数字等受限输入类型是否需要额外屏蔽
 
 代码审阅中曾发现自己写反两处分支条件（字符长度判定误用 `if-ne`），已修正。
