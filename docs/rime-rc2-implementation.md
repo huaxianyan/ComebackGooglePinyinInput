@@ -151,3 +151,17 @@
 - 本次没有在设备上安装 Release 产物。设备上仍是覆盖安装的 `2.0.11-rc.4` 体验包，是否升级由用户决定。
 
 证据在 `work/release-verify/`，分支归档记录在 `work/branch-audit/rime-branch-archival.json`。
+
+## 正式发布 2.1.2
+
+旧设置页的 Rime 同步在真机验收通过后合并发布，补上 API 17 至 34 上唯一可达的入口。
+
+- `feat/legacy-rime-settings` 以快进方式合并进 `master`（`80c00d9`），随后删除本地与远端分支引用，归档记录在 `work/branch-audit/legacy-rime-settings-archival.json`。
+- 版本更新为 `2.1.2`，versionCode 为 `4520403`，target SDK 36，标签为 `v2.1.2`，发布说明为 [2.1.2 发布说明](releases/v2.1.2.md)。
+- README 与 CHANGELOG 补上旧设置页的入口说明，并把「Rime 同步只位于 Android 15 及以上」的范围表述改成两个设置页都可配置。
+- 发布前发现并修掉一处只在 CI 上才会暴露的门禁缺陷。`verify_rime_legacy_settings.py` 原先要求 `res/values/rime_legacy_settings.xml` 存在，而 apktool 解码 APK 时会把同一 configuration 的 values 文件按资源类型聚合，补丁自己命名的文件不会保留到 `work/final-decoded`。现改为按 locale 目录断言声明的资源名集合，实测两个 locale 各声明 68 个名字。
+- GitHub Actions 在 `master` 与标签上各跑一次（`36333115826`、`36333531508`），全部步骤通过，包括解码成品 APK 后的门禁。
+- 重新下载的 Release 资产已复核：包名 `com.google.android.inputmethod.pinyin.compat`，versionName `2.1.2`，versionCode `4520403`，target SDK 36，非 Debug，仅 `arm64-v8a`，v1/v2/v3 签名通过，证书 SHA-256 为 `985cbf843a362169b129aeac5e153d13095f0923231936d1486a20c8332cde2f`，`zipalign -c -P 16 4` 通过，APK 大小 27,784,399 字节，SHA-256 为 `8303aa4357b48050b9dec13d93e9b00af0c3674f196eda0a83ed32cbfb2f3e27`。
+- 设备当前离线（`59271FDCH002F9` 未出现在 adb 设备列表），本次没有在设备上安装 Release 产物。
+
+证据在 `work/release-verify/`。
