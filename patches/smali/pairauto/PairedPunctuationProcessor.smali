@@ -221,13 +221,226 @@
 
     move-result v0
 
-    if-eqz v0, :cond_e
+    if-eqz v0, :cond_f
 
     const-string v0, "』"
 
     return-object v0
 
-    :cond_e
+    # The decorative and compatibility forms sit on the same symbol-keyboard pages
+    # as the brackets and quotes above, so a user tapping one of them expects the
+    # same completion. The brace page carries U+275B..U+3019 plus the range
+    # U+FE35..U+FE42, the favourite page carries the guillemets. The straight
+    # double quote is the only ASCII quote that has no competing apostrophe use.
+    :cond_f
+    const-string v0, "\""
+
+    invoke-virtual {v0, p0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+
+    move-result v0
+
+    if-eqz v0, :cond_10
+
+    const-string v0, "\""
+
+    return-object v0
+
+    :cond_10
+    const-string v0, "«"
+
+    invoke-virtual {v0, p0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+
+    move-result v0
+
+    if-eqz v0, :cond_11
+
+    const-string v0, "»"
+
+    return-object v0
+
+    :cond_11
+    const-string v0, "‹"
+
+    invoke-virtual {v0, p0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+
+    move-result v0
+
+    if-eqz v0, :cond_12
+
+    const-string v0, "›"
+
+    return-object v0
+
+    :cond_12
+    const-string v0, "❛"
+
+    invoke-virtual {v0, p0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+
+    move-result v0
+
+    if-eqz v0, :cond_13
+
+    const-string v0, "❜"
+
+    return-object v0
+
+    :cond_13
+    const-string v0, "❝"
+
+    invoke-virtual {v0, p0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+
+    move-result v0
+
+    if-eqz v0, :cond_14
+
+    const-string v0, "❞"
+
+    return-object v0
+
+    :cond_14
+    const-string v0, "❨"
+
+    invoke-virtual {v0, p0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+
+    move-result v0
+
+    if-eqz v0, :cond_15
+
+    const-string v0, "❩"
+
+    return-object v0
+
+    :cond_15
+    const-string v0, "❲"
+
+    invoke-virtual {v0, p0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+
+    move-result v0
+
+    if-eqz v0, :cond_16
+
+    const-string v0, "❳"
+
+    return-object v0
+
+    :cond_16
+    const-string v0, "❴"
+
+    invoke-virtual {v0, p0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+
+    move-result v0
+
+    if-eqz v0, :cond_17
+
+    const-string v0, "❵"
+
+    return-object v0
+
+    :cond_17
+    const-string v0, "〘"
+
+    invoke-virtual {v0, p0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+
+    move-result v0
+
+    if-eqz v0, :cond_18
+
+    const-string v0, "〙"
+
+    return-object v0
+
+    :cond_18
+    const-string v0, "︵"
+
+    invoke-virtual {v0, p0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+
+    move-result v0
+
+    if-eqz v0, :cond_19
+
+    const-string v0, "︶"
+
+    return-object v0
+
+    :cond_19
+    const-string v0, "︷"
+
+    invoke-virtual {v0, p0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+
+    move-result v0
+
+    if-eqz v0, :cond_1a
+
+    const-string v0, "︸"
+
+    return-object v0
+
+    :cond_1a
+    const-string v0, "︹"
+
+    invoke-virtual {v0, p0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+
+    move-result v0
+
+    if-eqz v0, :cond_1b
+
+    const-string v0, "︺"
+
+    return-object v0
+
+    :cond_1b
+    const-string v0, "︻"
+
+    invoke-virtual {v0, p0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+
+    move-result v0
+
+    if-eqz v0, :cond_1c
+
+    const-string v0, "︼"
+
+    return-object v0
+
+    :cond_1c
+    const-string v0, "︽"
+
+    invoke-virtual {v0, p0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+
+    move-result v0
+
+    if-eqz v0, :cond_1d
+
+    const-string v0, "︾"
+
+    return-object v0
+
+    :cond_1d
+    const-string v0, "︿"
+
+    invoke-virtual {v0, p0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+
+    move-result v0
+
+    if-eqz v0, :cond_1e
+
+    const-string v0, "﹀"
+
+    return-object v0
+
+    :cond_1e
+    const-string v0, "﹁"
+
+    invoke-virtual {v0, p0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+
+    move-result v0
+
+    if-eqz v0, :cond_1f
+
+    const-string v0, "﹂"
+
+    return-object v0
+
+    :cond_1f
     const/4 v0, 0x0
 
     return-object v0

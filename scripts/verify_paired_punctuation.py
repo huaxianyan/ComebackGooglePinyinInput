@@ -28,6 +28,15 @@ def fail(message: str) -> None:
     raise SystemExit(f"paired punctuation contract violated: {message}")
 
 
+def smali_literal(value: str) -> str:
+    """Escape a character the way the Smali assembler spells it in a literal.
+
+    Only the straight double quote needs this: it is the one table entry whose
+    Smali form differs from the character itself.
+    """
+    return value.replace("\\", "\\\\").replace('"', '\\"')
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("decoded", type=Path)
@@ -68,12 +77,14 @@ def main() -> int:
     # Pin the symbol table. Every pair below is reachable from the shipped symbol
     # keyboard, so dropping one is a user-visible regression. The vertical
     # quotation marks 「」 and 『』 were missing from the first cut and had to be
-    # added after a device test.
+    # added after a device test; the decorative forms of the brace and favourite
+    # pages followed the same route.
     for opening, closing in (
         ("(", ")"),
         ("[", "]"),
         ("{", "}"),
         ("<", ">"),
+        ('"', '"'),
         ("（", "）"),
         ("［", "］"),
         ("｛", "｝"),
@@ -85,9 +96,24 @@ def main() -> int:
         ("“", "”"),
         ("「", "」"),
         ("『", "』"),
+        ("«", "»"),
+        ("‹", "›"),
+        ("❛", "❜"),
+        ("❝", "❞"),
+        ("❨", "❩"),
+        ("❲", "❳"),
+        ("❴", "❵"),
+        ("〘", "〙"),
+        ("︵", "︶"),
+        ("︷", "︸"),
+        ("︹", "︺"),
+        ("︻", "︼"),
+        ("︽", "︾"),
+        ("︿", "﹀"),
+        ("﹁", "﹂"),
     ):
         for symbol in (opening, closing):
-            if f'const-string v0, "{symbol}"' not in text:
+            if f'const-string v0, "{smali_literal(symbol)}"' not in text:
                 fail(f"processor does not complete the {opening}{closing} pair")
 
     # Both the preference gate and the read of the preference must be present.
