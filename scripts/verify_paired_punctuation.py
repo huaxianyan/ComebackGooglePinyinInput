@@ -192,7 +192,8 @@ def main() -> int:
     )
     if not ninth_key_source.is_file():
         fail("missing the English 9-key IME class")
-    if f"L{hook_class};->a(" not in ninth_key_source.read_text(encoding="utf-8"):
+    ninth_text = ninth_key_source.read_text(encoding="utf-8")
+    if f"L{hook_class};->a(" not in ninth_text:
         fail("the English 9-key IME class does not call the shared completion hook")
 
     hook_source = decoded / f"smali/{hook_class}.smali"
@@ -208,6 +209,38 @@ def main() -> int:
     # One switch drives both languages only while the table stays shared.
     if ".method public static a(Ljava/lang/String;)Ljava/lang/String;" not in text:
         fail("the character table must stay public so the hook can reuse it")
+
+    # The context has to survive from initialize() to handle(). AbstractIme keeps
+    # it in a field that is still null on the English path, so the hook holds its
+    # own copy; without it every English event is declined and the feature is dead.
+    if ".field public static a:Landroid/content/Context;" not in hook_text:
+        fail("the shared hook does not keep the context from initialize()")
+    if (
+        "sput-object p0, " + "L" + hook_class + ";->a:Landroid/content/Context;"
+        not in hook_text
+    ):
+        fail("the shared hook does not store the context it receives")
+    for label, body in (
+        ("English QWERTY", english_text),
+        ("English 9-key", ninth_text),
+    ):
+        if (
+            "initialize(Landroid/content/Context;"
+            "Lcom/google/android/apps/inputmethod/libs/framework/core/metadata/ImeDef;"
+            "Lcom/google/android/apps/inputmethod/libs/framework/core/IImeDelegate;)V"
+            not in body
+        ):
+            fail(f"the {label} IME class does not override initialize")
+        if f"L{hook_class};->a(Landroid/content/Context;)V" not in body:
+            fail(f"the {label} IME class does not hand the context to the hook")
+    # Development smoke markers must never reach a shipped build.
+    for label, body in (
+        ("shared hook", hook_text),
+        ("English QWERTY", english_text),
+        ("English 9-key", ninth_text),
+    ):
+        if "PairautoHook" in body:
+            fail(f"the {label} still carries diagnostic logging")
 
     print("paired punctuation completion contracts verified")
     return 0

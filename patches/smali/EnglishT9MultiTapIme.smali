@@ -247,12 +247,22 @@
 .end method
 
 
+# AbstractIme.mContext is still null by the time handle() runs on this path, so
+# the context has to be kept from the argument the framework passes here. This
+# mirrors ProcessorBasedIme, which forwards the same argument to its processors.
+.method public initialize(Landroid/content/Context;Lcom/google/android/apps/inputmethod/libs/framework/core/metadata/ImeDef;Lcom/google/android/apps/inputmethod/libs/framework/core/IImeDelegate;)V
+    .locals 0
+
+    invoke-super {p0, p1, p2, p3}, Lcom/google/android/apps/inputmethod/libs/english/ime/EnglishIme;->initialize(Landroid/content/Context;Lcom/google/android/apps/inputmethod/libs/framework/core/metadata/ImeDef;Lcom/google/android/apps/inputmethod/libs/framework/core/IImeDelegate;)V
+
+    invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/pairauto/PairedPunctuationHook;->a(Landroid/content/Context;)V
+
+    return-void
+.end method
+
+
 .method public handle(Lcom/google/android/apps/inputmethod/libs/framework/core/Event;)Z
     .locals 16
-
-    const-string v0, "t9-handle"
-
-    invoke-static {v0}, Lcom/google/android/inputmethod/pinyin/pairauto/PairedPunctuationHook;->log(Ljava/lang/String;)V
 
     # p0 and p1 live in v16/v17, which iget/iput (22c) and invoke (35c) cannot
     # address. Keep low-register aliases for the whole method instead.

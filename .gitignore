@@ -7,6 +7,9 @@
 work/
 build/
 dist/
+
+# Scratch trees written by the local reuse-rebuild helper
+/pa-*/
 .gradle/
 .kotlin/
 

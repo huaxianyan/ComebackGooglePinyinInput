@@ -8,47 +8,68 @@
 # The Chinese keyboards push every soft-key event through
 # PairedPunctuationProcessor, so the replacement of the opening symbol happens
 # inside the processor framework. The English keyboards cannot do that:
-# EnglishIme extends LatinIme, which extends AbstractIme, and AbstractIme never
-# reads the "<processors>" element of an IME definition. Only ProcessorBasedIme
-# reads it, so an <include href="@xml/processors_*" /> entry under an English
-# <ime> would be silently ignored.
+# EnglishIme extends LatinIme, which extends AbstractIme, and only
+# ProcessorBasedIme reads the "<processors>" element of an IME definition, so an
+# <include href="@xml/processors_*" /> entry under an English <ime> would be
+# silently ignored.
 #
 # Those IMEs therefore call this helper from their own handle() entry point,
-# before the stock LatinIme implementation sees the event. Both paths read the
-# same preference and the same character table, so a single switch turns the
+# before the stock implementation sees the event. Both paths read the same
+# preference and the same character table, so a single switch turns the
 # completion on or off for Chinese and English at once.
+#
+# The context does not come from AbstractIme.mContext. On-device logging shows
+# that field is still null when handle() runs, while mImeDelegate is live and the
+# stock keyboard types normally. The Chinese processors never relied on the
+# field either: ProcessorBasedIme passes the argument it receives in
+# initialize() straight through. The English IME subclasses do the same here,
+# which is why a(Context) below stores the context that initialize() handed
+# them.
+#
+# Guard polarity follows PairedPunctuationProcessor: every check jumps to the
+# common exit when the expected condition does NOT hold.
+#
+# Not every event carries a key: the framework dispatches a soft-key event when
+# the keyboard becomes ready, and that one has no intent at all. A missing value
+# is a plain decline, so the guards test the values and never call a method on
+# them.
 #
 # Returns true when the event was consumed. The caller must then report the
 # event as handled and must not forward it to the stock implementation.
-#
-# TEMPORARY DIAGNOSTIC BUILD: each guard that rejects an event logs a marker
-# through PairedPunctuationHook->log. Remove the markers before release.
 
-.method public static log(Ljava/lang/String;)V
-    .locals 1
+.field public static a:Landroid/content/Context;
 
-    const-string v0, "PairautoHook"
 
-    invoke-static {v0, p0}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
+# Stores the context the IME received from the framework. Called from the
+# initialize() override of every English IME that uses this hook.
+.method public static a(Landroid/content/Context;)V
+    .locals 0
+
+    sput-object p0, Lcom/google/android/inputmethod/pinyin/pairauto/PairedPunctuationHook;->a:Landroid/content/Context;
 
     return-void
 .end method
 
 
 .method public static a(Landroid/content/Context;Lcom/google/android/apps/inputmethod/libs/framework/core/IImeDelegate;Lcom/google/android/apps/inputmethod/libs/framework/core/Event;)Z
-    .locals 7
+    .locals 5
 
     const/4 v0, 0x0
 
-    const-string v5, "enter"
+    # Prefer the context captured in initialize(); keep the argument, which is
+    # AbstractIme.mContext and therefore null on this path, as the fallback.
+    sget-object v1, Lcom/google/android/inputmethod/pinyin/pairauto/PairedPunctuationHook;->a:Landroid/content/Context;
 
-    invoke-static {v5}, Lcom/google/android/inputmethod/pinyin/pairauto/PairedPunctuationHook;->log(Ljava/lang/String;)V
+    if-eqz v1, :context_ready
 
-    if-nez p0, :bad_context
+    move-object p0, v1
 
-    if-nez p1, :bad_delegate
+    :context_ready
+    if-eqz p0, :done
 
-    if-nez p2, :bad_event
+    if-eqz p1, :done
+
+    if-eqz p2, :done
 
     invoke-static {p0}, Landroid/preference/PreferenceManager;->getDefaultSharedPreferences(Landroid/content/Context;)Landroid/content/SharedPreferences;
 
@@ -62,33 +83,33 @@
 
     move-result v1
 
-    if-nez v1, :bad_pref
+    if-eqz v1, :done
 
     iget-object v1, p2, Lcom/google/android/apps/inputmethod/libs/framework/core/Event;->a:[Lcom/google/android/apps/inputmethod/libs/framework/core/KeyData;
 
-    if-nez v1, :bad_array
+    if-eqz v1, :done
 
     array-length v2, v1
 
-    if-gtz v2, :bad_empty
+    if-lez v2, :done
 
     const/4 v2, 0x0
 
     aget-object v1, v1, v2
 
-    if-nez v1, :bad_key
+    if-eqz v1, :done
 
     iget-object v2, v1, Lcom/google/android/apps/inputmethod/libs/framework/core/KeyData;->a:Lcom/google/android/apps/inputmethod/libs/framework/core/KeyData$a;
 
     sget-object v3, Lcom/google/android/apps/inputmethod/libs/framework/core/KeyData$a;->COMMIT:Lcom/google/android/apps/inputmethod/libs/framework/core/KeyData$a;
 
-    if-eq v2, v3, :bad_intent
+    if-ne v2, v3, :done
 
     iget-object v2, v1, Lcom/google/android/apps/inputmethod/libs/framework/core/KeyData;->a:Ljava/lang/Object;
 
     instance-of v3, v2, Ljava/lang/String;
 
-    if-nez v3, :bad_payload
+    if-eqz v3, :done
 
     check-cast v2, Ljava/lang/String;
 
@@ -98,13 +119,13 @@
 
     const/4 v4, 0x1
 
-    if-eq v3, v4, :bad_length
+    if-ne v3, v4, :done
 
     invoke-static {v2}, Lcom/google/android/inputmethod/pinyin/pairauto/PairedPunctuationProcessor;->a(Ljava/lang/String;)Ljava/lang/String;
 
     move-result-object v3
 
-    if-nez v3, :bad_pair
+    if-eqz v3, :done
 
     new-instance v4, Ljava/lang/StringBuilder;
 
@@ -117,10 +138,6 @@
     invoke-virtual {v4}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
 
     move-result-object v2
-
-    const-string v5, "hit"
-
-    invoke-static {v5}, Lcom/google/android/inputmethod/pinyin/pairauto/PairedPunctuationHook;->log(Ljava/lang/String;)V
 
     const/4 v3, 0x0
 
@@ -136,75 +153,6 @@
 
     const/4 v0, 0x1
 
-    return v0
-
-    :bad_context
-    const-string v5, "exit:no-context"
-
-    goto :log_bad
-
-    :bad_delegate
-    const-string v5, "exit:no-delegate"
-
-    goto :log_bad
-
-    :bad_event
-    const-string v5, "exit:no-event"
-
-    goto :log_bad
-
-    :bad_pref
-    const-string v5, "exit:pref-off"
-
-    goto :log_bad
-
-    :bad_array
-    const-string v5, "exit:no-array"
-
-    goto :log_bad
-
-    :bad_empty
-    const-string v5, "exit:empty-array"
-
-    goto :log_bad
-
-    :bad_key
-    const-string v5, "exit:no-keydata"
-
-    goto :log_bad
-
-    :bad_intent
-    invoke-virtual {v2}, Ljava/lang/Object;->toString()Ljava/lang/String;
-
-    move-result-object v5
-
-    goto :log_bad
-
-    :bad_payload
-    invoke-virtual {v2}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
-
-    move-result-object v5
-
-    invoke-virtual {v5}, Ljava/lang/Class;->getName()Ljava/lang/String;
-
-    move-result-object v5
-
-    goto :log_bad
-
-    :bad_length
-    invoke-static {v2}, Ljava/lang/String;->valueOf(Ljava/lang/Object;)Ljava/lang/String;
-
-    move-result-object v5
-
-    goto :log_bad
-
-    :bad_pair
-    invoke-static {v2}, Ljava/lang/String;->valueOf(Ljava/lang/Object;)Ljava/lang/String;
-
-    move-result-object v5
-
-    :log_bad
-    invoke-static {v5}, Lcom/google/android/inputmethod/pinyin/pairauto/PairedPunctuationHook;->log(Ljava/lang/String;)V
-
+    :done
     return v0
 .end method
