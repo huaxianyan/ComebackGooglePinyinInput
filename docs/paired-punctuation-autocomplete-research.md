@@ -2,7 +2,9 @@
 
 ## 状态
 
-已实现。分支 `feat/paired-punctuation-autocomplete`，实现提交 `51bca8c`，设置页接线与中文文案随后补齐，英文侧的缺陷修复为 `0fa0ca0`。**中文与英文两条路径均已完成真机运行时验证**，见「实现进度」一节。
+已实现。分支 `feat/paired-punctuation-autocomplete`，实现提交 `51bca8c`，设置页接线与中文文案随后补齐，英文侧的缺陷修复为 `0fa0ca0`，英文九键符号候选路径为尚未提交的工作区改动。**中文、英文按键、英文九键候选三条路径均已完成真机运行时验证**，见「实现进度」一节。
+
+配对删除（按一次退格删掉整对符号）已完成可行性调查，结论见「配对删除的可行性调查」一节。该功能与补全性质不同，**待补全全部验收通过后单开分支实施**，本轮不开发。
 
 本版补充了三项用户指定的结论：候选期间输入符号的现状、自动空格的完整运作逻辑、删除与跳过的处理原则。
 
@@ -155,6 +157,8 @@ c(int codepoint):
 这意味着不需要维护「补全状态机」、不需要记录哪些字符是自己插入的、不需要拦截后续按键。实现复杂度显著降低。
 
 代价是会出现 `（））` 这类结果，但这是用户明确接受的取舍。
+
+其中「补全后按退格只删除左半边」这一条**已被后续需求重新审议**：用户希望按一次退格删掉整对符号，包括用户自己手敲的符号对。该目标的可行性调查见「配对删除的可行性调查」一节，实施排在本功能全部验收通过之后，单开分支进行。上表其余两行仍然有效。
 
 ## 框架提供的机制
 
@@ -332,6 +336,54 @@ shouldHandle(Event): boolean
 
 代码审阅中曾发现自己写反两处分支条件（字符长度判定误用 `if-ne`），已修正。
 
+### 英文九键的符号候选：第三条路径
+
+用户真机反馈：英文九键按数字键出现的符号候选，点候选上屏时不会补全。这第三种入口**尚未提交**，只存在于工作区改动中。
+
+原因：候选点击**不经过 `IIme.handle(Event)`**，既有的两条路径（中文处理器链、英文 `handle` 里的 helper）都拦不到。
+
+完整链路：
+
+| 阶段 | 行为 |
+| --- | --- |
+| 按数字键 | `English9KeyIme.handle` 置候选标志并请求候选，内容取自 `clinit` 里的 32 个符号 |
+| 点候选 | `InputBundle` 的 `sswitch_0` 分支以 `p2 = true` 调 `IIme.selectTextCandidate(candidate, true)` |
+| 提交 | `English9KeyIme.selectTextCandidate` 内部走 `beginBatchEdit`、`finishComposingText`、`commitText`、`endBatchEdit` |
+
+关键细节：真正点候选走的是 `InputBundle.a(Event)Z` 的 `sswitch_0` 分支。它在行 250 用 `const/4 v2, 0x1` 置好局部量，行 290 拿它调 `IIme.selectTextCandidate(candidate, v2)`，所以这条路径的 `p2` 恒为 true，真机日志 `p2=1` 也确认了。`InputBundle` 另有 `selectTextCandidate(Candidate, Z)`（行 4855），行 4942 以 `const/4 v3, 0x0` 转发给 `IIme`，但符号条点击不走那里。
+
+实现方式：
+
+- `PairedPunctuationHook` 增加 `public static a(Ljava/lang/CharSequence;)Ljava/lang/String;`：读静态 Context 下的开关、查共用配对表、返回右半边或 null
+- `EnglishT9MultiTapIme` 覆盖 `public selectTextCandidate(Candidate;Z)V`：多击开启或候选不配对时原样交父类，否则**先 `invoke-super`**，再在 `p2 != 0` 时补右半边并把光标移回中间
+
+先跑父类的理由是候选条收尾、内部计数与命中统计都属于原实现，必须保持原样。多击开关**不参与**这条路径的判定：多击是字母键的属性，符号候选条与它无关，门禁已把这一点钉死。
+
+真机验证（已在设备上跑通）：
+
+- 环境：隔离包 `com.google.android.inputmethod.pinyin.pairauto`，9 键英文，`enable_paired_punctuation_completion` 为 true
+- 配对符号：展开符号候选面板后点 `(`，输入框得到 `()`，光标停在两者之间（按一次退格删掉的是 `(`，剩下 `)`）
+- 非配对符号：点 `%` 得到 `%`，光标落在符号之后（按一次退格删掉 `%`，剩下为空）
+- 表内其他开符：`[` 得 `[]`，`{` 得 `{}`
+- 从原始 APK 完整重建，v1/v2/v3 签名与既有门禁通过
+- 包内 `classes.dex` 确认 `EnglishT9MultiTapIme` 出现 `selectTextCandidate`
+- 门禁新增断言：九键类要有该覆盖、覆盖里要调共用 helper、要有 `offsetSelection(II)V`、分支极性必须是「空值交父类」；hook 侧要求候选入口方法存在。该断言已用旧极性文件反证过会拒绝
+
+未覆盖：候选条在受限输入类型（如纯数字框）下的行为。
+
+#### 分支极性写反过一次
+
+第一版的判据是 `if-nez v1, :compat_stock_candidate`，于是「右半边非空」时反而跳去父类、空值时反而落进配对分支。用户报的两个现象都由此而来：
+
+| 现象 | 成因 |
+| --- | --- |
+| 点 `(` 只得到 `(` | 右半边 `)` 非空，直接跳去父类，补全分支从未执行 |
+| 点任意非配对符号，光标往前跳一格 | 右半边为空，落进配对分支，`commitText(null)` 只提交空串，而 `offsetSelection(-1, -1)` 照常执行，把光标退回一格 |
+
+定位过程：日志一度只能证明 hook 返回了正确的右半边，看不出控制流走向，反而出现「点 `(` 没打 `closer`、点 `%` 却打了」的假矛盾。在关键位置逐点加标记后（`stock-branch`、`after-super`、`closer`，外加把候选文案与 `mImeDelegate` 一起打出来），走向才清楚。Dalvik 的约定是 `if-eqz v` 在「v 等于 0」时跳、`if-nez v` 在「v 不等于 0」时跳。
+
+踩坑记录：`English9KeyIme.b:Z` 是 `private`，子类（不同包）读不到，`a(ZZ)V` 也不在本类。因此「完全自己实现提交」不可行，只能「先跑父类再补」。
+
 ### 为何用 Smali 而不是 Java
 
 项目的主流做法是写 Java、再用 `generate_*_smali.py` 编译成 Smali。本功能**不能用这条路**：
@@ -401,6 +453,111 @@ shouldHandle(Event): boolean
 1. `shouldHandle` 返回 true 后，`InputBundle` 是否确实跳过 `sendKeyData`（控制流上成立，需实测）
 2. 处理器自发的 `COMMIT_TEXT` 与 `OFFSET_SELECTION` 消息是否会被 `ImeDef` 的掩码过滤
 3. 密码输入框是否会自动禁用该功能（预计需要，尚未确认）
+
+## 配对删除的可行性调查
+
+本节记录「按一次退格删掉补全出来的整对符号」的可行性调查结论，供后续单开分支使用。**当前不实施**，待补全功能（含英文九键候选路径）全部验收通过后再开始。
+
+### 目标行为
+
+补全后状态为 `（|）`，光标夹在中间。用户按一次退格时删除整对，而不是只删左半边。
+
+用户已明确一项取舍：**不区分符号对的来源**。用户自己手敲出 `（）` 再把光标移进中间，退格同样删掉整对。这一决定消除了对来源判断的需求，因此判据比预想简单，详见「判据」一节。
+
+### 删除键不经过输入法的写入 API
+
+这是本条需求的根本约束，已逐行核实：
+
+- 退格是 `KEYCODE_DEL`（`0x43`，十进制 67），**不带 payload**
+- `GoogleInputMethodService.sendKeyData(KeyData, I)` 在处理标点这类「带 `CharSequence` payload 的字符键」时，最终落到 `aqi.sendKeyData` 里的 `InputConnection.commitText(text, length)`（`aqi.smali` 第 79 行）
+- 退格不走这条路。它在同一个 `sendKeyData` 里被判为「不是字符键」，改用 `Lajx.a(InputConnection, III)`（`GoogleInputMethodService.smali` 第 1253 至 1254 行，`:cond_6` / `:cond_7` 分支）。该方法的实现是构造一对 `KeyEvent` 并调用 `InputConnection.sendKeyEvent`
+
+也就是说，退格是**作为平台 KeyEvent 转发给应用去执行**的。推论：
+
+- 输入法拿不到「应用删了几个字符」的返回值
+- 输入法不能用「拦下按键再删两次」的方式实现，因为删除动作不在自己手里
+- 要实现成对删除，必须在**转发这个决定的时刻**介入，不再转发 DEL，改为自己发起一次删除
+
+### 拦截点只有一个
+
+先前曾判断中文与英文需要两个入口，该判断有误，已更正。核查结果：
+
+- `Lajx.a(InputConnection, III)` 的调用点**全部位于 `GoogleInputMethodService.sendKeyData`**，该方法按 keycode 分支，DEL 落在第 1253 至 1254 行
+- `sendKeyData` 本身是 `InputBundleDelegate` 契约的实现，而 `InputBundle` 只在 `IIme.handle(Event)` 返回 false 时才调用它
+
+因此中文、英文、九键、全键盘的退格转发都汇到 `sendKeyData` 这一处。**一个拦截点即可覆盖全部语言与键盘布局。**
+
+### 判据：为何不需要来源记录
+
+用户最初倾向于用 `SelectionChangeTracker` 的记录作为判据，理由是「成本高但更稳定」。核查后需要修正这个前提：
+
+- `A（ajx）` 的 `b(II)`（即 `getTextAfterCursor`）实现就是对 `InputConnection.getTextAfterCursor(p1, p2)` 的直接转调（`ajx.smali` 第 64 行），**中间没有任何缓存**
+- 因此 `SelectionChangeTracker` 路线并不比直接回读更可靠，两者读的是同一个 `InputConnection`，在 WebView 或远程连接下同样可能返回 null
+
+`SelectionChangeTracker` 真正提供的是**来源与时序**，不是文本可靠性：
+
+- `Reason` 只有三态，`IME`、`DELETE`、`OTHER`（`SelectionChangeTracker$Reason.smali`）
+- `DELETE` 的产生点是 `A.a(IC, III)` 里 `if-ne p2, 0x43`，即「输入法正在转发退格」
+- `Reason.IME` 由 `Lajx.a(CharSequence, I)` 上报，正是补全把光标移进中间所走的路径
+
+由于用户已选择不区分来源，判据退化为**纯文本检查**：「光标夹在一对配对符号之间，且两者之间没有内容」。不需要知道这对符号是谁写的，也就不需要这份记录，更不必改动框架内部结构。
+
+### 建议判据与守卫
+
+全部满足才命中：
+
+- 开关开启
+- 光标是折叠态，没有选区
+- 不处于组合态（中文拼音输入过程中）
+- 光标前后各取一字符，分别构成配对表的右半与左半，且属于同一对
+- 不在受限输入类型（密码、数字等）
+
+命中后不转发 DEL，改为发起一次成对删除。任一条件不满足即原样转发，行为与现在完全一致。
+
+### 参考实现
+
+仓库内已有一个官方模板可循：`AbstractDoubleSpaceProcessor`（双击空格出句号）。
+
+- 它的 `a()Z` 读 `IImeContextDelegate.getTextBeforeCursor(3, 0)`，再逐 codepoint 判定，确认光标前是「一个空格加一个字母」
+- 确认后用 `ProcessMessage.a(CharSequence, ProcessMessage$a, Object)` 构造 `REPLACE_TEXT` 消息改写文本
+- 它同样通过 `res/xml/processors_*.xml` 注册，而本功能已经在这批 XML 上打过补丁
+
+即「读光标周围文本，再改写文本」这条路，Google 自己已在同版本 APK 里发布并可用。
+
+### 成对删除的消息表达
+
+成对删除应表达为一条 `replaceText(1, 1, "", false)` 语义的消息，即替换光标前后各一格。
+
+需要留意：现成的 `REPLACE_TEXT` 工厂 `ProcessMessage.a(CharSequence, ProcessMessage$a, Object)` 只预设 `f=1`、`g=0`（双击空格正是用它把光标前一格替换成句号）。要拿到 `g=1` 需手工写 `ProcessMessage` 的 public 字段。
+
+字段是 public，操作可行，但**偏移符号约定尚未核实**。实施时应先对着 `GoogleInputMethodService.replaceText` 逐行确认，或直接真机验证，不要凭推断。
+
+### 现有实现是否需要推翻
+
+**不需要。删除方向是纯追加，现有补全代码无需改动。**
+
+| 现有产物 | 删除方向是否复用 |
+| --- | --- |
+| `PairedPunctuationProcessor`（413 行） | 复用，配对表 `a(String)String` 正是删除方向要查的那张表 |
+| `PairedPunctuationHook` | 复用，静态 Context 捕获与守卫结构继续沿用 |
+| `PairedPunctuationEnglishIme` | 复用 |
+| `EnglishT9MultiTapIme` 的 `handle`、`initialize`、`selectTextCandidate` | 复用，DEL 分支只是再加一处判断 |
+| 开关、资源、`apply_patches.py` 接线、静态门禁 | 全部复用 |
+| 15 对符号表 | 两个方向共用，仍是唯一一份 |
+
+之所以不必推翻，关键在于**用户选择的取舍与既有设计一致**。本文档原先明确放弃「补全状态机」，理由是那需要记录「哪些字符是自己插的」。选择不区分来源后，就不需要这份记录，只读当前文本状态即可。这个选择实际上让删除方向比预想的便宜。
+
+### 待验证
+
+1. **中文组合态的退格归属**：中文输入拼音时，退格由 HMM 引擎的 `deleteLastInput` 消费（`AbstractHmmChineseDecodeProcessor` 的 `:pswitch_0`）。需确认组合期间的退格在到达 `sendKeyData` 之前就被短路，否则会误吞。
+2. **偏移符号约定**：见「成对删除的消息表达」。
+3. **受限输入框行为**：WebView 与其他远程 `InputConnection` 下前后文读取可能返回 null，需确认退化为原样转发而非异常。
+
+### 实施边界
+
+该功能引入了与现有三条路径**性质不同**的入口：前三条在「写文本」时拦截，这条在「转发按键」时拦截，并需要独立状态与独立的真机矩阵（中英双语、双英文布局、组合态、有选区、WebView、密码框）。
+
+因此**单独开分支**，不混入 `feat/paired-punctuation-autocomplete`，验收阶段也独立。当前仅记录结论，不开发。
 
 ## 待确认问题
 

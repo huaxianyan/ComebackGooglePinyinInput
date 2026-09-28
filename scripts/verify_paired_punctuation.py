@@ -195,6 +195,47 @@ def main() -> int:
     ninth_text = ninth_key_source.read_text(encoding="utf-8")
     if f"L{hook_class};->a(" not in ninth_text:
         fail("the English 9-key IME class does not call the shared completion hook")
+    # The symbol page of this keyboard does not push a key event: it commits a
+    # chosen text candidate, which arrives through IIme.selectTextCandidate() and
+    # never passes through handle(). Without an override there the symbols stay
+    # unpaired, which is exactly what a device test reported.
+    if (
+        "selectTextCandidate(Lcom/google/android/apps/inputmethod/libs/framework/"
+        "core/Candidate;Z)V" not in ninth_text
+    ):
+        fail("the English 9-key IME class does not override selectTextCandidate")
+    if f"L{hook_class};->a(Ljava/lang/CharSequence;)Ljava/lang/String;" not in ninth_text:
+        fail("the English 9-key candidate path does not ask the shared hook")
+    if "offsetSelection(II)V" not in ninth_text:
+        fail("the English 9-key candidate path does not move the caret between the symbols")
+    # The symbol strip offers its candidates whatever the multi-tap option says,
+    # so the entry point must not consult that switch before appending the closing
+    # half. It once did, and every symbol candidate stayed unpaired on a device.
+    candidate_entry = ninth_text.split(
+        ".method public selectTextCandidate(Lcom/google/android/apps/inputmethod/"
+        "libs/framework/core/Candidate;Z)V"
+    )[-1].split(".end method")[0]
+    if "enabled()" in candidate_entry:
+        fail("the English 9-key candidate path is gated on the multi-tap switch")
+    # Guard polarity: the stock branch is the one taken when the hook reports that
+    # the candidate text has no closing half. It was written the other way round
+    # once, which left every paired opener unpaired and made every unpaired symbol
+    # step the caret back one character.
+    after_hook = candidate_entry.split(
+        f"L{hook_class};->a(Ljava/lang/CharSequence;)Ljava/lang/String;"
+    )[-1]
+    result_reg = re.search(r"move-result-object (v\d+)", after_hook)
+    if not result_reg:
+        fail("the candidate path discards the result of the shared hook")
+    branch = re.search(rf"(if-\w+) {result_reg.group(1)}, (:[\w_]+)", after_hook)
+    if not branch:
+        fail(f"the candidate path never tests {result_reg.group(1)} from the shared hook")
+    if branch.group(1) != "if-eqz" or "stock" not in branch.group(2):
+        fail(
+            f"the candidate path branches on a non-null closing half "
+            f"({branch.group(1)} {result_reg.group(1)}, {branch.group(2)}); it must "
+            "fall back to the stock implementation only when the hook returns null"
+        )
 
     hook_source = decoded / f"smali/{hook_class}.smali"
     if not hook_source.is_file():
@@ -206,6 +247,13 @@ def main() -> int:
         fail("the shared hook must reuse the processor character table")
     if "offsetSelection(II)V" not in hook_text:
         fail("the shared hook does not offset the caret to sit between the symbols")
+    # The candidate entry point keeps the switch and the table in this one place,
+    # so the 9-key override cannot drift away from the key-event path.
+    if (
+        ".method public static a(Ljava/lang/CharSequence;)Ljava/lang/String;"
+        not in hook_text
+    ):
+        fail("the shared hook does not offer the candidate-text entry point")
     # One switch drives both languages only while the table stays shared.
     if ".method public static a(Ljava/lang/String;)Ljava/lang/String;" not in text:
         fail("the character table must stay public so the hook can reuse it")

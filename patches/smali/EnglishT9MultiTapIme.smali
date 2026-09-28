@@ -440,6 +440,63 @@
 .end method
 
 
+# The symbol candidates of this keyboard are committed through
+# selectTextCandidate() instead of through handle(), so the paired completion
+# needs this second entry point. The stock implementation still runs first, so
+# the candidate strip and its bookkeeping stay untouched; the closing half is
+# appended afterwards and the caret is moved back between the two characters.
+#
+# The stock implementation only commits when its candidate list is live and the
+# caller asked for a commit, so the same caller condition is repeated here before
+# anything is appended. The switch and the character table come from the shared
+# hook, which also owns the context that initialize() stored for this path.
+#
+# Multi-tap does not gate this path: the 9-key symbol strip offers its
+# candidates whatever that option says, so the entry point never consults
+# enabled() before appending the closing half.
+.method public selectTextCandidate(Lcom/google/android/apps/inputmethod/libs/framework/core/Candidate;Z)V
+    .locals 6
+
+    if-eqz p1, :compat_stock_candidate
+
+    iget-object v0, p1, Lcom/google/android/apps/inputmethod/libs/framework/core/Candidate;->a:Ljava/lang/CharSequence;
+
+    invoke-static {v0}, Lcom/google/android/inputmethod/pinyin/pairauto/PairedPunctuationHook;->a(Ljava/lang/CharSequence;)Ljava/lang/String;
+
+    move-result-object v1
+
+    if-eqz v1, :compat_stock_candidate
+
+    invoke-super {p0, p1, p2}, Lcom/google/android/apps/inputmethod/libs/english/ime/English9KeyIme;->selectTextCandidate(Lcom/google/android/apps/inputmethod/libs/framework/core/Candidate;Z)V
+
+    if-eqz p2, :compat_candidate_done
+
+    iget-object v2, p0, Lcom/google/android/apps/inputmethod/libs/framework/ime/AbstractIme;->mImeDelegate:Lcom/google/android/apps/inputmethod/libs/framework/core/IImeDelegate;
+
+    if-eqz v2, :compat_candidate_done
+
+    const/4 v3, 0x0
+
+    const/4 v0, 0x1
+
+    invoke-interface {v2, v1, v3, v0}, Lcom/google/android/apps/inputmethod/libs/framework/core/IImeDelegate;->commitText(Ljava/lang/CharSequence;ZI)V
+
+    const/4 v3, -0x1
+
+    const/4 v0, -0x1
+
+    invoke-interface {v2, v3, v0}, Lcom/google/android/apps/inputmethod/libs/framework/core/IImeDelegate;->offsetSelection(II)V
+
+    :compat_candidate_done
+    return-void
+
+    :compat_stock_candidate
+    invoke-super {p0, p1, p2}, Lcom/google/android/apps/inputmethod/libs/english/ime/English9KeyIme;->selectTextCandidate(Lcom/google/android/apps/inputmethod/libs/framework/core/Candidate;Z)V
+
+    return-void
+.end method
+
+
 # Timer entry point: the tap window for the current key has expired, so the
 # pending letter stops being composing text and its underline disappears.
 .method public run()V

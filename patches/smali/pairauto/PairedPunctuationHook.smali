@@ -51,6 +51,53 @@
 .end method
 
 
+# Second entry point, for symbols that reach the editor as a chosen text
+# candidate instead of as a key event. The English 9-key symbol page commits its
+# candidates through IIme.selectTextCandidate(), which never passes through
+# handle(), so the caller there asks this helper whether the candidate text is an
+# opening pair. Returns the closing symbol, or null when the switch is off or the
+# text is not in the table. The context comes from the field initialize() filled
+# in, for the same reason the handle() path uses it.
+.method public static a(Ljava/lang/CharSequence;)Ljava/lang/String;
+    .locals 3
+
+    sget-object v0, Lcom/google/android/inputmethod/pinyin/pairauto/PairedPunctuationHook;->a:Landroid/content/Context;
+
+    if-eqz v0, :no
+
+    invoke-static {v0}, Landroid/preference/PreferenceManager;->getDefaultSharedPreferences(Landroid/content/Context;)Landroid/content/SharedPreferences;
+
+    move-result-object v0
+
+    const-string v1, "enable_paired_punctuation_completion"
+
+    const/4 v2, 0x1
+
+    invoke-interface {v0, v1, v2}, Landroid/content/SharedPreferences;->getBoolean(Ljava/lang/String;Z)Z
+
+    move-result v0
+
+    if-eqz v0, :no
+
+    if-eqz p0, :no
+
+    invoke-static {p0}, Ljava/lang/String;->valueOf(Ljava/lang/Object;)Ljava/lang/String;
+
+    move-result-object v0
+
+    invoke-static {v0}, Lcom/google/android/inputmethod/pinyin/pairauto/PairedPunctuationProcessor;->a(Ljava/lang/String;)Ljava/lang/String;
+
+    move-result-object v0
+
+    return-object v0
+
+    :no
+    const/4 v0, 0x0
+
+    return-object v0
+.end method
+
+
 .method public static a(Landroid/content/Context;Lcom/google/android/apps/inputmethod/libs/framework/core/IImeDelegate;Lcom/google/android/apps/inputmethod/libs/framework/core/Event;)Z
     .locals 5
 
