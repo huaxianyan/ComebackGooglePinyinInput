@@ -8,7 +8,7 @@
 
 - 仓库：`https://github.com/huaxianyan/ComebackGooglePinyinInput`。
 - 正式包名：`com.google.android.inputmethod.pinyin.compat`。
-- 当前正式基线：`v2.1.2`（`master` 已含成对标点补全与英文键盘支持，待发布为 `v2.1.3`），`targetSdkVersion=36`，`minSdkVersion=17`。
+- 当前正式基线：`v2.1.3`（`master` 已含成对标点补全的成对删除与智能跳过，三条路径各三条场景全部通过真机验收），`targetSdkVersion=36`，`minSdkVersion=17`。
 - 正式签名身份必须保持不变。私钥、口令和其他签名材料只保存在仓库外或 GitHub Actions Secrets 中。
 - 默认不修改原生输入、候选、学习权重、词典格式、手写、主题、分页和触摸语义，以修复已定位缺陷为默认立场。
 
