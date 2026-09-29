@@ -4,7 +4,7 @@
 
 已实现。分支 `feat/paired-punctuation-autocomplete`，实现提交 `51bca8c`，设置页接线与中文文案随后补齐，英文侧的缺陷修复为 `0fa0ca0`，英文九键符号候选路径为尚未提交的工作区改动。**中文、英文按键、英文九键候选三条路径均已完成真机运行时验证**，见「实现进度」一节。
 
-配对删除（按一次退格删掉整对符号）已完成可行性调查，结论见「配对删除的可行性调查」一节。该功能与补全性质不同，**待补全全部验收通过后单开分支实施**，本轮不开发。
+配对删除（按一次退格删掉整对符号）与「后一半已在光标之后时不重复补全」两项已完成实现，分支 `feat/paired-punctuation-delete-and-skip`，工作区改动尚未提交。**中文处理器链、英文按键路径、英文九键候选条路径各三条场景已全部通过真机验收**，见「已实施」一节。调查结论与实现现状见「配对删除的可行性调查」一节。
 
 本版补充了三项用户指定的结论：候选期间输入符号的现状、自动空格的完整运作逻辑、删除与跳过的处理原则。
 
@@ -520,7 +520,7 @@ shouldHandle(Event): boolean
 
 ## 配对删除的可行性调查
 
-本节记录「按一次退格删掉补全出来的整对符号」的可行性调查结论，供后续单开分支使用。**当前不实施**，待补全功能（含英文九键候选路径）全部验收通过后再开始。
+本节记录「按一次退格删掉补全出来的整对符号」的调查结论与实现现状，实现落在分支 `feat/paired-punctuation-delete-and-skip`。
 
 ### 目标行为
 
@@ -617,11 +617,131 @@ shouldHandle(Event): boolean
 2. **偏移符号约定**：见「成对删除的消息表达」。
 3. **受限输入框行为**：WebView 与其他远程 `InputConnection` 下前后文读取可能返回 null，需确认退化为原样转发而非异常。
 
+### 已实施
+
+分支 `feat/paired-punctuation-delete-and-skip`，四个文件，`+299 / -3`：
+
+| 文件 | 改动 |
+| --- | --- |
+| `patches/smali/pairauto/PairedPunctuationProcessor.smali` | 实现 `IImeActionProcessor` 与 `IImeContextAwareProcessor`，取得 `replaceText` 与前后文读取；DEL 分支、智能跳过分支 |
+| `patches/smali/pairauto/PairedPunctuationHook.smali` | `.locals 5` 提到 8；DEL 分支（读前后文、查配对表，命中则 `replaceText(1,1,"",false)` 并消费事件）；COMMIT 分支补前进守卫 |
+| `patches/smali/EnglishT9MultiTapIme.smali` | `selectTextCandidate` 内智能跳过：光标后已是右半边时交还原生路径 |
+| `scripts/verify_paired_punctuation.py` | 新增断言：两个 aware 接口与两个 set 方法必须存在、必须读 `getTextAfterCursor`、必须识别 `const/16 vX, 0x43`、必须调 `replaceText` |
+
+两条路径的分工沿用既有约定：中文走处理器链，英文在 IME 的 `handle` 与 `selectTextCandidate` 里调共用 helper，配对表仍只有一份。
+
+**真机验收已完成（2026-09-29）。** 分支构建 `dist/pairauto-diag.apk`（sha256 `53cab546…`，`dexdump` 核对含 `getTextBeforeCursor`×1、`getTextAfterCursor`×2）装到 Pixel 10 Pro，中英两侧各三条路径全部通过：
+
+| 侧 | 场景 | 期望 | 实测 |
+| --- | --- | --- | --- |
+| 中文（处理器链） | 符号页点 `(` | `()` | `()` ✓ |
+| 中文 | `()` 中间按退格 | 空 | 空 ✓ |
+| 中文 | `()` 中间再点 `(` | `(()` | `(()` ✓ |
+| 英文（`handle` 路径） | 长按字母键小字出 `(` | `()` | `()` ✓ |
+| 英文 | `()` 中间按退格 | 空 | 空 ✓ |
+| 英文 | `()` 中间再出 `(` | `(()` | `(()` ✓ |
+
+英文侧验的是 QWERTY 布局（`PairedPunctuationEnglishIme`）。
+
+**英文九键的候选条路径（`EnglishT9MultiTapIme.selectTextCandidate`）已于同日补齐验收**，三条场景全部通过：
+
+| 侧 | 场景 | 期望 | 实测 |
+| --- | --- | --- | --- |
+| 英文（九键候选条路径） | 符号页点 `(` | `()` | `()` ✓ |
+| 英文（九键候选条路径） | `()` 中间按退格 | 空 | 空 ✓ |
+| 英文（九键候选条路径） | `()` 中间再点 `(` | `(()` | `(()` ✓ |
+
+证据在 `work/en9key-verify/`（`26-box.png`、`27-del.png`、`29-box.png`）。符号页点 `(` 正是这条路径：`res/xml/ime_en_9key.xml` 的符号候选不经 `handle()`，而是走 `selectTextCandidate()` 提交，所以符号页的一次点击就构成候选条路径的完整用例。
+
+切换方式不是偏好项 `ACTIVE_IME.SOFT.en`，而是键盘上方的 IME 选择条（`中` / `En` 两个标签）选到「En」后，再从键盘选择弹窗右侧选英文 9 键。偏好项那条路看不出实际作用的原因待查，但不影响验收。
+
+### 一处 adb 注入陷阱（复现时必读）
+
+`adb shell input tap` 对这套自绘键盘（IMESurface）的注入成功率约一半，丢失时表现为「点了没反应」。本轮一度按这个假象判定「第一次点击被吞」「配对删除未生效」，改用 `adb shell input swipe x y x y 60` 后点击 100% 可靠，三条场景一次通过。
+
+因此**任何靠 `input tap` 得出的「某次按键无效」的结论都不可信**，必须换 `input swipe` 复测。本文档 652 节记录的「符号后第一次退格被吞」当时用的是专用脚本（`symtest.py`）并带重试，其逐字符图谱有区分度（`!` `&` `*` `(` `)` `=` 被吞而 `@` `#` `$` `%` `^` 正常），不属于这类随机丢失，结论仍然成立。本节补录陷阱只为避免后续复现时重蹈。
+
 ### 实施边界
 
 该功能引入了与现有三条路径**性质不同**的入口：前三条在「写文本」时拦截，这条在「转发按键」时拦截，并需要独立状态与独立的真机矩阵（中英双语、双英文布局、组合态、有选区、WebView、密码框）。
 
-因此**单独开分支**，不混入 `feat/paired-punctuation-autocomplete`，验收阶段也独立。当前仅记录结论，不开发。
+因此**单独开分支**，不混入 `feat/paired-punctuation-autocomplete`，验收阶段也独立。
+
+## 符号后第一次退格被吞：一处既有行为
+
+真机验收配对补全时观察到：英文九键符号页输入 `&`、`*`、`=` 后，第一次退格没有反应，第二次才删掉。逐层收窄范围后确认，**这既不是配对补全引入的，也不是配对删除引入的，正式发布包 v2.1.2 在同等设置下行为完全一致。**
+
+### 逐字符图谱
+
+英文九键符号页第一页，关闭「复古 9 键」，逐键点击后按一次退格：
+
+| 符号 | 一次退格后 | 判定 |
+| --- | --- | --- |
+| `!` `&` `*` `(` `)` `=` | 字符仍在 | 被吞 |
+| `@` `#` `$` `%` `^` | 已清空 | 正常 |
+
+换成硬件 `KEYCODE_DEL` 结果相同，被吞的位置不在键盘视图的软键管线里。把 `enable_paired_punctuation_completion` 关掉结果也不变，与补全开关无关。
+
+中文九键符号页上同样复现（`(` 与 `)` 都要按两次），英文 QWERTY 上同样复现，所以这不是某一种键盘布局特有的。
+
+换一条提交路径就能看出分界：用 `input text ")"` 提交的 `)` 一次退格就删掉，`input text "x"` 提交的普通字母同样一次就删。只有软键点出来的符号会吃掉第一次退格。
+
+### 只由设置决定
+
+第一轮用「两种构建 × 两组设置」对照，两种构建在同样的设置组合下逐字符结果完全一致，说明差异全部来自设置而不是代码：
+
+| 构建 | 复古 9 键 | 下一词预测 | 结果 |
+| --- | --- | --- | --- |
+| v2.1.2 正式包（不含任何配对补全代码） | 关 | 开 | 被吞 |
+| v2.1.2 正式包 | 关 | 关 | 正常 |
+| v2.1.2 正式包 | 开 | 关 | 正常 |
+| master（已含配对补全） | 关 | 开 | 被吞 |
+| master | 关 | 关 | 正常 |
+| master | 开 | 开 | 正常 |
+
+第二轮换成单变量控制，只动 `en_t9_multitap_enabled` 一项，构建与其余设置都不变，行为直接翻转：
+
+| 构建 | `en_t9_multitap_enabled` | `)` 后一次退格 |
+| --- | --- | --- |
+| v2.1.2 正式包 | `true`（日常包取值） | 已清空 |
+| pairauto master（符号补全那一轮） | 缺省，等同 `false` | 字符仍在 |
+| pairauto 分支（本轮） | 缺省，等同 `false` | 字符仍在 |
+| pairauto 分支 | 显式 `true` | 已清空 |
+| pairauto 分支 | 显式 `false` | 字符仍在 |
+
+后三行是同一次装机、同一个构建，只有这一个偏好不同。**这一项单独就足以决定结果**，`next_word_prediction` 并非必要条件。两轮合起来把范围收在「偏好」这一层，与本轮及上一轮的配对补全代码都无关。
+
+### 机制
+
+1. `res/xml/ime_en_9key.xml` 声明了 `<item id="@id/extra_value_latin_enable_suspend_prediction_on_backspace" value="true" />`，同一文件里 `extra_value_latin_update_suggestion_on_activate` 为 `false`
+2. `LatinIme.initialize` 把前者读进 `LatinIme.b:Z`（资源 id `0x7f0f002b`），`LatinIme.a(EditorInfo)` 再抄进解码器配置 `Lcgp.h:Z`
+3. 解码器的按键入口 `adw.a(JLchw;)Z` 里比较常量 `v2 = 0x8`，即退格：当这次按键的解码结果既没有 `Lcfk.a:Lchk` 也没有 `Lcfk.a:Lchh`（既无候选也无标点输出）时，读 `Lcgp.h` 与联想状态 `Layx->a:Lazh.a()`，命中挂起分支就 `goto :goto_0`，**丢弃本次按键的解码结果**
+
+这同时解释了设置为何能决定结果：「复古 9 键」开启时 `EnglishT9MultiTapIme.computeShouldShowSuggestions` 与 `computeShouldEnableAutoCorrection` 都返回 false，联想不活跃；`next_word_prediction` 为 false 时下一词预测不启用。任一成立就不会被吞，其中前者单独就够（见上一节的单变量表）。隔离测试包的默认组合恰好两条都不满足（`en_t9_multitap_enabled` 缺省 false，`next_word_prediction` 为 true），日常包则两条都满足。
+
+这条链路取自英文九键的解码器。本轮在中文九键符号页与英文 QWERTY 上也观察到同一个开关依赖，说明它牵动的是一处更通用的联想状态，究竟落在哪个类里尚未逐层核实。
+
+后续的专项调研补齐了这两处，并修正了本节给出的修改建议，见 [英文符号引发后续建议与首次退格被吞的调研](symbol-backspace-swallow-research.md)。结论是差异来自各语言的 `symbols_word_separators` 词分隔符集合，哪些符号被吞由它精确决定，与符号自身无关。改动方向应是收窄该集合，而不是本节原先建议的开关。
+
+### 复现方式
+
+设备侧脚本在 `.workbuddy/tmp/`：`edit_prefs.py` 按基线与逐键覆盖写偏好并重启进程，`symtest.py` 跑「点符号 → 退格 → 再退格」并给出判定，`sd.py` 负责具体操作与稳定读数，`rowscan.py` 与 `kgrid.py` 用来从截图里量真实键位。`edit_prefs.py` 首次写入任一包前会把原文件备份到 `tmp/<pkg>-prefs-backup.xml`，用 `restore` 还原。
+
+两个必须注意的坑。写偏好与 `kill -9` 之间有窗口，输入法进程若在这期间回写偏好，改动会被覆盖；判断开关是否真的生效要看行为（例如 `(` 是否变成 `()`），不能只看写入成功。另一个是键盘页面会自行漂移：字母页与符号页的切换键占同一个位置，靠截图判断当前页面在两个方向上都会出错，误判一次就把键盘切到反方向。`symtest.py` 因此不再判页面，改为按结果重试——点符号键后没产出该符号，就切换页面再来一次。
+
+### 是否处理
+
+未处理。本节原先建议「把这四处改成 `false` 即可」，该建议经逐字节复核后**不成立**：`adw.a(JLchw;)Z` 里 `cgp.h == false` 会**无条件**进入挂起分支，改成 `false` 会让候选缺失的退格全部被吞，问题加重。`ime_en_floating_hard_qwerty.xml` 与 `ime_en_hard_qwerty.xml` 正因缺省该条目而处于这一档，可作为旁证。
+
+正确的改动方向是收窄各语言的 `symbols_word_separators`，见 [英文符号引发后续建议与首次退格被吞的调研](symbol-backspace-swallow-research.md)。
+
+### 教训
+
+第一轮对照实验是错的：拿正式包自身的设置测出「干净」，就得出「只有加了补全代码的包才有问题」。两个包的偏好本身相差十余项，其中 `en_t9_multitap_enabled` 恰好是决定这项行为的那一项。
+
+中间还绕过一次弯路：「把补全开关关掉也复现」曾被当作「与补全代码无关」的证据，但那次关的是 `enable_paired_punctuation_completion`，与真正起作用的 `en_t9_multitap_enabled` 是两个不同的开关。关掉一个不在嫌疑链路上的开关不构成排除，只是又做了一次没有对齐的对照。
+
+结论有两条：对照必须一次只动一个变量；「关掉某个开关仍然复现」只有在那个开关确实位于嫌疑链路上时才算证据。
 
 ## 待确认问题
 
