@@ -651,7 +651,7 @@ shouldHandle(Event): boolean
 | 英文（九键候选条路径） | `()` 中间按退格 | 空 | 空 ✓ |
 | 英文（九键候选条路径） | `()` 中间再点 `(` | `(()` | `(()` ✓ |
 
-证据在 `work/en9key-verify/`（`26-box.png`、`27-del.png`、`29-box.png`）。符号页点 `(` 正是这条路径：`res/xml/ime_en_9key.xml` 的符号候选不经 `handle()`，而是走 `selectTextCandidate()` 提交，所以符号页的一次点击就构成候选条路径的完整用例。
+证据在 `work/en9key-verify/evidence/`（`26-b.png` 补全得 `()`、`27-del.png` 一次退格清空、`29-p2.png` 得 `(()`）。符号页点 `(` 正是这条路径：`res/xml/ime_en_9key.xml` 的符号候选不经 `handle()`，而是走 `selectTextCandidate()` 提交，所以符号页的一次点击就构成候选条路径的完整用例。
 
 切换方式不是偏好项 `ACTIVE_IME.SOFT.en`，而是键盘上方的 IME 选择条（`中` / `En` 两个标签）选到「En」后，再从键盘选择弹窗右侧选英文 9 键。偏好项那条路看不出实际作用的原因待查，但不影响验收。
 
