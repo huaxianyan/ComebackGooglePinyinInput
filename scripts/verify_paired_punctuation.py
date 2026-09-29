@@ -122,6 +122,37 @@ def main() -> int:
     if "getBoolean" not in text:
         fail("processor does not gate itself on the stored preference")
 
+    # The two aware interfaces are how the framework hands the processor what it
+    # needs beyond the message itself: the context delegate reads the text around
+    # the caret, the action delegate performs the paired deletion. ProcessorBasedIme
+    # injects both right after initialize(), so dropping an interface would leave
+    # the matching method unreachable and the behaviour silently gone.
+    for aware in ("IImeActionProcessor", "IImeContextAwareProcessor"):
+        if f"Lcom/google/android/apps/inputmethod/libs/framework/ime/{aware};" not in text:
+            fail(f"processor does not implement {aware}")
+    if (
+        "setImeContextDelegate(Lcom/google/android/apps/inputmethod/libs/framework/"
+        "core/IImeContextDelegate;)V" not in text
+    ):
+        fail("processor does not accept the context delegate")
+    if (
+        "setImeActionDelegate(Lcom/google/android/apps/inputmethod/libs/framework/"
+        "core/IImeActionDelegate;)V" not in text
+    ):
+        fail("processor does not accept the action delegate")
+    if (
+        "IImeContextDelegate;->getTextAfterCursor(II)Ljava/lang/CharSequence;" not in text
+    ):
+        fail("processor never reads the text after the caret")
+    # A DEL press carries no intent, so it has to be screened before the COMMIT
+    # guard. Only a caret sitting between the halves of a pair is taken over, and
+    # only then is the forwarded deletion replaced by one that removes both
+    # halves. Unlike the completion steps this path consumes the event.
+    if not re.search(r"const/16 v\d+, 0x43\b", text):
+        fail("processor does not recognise the DEL key code")
+    if "IImeActionDelegate;->replaceText(IILjava/lang/CharSequence;Z)V" not in text:
+        fail("processor does not delete both halves on DEL")
+
     # Registration must be present and must precede the existing processors.
     for relative in PROCESSOR_XML:
         path = decoded / relative
@@ -264,6 +295,11 @@ def main() -> int:
         )
 
     hook_source = decoded / f"smali/{hook_class}.smali"
+
+    # The candidate path skips the completion for the same reason the key path
+    # does: the closing half may already sit in front of the caret.
+    if "getTextAfterCursor" not in candidate_entry:
+        fail("the English 9-key candidate path never reads the text after the caret")
     if not hook_source.is_file():
         fail("missing the shared paired punctuation hook")
     hook_text = hook_source.read_text(encoding="utf-8")
@@ -283,6 +319,15 @@ def main() -> int:
     # One switch drives both languages only while the table stays shared.
     if ".method public static a(Ljava/lang/String;)Ljava/lang/String;" not in text:
         fail("the character table must stay public so the hook can reuse it")
+
+    # English keyboards run no processor chain, so the same two behaviours have to
+    # be present in the shared hook they call from their own handle().
+    if "IImeDelegate;->getTextAfterCursor(II)Ljava/lang/CharSequence;" not in hook_text:
+        fail("the shared hook never reads the text after the caret")
+    if not re.search(r"const/16 v\d+, 0x43\b", hook_text):
+        fail("the shared hook does not recognise the DEL key code")
+    if "IImeDelegate;->replaceText(IILjava/lang/CharSequence;Z)V" not in hook_text:
+        fail("the shared hook does not delete both halves on DEL")
 
     # The context has to survive from initialize() to handle(). AbstractIme keeps
     # it in a field that is still null on the English path, so the hook holds its

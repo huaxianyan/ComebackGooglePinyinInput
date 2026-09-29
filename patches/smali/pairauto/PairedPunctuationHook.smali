@@ -99,7 +99,7 @@
 
 
 .method public static a(Landroid/content/Context;Lcom/google/android/apps/inputmethod/libs/framework/core/IImeDelegate;Lcom/google/android/apps/inputmethod/libs/framework/core/Event;)Z
-    .locals 5
+    .locals 8
 
     const/4 v0, 0x0
 
@@ -146,6 +146,71 @@
 
     if-eqz v1, :done
 
+    # DEL carries no intent, so it is screened before the COMMIT guard below.
+    # Only a caret sitting between the two halves of a pair is taken over, and
+    # only then is the forwarded deletion replaced by one that removes both
+    # halves. Everything else falls through unchanged.
+    iget v2, v1, Lcom/google/android/apps/inputmethod/libs/framework/core/KeyData;->a:I
+
+    const/16 v3, 0x43
+
+    if-ne v2, v3, :cond_intent
+
+    const/4 v2, 0x1
+
+    const/4 v3, 0x0
+
+    invoke-interface {p1, v2, v3}, Lcom/google/android/apps/inputmethod/libs/framework/core/IImeDelegate;->getTextBeforeCursor(II)Ljava/lang/CharSequence;
+
+    move-result-object v2
+
+    const/4 v3, 0x1
+
+    const/4 v4, 0x0
+
+    invoke-interface {p1, v3, v4}, Lcom/google/android/apps/inputmethod/libs/framework/core/IImeDelegate;->getTextAfterCursor(II)Ljava/lang/CharSequence;
+
+    move-result-object v3
+
+    if-eqz v2, :cond_intent
+
+    if-eqz v3, :cond_intent
+
+    invoke-static {v2}, Ljava/lang/String;->valueOf(Ljava/lang/Object;)Ljava/lang/String;
+
+    move-result-object v2
+
+    invoke-static {v3}, Ljava/lang/String;->valueOf(Ljava/lang/Object;)Ljava/lang/String;
+
+    move-result-object v3
+
+    invoke-static {v2}, Lcom/google/android/inputmethod/pinyin/pairauto/PairedPunctuationProcessor;->a(Ljava/lang/String;)Ljava/lang/String;
+
+    move-result-object v4
+
+    if-eqz v4, :cond_intent
+
+    invoke-virtual {v4, v3}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+
+    move-result v4
+
+    if-eqz v4, :cond_intent
+
+    const/4 v2, 0x1
+
+    const/4 v3, 0x1
+
+    const-string v4, ""
+
+    const/4 v5, 0x0
+
+    invoke-interface {p1, v2, v3, v4, v5}, Lcom/google/android/apps/inputmethod/libs/framework/core/IImeDelegate;->replaceText(IILjava/lang/CharSequence;Z)V
+
+    const/4 v0, 0x1
+
+    return v0
+
+    :cond_intent
     iget-object v2, v1, Lcom/google/android/apps/inputmethod/libs/framework/core/KeyData;->a:Lcom/google/android/apps/inputmethod/libs/framework/core/KeyData$a;
 
     sget-object v3, Lcom/google/android/apps/inputmethod/libs/framework/core/KeyData$a;->COMMIT:Lcom/google/android/apps/inputmethod/libs/framework/core/KeyData$a;
@@ -174,6 +239,32 @@
 
     if-eqz v3, :done
 
+    # The closing half already follows the caret, so the pair is already there.
+    # Completing again would leave a stray half behind. Declining hands the
+    # event back to the stock path, which inserts the opening half alone.
+    # v5 and v6 are free here, and v2 must stay the opening half for the
+    # builder below.
+    const/4 v5, 0x1
+
+    const/4 v6, 0x0
+
+    invoke-interface {p1, v5, v6}, Lcom/google/android/apps/inputmethod/libs/framework/core/IImeDelegate;->getTextAfterCursor(II)Ljava/lang/CharSequence;
+
+    move-result-object v5
+
+    if-eqz v5, :cond_build
+
+    invoke-static {v5}, Ljava/lang/String;->valueOf(Ljava/lang/Object;)Ljava/lang/String;
+
+    move-result-object v5
+
+    invoke-virtual {v3, v5}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+
+    move-result v5
+
+    if-nez v5, :done
+
+    :cond_build
     new-instance v4, Ljava/lang/StringBuilder;
 
     invoke-direct {v4}, Ljava/lang/StringBuilder;-><init>()V

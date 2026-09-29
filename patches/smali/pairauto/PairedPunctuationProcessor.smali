@@ -3,6 +3,12 @@
 .source "PairedPunctuationProcessor.java"
 
 # interfaces
+# The two aware interfaces are how ProcessorBasedIme hands the processor the
+# pieces it needs beyond the message itself: the context delegate reads the text
+# around the caret, the action delegate performs the paired deletion. Both are
+# injected right after initialize(), see ProcessorBasedIme.initialize.
+.implements Lcom/google/android/apps/inputmethod/libs/framework/ime/IImeActionProcessor;
+.implements Lcom/google/android/apps/inputmethod/libs/framework/ime/IImeContextAwareProcessor;
 .implements Lcom/google/android/apps/inputmethod/libs/framework/ime/IImeProcessor;
 
 
@@ -12,6 +18,10 @@
 
 # instance fields
 .field private a:Z
+
+.field private a:Lcom/google/android/apps/inputmethod/libs/framework/core/IImeActionDelegate;
+
+.field private a:Lcom/google/android/apps/inputmethod/libs/framework/core/IImeContextDelegate;
 
 .field private a:Lcom/google/android/apps/inputmethod/libs/framework/ime/IImeProcessorDelegate;
 
@@ -499,9 +509,82 @@
     :cond_key
     aget-object v1, v1, v6
 
-    if-nez v1, :cond_intent
+    if-nez v1, :cond_del
 
     return v6
+
+    # DEL carries no COMMIT intent, so it has to be screened before the intent
+    # guard further down. Only a caret sitting between the two halves of a pair
+    # is taken over, and only then is the forwarded deletion replaced by one
+    # that removes both halves. Everything else falls through unchanged.
+    :cond_del
+    iget v2, v1, Lcom/google/android/apps/inputmethod/libs/framework/core/KeyData;->a:I
+
+    const/16 v3, 0x43
+
+    if-ne v2, v3, :cond_intent
+
+    iget-object v2, p0, Lcom/google/android/inputmethod/pinyin/pairauto/PairedPunctuationProcessor;->a:Lcom/google/android/apps/inputmethod/libs/framework/core/IImeContextDelegate;
+
+    if-eqz v2, :cond_intent
+
+    iget-object v3, p0, Lcom/google/android/inputmethod/pinyin/pairauto/PairedPunctuationProcessor;->a:Lcom/google/android/apps/inputmethod/libs/framework/core/IImeActionDelegate;
+
+    if-eqz v3, :cond_intent
+
+    const/4 v4, 0x1
+
+    const/4 v5, 0x0
+
+    invoke-interface {v2, v4, v5}, Lcom/google/android/apps/inputmethod/libs/framework/core/IImeContextDelegate;->getTextBeforeCursor(II)Ljava/lang/CharSequence;
+
+    move-result-object v4
+
+    const/4 v5, 0x1
+
+    const/4 v7, 0x0
+
+    invoke-interface {v2, v5, v7}, Lcom/google/android/apps/inputmethod/libs/framework/core/IImeContextDelegate;->getTextAfterCursor(II)Ljava/lang/CharSequence;
+
+    move-result-object v5
+
+    if-eqz v4, :cond_intent
+
+    if-eqz v5, :cond_intent
+
+    invoke-static {v4}, Ljava/lang/String;->valueOf(Ljava/lang/Object;)Ljava/lang/String;
+
+    move-result-object v4
+
+    invoke-static {v5}, Ljava/lang/String;->valueOf(Ljava/lang/Object;)Ljava/lang/String;
+
+    move-result-object v5
+
+    invoke-static {v4}, Lcom/google/android/inputmethod/pinyin/pairauto/PairedPunctuationProcessor;->a(Ljava/lang/String;)Ljava/lang/String;
+
+    move-result-object v7
+
+    if-eqz v7, :cond_intent
+
+    invoke-virtual {v7, v5}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+
+    move-result v7
+
+    if-eqz v7, :cond_intent
+
+    const/4 v4, 0x1
+
+    const/4 v5, 0x1
+
+    const-string v7, ""
+
+    const/4 v8, 0x0
+
+    invoke-interface {v3, v4, v5, v7, v8}, Lcom/google/android/apps/inputmethod/libs/framework/core/IImeActionDelegate;->replaceText(IILjava/lang/CharSequence;Z)V
+
+    const/4 v0, 0x1
+
+    return v0
 
     :cond_intent
     iget-object v2, v1, Lcom/google/android/apps/inputmethod/libs/framework/core/KeyData;->a:Lcom/google/android/apps/inputmethod/libs/framework/core/KeyData$a;
@@ -538,7 +621,39 @@
     invoke-static {v2}, Lcom/google/android/inputmethod/pinyin/pairauto/PairedPunctuationProcessor;->a(Ljava/lang/String;)Ljava/lang/String;
     move-result-object v3
 
-    if-nez v3, :cond_build
+    if-nez v3, :cond_skip
+
+    return v6
+
+    # The closing half already follows the caret, so the pair is already there.
+    # Completing again would leave a stray half behind, which is what users
+    # noticed when they typed an opening bracket in front of an existing one.
+    # Declining the event hands it back to the ordinary commit path, which
+    # inserts the opening half on its own.
+    :cond_skip
+    iget-object v4, p0, Lcom/google/android/inputmethod/pinyin/pairauto/PairedPunctuationProcessor;->a:Lcom/google/android/apps/inputmethod/libs/framework/core/IImeContextDelegate;
+
+    if-eqz v4, :cond_build
+
+    const/4 v5, 0x1
+
+    const/4 v7, 0x0
+
+    invoke-interface {v4, v5, v7}, Lcom/google/android/apps/inputmethod/libs/framework/core/IImeContextDelegate;->getTextAfterCursor(II)Ljava/lang/CharSequence;
+
+    move-result-object v5
+
+    if-eqz v5, :cond_build
+
+    invoke-static {v5}, Ljava/lang/String;->valueOf(Ljava/lang/Object;)Ljava/lang/String;
+
+    move-result-object v5
+
+    invoke-virtual {v3, v5}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+
+    move-result v5
+
+    if-eqz v5, :cond_build
 
     return v6
 
@@ -613,6 +728,22 @@
     move-result v0
 
     iput-boolean v0, p0, Lcom/google/android/inputmethod/pinyin/pairauto/PairedPunctuationProcessor;->a:Z
+
+    return-void
+.end method
+
+.method public setImeActionDelegate(Lcom/google/android/apps/inputmethod/libs/framework/core/IImeActionDelegate;)V
+    .locals 0
+
+    iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/pairauto/PairedPunctuationProcessor;->a:Lcom/google/android/apps/inputmethod/libs/framework/core/IImeActionDelegate;
+
+    return-void
+.end method
+
+.method public setImeContextDelegate(Lcom/google/android/apps/inputmethod/libs/framework/core/IImeContextDelegate;)V
+    .locals 0
+
+    iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/pairauto/PairedPunctuationProcessor;->a:Lcom/google/android/apps/inputmethod/libs/framework/core/IImeContextDelegate;
 
     return-void
 .end method

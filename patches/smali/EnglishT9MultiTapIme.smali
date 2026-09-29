@@ -467,6 +467,35 @@
 
     if-eqz v1, :compat_stock_candidate
 
+    # The closing half already follows the caret, so the pair is already there.
+    # Completing again would leave a stray half behind. The stock path below
+    # commits the candidate itself, which is what is wanted here.
+    iget-object v2, p0, Lcom/google/android/apps/inputmethod/libs/framework/ime/AbstractIme;->mImeDelegate:Lcom/google/android/apps/inputmethod/libs/framework/core/IImeDelegate;
+
+    if-eqz v2, :compat_complete
+
+    const/4 v3, 0x1
+
+    const/4 v0, 0x0
+
+    invoke-interface {v2, v3, v0}, Lcom/google/android/apps/inputmethod/libs/framework/core/IImeDelegate;->getTextAfterCursor(II)Ljava/lang/CharSequence;
+
+    move-result-object v3
+
+    if-eqz v3, :compat_complete
+
+    invoke-static {v3}, Ljava/lang/String;->valueOf(Ljava/lang/Object;)Ljava/lang/String;
+
+    move-result-object v3
+
+    invoke-virtual {v1, v3}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+
+    move-result v3
+
+    if-eqz v3, :compat_stock_candidate
+
+    :compat_complete
+
     invoke-super {p0, p1, p2}, Lcom/google/android/apps/inputmethod/libs/english/ime/English9KeyIme;->selectTextCandidate(Lcom/google/android/apps/inputmethod/libs/framework/core/Candidate;Z)V
 
     if-eqz p2, :compat_candidate_done
