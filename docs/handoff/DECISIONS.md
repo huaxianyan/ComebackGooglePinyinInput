@@ -36,7 +36,7 @@
 - 方案与门禁见 [实施设计](../comma-period-toggle-design.md)，原调研见 [逗号与句号显示开关方案调研](../comma-period-toggle-research.md)。
 - **实现方式限定为「纯布局 + keymapping」，不得新增 View 子类，也不得运行时改写 `layout_weight`。** 参考对象是原版语言切换键：布局声明 `visibility="gone"`，keymapping 用状态位在真实键与 `softkey_empty` 之间切换，框架自动处理可见性。逗号、句号槽位是顶层兄弟，gone 后释放的宽度按权重比例摊给所有可见兄弟，空格因此变宽，其余键一同微增，这一点作为既定取舍接受。
 - 理由：曾新增 `CommaPeriodToggleKeyView` 改写空格权重，真机上导致除手写外的全部键盘布局白屏，且日志无异常，无从定位。`SoftKeyView` 本身不读写权重，没有任何框架钩子可按状态改权重，绕过布局去改权重的收益不足以承担渲染失败的风险。
-- **进度状态（2026-09-30）**：方案已定，代码尚未按此方向实施；白屏版补丁仍在工作树里。效果对比图已交用户取舍，等待答复。详见 [2026-09-30 交接](./2026-09-30.md)。
+- **进度状态**：**已搁置（2026-09-30）**。用户判定工程量超出预期，决定不做，等待更合适的实现路径。方案 B/A 从未拍板，代码未按纯布局方向实施，白屏版补丁仍留在工作树（未构建、未发布）。详见 [逗号句号开关：项目搁置决策记录](../comma-period-toggle-shelved.md)。
 
 
 ## 键盘布局插件化（独立 APK 提供布局）
@@ -72,6 +72,17 @@
 - **风险**：白屏（本项目已发生一次且日志无异常）、状态位耗尽、JSON 损坏致不可用。
 - **强烈建议先做最小验证**：硬编码一段 XML 走 parser 重载，确认能渲染且能点击，再决定是否投入完整方案。
 - 详见 [自定义键盘布局框架（JSON 导入）：技术评估](../custom-layout-framework-assessment.md)。
+- **状态：已搁置（2026-09-30）**。用户判定整体工期超出预期，随逗号句号开关一并停止，未做任何验证探针。技术结论保留，重启前应先读搁置记录。
+
+## 参考实现：T+ fork（新增整套静态布局）
+
+- 仓库 `JunperoH/Tback-google-pinyin-input` 与本项目**走同一条技术路线**（`original` + `patches` + `scripts` 补丁式改造同一份 Google 拼音 4.5.2 APK），在同一基线上**成功新增了一整套 T+ 双字母布局**，已上真机。是本项目最有参考价值的外部实现。
+- **新增整套布局的真实成本远低于此前估计**：只需资源文件（`keyboard_*.xml`、`keymapping_*.xml`、`softkeys_*.xml`、`values/*.xml` 声明 id、`ime_*.xml` 注册）加一个 IME 注册项，**不改 `KeyboardViewDef`、不新增状态位、不重写 inflate**，几十个 XML 全部可脚本化生成。
+- **槽位 id 池是跨布局共享的全局资源**：T+ 的 `keyboard_tplus_body_inner.xml` 直接 `<include layout="@layout/keyboard_prime_bottom" />` 复用了本项目的目标文件。这意味着 JSON 布局方案不需要发明新 id，只需重新组合既有 id 池——**这正是「多 JSON 共用一套 id 池、无需预注册」的技术依据**。
+- **资源 id 可静态固化**：`scripts/generate_stable_resource_ids.py` + `verify_stable_resource_ids.py` 让每次重建生成同一套 id，避免资源表重排致 smali 引用失效。若要重启 JSON 框架，这是预留固定 id 区间的现成做法。
+- **自定义 KeyView 子类可行但有门槛**：`SimplifiedTraditionalToggleKeyView`（`extends SoftKeyView`）+ 生成脚本 + 9.5 KB 门禁 + 设备验证。本项目白屏的 `CommaPeriodToggleKeyView` 属同类但只有第一步，这是白屏的深层原因。
+- **新增静态布局 ≠ 运行期可配置布局**。T+ 提供的是「一整套布局长什么样」的清单与工程手法，不提供 JSON 运行期加载的任何东西。
+- 详见 [参考实现调研：Tback-google-pinyin-input](../reference-tplus-fork.md)。
 
 ## 已决定不改的行为
 
