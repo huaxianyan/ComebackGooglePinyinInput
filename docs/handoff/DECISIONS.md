@@ -48,6 +48,15 @@
 - **补充（产物归属问题）**：任何布局方案最终都要进输入法自己的资源表——`<view layout="@layout/...">` 走 `getAttributeResourceValue` 取**编译期资源 id**（`KeyboardViewDef$a` 实证），布局不在本 APK 资源表里就拿不到 id，`inflate` 直接断链。因此「多个开发者各塞一套布局」不存在可行实现，改配置格式只是把膨胀从代码挪到配置目录。
 - **分层原则**：可扩展的应是「框架解析后的参数」，不是「框架解析的输入」。第 1 层固定开关、第 2 层用户级参数、第 3 层用户级配置（JSON）都不进资源表，不产生膨胀；第 4 层第三方布局包必然膨胀，唯一可行形态是提 PR 由维护者合入。详见 [键盘布局扩展的边界与分层](../keyboard-layout-extensibility-limits.md)。
 
+## 用户自定义键位
+
+- 键位由三层构成：**布局槽位**（`keyboard_prime_bottom.xml`，槽位 id 与权重）→ **映射**（`keymapping_*.xml`，`view_id` → `key_id`）→ **软键定义**（`softkeys_*.xml`，action/label/long_press）。
+- **映射层可以运行期重建**：`KeyMappingDef` 有 Builder（`KeyMappingDef$a`，`a(Z)` 建、`a(ILSoftKeyDef;[J)` 加、`a()` 出）。框架自己在 `SoftKeyViewsMapper$MergeMultiLingualKeyMappingDefTask` 里就这么干（跨语言合并时重建映射表）。这是「用户自定义键位」的可行落点。
+- **布局层与 XML 解析层都只认资源 id**：`SimpleXmlParser.a(Context, int resId)` 是唯一入口，不接受文件路径或 InputStream；布局用 `getAttributeResourceValue` 取编译期 id。因此「用户提供一份布局/keymapping XML 直接加载」不可行。
+- **能做的**：每个既定槽位里放哪个键（换键、对调、复用功能键、映射到 `softkey_empty` 屏蔽）。**不能做的**：槽位数量、顺序、权重（即「空格左右各加一个键」「两个槽位合并成宽键」）。
+- 推荐先做映射层（第 2 层）：不需要重打包、不新增资源、不新增状态位，风险最低。逗号句号开关是它的特例（等价于把两个槽位映射到 `softkey_empty`）。
+- 详见 [用户自定义键盘键位：可行边界与实施路径](../custom-key-layout-feasibility.md)。
+
 ## 已决定不改的行为
 
 - 英文键盘上符号后第一次退格只退出建议、删成对符号要按两次，判定为原版 Google 拼音输入法既有行为，**不改代码**。
