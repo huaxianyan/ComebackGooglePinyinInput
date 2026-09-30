@@ -44,6 +44,16 @@
 - 项目约束 AndroidX-free，`ContextCompat.getColor` 不可用，只能用平台 `getResources().getColor(int, Theme)`（API 23+）。
 - 三项真机实测中，**实测①（运行期读系统色）已通过**（Pixel 10 Pro / Android 16，100% 命中）；实测②③待做。详见 [动态配色实测①](../dynamic-color-device-test-1.md)。
 - 远程设备接入必须用 server 模式：`ADB_SERVER_SOCKET=tcp:<ip>:15037` 或 `adb -H <ip> -P <port>`。**`adb connect <ip>:15037` 会永远 `offline`**（语义错配：转发器暴露的是整个 ADB server，不是一台设备）。
+- **实测载体必须干净**：首轮实测②用的是 2.2.0 失败产物（`pairauto` 包），结论作废。2.2.0 是「System Auto 主题」方向的失败尝试，不在 git / CHANGELOG / 任何记录中，功能已定性**暂不做**，其产物与设备包已清理。
+- 已有的「跟随系统深浅色」是 `SystemAutoThemeCompat` **三槽模型**（`followThemeEnabled + light + dark + fixed`），commit `f3b264c`，**自 2.0.1 起在正式版中**。动态配色是**在此模型上加第四槽 `SLOT_DYNAMIC`**，不是从零开始。
+- 因系统语义色现成可用，**颜色推导算法这一最大工作量项被移除**，动态配色难度由「高」下调；剩余工作集中在「系统色 → 键盘色槽」映射表。详见 [动态配色实测②③](../dynamic-color-device-test-2.md)。
+
+## 开发与测试包名
+
+- **开发与真机测试一律使用非正式包名**，验收后卸载测试包。绝不把调试产物装成正式 ID `com.google.android.inputmethod.pinyin.compat`。
+- 当前测试包：`com.google.android.inputmethod.pinyin.dev`（versionName 2.1.3 / versionCode 4520404，release-like，用 `work/audit-signing/audit-signing.p12` 签名）。
+- 构建入口是 `scripts/build.ps1`，传 `-ApplicationId <隔离包名>`；需 `run-as` / JDWP 时加 `-Debuggable`，`apply_patches.py` 会拒绝让正式 ID 变 debuggable。
+- **本地构建版本号会漂**：`build.ps1` 不读 `version.properties`，`apply_patches.py` 默认版本与之一致性靠人传参。正式发布的版本一致性由 GitHub Actions（`build-release.yml` 校验 tag 与 `version.properties` 相符）保证，本地构建只适合做测试包。
 
 ## 已知坑与结论
 
