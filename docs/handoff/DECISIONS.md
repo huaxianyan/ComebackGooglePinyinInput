@@ -56,6 +56,11 @@
 - **能做的**：每个既定槽位里放哪个键（换键、对调、复用功能键、映射到 `softkey_empty` 屏蔽）。**不能做的**：槽位数量、顺序、权重（即「空格左右各加一个键」「两个槽位合并成宽键」）。
 - 推荐先做映射层（第 2 层）：不需要重打包、不新增资源、不新增状态位，风险最低。逗号句号开关是它的特例（等价于把两个槽位映射到 `softkey_empty`）。
 - 详见 [用户自定义键盘键位：可行边界与实施路径](../custom-key-layout-feasibility.md)。
+- **重要纠正（同日）**：映射层方案**不足以满足「用户自定义键位」**。用户要的是**布局改变**（键的位置、数量、宽度），映射层只能改「每个槽位放什么键」，是范围不足的方案。用户已明确否定。
+- **布局在编译期固化，运行期无任何钩子**，证据链四环：① 布局 id 来自 `getAttributeResourceValue`（编译期）；② `GoogleInputMethodService.loadSoftKeyboardView` 用 `inflate(resId)` **一次成型整棵树**并按 resId 缓存；③ `SoftKeyView` 对 `LayoutParams`/`weight` 引用数为 **0**；④ 键盘视图路径上**无任何 addView/removeView**。
+- **原版扩展系统（`ExtensionManager`）只扩展功能面板，不扩展布局**。模块注册（`Lawu.b()`）从**自身** `ApplicationInfo.metaData` 读 `"module:"` 前缀项，第三方包无法注册。
+- **最终结论**：用户自定义布局**不可行**。唯一形态是「输入法内置有限几套完整布局，用户在其中选」——这是选预设，不是自定义。若坚持任意布局，只能进输入法资源表（即由维护者合入 / 提 PR）。
+- 详见 [用户自定义键盘布局：边界纠正与真正的结论](../custom-layout-boundary-correction.md)。
 
 ## 已决定不改的行为
 
