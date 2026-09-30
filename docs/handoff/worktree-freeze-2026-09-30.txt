@@ -1,0 +1,49 @@
+=== 分支与提交 ===
+feat/comma-period-toggle
+19b3af1ab2eb117f8523fbe82dc9cc30eec50e90
+
+=== 未提交改动指纹 ===
+ M .github/workflows/build-release.yml
+ M CHANGELOG.md
+ M README.md
+ M docs/comma-period-toggle-research.md
+ M docs/handoff/2026-09-29.md
+ M docs/handoff/DECISIONS.md
+ M scripts/apply_patches.py
+ M scripts/verify_paired_punctuation.py
+ M version.properties
+?? dist-audit/
+?? docs/comma-period-toggle-design.md
+?? docs/handoff/2026-09-30.md
+?? docs/handoff/worktree-freeze-2026-09-30.txt
+?? docs/releases/v2.2.0.md
+?? patches/res/values/comma_period_toggle.xml
+?? patches/smali/CommaPeriodToggleKeyView.smali
+?? scripts/build_audit.ps1
+?? scripts/verify_comma_period_toggle.py
+
+=== 已修改文件哈希 ===
+warning: in the working copy of 'docs/handoff/2026-09-29.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/handoff/DECISIONS.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'scripts/verify_paired_punctuation.py', LF will be replaced by CRLF the next time Git touches it
+c1e798fbce696ad689896aed0ebf9ab788c3be1d  .github/workflows/build-release.yml
+d24dfa4c9360c605bc62ed8f958c335e1f155fb3  CHANGELOG.md
+80596d41de167e7d1fa2951e7415f2f62e01db77  README.md
+5b2b79085a939c4dc47d1245d73a684921d6858a  docs/comma-period-toggle-research.md
+c36daae44435f84d15b869e7c480a76ee2b5207c  docs/handoff/2026-09-29.md
+a7b180d68fc9ddccb1e1431c8a3f84a20879c2d3  docs/handoff/DECISIONS.md
+ce2004753140b7d73a112bc46201be03d81a0baa  scripts/apply_patches.py
+c0f428317575d00519fd0bf8aa7ae30cea1833fb  scripts/verify_paired_punctuation.py
+61b1e5c55d46481367bd9b47b40de7d99c07f362  version.properties
+
+=== 未跟踪文件哈希 ===
+d93161cd0a19babe5a4a92e084f128b6aa6001f6  dist-audit/google-pinyin-4.5.2-audit-aligned-signed.apk.idsig
+93fb0126fae92406d6ec2116eaa87ddd6d52798c  dist-audit/google-pinyin-4.5.2-audit-v2-aligned-signed.apk.idsig
+d113e82ef0129a6230dbca73c6d2e694cfe416fb  docs/comma-period-toggle-design.md
+5e10d60283d8e580e3968aa24fda8960e4fa1573  docs/handoff/2026-09-30.md
+29ac34f372171673b20aa48c71b120aafae3cd60  docs/handoff/worktree-freeze-2026-09-30.txt
+7ba8ca275f82f0cbb9dc84b72acffe78e79f4448  docs/releases/v2.2.0.md
+23102aff2686240964fe5a5786b388e382b58bbe  patches/res/values/comma_period_toggle.xml
+531025918ce55db39c31240fc150fc972911e8c9  patches/smali/CommaPeriodToggleKeyView.smali
+5648997908e7f92206cf8bcb223227cbe6573b94  scripts/build_audit.ps1
+fb4bef0e2506e33ad166e41f99a2149630524ac0  scripts/verify_comma_period_toggle.py

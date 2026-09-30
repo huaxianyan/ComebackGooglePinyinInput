@@ -186,23 +186,31 @@ def main() -> int:
     defaults = (decoded / "res/values/arrays.xml").read_text(encoding="utf-8")
     if "@string/pref_key_enable_paired_punctuation" not in defaults:
         fail("arrays.xml does not carry the preference default")
-    bools = (decoded / "res/values/bools.xml").read_text(encoding="utf-8")
-    if 'name="pref_def_value_enable_paired_punctuation">true<' not in bools:
+    # The per-feature resource file may be merged into any aggregate file, so
+    # scan the whole values directory rather than guessing a file name.
+    values = "\n".join(
+        source.read_text(encoding="utf-8")
+        for source in sorted((decoded / "res/values").glob("*.xml"))
+    )
+    if 'name="pref_def_value_enable_paired_punctuation">true<' not in values:
         fail("the feature must default to enabled")
-    strings = (decoded / "res/values/strings.xml").read_text(encoding="utf-8")
-    if f'>{PREFERENCE_KEY}<' not in strings:
+    if f'>{PREFERENCE_KEY}<' not in values:
         fail("the stored preference value must be the raw key, not a resource name")
     # The switch is user-facing, so every shipped Chinese locale must translate
-    # it instead of falling back to the English label.
+    # it instead of falling back to the English label. The translation may live
+    # in a per-feature file, so scan the whole locale directory.
     for relative in (
-        "res/values-zh/strings.xml",
-        "res/values-zh-rHK/strings.xml",
-        "res/values-zh-rTW/strings.xml",
+        "res/values-zh",
+        "res/values-zh-rHK",
+        "res/values-zh-rTW",
     ):
-        path = decoded / relative
-        if not path.is_file():
-            fail(f"missing localized resource file: {relative}")
-        body = path.read_text(encoding="utf-8")
+        directory = decoded / relative
+        if not directory.is_dir():
+            fail(f"missing localized resource directory: {relative}")
+        body = "\n".join(
+            source.read_text(encoding="utf-8")
+            for source in sorted(directory.glob("*.xml"))
+        )
         if 'name="setting_paired_punctuation_title"' not in body:
             fail(f"{relative} does not translate the paired punctuation switch")
 

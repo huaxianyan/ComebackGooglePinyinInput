@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="pref_key_show_comma_key">show_comma_key</string>
+    <string name="pref_key_show_period_key">show_period_key</string>
+    <bool name="pref_def_value_show_comma_key">true</bool>
+    <bool name="pref_def_value_show_period_key">true</bool>
+    <string name="setting_show_comma_key_title">Show comma key</string>
+    <string name="setting_show_comma_key_summary">Turn it off to hide the comma on the bottom row and give its space to the space bar. The long-press emoji entry on this key disappears with it, and the comma stays available on the symbol keyboard</string>
+    <string name="setting_show_period_key_title">Show period key</string>
+    <string name="setting_show_period_key_summary">Turn it off to hide the period on the bottom row and give its space to the space bar</string>
+</resources>

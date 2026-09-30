@@ -17,6 +17,23 @@ ROOT = Path(__file__).resolve().parents[1]
 FORMAL_APPLICATION_ID = "com.google.android.inputmethod.pinyin.compat"
 
 
+def release_identity() -> tuple[str, int]:
+    """Read VERSION_NAME and VERSION_CODE from version.properties.
+
+    The CLI falls back to these so a direct run cannot silently stamp the APK
+    with a version lower than the shipped one, which the device rejects as a
+    downgrade. The release workflow still passes both flags explicitly.
+    """
+    properties: dict[str, str] = {}
+    for line in (ROOT / "version.properties").read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        properties[key.strip()] = value.strip()
+    return properties["VERSION_NAME"], int(properties["VERSION_CODE"])
+
+
 def replace_once(path: Path, old: str, new: str) -> None:
     text = path.read_text(encoding="utf-8")
     count = text.count(old)
@@ -340,6 +357,222 @@ def apply(
         '        <item>@string/pref_key_enable_paired_punctuation</item>\n'
         '        <item>@bool/pref_def_value_enable_paired_punctuation</item>\n'
         '        <item>@string/pref_key_keyboard_slide_sensitivity_ratio</item>',
+    )
+
+    # The comma and period of the bottom row get independent visibility
+    # switches. They sit next to the emoji and language switch keys because they
+    # all shape the same bottom row. Turning one off reuses the framework's
+    # softkey_empty mechanism: the slot maps to an empty soft key, keeps the
+    # "gone" visibility it declares in the layout, and leaves the layout, so the
+    # space bar takes the freed width. Neither switch touches the symbol
+    # keyboard, the number/phone layouts or the slash, at-sign and .com variants
+    # used for URI and e-mail fields.
+    setting_keyboard = decoded / "res/xml/setting_keyboard.xml"
+    replace_once(
+        setting_keyboard,
+        '    <CheckBoxPreference android:persistent="true" android:title="@string/setting_show_emoji_switch_key_title"',
+        '    <CheckBoxPreference android:persistent="true" android:title="@string/setting_show_comma_key_title" android:key="@string/pref_key_show_comma_key" android:summary="@string/setting_show_comma_key_summary" />\n'
+        '    <CheckBoxPreference android:persistent="true" android:title="@string/setting_show_period_key_title" android:key="@string/pref_key_show_period_key" android:summary="@string/setting_show_period_key_summary" />\n'
+        '    <CheckBoxPreference android:persistent="true" android:title="@string/setting_show_emoji_switch_key_title"',
+    )
+    replace_once(
+        arrays,
+        '        <item>@string/pref_key_enable_paired_punctuation</item>\n'
+        '        <item>@bool/pref_def_value_enable_paired_punctuation</item>\n'
+        '        <item>@string/pref_key_keyboard_slide_sensitivity_ratio</item>',
+        '        <item>@string/pref_key_enable_paired_punctuation</item>\n'
+        '        <item>@bool/pref_def_value_enable_paired_punctuation</item>\n'
+        '        <item>@string/pref_key_show_comma_key</item>\n'
+        '        <item>@bool/pref_def_value_show_comma_key</item>\n'
+        '        <item>@string/pref_key_show_period_key</item>\n'
+        '        <item>@bool/pref_def_value_show_period_key</item>\n'
+        '        <item>@string/pref_key_keyboard_slide_sensitivity_ratio</item>',
+    )
+
+    # The bottom-row punctuation slots pick their soft key from the keyboard
+    # state. A slot keeps its stock punctuation while its state bit is set and
+    # falls back to softkey_empty when it is not, so the "hidden" case needs one
+    # extra mapping per slot. The state groups go after the default group, since
+    # a later group wins for the same view id inside one keyboard view. The URI
+    # and e-mail variants are excluded here so a field that needs "/", "@" or
+    # ".com" keeps its stock key no matter how the toggles are set.
+    comma_period_hidden_mappings = (
+        '        <key_mapping state="SHOW_COMMA_KEY" exclude_state="INPUT_TYPE_URI,INPUT_TYPE_EMAIL_ADDRESS">\n'
+        '            <mapping view_id="@id/key_pos_bottom_symbol_1" key_id="@id/softkey_empty" />\n'
+        '        </key_mapping>\n'
+        '        <key_mapping state="SHOW_PERIOD_KEY" exclude_state="INPUT_TYPE_URI,INPUT_TYPE_EMAIL_ADDRESS">\n'
+        '            <mapping view_id="@id/key_pos_bottom_symbol_2" key_id="@id/softkey_empty" />\n'
+        '        </key_mapping>\n'
+    )
+    for bottom_symbol, sentence_key in (
+        ("zh_cn", "softkey_bottom_sentence_zh_popup_punctuation"),
+        ("en", "softkey_bottom_sentence_popup_punctuation"),
+    ):
+        replace_once(
+            decoded / f"res/xml/keymapping_bottom_{bottom_symbol}_symbol.xml",
+            f'        <mapping view_id="@id/key_pos_bottom_symbol_2" key_id="@id/{sentence_key}" />\n',
+            f'        <mapping view_id="@id/key_pos_bottom_symbol_2" key_id="@id/{sentence_key}" />\n'
+            + comma_period_hidden_mappings,
+        )
+
+    # The slot must leave the layout, not just blank out, for the space bar to
+    # take the freed width. SoftKeyView restores whatever visibility the layout
+    # declared when an empty soft key is applied, so declare it gone.
+    for prime_bottom in (
+        decoded / "res/layout/keyboard_prime_bottom.xml",
+        decoded / "res/layout-sw600dp-v13/keyboard_prime_bottom.xml",
+    ):
+        replace_once(
+            prime_bottom,
+            '<com.google.android.apps.inputmethod.libs.framework.keyboard.SoftKeyView android:id="@id/key_pos_bottom_symbol_1" android:layout_weight="100.0" style="@style/SoftKey.Bottom.Dark" />',
+            '<com.google.android.apps.inputmethod.libs.framework.keyboard.SoftKeyView android:id="@id/key_pos_bottom_symbol_1" android:visibility="gone" android:layout_weight="100.0" style="@style/SoftKey.Bottom.Dark" />',
+        )
+        replace_once(
+            prime_bottom,
+            '<com.google.android.apps.inputmethod.libs.framework.keyboard.SoftKeyView android:id="@id/key_pos_bottom_symbol_2" android:layout_weight="100.0" style="@style/SoftKey.Bottom.Dark" />',
+            '<com.google.android.apps.inputmethod.libs.framework.keyboard.SoftKeyView android:id="@id/key_pos_bottom_symbol_2" android:visibility="gone" android:layout_weight="100.0" style="@style/SoftKey.Bottom.Dark" />',
+        )
+
+    # The freed slot must widen the space bar, and a layout cannot express a
+    # conditional weight. The comma slot therefore carries a SoftKeyView
+    # subclass that reads the two switches and moves their weight onto the
+    # space bar; the wrapping container keeps its own weight, so the language
+    # key and every other key keep their width. Only the comma slot owns this
+    # logic, so the arithmetic runs once per keyboard rather than twice. The
+    # slot class is still a SoftKeyView, so the framework treats it identically
+    # apart from the extra reweight step.
+    for prime_bottom in (
+        decoded / "res/layout/keyboard_prime_bottom.xml",
+        decoded / "res/layout-sw600dp-v13/keyboard_prime_bottom.xml",
+    ):
+        replace_once(
+            prime_bottom,
+            '<com.google.android.apps.inputmethod.libs.framework.keyboard.SoftKeyView android:id="@id/key_pos_bottom_symbol_1" android:visibility="gone"',
+            '<com.google.android.inputmethod.pinyin.CommaPeriodToggleKeyView android:id="@id/key_pos_bottom_symbol_1" android:visibility="gone"',
+        )
+
+    comma_period_view_src = ROOT / "patches/smali/CommaPeriodToggleKeyView.smali"
+    comma_period_view_dst = decoded / (
+        "smali/com/google/android/inputmethod/pinyin/CommaPeriodToggleKeyView.smali"
+    )
+    shutil.copyfile(comma_period_view_src, comma_period_view_dst)
+
+    # A merge re-applies its long-press definition by view id even after the
+    # slot has fallen back to softkey_empty, which would light the slot back up.
+    # Exclude the new state so the emoji long-press entry follows the switch and
+    # disappears together with the comma key.
+    replace_once(
+        decoded / "res/xml/keymapping_bottom_symbol_1_popup_switch_to_emoji.xml",
+        'exclude_state="INPUT_TYPE_EMAIL_ADDRESS,INPUT_TYPE_URI,SHOW_EMOJI_SWITCH_KEY"',
+        'exclude_state="INPUT_TYPE_EMAIL_ADDRESS,INPUT_TYPE_URI,SHOW_EMOJI_SWITCH_KEY,SHOW_COMMA_KEY"',
+    )
+
+    # The two new state bits live in the framework state table. Laku discovers
+    # every "STATE_*" static final long by reflection and runs two checks on
+    # each value: it must be a subset of a mask, and it must not already be
+    # owned by another state in the shared Lkm table.
+    #
+    # Bit ownership in the original APK, established by scanning every class
+    # that declares STATE_* (aku, abs, bdx) plus the four Laku$a runtime
+    # allocators (4,0x13)=19-22, (5,0x17)=23-27, (6,0x1c)=28-33, (0xa,0x22)=34-43:
+    #
+    #   bits 0-18    fixed flags
+    #   bits 19-43   handed out at runtime by the four allocators
+    #   bits 44-54   fixed flags
+    #   bit  55      free
+    #   bit  56      abs.STATE_SINGLE_CHARACTER_CANDIDATE
+    #   bit  57      abs.STATE_ENABLE_SC_TC_CONVERSION
+    #   bits 58-59   free
+    #   bit  60      bdx.STATE_SHUANGPIN_MS_ZIGUANG
+    #   bits 61-63   free
+    #
+    # So the two switches take bit 55 (comma) and bit 58 (period). An earlier
+    # attempt put the period on bit 56, which passes the range check but then
+    # fails the conflict check against abs.STATE_SINGLE_CHARACTER_CANDIDATE,
+    # crashing the IME at class-init time. Bit 58 is the nearest free bit after
+    # 55 that neither abs nor bdx owns.
+    #
+    # The mask in aku.<clinit> is widened from 0xffffffffffffff (bits 0-55) to
+    # 0x7ffffffffffffff (bits 0-58) so both new values are in range. Widening by
+    # three bits also makes bits 56-57 legal, which is harmless: those belong to
+    # abs and are registered by abs.<clinit>, while this mask only gates the
+    # fields aku.<clinit> registers. The runtime allocators never reach past
+    # bit 43, so the wider mask cannot collide with a generated state.
+    replace_once(
+        decoded / "smali/aku.smali",
+        "    const-wide v2, 0xffffffffffffffL\n",
+        "    const-wide v2, 0x7ffffffffffffffL\n",
+    )
+    replace_once(
+        decoded / "smali/aku.smali",
+        ".field public static final STATE_SHOW_EMOJI_SWITCH_KEY:J = 0x10000000000000L\n",
+        ".field public static final STATE_SHOW_COMMA_KEY:J = 0x80000000000000L\n"
+        "\n"
+        ".field public static final STATE_SHOW_EMOJI_SWITCH_KEY:J = 0x10000000000000L\n"
+        "\n"
+        ".field public static final STATE_SHOW_PERIOD_KEY:J = 0x400000000000000L\n",
+    )
+
+    # Keyboard.a()J assembles the state mask. Read the two switches with the
+    # by-name preference accessor, the same one the paired-punctuation switch
+    # uses, so no new resource id has to be baked into Smali. A switch that is
+    # on sets its "show" bit; the default state is therefore "shown", and an
+    # off switch simply leaves the bit clear for the keymapping to hide the key.
+    replace_once(
+        decoded / (
+            "smali/com/google/android/apps/inputmethod/libs/framework/keyboard/"
+            "Keyboard.smali"
+        ),
+        "    .line 288\n"
+        "    :cond_7\n"
+        "    iget-object v2, p0, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/Keyboard;->a:Landroid/view/inputmethod/EditorInfo;\n",
+        "    .line 288\n"
+        "    :cond_7\n"
+        "    iget-object v2, p0, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/Keyboard;->a:Lamx;\n"
+        "\n"
+        '    const-string v3, "show_comma_key"\n'
+        "\n"
+        "    const/4 v4, 0x1\n"
+        "\n"
+        "    invoke-virtual {v2, v3, v4}, Lamx;->a(Ljava/lang/String;Z)Z\n"
+        "\n"
+        "    move-result v2\n"
+        "\n"
+        "    if-eqz v2, :cond_7_comma\n"
+        "\n"
+        "    const-wide/high16 v2, 0x80000000000000L\n"
+        "\n"
+        "    or-long/2addr v0, v2\n"
+        "\n"
+        "    :cond_7_comma\n"
+        "    iget-object v2, p0, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/Keyboard;->a:Lamx;\n"
+        "\n"
+        '    const-string v3, "show_period_key"\n'
+        "\n"
+        "    const/4 v4, 0x1\n"
+        "\n"
+        "    invoke-virtual {v2, v3, v4}, Lamx;->a(Ljava/lang/String;Z)Z\n"
+        "\n"
+        "    move-result v2\n"
+        "\n"
+        "    if-eqz v2, :cond_7_period\n"
+        "\n"
+        "    const-wide/high16 v2, 0x400000000000000L\n"
+        "\n"
+        "    or-long/2addr v0, v2\n"
+        "\n"
+        "    :cond_7_period\n"
+        "    iget-object v2, p0, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/Keyboard;->a:Landroid/view/inputmethod/EditorInfo;\n",
+    )
+    replace_once(
+        decoded / "res/xml/keymapping_bottom_symbol_1_popup_switch_to_emoji_no_hint_icon.xml",
+        'state="EMOJI_AVAILABLE" exclude_state="INPUT_TYPE_EMAIL_ADDRESS,INPUT_TYPE_URI,SHOW_EMOJI_SWITCH_KEY"',
+        'state="EMOJI_AVAILABLE" exclude_state="INPUT_TYPE_EMAIL_ADDRESS,INPUT_TYPE_URI,SHOW_EMOJI_SWITCH_KEY,SHOW_COMMA_KEY"',
+    )
+    replace_once(
+        decoded / "res/xml/keymapping_bottom_symbol_1_popup_switch_to_emoji_no_hint_icon.xml",
+        'state="EMOJI_AVAILABLE+INPUT_TYPE_URI" exclude_state="SHOW_EMOJI_SWITCH_KEY"',
+        'state="EMOJI_AVAILABLE+INPUT_TYPE_URI" exclude_state="SHOW_EMOJI_SWITCH_KEY,SHOW_COMMA_KEY"',
     )
 
     # Paired-symbol completion is a general input-behaviour switch, so it lives
@@ -3318,8 +3551,9 @@ def main() -> None:
         action="store_true",
         help="enable Android debugging for an isolated non-formal audit ID",
     )
-    parser.add_argument("--version-name", default="2.0.2")
-    parser.add_argument("--version-code", type=int, default=4520387)
+    default_version_name, default_version_code = release_identity()
+    parser.add_argument("--version-name", default=default_version_name)
+    parser.add_argument("--version-code", type=int, default=default_version_code)
     args = parser.parse_args()
     apply(
         args.decoded.resolve(),
