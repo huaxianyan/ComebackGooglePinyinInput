@@ -82,7 +82,53 @@
 
 跨 APK 资源表是 AssetManager 层安全边界，加权限也绕不过。`ang`/`Lang` 只是同 APK 内双包名回退。**别再走这条。**
 
-## 五、当前工作树状态
+## 五、归档方式（便于将来重启）
+
+用户要求：**保留全部记录，保证 commit 连续性与可追溯性——失败开发也是开发。** 分支不删除，改为归档。
+
+### 归档锚点（指向同一提交 `a82d098`）
+
+| 引用 | 类型 | 位置 |
+| --- | --- | --- |
+| `archive/comma-period-toggle-2026-09-30` | 归档分支 | `a82d098` |
+| `archive/comma-period-toggle-2026-09-30-shelved` | 归档标签（含说明） | `a82d098` |
+| `feat/comma-period-toggle` | 原开发分支（保留不删） | `a82d098` |
+| `wip/comma-period-toggle-2026-09-30` | 早期封存点标签 | `2eca31a` |
+
+**说明**：`wip/` 标签指向更早的封存点（白屏版补丁的完整快照），保留了事故现场；`archive/` 锚点指向调研全部完成后的最终状态。两个都留着——事故现场本身也是记录。
+
+### 分支内容（9 个提交，`a2d5e58`..`a82d098`）
+
+```
+a82d098  docs: 逗号句号开关与 JSON 布局框架整体搁置
+03d890e  docs: T+ fork 参考实现调研
+0f59c0e  docs: 自定义布局框架（JSON 导入）技术评估
+1727554  docs: 纠正自定义布局判断——布局层不可运行期修改
+2e8fff0  docs: 用户自定义键位的可行边界与实施路径
+9c5d87e  docs: 布局扩展的产物归属问题与分层结论
+2ffcdcb  docs: 键盘布局插件化可行性调研（独立 APK 提供布局）
+8185f79  docs: 补记封存点到工作树快照
+a2d5e58  WIP(逗号句号开关): 白屏事故复盘 + 转向纯布局 + 效果对比数据
+```
+
+### 重启方式（三选一）
+
+1. **从归档分支续做**：`git checkout archive/comma-period-toggle-2026-09-30`
+2. **另开新分支**：`git checkout -b feat/xxx archive/comma-period-toggle-2026-09-30`
+3. **回看事故现场**：`git checkout wip/comma-period-toggle-2026-09-30`
+
+**注意**：归档分支与 `feat` 分支均**未推送远端**，目前只在本地。若需跨机器同步或防本地丢失，可显式推送：
+
+```
+git push origin archive/comma-period-toggle-2026-09-30
+git push origin archive/comma-period-toggle-2026-09-30-shelved
+```
+
+### 日常工作面
+
+已切回 `master`，工作树干净。补了一条 `.gitignore` 规则忽略 `dist-audit/`（审计包构建产物约 150 MB，属生成物）。
+
+## 六、当前工作树状态
 
 - 分支：`feat/comma-period-toggle`
 - 封存标签：`wip/comma-period-toggle-2026-09-30`
@@ -111,7 +157,7 @@
 | `docs/custom-layout-*.md`、`docs/keyboard-layout-*.md` | 调研文档（结论仍有价值） |
 | `docs/reference-tplus-fork.md` | T+ 参考实现调研 |
 
-## 六、调研成果保留
+## 七、调研成果保留
 
 本轮调研虽然需求搁置，但**技术结论有长期价值**，已归档：
 
