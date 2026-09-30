@@ -47,3 +47,10 @@ d113e82ef0129a6230dbca73c6d2e694cfe416fb  docs/comma-period-toggle-design.md
 531025918ce55db39c31240fc150fc972911e8c9  patches/smali/CommaPeriodToggleKeyView.smali
 5648997908e7f92206cf8bcb223227cbe6573b94  scripts/build_audit.ps1
 fb4bef0e2506e33ad166e41f99a2149630524ac0  scripts/verify_comma_period_toggle.py
+
+=== 封存点 ===
+提交：a2d5e58a14166aea989d84ee65b0bad3dfe0010b
+标签：wip/comma-period-toggle-2026-09-30
+分支：feat/comma-period-toggle
+封存时间：2026-09-30 12:10 (+08:00)
+说明：方案已定（纯布局 + keymapping，方案 B），代码未实施，待用户拍板。
