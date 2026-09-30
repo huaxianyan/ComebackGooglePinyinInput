@@ -36,11 +36,14 @@
 
 - 方向已定：**目标为真动态配色（Material You），按系统能力降级**——只有 `API >= 31` 的设备启用动态槽，其余版本完全走现有三槽逻辑（零改动零风险）。
 - 降级判据单一且明确：`Build.VERSION.SDK_INT >= 31`。
-- 系统动态色资源 id 是 framework 资源（`0x01` 前缀，本 APK 是 `0x7f`），编译期内联为字面量，**跨 API 版本稳定**（已实测 API 35/36/37.2 完全一致），可直接硬编码，不随本 APK 资源表重排失效。
+- 系统动态色资源**必须按资源名取，不能硬编码 id**。真机实测（Pixel 10 Pro / Android 16）证明：android.jar 是编译期符号表，真机 framework 资源 id 运行时分配，两者不等同（`0x01060037` 真机不存在，真机 accent1 起于 `0x010603ba`）。先前基于 android.jar 的「id 跨版本稳定可硬编码」结论**已被真机推翻**。
+- 系统动态色资源在 Android 16 上按深浅色拆分为独立 id（`system_accent1_100_dark` / `_light`），正好对应浅色槽/深色槽设计，取色不依赖 `uiMode`。
+- **不需要移植 Material Color Utilities**：系统已算好完整语义色（`system_primary_light`、`system_surface_container_dark` 等），实测应用进程内 `getIdentifier` + `getColor` 全部可读（18/18 语义色、色阶色全命中）。
 - 主题包可在运行期用代码构造（`baj` 写入器），经 `files:` 前缀通路（原版既有）加载，写入与读取的 zip 条目名完全一致。
 - 架构上新增 `SLOT_DYNAMIC` 作为第四槽，接进现有 `SystemAutoThemeCompat` 机制。
 - 项目约束 AndroidX-free，`ContextCompat.getColor` 不可用，只能用平台 `getResources().getColor(int, Theme)`（API 23+）。
-- 三项真机实测是前置条件，反编译不能替代：运行期读系统色、代码造主题包能否渲染、最小可行样式表。详见 [动态配色定向验证](../dynamic-color-theme-verification.md)。
+- 三项真机实测中，**实测①（运行期读系统色）已通过**（Pixel 10 Pro / Android 16，100% 命中）；实测②③待做。详见 [动态配色实测①](../dynamic-color-device-test-1.md)。
+- 远程设备接入必须用 server 模式：`ADB_SERVER_SOCKET=tcp:<ip>:15037` 或 `adb -H <ip> -P <port>`。**`adb connect <ip>:15037` 会永远 `offline`**（语义错配：转发器暴露的是整个 ADB server，不是一台设备）。
 
 ## 已知坑与结论
 
