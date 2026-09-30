@@ -42,9 +42,14 @@
 - 主题包可在运行期用代码构造（`baj` 写入器），经 `files:` 前缀通路（原版既有）加载，写入与读取的 zip 条目名完全一致。
 - 架构上新增 `SLOT_DYNAMIC` 作为第四槽，接进现有 `SystemAutoThemeCompat` 机制。
 - 项目约束 AndroidX-free，`ContextCompat.getColor` 不可用，只能用平台 `getResources().getColor(int, Theme)`（API 23+）。
-- 三项真机实测中，**实测①（运行期读系统色）已通过**（Pixel 10 Pro / Android 16，100% 命中）；实测②③待做。详见 [动态配色实测①](../dynamic-color-device-test-1.md)。
+- 三项真机实测**全部通过**：实测①（运行期读系统色，40/40 命中）、实测②（自造主题包可渲染，键盘区 96.6% 探针色）、实测③（系统色→主题包→渲染全链路，`color_base` 精确等于 `system_surface_light`）。详见 [实测①](../dynamic-color-device-test-1.md)、[实测②③](../dynamic-color-device-test-2.md)。
+- **主题生效键是 `additional_keyboard_theme`，不是 `keyboard_theme`**（实测②结论）。`baq.a(Context)` 中 `additional_keyboard_theme` 非空即短路，`keyboard_theme` 被完全忽略；且只写 `keyboard_theme` 时 `gc.b()` 校验必然失败（值无 `assets:`/`files:`/`system:` 前缀）而退回内置主题。**自定义主题只能通过 `additional_keyboard_theme` 注入，值必须以三种前缀之一开头。**
+- **`ThemePackageMetadata` 字段映射已纠正**：`field1`=int 版本（可省略）、`field2`=**repeated string 主 style_sheet 文件名列表**、`field3`=嵌套消息含 border 文件列表。此前把 `field2` 当主题名、`field3` 当单文件列表是错的，会导致 `bbl.a(File)Z` 校验失败。**最稳做法：照抄某个内置主题 metadata 的原始字节。**
+- **系统色 → 键盘槽映射已跑通**（实测③，20 槽）：`color_base←system_surface_light`、`color_header←system_surface_container_light`、`color_label←system_on_surface_light`、`color_icon←system_on_surface_variant_light`、`color_state_action←system_primary_light`、`color_state_action_pressed←system_primary_container_light`、`color_popup_background←system_surface_container_high_light`、`color_keyboard_separator←system_outline_variant_light`。完整表见 [实测②③](../dynamic-color-device-test-2.md)。
+- 实测②证据：`additional_keyboard_theme=files:user_theme_000000000000001_00.zip`，键盘区 **96.6% 像素为 `#FF00FF`**（`work/dynamic-color-probe/shots/probe_v3_additional.png`）；仅改该单键亦生效。
 - 远程设备接入必须用 server 模式：`ADB_SERVER_SOCKET=tcp:<ip>:15037` 或 `adb -H <ip> -P <port>`。**`adb connect <ip>:15037` 会永远 `offline`**（语义错配：转发器暴露的是整个 ADB server，不是一台设备）。
 - **实测载体必须干净**：首轮实测②用的是 2.2.0 失败产物（`pairauto` 包），结论作废。2.2.0 是「System Auto 主题」方向的失败尝试，不在 git / CHANGELOG / 任何记录中，功能已定性**暂不做**，其产物与设备包已清理。
+- `SystemAutoThemeCompat.debugLog` **仅在 `ApplicationInfo.flags & 0x2`（FLAG_DEBUGGABLE）时输出**。release-like 包无 `SystemAutoTheme` 日志属正常，**不能据此判定该类未被调用**——调用链已确认：`PinyinIME` → `Labp` → `GoogleInputMethodService.onCreate()` → `applyOnCreate`。
 - 已有的「跟随系统深浅色」是 `SystemAutoThemeCompat` **三槽模型**（`followThemeEnabled + light + dark + fixed`），commit `f3b264c`，**自 2.0.1 起在正式版中**。动态配色是**在此模型上加第四槽 `SLOT_DYNAMIC`**，不是从零开始。
 - 因系统语义色现成可用，**颜色推导算法这一最大工作量项被移除**，动态配色难度由「高」下调；剩余工作集中在「系统色 → 键盘色槽」映射表。详见 [动态配色实测②③](../dynamic-color-device-test-2.md)。
 
