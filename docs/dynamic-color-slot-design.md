@@ -1158,7 +1158,8 @@ adb exec-out screencap -p > shot.png
 | 6 | **改 `modern-settings/` 的 10 个文件**（见 5.3.3 清单） | `:compose-runtime:testDebugUnitTest` **73 用例全过** | ✅ |
 | 7 | 阶段 A 比对（`scripts/test_dynamic_color_rewrite.py`） | **4/4 MATCH**，槽位覆盖 20/20 | ✅ |
 | 8 | 构建隔离包（**Compose host 全链路**，见 5.2） | `dist/dyn-host-debug.apk`，v1/v2/v3 签名 + 16 KiB 对齐通过 | ✅ |
-| 9 | **真机阶段 C~G + 交互专项 I-7~I-12** | 见第七节 | ⬜ 待设备 |
+| 9 | `verify_modern_settings_runtime.py` 完整运行 | 对最终组装包解码后运行，输出 `official Compose Material 3 settings runtime verified` | ✅ |
+| 10 | **真机阶段 C~G + 交互专项 I-7~I-12** | 见第七节 | ⬜ 待设备 |
 
 **实施中已解决的实测点**：
 
