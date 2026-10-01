@@ -79,6 +79,15 @@ public final class SystemAutoThemeCompat {
     private static final String MODE_DARK = "dark";
 
     /**
+     * Outcome of a palette sync. "Rebuilt" and "unchanged" are both usable, but
+     * only a rebuild means the view on screen is now showing stale colors and
+     * has to be rebuilt for the new palette to appear.
+     */
+    private static final int SYNC_UNAVAILABLE = 0;
+    private static final int SYNC_UNCHANGED = 1;
+    private static final int SYNC_REBUILT = 2;
+
+    /**
      * Zip entries other than metadata, in the exact order the original
      * packaging tool used. Entry names equal the asset template names, so the
      * generated package can be diffed against {@code assets/theme/} directly.
@@ -315,7 +324,17 @@ public final class SystemAutoThemeCompat {
     public static boolean applyIfEnabled(Context context, Configuration configuration) {
         debugLog(context, "configuration uiMode=" + configuration.uiMode);
         ensureInitialized(context);
-        if (hasSelectionSession(context) || !isEnabled(context)) {
+        if (hasSelectionSession(context)) {
+            return false;
+        }
+        // The generated palette follows the same light and dark switch, so it
+        // has to be resolved on a configuration change too. Leaving it out
+        // would refresh the palette only on the next process start, and the
+        // keyboard would keep drawing the mode the user just left.
+        if (isDynamicEnabled(context)) {
+            return applyConfiguredTheme(context, configuration);
+        }
+        if (!isEnabled(context)) {
             return false;
         }
         return writeSlot(
@@ -352,11 +371,16 @@ public final class SystemAutoThemeCompat {
         }
         if (isDynamicEnabled(context)) {
             boolean dark = isDark(configuration);
-            if (syncDynamicTheme(context, dark)) {
-                return writeSlot(
+            int sync = syncDynamicTheme(context, dark);
+            if (sync != SYNC_UNAVAILABLE) {
+                boolean written = writeSlot(
                         context,
                         SLOT_DYNAMIC,
                         dark ? "resolved target=dynamic-dark" : "resolved target=dynamic-light");
+                // A rebuilt package changes what the view should draw even when
+                // the resolved preference pair is byte-identical, so the caller
+                // must rebuild the view for the new palette to appear.
+                return sync == SYNC_REBUILT || written;
             }
             // The generated package is unavailable. Pointing the runtime at a
             // file that is not there would fail the original metadata check and
@@ -398,13 +422,14 @@ public final class SystemAutoThemeCompat {
     /**
      * Makes sure the generated package matches the current palette.
      *
-     * <p>Returns whether a usable package exists afterwards, which is not the
-     * same as "was it rebuilt". An unchanged palette with a package already on
-     * disk is the common path and returns true without touching the file; a
-     * failed build still returns true when a previous package survived, because
-     * a slightly stale palette beats no palette at all.</p>
+     * <p>Returns whether a usable package exists and whether it had to be
+     * rebuilt, which are different questions. An unchanged palette with a
+     * package already on disk is the common path and reports
+     * {@link #SYNC_UNCHANGED}; a failed build still reports a usable package
+     * when a previous one survived, because a slightly stale palette beats no
+     * palette at all.</p>
      */
-    private static boolean syncDynamicTheme(Context context, boolean dark) {
+    private static int syncDynamicTheme(Context context, boolean dark) {
         Map<String, Integer> colors = resolveDynamicColors(context, dark);
         String signature = dynamicSignature(dark, colors);
         SharedPreferences preferences = preferences(context);
@@ -412,15 +437,15 @@ public final class SystemAutoThemeCompat {
         if (target.isFile()
                 && signature.equals(preferences.getString(DYNAMIC_SIGNATURE_KEY, null))) {
             debugLog(context, "dynamic palette unchanged");
-            return true;
+            return SYNC_UNCHANGED;
         }
         if (!buildDynamicThemePackage(context, dark, colors)) {
             debugLog(context, "dynamic theme package build failed");
-            return target.isFile();
+            return target.isFile() ? SYNC_UNCHANGED : SYNC_UNAVAILABLE;
         }
         preferences.edit().putString(DYNAMIC_SIGNATURE_KEY, signature).commit();
         debugLog(context, "dynamic theme package rebuilt");
-        return true;
+        return SYNC_REBUILT;
     }
 
     /** Reads the platform palette by resource name; missing entries keep the template color. */

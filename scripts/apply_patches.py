@@ -2920,9 +2920,18 @@ def apply(
     )
     # A wallpaper change recolors the system palette without raising any
     # configuration change, so nothing in the framework would notice. The
-    # keyboard-popup hook is the cheapest place to compare the palette: when it
-    # is unchanged the call writes nothing at all. The result is deliberately
-    # discarded, the same way applyOnCreate's is, so no register is disturbed.
+    # keyboard-popup hook is the cheapest place to compare the palette. When the
+    # palette is unchanged it writes nothing; when it was rebuilt the view on
+    # screen still holds the old colors, so rebuild it the same way the
+    # configuration exits do. One extra local is taken because every register
+    # below v7 is still live at this point.
+    replace_once(
+        framework,
+        ".method public onStartInputView(Landroid/view/inputmethod/EditorInfo;Z)V\n"
+        "    .locals 7",
+        ".method public onStartInputView(Landroid/view/inputmethod/EditorInfo;Z)V\n"
+        "    .locals 8",
+    )
     replace_once(
         framework,
         "    .line 541\n"
@@ -2934,6 +2943,13 @@ def apply(
         "InputMethodService;->onStartInputView(Landroid/view/inputmethod/EditorInfo;Z)V\n\n"
         "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/"
         "SystemAutoThemeCompat;->applyOnKeyboardShown(Landroid/content/Context;)Z\n\n"
+        "    move-result v7\n\n"
+        "    if-eqz v7, :system_auto_theme_shown_done\n\n"
+        "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/"
+        "SystemAutoThemeCompat;->logInputViewRebuild(Landroid/content/Context;)V\n\n"
+        "    invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/libs/framework/"
+        "core/GoogleInputMethodService;->c()V\n\n"
+        "    :system_auto_theme_shown_done\n"
         "    .line 542",
     )
 

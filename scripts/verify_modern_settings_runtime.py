@@ -1196,14 +1196,19 @@ def main() -> int:
                 "move-result v9",
                 "SystemAutoThemeCompat;->logInputViewRebuild(Landroid/content/Context;)V",
                 "SystemAutoThemeCompat;->applyOnKeyboardShown(Landroid/content/Context;)Z",
+                "move-result v7",
+                ":system_auto_theme_shown_done",
                 "GoogleInputMethodService;->c()V",
             ),
             "IME System Auto configuration hooks",
         )
         if google_ime_text.count(
             "SystemAutoThemeCompat;->logInputViewRebuild(Landroid/content/Context;)V"
-        ) != 2:
-            raise RuntimeError("both IME configuration exits must rebuild an updated auto theme")
+        ) != 3:
+            raise RuntimeError(
+                "both configuration exits and the keyboard-popup hook must rebuild "
+                "an updated auto theme"
+            )
 
         operations_helper = decoded / (
             "smali/com/google/android/inputmethod/pinyin/DictionaryOperationsCompat.smali"
