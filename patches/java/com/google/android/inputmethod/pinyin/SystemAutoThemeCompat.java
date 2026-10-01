@@ -5,24 +5,45 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.res.Configuration;
+import android.content.res.Resources;
+import android.os.Build;
 import android.util.Log;
 
+import java.io.ByteArrayOutputStream;
+import java.io.Closeable;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.nio.charset.Charset;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.zip.CRC32;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * Old-ART-safe theme-slot bridge over the original two-key theme runtime.
  *
- * <p>Three complete theme specifications are persisted independently. The two
+ * <p>Four complete theme specifications are persisted independently. The two
  * original theme preferences are only the materialized runtime output, so
  * enabling automatic selection never destroys the fixed theme and disabling it
  * restores that theme exactly.</p>
+ *
+ * <p>The fourth slot is a generated package whose main style sheet is recolored
+ * from the platform Material You palette. It is gated on API 31+, off by
+ * default, and while disabled it changes nothing at all: the original three
+ * slots keep behaving exactly as before.</p>
  */
 public final class SystemAutoThemeCompat {
     public static final String AUTO_THEME_KEY = "compat_system_auto_keyboard_theme";
+    public static final String DYNAMIC_THEME_KEY = "compat_system_dynamic_color_theme";
     public static final String SLOT_LIGHT = "light";
     public static final String SLOT_DARK = "dark";
     public static final String SLOT_FIXED = "fixed";
+    public static final String SLOT_DYNAMIC = "dynamic";
 
     private static final String DIAGNOSTIC_TAG = "SystemAutoTheme";
     private static final String INITIALIZED_KEY = "compat_theme_slots_initialized";
@@ -33,6 +54,9 @@ public final class SystemAutoThemeCompat {
     private static final String DARK_ADDITIONAL_KEY = "compat_theme_dark_additional";
     private static final String FIXED_BASE_KEY = "compat_theme_fixed_keyboard";
     private static final String FIXED_ADDITIONAL_KEY = "compat_theme_fixed_additional";
+    private static final String DYNAMIC_BASE_KEY = "compat_theme_dynamic_keyboard";
+    private static final String DYNAMIC_ADDITIONAL_KEY = "compat_theme_dynamic_additional";
+    private static final String DYNAMIC_SIGNATURE_KEY = "compat_theme_dynamic_signature";
 
     // Stable IDs from the original 4.5.2 resource table.
     private static final int PREF_KEY_ADDITIONAL_THEME = 0x7f11023a;
@@ -40,6 +64,99 @@ public final class SystemAutoThemeCompat {
     private static final int BASE_MATERIAL_THEME = 0x7f110226;
     private static final int MATERIAL_DARK_THEME = 0x7f110224;
     private static final int MATERIAL_LIGHT_THEME = 0x7f110225;
+
+    /** Material You semantic colors only exist from Android 12. */
+    private static final int DYNAMIC_MIN_SDK = 31;
+
+    private static final String DYNAMIC_PACKAGE_NAME = "dynamic_theme.zip";
+    private static final String DYNAMIC_PACKAGE_TEMP_NAME = "dynamic_theme.tmp";
+    private static final String DYNAMIC_ADDITIONAL_PREFIX = "files:";
+    private static final String ASSET_DIRECTORY = "theme/";
+    private static final String METADATA_ENTRY = "metadata.binarypb";
+    private static final String MATERIAL_TEMPLATE_PREFIX = "style_sheet_material_";
+    private static final String METADATA_TEMPLATE_PREFIX = "theme_package_metadata_material_";
+    private static final String MODE_LIGHT = "light";
+    private static final String MODE_DARK = "dark";
+
+    /**
+     * Zip entries other than metadata, in the exact order the original
+     * packaging tool used. Entry names equal the asset template names, so the
+     * generated package can be diffed against {@code assets/theme/} directly.
+     * The entry named {@code style_sheet_material_<mode>.binarypb} is the one
+     * that gets recolored; every other entry is copied byte for byte.
+     */
+    private static final String[] DYNAMIC_ENTRIES_LIGHT = {
+        "style_sheet_color_common.binarypb",
+        "style_sheet_material_light.binarypb",
+        "style_sheet_color_gif_light.binarypb",
+        "style_sheet_color_rules.binarypb",
+        "style_sheet_material_rules.binarypb",
+        "style_sheet_material_light_border.binarypb",
+        "style_sheet_color_rules_border.binarypb",
+        "style_sheet_material_rules_border.binarypb",
+    };
+    private static final String[] DYNAMIC_ENTRIES_DARK = {
+        "style_sheet_color_common.binarypb",
+        "style_sheet_material_dark.binarypb",
+        "style_sheet_color_gif_dark.binarypb",
+        "style_sheet_color_rules.binarypb",
+        "style_sheet_material_rules.binarypb",
+        "style_sheet_material_dark_border.binarypb",
+        "style_sheet_color_rules_border.binarypb",
+        "style_sheet_material_rules_border.binarypb",
+    };
+
+    /**
+     * Keyboard style slot to Material You color name. The concrete resource is
+     * this name plus {@code _light} or {@code _dark}. Both arrays must stay in
+     * step; they are parallel by index so the mapping reads as a table.
+     */
+    private static final String[] DYNAMIC_SLOT_NAMES = {
+        "color_base",
+        "color_header",
+        "color_popup_background",
+        "color_access_points_menu_background",
+        "color_access_point_panel_item_background",
+        "color_label",
+        "color_label_header_active",
+        "color_popup_label",
+        "color_icon",
+        "color_state_action",
+        "color_state_action_pressed",
+        "color_action_default",
+        "color_label_dynamic",
+        "color_keyboard_editing_button",
+        "color_keyboard_editing_button_background",
+        "color_key_paging_scrollbar",
+        "color_notice_text",
+        "color_state_popup_item_pressed",
+        "color_generic_extension_background_activated",
+        "color_keyboard_separator",
+    };
+    private static final String[] DYNAMIC_SLOT_RESOURCES = {
+        "system_surface",
+        "system_surface_container",
+        "system_surface_container_high",
+        "system_surface",
+        "system_surface",
+        "system_on_surface",
+        "system_on_surface",
+        "system_on_surface",
+        "system_on_surface_variant",
+        "system_primary",
+        "system_primary_container",
+        "system_primary",
+        "system_primary",
+        "system_primary",
+        "system_primary_container",
+        "system_primary",
+        "system_primary",
+        "system_primary_container",
+        "system_secondary_container",
+        "system_outline_variant",
+    };
+
+    private static final Charset UTF_8 = Charset.forName("UTF-8");
 
     private SystemAutoThemeCompat() {}
 
@@ -52,9 +169,41 @@ public final class SystemAutoThemeCompat {
         SharedPreferences.Editor editor = preferences(context).edit()
                 .remove(SELECTION_SLOT_KEY);
         if (enabled) {
-            editor.putBoolean(AUTO_THEME_KEY, true);
+            // The two automatic modes cannot both own the resolved theme pair.
+            editor.putBoolean(AUTO_THEME_KEY, true).remove(DYNAMIC_THEME_KEY);
         } else {
             editor.remove(AUTO_THEME_KEY);
+        }
+        editor.commit();
+        applyConfiguredTheme(context, context.getResources().getConfiguration());
+    }
+
+    /** Whether the platform exposes a Material You palette at all. */
+    public static boolean supportsDynamicColor() {
+        return Build.VERSION.SDK_INT >= DYNAMIC_MIN_SDK;
+    }
+
+    public static boolean isDynamicEnabled(Context context) {
+        return supportsDynamicColor()
+                && preferences(context).getBoolean(DYNAMIC_THEME_KEY, false);
+    }
+
+    /**
+     * Enables or disables the generated-palette slot.
+     *
+     * <p>Enabling suppresses automatic selection: both follow the system light
+     * and dark switch, so letting them both write the resolved pair would make
+     * the owner ambiguous. Disabling suppresses nothing, so the previous
+     * follow-system or fixed choice is restored untouched.</p>
+     */
+    public static void setDynamicEnabled(Context context, boolean enabled) {
+        ensureInitialized(context);
+        SharedPreferences.Editor editor = preferences(context).edit()
+                .remove(SELECTION_SLOT_KEY);
+        if (enabled) {
+            editor.putBoolean(DYNAMIC_THEME_KEY, true).remove(AUTO_THEME_KEY);
+        } else {
+            editor.remove(DYNAMIC_THEME_KEY);
         }
         editor.commit();
         applyConfiguredTheme(context, context.getResources().getConfiguration());
@@ -64,7 +213,7 @@ public final class SystemAutoThemeCompat {
     public static void beginSelection(Context context, String slot) {
         ensureInitialized(context);
         boolean automatic = isEnabled(context);
-        if (!isValidSlot(slot)
+        if (!isSelectableSlot(slot)
                 || (SLOT_FIXED.equals(slot) ? automatic : !automatic)) {
             throw new IllegalStateException("Theme slot is disabled");
         }
@@ -83,7 +232,7 @@ public final class SystemAutoThemeCompat {
         ensureInitialized(context);
         SharedPreferences preferences = preferences(context);
         String slot = preferences.getString(SELECTION_SLOT_KEY, null);
-        if (!isValidSlot(slot)) {
+        if (!isSelectableSlot(slot)) {
             return false;
         }
         String[] selected = resolveCurrentTheme(context);
@@ -96,13 +245,16 @@ public final class SystemAutoThemeCompat {
         return true;
     }
 
-    /** Legacy fixed-theme selection exits automatic mode unless a slot session owns it. */
+    /** Legacy fixed-theme selection exits every automatic mode unless a slot session owns it. */
     public static void disable(Context context) {
         ensureInitialized(context);
         if (hasSelectionSession(context)) {
             return;
         }
-        preferences(context).edit().remove(AUTO_THEME_KEY).commit();
+        preferences(context).edit()
+                .remove(AUTO_THEME_KEY)
+                .remove(DYNAMIC_THEME_KEY)
+                .commit();
     }
 
     /** Captures an ordinary legacy selector write as the durable fixed slot. */
@@ -172,6 +324,23 @@ public final class SystemAutoThemeCompat {
                 isDark(configuration) ? "resolved target=dark" : "resolved target=light");
     }
 
+    /**
+     * Keyboard-popup checkpoint for the generated palette.
+     *
+     * <p>A wallpaper change alters the system palette without raising any
+     * configuration change, so the only cheap way to notice is to compare the
+     * resolved palette on a hook that already runs constantly. When the
+     * signature is unchanged this costs a preference read plus the palette
+     * lookups and writes nothing.</p>
+     */
+    public static boolean applyOnKeyboardShown(Context context) {
+        if (!isDynamicEnabled(context)) {
+            return false;
+        }
+        ensureInitialized(context);
+        return applyConfiguredTheme(context, context.getResources().getConfiguration());
+    }
+
     /** Debug builds only: records framework rebuild without settings or text data. */
     public static void logInputViewRebuild(Context context) {
         debugLog(context, "rebuilding InputView after automatic theme resolution");
@@ -180,6 +349,21 @@ public final class SystemAutoThemeCompat {
     private static boolean applyConfiguredTheme(Context context, Configuration configuration) {
         if (hasSelectionSession(context)) {
             return false;
+        }
+        if (isDynamicEnabled(context)) {
+            boolean dark = isDark(configuration);
+            if (syncDynamicTheme(context, dark)) {
+                return writeSlot(
+                        context,
+                        SLOT_DYNAMIC,
+                        dark ? "resolved target=dynamic-dark" : "resolved target=dynamic-light");
+            }
+            // The generated package is unavailable. Pointing the runtime at a
+            // file that is not there would fail the original metadata check and
+            // drop the keyboard to the built-in default, which is worse than
+            // simply keeping the theme the user already had. Fall through and
+            // resolve normally instead; the next palette change retries.
+            debugLog(context, "dynamic package unavailable, resolving the legacy pair");
         }
         if (isEnabled(context)) {
             boolean dark = isDark(configuration);
@@ -211,6 +395,341 @@ public final class SystemAutoThemeCompat {
         return committed;
     }
 
+    /**
+     * Makes sure the generated package matches the current palette.
+     *
+     * <p>Returns whether a usable package exists afterwards, which is not the
+     * same as "was it rebuilt". An unchanged palette with a package already on
+     * disk is the common path and returns true without touching the file; a
+     * failed build still returns true when a previous package survived, because
+     * a slightly stale palette beats no palette at all.</p>
+     */
+    private static boolean syncDynamicTheme(Context context, boolean dark) {
+        Map<String, Integer> colors = resolveDynamicColors(context, dark);
+        String signature = dynamicSignature(dark, colors);
+        SharedPreferences preferences = preferences(context);
+        File target = new File(context.getFilesDir(), DYNAMIC_PACKAGE_NAME);
+        if (target.isFile()
+                && signature.equals(preferences.getString(DYNAMIC_SIGNATURE_KEY, null))) {
+            debugLog(context, "dynamic palette unchanged");
+            return true;
+        }
+        if (!buildDynamicThemePackage(context, dark, colors)) {
+            debugLog(context, "dynamic theme package build failed");
+            return target.isFile();
+        }
+        preferences.edit().putString(DYNAMIC_SIGNATURE_KEY, signature).commit();
+        debugLog(context, "dynamic theme package rebuilt");
+        return true;
+    }
+
+    /** Reads the platform palette by resource name; missing entries keep the template color. */
+    private static Map<String, Integer> resolveDynamicColors(Context context, boolean dark) {
+        Resources resources = context.getResources();
+        Resources.Theme theme = context.getTheme();
+        String suffix = dark ? "_dark" : "_light";
+        Map<String, Integer> colors = new HashMap<String, Integer>();
+        for (int index = 0; index < DYNAMIC_SLOT_NAMES.length; index++) {
+            String resource = DYNAMIC_SLOT_RESOURCES[index] + suffix;
+            int identifier = resources.getIdentifier(resource, "color", "android");
+            if (identifier == 0) {
+                continue;
+            }
+            try {
+                colors.put(
+                        DYNAMIC_SLOT_NAMES[index],
+                        Integer.valueOf(resources.getColor(identifier, theme)));
+            } catch (RuntimeException ignored) {
+                // A ROM that declares the name but cannot resolve it falls back
+                // to the template color for this one slot only.
+            }
+        }
+        return colors;
+    }
+
+    private static String dynamicSignature(boolean dark, Map<String, Integer> colors) {
+        StringBuilder builder = new StringBuilder(dark ? MODE_DARK : MODE_LIGHT);
+        for (int index = 0; index < DYNAMIC_SLOT_NAMES.length; index++) {
+            Integer value = colors.get(DYNAMIC_SLOT_NAMES[index]);
+            builder.append(':');
+            if (value != null) {
+                builder.append(Integer.toHexString(value.intValue()));
+            }
+        }
+        return builder.toString();
+    }
+
+    /**
+     * Writes the generated package through a temporary file and swaps it in.
+     *
+     * <p>A half-written package would fail the original metadata check and drop
+     * the keyboard to the default theme, so the swap either replaces the whole
+     * file or leaves the previous one untouched.</p>
+     */
+    private static boolean buildDynamicThemePackage(
+            Context context, boolean dark, Map<String, Integer> colors) {
+        String mode = dark ? MODE_DARK : MODE_LIGHT;
+        String materialName = MATERIAL_TEMPLATE_PREFIX + mode + ".binarypb";
+        String[] entries = dark ? DYNAMIC_ENTRIES_DARK : DYNAMIC_ENTRIES_LIGHT;
+        byte[][] payloads = new byte[entries.length][];
+        for (int index = 0; index < entries.length; index++) {
+            String name = entries[index];
+            byte[] data = templateBytes(context, name);
+            if (data == null) {
+                debugLog(context, "dynamic template missing: " + name);
+                return false;
+            }
+            if (materialName.equals(name)) {
+                data = rewriteStyleSheetColors(data, colors);
+                if (data == null) {
+                    debugLog(context, "dynamic style sheet rewrite failed");
+                    return false;
+                }
+            }
+            payloads[index] = data;
+        }
+        byte[] metadata = templateBytes(context, METADATA_TEMPLATE_PREFIX + mode + ".binarypb");
+        if (metadata == null) {
+            debugLog(context, "dynamic template missing: metadata");
+            return false;
+        }
+
+        File target = new File(context.getFilesDir(), DYNAMIC_PACKAGE_NAME);
+        File temporary = new File(context.getFilesDir(), DYNAMIC_PACKAGE_TEMP_NAME);
+        ZipOutputStream zip = null;
+        try {
+            zip = new ZipOutputStream(new FileOutputStream(temporary));
+            putStoredEntry(zip, METADATA_ENTRY, metadata);
+            for (int index = 0; index < entries.length; index++) {
+                putStoredEntry(zip, entries[index], payloads[index]);
+            }
+        } catch (IOException e) {
+            debugLog(context, "dynamic theme package write failed");
+            closeQuietly(zip);
+            temporary.delete();
+            return false;
+        }
+        closeQuietly(zip);
+
+        if (!temporary.renameTo(target)) {
+            // Some volumes refuse an in-place replace; retry once without the
+            // previous package so a stale file can never win over the new one.
+            if (!target.delete() || !temporary.renameTo(target)) {
+                temporary.delete();
+                debugLog(context, "dynamic theme package replace failed");
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Recolors a StyleSheetProto message in place.
+     *
+     * <p>Wire format:
+     * <pre>
+     * StyleSheet          field 2 (0x12) = repeated StyleRule
+     * StyleRule           field 1 (0x0a) = string  property name
+     *                     field 2 (0x12) = StylePropertyValue
+     *                     field 3 (0x1a) = int     selector
+     * StylePropertyValue  field 1 (0x08) = int     ARGB color
+     *                     field 2 (0x12) = repeated int
+     * </pre>
+     *
+     * <p>Only a rule whose value block is a bare color varint is rebuilt, and
+     * only its length is recomputed. Every other byte is passed through
+     * untouched, so a rule this mapping does not know about cannot be damaged
+     * by a parse it never needed.</p>
+     */
+    public static byte[] rewriteStyleSheetColors(byte[] source, Map<String, Integer> colorMap) {
+        if (source == null || colorMap == null) {
+            return null;
+        }
+        ByteArrayOutputStream output = new ByteArrayOutputStream(source.length);
+        int total = source.length;
+        int position = 0;
+        while (position < total) {
+            if ((source[position] & 0xFF) != 0x12) {
+                break;
+            }
+            position++;
+            long[] length = new long[1];
+            position = readVarint(source, position, length);
+            if (position < 0) {
+                return null;
+            }
+            int ruleStart = position;
+            int ruleEnd = ruleStart + (int) length[0];
+            if (ruleEnd > total || ruleEnd < ruleStart) {
+                return null;
+            }
+
+            String name = null;
+            long color = 0L;
+            boolean hasColor = false;
+            int selector = 0;
+            boolean hasSelector = false;
+
+            int cursor = ruleStart;
+            while (cursor < ruleEnd) {
+                int tag = source[cursor] & 0xFF;
+                cursor++;
+                if (tag == 0x0A) {
+                    long[] nameLength = new long[1];
+                    cursor = readVarint(source, cursor, nameLength);
+                    if (cursor < 0) {
+                        return null;
+                    }
+                    int nameEnd = cursor + (int) nameLength[0];
+                    if (nameEnd > ruleEnd) {
+                        return null;
+                    }
+                    name = new String(source, cursor, (int) nameLength[0], UTF_8);
+                    cursor = nameEnd;
+                } else if (tag == 0x12) {
+                    long[] valueLength = new long[1];
+                    cursor = readVarint(source, cursor, valueLength);
+                    if (cursor < 0) {
+                        return null;
+                    }
+                    int valueEnd = cursor + (int) valueLength[0];
+                    if (valueEnd > ruleEnd) {
+                        return null;
+                    }
+                    if (cursor < valueEnd && (source[cursor] & 0xFF) == 0x08) {
+                        long[] value = new long[1];
+                        if (readVarint(source, cursor + 1, value) < 0) {
+                            return null;
+                        }
+                        color = value[0];
+                        hasColor = true;
+                    }
+                    cursor = valueEnd;
+                } else if (tag == 0x1A) {
+                    long[] value = new long[1];
+                    cursor = readVarint(source, cursor, value);
+                    if (cursor < 0) {
+                        return null;
+                    }
+                    selector = (int) value[0];
+                    hasSelector = true;
+                } else {
+                    cursor = ruleEnd;
+                }
+            }
+
+            Integer replacement = name == null ? null : colorMap.get(name);
+            if (replacement != null && hasColor) {
+                byte[] nameBytes = name.getBytes(UTF_8);
+                ByteArrayOutputStream value = new ByteArrayOutputStream();
+                value.write(0x08);
+                writeVarint(value, replacement.longValue() & 0xFFFFFFFFL);
+                byte[] valueBytes = value.toByteArray();
+
+                ByteArrayOutputStream body = new ByteArrayOutputStream();
+                body.write(0x0A);
+                writeVarint(body, nameBytes.length);
+                body.write(nameBytes, 0, nameBytes.length);
+                body.write(0x12);
+                writeVarint(body, valueBytes.length);
+                body.write(valueBytes, 0, valueBytes.length);
+                if (hasSelector) {
+                    body.write(0x1A);
+                    writeVarint(body, selector & 0xFFFFFFFFL);
+                }
+                byte[] bodyBytes = body.toByteArray();
+
+                output.write(0x12);
+                writeVarint(output, bodyBytes.length);
+                output.write(bodyBytes, 0, bodyBytes.length);
+            } else {
+                int ruleLength = ruleEnd - ruleStart;
+                output.write(0x12);
+                writeVarint(output, ruleLength);
+                output.write(source, ruleStart, ruleLength);
+            }
+            position = ruleEnd;
+        }
+        return output.toByteArray();
+    }
+
+    private static byte[] templateBytes(Context context, String name) {
+        InputStream input = null;
+        try {
+            input = context.getAssets().open(ASSET_DIRECTORY + name);
+            ByteArrayOutputStream output = new ByteArrayOutputStream();
+            byte[] buffer = new byte[4096];
+            int read;
+            while ((read = input.read(buffer)) > 0) {
+                output.write(buffer, 0, read);
+            }
+            return output.toByteArray();
+        } catch (IOException e) {
+            return null;
+        } finally {
+            closeQuietly(input);
+        }
+    }
+
+    /** Stored, not deflated: the package is tiny and stays byte-comparable to the templates. */
+    private static void putStoredEntry(ZipOutputStream zip, String name, byte[] data)
+            throws IOException {
+        CRC32 crc = new CRC32();
+        crc.update(data);
+        ZipEntry entry = new ZipEntry(name);
+        entry.setMethod(ZipEntry.STORED);
+        entry.setSize(data.length);
+        entry.setCompressedSize(data.length);
+        entry.setCrc(crc.getValue());
+        zip.putNextEntry(entry);
+        zip.write(data);
+        zip.closeEntry();
+    }
+
+    /** Returns the next position, or -1 when the value does not fit or is truncated. */
+    private static int readVarint(byte[] buffer, int position, long[] outValue) {
+        long value = 0L;
+        int shift = 0;
+        while (true) {
+            if (position >= buffer.length || shift > 63) {
+                return -1;
+            }
+            int current = buffer[position] & 0xFF;
+            position++;
+            value |= ((long) (current & 0x7F)) << shift;
+            if ((current & 0x80) == 0) {
+                break;
+            }
+            shift += 7;
+        }
+        outValue[0] = value;
+        return position;
+    }
+
+    private static void writeVarint(ByteArrayOutputStream output, long value) {
+        while (true) {
+            int current = (int) (value & 0x7F);
+            value >>>= 7;
+            if (value != 0L) {
+                output.write(current | 0x80);
+            } else {
+                output.write(current);
+                return;
+            }
+        }
+    }
+
+    private static void closeQuietly(Closeable closeable) {
+        if (closeable == null) {
+            return;
+        }
+        try {
+            closeable.close();
+        } catch (IOException ignored) {
+            // Closing a stream that is already gone changes nothing for us.
+        }
+    }
+
     private static synchronized void ensureInitialized(Context context) {
         SharedPreferences preferences = preferences(context);
         if (preferences.getBoolean(INITIALIZED_KEY, false)) {
@@ -225,6 +744,10 @@ public final class SystemAutoThemeCompat {
                 .putString(LIGHT_ADDITIONAL_KEY, context.getString(MATERIAL_LIGHT_THEME))
                 .putString(DARK_BASE_KEY, baseMaterial)
                 .putString(DARK_ADDITIONAL_KEY, context.getString(MATERIAL_DARK_THEME))
+                .putString(DYNAMIC_BASE_KEY, baseMaterial)
+                .putString(
+                        DYNAMIC_ADDITIONAL_KEY,
+                        DYNAMIC_ADDITIONAL_PREFIX + DYNAMIC_PACKAGE_NAME)
                 .putBoolean(INITIALIZED_KEY, true)
                 .commit();
     }
@@ -254,10 +777,11 @@ public final class SystemAutoThemeCompat {
     }
 
     private static boolean hasSelectionSession(Context context) {
-        return isValidSlot(preferences(context).getString(SELECTION_SLOT_KEY, null));
+        return isSelectableSlot(preferences(context).getString(SELECTION_SLOT_KEY, null));
     }
 
-    private static boolean isValidSlot(String slot) {
+    /** Slots a user may pick in the original selector. The generated slot is never one. */
+    private static boolean isSelectableSlot(String slot) {
         return SLOT_LIGHT.equals(slot) || SLOT_DARK.equals(slot) || SLOT_FIXED.equals(slot);
     }
 
@@ -265,6 +789,7 @@ public final class SystemAutoThemeCompat {
         if (SLOT_LIGHT.equals(slot)) return LIGHT_BASE_KEY;
         if (SLOT_DARK.equals(slot)) return DARK_BASE_KEY;
         if (SLOT_FIXED.equals(slot)) return FIXED_BASE_KEY;
+        if (SLOT_DYNAMIC.equals(slot)) return DYNAMIC_BASE_KEY;
         throw new IllegalArgumentException("Unknown theme slot");
     }
 
@@ -272,6 +797,7 @@ public final class SystemAutoThemeCompat {
         if (SLOT_LIGHT.equals(slot)) return LIGHT_ADDITIONAL_KEY;
         if (SLOT_DARK.equals(slot)) return DARK_ADDITIONAL_KEY;
         if (SLOT_FIXED.equals(slot)) return FIXED_ADDITIONAL_KEY;
+        if (SLOT_DYNAMIC.equals(slot)) return DYNAMIC_ADDITIONAL_KEY;
         throw new IllegalArgumentException("Unknown theme slot");
     }
 

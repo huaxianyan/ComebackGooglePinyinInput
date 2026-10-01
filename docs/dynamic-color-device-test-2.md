@@ -241,12 +241,12 @@ metadata 十六进制 `08 03 12 11 ...`（版本 3 + 名称 + 文件名列表）
 
 **做法**：
 
-1. 取内置 `theme_package_metadata_material_light.binarypb` 的**原始字节**作 metadata；
-2. 把 metadata 列出的 5 个主样式表 + 3 个 border 样式表一并打进 zip（STORED）；
+1. 取内置 `theme_package_metadata_material_light.binarypb` 的**原始字节**作 metadata。
+2. 把 metadata 列出的 5 个主样式表 + 3 个 border 样式表一并打进 zip（STORED）。
 3. 其中 `style_sheet_material_light.binarypb` 的 51 条规则颜色全改为 `#FF00FF`
    （`style_sheet_tool.py` 的 `rebuild_with_colors`）；
-4. 推到 `files/user_theme_000000000000001_00.zip`；
-5. prefs 写 `additional_keyboard_theme = files:user_theme_000000000000001_00.zip`；
+4. 推到 `files/user_theme_000000000000001_00.zip`。
+5. prefs 写 `additional_keyboard_theme = files:user_theme_000000000000001_00.zip`。
 6. 重启输入法 → 唤起键盘 → 截图采样。
 
 **结果**：键盘区 **96.6% 像素 = `#FF00FF`**；仅改 `additional_keyboard_theme`
@@ -276,7 +276,7 @@ metadata 十六进制 `08 03 12 11 ...`（版本 3 + 名称 + 文件名列表）
 
 1. 探针 APK 读系统语义色（`SEMANTIC` 扩到 40 项，**40/40 命中**），
    导出到 `work/dynamic-color-probe/system_colors.json`；
-2. `build_probe_dynamic.py` 按映射表把 20 个键盘样式槽指向系统色；
+2. `build_probe_dynamic.py` 按映射表把 20 个键盘样式槽指向系统色。
 3. 打包 → 推 `files/` → 写 `additional_keyboard_theme` → 重启输入法 → 截图。
 
 **映射表（部分）**：

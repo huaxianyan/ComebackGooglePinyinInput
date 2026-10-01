@@ -78,6 +78,11 @@ def main() -> int:
             "import androidx.activity.compose.BackHandler",
             "import androidx.compose.material3.TopAppBar",
             "data class SettingsActions(",
+            "val onDynamicColorEnabledChange: (Boolean) -> Unit",
+            "actions.onDynamicColorEnabledChange",
+            "snapshot.dynamicColorEnabled",
+            "DynamicColorSetting.preferenceKey",
+            '"setDynamicEnabled"',
             "val onSystemAutoThemeEnabledChange: (Boolean) -> Unit",
             "actions.onSystemAutoThemeEnabledChange",
             "snapshot.systemAutoThemeEnabled",
@@ -89,7 +94,7 @@ def main() -> int:
             "actions.onOpenThemeSelector(ThemeSelectionSlot.Fixed)",
             "SettingsRoute.ThemeBackground",
             "themeBackgroundSettingsItems(snapshot, actions)",
-            "ThemeSettingRules.canSelect(slot, followThemeEnabled)",
+            "ThemeSettingRules.canSelect(slot, followThemeEnabled, dynamicColorEnabled)",
             "val onRefreshDictionaryHealth: () -> Unit",
             "DictionaryHealthStatusCompat\\$SnapshotCallback",
             "DictionaryHealthStateReducer.start(dictionaryHealth)",
@@ -1137,6 +1142,47 @@ def main() -> int:
             ),
             "primary-DEX System Auto theme-slot helper",
         )
+        require(
+            auto_theme_helper.read_text(encoding="utf-8"),
+            (
+                '"compat_system_dynamic_color_theme"',
+                '"compat_theme_dynamic_keyboard"',
+                '"compat_theme_dynamic_additional"',
+                '"compat_theme_dynamic_signature"',
+                '"dynamic_theme.zip"',
+                '"theme/"',
+                '"style_sheet_material_"',
+                '"system_surface"',
+                '"system_primary_container"',
+                '"system_outline_variant"',
+                ".method public static setDynamicEnabled(Landroid/content/Context;Z)V",
+                ".method public static isDynamicEnabled(Landroid/content/Context;)Z",
+                ".method public static supportsDynamicColor()Z",
+                ".method public static applyOnKeyboardShown(Landroid/content/Context;)Z",
+                ".method public static rewriteStyleSheetColors([BLjava/util/Map;)[B",
+                ".method private static isSelectableSlot(Ljava/lang/String;)Z",
+                ".method private static buildDynamicThemePackage(Landroid/content/Context;ZLjava/util/Map;)Z",
+            ),
+            "primary-DEX dynamic-color theme-slot helper",
+        )
+        # The generated slot is switch-only. If it ever became "selectable" the
+        # picker could open it and the selection session would pause the very
+        # slot it was meant to edit.
+        #
+        # Split on the declaration, not on the bare signature: the first match
+        # in the file is a call site, and a call site sits in some unrelated
+        # method whose body would be checked instead. The positive assertions
+        # below make a wrong region fail loudly rather than pass silently.
+        selectable_body = auto_theme_helper.read_text(encoding="utf-8").split(
+            ".method private static isSelectableSlot(Ljava/lang/String;)Z", 1,
+        )[1].split(".end method", 1)[0]
+        for literal in ('"light"', '"dark"', '"fixed"'):
+            if literal not in selectable_body:
+                raise RuntimeError(
+                    "isSelectableSlot body looks wrong; expected " + literal
+                )
+        if '"dynamic"' in selectable_body:
+            raise RuntimeError("the generated slot must never be selectable in the picker")
         google_ime = decoded / (
             "smali/com/google/android/apps/inputmethod/libs/framework/core/"
             "GoogleInputMethodService.smali"
@@ -1149,6 +1195,7 @@ def main() -> int:
                 "SystemAutoThemeCompat;->applyIfEnabled(Landroid/content/Context;Landroid/content/res/Configuration;)Z",
                 "move-result v9",
                 "SystemAutoThemeCompat;->logInputViewRebuild(Landroid/content/Context;)V",
+                "SystemAutoThemeCompat;->applyOnKeyboardShown(Landroid/content/Context;)Z",
                 "GoogleInputMethodService;->c()V",
             ),
             "IME System Auto configuration hooks",

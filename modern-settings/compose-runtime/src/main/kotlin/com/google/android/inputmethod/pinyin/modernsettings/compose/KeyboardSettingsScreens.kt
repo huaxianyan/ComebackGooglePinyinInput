@@ -139,11 +139,30 @@ internal fun androidx.compose.foundation.lazy.LazyListScope.themeBackgroundSetti
     actions: SettingsActions,
 ) {
     val followTheme = snapshot.systemAutoThemeEnabled
+    val dynamicColor = snapshot.dynamicColorEnabled
+    // While the generated palette is on it owns the resolved theme pair, so
+    // every other row on this page is shown as unavailable rather than hidden.
+    // The page keeps its shape and the reason stays visible.
+    val suppressedSummary = R.string.modern_settings_theme_requires_dynamic_disabled
+    if (snapshot.capabilities.dynamicColorVisible) {
+        item {
+            SettingsSwitchRow(
+                title = stringResource(R.string.modern_settings_dynamic_color_title),
+                supporting = stringResource(R.string.modern_settings_dynamic_color_summary),
+                checked = dynamicColor,
+                onCheckedChange = actions.onDynamicColorEnabledChange,
+            )
+        }
+    }
     item {
         SettingsSwitchRow(
             title = stringResource(R.string.modern_settings_system_auto_theme_title),
-            supporting = stringResource(R.string.modern_settings_system_auto_theme_summary),
+            supporting = stringResource(
+                if (dynamicColor) suppressedSummary
+                else R.string.modern_settings_system_auto_theme_summary,
+            ),
             checked = followTheme,
+            enabled = !dynamicColor,
             onCheckedChange = actions.onSystemAutoThemeEnabledChange,
         )
     }
@@ -151,10 +170,15 @@ internal fun androidx.compose.foundation.lazy.LazyListScope.themeBackgroundSetti
         SettingsNavigationRow(
             title = stringResource(R.string.modern_settings_light_mode_theme_title),
             supporting = stringResource(
-                if (followTheme) R.string.modern_settings_light_mode_theme_summary
-                else R.string.modern_settings_theme_requires_follow_enabled,
+                when {
+                    dynamicColor -> suppressedSummary
+                    followTheme -> R.string.modern_settings_light_mode_theme_summary
+                    else -> R.string.modern_settings_theme_requires_follow_enabled
+                },
             ),
-            enabled = followTheme,
+            enabled = ThemeSettingRules.canSelect(
+                ThemeSelectionSlot.Light, followTheme, dynamicColor,
+            ),
             onClick = { actions.onOpenThemeSelector(ThemeSelectionSlot.Light) },
         )
     }
@@ -162,10 +186,15 @@ internal fun androidx.compose.foundation.lazy.LazyListScope.themeBackgroundSetti
         SettingsNavigationRow(
             title = stringResource(R.string.modern_settings_dark_mode_theme_title),
             supporting = stringResource(
-                if (followTheme) R.string.modern_settings_dark_mode_theme_summary
-                else R.string.modern_settings_theme_requires_follow_enabled,
+                when {
+                    dynamicColor -> suppressedSummary
+                    followTheme -> R.string.modern_settings_dark_mode_theme_summary
+                    else -> R.string.modern_settings_theme_requires_follow_enabled
+                },
             ),
-            enabled = followTheme,
+            enabled = ThemeSettingRules.canSelect(
+                ThemeSelectionSlot.Dark, followTheme, dynamicColor,
+            ),
             onClick = { actions.onOpenThemeSelector(ThemeSelectionSlot.Dark) },
         )
     }
@@ -173,10 +202,15 @@ internal fun androidx.compose.foundation.lazy.LazyListScope.themeBackgroundSetti
         SettingsNavigationRow(
             title = stringResource(R.string.modern_settings_fixed_theme_title),
             supporting = stringResource(
-                if (followTheme) R.string.modern_settings_theme_requires_follow_disabled
-                else R.string.modern_settings_fixed_theme_summary,
+                when {
+                    dynamicColor -> suppressedSummary
+                    followTheme -> R.string.modern_settings_theme_requires_follow_disabled
+                    else -> R.string.modern_settings_fixed_theme_summary
+                },
             ),
-            enabled = !followTheme,
+            enabled = ThemeSettingRules.canSelect(
+                ThemeSelectionSlot.Fixed, followTheme, dynamicColor,
+            ),
             onClick = { actions.onOpenThemeSelector(ThemeSelectionSlot.Fixed) },
         )
     }

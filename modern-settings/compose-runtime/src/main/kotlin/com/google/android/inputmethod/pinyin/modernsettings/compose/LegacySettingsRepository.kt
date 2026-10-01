@@ -70,6 +70,10 @@ class LegacySettingsRepository(context: Context) {
                 SystemAutoThemeSetting.preferenceKey,
                 false,
             ),
+            dynamicColorEnabled = capabilities.dynamicColorVisible && preferences.getBoolean(
+                DynamicColorSetting.preferenceKey,
+                false,
+            ),
             soundEnabled = preferences.getBoolean(SliderSettingContracts.SOUND_ENABLED_KEY, false),
             volume = volume,
             vibrationEnabled = preferences.getBoolean(
@@ -183,12 +187,32 @@ class LegacySettingsRepository(context: Context) {
         return readSnapshot()
     }
 
+    /**
+     * Toggles the generated palette.
+     *
+     * Turning it on also turns automatic selection off, in the bridge rather
+     * than here, so the persisted pair can never have two owners. Turning it
+     * off leaves both the follow-system choice and every slot value untouched.
+     */
+    fun setDynamicColorEnabled(enabled: Boolean): SettingsSnapshot {
+        Class.forName(SYSTEM_AUTO_THEME_BRIDGE).getMethod(
+            "setDynamicEnabled",
+            Context::class.java,
+            Boolean::class.javaPrimitiveType,
+        ).invoke(null, applicationContext, enabled)
+        return readSnapshot()
+    }
+
     fun beginThemeSelection(slot: ThemeSelectionSlot): SettingsSnapshot {
         val followThemeEnabled = preferences.getBoolean(
             SystemAutoThemeSetting.preferenceKey,
             false,
         )
-        require(ThemeSettingRules.canSelect(slot, followThemeEnabled)) {
+        val dynamicColorEnabled = preferences.getBoolean(
+            DynamicColorSetting.preferenceKey,
+            false,
+        )
+        require(ThemeSettingRules.canSelect(slot, followThemeEnabled, dynamicColorEnabled)) {
             "Theme slot is disabled: ${slot.persistedValue}"
         }
         Class.forName(SYSTEM_AUTO_THEME_BRIDGE).getMethod(
@@ -475,6 +499,7 @@ class LegacySettingsRepository(context: Context) {
 data class SettingsSnapshot(
     val capabilities: SettingsCapabilities,
     val systemAutoThemeEnabled: Boolean,
+    val dynamicColorEnabled: Boolean,
     val soundEnabled: Boolean,
     val volume: ResolvedSetting<Float>,
     val vibrationEnabled: Boolean,

@@ -35,6 +35,9 @@
     <string name="modern_settings_fixed_theme_summary">Choose the theme used while Follow theme is off</string>
     <string name="modern_settings_theme_requires_follow_enabled">Turn on Follow theme to configure this setting</string>
     <string name="modern_settings_theme_requires_follow_disabled">Turn off Follow theme to configure this setting</string>
+    <string name="modern_settings_dynamic_color_title">Dynamic color</string>
+    <string name="modern_settings_dynamic_color_summary">Take keyboard colors from the system theme colors and follow light or dark mode</string>
+    <string name="modern_settings_theme_requires_dynamic_disabled">Turn off Dynamic color to configure this setting</string>
     <string name="modern_settings_keyboard_appearance_summary">Theme, one-handed mode, and keyboard height</string>
     <string name="modern_settings_keyboard_keys_title">Keys and switching</string>
     <string name="modern_settings_keyboard_keys_summary">Key popups, input buttons, switching, and interaction</string>

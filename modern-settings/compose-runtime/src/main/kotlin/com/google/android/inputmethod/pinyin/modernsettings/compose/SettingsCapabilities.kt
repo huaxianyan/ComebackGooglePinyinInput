@@ -11,6 +11,7 @@ data class SettingsCapabilities(
     val vibrationControlsVisible: Boolean,
     val oneHandedModeVisible: Boolean,
     val emojiSwitchKeyVisible: Boolean,
+    val dynamicColorVisible: Boolean,
     val inputMethodSwitchingAvailable: Boolean,
 )
 
@@ -40,6 +41,7 @@ object SettingsCapabilityResolver {
             ),
             oneHandedModeVisible = !isTablet,
             emojiSwitchKeyVisible = Build.VERSION.SDK_INT >= 19 && !isTablet,
+            dynamicColorVisible = Build.VERSION.SDK_INT >= DynamicColorSetting.minSdk,
             inputMethodSwitchingAvailable = hasSettingsActivitySwitchTarget(
                 applicationPackageName = context.packageName,
                 inputMethods = inputMethods,

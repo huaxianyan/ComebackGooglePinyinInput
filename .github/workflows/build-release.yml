@@ -170,6 +170,25 @@ jobs:
           git diff --exit-code -- patches/smali/rimesync
           if ($LASTEXITCODE -ne 0) { throw "Generated Rime synchronization Smali is stale" }
 
+      - name: Verify reproducible theme-slot Smali
+        shell: pwsh
+        run: |
+          python scripts/generate_system_auto_theme_smali.py `
+            --android-jar "$env:ANDROID_SDK_ROOT\platforms\android-36\android.jar" `
+            --jdk "$env:JAVA_HOME" `
+            --build-tools "$env:ANDROID_SDK_ROOT\build-tools\36.0.0" `
+            --apktool work/tools/apktool.jar
+          git diff --exit-code -- patches/smali/SystemAutoThemeCompat.smali
+          if ($LASTEXITCODE -ne 0) { throw "Generated theme-slot Smali is stale" }
+
+      - name: Verify Java and Python StyleSheet recoloring agree
+        shell: pwsh
+        run: |
+          python scripts/test_dynamic_color_rewrite.py `
+            --android-jar "$env:ANDROID_SDK_ROOT\platforms\android-36\android.jar" `
+            --jdk "$env:JAVA_HOME" `
+            --apk "$env:ORIGINAL_APK"
+
       - name: Restore keystore and verify signing identity
         shell: pwsh
         run: |

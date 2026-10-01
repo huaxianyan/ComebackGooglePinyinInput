@@ -2918,6 +2918,24 @@ def apply(
         "    :system_auto_theme_config_done\n"
         "    goto :goto_0",
     )
+    # A wallpaper change recolors the system palette without raising any
+    # configuration change, so nothing in the framework would notice. The
+    # keyboard-popup hook is the cheapest place to compare the palette: when it
+    # is unchanged the call writes nothing at all. The result is deliberately
+    # discarded, the same way applyOnCreate's is, so no register is disturbed.
+    replace_once(
+        framework,
+        "    .line 541\n"
+        "    invoke-super {p0, p1, p2}, Landroid/inputmethodservice/"
+        "InputMethodService;->onStartInputView(Landroid/view/inputmethod/EditorInfo;Z)V\n\n"
+        "    .line 542",
+        "    .line 541\n"
+        "    invoke-super {p0, p1, p2}, Landroid/inputmethodservice/"
+        "InputMethodService;->onStartInputView(Landroid/view/inputmethod/EditorInfo;Z)V\n\n"
+        "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/"
+        "SystemAutoThemeCompat;->applyOnKeyboardShown(Landroid/content/Context;)Z\n\n"
+        "    .line 542",
+    )
 
     theme_selector_activity = decoded / (
         "smali/com/google/android/apps/inputmethod/libs/theme/preference/"

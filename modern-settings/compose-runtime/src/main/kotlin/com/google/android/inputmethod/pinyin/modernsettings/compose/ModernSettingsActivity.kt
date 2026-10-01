@@ -178,6 +178,9 @@ class ModernSettingsActivity : ComponentActivity() {
                         dictionaryClear = dictionaryClear,
                         rimeSync = rimeSync,
                         actions = SettingsActions(
+                            onDynamicColorEnabledChange = { enabled ->
+                                snapshot = controller.setDynamicColorEnabled(enabled)
+                            },
                             onSystemAutoThemeEnabledChange = { enabled ->
                                 snapshot = controller.setSystemAutoThemeEnabled(enabled)
                             },

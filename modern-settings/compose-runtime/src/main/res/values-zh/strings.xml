@@ -35,6 +35,9 @@
     <string name="modern_settings_fixed_theme_summary">选择关闭「跟随主题」时使用的主题</string>
     <string name="modern_settings_theme_requires_follow_enabled">开启「跟随主题」后可设置</string>
     <string name="modern_settings_theme_requires_follow_disabled">关闭「跟随主题」后可设置</string>
+    <string name="modern_settings_dynamic_color_title">动态配色</string>
+    <string name="modern_settings_dynamic_color_summary">键盘配色取自系统主题色，随深浅色模式变化</string>
+    <string name="modern_settings_theme_requires_dynamic_disabled">关闭「动态配色」后可设置</string>
     <string name="modern_settings_keyboard_appearance_summary">主题、单手模式和键盘高度</string>
     <string name="modern_settings_keyboard_keys_title">按键与切换</string>
     <string name="modern_settings_keyboard_keys_summary">按键气泡、输入按钮、切换和交互</string>

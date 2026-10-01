@@ -68,6 +68,7 @@ import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
 
 data class SettingsActions(
+    val onDynamicColorEnabledChange: (Boolean) -> Unit,
     val onSystemAutoThemeEnabledChange: (Boolean) -> Unit,
     val onOpenThemeSelector: (ThemeSelectionSlot) -> Unit,
     val onOpenTerms: () -> Unit,

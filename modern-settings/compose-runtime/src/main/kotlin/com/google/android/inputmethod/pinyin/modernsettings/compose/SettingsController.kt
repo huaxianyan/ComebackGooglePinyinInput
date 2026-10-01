@@ -7,6 +7,9 @@ class SettingsController(
 ) {
     fun read(): SettingsSnapshot = repository.readSnapshot()
 
+    fun setDynamicColorEnabled(enabled: Boolean): SettingsSnapshot =
+        repository.setDynamicColorEnabled(enabled)
+
     fun setSystemAutoThemeEnabled(enabled: Boolean): SettingsSnapshot =
         repository.setSystemAutoThemeEnabled(enabled)
 
