@@ -990,8 +990,8 @@ RAW_TEMPLATES = [
 ]
 ```
 
-1. 从 `assets/theme/` 复制并改名到 `res/raw/`；
-2. 解析 `public.xml` 找 `type="raw"` 的当前最大 id，逐个 `+1` 追加；
+1. 从 `assets/theme/` 复制并改名到 `res/raw/`。
+2. 解析 `public.xml` 找 `type="raw"` 的当前最大 id，逐个 `+1` 追加。
 3. Java 侧把分配到的 id 写死为常量（与 `PREF_KEY_*` 同做法）。
 
 > **实施时必须实测确认**：现有 raw 的最大 id 是多少。若 raw 段后面还有其他
@@ -1281,8 +1281,8 @@ adb exec-out screencap -p > shot.png
 
 **含义**：
 
-- 动态槽同样要遵守这一点：关闭动态配色**不删除**动态槽的值与已生成的 zip；
-- 这与 `SystemAutoThemeCompat` 既有的"legacy 两键只是物化输出"设计一致；
+- 动态槽同样要遵守这一点：关闭动态配色**不删除**动态槽的值与已生成的 zip。
+- 这与 `SystemAutoThemeCompat` 既有的"legacy 两键只是物化输出"设计一致。
 - 测试 E（关闭开关后复原）应验证"恢复的是用户之前的固定主题"，而非"槽位被清空"。
 
 > **本项目即事实上的上游。** 原 APK 已不维护，`assets/theme/` 下 75 个
