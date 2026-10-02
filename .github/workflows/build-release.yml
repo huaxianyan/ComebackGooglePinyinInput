@@ -181,6 +181,12 @@ jobs:
           git diff --exit-code -- patches/smali/SystemAutoThemeCompat.smali
           if ($LASTEXITCODE -ne 0) { throw "Generated theme-slot Smali is stale" }
 
+      - name: Verify theme-slot initialization contract
+        shell: pwsh
+        run: |
+          python scripts/verify_theme_slot_initialization.py
+          if ($LASTEXITCODE -ne 0) { throw "Theme-slot initialization contract violated" }
+
       - name: Verify Java and Python StyleSheet recoloring agree
         shell: pwsh
         run: |

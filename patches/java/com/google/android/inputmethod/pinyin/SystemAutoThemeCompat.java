@@ -46,7 +46,6 @@ public final class SystemAutoThemeCompat {
     public static final String SLOT_DYNAMIC = "dynamic";
 
     private static final String DIAGNOSTIC_TAG = "SystemAutoTheme";
-    private static final String INITIALIZED_KEY = "compat_theme_slots_initialized";
     private static final String SELECTION_SLOT_KEY = "compat_theme_selection_slot";
     private static final String LIGHT_BASE_KEY = "compat_theme_light_keyboard";
     private static final String LIGHT_ADDITIONAL_KEY = "compat_theme_light_additional";
@@ -406,6 +405,14 @@ public final class SystemAutoThemeCompat {
         String keyboardTheme = preferences.getString(baseKey(slot), "");
         String additionalTheme = preferences.getString(additionalKey(slot), "");
         debugLog(context, diagnostic);
+        if (keyboardTheme.isEmpty() || additionalTheme.isEmpty()) {
+            // An empty pair means the slot was never initialized. Writing it
+            // would point the runtime at nothing and drop the keyboard to the
+            // built-in default, which is worse than keeping the theme the user
+            // already has. The slot resolves normally once it is filled in.
+            debugLog(context, "theme slot is empty, keeping the current theme");
+            return false;
+        }
         if (keyboardTheme.equals(preferences.getString(keyboardThemeKey, null))
                 && additionalTheme.equals(preferences.getString(additionalThemeKey, null))) {
             debugLog(context, "legacy theme pair already resolved");
@@ -755,26 +762,65 @@ public final class SystemAutoThemeCompat {
         }
     }
 
+    /**
+     * Fills in every slot key that is not on disk yet.
+     *
+     * <p>A single one-shot flag used to guard this whole routine, so a device
+     * initialized by an earlier release never received the keys of a slot added
+     * later: the flag was already set and the routine returned before writing
+     * them. The generated-palette slot shipped that way, which made it work on
+     * a fresh install and stay invisible on every upgrade. Deciding per key
+     * instead makes the routine idempotent, so a slot added now reaches an
+     * install that predates it.</p>
+     *
+     * <p>Existing keys are never rewritten. Three of the four slots hold a
+     * choice the user made, and initialization must not overwrite it.</p>
+     */
     private static synchronized void ensureInitialized(Context context) {
         SharedPreferences preferences = preferences(context);
-        if (preferences.getBoolean(INITIALIZED_KEY, false)) {
+        if (hasEverySlotKey(preferences)) {
             return;
         }
-        String[] current = resolveCurrentTheme(context);
+        SharedPreferences.Editor editor = preferences.edit();
+        if (!preferences.contains(FIXED_BASE_KEY) || !preferences.contains(FIXED_ADDITIONAL_KEY)) {
+            // Only the fixed slot mirrors whichever theme is live, and only
+            // while it is still empty. Once it holds a choice, reading the live
+            // theme again would replace that choice with a derived value.
+            String[] current = resolveCurrentTheme(context);
+            putIfAbsent(editor, preferences, FIXED_BASE_KEY, current[0]);
+            putIfAbsent(editor, preferences, FIXED_ADDITIONAL_KEY, current[1]);
+        }
         String baseMaterial = context.getString(BASE_MATERIAL_THEME);
-        preferences.edit()
-                .putString(FIXED_BASE_KEY, current[0])
-                .putString(FIXED_ADDITIONAL_KEY, current[1])
-                .putString(LIGHT_BASE_KEY, baseMaterial)
-                .putString(LIGHT_ADDITIONAL_KEY, context.getString(MATERIAL_LIGHT_THEME))
-                .putString(DARK_BASE_KEY, baseMaterial)
-                .putString(DARK_ADDITIONAL_KEY, context.getString(MATERIAL_DARK_THEME))
-                .putString(DYNAMIC_BASE_KEY, baseMaterial)
-                .putString(
-                        DYNAMIC_ADDITIONAL_KEY,
-                        DYNAMIC_ADDITIONAL_PREFIX + DYNAMIC_PACKAGE_NAME)
-                .putBoolean(INITIALIZED_KEY, true)
-                .commit();
+        putIfAbsent(editor, preferences, LIGHT_BASE_KEY, baseMaterial);
+        putIfAbsent(editor, preferences, LIGHT_ADDITIONAL_KEY, context.getString(MATERIAL_LIGHT_THEME));
+        putIfAbsent(editor, preferences, DARK_BASE_KEY, baseMaterial);
+        putIfAbsent(editor, preferences, DARK_ADDITIONAL_KEY, context.getString(MATERIAL_DARK_THEME));
+        putIfAbsent(editor, preferences, DYNAMIC_BASE_KEY, baseMaterial);
+        putIfAbsent(
+                editor,
+                preferences,
+                DYNAMIC_ADDITIONAL_KEY,
+                DYNAMIC_ADDITIONAL_PREFIX + DYNAMIC_PACKAGE_NAME);
+        editor.commit();
+    }
+
+    private static void putIfAbsent(
+            SharedPreferences.Editor editor, SharedPreferences preferences, String key, String value) {
+        if (!preferences.contains(key)) {
+            editor.putString(key, value);
+        }
+    }
+
+    /** Every slot key this build knows about, which is what makes init idempotent. */
+    private static boolean hasEverySlotKey(SharedPreferences preferences) {
+        return preferences.contains(FIXED_BASE_KEY)
+                && preferences.contains(FIXED_ADDITIONAL_KEY)
+                && preferences.contains(LIGHT_BASE_KEY)
+                && preferences.contains(LIGHT_ADDITIONAL_KEY)
+                && preferences.contains(DARK_BASE_KEY)
+                && preferences.contains(DARK_ADDITIONAL_KEY)
+                && preferences.contains(DYNAMIC_BASE_KEY)
+                && preferences.contains(DYNAMIC_ADDITIONAL_KEY);
     }
 
     private static String[] resolveCurrentTheme(Context context) {
