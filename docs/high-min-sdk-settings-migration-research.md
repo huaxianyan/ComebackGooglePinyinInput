@@ -49,6 +49,18 @@ API 17-34   旧 Preference 实现
 API 35+     ModernSettingsActivity（按类名字符串路由）
 ```
 
+分流**不是一处开关，而是两扇独立的门**。2026-10-02 在 API 23 模拟器上实跑确认，
+改 minSdk 时必须同时处理这两处：
+
+| # | 门 | 位置 | 表现 |
+| --- | --- | --- | --- |
+| 1 | smali 里的 `SDK_INT` 阈值 | `scripts/apply_patches.py:654`（`const/16 v1, 0x23`） | 35 以下不走 `setClassName` 重定向 |
+| 2 | 清单里的组件启用开关 | `bool/modern_settings_runtime_enabled`，由 `scripts/prepare_compose_host_manifest.py:171` / `:187` / `:192` 生成 | 基础 `false`、仅 `values-v35` 为 `true`；35 以下组件被注册为**禁用** |
+
+第 2 扇门最容易漏：只把 smali 的 `0x23` 改成 `0x17`，在 API 23 上仍会得到
+`Error type 3: Activity class does not exist`（实测必须 `pm enable` 才起得来）。
+实测记录见 10.5。
+
 Compose host 的 `AndroidManifest.xml` 里 `minSdkVersion` 与 `targetSdkVersion` 都被**移除**
 （AGP 9 要求写在 Gradle DSL），只留 `overrideLibrary` 例外清单，
 用来放行 Compose 库的 minSdk 23 高于应用 minSdk 17 这件事。
@@ -158,6 +170,17 @@ minSdk 提到 23 后，这份例外清单可以整个删掉，少一处脆弱的
 建议把「优先用模拟器跑通 23、26、29、31、34 五个代表版本」列为阶段 1 的具体动作，
 而不是只笼统说「模拟器验证」。
 
+### 3.5 首次实跑：API 23（Android 6.0）已通过
+
+把「23 能不能跑」从推断变成实测：arm64 模拟器 + **正式版 APK**，
+`logcat -b crash` 为空，首页 / 二级页 / 三级页 / 返回 / MD3 滑块全部正常。
+
+**结论：Compose 设置页在 API 23 上能起来、能渲染、能导航，无崩溃。**
+3.3 里「23 只是能编译、不是已验证」这条顾虑，对 API 23 已经不成立。
+
+细节（模拟器选型、启动参数、两道闸、复现步骤）见第十节，不在此重复。
+**剩余 26 / 29 / 31 / 34 待跑**，这是当前进行中的工作。
+
 ## 四、先期工作清单
 
 按依赖排序，`→` 表示前置。
@@ -169,6 +192,9 @@ minSdk 提到 23 后，这份例外清单可以整个删掉，少一处脆弱的
 3. **定首次引导是否一并 Compose 化**，还是继续用已重绘的旧 Activity。
 
 ### 阶段 1：验证面确认（定完 minSdk 立刻做）
+
+> **本阶段已完成，结论见第十节。** arm64 模拟器可用且覆盖 23–36，
+> Compose 设置页在 API 23 上实测通过。下面是原始条目，保留以备对照。
 
 4. 确认目标区间有没有可用设备或模拟器。当前只有 Pixel 10 Pro / API 36。
    API 31–34 的 ARM64 模拟器或真机是**硬前置**，否则无法验收。
@@ -197,6 +223,9 @@ minSdk 提到 23 后，这份例外清单可以整个删掉，少一处脆弱的
     注意 `patches/res/xml/` 与 `patches/res/xml-v19/` 两份都要改，只改一份会漏掉一个版本区间。
 11. 旧 Preference XML 与 smali 保留不动，但不再有可达路径。
 12. 静态门禁确认旧路径不可达，并更新所有绑定 minSdk 17 与分流逻辑的断言。
+    **注意分流有两道闸**（见 10.5）：除 smali 阈值外，
+    还要改 `modern_settings_runtime_enabled` 这个 bool 资源，
+    否则路由过去了但目标活动仍被禁用。
 
 ### 阶段 4：文档与门禁
 
@@ -267,7 +296,8 @@ minSdk 提到 23 后，这份例外清单可以整个删掉，少一处脆弱的
 
 | 风险 | 说明 |
 | --- | --- |
-| Compose 在 35 以下未验证 | 选 31 或更低时最大，且需要设备才能验收 |
+| Compose 在 35 以下未验证 | **已下调**：API 23 实测通过（见第十节）。剩余风险是 26–34 的**覆盖面**，不是可行性 |
+| 只改一处分流闸 | 分流有**两道**闸（见 2.1 与 10.5），只改 smali 阈值会得到「路由过去了、目标活动却被禁用」 |
 | 自定义主题需要复现主题包格式 | 独立且不小的工程量，建议拆阶段 |
 | 系统「输入法设置」入口失效 | 若漏改 IME 的 `settingsActivity` 声明，用户从系统设置进不去 |
 | 门禁大面积失效 | 现有断言深度绑定 minSdk 17 与分流逻辑，需成批更新 |
@@ -277,8 +307,9 @@ minSdk 提到 23 后，这份例外清单可以整个删掉，少一处脆弱的
 
 1. **定 minSdk**。技术下限实测为 **23**，建议一次降到位，避免以后再降一次、
    把验证面重做一遍。
-2. **解决设备**。这是硬前置：23–34 区间没有设备就无法验收，不要先写代码后找设备。
-3. 在目标区间上跑一次现有 Compose 设置页，记录真实崩溃点，再决定要不要补兼容分支。
+2. ~~**解决设备**~~。**已解决**：自建 arm64 模拟器覆盖 23–36，不需要真机（见第十节）。
+3. ~~在目标区间上跑一次现有 Compose 设置页，记录真实崩溃点~~。**API 23 已完成，无崩溃**。
+   按 23、26、29、31、34 把剩下的四档跑完，逐档留截图与日志。
 4. 做阶段 2 的补齐，其中主题选择页按 5.2 的建议**先做只读部分**。
 5. 做阶段 3 的弃用落地，**重点盯 IME `settingsActivity` 入口**。
 6. 顺手删掉 `OVERRIDE_LIBRARIES` 例外清单。
@@ -309,9 +340,152 @@ minSdk 提到 23 后，这份例外清单可以整个删掉，少一处脆弱的
 中间态的含义：先完成「minSdk 提到 23 + 摘掉旧入口 + 改指 `settingsActivity`」，
 拿到一个可独立验收的版本，再依次补主题选择页与首次引导。
 
-### 9.2 当前优先级已变更
+### 9.2 当前状态与进行中的位置
 
-用户反馈 **2.1.4 的动态配色键盘在用户设备上不工作**，且无法取得该设备。
-在继续本工程之前，先做一个**带诊断日志与导出功能的 debug 版本**，
-用于从用户设备上取回现场信息。设计见
-[动态配色诊断日志设计](dynamic-color-diagnostics-design.md)。
+| 项 | 状态 |
+| --- | --- |
+| 2.1.4 重新发布 + 升级路径真机复测 | **已完成**，见 [2026-10-02 交接记录](handoff/2026-10-02.md) |
+| 动态配色诊断版本 | **不再实施**（根因已定位并修复，见下方解除说明） |
+| 本工程（新设置页） | **进行中** |
+
+进行中的具体位置：**阶段 1 的验证面确认**。API 23 已在 arm64 模拟器上跑通（第十节），
+下一步按 26 / 29 / 31 / 34 依次跑完，逐档留截图与日志，再决定要不要补兼容分支。
+
+历史背景（已解除）：用户曾反馈 **2.1.4 的动态配色键盘在用户设备上不工作**，
+且无法取得该设备，原计划先做一个带诊断日志与导出功能的 debug 版本，
+设计见 [动态配色诊断日志设计](dynamic-color-diagnostics-design.md)。
+
+**该阻塞已解除（2026-10-02）。** 动态配色失效的根因是槽位初始化的一次性标志，
+与设备 ROM 无关，已在真机上修复并验证。诊断功能不再实施，本工程回到正常顺序。
+见 [2026-10-02 交接记录](handoff/2026-10-02.md)。
+
+## 十、验证面：模拟器实测（2026-10-02）
+
+阶段 1 的硬前置是「23–34 有没有可用的验证载体」。本节把它实测清楚了。
+
+### 10.1 结论：API 23 上跑通了
+
+**Compose 设置页在 API 23（Android 6.0）上实测可正常运行**，用的是真实发布包，不是替身。
+
+![API 23 上的 Compose 设置首页](../images/modern-settings-api23.png)
+
+首页四个分区正常渲染，进入二级页、三级页、返回都正常，MD3 滑块（`Keyboard height`）也正常。
+
+![API 23 上的外观页与 MD3 滑块](../images/modern-settings-api23-appearance.png)
+
+整个过程 `logcat -b crash` 为空，无崩溃。
+
+### 10.2 前提约束：应用只有 arm64
+
+发布包 `lib/` 下只有 **arm64-v8a** 的 6 个 `.so`（`libpinyin_data_bundle`、`libhwrword`、
+`libgnustl_shared` 等）。这直接决定了模拟器的选择：
+
+| 模拟器镜像 | 能否跑真实应用 | 说明 |
+| --- | --- | --- |
+| x86_64，API 23–29 | **不能** | 没有 ARM 转译，arm64 库无法加载 |
+| x86_64，API 30+ | 可以 | `google_apis` 镜像带 `libndk_translation` 转译层 |
+| arm64-v8a，API 23+ | **可以** | 原生执行，代价是宿主机要软件模拟 |
+
+好消息是 `arm64-v8a` 镜像从 API 23 到 API 36 都有（`google_apis` 与 `default` 两种 tag），
+所以整段区间都能覆盖，不需要为低版本另找载体。
+
+### 10.3 模拟器版本陷阱（实测）
+
+**新版模拟器不支持 arm64。** 用 SDK 里的 37.2.12 启动 API 23 arm64 镜像，直接退出：
+
+```text
+FATAL | QEMU2 emulator does not support arm64 CPU architecture
+```
+
+改用 **34.2.16**（build id `12038310`）后可以正常启动。该版本需从归档地址单独下载并解压到独立目录，
+**不要覆盖 SDK 里的 `emulator`**，否则会影响其他 AVD。
+
+必须的参数组合，缺一不可：
+
+```text
+emulator -avd <名称>
+  -sysdir <SDK>/system-images/android-23/google_apis/arm64-v8a
+  -gpu swiftshader_indirect    # 否则黑屏
+  -accel off                   # x86 宿主机上模拟 arm64，无法硬件加速
+  -memory 4096 -cores 4        # 核数给太多反而不稳
+  -no-window -no-snapshot -no-boot-anim -no-audio
+  -qemu -machine virt          # 否则报 "PCI bus not available for hda"
+```
+
+**代价**：纯软件模拟。冷启动到 `sys.boot_completed=1` 实测约 **10 分钟**，界面响应明显迟缓。
+截图与日志采集可用，但逐项 UI 走查会很慢。
+
+判断是否真的跑在 arm64 上，看这三个属性：
+
+```text
+ro.product.cpu.abilist      arm64-v8a
+ro.dalvik.vm.native.bridge  0           # 0 表示没走转译，是原生 arm64
+uname -m                    aarch64
+```
+
+### 10.4 x86_64 路线仍然值得保留
+
+`emulator -accel-check` 显示 **WHPX 可用**，所以 x86_64 镜像是硬件加速的，速度不在一个量级。
+它跑不了真实应用（见 10.2），但可以跑只含 Compose 代码的载体。
+
+`modern-settings/compose-integration-prototype` 正好是这样一个模块：它是一个 **application** 模块
+（applicationId `com.google.android.inputmethod.pinyin.materialcomposeaudit`），依赖 `:compose-runtime`，
+清单里声明的就是真实的 `ModernSettingsActivity`，并且打包了四种 ABI。
+
+**但它当前不能直接用。** 它不含 legacy dex，而 `LegacyRimeSyncRepository` 用 `Class.forName`
+反射 `...rimesync.RimeSyncSettingsCompat`（无 try/catch），在载体里必然抛
+`ClassNotFoundException` 并崩溃。真实包里有这个类，所以不是应用缺陷，是载体缺件。
+要用它就得补一个桩类，或让该反射容忍缺失。
+
+### 10.5 分流其实有两道闸（本次新发现）
+
+调研原先只记了 smali 里的阈值。实测发现**还有第二道，而且更硬**：
+
+| 闸 | 位置 | 现值 | 作用 |
+| --- | --- | --- | --- |
+| 路由阈值 | `scripts/apply_patches.py` 的 `const/16 v1, 0x23` | 35 | `SettingsActivity` 是否跳转新页 |
+| 组件启用 | `res/values/modern_settings_runtime.xml` 的 `modern_settings_runtime_enabled` | `false` | 活动本身是否可用 |
+
+第二道由 `scripts/prepare_compose_host_manifest.py` 生成：基础 `values/` 写 `false`，
+`values-v35/` 写 `true`。**API 34 及以下这个活动是被禁用的**，`am start` 直接报
+`Activity class does not exist`。
+
+`docs/modern-settings-runtime-design.md` 记了这件事，但**本文的阶段 3 原清单没写**，
+现已补进第 12 条。只改 smali 阈值会得到「路由过去了、目标活动却不可用」。
+中间态必须同时改这两处；`scripts/verify_modern_settings_runtime.py:1056-1063`
+断言了 `false` / `true` 两个变体并存，也要一并改掉。
+
+实测手法：`pm enable <组件>` 临时启用后即可启动，10.1 的截图就是这么拿到的。
+
+### 10.6 复现方式
+
+脚本留在 `work/emulator/`（未入库）：
+
+- `emu-adb.sh`：adb 封装。沙箱会在命令之间回收 adb server，所以每次都要 `start-server`
+  并重新 `connect 127.0.0.1:5557`；还必须 `MSYS_NO_PATHCONV=1`，
+  否则 `/sdcard/...` 会被 Git Bash 改写成 Windows 路径。
+- `run-compose-probe.sh`：装包、启动、抓崩溃日志、截图。
+
+完整流程：
+
+```text
+1. 装镜像   sdkmanager --install "platforms;android-23" "system-images;android-23;google_apis;arm64-v8a"
+2. 建 AVD   avdmanager create avd -n api23arm64 -k "system-images;android-23;google_apis;arm64-v8a" -d pixel_2
+3. 降分辨率 改 AVD 的 config.ini 到 720x1280，减轻软件渲染负担
+4. 启动     用 34.2.16，参数见 10.3
+5. 等待     sys.boot_completed=1
+6. 验证     装真实包，pm enable 新设置活动，am start
+```
+
+### 10.7 对阶段 1 的结论
+
+| 原计划的硬前置 | 现状 |
+| --- | --- |
+| 23–34 有没有可用设备或模拟器 | **已解决**，arm64 镜像覆盖全区间 |
+| 在目标区间跑一次 Compose 设置页 | **已完成**，API 23 通过，无崩溃 |
+
+**风险等级下调**：「Compose 在 35 以下会不会崩」不再是未知。剩下的工作是**覆盖面**，
+不是可行性——按 23、26、29、31、34 依次跑一遍，逐档留截图与日志即可。
+
+**边界不变**：模拟器验的是 Compose 运行时与布局，验不了 IME 窗口交互与厂商 ROM 差异。
+3.4 里写明的那条不因本次实测而改变。
