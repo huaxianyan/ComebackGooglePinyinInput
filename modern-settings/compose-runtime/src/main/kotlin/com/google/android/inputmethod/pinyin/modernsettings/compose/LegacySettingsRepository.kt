@@ -63,9 +63,11 @@ class LegacySettingsRepository(context: Context) {
             SliderSettingContracts.handwritingStrokeWidth,
         )
         val launcherIcon = readLauncherIcon()
+        val themeCatalog = readThemeCatalog()
 
         return SettingsSnapshot(
             capabilities = capabilities,
+            themeCatalog = themeCatalog,
             systemAutoThemeEnabled = preferences.getBoolean(
                 SystemAutoThemeSetting.preferenceKey,
                 false,
@@ -434,12 +436,53 @@ class LegacySettingsRepository(context: Context) {
     private fun readEnumeratedIndex(contract: EnumeratedSliderContract): Int =
         contract.indexOf(preferences.getString(contract.key, contract.defaultValue))
 
+    /**
+     * Reads the theme inventory.
+     *
+     * Built-in themes come from the legacy value array and are named by the
+     * legacy value/name map, because the packaged metadata blobs carry style
+     * sheet file names and no label. Custom themes come from the directory names
+     * the legacy filter accepts. Every slot is then resolved against that list
+     * so a stored value with no matching package still shows up as unresolved
+     * rather than disappearing.
+     */
+    private fun readThemeCatalog(): ThemeCatalog {
+        val builtinNames = ThemeCatalogRules.builtinNames(
+            readStringArray(BUILTIN_THEME_NAME_MAP),
+        )
+        val builtin = ThemeCatalogRules.builtinCatalog(
+            readStringArray(BUILTIN_THEME_VALUES),
+            builtinNames,
+        )
+        val user = ThemeCatalogRules.userCatalog(userThemeDirectoryNames())
+        val generated = ThemeEntry(
+            value = DynamicColorSetting.generatedPackageValue,
+            name = resources.getString(R.string.modern_settings_dynamic_color_title),
+            source = ThemeSource.Generated,
+        )
+        val entries = builtin + user + generated
+        val additionalBySlot = ThemeSlotKey.entries.associateWith { slot ->
+            preferences.getString(slot.additionalKey, "").orEmpty()
+        }
+        return ThemeCatalog(
+            builtin = builtin,
+            user = user,
+            generated = generated,
+            slots = ThemeCatalogRules.resolveSlots(additionalBySlot, entries),
+        )
+    }
+
+    private fun userThemeDirectoryNames(): List<String> =
+        applicationContext.filesDir.list()?.toList().orEmpty()
+
     private fun readEntryLabel(arrayName: String, index: Int): String =
         readEntryLabels(arrayName)[index]
 
-    private fun readEntryLabels(arrayName: String): List<String> {
+    private fun readEntryLabels(arrayName: String): List<String> = readStringArray(arrayName)
+
+    private fun readStringArray(arrayName: String): List<String> {
         val id = resources.getIdentifier(arrayName, "array", applicationContext.packageName)
-        require(id != 0) { "Missing legacy entries array: $arrayName" }
+        require(id != 0) { "Missing legacy array: $arrayName" }
         return resources.getStringArray(id).toList()
     }
 
@@ -462,6 +505,14 @@ class LegacySettingsRepository(context: Context) {
         private const val LAUNCHER_ICON_KEY = "show_launcher_icon"
         private const val SYSTEM_AUTO_THEME_BRIDGE =
             "com.google.android.inputmethod.pinyin.SystemAutoThemeCompat"
+
+        /** The legacy array holding the built-in theme values, in display order. */
+        private const val BUILTIN_THEME_VALUES =
+            "entryvalues_builtin_additional_keyboard_theme"
+
+        /** The legacy flat array of built-in theme value/name pairs. */
+        private const val BUILTIN_THEME_NAME_MAP =
+            "builtin_theme_package_name_to_theme_name_map"
 
         internal fun selectDeviceOverride(
             entries: Array<String>,
@@ -498,6 +549,7 @@ class LegacySettingsRepository(context: Context) {
 
 data class SettingsSnapshot(
     val capabilities: SettingsCapabilities,
+    val themeCatalog: ThemeCatalog,
     val systemAutoThemeEnabled: Boolean,
     val dynamicColorEnabled: Boolean,
     val soundEnabled: Boolean,

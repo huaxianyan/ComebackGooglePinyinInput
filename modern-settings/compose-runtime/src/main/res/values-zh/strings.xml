@@ -38,6 +38,14 @@
     <string name="modern_settings_dynamic_color_title">动态配色</string>
     <string name="modern_settings_dynamic_color_summary">键盘配色取自系统主题色，随深浅色模式变化</string>
     <string name="modern_settings_theme_requires_dynamic_disabled">关闭「动态配色」后可设置</string>
+    <string name="modern_settings_theme_catalog_title">主题清单</string>
+    <string name="modern_settings_theme_catalog_summary">查看内置主题与自定义主题</string>
+    <string name="modern_settings_theme_catalog_in_use">当前使用</string>
+    <string name="modern_settings_theme_catalog_builtin">内置主题</string>
+    <string name="modern_settings_theme_catalog_custom">自定义主题</string>
+    <string name="modern_settings_theme_catalog_no_custom">暂无自定义主题</string>
+    <string name="modern_settings_theme_catalog_unset">未设置</string>
+    <string name="modern_settings_theme_catalog_unresolved">未收录的主题</string>
     <string name="modern_settings_keyboard_appearance_summary">主题、单手模式和键盘高度</string>
     <string name="modern_settings_keyboard_keys_title">按键与切换</string>
     <string name="modern_settings_keyboard_keys_summary">按键气泡、输入按钮、切换和交互</string>

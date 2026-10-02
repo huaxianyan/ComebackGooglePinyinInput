@@ -93,7 +93,19 @@ def main() -> int:
             "actions.onOpenThemeSelector(ThemeSelectionSlot.Dark)",
             "actions.onOpenThemeSelector(ThemeSelectionSlot.Fixed)",
             "SettingsRoute.ThemeBackground",
-            "themeBackgroundSettingsItems(snapshot, actions)",
+            "themeBackgroundSettingsItems(",
+            "snapshot, actions, navigateTo,",
+            "SettingsRoute.ThemeCatalog",
+            "ThemeCatalogScreen(snapshot = snapshot, onNavigateBack = navigateBack)",
+            "ThemeCatalogRules.builtinNames(",
+            "ThemeCatalogRules.builtinCatalog(",
+            "ThemeCatalogRules.userCatalog(",
+            "ThemeCatalogRules.resolveSlots(",
+            "ThemeSlotKey.entries.associateWith { slot ->",
+            "DynamicColorSetting.generatedPackageValue",
+            '"entryvalues_builtin_additional_keyboard_theme"',
+            '"builtin_theme_package_name_to_theme_name_map"',
+            "themeCatalog = themeCatalog",
             "ThemeSettingRules.canSelect(slot, followThemeEnabled, dynamicColorEnabled)",
             "val onRefreshDictionaryHealth: () -> Unit",
             "DictionaryHealthStatusCompat\\$SnapshotCallback",
@@ -295,6 +307,14 @@ def main() -> int:
                 'name="modern_settings_fixed_theme_summary"',
                 'name="modern_settings_theme_requires_follow_enabled"',
                 'name="modern_settings_theme_requires_follow_disabled"',
+                'name="modern_settings_theme_catalog_title"',
+                'name="modern_settings_theme_catalog_summary"',
+                'name="modern_settings_theme_catalog_in_use"',
+                'name="modern_settings_theme_catalog_builtin"',
+                'name="modern_settings_theme_catalog_custom"',
+                'name="modern_settings_theme_catalog_no_custom"',
+                'name="modern_settings_theme_catalog_unset"',
+                'name="modern_settings_theme_catalog_unresolved"',
                 'name="modern_settings_launcher_icon_title"',
                 'name="modern_settings_launcher_icon_summary"',
                 'name="modern_settings_dictionary_health_title"',
@@ -465,6 +485,39 @@ def main() -> int:
             "nonGoogleOtherImeDoesNotSatisfyLegacyFallback",
         ),
         "keyboard capability predicate tests",
+    )
+
+    theme_catalog_rules = next(
+        (project / "compose-runtime/src/main/kotlin").rglob("ThemeCatalog.kt")
+    ).read_text(encoding="utf-8")
+    require(
+        theme_catalog_rules,
+        (
+            'require(pairs.size % 2 == 0) { "array size should be multiple of 2." }',
+            "USER_THEME_DIRECTORY_PREFIX = \"user_theme_\"",
+            "it.startsWith(USER_THEME_DIRECTORY_PREFIX)",
+            "additionalBySlot[slot].orEmpty()",
+            "entries.firstOrNull { it.value == additional }",
+        ),
+        "theme inventory rules",
+    )
+    theme_catalog_test = next(
+        (project / "compose-runtime/src/test/kotlin").rglob("ThemeCatalogTest.kt")
+    ).read_text(encoding="utf-8")
+    require(
+        theme_catalog_test,
+        (
+            "builtinCatalogKeepsDeclarationOrder",
+            "builtinCatalogDropsValuesWithoutAName",
+            "builtinNamesRejectsAnOddArray",
+            "userCatalogFiltersSortsAndBuildsFilesValues",
+            "generatedPaletteIsNotAScannedUserTheme",
+            "resolveSlotsNamesEverySlotAndKeepsUnresolvedValues",
+            "resolveSlotsLeavesAnUnknownValueUnresolved",
+            "slotKeysMatchTheBridgeNaming",
+            "generatedSlotIsNotASelectionTarget",
+        ),
+        "theme inventory tests",
     )
 
     launcher_rules = next(
@@ -736,9 +789,12 @@ def main() -> int:
             "public static boolean applyOnCreate(Context context)",
             "public static boolean applyIfEnabled(Context context, Configuration configuration)",
             'Class.forName("baq")',
-            ".putString(FIXED_BASE_KEY, current[0])",
-            ".putString(LIGHT_ADDITIONAL_KEY, context.getString(MATERIAL_LIGHT_THEME))",
-            ".putString(DARK_ADDITIONAL_KEY, context.getString(MATERIAL_DARK_THEME))",
+            "putIfAbsent(editor, preferences, FIXED_BASE_KEY, current[0])",
+            "putIfAbsent(editor, preferences, LIGHT_ADDITIONAL_KEY, "
+            "context.getString(MATERIAL_LIGHT_THEME))",
+            "putIfAbsent(editor, preferences, DARK_ADDITIONAL_KEY, "
+            "context.getString(MATERIAL_DARK_THEME))",
+            "if (!preferences.contains(key))",
             "ApplicationInfo.FLAG_DEBUGGABLE",
             'DIAGNOSTIC_TAG = "SystemAutoTheme"',
             '"configuration uiMode="',

@@ -201,6 +201,10 @@ private fun SettingsRoutePage(
         )
         return
     }
+    if (route == SettingsRoute.ThemeCatalog) {
+        ThemeCatalogScreen(snapshot = snapshot, onNavigateBack = navigateBack)
+        return
+    }
     val context = LocalContext.current
     val percentText: (Int) -> String = {
         context.getString(R.string.modern_settings_percent_format, it)
@@ -242,7 +246,10 @@ private fun SettingsRoutePage(
                 SettingsRoute.KeyboardAppearance -> keyboardAppearanceSettingsItems(
                     snapshot, actions, navigateTo,
                 )
-                SettingsRoute.ThemeBackground -> themeBackgroundSettingsItems(snapshot, actions)
+                SettingsRoute.ThemeBackground -> themeBackgroundSettingsItems(
+                    snapshot, actions, navigateTo,
+                )
+                SettingsRoute.ThemeCatalog -> error("Theme catalog uses its dedicated screen")
                 SettingsRoute.KeyboardKeys -> keyboardKeysSettingsItems(
                     snapshot, actions, millisecondsText,
                 )
@@ -286,6 +293,7 @@ private fun routeTitle(route: SettingsRoute): String = when (route) {
         R.string.modern_settings_keyboard_appearance_title,
     )
     SettingsRoute.ThemeBackground -> stringResource(R.string.modern_settings_theme_title)
+    SettingsRoute.ThemeCatalog -> stringResource(R.string.modern_settings_theme_catalog_title)
     SettingsRoute.KeyboardKeys -> stringResource(R.string.modern_settings_keyboard_keys_title)
     SettingsRoute.KeyboardFeedback -> stringResource(R.string.modern_settings_section_key_feedback)
     SettingsRoute.Handwriting -> stringResource(R.string.modern_settings_section_handwriting)

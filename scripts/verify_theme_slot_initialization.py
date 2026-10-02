@@ -18,6 +18,11 @@ against the source that defines it:
 
 The slot keys are read out of `baseKey` and `additionalKey` rather than
 hardcoded, so adding a slot without extending initialization fails here.
+
+The Compose settings runtime reads the same keys back for the read-only theme
+inventory. It derives them from a slot table instead of repeating the literals,
+so the same literals are cross-checked against that table: a slot added on
+either side alone fails here rather than silently reading an empty value.
 """
 
 from __future__ import annotations
@@ -29,8 +34,15 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "patches/java/com/google/android/inputmethod/pinyin/SystemAutoThemeCompat.java"
+CATALOG = (
+    ROOT
+    / "modern-settings/compose-runtime/src/main/kotlin/com/google/android/inputmethod/pinyin"
+    / "modernsettings/compose/ThemeCatalog.kt"
+)
 
 SLOT_KEY = re.compile(r"\b([A-Z][A-Z0-9_]*_KEY)\b")
+ENUM_ENTRY = re.compile(r'^\s*([A-Z][A-Za-z0-9]*)\(\s*"([^"]+)"\s*\)\s*,?\s*$', re.MULTILINE)
+SLOT_KEY_PREFIX = re.compile(r'const val PREFIX = "([^"]+)"')
 
 
 def method_body(source: str, name: str) -> str | None:
@@ -59,6 +71,25 @@ def method_body(source: str, name: str) -> str | None:
     return None
 
 
+def enum_body(source: str, name: str) -> str | None:
+    """Return the body of `enum class <name>(...)`, excluding the header."""
+    start = source.find(f"enum class {name}(")
+    if start < 0:
+        return None
+    open_brace = source.find("{", source.find(")", start))
+    if open_brace < 0:
+        return None
+    depth = 0
+    for index in range(open_brace, len(source)):
+        if source[index] == "{":
+            depth += 1
+        elif source[index] == "}":
+            depth -= 1
+            if depth == 0:
+                return source[open_brace + 1 : index]
+    return None
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -66,6 +97,12 @@ def main() -> int:
         type=Path,
         default=SOURCE,
         help="Java source to check; override to replay the contract against another revision",
+    )
+    parser.add_argument(
+        "--catalog",
+        type=Path,
+        default=CATALOG,
+        help="Compose-side slot table whose derived keys must match the bridge",
     )
     args = parser.parse_args()
     source = args.source.read_text(encoding="utf-8")
@@ -112,6 +149,28 @@ def main() -> int:
     elif ".commit()" in written and written.index("isEmpty()") > written.index(".commit()"):
         failures.append("writeSlot commits before checking the slot pair is usable")
 
+    catalog_body = enum_body(args.catalog.read_text(encoding="utf-8"), "ThemeSlotKey")
+    if catalog_body is None:
+        failures.append("ThemeSlotKey is missing, so the slot table cannot be read")
+        catalog_body = ""
+    prefix_match = SLOT_KEY_PREFIX.search(catalog_body)
+    if prefix_match is None:
+        failures.append("ThemeSlotKey does not declare the shared key prefix")
+    prefix = prefix_match.group(1) if prefix_match else ""
+    persisted = ENUM_ENTRY.findall(catalog_body)
+    derived: list[tuple[str, str]] = []
+    for entry_name, persisted_value in persisted:
+        derived.append((prefix + persisted_value + "_keyboard", entry_name))
+        derived.append((prefix + persisted_value + "_additional", entry_name))
+    if len(derived) != len(slot_keys):
+        failures.append(
+            f"the slot table derives {len(derived)} keys but the bridge declares "
+            f"{len(slot_keys)}"
+        )
+    for literal, entry_name in derived:
+        if f'"{literal}"' not in source:
+            failures.append(f"the bridge declares no slot key {literal} for {entry_name}")
+
     if failures:
         for failure in failures:
             print(f"FAIL {failure}", file=sys.stderr)
@@ -119,7 +178,8 @@ def main() -> int:
 
     print(
         f"theme-slot initialization contract verified "
-        f"({len(slot_keys)} slot keys, no one-shot flag)"
+        f"({len(slot_keys)} slot keys, no one-shot flag, "
+        f"{len(derived)} keys matched against the Compose slot table)"
     )
     return 0
 

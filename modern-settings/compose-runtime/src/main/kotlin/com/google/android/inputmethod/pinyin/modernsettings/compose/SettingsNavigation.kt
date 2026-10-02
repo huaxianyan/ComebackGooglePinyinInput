@@ -14,6 +14,7 @@ internal enum class SettingsRoute {
     Keyboard,
     KeyboardAppearance,
     ThemeBackground,
+    ThemeCatalog,
     KeyboardKeys,
     KeyboardFeedback,
     Handwriting,

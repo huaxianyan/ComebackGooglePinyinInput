@@ -137,6 +137,7 @@ internal fun androidx.compose.foundation.lazy.LazyListScope.keyboardAppearanceSe
 internal fun androidx.compose.foundation.lazy.LazyListScope.themeBackgroundSettingsItems(
     snapshot: SettingsSnapshot,
     actions: SettingsActions,
+    navigateTo: (SettingsRoute) -> Unit,
 ) {
     val followTheme = snapshot.systemAutoThemeEnabled
     val dynamicColor = snapshot.dynamicColorEnabled
@@ -212,6 +213,16 @@ internal fun androidx.compose.foundation.lazy.LazyListScope.themeBackgroundSetti
                 ThemeSelectionSlot.Fixed, followTheme, dynamicColor,
             ),
             onClick = { actions.onOpenThemeSelector(ThemeSelectionSlot.Fixed) },
+        )
+    }
+    // Read-only, so it stays reachable while either automatic mode owns the
+    // resolved pair: knowing which theme a slot holds is exactly what a
+    // suppressed slot cannot be inspected for elsewhere.
+    item {
+        SettingsNavigationRow(
+            title = stringResource(R.string.modern_settings_theme_catalog_title),
+            supporting = stringResource(R.string.modern_settings_theme_catalog_summary),
+            onClick = { navigateTo(SettingsRoute.ThemeCatalog) },
         )
     }
 }

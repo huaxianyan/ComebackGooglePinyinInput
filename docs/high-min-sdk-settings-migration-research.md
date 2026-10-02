@@ -203,6 +203,8 @@ minSdk 提到 23 后，这份例外清单可以整个删掉，少一处脆弱的
 ### 阶段 2：补齐 Compose 侧缺口
 
 6. **新主题选择页**（见第五节，独立专项）。
+   **只读切片已落地**（见 5.5）：清单、槽位解析、四槽当前指向；
+   预览与写入仍未做。
 7. 词典破坏性操作入口的 Compose 化，或明确保留旧 fragment 并写清理由。
 8. 许可证页的 Compose 化。
 9. 首次引导（若阶段 0 决定一并做）。
@@ -292,6 +294,43 @@ minSdk 提到 23 后，这份例外清单可以整个删掉，少一处脆弱的
 新主题选择页可以参考它的信息组织，但**主题包格式与持久化契约仍以本项目既有实现为准**，
 不要按 Gboard 的内部结构去改。
 
+### 5.5 已落地的只读切片（2026-10-02）
+
+按 5.2 的建议先做了只读部分：**主题清单与槽位解析**，不含预览、不含写入。
+落点：
+
+| 文件 | 内容 |
+| --- | --- |
+| `compose/ThemeCatalog.kt` | 纯逻辑：槽位表、主题项模型、清单装配与槽位解析规则 |
+| `compose/ThemeCatalogScreen.kt` | 只读页：当前使用 + 内置主题 + 自定义主题三段 |
+| `compose/LegacySettingsRepository.kt` | `readThemeCatalog()`，随 `SettingsSnapshot` 一起读出 |
+| `scripts/verify_theme_slot_initialization.py` | 新增槽位键与 Compose 槽位表的**交叉核对** |
+
+这一轮把此前只是「读代码推断」的契约变成了可断言的事实：
+
+1. **内置主题 17 套，来源是数组 `entryvalues_builtin_additional_keyboard_theme`**，
+   顺序即显示顺序。值形如 `assets:theme_package_metadata_color_black.binarypb`。
+2. **显示名另有资源**：`builtin_theme_package_name_to_theme_name_map` 是
+   34 项两两一对（值 → `kb_theme_*` 字符串），中文本地化已存在（`黑色主题`、`浅色主题` 等）。
+   **这是名字的唯一来源**：`theme_package_metadata_*.binarypb` 实测只有
+   field2（样式表文件名列表）与 field3（边框列表），**没有任何名字或颜色字段**，
+   所以 `bbg.a(Context, metadata)` 对内置主题必然走空名字回退。
+3. **写入契约**（`baq.a(Lamx)`）是两个键：`keyboard_theme` 与 `additional_keyboard_theme`。
+   内置主题的 `keyboard_theme` **恒为 `material_dark_theme`**
+   （`pref_entry_base_keyboard_theme` 就是它），实际生效的只有 `additional`。
+4. **槽位键共四对**：`compat_theme_{light,dark,fixed,dynamic}_{keyboard,additional}`。
+   `compat_theme_selection_slot` **只在「借道旧 Activity」时临时存在**，
+   用于把选中结果写回正确的槽；Compose 侧直接读写就不需要它。
+5. **动态槽不在可选中集合里**：桥接的 `isSelectableSlot` 只认 light/dark/fixed，
+   动态槽只有开关没有选择器。它的值是 `files:dynamic_theme.zip`（生成包），
+   清单里作为 `ThemeSource.Generated` 单独构造，**不会被 `user_theme_` 目录扫描捞到**。
+
+**仍未做、也是唯一的真难点：键盘预览**。旧页用
+`KeyboardPreviewRenderer$KeyboardPreviewRequestCanceler` +
+`onKeyboardPreviewReady(String, Drawable)` 拿引擎渲染的预览图，
+不是纯资源渲染；Compose 侧要么反射这条路，要么自绘。
+写入路径与自定义主题（SAF 选图、裁剪、落盘）同样留到下一刀。
+
 ## 六、风险
 
 | 风险 | 说明 |
@@ -312,6 +351,8 @@ minSdk 提到 23 后，这份例外清单可以整个删掉，少一处脆弱的
    23、26、30、31、34 全部通过、无崩溃。**27–29 是本机验证台的盲区**（10.7），
    文档与发布说明里必须写明这三档是推断而非实测。
 4. 做阶段 2 的补齐，其中主题选择页按 5.2 的建议**先做只读部分**。
+   **只读切片已完成**（见 5.5）：主题清单、槽位解析、四槽当前指向都能读出来并断言。
+   剩下的是预览、写入与自定义主题。
 5. 做阶段 3 的弃用落地，**重点盯 IME `settingsActivity` 入口**。
 6. 顺手删掉 `OVERRIDE_LIBRARIES` 例外清单。
 7. 最后统一更新门禁与文档。
