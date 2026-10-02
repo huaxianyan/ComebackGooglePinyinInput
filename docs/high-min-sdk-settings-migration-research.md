@@ -203,8 +203,9 @@ minSdk 提到 23 后，这份例外清单可以整个删掉，少一处脆弱的
 ### 阶段 2：补齐 Compose 侧缺口
 
 6. **新主题选择页**（见第五节，独立专项）。
-   **只读切片已落地**（见 5.5）：清单、槽位解析、四槽当前指向；
-   预览与写入仍未做。
+   **只读切片已落地**（见 5.5）：清单、槽位解析、四槽当前指向。
+   **键盘预览也已落地**（见 5.5 与 `docs/compose-theme-preview-design.md`），
+   真机验证待做。**写入路径仍未做。**
 7. 词典破坏性操作入口的 Compose 化，或明确保留旧 fragment 并写清理由。
 8. 许可证页的 Compose 化。
 9. 首次引导（若阶段 0 决定一并做）。
@@ -330,6 +331,15 @@ minSdk 提到 23 后，这份例外清单可以整个删掉，少一处脆弱的
 `onKeyboardPreviewReady(String, Drawable)` 拿引擎渲染的预览图，
 不是纯资源渲染；Compose 侧要么反射这条路，要么自绘。
 写入路径与自定义主题（SAF 选图、裁剪、落盘）同样留到下一刀。
+
+预览的三条路线对比见 `docs/compose-theme-preview-design.md`（2026-10-02）。
+那一份把调用链逐行核实过了，结论是推荐反射引擎渲染，理由是前置条件已经满足：
+两个必需的偏好键在 `preferences_pinyin_forced_values` 里都有强制值，
+且渲染走独立 `InputBundleManager`，不依赖 IME 是否在前台。
+
+**该方案已落地**（同日）：`ThemePreviewBridge.kt` + `ThemePreview.kt`，
+清单页顶部固定预览、点行切换。新增门禁 `scripts/verify_theme_preview_bridge.py`
+把「上游类改名」变成构建期失败。单元测试 83 通过 / 0 失败。**真机验证待做。**
 
 ## 六、风险
 

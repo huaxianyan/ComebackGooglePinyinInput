@@ -80,6 +80,16 @@ data class ThemeCatalog(
     val user: List<ThemeEntry>,
     val generated: ThemeEntry?,
     val slots: List<ThemeSlotValue>,
+    /**
+     * The theme the engine is using right now, read from
+     * `additional_keyboard_theme`.
+     *
+     * It is not one of the slot keys: the bridge materializes exactly one slot
+     * into the two legacy preferences, so this is the value that is in effect
+     * rather than the value a slot remembers. The inventory opens its preview
+     * on it, because it is what the keyboard is showing.
+     */
+    val activeValue: String,
 )
 
 /**

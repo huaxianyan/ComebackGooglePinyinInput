@@ -469,6 +469,7 @@ class LegacySettingsRepository(context: Context) {
             user = user,
             generated = generated,
             slots = ThemeCatalogRules.resolveSlots(additionalBySlot, entries),
+            activeValue = preferences.getString(ACTIVE_THEME_KEY, "").orEmpty(),
         )
     }
 
@@ -513,6 +514,15 @@ class LegacySettingsRepository(context: Context) {
         /** The legacy flat array of built-in theme value/name pairs. */
         private const val BUILTIN_THEME_NAME_MAP =
             "builtin_theme_package_name_to_theme_name_map"
+
+        /**
+         * The preference that actually selects a theme.
+         *
+         * The legacy resolver short-circuits on this one and ignores
+         * `keyboard_theme` whenever it is non-empty, so this value is what the
+         * keyboard is using.
+         */
+        private const val ACTIVE_THEME_KEY = "additional_keyboard_theme"
 
         internal fun selectDeviceOverride(
             entries: Array<String>,
