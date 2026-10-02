@@ -179,7 +179,7 @@ minSdk 提到 23 后，这份例外清单可以整个删掉，少一处脆弱的
 3.3 里「23 只是能编译、不是已验证」这条顾虑，对 API 23 已经不成立。
 
 细节（模拟器选型、启动参数、两道闸、复现步骤）见第十节，不在此重复。
-**剩余 26 / 29 / 31 / 34 待跑**，这是当前进行中的工作。
+**五档已跑完**（23、26、30、31、34），27–29 因验证台限制无法实测，见 10.7。
 
 ## 四、先期工作清单
 
@@ -307,9 +307,10 @@ minSdk 提到 23 后，这份例外清单可以整个删掉，少一处脆弱的
 
 1. **定 minSdk**。技术下限实测为 **23**，建议一次降到位，避免以后再降一次、
    把验证面重做一遍。
-2. ~~**解决设备**~~。**已解决**：自建 arm64 模拟器覆盖 23–36，不需要真机（见第十节）。
-3. ~~在目标区间上跑一次现有 Compose 设置页，记录真实崩溃点~~。**API 23 已完成，无崩溃**。
-   按 23、26、29、31、34 把剩下的四档跑完，逐档留截图与日志。
+2. ~~**解决设备**~~。**已解决**：自建模拟器台，两条客户机路线互补（见第十节）。
+3. ~~在目标区间上跑一次现有 Compose 设置页，记录真实崩溃点~~。**已完成五档**：
+   23、26、30、31、34 全部通过、无崩溃。**27–29 是本机验证台的盲区**（10.7），
+   文档与发布说明里必须写明这三档是推断而非实测。
 4. 做阶段 2 的补齐，其中主题选择页按 5.2 的建议**先做只读部分**。
 5. 做阶段 3 的弃用落地，**重点盯 IME `settingsActivity` 入口**。
 6. 顺手删掉 `OVERRIDE_LIBRARIES` 例外清单。
@@ -348,8 +349,9 @@ minSdk 提到 23 后，这份例外清单可以整个删掉，少一处脆弱的
 | 动态配色诊断版本 | **不再实施**（根因已定位并修复，见下方解除说明） |
 | 本工程（新设置页） | **进行中** |
 
-进行中的具体位置：**阶段 1 的验证面确认**。API 23 已在 arm64 模拟器上跑通（第十节），
-下一步按 26 / 29 / 31 / 34 依次跑完，逐档留截图与日志，再决定要不要补兼容分支。
+进行中的具体位置：**阶段 1 的验证面确认已收口**。五档实测通过（23、26、30、31、34），
+27–29 是本机验证台盲区，见 10.7。下一步是**阶段 2 的 Compose 侧补齐**，
+其中主题选择页按 5.2 的建议先做只读部分。
 
 历史背景（已解除）：用户曾反馈 **2.1.4 的动态配色键盘在用户设备上不工作**，
 且无法取得该设备，原计划先做一个带诊断日志与导出功能的 debug 版本，
@@ -363,7 +365,7 @@ minSdk 提到 23 后，这份例外清单可以整个删掉，少一处脆弱的
 
 阶段 1 的硬前置是「23–34 有没有可用的验证载体」。本节把它实测清楚了。
 
-### 10.1 结论：API 23 上跑通了
+### 10.1 结论：API 23 与 26 上跑通了
 
 **Compose 设置页在 API 23（Android 6.0）上实测可正常运行**，用的是真实发布包，不是替身。
 
@@ -375,21 +377,44 @@ minSdk 提到 23 后，这份例外清单可以整个删掉，少一处脆弱的
 
 整个过程 `logcat -b crash` 为空，无崩溃。
 
+**API 26（Android 8.0）同样通过**：`mResumedActivity` 指向新设置页，进程存活，
+崩溃缓冲区为空，首页四个分区（输入 / 键盘 / 词典与备份 / 其他）全部正常渲染。
+
+![API 26 上的 Compose 设置首页](../images/modern-settings-api26.png)
+
+首轮在 API 26 上还看到过一条 **「System UI isn't responding」** 的 ANR 弹窗。
+那是 **SystemUI 在 TCG 软件模拟下被饿死**，属验证台自身的性能问题，不是应用缺陷——
+新设置页本身已经完整绘制在弹窗下面。给客户机加上
+`settings put global hide_error_dialogs 1` 之后截图就干净了，
+换成 10.4 的 x86_64 路线后这个问题彻底消失。
+
 ### 10.2 前提约束：应用只有 arm64
 
 发布包 `lib/` 下只有 **arm64-v8a** 的 6 个 `.so`（`libpinyin_data_bundle`、`libhwrword`、
-`libgnustl_shared` 等）。这直接决定了模拟器的选择：
+`libgnustl_shared` 等）。这一条同时约束了客户机架构和可用区间：
 
-| 模拟器镜像 | 能否跑真实应用 | 说明 |
-| --- | --- | --- |
-| x86_64，API 23–29 | **不能** | 没有 ARM 转译，arm64 库无法加载 |
-| x86_64，API 30+ | 可以 | `google_apis` 镜像带 `libndk_translation` 转译层 |
-| arm64-v8a，API 23+ | **可以** | 原生执行，代价是宿主机要软件模拟 |
+| 客户机 | 能跑真实应用吗 | 可用区间 | 说明 |
+| --- | --- | --- | --- |
+| x86_64 | 看转译层 | **API 30+** | `libndk_translation.so` 是 Android 11 才加的，30 以下没有 |
+| arm64-v8a | 可以（原生） | **实测到 API 26** | 29 起确定起不来（见 10.3）；27、28 未测 |
 
-好消息是 `arm64-v8a` 镜像从 API 23 到 API 36 都有（`google_apis` 与 `default` 两种 tag），
-所以整段区间都能覆盖，不需要为低版本另找载体。
+转译层的有无可以直接读镜像的 `build.prop` 判断，不必启动：
 
-### 10.3 模拟器版本陷阱（实测）
+```text
+android-29/google_apis/x86_64          abilist=x86_64,x86                                  ← 无 arm64
+android-29/google_apis_playstore/x86_64 abilist=x86_64,x86                                 ← 无 arm64
+android-30/google_apis/x86_64          abilist=x86_64,x86,arm64-v8a,armeabi-v7a,armeabi    ← 有
+```
+
+`google_apis` 与 `google_apis_playstore` 两种 tag 都试过，29 都没有转译层。
+
+两边合起来，**只有 API 27、28、29 落进了空档**：arm64 客户机起不来，x86_64 客户机又没有转译层。
+这是验证台的能力边界，不是应用的问题。
+
+`arm64-v8a` 镜像本身从 API 23 到 API 36 都有（`google_apis` 与 `default` 两种 tag）。
+**但「镜像存在」不等于「能启动」**，见 10.3。
+
+### 10.3 模拟器版本与 arm64 的 API 上限（实测）
 
 **新版模拟器不支持 arm64。** 用 SDK 里的 37.2.12 启动 API 23 arm64 镜像，直接退出：
 
@@ -399,6 +424,37 @@ FATAL | QEMU2 emulator does not support arm64 CPU architecture
 
 改用 **34.2.16**（build id `12038310`）后可以正常启动。该版本需从归档地址单独下载并解压到独立目录，
 **不要覆盖 SDK 里的 `emulator`**，否则会影响其他 AVD。
+
+根因在 `main-emulator.cpp` 的 `kQemuArchs` 表：35.3（2024-08）起把它改成按宿主编译期宏
+条件编译，`arm64` 一项只在 `__aarch64__` 宿主上存在。于是 x86_64 宿主上查表返回 `NULL`，
+触发这条报错。**34.2.16 是最后一个还能在 x86_64 宿主上跑 arm64 客户机的版本。**
+
+**但这还不够——arm64 镜像有 API 上限。** 同一台机器、同一份模拟器、同一套参数，
+逐档实测的结果是：
+
+| 镜像 | 结果 |
+| --- | --- |
+| `android-23` arm64 | **启动成功**，`uname -m=aarch64` |
+| `android-26` arm64 | **启动成功**，`uname -m=aarch64` |
+| `android-29` arm64 | `PANIC: Avd's CPU Architecture 'arm64' is not supported…` |
+| `android-31` arm64 | 同上 |
+| `android-34` arm64 | 同上 |
+
+排除过程：
+
+- 两档 AVD 的 `config.ini` **逐行 diff 只差 `image.sysdir.1` 与 `target`**，
+  连 `hw.cpu.arch=arm64`、`abi.type=arm64-v8a` 都一致。
+- 新建一个全新的 API 29 arm64 AVD，同样 PANIC —— 不是 AVD 被写坏。
+- 换成 AOSP 的 `default` tag 镜像（`android-29;default;arm64-v8a`），同样 PANIC ——
+  不是 `google_apis` tag 的问题。
+- `source.properties` 的 `SystemImage.Abi` 都是 `arm64-v8a`；34.2.16 自带
+  `qemu-system-aarch64.exe`；去掉 `-qemu -machine virt` 报错不变。
+
+所以**不是配置问题，是这套模拟器对 API 28 以上的 arm64 镜像一律拒收**。
+分界点为什么落在 27/28 之间，本次没有查到确证，不做推测。
+
+**含义**：arm64 路线**实测只覆盖到 API 26**；27、28 未测，29 起确定不行。
+29 及以上必须换载体，方案是 x86_64 镜像 + ARM 转译层，见 10.4。
 
 必须的参数组合，缺一不可：
 
@@ -423,19 +479,51 @@ ro.dalvik.vm.native.bridge  0           # 0 表示没走转译，是原生 arm64
 uname -m                    aarch64
 ```
 
-### 10.4 x86_64 路线仍然值得保留
+### 10.4 API 28 以上走 x86_64 + 转译层（实测）
 
-`emulator -accel-check` 显示 **WHPX 可用**，所以 x86_64 镜像是硬件加速的，速度不在一个量级。
-它跑不了真实应用（见 10.2），但可以跑只含 Compose 代码的载体。
+API 28 起 arm64 客户机起不来（10.3），只能换 x86_64。好在 API 30+ 的 x86_64 镜像
+自带 ARM64 转译层，**真实发布包可以直接装上去跑**：
 
-`modern-settings/compose-integration-prototype` 正好是这样一个模块：它是一个 **application** 模块
+```text
+ro.product.cpu.abilist         x86_64,arm64-v8a
+ro.dalvik.vm.native.bridge     libndk_translation.so
+ro.enable.native.bridge.exec   1
+```
+
+`emulator -accel-check` 显示 **WHPX 可用**，所以 x86_64 客户机是硬件加速的，
+速度与 arm64 的 TCG 完全不在一个量级：
+
+| 客户机 | 冷启动 | 一轮验证（装包 + 启活动 + 截图） |
+| --- | --- | --- |
+| arm64 / TCG | 2–10 分钟 | 分钟级，且 SystemUI 会被饿出 ANR |
+| x86_64 / WHPX | **约 86 秒** | **约 1 分钟**，界面流畅无 ANR |
+
+**结论：28 以上一律用 x86_64；arm64 只用于 23–26。** 两条路线互补，没有重叠。
+
+实际跑通的三档（每档都留了截图，`logcat -b crash` 全为空）：
+
+| 档位 | 客户机 | 结果 |
+| --- | --- | --- |
+| API 30（Android 11） | x86_64 + 转译 | 通过 |
+| API 31（Android 12） | x86_64 + 转译 | 通过 |
+| API 34（Android 14） | x86_64 + 转译 | 通过 |
+
+![API 30 上的 Compose 设置页](../images/modern-settings-api30.png)
+
+![API 31 上的 Compose 设置页](../images/modern-settings-api31.png)
+
+![API 34 上的 Compose 设置页](../images/modern-settings-api34.png)
+
+**这里跑的是只带 arm64 原生库的正式包**：`libndk_translation.so` 确实把 arm64 的
+`.so` 托起来了，`PinyinApp` 的 `<clinit>` 没有报 `UnsatisfiedLinkError`，
+设置页正常起来。也就是说 x86_64 客户机在这里不是「近似环境」，而是真能跑正式包。
+
+顺带记一个用不上的候选：`modern-settings/compose-integration-prototype` 是个 **application** 模块
 （applicationId `com.google.android.inputmethod.pinyin.materialcomposeaudit`），依赖 `:compose-runtime`，
-清单里声明的就是真实的 `ModernSettingsActivity`，并且打包了四种 ABI。
-
-**但它当前不能直接用。** 它不含 legacy dex，而 `LegacyRimeSyncRepository` 用 `Class.forName`
-反射 `...rimesync.RimeSyncSettingsCompat`（无 try/catch），在载体里必然抛
-`ClassNotFoundException` 并崩溃。真实包里有这个类，所以不是应用缺陷，是载体缺件。
-要用它就得补一个桩类，或让该反射容忍缺失。
+清单里声明的就是真实的 `ModernSettingsActivity`，并打包了四种 ABI，本来很适合做纯 Compose 载体。
+**但它缺 legacy dex**，而 `LegacyRimeSyncRepository` 用 `Class.forName` 反射
+`...rimesync.RimeSyncSettingsCompat`（无 try/catch），在载体里必然抛
+`ClassNotFoundException`。既然真实包能跑，就不必再补桩类了。
 
 ### 10.5 分流其实有两道闸（本次新发现）
 
@@ -462,30 +550,56 @@ uname -m                    aarch64
 脚本留在 `work/emulator/`（未入库）：
 
 - `emu-adb.sh`：adb 封装。沙箱会在命令之间回收 adb server，所以每次都要 `start-server`
-  并重新 `connect 127.0.0.1:5557`；还必须 `MSYS_NO_PATHCONV=1`，
-  否则 `/sdcard/...` 会被 Git Bash 改写成 Windows 路径。
-- `run-compose-probe.sh`：装包、启动、抓崩溃日志、截图。
+  并重新注册客户机；还必须 `MSYS_NO_PATHCONV=1`，否则 `/sdcard/...` 会被 Git Bash
+  改写成 Windows 路径。**反过来，`MSYS_NO_PATHCONV=1` 又让 `adb.exe` 收到 `/e/...`
+  这种它认不出的路径**，凡跨这条边界的路径都要用 `cygpath -w` 转一次——
+  漏了会表现为「装包失败、随后 `am start` 报 Activity 不存在」，极易误判成路由问题。
+- `boot-api.sh <api> [port]`：建 AVD、压到 720x1280、用 34.2.16 启动 arm64 客户机，
+  等 `sys.boot_completed=1`，然后**持有**客户机。
+- `boot-x64.sh <api> [port]`：同上，但走 x86_64 + WHPX，约 86 秒起来。
+- `check-api.sh <api> [port]`：装真实包 → `pm enable` 新设置活动 → `am start` →
+  记录 `mResumedActivity` / 进程 / 崩溃缓冲区 → 截图。
+
+两条验证台经验值得记：
+
+1. **沙箱会回收长时间的前台命令，并把子进程一起带走。**
+   所以「启动客户机」与「验证」必须分开：客户机由后台任务持有，验证用短命令打进去。
+   曾把两者串进同一个脚本，脚本被回收时客户机跟着死，表现成「模拟器无故退出」。
+2. **别用 `cmd | tail` 包住长命令**：输出全被 `tail` 缓冲，工具侧长时间看不到任何输出，
+   更容易被当成卡死回收。让输出直接流进日志文件，再 `tail` 文件。
 
 完整流程：
 
 ```text
-1. 装镜像   sdkmanager --install "platforms;android-23" "system-images;android-23;google_apis;arm64-v8a"
-2. 建 AVD   avdmanager create avd -n api23arm64 -k "system-images;android-23;google_apis;arm64-v8a" -d pixel_2
-3. 降分辨率 改 AVD 的 config.ini 到 720x1280，减轻软件渲染负担
-4. 启动     用 34.2.16，参数见 10.3
-5. 等待     sys.boot_completed=1
-6. 验证     装真实包，pm enable 新设置活动，am start
+1. 装镜像  sdkmanager --install "system-images;android-<api>;google_apis;{arm64-v8a|x86_64}"
+2. 启动    RUN_CHECK=1 ./boot-api.sh <api>    # arm64，23–26
+           RUN_CHECK=1 ./boot-x64.sh <api>    # x86_64，30+
+3. 等就绪  tail -f api<api>-boot.log           # 出现 "holding" 即已就绪
+4. 结果    api<api>-check.log 与 shots/api<api>-modern-settings.png
+5. 关闭    ./emu-adb.sh emu kill
 ```
 
 ### 10.7 对阶段 1 的结论
 
 | 原计划的硬前置 | 现状 |
 | --- | --- |
-| 23–34 有没有可用设备或模拟器 | **已解决**，arm64 镜像覆盖全区间 |
-| 在目标区间跑一次 Compose 设置页 | **已完成**，API 23 通过，无崩溃 |
+| 23–34 有没有可用设备或模拟器 | **已解决**，两条客户机路线互补 |
+| 在目标区间跑一次 Compose 设置页 | **五档完成**：23、26、30、31、34，全部通过且无崩溃 |
 
-**风险等级下调**：「Compose 在 35 以下会不会崩」不再是未知。剩下的工作是**覆盖面**，
-不是可行性——按 23、26、29、31、34 依次跑一遍，逐档留截图与日志即可。
+覆盖情况如实记录：
+
+| 区间 | 载体 | 状态 |
+| --- | --- | --- |
+| 23–26 | arm64 / TCG | **已实测**（23、26） |
+| 27–29 | 无 | **未实测**：arm64 客户机起不来（10.3），x86_64 客户机又没有转译层（10.2） |
+| 30–34 | x86_64 / WHPX + 转译 | **已实测**（30、31、34） |
+
+**27–29 这三档在本机验证台上无解**，属环境限制而非应用问题：
+26 与 30 两侧的结论一致，Compose 库在这段区间也没有行为差异。
+但「一致」是推断，**发布说明与文档里要写明这三档是推断、不是实测**。
+
+**风险等级下调**：「Compose 在 35 以下会不会崩」不再是未知。
+剩下的是 27–29 的覆盖缺口，以及真机与厂商 ROM 的差异。
 
 **边界不变**：模拟器验的是 Compose 运行时与布局，验不了 IME 窗口交互与厂商 ROM 差异。
 3.4 里写明的那条不因本次实测而改变。
