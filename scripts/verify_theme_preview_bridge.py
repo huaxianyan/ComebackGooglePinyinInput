@@ -16,6 +16,10 @@ values. Both sides are read rather than duplicated:
 * the preference key names come from the bridge, and are matched against
   `strings.xml` and against the forced-value array.
 
+The forced values are the reason the bridge goes through the preference facade
+instead of `SharedPreferences`: they are held in memory and never written to
+disk, so a direct read finds nothing.
+
 Run it after decoding the APK. Without a decoded tree there is nothing to
 compare against, so a missing tree is an error rather than a skip.
 """
@@ -48,6 +52,7 @@ REQUIRED_CLASSES = {
     "THEME_CLASS": ["bck"],
     "WRAPPED_CONTEXT_CLASS": ["bbb"],
     "VIEW_DEF_HOLDER_CLASS": ["ats"],
+    "PREFERENCES_CLASS": ["amx"],
     "RENDERER_CLASS": [
         KEYBOARD_PACKAGE + ".KeyboardPreviewRenderer",
     ],
@@ -62,41 +67,74 @@ REQUIRED_CLASSES = {
     ],
 }
 
-REQUIRED_MEMBERS = {
-    "baq": [
-        ".method public static a(Landroid/content/Context;Ljava/lang/String;)Lbaq;",
-    ],
-    "bck": [
-        ".method public constructor <init>(Landroid/content/Context;Lbaq;Z)V",
-    ],
-    "ats": [
-        ".field public static final a:"
-        "[Lcom/google/android/apps/inputmethod/libs/framework/core/metadata/KeyboardViewDef$Type;",
-    ],
-    KEYBOARD_PACKAGE + ".KeyboardPreviewRenderer": [
-        ".method public constructor <init>(Landroid/content/Context;"
-        "Lcom/google/android/apps/inputmethod/libs/framework/keyboard/IKeyboardTheme;"
-        "[Lcom/google/android/apps/inputmethod/libs/framework/core/metadata/KeyboardViewDef$Type;F)V",
-        ".method public final a(ILjava/lang/String;"
-        "Lcom/google/android/apps/inputmethod/libs/framework/keyboard/"
-        "KeyboardPreviewRenderer$KeyboardPreviewReceiver;)"
-        "Lcom/google/android/apps/inputmethod/libs/framework/keyboard/"
-        "KeyboardPreviewRenderer$KeyboardPreviewRequestCanceler;",
-    ],
-    KEYBOARD_PACKAGE + ".KeyboardPreviewRenderer$KeyboardPreviewRequestCanceler": [
-        ".method public abstract cancelRequest()V",
-    ],
-    KEYBOARD_PACKAGE + ".KeyboardPreviewRenderer$KeyboardPreviewReceiver": [
-        ".method public abstract onKeyboardPreviewReady("
-        "Ljava/lang/String;Landroid/graphics/drawable/Drawable;)V",
-    ],
-}
+# Members that the bridge names through a constant, and so must be derived from
+# it rather than spelled out again here. Renaming the constant in the bridge has
+# to fail this gate; a hardcoded copy would silently keep passing.
+RENDERER_CLASS = KEYBOARD_PACKAGE + ".KeyboardPreviewRenderer"
+CANCELER_CLASS = RENDERER_CLASS + "$KeyboardPreviewRequestCanceler"
+RECEIVER_CLASS = RENDERER_CLASS + "$KeyboardPreviewReceiver"
+
+
+def required_members(constants: dict[str, str]) -> dict[str, list[str]]:
+    accessor = constants.get("PREFERENCES_ACCESSOR", "a")
+    request = constants.get("REQUEST_METHOD", "a")
+    cancel = constants.get("CANCEL_METHOD", "cancelRequest")
+    ready = constants.get("RECEIVER_METHOD", "onKeyboardPreviewReady")
+    return {
+        "baq": [
+            ".method public static a(Landroid/content/Context;Ljava/lang/String;)Lbaq;",
+        ],
+        "bck": [
+            ".method public constructor <init>(Landroid/content/Context;Lbaq;Z)V",
+        ],
+        "ats": [
+            ".field public static final a:"
+            "[Lcom/google/android/apps/inputmethod/libs/framework/core/metadata/"
+            "KeyboardViewDef$Type;",
+        ],
+        # The forced-value map lives behind these three. Reading SharedPreferences
+        # directly returns nothing, because the values are never written to disk.
+        "amx": [
+            f".method public static {accessor}(Landroid/content/Context;)Lamx;",
+            f".method public final declared-synchronized {accessor}"
+            "(Ljava/lang/String;I)I",
+            f".method public final declared-synchronized {accessor}"
+            "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;",
+        ],
+        RENDERER_CLASS: [
+            ".method public constructor <init>(Landroid/content/Context;"
+            "Lcom/google/android/apps/inputmethod/libs/framework/keyboard/IKeyboardTheme;"
+            "[Lcom/google/android/apps/inputmethod/libs/framework/core/metadata/"
+            "KeyboardViewDef$Type;F)V",
+            f".method public final {request}(ILjava/lang/String;"
+            "Lcom/google/android/apps/inputmethod/libs/framework/keyboard/"
+            "KeyboardPreviewRenderer$KeyboardPreviewReceiver;)"
+            "Lcom/google/android/apps/inputmethod/libs/framework/keyboard/"
+            "KeyboardPreviewRenderer$KeyboardPreviewRequestCanceler;",
+        ],
+        CANCELER_CLASS: [
+            f".method public abstract {cancel}()V",
+        ],
+        RECEIVER_CLASS: [
+            f".method public abstract {ready}("
+            "Ljava/lang/String;Landroid/graphics/drawable/Drawable;)V",
+        ],
+    }
 
 # Preference keys the renderer reads, named by the constants that hold them.
 REQUIRED_PREFERENCES = {
     "PREVIEW_BUNDLES_KEY": "pref_key_preview_input_bundles_xml_id",
     "PREVIEW_LAYOUT_KEY": "pref_key_preview_keyboard_layout",
 }
+
+# Method names the bridge reaches for. They feed the derived signatures above,
+# so a rename has to be visible here rather than silently falling back.
+REQUIRED_CONSTANTS = [
+    "PREFERENCES_ACCESSOR",
+    "REQUEST_METHOD",
+    "CANCEL_METHOD",
+    "RECEIVER_METHOD",
+]
 
 
 def smali_path(root: Path, class_name: str) -> Path:
@@ -142,6 +180,11 @@ def main() -> int:
         return 1
 
     constants = string_constants(args.bridge.read_text(encoding="utf-8"))
+    members = required_members(constants)
+
+    for constant in REQUIRED_CONSTANTS:
+        if constant not in constants:
+            failures.append(f"the bridge declares no {constant}")
 
     class_names: set[str] = set()
     for constant, expected in REQUIRED_CLASSES.items():
@@ -163,7 +206,7 @@ def main() -> int:
             failures.append(f"the decoded APK has no class {class_name}")
             continue
         text = path.read_text(encoding="utf-8")
-        for member in REQUIRED_MEMBERS.get(class_name, []):
+        for member in members.get(class_name, []):
             if member not in text:
                 failures.append(f"{class_name} no longer declares {member}")
 
@@ -184,8 +227,8 @@ def main() -> int:
     for resource in REQUIRED_PREFERENCES.values():
         if f"@string/{resource}" not in forced:
             failures.append(
-                f"the forced-value array no longer sets {resource}, so the "
-                f"renderer would hit its guard instead of rendering"
+                f"the forced-value array no longer sets {resource}, so neither "
+                f"the legacy selector nor this bridge could read it"
             )
 
     if failures:
@@ -196,7 +239,7 @@ def main() -> int:
     print(
         f"theme preview bridge verified "
         f"({len(class_names)} classes, "
-        f"{sum(len(v) for v in REQUIRED_MEMBERS.values())} member signatures, "
+        f"{sum(len(v) for v in members.values())} member signatures, "
         f"{len(REQUIRED_PREFERENCES)} forced preferences)"
     )
     return 0

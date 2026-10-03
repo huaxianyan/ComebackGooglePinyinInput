@@ -108,7 +108,24 @@ def main() -> int:
     )
     # Build once before AGP-specific normalization to obtain the patched legacy
     # DEX with the normal apktool source contract.
-    run(apktool_base + ["b", "-p", framework, "-o", str(legacy_apk), str(decoded)])
+    #
+    # On Windows apktool writes the APK and then fails to move
+    # AndroidManifest.xml.orig back, exiting non-zero after a complete build.
+    # The artifact is inspected rather than the exit code, so a genuine apktool
+    # failure still stops the build here instead of being swallowed.
+    try:
+        run(apktool_base + ["b", "-p", framework, "-o", str(legacy_apk), str(decoded)])
+    except subprocess.CalledProcessError:
+        if not legacy_apk.is_file():
+            raise
+        with ZipFile(legacy_apk) as archive:
+            entries = set(archive.namelist())
+        if not {"classes.dex", "AndroidManifest.xml"} <= entries:
+            raise
+        print(
+            "apktool exited non-zero after writing a complete APK; continuing",
+            flush=True,
+        )
     with ZipFile(legacy_apk) as archive:
         legacy_dex.write_bytes(archive.read("classes.dex"))
 

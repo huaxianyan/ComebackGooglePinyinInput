@@ -55,7 +55,16 @@ invoke-static {v1}, Landroid/view/LayoutInflater;->from(...)
 | Context | `new bbb(activity)` |
 | IKeyboardTheme | `new bck(activity, baq, false)` |
 | Type[] | `ats.a`，固定为 `[HEADER, BODY]` |
-| float | `0.5f` |
+| float | `0.5f`（缩放系数，见下） |
+
+那个 `float` 是**位图缩放系数**。渲染时先按
+`makeMeasureSpec(renderer.a:I, EXACTLY)` 与 `makeMeasureSpec(renderer.b:I, EXACTLY)`
+测量键盘视图，再 `createBitmap(宽 × 系数, 高 × 系数)` 并 `canvas.scale(系数, 系数)` 绘制。
+其中 `renderer.a:I` = `ats.a(Context)` = `DisplayMetrics.widthPixels`（屏幕宽），
+`renderer.b:I` = `ats.a(Context, [HEADER, BODY])`（键盘高）。
+
+所以旧页传 `0.5f` 是因为它的展示区只有半宽；**系数要跟着展示尺寸走**，
+不是固定值。本项目最终取 `1.0f`，理由见第十节。
 
 随后分两步：
 
@@ -95,6 +104,13 @@ invoke-static {v1}, Landroid/view/LayoutInflater;->from(...)
 强制值写在 `res/values/arrays.xml` 的 `preferences_pinyin_forced_values`（`0x7f0a0030`）里，
 由 `PinyinApp.a(Lamx)` 调 `amx.c(0x7f0a0030)` 在应用启动时写入。
 
+注意这里的「写入」**不是写盘**。`amx.c(int)` 把值塞进 `amx` 的 `ConcurrentHashMap`
+（`Lamx->a:Ljava/util/concurrent/ConcurrentHashMap;`），而 `amx.a(String,int)` 与
+`amx.a(String,String)` 都是「先查这张表，查不到才落到 `SharedPreferences`」。
+所以这两个键在设备上的偏好 XML 里**根本不存在**（正式版 `compat` 与测试包都验证过），
+直接读 `SharedPreferences` 只会拿到 0 与空串。要拿值必须过 `amx`。
+旧页 `ThemeSelectorActivity` 也是这么读的（`amx.a(0x7f110291)` / `amx.a(0x7f110292)`）。
+
 顺带一条简化：`baq.a(Context)` 这个静态方法已经处理完 `additional_keyboard_theme` 与
 `keyboard_theme` 的优先级，也处理了「跟随系统」分支。Compose 侧不必自己读偏好键，
 直接调它就能拿到与引擎一致的当前主题描述符。
@@ -119,7 +135,7 @@ val theme = bckClass
 // 3. 构造渲染器
 val renderer = kprClass.getConstructor(
     Context::class.java, iktClass, typesArrayClass, Float::class.javaPrimitiveType,
-).newInstance(bbbContext, theme, atsA, 0.5f)
+).newInstance(bbbContext, theme, atsA, scale)
 
 // 4. 请求（主线程）
 val canceler = kprClass
@@ -138,9 +154,9 @@ val canceler = kprClass
 - 反射约 30 到 50 行，集中在一个 `ThemePreviewRenderer` 里。
 - 需要新增一个 Compose 组件承载大图与占位状态。
 - 需要处理取消：`DisposableEffect` 里调 `cancelRequest()`。
-- `bundleXmlId` 与 `layoutName` 建议反射读 `amx`，或退一步用
-  `resources.getIdentifier("ime_zh_cn_pinyin_qwerty", "xml", packageName)`。
-  两者都比硬编码 `0x7f080036` 稳妥。
+- `bundleXmlId` 与 `layoutName` 必须反射 `amx` 读（见 2.4：值只在内存里）。
+  退一步的 `resources.getIdentifier("ime_zh_cn_pinyin_qwerty", "xml", packageName)`
+  只能解决 `bundleXmlId`，`layoutName` 仍无来源，所以不作为主路径。
 
 ### 3.3 风险
 
@@ -221,9 +237,8 @@ val canceler = kprClass
 1. **`Latp` 缓存是否跨渲染器共享。** 构造器里是 `new-instance v0, Latp;`，看起来每实例一份。
    若确实如此，每次渲染都要重新加载 bundle，需要自己缓存渲染器实例或结果位图。
    做法：在真机上连续切换两个主题，看第二次是否明显更快。也可以直接读 `Latp` 的实现。
-2. ~~**`bundleXmlId` 与 `layoutName` 的读取方式。**~~ 已定：直接读默认共享偏好。
-   两个键名是 `R.string.pref_key_preview_*` 的值，`amx` 读的也是同一个文件，
-   所以不必反射它，也不必用 `getIdentifier` 反查资源 id。见第九节。
+2. ~~**`bundleXmlId` 与 `layoutName` 的读取方式。**~~ 已定，且**第一版定错了**：
+   以为直接读默认共享偏好即可，实测两者都拿不到。正确做法是反射 `amx`。见第十节。
 3. **自定义主题能否走同一条路。** `baq.a(Context)` 对 `files:` 前缀的取值应同样有效，
    但用户主题目录尚未在真机验证。这条要等写入路径做完才能确认。
 4. **是否需要为每个槽位各渲染一张。** 旧页只渲染当前选中主题。清单页若要展示
@@ -246,8 +261,8 @@ val canceler = kprClass
 
 实现要点：
 
-1. **两个偏好键直接读共享偏好，不反射 `amx`。** 键名就是 `R.string` 的值，
-   `amx` 读的也是同一个默认偏好文件。少一层反射，也少一处会失效的签名。
+1. ~~**两个偏好键直接读共享偏好，不反射 `amx`。**~~ **这条是错的，见第十节。**
+   已改为反射 `amx.a(String,int)` 与 `amx.a(String,String)`。
 2. **渲染器每次新建**，与旧页一致。`Latp` 的缓存语义仍未确认，见第八节第 1 条。
 3. **主线程发起**，回调里再 `post` 一次到主线程，因为 `InputBundleManager`
    的回调线程没有保证。
@@ -256,13 +271,16 @@ val canceler = kprClass
 
 门禁 `scripts/verify_theme_preview_bridge.py` 断言三件事：
 
-- 桥接里的 8 个类名常量都能在解码产物里找到对应的 smali 文件；
-- 7 条成员签名仍然存在，含 `baq.a(Context, String)`、`bck.<init>`、`ats.a`、
-  渲染器构造、`a(int, String, receiver)`、`cancelRequest`、`onKeyboardPreviewReady`；
+- 桥接里的 9 个类名常量都能在解码产物里找到对应的 smali 文件。
+- 10 条成员签名仍然存在，含 `baq.a(Context, String)`、`bck.<init>`、`ats.a`、
+  `amx.a(Context)` / `amx.a(String,int)` / `amx.a(String,String)`、
+  渲染器构造、`a(int, String, receiver)`、`cancelRequest`、`onKeyboardPreviewReady`。
+  其中 `amx` 的三条与渲染器的三条都从桥接的常量推导，改常量名会被抓到。
 - 两个偏好键名与 `strings.xml` 一致，且仍出现在 `preferences_pinyin_forced_values` 里。
 
-反向验证做了两次：把 `DESCRIPTOR_CLASS` 改成 `baqx`，把 `PREVIEW_LAYOUT_KEY`
-改成 `preview_layout_wrong`，门禁都如期失败。
+反向验证做了四次：把 `DESCRIPTOR_CLASS` 改成 `baqx`、把 `PREVIEW_LAYOUT_KEY`
+改成 `preview_layout_wrong`、把 `PREFERENCES_CLASS` 改成 `amxq`、把
+`PREFERENCES_ACCESSOR` 改成 `b`，门禁都如期失败。
 
 验证结果：`:compose-runtime:testDebugUnitTest` **83 通过 / 0 失败**；
 `verify_theme_preview_bridge.py`、`verify_modern_settings_runtime.py`、
@@ -271,3 +289,97 @@ val canceler = kprClass
 **仍未做：真机验证。** 要确认四件事：渲染是否成功、预览与键盘实际外观是否一致、
 连续切换两个主题的耗时（用来回答 `Latp` 缓存问题）、
 自定义主题（`files:` 前缀）能否走通同一条路。
+
+---
+
+## 十、真机第一轮：预览没出现，根因是读偏好的方式（2026-10-02）
+
+测试包 `dist/pinyin-dev-preview.apk`（`...pinyin.dev`）装到 Pixel 10 Pro / API 36。
+设置页能进，主题清单页能出，但**顶部没有预览**，且连占位高度都没有。
+
+### 10.1 定位
+
+`ThemePreview` 有两个提前返回：`!available` 与 `themeValue.isEmpty()`。
+两者都不占版面，从截图分不出来，于是分别验证。
+
+- **`themeValue` 确实是空的**：`additional_keyboard_theme` 在设备上是空串（新装包没选过主题）。
+  这只是次要原因。
+- **`available` 为 false 才是主因**：`isAvailable()` 要求两个偏好键有值，而设备上的
+  `com.google.android.inputmethod.pinyin.dev_preferences.xml` 里**这两个键根本不存在**，
+  `theme_array_id`、`bordered_theme_array_id` 等其它强制键也都不存在。
+
+### 10.2 为什么不存在
+
+`amx.c(int)` 走 `amx.a(int, Writer)`，把强制值塞进
+`Lamx->a:Ljava/util/concurrent/ConcurrentHashMap;`；而读取侧
+
+```text
+amx.a(String key, int def)     先 map.get(key)，命中就返回；否则 SharedPreferences.getInt
+amx.a(String key, String def)  同上，字符串版本
+```
+
+即**强制值只活在内存里，从不落盘**。所以 `SharedPreferences` 里没有它们，
+而第一版桥接恰好直接读 `SharedPreferences`，于是 `isAvailable()` 恒为 false。
+
+对照实验（决定性）：把两个键从设备偏好文件里清掉，直接启动旧页
+`ThemeSelectorActivity`，它的预览**照常渲染**（截图 `work/shots/07-legacy-selector.png`）。
+旧页读的正是 `amx.a(0x7f110291)` / `amx.a(0x7f110292)`，证明值确实在内存表里。
+同一实验也排除了「强制值机制在本构建里失效」这一可能。
+
+另一条对照：正式版 `compat`（长期作为默认输入法）的偏好文件里同样没有这两个键，
+说明这是全局行为，不是测试包特有。
+
+### 10.3 修复
+
+`ThemePreviewBridge` 改为反射 `amx`：
+
+```text
+amx.a(Context)                        → 门面实例（静态）
+facade.a(String key, int def): int    → bundleXmlId
+facade.a(String key, String def)      → layoutName
+```
+
+键名仍用桥接里已有的 `preview_input_bundles_xml_id` 与 `preview_keyboard_layout`
+（`amx` 的这两个重载本来就是按**键名**取值的），所以不需要 `R.string` 的 id，
+也不需要 `getIdentifier`。门禁新增 `amx` 类与这三条签名。
+
+### 10.4 同一轮顺带确认的
+
+- 渲染链路本身是通的：手工把两个键写进设备偏好后，Compose 预览正常出图，
+  画的是 `material_dark`，与旧页预览同一套键位（截图 `work/shots/06-preview-after-inject.png`）。
+- 修好读偏好之后，`themeValue` 为空仍是问题：新装包 `additional_keyboard_theme` 是空串。
+  需要决定空值时显示什么（当前是不渲染）。
+
+### 10.5 仍未验证
+
+渲染与键盘实际外观的一致性、连续切换两个主题的耗时（`Latp` 缓存）、
+自定义主题（`files:` 前缀）、快速连点时的取消行为。这四条要等修复后的包重新构建。
+
+---
+
+## 十一、真机第二轮：预览细线与真实键盘不一致（2026-10-02）
+
+修复读偏好之后预览能出了，但细线（键位分隔线、数字行下的那条线）与真实键盘对不上。
+
+### 11.1 原因：缩放系数照抄了旧页
+
+第一版把 `PREVIEW_SCALE` 照抄成旧页的 `0.5f`，但两边的展示尺寸完全不同：
+
+| | 位图宽度 | 展示宽度 | 结果 |
+| --- | --- | --- | --- |
+| 旧页 | `1080 × 0.5` = 540 px | 540 px（原尺寸） | 1:1，清晰 |
+| 第一版 | 540 px | 984 px（`fillMaxWidth`） | 1.82 倍放大，细线糊掉 |
+
+`canvas.scale(0.5)` 是**真下采样**：1 px 的线在 0.5 倍下只有半个像素，
+栅格化后已经变淡或消失，再放大 1.82 倍只会把损失摊开。真实键盘按 1.0 绘制，
+所以两边必然不同。
+
+### 11.2 修复
+
+`PREVIEW_SCALE` 改为 `1.0f`。这样位图尺寸正好是
+`widthPixels × 键盘高度`，即真实键盘在屏幕上的占位；展示时是 984/1080 ≈ 0.91
+的单次降采样，细线能保住。
+
+若要做到**零重采样**，需要让位图宽度等于展示宽度，
+即 `scale = 展示宽度 / widthPixels`，代价是要等测量完成再渲染。
+当前先不做，等最终版式定下来再决定是否值得。
