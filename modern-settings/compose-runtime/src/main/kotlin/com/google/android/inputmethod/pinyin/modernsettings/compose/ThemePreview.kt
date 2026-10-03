@@ -24,6 +24,10 @@ import androidx.compose.ui.viewinterop.AndroidView
  * The picture comes from the engine renderer through [ThemePreviewBridge], so it
  * matches what the theme actually looks like rather than approximating it.
  *
+ * [renderKey] is any value that should force a fresh render without changing
+ * the theme: the key-border switch uses it, because the renderer reads that
+ * preference itself and would otherwise answer from a picture it already drew.
+ *
  * Nothing is drawn when the renderer is unavailable or no theme is given. A
  * preview is decoration, so the inventory stays readable without it instead of
  * reserving space for an empty frame.
@@ -32,6 +36,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 internal fun ThemePreview(
     themeValue: String,
     modifier: Modifier = Modifier,
+    renderKey: Any = Unit,
 ) {
     val context = LocalContext.current
     val available = remember(context) { ThemePreviewBridge.isAvailable(context) }
@@ -46,7 +51,7 @@ internal fun ThemePreview(
     val mainHandler = remember { Handler(Looper.getMainLooper()) }
     var canceler by remember { mutableStateOf<ThemePreviewBridge.Canceler?>(null) }
 
-    LaunchedEffect(themeValue) {
+    LaunchedEffect(themeValue, renderKey) {
         canceler?.cancel()
         canceler = null
         imageView.setImageDrawable(null)
@@ -55,7 +60,7 @@ internal fun ThemePreview(
         }
     }
 
-    DisposableEffect(themeValue) {
+    DisposableEffect(themeValue, renderKey) {
         onDispose {
             canceler?.cancel()
             canceler = null

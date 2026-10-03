@@ -383,3 +383,301 @@ facade.a(String key, String def)      → layoutName
 若要做到**零重采样**，需要让位图宽度等于展示宽度，
 即 `scale = 展示宽度 / widthPixels`，代价是要等测量完成再渲染。
 当前先不做，等最终版式定下来再决定是否值得。
+
+---
+
+## 十二、版式重做：Gboard 式缩略图网格（2026-10-03）
+
+### 12.1 方向
+
+此前那一版主题清单页只是**功能验证载体**（能出预览、能读偏好就算过关），
+版式是「顶部大预览 + 一行一个主题的列表」。用户确认最终视觉效果对标 Gboard，
+即**缩略图网格 + 大预览**，并选择先做版式、写入路径随后。
+
+### 12.2 缩略图不必跑引擎渲染
+
+直觉上「每格一张缩略图」会让人以为要逐格调引擎渲染，其实不用。旧页的格子
+本来就不是贴图（见 2.1）：它是把真实键盘布局 inflate 进一个换过 Context 的容器，
+靠主题属性着色。所以复用同一条路，成本是**每格一次 layout inflate**，
+没有位图、没有栅格化、也没有引擎调用。
+
+旧页的格子有三种，由 `bdc` 枚举区分，每种自带要 inflate 的布局 id
+（字段 `layoutResourceId`）：
+
+| `bdc` 常量 | 布局 | 用途 |
+| --- | --- | --- |
+| `BUILDER_LAUNCHER` | `theme_selector_candidate_builder_launcher` | 「我的图片」，无主题 |
+| `CANDIDATE` | `theme_selector_candidate` | 一个内置或用户主题 |
+| `EDITABLE_CANDIDATE` | `theme_selector_candidate_editable` | 可删除的用户主题 |
+
+`BUILDER_LAUNCHER` 与 `CANDIDATE` 的差别只在布局：前者不套主题属性
+（只用框架资源与自带 drawable），所以可以拿裸 Context 直接 inflate；
+后者引用 `?BgSpaceTiny`、`?IconImeActionBack` 这类主题属性，必须换 Context。
+
+### 12.3 格子顺序对齐旧页
+
+旧页 `ThemeSelectorActivity.a()` 往列表里加的次序是：
+
+```text
+BUILDER_LAUNCHER                        （我的图片，第一个）
+gc.a(Context)  → filesDir 下的主题      （用户主题，EDITABLE_CANDIDATE）
+gc.c(Context)  → 额外主题目录            （正常设备上该资源为空，不产生格子）
+内置数组 0x7f0a000e                     （内置主题）
+```
+
+Compose 侧按同样次序排：我的图片 → 自定义 → 内置。第四段在设备上恒为空，
+所以不实现。第一段的「我的图片」当前**只占位、点击不动作**，
+等写入路径那一阶段接图片选择器时再挂上。
+
+### 12.4 选中态
+
+旧页的格子根布局是 `CheckableFrameLayout`，`setChecked(Z)` 会切
+`state_checked`，前景选择器随之显示打勾图标。
+
+**这个勾是谁打的，第一版查错了。** 全仓 grep `setChecked` 在主题包里零命中，
+于是当时结论是「没人调、勾不出现」。实际调用方在框架层：旧页网格是 `GridView`，
+`ThemeSelectorActivity.c()` 调 `GridView.setItemChecked(i, true)`，
+`AbsListView.updateOnScreenCheckedViews()` 再对 `Checkable` 子视图调
+`setChecked()`。所以 grep 应用层代码永远找不到，但勾确实会出现，
+打在**当前生效**的那个主题上（用 `baq.equals` 逐个比对得到下标）。
+
+Compose 侧不是 `GridView`，没有这层机制，所以桥接新增
+`markSelected(View, Boolean)`，`ThemeCard` 在 `update` 里调用。
+
+打勾的目标有一处**有意的差异**：旧页打在当前生效的主题上，
+Compose 页打在当前**正在预览**的主题上。两者在打开页面时重合
+（初始预览值就是生效值），点过格子之后分开。写入路径落地后点击即应用，
+两者会再次重合。
+
+### 12.5 格子尺寸
+
+格子尺寸取自 `@dimen/theme_selector_candidate_width`（128 dip）与
+`_height`（92 dip），`@style/ThemeSelectorCandidate` 也用同一对值。
+Compose 侧拿不到 dimen（多一次反射不值得），所以在
+`ThemeCatalogScreen.kt` 里写成常量，由门禁比对，见 12.6。
+
+### 12.6 门禁
+
+`scripts/verify_theme_preview_bridge.py` 扩展为断言四件事：
+
+- 桥接里的 **11 个类名常量**都能在解码产物里找到对应 smali。
+- **15 条成员签名**仍然存在（新增 `bck` 的四参构造、`bdc` 的三个字段、
+  `CheckableFrameLayout.setChecked(Z)V`）。其中 `bdc` 的常量名、
+  `layoutResourceId` 字段名、`setChecked` 方法名都从桥接常量推导。
+- **2 个强制偏好键**仍与 `strings.xml` 一致且仍在强制值数组里。
+- **2 个格子尺寸**与 `dimens.xml` 一致。
+
+反向验证做了三次：`THEME_CELL_WIDTH_DP` 由 128 改 130、`CARD_KIND_THEME`
+改成 `CANDIDATEX`、`CARD_CHECK_METHOD` 改成 `setCheckedX`，门禁都如期失败。
+
+### 12.7 仍未解决：没选过主题时顶部预览是空的
+
+真机上新装包 `additional_keyboard_theme` 是空串，Compose 预览整块不渲染，
+而**同一状态下旧页照常出图**（`work/shots/32-legacy-empty-theme.png`）：
+浅色键盘 + 勾在浅色内置主题上。这说明引擎的**生效**主题不是空串，
+`baq.a(Context)` 会沿 `keyboard_theme` 一路回退，最终落到浅色内置主题。
+
+Compose 侧读的是**原始偏好值**而不是**生效值**，所以两边不一致。
+正确做法是反射 `baq.a(Context)` 取字段 `b`（旧页初始渲染用的就是它），
+而不是继续读 `additional_keyboard_theme`。这条要在版式重做时一并改掉。
+
+### 12.8 版式方向被否：这不是 Gboard
+
+12.1 到 12.6 做出来的东西**是旧主题选择页的复刻**，不是 Gboard。用户指出三处差距：
+
+1. **没有按功能分区**。Gboard 把模式类主题（动态配色、浅色/深色模式主题）
+   与内置主题、自定义主题分开成组；这一版是一整块连续网格。
+2. **共用一个顶部预览区**。Gboard 是点击缩略图后**弹出**预览区域，
+   弹层里带「应用」与「显示按键边框」开关；这一版把预览钉在页面顶部。
+3. 因此点击的语义也不同：Gboard 的点击进入「预览 → 确认应用」，
+   这一版点击只是换一下顶部预览。
+
+12.2 至 12.6 的**技术结论仍然有效**（缩略图靠 inflate 而非引擎渲染、
+`bdc` 三种格子、尺寸取值、门禁、选中态机制），可以继续用；
+需要重做的是**页面结构**。
+
+---
+
+## 十三、最终版式：Gboard 骨架 + 保留四槽（2026-10-03）
+
+### 13.1 规格
+
+三区、三列、点击弹层。分区不是装饰，它是这次重做的全部要点：
+
+| 分区 | 内容 | 说明 |
+| --- | --- | --- |
+| 我的主题 | `＋` 磁贴 + `filesDir` 下的自定义主题 | `＋` 暂不动作，等图片选择器 |
+| 默认 | 动态颜色 + 系统自动 + 默认 + 默认深色 | 四格单选，带文字标签 |
+| 颜色 | 17 套内置主题 | 标题右侧可折叠 |
+
+三列对应旧页网格的列数，磁贴比例沿用
+`theme_selector_candidate_width / _height`（128 : 92），
+所以形状与旧页一致，只是间距由 Compose 的 `Arrangement` 给。
+
+「系统自动」格用**左右对半**缩略图（左浅右深），这是 Gboard 的做法，
+也是这一格唯一能自证语义的方式：单张主题图无法表达「跟着系统变」。
+实现上把整张样本布局按格宽绘制，再 `clipToBounds` 裁掉一半，
+所以每半读起来是键盘的切片，而不是被压扁的整张键盘。
+
+### 13.2 四槽怎么落进没有槽位行的界面
+
+本页最终要**取代**「主题背景」页（见 13.6），槽位行没有摆放位置。
+用户定的规则：
+
+- 固定颜色主题的弹层里给两个写入按钮：「设为浅色模式主题」「设为深色模式主题」。
+- 从未设置过的用户，浅色槽与深色槽**预设为 `material_light` / `material_dark`**，
+  这两个值就是引擎自己在无存储时的回退目标
+  （`pref_entry_additional_keyboard_theme_material_light` / `_dark`），
+  所以「跟随主题」对新用户也可用，不需要先手动指定一次。
+- 「默认」区四格＝四种模式（动态颜色 / 系统自动 / 固定浅色 / 固定深色）单选。
+  未设置过时浅色格视为选中，因为引擎此时画的就是浅色默认值。
+
+### 13.3 「跟随主题」改名「系统自动」
+
+用户要求对齐 Gboard 的叫法以降低理解成本。改的是**显示文案**：
+`modern_settings_system_auto_theme_title` 由 `Follow theme` 改为 `Auto (system)`，
+中文由「跟随主题」改为「系统自动」，繁体同步。
+偏好键与槽位语义不变。
+
+### 13.4 桥接新增三个方法
+
+| 方法 | 反射目标 | 用途 |
+| --- | --- | --- |
+| `activeThemeValue(Context)` | `baq.a(Context)` 的字段 `b` | 取**生效**主题，解掉 12.7 |
+| `keyBorderEnabled(Context)` | `gc.c(Context)` | 读按键边框的**生效**值 |
+| `setKeyBorderEnabled(Context, Boolean)` | `amx.a(String, Boolean)` | 写按键边框偏好 |
+
+前两个都刻意**不读偏好**：`keyboard_theme` 与 `additional_keyboard_theme`
+都有回退链，按键边框偏好还有系统属性回退。读存储值会得到与画面不一致的答案，
+所以统一走引擎自己的解析入口。第三个是纯偏好，没有槽位、没有强制值，
+可以在主题写入路径之前独立落地。
+
+同时删掉了 `CARD_KIND_USER_IMAGE` 与 `inflateUserImageCard`：
+「我的图片」格在新版式里是自绘的描边磁贴，不再借道 `BUILDER_LAUNCHER` 布局。
+
+### 13.5 门禁
+
+`scripts/verify_theme_preview_bridge.py` 现在断言六件事：
+
+- **12 个类名常量**都能在解码产物里找到对应 smali（新增 `gc`）。
+- **19 条成员签名**仍然存在。新增的有 `baq.a(Context)`、
+  `baq.a(Context, String)`、`baq.b` 字段、`amx.a(String, Z)Z`、
+  `amx.a(String, Z)V`、`gc.c(Context)Z`；`bdc` 去掉了 `image_kind`。
+- **2 个强制偏好键**仍与 `strings.xml` 一致且仍在强制值数组里。
+- **1 个按键边框偏好键**与 `strings.xml` 一致。它是唯一**不带强制值**的，
+  所以只比对键名。
+- **2 个格子尺寸**与 `dimens.xml` 一致。
+- **2 个默认预设**（`LIGHT_PRESET_VALUE` / `DARK_PRESET_VALUE`）与
+  `strings.xml` 里那两个 `pref_entry_*` 的值一致，取自 `ThemeCatalogScreen.kt`。
+
+反向验证做了三次：`KEY_BORDER_KEY` 改成 `enable_key_borderX`、
+`LIGHT_PRESET_VALUE` 改成 `..._lightX.binarypb`、`BORDER_STATE_CLASS` 改成 `gcX`，
+门禁都如期失败。
+
+### 13.6 本轮不做的事
+
+- **写入路径**：弹层的「应用」「设为浅色模式主题」「设为深色模式主题」
+  目前 `enabled = false`，是刻意的——宁可灰着，也不要看起来能点却没反应。
+- **入口切换**：本页尚未取代「主题背景」页。写入路径没落地之前切入口，
+  用户会失去换主题的能力，所以本轮两页并存。
+- **`＋` 磁贴**：`onClick = {}`，等图片选择器。
+
+---
+
+## 十四、磁贴改成配色格，以及三处修正（2026-10-03）
+
+第十三节落地后真机验收，用户提了四条。前三条是同一件事的三个侧面，第四条是取值错了。
+
+### 14.1 磁贴不再是「键盘截了一角」
+
+原来的磁贴直接 inflate 旧页的样本布局 `theme_selector_candidate`。
+那是个**键盘的缩微版**：顶栏、键盘主体、空格条、动作键图标都在。
+按 128×92 dip 画出来还行，铺到磁贴尺寸就成了一团看不清的按键，
+用户的原话是「键盘实际预览的截了一点，很难看」。
+
+Gboard 的磁贴其实是**三件套**（`work/shots/41a-gboard-colors-zoom.png` 放大可见）：
+
+| 元素 | 来源 | 说明 |
+| --- | --- | --- |
+| 主体色块 | `?BgKeyboardBody` | 铺满整格，就是键盘底色 |
+| 空格条 | `?BgSpaceTiny` | 底部居中的浅色胶囊 |
+| 强调色圆点 | `?IconImeActionBack` | 右下角的小圆点 |
+
+这三样样本布局里**本来就有**，只是被顶栏和按键细节淹没了。
+所以改法是复用同一份布局，但只留这三样：
+
+- 把 `.keyboard-body-area` 的背景搬到卡片根上 → 主体色铺满整格
+- 隐藏 `.keyboard-header-area`（顶栏）
+- 隐藏没有 tag 的那个占位 View（它是固定灰色 `@color/theme_selector_candidate_background_color`）
+- 保留 `.space_bar`、`.background-icon.for-action-key.for-preview`
+- 保留 `.keyboard-background.for-preview`：内置纯色主题上它是空的，
+  但用户用图片生成的主题靠它显示缩略图，删了就只剩一块纯色
+
+选择复用它而不是「解析属性取色再在 Compose 里画」，是因为取色这条路要么
+拿到的是 `GradientDrawable`（拿不到颜色），要么得把 drawable 画进 1×1 位图再读像素；
+而强调色根本没有对应属性，它就是个图标。复用布局则三样一起拿到，且对主题包自动生效。
+
+**坑：样本布局的容器是写死尺寸的。** 它的根（`theme_selector_candidate_preview`）
+写死 128×92 dip，和磁贴尺寸不一致。不动它的话，容器比磁贴大、右下溢出，
+而**锚在它底部的空格条和强调色圆点就被推到磁贴外裁掉**——表现为胶囊和圆点
+贴着下边缘、只剩半截。真机第一版就是这个样子，用户一眼看出来了。
+修法：把容器（以及满幅的 `.keyboard-background.for-preview`）的
+`LayoutParams` 改成 `MATCH_PARENT`，让它跟着磁贴走。
+
+**坑：半格切片要在绘制阶段裁，不能靠布局盒子。**「系统自动」的两半是「按整格尺寸绘制再裁一半」。
+第一版写成 `BoxWithConstraints` + `requiredWidth(整格宽)` + `offset(负半格)`，
+真机上右半只画出了一半宽度。原因是 `BoxWithConstraints` 暴露的 `maxWidth` 与
+`requiredWidth` 实际吃到的约束对不上（实测拿到的 `maxWidth` 是半格的一半），
+偏移量因此只有应有的一半。
+
+改成不依赖任何宽度推导的写法：两个整格色块**叠放**在同一个 `Box` 里，
+各自用 `Modifier.drawWithContent { clipRect(...) }` 在绘制阶段裁掉一半。
+这样布局盒子不变、尺寸不用推导，切片位置只由 `DrawScope.size.width` 决定。
+
+### 14.2 动态颜色格不再假装能预览
+
+`DynamicColorSetting.generatedPackageValue` = `files:dynamic_theme.zip`，
+但这个包**在模式打开之前根本不存在**（真机 `files/` 下只有 `personal/`，
+`compat_system_dynamic_color_theme` 偏好也没有）。
+拿一个不存在的包去 inflate，得到的就是一格莫名其妙的深色。
+
+改成 Gboard 的做法：这一格画**模式符号**——`surfaceVariant` 底 +
+居中的圆形勾，不画色块。写入路径落地后，这一格改为点击即开启动态颜色，
+届时再看要不要换成真实调色板。
+
+### 14.3 默认区预设取错了两个值
+
+`LIGHT_PRESET_VALUE` / `DARK_PRESET_VALUE` 原先指向 `material_light` /
+`material_dark`，也就是内置列表的**第 1、2 个**。用户指出应该是**第 3、4 个**：
+
+```text
+1. material_light          2. material_dark
+3. google_blue_light       4. google_blue_dark      ← 默认 / 默认深色
+5. color_red  ...
+```
+
+核对 `entryvalues_builtin_additional_keyboard_theme` 的顺序后确认无误
+（`work/decoded-fresh/res/values/arrays.xml`）。
+这也解释了真机上那一格勾为什么落在 `google_blue_light` 上：
+引擎无存储时的回退目标就是它。
+
+### 14.4 弹层要按两次返回键
+
+`rememberModalBottomSheetState()` 默认 `skipPartiallyExpanded = false`，
+弹层先停在半开高度，第一次 BACK 只是从全开收到半开。
+弹层里没有需要滚动的内容，半开状态没有意义，改为
+`rememberModalBottomSheetState(skipPartiallyExpanded = true)`，一次 BACK 即关。
+
+### 14.5 门禁
+
+`scripts/verify_theme_preview_bridge.py` 增加两项：
+
+- **4 个 tag**（`BODY_TAG` / `SPACE_TAG` / `ACTION_ICON_TAG` /
+  `KEYBOARD_BACKGROUND_TAG`）必须仍出现在
+  `res/layout/theme_selector_candidate_preview.xml` 或 `res/values/styles.xml` 里。
+  注意 `BODY_TAG` 是写在 `@style/Body` 里的，只看布局文件会误报。
+- `PRESET_VALUES` 的两个资源名同步换成 `..._google_blue_light` / `_dark`。
+
+反向验证三次：`LIGHT_PRESET_VALUE` 换回 `material_light`、
+`BODY_TAG` 改成 `.keyboard-body-areax`、`SPACE_TAG` 改成 `.space_barx`，都如期失败。
+
