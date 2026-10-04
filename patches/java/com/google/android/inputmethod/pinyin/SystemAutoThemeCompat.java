@@ -18,7 +18,9 @@ import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
@@ -70,12 +72,63 @@ public final class SystemAutoThemeCompat {
     private static final String DYNAMIC_PACKAGE_NAME = "dynamic_theme.zip";
     private static final String DYNAMIC_PACKAGE_TEMP_NAME = "dynamic_theme.tmp";
     private static final String DYNAMIC_ADDITIONAL_PREFIX = "files:";
+
+    /**
+     * The preview renderer's rasterised keyboards, as it names them.
+     *
+     * <p>Each file is one drawn keyboard, keyed on the theme value it was drawn
+     * from, so every file with this prefix belongs to exactly one value and
+     * holds the palette that value had when it was last drawn.</p>
+     */
+    private static final String SNAPSHOT_CACHE_PREFIX = "keyboardsnapshotcache_";
+    private static final String SNAPSHOT_CACHE_SUFFIX = ".png";
+
     private static final String ASSET_DIRECTORY = "theme/";
     private static final String METADATA_ENTRY = "metadata.binarypb";
     private static final String MATERIAL_TEMPLATE_PREFIX = "style_sheet_material_";
     private static final String METADATA_TEMPLATE_PREFIX = "theme_package_metadata_material_";
     private static final String MODE_LIGHT = "light";
     private static final String MODE_DARK = "dark";
+
+    /**
+     * The theme-package format the generated package declares.
+     *
+     * <p>The engine reads a package's format version from field 1 of its
+     * metadata and picks a style-sheet converter from it. The built-in packages
+     * live in the APK's assets, which the engine loads without consulting the
+     * version at all; a package under {@code files:} does not get that
+     * exemption. A package that declares no version reads as version 0, which
+     * the engine takes for a legacy CSS-era theme and rewrites on the way in:
+     * every selector that names a key loses that name, and a rule left with no
+     * selector at all is dropped. The keyboard's keys then match nothing and
+     * fall back to the built-in colours, while the theme grid - which draws no
+     * keys - looks correct. That is why a generated package has to say which
+     * format it is in.</p>
+     *
+     * <p>Versions 1 and 2 select the older converter chains and anything above
+     * 2 selects the pass-through converter, so this is the first version that
+     * means "already current". The sheets copied into the package are the
+     * current ones, so the pass-through is the right choice.</p>
+     */
+    private static final int THEME_PACKAGE_FORMAT_VERSION = 3;
+
+    /** Protobuf tag for field 1 as a varint: field number 1, wire type 0. */
+    private static final int METADATA_VERSION_TAG = 0x08;
+
+    /**
+     * Which set of slots the generator writes, as opposed to which format the
+     * package is in.
+     *
+     * <p>The signature doubles as the cache key for the file on disk, so a
+     * generator that starts writing different colors has to change it or the
+     * previous package keeps being served: the palette it holds still matches,
+     * so the sync reports "unchanged" and the new sheet is never built. Revision
+     * 1 colored only {@code style_sheet_material_<mode>.binarypb}; revision 2
+     * also colors the border sheet that the engine swaps in when key borders
+     * are on; revision 3 gives that sheet's key fills enough contrast against
+     * {@code color_base} to be visible at all.</p>
+     */
+    private static final int DYNAMIC_PALETTE_REVISION = 3;
 
     /**
      * Outcome of a palette sync. "Rebuilt" and "unchanged" are both usable, but
@@ -90,8 +143,10 @@ public final class SystemAutoThemeCompat {
      * Zip entries other than metadata, in the exact order the original
      * packaging tool used. Entry names equal the asset template names, so the
      * generated package can be diffed against {@code assets/theme/} directly.
-     * The entry named {@code style_sheet_material_<mode>.binarypb} is the one
-     * that gets recolored; every other entry is copied byte for byte.
+     * The entry named {@code style_sheet_material_<mode>.binarypb} is recolored
+     * from the palette, and so is {@code style_sheet_material_<mode>_border
+     * .binarypb} - the engine layers the latter over the former whenever key
+     * borders are on. Every other entry is copied byte for byte.
      */
     private static final String[] DYNAMIC_ENTRIES_LIGHT = {
         "style_sheet_color_common.binarypb",
@@ -164,6 +219,57 @@ public final class SystemAutoThemeCompat {
         "system_outline_variant",
     };
 
+    /**
+     * Border-sheet variable to the keyboard slot it takes its color from.
+     *
+     * <p>When key borders are on the engine layers
+     * {@code style_sheet_material_<mode>_border.binarypb} over the material
+     * sheet, and every variable it declares wins over the material one. The
+     * template's border sheet is not palette-neutral: it carries the Material
+     * demo's teal in {@code color_state_border_key_action}, so a generated
+     * package that copies it verbatim paints the action key teal even though
+     * the material sheet says otherwise. Each built-in theme's border sheet
+     * carries that theme's own colors, which is what these entries restore.</p>
+     *
+     * <p>The key fills are the reason this table cannot just point at
+     * {@code color_base}. In the material sheet {@code color_state_key} and
+     * {@code color_state_key_dark} are fully transparent: the keyboard paints
+     * one flat {@code color_base} and the keys are only told apart by the
+     * shadow each key view casts. The border sheet replaces them with opaque
+     * fills, and that is the whole mechanism behind the "key borders" switch -
+     * an inset opaque key against the sheet's own base colour. A border sheet
+     * whose key fill equals {@code color_base} therefore renders as a flat
+     * slab: the switch appears to do nothing, and the preview, which never
+     * draws the per-key shadow, shows only the keys that happen to differ.
+     * The template keeps a deliberate gap - light {@code #fbfbfc} keys on
+     * {@code #eceff1}, dark {@code #404a50} keys on {@code #263238} - and the
+     * entries below reproduce it from the surface container ramp, which is the
+     * one family guaranteed to differ from {@code system_surface} in both
+     * modes (lighter in dark, darker in light).</p>
+     *
+     * <p>Sources name slots from {@link #DYNAMIC_SLOT_NAMES}, so no platform
+     * resource is read twice and the palette signature needs no extra terms.
+     * Both arrays are parallel by index.</p>
+     */
+    private static final String[] BORDER_SHEET_NAMES = {
+        "color_state_key",
+        "color_state_key_dark",
+        "color_state_key_pressed",
+        "color_state_key_dark_pressed",
+        "color_label_space_key",
+        "color_state_border_key_action",
+        "color_state_border_key_action_pressed",
+    };
+    private static final String[] BORDER_SHEET_SOURCES = {
+        "color_header",
+        "color_popup_background",
+        "color_generic_extension_background_activated",
+        "color_generic_extension_background_activated",
+        "color_icon",
+        "color_action_default",
+        "color_state_action_pressed",
+    };
+
     private static final Charset UTF_8 = Charset.forName("UTF-8");
 
     private SystemAutoThemeCompat() {}
@@ -215,6 +321,31 @@ public final class SystemAutoThemeCompat {
         }
         editor.commit();
         applyConfiguredTheme(context, context.getResources().getConfiguration());
+    }
+
+    /**
+     * Builds the generated palette package without changing which theme is in use.
+     *
+     * <p>The palette has no package until something generates one, and the
+     * settings screen has to draw the mode before it is switched on. Building it
+     * here rather than switching the mode on keeps the two apart: the caller
+     * gets a package to render, and the theme the keyboard is actually using
+     * stays where it was. Nothing outside the package file and its signature is
+     * touched, so calling this twice in a row is a no-op.</p>
+     *
+     * <p>Returns the value the package is addressed by, or {@code null} when the
+     * platform has no palette to build from or the build failed.</p>
+     */
+    public static String prepareDynamicTheme(Context context) {
+        if (!supportsDynamicColor()) {
+            return null;
+        }
+        ensureInitialized(context);
+        boolean dark = isDark(context.getResources().getConfiguration());
+        if (syncDynamicTheme(context, dark) == SYNC_UNAVAILABLE) {
+            return null;
+        }
+        return DYNAMIC_ADDITIONAL_PREFIX + DYNAMIC_PACKAGE_NAME;
     }
 
     /** Called before launching the original selector in one-slot assignment mode. */
@@ -451,6 +582,12 @@ public final class SystemAutoThemeCompat {
             return target.isFile() ? SYNC_UNCHANGED : SYNC_UNAVAILABLE;
         }
         preferences.edit().putString(DYNAMIC_SIGNATURE_KEY, signature).commit();
+        // The new package is in place and the value addressing it has not
+        // changed, so every preview drawn from the previous palette is now
+        // showing the wrong colours. Drop them here, after the package has been
+        // swapped in, so a preview requested from now on redraws from the new
+        // one instead of being served the old bitmap.
+        invalidatePreviewSnapshots(context);
         debugLog(context, "dynamic theme package rebuilt");
         return SYNC_REBUILT;
     }
@@ -479,8 +616,31 @@ public final class SystemAutoThemeCompat {
         return colors;
     }
 
+    /**
+     * The palette entries the border sheet needs, read back by slot name.
+     *
+     * <p>A slot the platform did not resolve is left out, and the border sheet
+     * then keeps the template value for that one variable - the same fallback
+     * the material sheet uses.</p>
+     */
+    private static Map<String, Integer> borderSheetColors(Map<String, Integer> colors) {
+        Map<String, Integer> border = new HashMap<String, Integer>();
+        for (int index = 0; index < BORDER_SHEET_NAMES.length; index++) {
+            Integer value = colors.get(BORDER_SHEET_SOURCES[index]);
+            if (value != null) {
+                border.put(BORDER_SHEET_NAMES[index], value);
+            }
+        }
+        return border;
+    }
+
     private static String dynamicSignature(boolean dark, Map<String, Integer> colors) {
         StringBuilder builder = new StringBuilder(dark ? MODE_DARK : MODE_LIGHT);
+        // The format is part of what is being signed. Without it, a build that
+        // writes a different format would find the previous build's file on
+        // disk and keep it, because the palette it holds still matches.
+        builder.append("@v").append(THEME_PACKAGE_FORMAT_VERSION);
+        builder.append("@r").append(DYNAMIC_PALETTE_REVISION);
         for (int index = 0; index < DYNAMIC_SLOT_NAMES.length; index++) {
             Integer value = colors.get(DYNAMIC_SLOT_NAMES[index]);
             builder.append(':');
@@ -489,6 +649,22 @@ public final class SystemAutoThemeCompat {
             }
         }
         return builder.toString();
+    }
+
+    /**
+     * The template metadata with the package format declared.
+     *
+     * <p>The template carries the sheet list and the flavour table but no
+     * version, so the field is prepended. Protobuf fields may appear in any
+     * order and every reader here walks them by tag, so prepending is enough
+     * and no other byte has to move.</p>
+     */
+    private static byte[] withFormatVersion(byte[] metadata) {
+        ByteArrayOutputStream output = new ByteArrayOutputStream(metadata.length + 2);
+        output.write(METADATA_VERSION_TAG);
+        output.write(THEME_PACKAGE_FORMAT_VERSION);
+        output.write(metadata, 0, metadata.length);
+        return output.toByteArray();
     }
 
     /**
@@ -502,6 +678,8 @@ public final class SystemAutoThemeCompat {
             Context context, boolean dark, Map<String, Integer> colors) {
         String mode = dark ? MODE_DARK : MODE_LIGHT;
         String materialName = MATERIAL_TEMPLATE_PREFIX + mode + ".binarypb";
+        String borderName = MATERIAL_TEMPLATE_PREFIX + mode + "_border.binarypb";
+        Map<String, Integer> borderColors = borderSheetColors(colors);
         String[] entries = dark ? DYNAMIC_ENTRIES_DARK : DYNAMIC_ENTRIES_LIGHT;
         byte[][] payloads = new byte[entries.length][];
         for (int index = 0; index < entries.length; index++) {
@@ -513,10 +691,12 @@ public final class SystemAutoThemeCompat {
             }
             if (materialName.equals(name)) {
                 data = rewriteStyleSheetColors(data, colors);
-                if (data == null) {
-                    debugLog(context, "dynamic style sheet rewrite failed");
-                    return false;
-                }
+            } else if (borderName.equals(name)) {
+                data = rewriteStyleSheetColors(data, borderColors);
+            }
+            if (data == null) {
+                debugLog(context, "dynamic style sheet rewrite failed: " + name);
+                return false;
             }
             payloads[index] = data;
         }
@@ -525,6 +705,7 @@ public final class SystemAutoThemeCompat {
             debugLog(context, "dynamic template missing: metadata");
             return false;
         }
+        metadata = withFormatVersion(metadata);
 
         File target = new File(context.getFilesDir(), DYNAMIC_PACKAGE_NAME);
         File temporary = new File(context.getFilesDir(), DYNAMIC_PACKAGE_TEMP_NAME);
@@ -553,6 +734,74 @@ public final class SystemAutoThemeCompat {
             }
         }
         return true;
+    }
+
+    /**
+     * Drops the rasterised keyboards the renderer cached for the previous palette.
+     *
+     * <p>{@code KeyboardPreviewRenderer} stores one bitmap per theme value under
+     * {@code keyboardsnapshotcache_<md5>.png} and builds the key from the value
+     * string plus the screen shape, the view-definition set and the key-border
+     * flag. Nothing in that key moves when this package is rebuilt under the
+     * same name, so an entry drawn from an earlier palette keeps being served
+     * forever and the preview shows colours the keyboard is no longer using.
+     * Deleting the files is the whole fix: the renderer's only other cache is a
+     * map on the renderer instance, and a renderer is built per render.</p>
+     *
+     * <p>Every snapshot goes, not just the generated theme's, because the file
+     * name is a hash of a key that cannot be reconstructed from the value
+     * alone. The cost is one re-render of the other themes' previews, which a
+     * cold cache would have paid anyway, and the files are small.</p>
+     *
+     * <p>This runs on the rebuild path only. A palette that did not change
+     * leaves the cache alone, so the common case - the hook that runs on every
+     * keyboard show - still costs one preference read and no I/O.</p>
+     */
+    private static void invalidatePreviewSnapshots(Context context) {
+        File[] directories = transientCacheDirectories(context);
+        int removed = 0;
+        for (int directory = 0; directory < directories.length; directory++) {
+            File[] entries = directories[directory].listFiles();
+            if (entries == null) {
+                continue;
+            }
+            for (int entry = 0; entry < entries.length; entry++) {
+                String name = entries[entry].getName();
+                if (name.startsWith(SNAPSHOT_CACHE_PREFIX)
+                        && name.endsWith(SNAPSHOT_CACHE_SUFFIX)
+                        && entries[entry].delete()) {
+                    removed++;
+                }
+            }
+        }
+        debugLog(context, "preview snapshots dropped: " + removed);
+    }
+
+    /**
+     * The directories the renderer's transient caches can be in.
+     *
+     * <p>The renderer gives its cache a context backed by device-protected
+     * storage, so from API 24 the snapshots sit outside the credential-protected
+     * directory {@link Context#getFilesDir()} returns; below 24 there is no
+     * device-protected storage and they sit in that directory. Both are derived
+     * and scanned rather than asking for a device-protected context, because the
+     * framework builds the path the same way - {@code LoadedApk} replaces
+     * {@code /user/} with {@code /user_de/} in the data directory - so this
+     * needs neither direct-boot awareness nor an API guard. A directory that is
+     * not there simply yields nothing to delete.</p>
+     */
+    private static File[] transientCacheDirectories(Context context) {
+        File credentialProtected = context.getFilesDir();
+        if (credentialProtected == null) {
+            return new File[0];
+        }
+        List<File> directories = new ArrayList<File>();
+        directories.add(credentialProtected);
+        String path = credentialProtected.getAbsolutePath();
+        if (path.contains("/user/")) {
+            directories.add(new File(path.replace("/user/", "/user_de/")));
+        }
+        return directories.toArray(new File[directories.size()]);
     }
 
     /**

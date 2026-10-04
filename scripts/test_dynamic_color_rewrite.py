@@ -37,7 +37,17 @@ ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "patches/java/com/google/android/inputmethod/pinyin/SystemAutoThemeCompat.java"
 PROBE = ROOT / "work/dynamic-color-probe"
 PROBE_TOOL = PROBE / "style_sheet_tool.py"
-TEMPLATES = ("style_sheet_material_light.binarypb", "style_sheet_material_dark.binarypb")
+MATERIAL_TEMPLATES = (
+    "style_sheet_material_light.binarypb",
+    "style_sheet_material_dark.binarypb",
+)
+# The engine layers these over the material sheet whenever key borders are on,
+# so the generator recolors them too and they have to be gated the same way.
+BORDER_TEMPLATES = (
+    "style_sheet_material_light_border.binarypb",
+    "style_sheet_material_dark_border.binarypb",
+)
+TEMPLATES = MATERIAL_TEMPLATES + BORDER_TEMPLATES
 ASSET_PREFIX = "assets/theme/"
 
 # A decoded tree is a build artifact and gets recreated under different names,
@@ -257,13 +267,35 @@ def rebuild_with_colors(data, color_map):
 
 def java_slot_names(source: str) -> list[str]:
     """Read the slot list out of the shipped Java so the gate cannot drift from it."""
-    block = re.search(r"DYNAMIC_SLOT_NAMES\s*=\s*\{(.*?)\};", source, re.DOTALL)
+    return java_array(source, "DYNAMIC_SLOT_NAMES")
+
+
+def java_array(source: str, name: str) -> list[str]:
+    block = re.search(re.escape(name) + r"\s*=\s*\{(.*?)\};", source, re.DOTALL)
     if not block:
-        raise RuntimeError("DYNAMIC_SLOT_NAMES not found in " + str(SOURCE))
-    names = re.findall(r'"([^"]+)"', block.group(1))
-    if not names:
-        raise RuntimeError("DYNAMIC_SLOT_NAMES is empty")
-    return names
+        raise RuntimeError(name + " not found in " + str(SOURCE))
+    values = re.findall(r'"([^"]+)"', block.group(1))
+    if not values:
+        raise RuntimeError(name + " is empty")
+    return values
+
+
+def java_border_mapping(source: str) -> tuple[list[str], list[str]]:
+    """The border-sheet variable -> slot table, as two parallel lists."""
+    names = java_array(source, "BORDER_SHEET_NAMES")
+    sources = java_array(source, "BORDER_SHEET_SOURCES")
+    if len(names) != len(sources):
+        raise RuntimeError(
+            f"BORDER_SHEET_NAMES has {len(names)} entries but "
+            f"BORDER_SHEET_SOURCES has {len(sources)}"
+        )
+    return names, sources
+
+
+def border_map(color_map: dict[str, int], names: list[str], sources: list[str]) -> dict[str, int]:
+    """The colors the border sheet is written with, derived from the palette map."""
+    derived = {name: color_map[source] for name, source in zip(names, sources) if source in color_map}
+    return derived
 
 
 def load_templates(template_dir: Path | None, apk: Path | None) -> tuple[dict[str, bytes], str]:
@@ -375,6 +407,8 @@ def main() -> int:
 
     slots = java_slot_names(SOURCE.read_text(encoding="utf-8"))
     print(f"Java mapping declares {len(slots)} slots")
+    border_names, border_sources = java_border_mapping(SOURCE.read_text(encoding="utf-8"))
+    print(f"Java border mapping declares {len(border_names)} variables")
 
     maps: list[tuple[str, dict[str, int]]] = [("synthetic", synthetic_map(slots))]
     measured = device_map(slots)
@@ -403,10 +437,14 @@ def main() -> int:
 
         for template_name in TEMPLATES:
             data = templates[template_name]
+            is_border = template_name in BORDER_TEMPLATES
             print(f"\n{template_name}  {len(data)} bytes")
             source_file = work / "template.bin"
             source_file.write_bytes(data)
             for label, color_map in maps:
+                if is_border:
+                    color_map = border_map(color_map, border_names, border_sources)
+                    label = label + "+border"
                 encoded = ",".join(f"{k}={v & 0xFFFFFFFF:08x}" for k, v in color_map.items())
                 java_out = work / "java.bin"
                 subprocess.run(
@@ -422,7 +460,7 @@ def main() -> int:
                 python_digest = digest(python_bytes)
                 same = java_digest == python_digest
                 print(
-                    f"  {label:<16} rules rewritten={rewritten:<3} "
+                    f"  {label:<24} rules rewritten={rewritten:<3} "
                     f"java={len(java_bytes)}B python={len(python_bytes)}B "
                     f"{'MATCH' if same else 'MISMATCH'}"
                 )
@@ -432,11 +470,21 @@ def main() -> int:
                     )
 
     # Coverage: a slot that matches no rule would be a silently dead mapping entry.
-    present = {rule["name"] for rule in parse_rules(templates[TEMPLATES[0]])}
-    absent = [slot for slot in slots if slot not in present]
-    print(f"\ncoverage: {len(slots) - len(absent)}/{len(slots)} slots present in the template")
-    if absent:
-        failures.append("mapping slots absent from the template: " + ", ".join(absent))
+    for template_name, names, what in (
+        (MATERIAL_TEMPLATES[0], slots, "mapping slots"),
+        (BORDER_TEMPLATES[0], border_names, "border mapping variables"),
+    ):
+        present = {rule["name"] for rule in parse_rules(templates[template_name])}
+        absent = [name for name in names if name not in present]
+        print(f"\ncoverage: {len(names) - len(absent)}/{len(names)} {what} present in {template_name}")
+        if absent:
+            failures.append(f"{what} absent from {template_name}: " + ", ".join(absent))
+
+    # A border source that names no slot would silently fall back to the template
+    # color, which is exactly the teal this mapping exists to remove.
+    unknown = [source for source in border_sources if source not in slots]
+    if unknown:
+        failures.append("border mapping sources that are not slots: " + ", ".join(unknown))
 
     if failures:
         print("\nFAILED")
