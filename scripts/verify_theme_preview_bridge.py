@@ -23,7 +23,32 @@ values. Both sides are read rather than duplicated:
 * the two Defaults presets come from the same screen, and are matched against
   the legacy strings the engine itself falls back to;
 * the tags the tile swatch reads come from the bridge, and are matched against
-  the legacy sample layout they name.
+  the legacy sample layout they name;
+* the class that builds the generated palette package comes from the bridge,
+  and its builder method is matched against the checked-in smali. That class is
+  the one thing here this project adds rather than inherits, so its source of
+  truth is `patches/smali/SystemAutoThemeCompat.smali` rather than the decoded
+  tree: it is what `apply_patches.py` injects verbatim, and it stays current
+  even when the decoded tree predates the last regeneration. Editing the Java
+  without re-running `generate_system_auto_theme_smali.py` leaves the two out of
+  step, and this is what notices.
+* the snapshot-cache prefix the builder matches on, and the method that drops
+  the renderer's snapshots, come from the same class. The renderer names each
+  rasterised keyboard after the theme value it was drawn from, so a palette
+  rebuilt in place leaves every snapshot showing the previous colours while the
+  real keyboard is already correct; the drop is what closes that gap, and a
+  rename that silently disables it would only show up as previews that are
+  wrong whenever the palette has changed since they were drawn.
+* the four lookups the bridge makes where the engine overloads by return type
+  are made through a helper that names the return type. `Class.getMethod`
+  matches on name and parameters alone, and several of these classes declare two
+  methods that differ only in what they return, so a lookup that ignores it
+  picks whichever the runtime lists first. Getting that wrong is not a crash:
+  the cast fails inside the bridge's `runCatching` and the caller takes its
+  fallback. The key-border switch read `false` for every setting that way, while
+  the renderer - whose call the compiler resolves - drew borders, so the switch
+  and the picture beside it disagreed. This is the one check here that guards
+  behaviour rather than a name.
 
 The forced values are the reason the bridge goes through the preference facade
 instead of `SharedPreferences`: they are held in memory and never written to
@@ -68,6 +93,30 @@ CELL_SIZE = {
 }
 
 KEYBOARD_PACKAGE = "com.google.android.apps.inputmethod.libs.framework.keyboard"
+
+# The generated-palette builder. This project adds the class rather than
+# inheriting it from the upstream APK, so it is checked against the smali the
+# build injects rather than against the decoded tree, which may predate the last
+# regeneration. The method name still comes from the bridge, so renaming the
+# constant there fails here instead of at runtime, where a missing method is
+# swallowed by the bridge's `runCatching` and the tile quietly loses its palette.
+PALETTE_BUILDER_CLASS = "com.google.android.inputmethod.pinyin.SystemAutoThemeCompat"
+PALETTE_BUILDER_SMALI = ROOT / "patches/smali/SystemAutoThemeCompat.smali"
+PALETTE_BUILDER_JAVA = (
+    ROOT
+    / "patches/java/com/google/android/inputmethod/pinyin/SystemAutoThemeCompat.java"
+)
+
+# The renderer's snapshot cache. It names each rasterised keyboard after the
+# theme value it was drawn from and never after the package behind that value,
+# so a palette rebuilt in place leaves every snapshot showing the previous
+# colours while the real keyboard, which does not read this cache, is already
+# correct. The builder drops them on every rebuild; the prefix it matches on and
+# the method that does the dropping are both named here, so a rename that
+# quietly stops the drop fails this gate instead of shipping stale previews.
+SNAPSHOT_PREFIX_CONSTANT = "SNAPSHOT_CACHE_PREFIX"
+SNAPSHOT_SUFFIX_CONSTANT = "SNAPSHOT_CACHE_SUFFIX"
+SNAPSHOT_DROP_METHOD = "invalidatePreviewSnapshots"
 
 # Every class the bridge loads, keyed by the constant that names it. The value
 # is the list of declarations that must appear in that class.
@@ -193,6 +242,62 @@ REQUIRED_PREFERENCES = {
 # The key-border preference the sheet writes. Unlike the two above it carries no
 # forced value, so it is only checked against `strings.xml`.
 KEY_BORDER_PREFERENCE = ("KEY_BORDER_KEY", "pref_key_enable_key_border")
+
+# Lookups the bridge makes where the engine overloads by return type, so a
+# lookup by name and parameters alone cannot name one method.
+#
+# `Class.getMethod` matches on name and parameters only. `gc` declares
+# `c(Context)` returning a `File` *and* `c(Context)` returning a boolean, and
+# the facade declares a boolean getter and a boolean setter under one name, so
+# for these four the return type is part of the method's identity. Picking the
+# wrong one is not a crash: the cast fails inside the caller's `runCatching` and
+# the caller silently takes its fallback - which is how the key-border switch
+# came to answer `false` for every setting while the renderer, whose call the
+# compiler resolves, drew borders.
+#
+# Each entry is the bridge's class constant, the smali class, the bridge's
+# method constant, the parameter list, and the return type that is wanted.
+RETURN_TYPE_LOOKUPS = [
+    (
+        "PREFERENCES_CLASS",
+        "amx",
+        "PREFERENCES_ACCESSOR",
+        "(Landroid/content/Context;)",
+        "Lamx;",
+    ),
+    (
+        "BORDER_STATE_CLASS",
+        "gc",
+        "BORDER_STATE_METHOD",
+        "(Landroid/content/Context;)",
+        "Z",
+    ),
+    (
+        "PREFERENCES_CLASS",
+        "amx",
+        "PREFERENCES_ACCESSOR",
+        "(Ljava/lang/String;I)",
+        "I",
+    ),
+    (
+        "PREFERENCES_CLASS",
+        "amx",
+        "PREFERENCES_ACCESSOR",
+        "(Ljava/lang/String;Ljava/lang/String;)",
+        "Ljava/lang/String;",
+    ),
+    (
+        "PREFERENCES_CLASS",
+        "amx",
+        "PREFERENCES_ACCESSOR",
+        "(Ljava/lang/String;Z)",
+        "V",
+    ),
+]
+
+# The helper that names the return type. The bridge has to route every lookup
+# above through it; `getMethod` on its own is the mistake this guards.
+RETURN_TYPE_HELPER = "engineMethod"
 
 # The two packaged presets the Defaults row offers, checked against the legacy
 # strings the engine itself falls back to.
@@ -330,6 +435,70 @@ def main() -> int:
             if member not in text:
                 failures.append(f"{class_name} no longer declares {member}")
 
+    # The return-type-ambiguous lookups. Each one is checked twice: the overload
+    # the bridge wants has to still exist, and if the class declares more than
+    # one method under that name and parameter list - which is what makes the
+    # return type load-bearing - the bridge has to be resolving it through the
+    # helper rather than through `getMethod`.
+    bridge_source = args.bridge.read_text(encoding="utf-8")
+    if f"fun {RETURN_TYPE_HELPER}(" not in bridge_source:
+        failures.append(
+            f"the bridge no longer declares {RETURN_TYPE_HELPER}, which is what "
+            f"picks a method out of an overload set that differs only by return "
+            f"type"
+        )
+    ambiguous = 0
+    for (
+        class_constant,
+        class_name,
+        method_constant,
+        params,
+        expected,
+    ) in RETURN_TYPE_LOOKUPS:
+        method_name = constants.get(method_constant)
+        if method_name is None:
+            failures.append(f"the bridge declares no {method_constant}")
+            continue
+        path = smali_path(args.decoded, class_name)
+        if not path.is_file():
+            failures.append(f"the decoded APK has no class {class_name}")
+            continue
+        text = path.read_text(encoding="utf-8")
+        declared = re.findall(
+            r"^\.method[^\n]*?\s"
+            + re.escape(method_name + params)
+            + r"(\S+)$",
+            text,
+            re.MULTILINE,
+        )
+        if expected not in declared:
+            failures.append(
+                f"{class_name} no longer declares "
+                f"{method_name}{params}{expected}"
+            )
+        if len(declared) < 2:
+            continue
+        ambiguous += 1
+        if not re.search(
+            re.escape(RETURN_TYPE_HELPER) + r"\(\s*" + class_constant + r",",
+            bridge_source,
+        ):
+            failures.append(
+                f"{class_name}.{method_name}{params} is declared {len(declared)} "
+                f"times over, differing only by return type, but the bridge does "
+                f"not look it up through {RETURN_TYPE_HELPER}({class_constant}, "
+                f"...); a lookup that ignores the return type picks whichever "
+                f"overload the runtime lists first, and the wrong one fails "
+                f"silently into the caller's fallback"
+            )
+    for method_constant in ("BORDER_STATE_METHOD", "PREFERENCES_ACCESSOR"):
+        if re.search(r"getMethod\(\s*" + method_constant, bridge_source):
+            failures.append(
+                f"the bridge resolves {method_constant} with getMethod, which "
+                f"cannot tell apart the overloads that differ only by return "
+                f"type; use {RETURN_TYPE_HELPER} instead"
+            )
+
     for constant, resource in REQUIRED_PREFERENCES.items():
         actual = constants.get(constant)
         if actual is None:
@@ -357,6 +526,81 @@ def main() -> int:
             failures.append(
                 f"{border_constant} is {actual}, but {border_resource} resolves "
                 f"to {legacy}"
+            )
+
+    # The generated-palette builder is the one class the bridge loads that this
+    # project adds rather than inherits. It is checked against the smali the
+    # build injects, because that is the copy the bridge will actually reach at
+    # runtime, and against the bridge's own constant so a rename cannot pass by
+    # falling back to a default that no longer matches.
+    builder_class = constants.get("DYNAMIC_PREPARE_CLASS")
+    builder_method = constants.get("DYNAMIC_PREPARE_METHOD")
+    if builder_class is None:
+        failures.append("the bridge declares no DYNAMIC_PREPARE_CLASS")
+    elif builder_class != PALETTE_BUILDER_CLASS:
+        failures.append(
+            f"DYNAMIC_PREPARE_CLASS is {builder_class}, but the injected class is "
+            f"{PALETTE_BUILDER_CLASS}"
+        )
+    if builder_method is None:
+        failures.append("the bridge declares no DYNAMIC_PREPARE_METHOD")
+    elif builder_class == PALETTE_BUILDER_CLASS:
+        if not PALETTE_BUILDER_SMALI.is_file():
+            failures.append(f"no injected smali at {PALETTE_BUILDER_SMALI}")
+        else:
+            member = (
+                f".method public static {builder_method}"
+                "(Landroid/content/Context;)Ljava/lang/String;"
+            )
+            if member not in PALETTE_BUILDER_SMALI.read_text(encoding="utf-8"):
+                failures.append(
+                    f"{PALETTE_BUILDER_CLASS} no longer declares {member}; the "
+                    f"Java source and the generated smali are out of step"
+                )
+
+    # The snapshot drop is the only thing between a rebuilt palette and previews
+    # that keep drawing the old one. Both halves are checked: the prefix and
+    # suffix the builder matches on come from its Java source, and the method
+    # that runs the drop has to be present in the smali the build injects, which
+    # is the copy `apply_patches.py` writes into the decoded tree.
+    if not PALETTE_BUILDER_JAVA.is_file():
+        failures.append(f"no builder source at {PALETTE_BUILDER_JAVA}")
+    elif PALETTE_BUILDER_SMALI.is_file():
+        builder_java = PALETTE_BUILDER_JAVA.read_text(encoding="utf-8")
+        builder_smali = PALETTE_BUILDER_SMALI.read_text(encoding="utf-8")
+        for constant in (SNAPSHOT_PREFIX_CONSTANT, SNAPSHOT_SUFFIX_CONSTANT):
+            match = re.search(
+                r"final String " + constant + r'\s*=\s*"([^"]*)"', builder_java
+            )
+            if match is None:
+                failures.append(f"the builder source declares no {constant}")
+                continue
+            literal = match.group(1)
+            field = (
+                f".field private static final {constant}:"
+                f'Ljava/lang/String; = "{literal}"'
+            )
+            if field not in builder_smali:
+                failures.append(
+                    f"the builder source sets {constant} to {literal}, but the "
+                    f"injected smali does not; the Java and the generated smali "
+                    f"are out of step"
+                )
+        declaration = (
+            f".method private static {SNAPSHOT_DROP_METHOD}"
+            "(Landroid/content/Context;)V"
+        )
+        if declaration not in builder_smali:
+            failures.append(
+                f"{PALETTE_BUILDER_CLASS} no longer declares {declaration}"
+            )
+        elif (
+            f"->{SNAPSHOT_DROP_METHOD}(Landroid/content/Context;)V"
+            not in builder_smali
+        ):
+            failures.append(
+                f"{PALETTE_BUILDER_CLASS} never calls {SNAPSHOT_DROP_METHOD}, so a "
+                f"rebuilt palette would leave its previous previews in place"
             )
 
     forced = (args.decoded / FORCED_VALUES_ARRAY).read_text(encoding="utf-8")
@@ -432,7 +676,10 @@ def main() -> int:
         f"{len(REQUIRED_PREFERENCES)} forced preferences, "
         f"{len(CELL_SIZE)} grid cell sizes, "
         f"{len(PRESET_VALUES)} default presets, "
-        f"{len(SWATCH_TAGS)} swatch tags)"
+        f"{len(SWATCH_TAGS)} swatch tags, "
+        f"{ambiguous} return-type overloads, "
+        f"1 injected palette builder, "
+        f"1 snapshot drop)"
     )
     return 0
 

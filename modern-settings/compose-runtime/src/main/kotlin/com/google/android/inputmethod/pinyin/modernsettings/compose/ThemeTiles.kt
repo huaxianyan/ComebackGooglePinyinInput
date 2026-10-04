@@ -5,18 +5,16 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -37,6 +35,36 @@ import androidx.compose.ui.viewinterop.AndroidView
 
 /** Corner radius every tile on the theme page shares. */
 private val TileShape = RoundedCornerShape(12.dp)
+
+/** Width of the hairline every theme tile carries. */
+private val TileBorderWidth = 1.dp
+
+/**
+ * The hairline that marks where a theme tile ends.
+ *
+ * A palette taken from the system - which is what the dynamic mode is, by
+ * definition - is derived from the very surface the tile is drawn on, so its
+ * body colour lands on the page colour and the tile has no visible edge at all.
+ * Every other palette can do the same by accident. The line is what says the
+ * picture stops here, so a tile reads as a tile rather than as a patch of the
+ * page behind it.
+ *
+ * Laid over the content rather than under it, because the swatch is opaque and
+ * full-bleed: a border drawn first would never be seen. `outlineVariant` rather
+ * than `outline` because this is an edge, not a control - it has to be there
+ * without competing with the palette inside it.
+ *
+ * Carries no click handling of its own, so a tap passes through it to whatever
+ * the tile put underneath.
+ */
+@Composable
+private fun BoxScope.TileBorder() {
+    Box(
+        modifier = Modifier
+            .matchParentSize()
+            .border(TileBorderWidth, MaterialTheme.colorScheme.outlineVariant, TileShape),
+    )
+}
 
 /**
  * One theme tile.
@@ -74,19 +102,37 @@ internal fun ThemeTile(
 /**
  * The tile for dynamic colour.
  *
- * Drawn here rather than from a theme package, because there is no package to
- * read until the mode is switched on: the compatibility bridge writes the
- * palette out of the system colours the first time it is enabled. Showing the
- * swatch of a package that does not exist yet is what made this tile come out
- * dark and wrong, so it shows the mode's symbol instead, the way Gboard does.
+ * Once the palette package exists this is an ordinary swatch, drawn down the
+ * same path as every other tile, because the mode produces an ordinary theme:
+ * the keyboard's own body colour with the space bar and the accent dot on top.
+ * Showing a symbol instead was a guess at what the mode would look like, and a
+ * wrong one - the palette is what the tile is for.
+ *
+ * The tick is not drawn here either. A check in the tile's resting state reads
+ * as "already on", so selection is left to the same indicator the other tiles
+ * use, which only appears when the mode is the one in effect.
+ *
+ * [themeValue] is null only when the platform has no palette to build from, in
+ * which case the tile falls back to a flat surface rather than an empty hole.
  */
 @Composable
 internal fun DynamicColorTile(
+    themeValue: String?,
     selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     label: String? = null,
 ) {
+    if (themeValue != null) {
+        ThemeTile(
+            themeValue = themeValue,
+            selected = selected,
+            onClick = onClick,
+            modifier = modifier,
+            label = label,
+        )
+        return
+    }
     Column(modifier = modifier.fillMaxWidth()) {
         Box(
             modifier = Modifier
@@ -95,25 +141,8 @@ internal fun DynamicColorTile(
                 .clip(TileShape)
                 .background(MaterialTheme.colorScheme.surfaceVariant)
                 .clickable(onClick = onClick),
-            contentAlignment = Alignment.Center,
         ) {
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    // `surface` rather than another container tone: the two
-                    // container tones can resolve to the same colour under a
-                    // dynamic palette, which left the circle invisible.
-                    .background(MaterialTheme.colorScheme.surface),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Check,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(24.dp),
-                )
-            }
+            TileBorder()
         }
         TileLabel(text = label, selected = selected)
     }
@@ -213,6 +242,7 @@ internal fun SplitThemeTile(
                 leftHalf = false,
                 modifier = Modifier.fillMaxSize(),
             )
+            TileBorder()
         }
         TileLabel(text = label, selected = selected)
     }
@@ -263,6 +293,11 @@ private fun Modifier.clipToHalf(left: Boolean): Modifier = drawWithContent {
  *
  * Keyed on the value because the inflated view is fixed once built: a new theme
  * has to mean a new view, even if the grid reuses the slot.
+ *
+ * The card sits in a box rather than carrying the size itself. The card is
+ * opaque and full-bleed, so the hairline has to be drawn over it; that means a
+ * box that draws the card and then the edge, and the box is what takes the
+ * tile's size.
  */
 @Composable
 private fun ThemeSwatchSurface(
@@ -274,17 +309,22 @@ private fun ThemeSwatchSurface(
     val context = LocalContext.current
     val currentOnClick by rememberUpdatedState(onClick)
     key(themeValue) {
-        AndroidView(
-            factory = {
-                val swatch = ThemePreviewBridge.inflateThemeSwatch(context, themeValue)
-                    ?: View(context)
-                swatch.setOnClickListener { currentOnClick() }
-                swatch
-            },
-            update = { swatch -> ThemePreviewBridge.markSelected(swatch, selected) },
+        Box(
             modifier = modifier
                 .clip(TileShape)
                 .background(MaterialTheme.colorScheme.surfaceVariant),
-        )
+        ) {
+            AndroidView(
+                factory = {
+                    val swatch = ThemePreviewBridge.inflateThemeSwatch(context, themeValue)
+                        ?: View(context)
+                    swatch.setOnClickListener { currentOnClick() }
+                    swatch
+                },
+                update = { swatch -> ThemePreviewBridge.markSelected(swatch, selected) },
+                modifier = Modifier.fillMaxSize(),
+            )
+            TileBorder()
+        }
     }
 }

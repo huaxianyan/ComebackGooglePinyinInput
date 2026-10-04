@@ -28,10 +28,27 @@ import androidx.compose.foundation.clickable
 import androidx.compose.ui.unit.dp
 
 /**
+ * What a tile asks the sheet to show.
+ *
+ * Most tiles are one theme and fill in only [themeValue]. The mode that follows
+ * the system is a pair: it is two themes with a rule for picking between them,
+ * and previewing only the light half would show it as a fixed light theme,
+ * which is the one thing it is not. [pairedValue] carries the second half.
+ */
+internal data class ThemePreviewSubject(
+    val themeValue: String,
+    val pairedValue: String? = null,
+)
+
+/**
  * What tapping a theme tile opens.
  *
  * The preview is here rather than pinned to the top of the page because it is
  * about one theme: the tile you tapped is the one being shown.
+ *
+ * A paired subject puts the two previews side by side, light on the left and
+ * dark on the right - the same reading order the tile that opens it uses, and
+ * the same order the keyboard itself switches between.
  *
  * The key-border switch works, and redraws the preview when it changes. The
  * three theme buttons do not: applying a theme and assigning one to a slot are
@@ -41,7 +58,7 @@ import androidx.compose.ui.unit.dp
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun ThemePreviewSheet(
-    themeValue: String,
+    subject: ThemePreviewSubject,
     onDismiss: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -50,6 +67,12 @@ internal fun ThemePreviewSheet(
     // height instead of dismissing it. There is nothing below the fold to scroll
     // to, so the half-open state is never useful here.
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    // The switch and the picture are the same value on purpose: it is read once
+    // here and then handed to the renderer, rather than the renderer resolving
+    // the preference for itself. Two lookups of one setting is how the two came
+    // to disagree - the switch read it through a reflective call that was
+    // landing on the wrong overload and answering `false` for everything, while
+    // the renderer resolved the same call at compile time and drew borders.
     var keyBorder by remember(context) {
         mutableStateOf(ThemePreviewBridge.keyBorderEnabled(context))
     }
@@ -63,7 +86,7 @@ internal fun ThemePreviewSheet(
                 .fillMaxWidth()
                 .padding(bottom = 24.dp),
         ) {
-            ThemePreview(themeValue = themeValue, renderKey = keyBorder)
+            PreviewRow(subject = subject, keyBorder = keyBorder)
             KeyBorderRow(
                 checked = keyBorder,
                 onCheckedChange = { enabled ->
@@ -123,6 +146,47 @@ internal fun ThemePreviewSheet(
                 }
             }
         }
+    }
+}
+
+/**
+ * The picture, or the pair of pictures.
+ *
+ * Both halves get the same width, so neither theme is shown as the important
+ * one. Stacking them instead would make the sheet tall enough to crowd the
+ * switch and the buttons off the bottom on a short screen, and the two are
+ * meant to be read against each other, which side by side does better.
+ */
+@Composable
+private fun PreviewRow(
+    subject: ThemePreviewSubject,
+    keyBorder: Boolean,
+) {
+    val paired = subject.pairedValue
+    if (paired == null) {
+        ThemePreview(
+            themeValue = subject.themeValue,
+            keyBorder = keyBorder,
+            modifier = Modifier.padding(horizontal = 16.dp),
+        )
+        return
+    }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        ThemePreview(
+            themeValue = subject.themeValue,
+            keyBorder = keyBorder,
+            modifier = Modifier.weight(1f),
+        )
+        ThemePreview(
+            themeValue = paired,
+            keyBorder = keyBorder,
+            modifier = Modifier.weight(1f),
+        )
     }
 }
 

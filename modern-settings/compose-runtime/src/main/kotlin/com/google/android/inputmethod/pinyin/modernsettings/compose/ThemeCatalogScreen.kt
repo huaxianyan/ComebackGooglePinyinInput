@@ -24,6 +24,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,12 +44,20 @@ import androidx.compose.ui.unit.dp
  *
  * Tapping a tile opens [ThemePreviewSheet] instead of moving a preview pinned
  * to the top of the page. The preview is about one theme, so it belongs next to
- * that theme rather than somewhere else on the screen.
+ * that theme rather than somewhere else on the screen. A tile whose theme is
+ * really a pair - the one that follows the system - hands the sheet both halves,
+ * so the sheet shows what the tile shows rather than half of it.
  *
- * Nothing here writes yet. The mode tiles read state and the sheet's assign
- * buttons are inert until the theme write path lands; the key-border switch in
- * the sheet is the one control that already works, because it is a plain
- * preference with no slot behind it.
+ * The Colours section leaves out the two packaged presets, because the Defaults
+ * row above it is where they belong and drawing them twice on one page would
+ * make the page look like it offered four light themes.
+ *
+ * Nothing here changes which theme is in use. The mode tiles read state and the
+ * sheet's assign buttons are inert until the theme write path lands. Two things
+ * do write, and neither of them is a theme: the key-border switch in the sheet,
+ * which is a plain preference with no slot behind it, and the generated palette
+ * package, which the dynamic-colour tile has to have on disk before it can show
+ * anything at all.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,7 +67,7 @@ internal fun ThemeCatalogScreen(
 ) {
     val catalog = snapshot.themeCatalog
     val context = LocalContext.current
-    var sheetValue by remember { mutableStateOf<String?>(null) }
+    var subject by remember { mutableStateOf<ThemePreviewSubject?>(null) }
     var colorsExpanded by remember { mutableStateOf(true) }
     // The stored value is empty on a device that never picked a theme, while
     // the keyboard still draws one. The engine resolves that, so ask it.
@@ -67,6 +76,19 @@ internal fun ThemeCatalogScreen(
     }
     val lightPreset = catalog.builtin.firstOrNull { it.value == LIGHT_PRESET_VALUE }
     val darkPreset = catalog.builtin.firstOrNull { it.value == DARK_PRESET_VALUE }
+    // The pair the follow-the-system mode actually swaps between. It is not the
+    // two packaged presets: those are only what the bridge seeds the slots with
+    // on a device that has never chosen, and the slots are what the keyboard
+    // reads. Showing the presets here would draw a pair the keyboard is not
+    // using as soon as the user assigns their own to either slot.
+    val lightSlotValue = catalog.slots
+        .firstOrNull { it.slot == ThemeSlotKey.Light }
+        ?.entry
+        ?.value
+    val darkSlotValue = catalog.slots
+        .firstOrNull { it.slot == ThemeSlotKey.Dark }
+        ?.entry
+        ?.value
     val fixedValue = catalog.slots
         .firstOrNull { it.slot == ThemeSlotKey.Fixed }
         ?.additional
@@ -74,6 +96,27 @@ internal fun ThemeCatalogScreen(
     val dynamicColor = snapshot.dynamicColorEnabled
     val systemAuto = snapshot.systemAutoThemeEnabled
     val fixedInUse = !dynamicColor && !systemAuto
+    // The Colours section, minus the pair the Defaults row already shows. They
+    // are the same two packaged themes, so leaving them in both places would
+    // draw the same tiles twice on one page.
+    val colorEntries = remember(catalog.builtin) {
+        catalog.builtin.filterNot {
+            it.value == LIGHT_PRESET_VALUE || it.value == DARK_PRESET_VALUE
+        }
+    }
+    // The palette package does not exist until something builds one, and the
+    // tile has to show a palette before the mode is switched on. Building it is
+    // not a theme change - it only writes the package file - so the mode stays
+    // where it was and the tile can still be previewed. Deferred out of
+    // composition because building the package reads assets and writes a file.
+    var dynamicValue by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(context, snapshot.capabilities.dynamicColorVisible) {
+        dynamicValue = if (snapshot.capabilities.dynamicColorVisible) {
+            ThemePreviewBridge.prepareDynamicTheme(context)
+        } else {
+            null
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -118,7 +161,7 @@ internal fun ThemeCatalogScreen(
                 ThemeTile(
                     themeValue = entry.value,
                     selected = entry.value == activeValue,
-                    onClick = { sheetValue = entry.value },
+                    onClick = { subject = ThemePreviewSubject(entry.value) },
                 )
             }
 
@@ -126,12 +169,9 @@ internal fun ThemeCatalogScreen(
             if (snapshot.capabilities.dynamicColorVisible) {
                 item(key = "theme_mode_dynamic") {
                     DynamicColorTile(
+                        themeValue = dynamicValue,
                         selected = dynamicColor,
-                        // The mode has no package to preview until it is turned
-                        // on, and turning it on is the write path. Left inert
-                        // rather than opening a sheet on a theme that does not
-                        // exist yet.
-                        onClick = {},
+                        onClick = { dynamicValue?.let { subject = ThemePreviewSubject(it) } },
                         label = stringResource(R.string.modern_settings_dynamic_color_title),
                     )
                 }
@@ -139,10 +179,20 @@ internal fun ThemeCatalogScreen(
             if (lightPreset != null && darkPreset != null) {
                 item(key = "theme_mode_auto") {
                     SplitThemeTile(
-                        lightValue = lightPreset.value,
-                        darkValue = darkPreset.value,
+                        lightValue = lightSlotValue ?: lightPreset.value,
+                        darkValue = darkSlotValue ?: darkPreset.value,
                         selected = systemAuto,
-                        onClick = { sheetValue = lightPreset.value },
+                        // Both halves, because the mode is the pair. The tile
+                        // shows the two themes it swaps between, so the sheet
+                        // that opens from it has to as well - and both come
+                        // from the slots, so the pair shown is the pair the
+                        // keyboard would use rather than the packaged default.
+                        onClick = {
+                            subject = ThemePreviewSubject(
+                                lightSlotValue ?: lightPreset.value,
+                                darkSlotValue ?: darkPreset.value,
+                            )
+                        },
                         label = stringResource(R.string.modern_settings_system_auto_theme_title),
                     )
                 }
@@ -156,7 +206,7 @@ internal fun ThemeCatalogScreen(
                         // reads as the one in use rather than as nothing.
                         selected = fixedInUse &&
                             (fixedValue.isEmpty() || fixedValue == LIGHT_PRESET_VALUE),
-                        onClick = { sheetValue = lightPreset.value },
+                        onClick = { subject = ThemePreviewSubject(lightPreset.value) },
                         label = stringResource(R.string.modern_settings_theme_default_light),
                     )
                 }
@@ -166,7 +216,7 @@ internal fun ThemeCatalogScreen(
                     ThemeTile(
                         themeValue = darkPreset.value,
                         selected = fixedInUse && fixedValue == DARK_PRESET_VALUE,
-                        onClick = { sheetValue = darkPreset.value },
+                        onClick = { subject = ThemePreviewSubject(darkPreset.value) },
                         label = stringResource(R.string.modern_settings_theme_default_dark),
                     )
                 }
@@ -178,21 +228,26 @@ internal fun ThemeCatalogScreen(
                 onToggle = { colorsExpanded = !colorsExpanded },
             )
             if (colorsExpanded) {
-                items(catalog.builtin, key = { "theme_builtin_" + it.value }) { entry ->
+                // Without the two presets, which the Defaults row above already
+                // offers. They are packaged colours, so they belong in this
+                // list by their value; they are also the pair the light and
+                // dark modes are defined as, and showing the same two tiles
+                // twice on one page invites the reader to wonder what differs.
+                items(colorEntries, key = { "theme_builtin_" + it.value }) { entry ->
                     ThemeTile(
                         themeValue = entry.value,
                         selected = entry.value == activeValue,
-                        onClick = { sheetValue = entry.value },
+                        onClick = { subject = ThemePreviewSubject(entry.value) },
                     )
                 }
             }
         }
     }
 
-    sheetValue?.let { value ->
+    subject?.let { shown ->
         ThemePreviewSheet(
-            themeValue = value,
-            onDismiss = { sheetValue = null },
+            subject = shown,
+            onDismiss = { subject = null },
         )
     }
 }
@@ -266,7 +321,8 @@ internal val THEME_CELL_ASPECT = THEME_CELL_WIDTH_DP.toFloat() / THEME_CELL_HEIG
  * and `_dark`: the pair the keyboard falls back to when nothing is stored, and
  * the third and fourth entries of the packaged list. Naming them here rather
  * than reusing the first two entries keeps the Defaults row showing the pair the
- * engine itself would pick.
+ * engine itself would pick. The Colours section filters both out, so the row
+ * above is the only place they appear.
  * `scripts/verify_theme_preview_bridge.py` checks them against `strings.xml`.
  */
 internal const val LIGHT_PRESET_VALUE =

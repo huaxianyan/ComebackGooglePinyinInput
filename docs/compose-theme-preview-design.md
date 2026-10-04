@@ -552,6 +552,9 @@ Compose 侧读的是**原始偏好值**而不是**生效值**，所以两边不�
 所以统一走引擎自己的解析入口。第三个是纯偏好，没有槽位、没有强制值，
 可以在主题写入路径之前独立落地。
 
+（`gc.c(Context)` 这个解析入口后来出过一次事：`gc` 在同一名字和参数下还有一个
+返回 `File` 的重载，`Class.getMethod` 取错了那一个。见 16.2。）
+
 同时删掉了 `CARD_KIND_USER_IMAGE` 与 `inflateUserImageCard`：
 「我的图片」格在新版式里是自绘的描边磁贴，不再借道 `BUILDER_LAUNCHER` 布局。
 
@@ -681,3 +684,191 @@ Gboard 的磁贴其实是**三件套**（`work/shots/41a-gboard-colors-zoom.png`
 反向验证三次：`LIGHT_PRESET_VALUE` 换回 `material_light`、
 `BODY_TAG` 改成 `.keyboard-body-areax`、`SPACE_TAG` 改成 `.space_barx`，都如期失败。
 
+## 十五、动态颜色预览的陈旧：渲染器的快照缓存（2026-10-04）
+
+### 15.1 现象
+
+弹层里的大预览在**切换深浅色之后仍显示切换前的配色**；深色下打开「按键边框」
+会把它换成另一份错误的图，关掉又恢复正常。真实键盘从头到尾都是对的，
+所以问题只在预览这一路。
+
+### 15.2 根因：缓存键里只有值，没有内容
+
+`KeyboardPreviewRenderer` 会把栅格化好的键盘落盘，文件名
+`keyboardsnapshotcache_<MD5>.png`，目录是**设备加密存储**
+`/data/user_de/0/<pkg>/files/`。
+
+键由 `preview_<resourceKey>_<viewStyleCacheKey>_t<types>_sp<w>_khp<h>_mp<On|Off>`
+加方向后缀算出，而 `getViewStyleCacheKey()` = `resourceKey + "_" + 主题值`。
+
+`syncDynamicTheme` 重建调色板时**原地重写同名文件** `files:dynamic_theme.zip`，
+值字符串一个字符都没变 → 键不变 → 该值对应的快照永远命中旧图。
+固定主题不会遇到这件事，因为 `assets:…` 恒指向同一份字节；
+动态配色破坏的正是「值唯一确定内容」这条不变量。真实键盘不读这条缓存，所以一直正确。
+
+### 15.3 按键边框为什么是不对称的
+
+`bck.getResourceCacheKey()` 把 `_border` 算进了键，所以**边框开/关是两个独立条目**，
+各自独立变陈旧。实测开关一次，目录里多一个文件
+（`…_03a9f1b…` 边框关 64974 B / `…_4902e58…` 边框开 69167 B）。
+修复前，「边框开」那一份的 mtime 停在 13:47，从未刷新过。
+
+### 15.4 定位过程里最容易走错的一步
+
+`/data/data/<pkg>` 是 `/data/user/0/<pkg>` 的符号路径，
+**`find /data/data` 不会进入 `user_de`**。按那个目录去找，只会得到
+「根本没有磁盘缓存」的结论，并顺着它编出「字面量有特判」「版本门控」
+一整套错误理论。搜 `/data` 才命中真实文件。
+
+### 15.5 修法：重建之后丢掉旧快照
+
+`SystemAutoThemeCompat.invalidatePreviewSnapshots(Context)`，在
+`syncDynamicTheme` 重建成功、写入签名之后调用，删除两个目录里所有
+`keyboardsnapshotcache_*.png`：
+
+- 两个目录是 `getFilesDir()` 和把路径里 `/user/` 换成 `/user_de/` 的那个。
+  框架 `LoadedApk` 也是这样从 `dataDir` 推出加密目录的，所以不必用
+  `createDeviceProtectedStorageContext()`，也不需要 API 守卫。
+- 只删快照，不碰 `keyboard_def_cache_*`，也不碰 `files:dynamic_theme.zip` 本身。
+- 渲染器实例上的 map 不用管：每次渲染都新建。
+- 放在重建**之后**：包已经换好，此后请求的预览才会照新调色板重画。
+
+### 15.6 真机验证
+
+同一台设备、同一个 APK，四个组合全部正确（`work/shots/202`–`206`）。
+文件侧证据：
+
+| 动作 | 签名 | 快照 |
+| --- | --- | --- |
+| 浅色下进入清单页 | `dark@v3:…` → `light@v3:…` | 14 → 6，旧的全删、重新生成 |
+| 切到深色 | 回到 `dark@v3:…` | 6 个 mtime 全部刷新 |
+
+### 15.7 门禁
+
+`scripts/verify_theme_preview_bridge.py` 增加三项断言，都从两侧读、不重复写：
+
+- `SNAPSHOT_CACHE_PREFIX` / `SNAPSHOT_CACHE_SUFFIX` 的字面量从 Java 源读出，
+  必须与注入 smali 里的字段声明一致；
+- `.method private static invalidatePreviewSnapshots(Landroid/content/Context;)V` 必须存在；
+- 该方法必须真的被调用，即 `->invalidatePreviewSnapshots(Landroid/content/Context;)V`
+  出现在 smali 里。
+
+反向验证三次（改调用名、改前缀字面量、删方法）都如期失败。
+
+### 15.8 顺带清掉的诊断代码
+
+上一轮为定位加的探针——`ThemeCatalogScreen` 里那 7 个 `probe` 和
+`ThemePreviewBridge` 的 `diagnose` / `probe` / `sheetProbe` / `chainProbe` /
+`rendererState` / `describe` / `palette` 等——每次打开清单页都会**额外跑一遍引擎渲染**，
+还会在快照目录里留下垃圾。定案后整体删除（`ThemePreviewBridge` 958 → 514 行）。
+`appliedContext` / `inflateCard` / `inflateCardIn` 是磁贴渲染要用的功能代码，保留。
+
+### 15.9 没做的方案
+
+「值随内容派生」（`files:dynamic_theme_<签名哈希>.zip`）能让键和内容重新一一对应，
+比清快照更贴近引擎的不变量，但要迁移老值、改掉所有字面量比较，而且老值一旦指向
+不存在的文件就会回退默认主题。本轮按最小改动落地，未采用。
+
+
+---
+
+## 十六、两处「预览与实际不符」（2026-10-04）
+
+上一节收尾后用户又提两条，两条都不是渲染器的问题，而是**预览的输入取错了地方**。
+
+### 16.1 系统自动：预览取的是打包预设，实际用的是槽位
+
+「系统自动」模式真正的取值来自 light / dark 两个槽
+（`compat_theme_{light,dark}_additional`），而 `ensureInitialized` 在首次启动时
+把这两个槽初始化成
+
+```text
+compat_theme_light_additional = assets:theme_package_metadata_material_light.binarypb
+compat_theme_dark_additional  = assets:theme_package_metadata_material_dark.binarypb
+```
+
+即 `pref_entry_additional_keyboard_theme_material_{light,dark}`，
+也就是内置数组的第 0、1 项。
+
+而清单页的「系统自动」磁贴和它的弹层一直在用
+`LIGHT_PRESET_VALUE` / `DARK_PRESET_VALUE`，那是 **`google_blue_light` / `google_blue_dark`**，
+内置数组的第 2、3 项。两者从第一天起就不是同一个主题，所以「预览和实际不符」
+不是偶发，而是必然——用户没改过槽位时就已经不符。
+
+**修法**：磁贴与弹层都改读槽位值，取不到（槽为空或值解析不出条目）才回落到预设。
+`ThemeCatalogScreen` 里两个新变量：
+
+```kotlin
+val lightSlotValue = catalog.slots.firstOrNull { it.slot == ThemeSlotKey.Light }?.entry?.value
+val darkSlotValue  = catalog.slots.firstOrNull { it.slot == ThemeSlotKey.Dark }?.entry?.value
+```
+
+`SplitThemeTile` 的两半与 `ThemePreviewSubject` 的两个值都从这里取，
+`?: lightPreset.value` / `?: darkPreset.value` 兜底。
+
+这样用户把任一槽改成别的主题后，磁贴和弹层跟着变，和键盘实际会用的那一对一致。
+
+### 16.2 按键边框：开关读错了重载，一直报 false
+
+现象（`work/shots/z1.png`）：弹层里「按键边框」开关是**关**的，
+但旁边的预览画着**带边框**的键盘。
+
+根因在反射：
+
+```text
+gc 同时声明了   c(Landroid/content/Context;)Ljava/io/File;     ← 文件 21778 行
+                c(Landroid/content/Context;)Z                    ← 布尔 22032 行
+```
+
+`Class.getMethod("c", Context.class)` 只按名字和参数匹配，
+**返回哪个由运行时列出的顺序决定**，结果是返回 `File` 那个。
+桥接里 `as? Boolean` 失败抛 `ClassCastException`，被 `runCatching` 吞掉，
+落到 `.getOrDefault(false)`——于是**开关永远是关的**，和偏好里存了什么无关。
+
+渲染器一侧没有这个问题：`bck` 的三参构造里那句
+`invoke-static {p1}, Lgc;->c(Landroid/content/Context;)Z` 是**编译期定死的调用**，
+返回类型写死在指令里，所以它读到的永远是对的。开关错、预览对，两边就分家了。
+
+同样的坑还有两处，只是暂时没发作：
+
+| 位置 | 重载 | 结果 |
+| --- | --- | --- |
+| `amx.a(Ljava/lang/String;Z)` | `…Z`（getter，2522）/ `…V`（setter，2240） | `getMethod` 取到 setter，写入**碰巧是对的** |
+| `amx.a(Landroid/content/Context;)` | `…Lamx`（204）/ `…Context`（252）/ `…V`（591） | 取到第一个 `Lamx`，**碰巧是对的** |
+
+也就是说三处里两处靠声明顺序侥幸正确，一处已经错了。
+
+**修法**：桥接新增 `engineMethod(className, methodName, returnType, vararg params)`，
+按**名字 + 参数 + 返回类型**三者匹配，不再用 `getMethod`。
+五处查找全部改走它（`gc.c`、`amx.a(Context)`、`amx.a(String,int)`、
+`amx.a(String,String)`、`amx.a(String,boolean)`）。
+
+同时把边框值**显式传给渲染器**：`render(context, themeValue, keyBorder, onReady)`
+改用 `bck` 的四参构造 `(Context, baq, Z, Z)`，最后一位就是边框。
+三参构造会自己调 `gc.c` 取，四参不会。这样开关成为预览的唯一输入，
+两边不可能再各读一次而读岔。
+
+`ThemePreview` 的 `renderKey: Any = Unit` 随之去掉——边框现在真的是渲染输入，
+直接作 `LaunchedEffect(themeValue, keyBorder)` 的 key 更诚实。
+
+### 16.3 门禁
+
+`scripts/verify_theme_preview_bridge.py` 新增一组「返回类型重载」断言
+（`RETURN_TYPE_LOOKUPS`，5 项）。对每一项：
+
+1. 期望的那个重载必须仍在（名字 + 参数 + **返回类型**全对）；
+2. 若该类在同一名字和参数下声明了**多于一个**方法（返回类型不同），
+   桥接必须通过 `engineMethod(<类常量>, …)` 去取；
+3. 桥接源码里不得出现 `getMethod(BORDER_STATE_METHOD` 或
+   `getMethod(PREFERENCES_ACCESSOR`。
+
+反向验证：把 `keyBorderEnabled` 改回 `getMethod`，门禁同时报两条——
+
+```text
+FAIL gc.c(Landroid/content/Context;) is declared 2 times over, differing only by
+     return type, but the bridge does not look it up through engineMethod(…
+FAIL the bridge resolves BORDER_STATE_METHOD with getMethod, …
+```
+
+这是本文件里第一条**管行为而不只是管名字**的断言：前面那些只能发现改名，
+这一条能发现「名字没变但取错了那一个」。
