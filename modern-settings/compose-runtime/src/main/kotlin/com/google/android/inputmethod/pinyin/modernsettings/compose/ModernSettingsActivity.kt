@@ -1,6 +1,7 @@
 package com.google.android.inputmethod.pinyin.modernsettings.compose
 
 import android.Manifest
+import android.app.Activity
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -56,6 +57,28 @@ class ModernSettingsActivity : ComponentActivity() {
         ActivityResultContracts.StartActivityForResult(),
     ) {
         if (::controller.isInitialized) snapshot = controller.finishThemeSelection()
+    }
+    /**
+     * The custom-theme builder's result.
+     *
+     * A cancelled builder and a builder that wrote nothing look the same here,
+     * and both leave the inventory as it was, so only a name applies a theme.
+     * The inventory is re-read either way: the builder can leave files behind
+     * on a cancel, and the page would otherwise keep showing the list it was
+     * built with.
+     */
+    private val themeBuilder = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult(),
+    ) { result ->
+        if (!::controller.isInitialized) return@registerForActivityResult
+        val fileName = result.data
+            ?.getStringExtra(LegacySettingsNavigation.newThemeFileNameExtra)
+            .orEmpty()
+        snapshot = if (result.resultCode == Activity.RESULT_OK && fileName.isNotEmpty()) {
+            controller.applyCustomTheme(fileName)
+        } else {
+            controller.read()
+        }
     }
     private val contactsPermission = registerForActivityResult(
         ActivityResultContracts.RequestPermission(),
@@ -195,6 +218,11 @@ class ModernSettingsActivity : ComponentActivity() {
                             },
                             onAssignThemeSlot = { slot, themeValue ->
                                 snapshot = controller.assignThemeSlot(slot, themeValue)
+                            },
+                            onAddTheme = {
+                                themeBuilder.launch(
+                                    LegacySettingsNavigation.themeBuilderIntent(this)
+                                )
                             },
                             onOpenTerms = {
                                 startActivity(LegacySettingsNavigation.legacyWebIntent(this, "tos_url"))

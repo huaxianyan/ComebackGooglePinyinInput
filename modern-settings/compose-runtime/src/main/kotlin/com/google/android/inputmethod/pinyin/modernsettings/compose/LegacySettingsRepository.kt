@@ -283,6 +283,30 @@ class LegacySettingsRepository(context: Context) {
         return readSnapshot()
     }
 
+    /**
+     * Makes the custom theme the builder just wrote the one in use.
+     *
+     * [fileName] is the bare name the builder returns, so the `files:` prefix
+     * comes from the same place the inventory uses for the same directory
+     * rather than from a second copy of the literal. Applying it is what the
+     * legacy selector does with the same result: the theme the user just built
+     * is the theme they asked for, so there is nothing left to confirm.
+     *
+     * The other half of the legacy result handling - repointing the slots that
+     * referenced an edited or deleted custom theme - has no counterpart here,
+     * because this page only ever opens the builder, and the builder only
+     * creates. Deleting is a job for the editor, which this page does not open.
+     */
+    fun applyCustomTheme(fileName: String): SettingsSnapshot {
+        require(fileName.isNotEmpty()) { "Empty theme file name" }
+        Class.forName(SYSTEM_AUTO_THEME_BRIDGE).getMethod(
+            "applyTheme",
+            Context::class.java,
+            String::class.java,
+        ).invoke(null, applicationContext, ThemeSource.User.valuePrefix + fileName)
+        return readSnapshot()
+    }
+
     fun setLauncherIconVisible(visible: Boolean): SettingsSnapshot {
         preferences.edit().putBoolean(LAUNCHER_ICON_KEY, visible).apply()
         return readSnapshot()

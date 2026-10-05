@@ -73,6 +73,7 @@ data class SettingsActions(
     val onOpenThemeSelector: (ThemeSelectionSlot) -> Unit,
     val onApplyTheme: (String) -> Unit,
     val onAssignThemeSlot: (ThemeSelectionSlot, String) -> Unit,
+    val onAddTheme: () -> Unit,
     val onOpenTerms: () -> Unit,
     val onOpenPrivacyPolicy: () -> Unit,
     val onOpenRepository: () -> Unit,
@@ -210,6 +211,7 @@ private fun SettingsRoutePage(
             onApplyTheme = actions.onApplyTheme,
             onAssignThemeSlot = actions.onAssignThemeSlot,
             onFollowSystemEnabledChange = actions.onSystemAutoThemeEnabledChange,
+            onAddTheme = actions.onAddTheme,
         )
         return
     }

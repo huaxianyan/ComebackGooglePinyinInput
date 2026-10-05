@@ -59,6 +59,11 @@ import androidx.compose.ui.unit.dp
  * and the generated palette package the dynamic-colour tile needs is built
  * ahead of any tap - building it leaves the mode alone, so the tile can be
  * previewed before the mode is switched on.
+ *
+ * The add tile leaves the page entirely: it opens the legacy builder, which is
+ * where a theme is made from a picture, and the theme it returns is applied on
+ * the way back. That is the one write that does not go through the sheet,
+ * because it is not about a theme already on the page.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -68,6 +73,7 @@ internal fun ThemeCatalogScreen(
     onApplyTheme: (String) -> Unit,
     onAssignThemeSlot: (ThemeSelectionSlot, String) -> Unit,
     onFollowSystemEnabledChange: (Boolean) -> Unit,
+    onAddTheme: () -> Unit,
 ) {
     val catalog = snapshot.themeCatalog
     val context = LocalContext.current
@@ -157,7 +163,7 @@ internal fun ThemeCatalogScreen(
             themeSection(R.string.modern_settings_theme_catalog_section_mine)
             item(key = "theme_add") {
                 AddThemeTile(
-                    onClick = {},
+                    onClick = onAddTheme,
                     label = stringResource(R.string.modern_settings_theme_catalog_add),
                 )
             }
