@@ -237,6 +237,21 @@ def main() -> int:
     ):
         if retired in kotlin_text:
             raise RuntimeError(f"retired theme-background page still present: {retired}")
+
+    # Every inflated swatch has to be keyed on its theme value. `AndroidView`
+    # runs its factory only on the first composition, so an unkeyed one keeps
+    # drawing whatever theme was passed when the page was opened - which is
+    # exactly how a slot the user had just repointed came to look unassigned.
+    theme_tiles = next(kotlin_root.rglob("ThemeTiles.kt")).read_text(encoding="utf-8")
+    swatches = theme_tiles.count("inflateThemeSwatch(context, themeValue)")
+    keyed = theme_tiles.count("key(themeValue) {")
+    if swatches == 0:
+        raise RuntimeError("ThemeTiles.kt no longer inflates a theme swatch")
+    if keyed < swatches:
+        raise RuntimeError(
+            f"ThemeTiles.kt inflates {swatches} swatches but keys only {keyed} on "
+            f"the theme value; the unkeyed one will not redraw when its theme changes"
+        )
     for forbidden in ("android.widget.SeekBar", "onDraw(", "Md3SliderView"):
         if forbidden in kotlin_text:
             raise RuntimeError(f"modern settings must not simulate Slider: {forbidden}")

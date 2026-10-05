@@ -256,6 +256,13 @@ internal fun SplitThemeTile(
  * and accent dot to land where they do on the single tiles. A layout box of half
  * the width would also change what the swatch measures, which is not something
  * this composable can control from the outside.
+ *
+ * Keyed on the value for the same reason [ThemeSwatchSurface] is: the inflated
+ * card is fixed once built, and `AndroidView`'s factory runs only on the first
+ * composition. Without the key a slot the user repoints would keep drawing the
+ * theme the page was opened with, which is what made assigning a light or dark
+ * theme look like it had not taken - the assignment had landed, and the half
+ * showing it had not been rebuilt.
  */
 @Composable
 private fun SplitHalf(
@@ -265,14 +272,16 @@ private fun SplitHalf(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    AndroidView(
-        factory = {
-            ThemePreviewBridge.inflateThemeSwatch(context, themeValue)
-                ?: View(context)
-        },
-        update = { card -> ThemePreviewBridge.markSelected(card, selected) },
-        modifier = modifier.clipToHalf(leftHalf),
-    )
+    key(themeValue) {
+        AndroidView(
+            factory = {
+                ThemePreviewBridge.inflateThemeSwatch(context, themeValue)
+                    ?: View(context)
+            },
+            update = { card -> ThemePreviewBridge.markSelected(card, selected) },
+            modifier = modifier.clipToHalf(leftHalf),
+        )
+    }
 }
 
 /** Keeps only the left or the right half of whatever is drawn. */
