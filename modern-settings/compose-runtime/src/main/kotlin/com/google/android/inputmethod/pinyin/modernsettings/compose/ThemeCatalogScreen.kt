@@ -107,6 +107,14 @@ internal fun ThemeCatalogScreen(
     val dynamicColor = snapshot.dynamicColorEnabled
     val systemAuto = snapshot.systemAutoThemeEnabled
     val fixedInUse = !dynamicColor && !systemAuto
+    // What the two grids mark, which is the theme in use but only while fixed
+    // mode is what puts it there. In the follow-the-system and generated-palette
+    // modes the live value is whatever that mode resolved to, so marking it in
+    // the grid would draw a second tick on a page whose whole point is that
+    // exactly one mode is on - and that tick would move on its own every time
+    // the system changed between light and dark. The empty string matches no
+    // entry, which is what a mode with no fixed theme should mark.
+    val markedValue = if (fixedInUse) activeValue else ""
     // The Colours section, minus the pair the Defaults row already shows. They
     // are the same two packaged themes, so leaving them in both places would
     // draw the same tiles twice on one page.
@@ -171,7 +179,7 @@ internal fun ThemeCatalogScreen(
             items(catalog.user, key = { "theme_user_" + it.value }) { entry ->
                 ThemeTile(
                     themeValue = entry.value,
-                    selected = entry.value == activeValue,
+                    selected = entry.value == markedValue,
                     onClick = { subject = ThemePreviewSubject(entry.value) },
                 )
             }
@@ -255,7 +263,7 @@ internal fun ThemeCatalogScreen(
                 items(colorEntries, key = { "theme_builtin_" + it.value }) { entry ->
                     ThemeTile(
                         themeValue = entry.value,
-                        selected = entry.value == activeValue,
+                        selected = entry.value == markedValue,
                         onClick = { subject = ThemePreviewSubject(entry.value) },
                     )
                 }

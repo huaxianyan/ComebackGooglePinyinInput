@@ -97,6 +97,7 @@ def main() -> int:
             "onAddTheme = actions.onAddTheme",
             "ThemePreviewMode.Dynamic",
             "ThemePreviewMode.FollowSystem",
+            "val markedValue = if (fixedInUse) activeValue else",
             "ThemeCatalogRules.builtinNames(",
             "ThemeCatalogRules.builtinCatalog(",
             "ThemeCatalogRules.userCatalog(",
