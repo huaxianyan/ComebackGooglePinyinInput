@@ -91,13 +91,20 @@ def main() -> int:
             "SettingsRoute.ThemeCatalog",
             "ThemeCatalogScreen(",
             "onApplyTheme = actions.onApplyTheme",
-            "onAssignThemeSlot = actions.onAssignThemeSlot",
+            "onAssignThemeSlotFollowingSystem = actions.onAssignThemeSlotFollowingSystem",
             "onFollowSystemEnabledChange = actions.onSystemAutoThemeEnabledChange",
             "onDynamicColorEnabledChange = actions.onDynamicColorEnabledChange",
             "onAddTheme = actions.onAddTheme",
             "ThemePreviewMode.Dynamic",
             "ThemePreviewMode.FollowSystem",
             "val markedValue = if (fixedInUse) activeValue else",
+            # The assign buttons used to be enabled by `canSelect`, which is
+            # false whenever the follow-the-system mode is off - and the sheet
+            # has no way to turn that mode on, so the pair sat dead for every
+            # theme on the page. They are now live for every subject that has a
+            # slot to write, and the write turns the mode on itself.
+            "assignEnablesFollowSystem = assignable && !systemAuto",
+            "R.string.modern_settings_theme_assign_enables_follow_system",
             "ThemeCatalogRules.builtinNames(",
             "ThemeCatalogRules.builtinCatalog(",
             "ThemeCatalogRules.userCatalog(",
@@ -322,6 +329,7 @@ def main() -> int:
                 'name="modern_settings_one_handed_mode_title"',
                 'name="modern_settings_theme_title"',
                 'name="modern_settings_theme_page_summary"',
+                'name="modern_settings_theme_assign_enables_follow_system"',
                 'name="modern_settings_system_auto_theme_title"',
                 'name="modern_settings_dynamic_color_title"',
                 'name="modern_settings_theme_catalog_title"',
@@ -795,10 +803,7 @@ def main() -> int:
             'SLOT_LIGHT = "light"',
             'SLOT_DARK = "dark"',
             'SLOT_FIXED = "fixed"',
-            'SELECTION_SLOT_KEY = "compat_theme_selection_slot"',
             'FIXED_BASE_KEY = "compat_theme_fixed_keyboard"',
-            "public static void beginSelection(Context context, String slot)",
-            "public static boolean finishSelection(Context context)",
             "public static void captureFixedTheme(Context context)",
             "public static void reconcileCustomThemeEdit(Context context, Intent data)",
             "public static void applyTheme(Context context, String additional)",
@@ -820,6 +825,20 @@ def main() -> int:
         ),
         "primary-DEX System Auto theme bridge",
     )
+    # The one-slot selection session is gone. The settings UI writes a slot
+    # through `assignSlot` instead of launching the original selector to pick
+    # one, so nothing ever opened a session and the machinery could only ever
+    # answer "no session". It is removed rather than left standing because a
+    # guard that can never be true still reads as a rule, and the next change
+    # to this file would be written to obey it.
+    for retired in (
+        "SELECTION_SLOT_KEY",
+        "hasSelectionSession",
+        "beginSelection",
+        "finishSelection",
+    ):
+        if retired in auto_theme_bridge:
+            raise RuntimeError(f"retired theme selection session still present: {retired}")
 
     legacy_navigation = (settings_source_dir / "LegacySettingsNavigation.kt").read_text(
         encoding="utf-8"
@@ -953,6 +972,7 @@ def main() -> int:
             "fun setHandwritingStrokeWidthIndex(index: Int)",
             "fun applyTheme(themeValue: String)",
             "fun assignThemeSlot(slot: ThemeSelectionSlot, themeValue: String)",
+            "fun assignThemeSlotFollowingSystem(",
             "fun applyCustomTheme(fileName: String)",
             "preferences.edit().putString(contract.key, contract.valueAt(index)).apply()",
         ),
@@ -1208,12 +1228,9 @@ def main() -> int:
             auto_theme_helper.read_text(encoding="utf-8"),
             (
                 '"compat_system_auto_keyboard_theme"',
-                '"compat_theme_selection_slot"',
                 '"compat_theme_light_keyboard"',
                 '"compat_theme_dark_keyboard"',
                 '"compat_theme_fixed_keyboard"',
-                ".method public static beginSelection(Landroid/content/Context;Ljava/lang/String;)V",
-                ".method public static finishSelection(Landroid/content/Context;)Z",
                 ".method public static captureFixedTheme(Landroid/content/Context;)V",
                 ".method public static reconcileCustomThemeEdit(Landroid/content/Context;Landroid/content/Intent;)V",
                 ".method public static applyOnCreate(Landroid/content/Context;)Z",
@@ -1221,6 +1238,15 @@ def main() -> int:
             ),
             "primary-DEX System Auto theme-slot helper",
         )
+        for retired in (
+            '"compat_theme_selection_slot"',
+            ".method public static beginSelection(",
+            ".method public static finishSelection(",
+        ):
+            if retired in auto_theme_helper.read_text(encoding="utf-8"):
+                raise RuntimeError(
+                    f"retired theme selection session still shipped in DEX: {retired}"
+                )
         require(
             auto_theme_helper.read_text(encoding="utf-8"),
             (

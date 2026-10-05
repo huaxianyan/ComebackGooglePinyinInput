@@ -205,8 +205,11 @@ class ModernSettingsActivity : ComponentActivity() {
                             onApplyTheme = { themeValue ->
                                 snapshot = controller.applyTheme(themeValue)
                             },
-                            onAssignThemeSlot = { slot, themeValue ->
-                                snapshot = controller.assignThemeSlot(slot, themeValue)
+                            onAssignThemeSlotFollowingSystem = { slot, themeValue ->
+                                snapshot = controller.assignThemeSlotFollowingSystem(
+                                    slot,
+                                    themeValue,
+                                )
                             },
                             onAddTheme = {
                                 themeBuilder.launch(

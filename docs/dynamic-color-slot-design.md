@@ -7,6 +7,18 @@
 > [实测①（系统动态色读取）](./dynamic-color-device-test-1.md)、
 > [定向验证报告](./dynamic-color-theme-verification.md)
 
+> **后记（2026-10-05）——两处已被后续实现取代，下文按「当时的设计」读**：
+>
+> 1. **「主题背景」页已删除**。槽位不再有各自的行，改由主题清单页的磁贴 + 弹层
+>    写入（`applyTheme` / `assignSlot`），见 `docs/compose-theme-preview-design.md`。
+>    因此下文「开关位置 = 主题背景页第一项」一类的表述只描述当时的计划。
+> 2. **「选择会话」机制已整体移除**：`beginSelection` / `finishSelection` /
+>    `SELECTION_SLOT_KEY` / `hasSelectionSession` 全部删掉。Compose 侧不再为某个槽
+>    启动原选择器，而是直接用 `assignSlot` 写槽位，会话从来没有人开启；留下的
+>    `hasSelectionSession()` 恒为 false，`disable()` / `captureFixedTheme()` /
+>    `applyConfiguredTheme()` 里的守卫因此永远不生效，读起来却像一条规则。
+>    删除后这三处变为无条件执行，行为不变。
+
 ## 〇、决定已全部确认（三项结构决定 + 三项设置交互）
 
 | # | 问题 | 决定 |

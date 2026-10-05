@@ -23,7 +23,7 @@
     <string name="modern_settings_chinese_input_summary">拼音方案、混合输入、联想和模糊拼音</string>
     <string name="modern_settings_english_input_summary">纠错、建议、预测和自动大写</string>
     <string name="modern_settings_keyboard_appearance_title">外观与布局</string>
-    <string name="modern_settings_theme_title">主题背景</string>
+    <string name="modern_settings_theme_title">主题</string>
     <string name="modern_settings_theme_page_summary">挑选主题，或让键盘跟随系统</string>
     <string name="modern_settings_system_auto_theme_title">系统自动</string>
     <string name="modern_settings_dynamic_color_title">动态颜色</string>
@@ -37,6 +37,7 @@
     <string name="modern_settings_theme_key_border">按键边框</string>
     <string name="modern_settings_theme_assign_light">设为浅色模式主题</string>
     <string name="modern_settings_theme_assign_dark">设为深色模式主题</string>
+    <string name="modern_settings_theme_assign_enables_follow_system">将开启「系统自动」；浅色与深色主题只在该模式下生效</string>
     <string name="modern_settings_theme_catalog_in_use">当前使用</string>
     <string name="modern_settings_theme_catalog_builtin">内置主题</string>
     <string name="modern_settings_theme_catalog_custom">自定义主题</string>

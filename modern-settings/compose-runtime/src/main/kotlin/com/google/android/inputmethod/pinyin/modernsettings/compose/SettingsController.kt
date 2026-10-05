@@ -16,8 +16,10 @@ class SettingsController(
     fun applyTheme(themeValue: String): SettingsSnapshot =
         repository.applyTheme(themeValue)
 
-    fun assignThemeSlot(slot: ThemeSelectionSlot, themeValue: String): SettingsSnapshot =
-        repository.assignThemeSlot(slot, themeValue)
+    fun assignThemeSlotFollowingSystem(
+        slot: ThemeSelectionSlot,
+        themeValue: String,
+    ): SettingsSnapshot = repository.assignThemeSlotFollowingSystem(slot, themeValue)
 
     fun applyCustomTheme(fileName: String): SettingsSnapshot =
         repository.applyCustomTheme(fileName)

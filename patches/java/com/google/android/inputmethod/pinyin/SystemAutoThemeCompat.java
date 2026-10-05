@@ -48,7 +48,6 @@ public final class SystemAutoThemeCompat {
     public static final String SLOT_DYNAMIC = "dynamic";
 
     private static final String DIAGNOSTIC_TAG = "SystemAutoTheme";
-    private static final String SELECTION_SLOT_KEY = "compat_theme_selection_slot";
     private static final String LIGHT_BASE_KEY = "compat_theme_light_keyboard";
     private static final String LIGHT_ADDITIONAL_KEY = "compat_theme_light_additional";
     private static final String DARK_BASE_KEY = "compat_theme_dark_keyboard";
@@ -280,8 +279,7 @@ public final class SystemAutoThemeCompat {
 
     public static void setEnabled(Context context, boolean enabled) {
         ensureInitialized(context);
-        SharedPreferences.Editor editor = preferences(context).edit()
-                .remove(SELECTION_SLOT_KEY);
+        SharedPreferences.Editor editor = preferences(context).edit();
         if (enabled) {
             // The two automatic modes cannot both own the resolved theme pair.
             editor.putBoolean(AUTO_THEME_KEY, true).remove(DYNAMIC_THEME_KEY);
@@ -312,8 +310,7 @@ public final class SystemAutoThemeCompat {
      */
     public static void setDynamicEnabled(Context context, boolean enabled) {
         ensureInitialized(context);
-        SharedPreferences.Editor editor = preferences(context).edit()
-                .remove(SELECTION_SLOT_KEY);
+        SharedPreferences.Editor editor = preferences(context).edit();
         if (enabled) {
             editor.putBoolean(DYNAMIC_THEME_KEY, true).remove(AUTO_THEME_KEY);
         } else {
@@ -348,48 +345,9 @@ public final class SystemAutoThemeCompat {
         return DYNAMIC_ADDITIONAL_PREFIX + DYNAMIC_PACKAGE_NAME;
     }
 
-    /** Called before launching the original selector in one-slot assignment mode. */
-    public static void beginSelection(Context context, String slot) {
-        ensureInitialized(context);
-        boolean automatic = isEnabled(context);
-        if (!isSelectableSlot(slot)
-                || (SLOT_FIXED.equals(slot) ? automatic : !automatic)) {
-            throw new IllegalStateException("Theme slot is disabled");
-        }
-        SharedPreferences preferences = preferences(context);
-        String base = preferences.getString(baseKey(slot), "");
-        String additional = preferences.getString(additionalKey(slot), "");
-        preferences.edit()
-                .putString(SELECTION_SLOT_KEY, slot)
-                .putString(context.getString(PREF_KEY_KEYBOARD_THEME), base)
-                .putString(context.getString(PREF_KEY_ADDITIONAL_THEME), additional)
-                .commit();
-    }
-
-    /** Captures the selector's final original theme state and restores the active slot. */
-    public static boolean finishSelection(Context context) {
-        ensureInitialized(context);
-        SharedPreferences preferences = preferences(context);
-        String slot = preferences.getString(SELECTION_SLOT_KEY, null);
-        if (!isSelectableSlot(slot)) {
-            return false;
-        }
-        String[] selected = resolveCurrentTheme(context);
-        preferences.edit()
-                .putString(baseKey(slot), selected[0])
-                .putString(additionalKey(slot), selected[1])
-                .remove(SELECTION_SLOT_KEY)
-                .commit();
-        applyConfiguredTheme(context, context.getResources().getConfiguration());
-        return true;
-    }
-
-    /** Legacy fixed-theme selection exits every automatic mode unless a slot session owns it. */
+    /** Legacy fixed-theme selection exits every automatic mode. */
     public static void disable(Context context) {
         ensureInitialized(context);
-        if (hasSelectionSession(context)) {
-            return;
-        }
         preferences(context).edit()
                 .remove(AUTO_THEME_KEY)
                 .remove(DYNAMIC_THEME_KEY)
@@ -399,9 +357,6 @@ public final class SystemAutoThemeCompat {
     /** Captures an ordinary legacy selector write as the durable fixed slot. */
     public static void captureFixedTheme(Context context) {
         ensureInitialized(context);
-        if (hasSelectionSession(context)) {
-            return;
-        }
         String[] selected = resolveCurrentTheme(context);
         preferences(context).edit()
                 .putString(FIXED_BASE_KEY, selected[0])
@@ -441,10 +396,11 @@ public final class SystemAutoThemeCompat {
      *
      * <p>Unlike {@link #applyTheme} this leaves the mode flags alone, because
      * assigning a slot only means something while the mode that reads it is the
-     * one in effect. The guard is the same one {@link #beginSelection} applies,
-     * so the two write paths cannot disagree about which slot is open. The
-     * caller is expected to have checked the generated palette separately: it
-     * owns the resolved pair while it is on, which is not visible from here.</p>
+     * one in effect. A caller that has no such mode in effect yet is expected to
+     * turn it on first; the guard here is the same rule the settings UI states,
+     * so a slot the UI offers is a slot this accepts. The caller is expected to
+     * have checked the generated palette separately: it owns the resolved pair
+     * while it is on, which is not visible from here.</p>
      */
     public static void assignSlot(Context context, String slot, String additional) {
         ensureInitialized(context);
@@ -497,19 +453,15 @@ public final class SystemAutoThemeCompat {
         }
     }
 
-    /** IME process startup recovers stale selector sessions and materializes the configured slot. */
+    /** IME process startup materializes the configured slot. */
     public static boolean applyOnCreate(Context context) {
         ensureInitialized(context);
-        preferences(context).edit().remove(SELECTION_SLOT_KEY).commit();
         return applyConfiguredTheme(context, context.getResources().getConfiguration());
     }
 
     public static boolean applyIfEnabled(Context context, Configuration configuration) {
         debugLog(context, "configuration uiMode=" + configuration.uiMode);
         ensureInitialized(context);
-        if (hasSelectionSession(context)) {
-            return false;
-        }
         // The generated palette follows the same light and dark switch, so it
         // has to be resolved on a configuration change too. Leaving it out
         // would refresh the palette only on the next process start, and the
@@ -549,9 +501,6 @@ public final class SystemAutoThemeCompat {
     }
 
     private static boolean applyConfiguredTheme(Context context, Configuration configuration) {
-        if (hasSelectionSession(context)) {
-            return false;
-        }
         if (isDynamicEnabled(context)) {
             boolean dark = isDark(configuration);
             int sync = syncDynamicTheme(context, dark);
@@ -1147,10 +1096,6 @@ public final class SystemAutoThemeCompat {
                             ""),
             };
         }
-    }
-
-    private static boolean hasSelectionSession(Context context) {
-        return isSelectableSlot(preferences(context).getString(SELECTION_SLOT_KEY, null));
     }
 
     /** Slots a user may pick in the original selector. The generated slot is never one. */

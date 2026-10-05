@@ -10,6 +10,7 @@
     <string name="modern_settings_dynamic_color_title">動態顏色</string>
     <string name="modern_settings_dynamic_color_summary">鍵盤配色取自系統主題色，隨深淺色模式變化</string>
     <string name="modern_settings_theme_requires_dynamic_disabled">關閉「動態顏色」後可設定</string>
+    <string name="modern_settings_theme_title">主題</string>
     <string name="modern_settings_theme_catalog_title">主題</string>
     <string name="modern_settings_theme_catalog_summary">檢視內建主題與自訂主題</string>
     <string name="modern_settings_theme_catalog_section_mine">我的主題</string>
@@ -21,6 +22,7 @@
     <string name="modern_settings_theme_key_border">按鍵邊框</string>
     <string name="modern_settings_theme_assign_light">設為淺色模式主題</string>
     <string name="modern_settings_theme_assign_dark">設為深色模式主題</string>
+    <string name="modern_settings_theme_assign_enables_follow_system">將開啟「系統自動」；淺色與深色主題只在該模式下生效</string>
     <string name="modern_settings_theme_catalog_in_use">目前使用</string>
     <string name="modern_settings_theme_catalog_builtin">內建主題</string>
     <string name="modern_settings_theme_catalog_custom">自訂主題</string>

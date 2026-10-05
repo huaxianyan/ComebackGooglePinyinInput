@@ -37,6 +37,7 @@
     <string name="modern_settings_theme_key_border">Key borders</string>
     <string name="modern_settings_theme_assign_light">Set as light mode theme</string>
     <string name="modern_settings_theme_assign_dark">Set as dark mode theme</string>
+    <string name="modern_settings_theme_assign_enables_follow_system">Turns on Auto (system); the light and dark themes only apply in that mode</string>
     <string name="modern_settings_theme_catalog_in_use">In use</string>
     <string name="modern_settings_theme_catalog_builtin">Built-in themes</string>
     <string name="modern_settings_theme_catalog_custom">Custom themes</string>

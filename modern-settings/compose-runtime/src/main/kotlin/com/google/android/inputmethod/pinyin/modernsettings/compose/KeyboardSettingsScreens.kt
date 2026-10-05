@@ -96,10 +96,14 @@ internal fun androidx.compose.foundation.lazy.LazyListScope.keyboardAppearanceSe
 ) {
     item {
         SettingsNavigationRow(
-            title = legacyString(
-                "setting_theme",
-                R.string.modern_settings_theme_title,
-            ),
+            // Deliberately not the legacy `setting_theme` this row used to read.
+            // That string is the original app's, and it says "theme background"
+            // in every language it covers - it named the page this row opened
+            // before that page was removed. The row now opens the catalog, and
+            // the catalog titles itself from `modern_settings_theme_catalog_title`
+            // ("Theme"), so reading our own string is what keeps the row and the
+            // page it opens saying the same word.
+            title = stringResource(R.string.modern_settings_theme_title),
             supporting = stringResource(R.string.modern_settings_theme_page_summary),
             onClick = { navigateTo(SettingsRoute.ThemeCatalog) },
         )

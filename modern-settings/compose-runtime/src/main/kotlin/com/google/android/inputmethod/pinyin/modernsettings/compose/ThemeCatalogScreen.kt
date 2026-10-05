@@ -71,7 +71,7 @@ internal fun ThemeCatalogScreen(
     snapshot: SettingsSnapshot,
     onNavigateBack: () -> Unit,
     onApplyTheme: (String) -> Unit,
-    onAssignThemeSlot: (ThemeSelectionSlot, String) -> Unit,
+    onAssignThemeSlotFollowingSystem: (ThemeSelectionSlot, String) -> Unit,
     onFollowSystemEnabledChange: (Boolean) -> Unit,
     onDynamicColorEnabledChange: (Boolean) -> Unit,
     onAddTheme: () -> Unit,
@@ -272,20 +272,13 @@ internal fun ThemeCatalogScreen(
     }
 
     subject?.let { shown ->
-        // A slot is only read while the follow-the-system mode is on, so this
-        // is also what the assign buttons are enabled by. It is asked per slot
-        // even though both answers are the same today: the rule is stated per
-        // slot, and the sheet takes one flag per button so that stays visible.
-        val lightSelectable = ThemeSettingRules.canSelect(
-            ThemeSelectionSlot.Light,
-            followThemeEnabled = systemAuto,
-            dynamicColorEnabled = dynamicColor,
-        )
-        val darkSelectable = ThemeSettingRules.canSelect(
-            ThemeSelectionSlot.Dark,
-            followThemeEnabled = systemAuto,
-            dynamicColorEnabled = dynamicColor,
-        )
+        // A slot is only read while the follow-the-system mode is on, and the
+        // write turns that mode on for itself, so the pair is live for every
+        // subject that has a slot to write. The generated palette is the
+        // exception: it is not a theme a slot can hold, it is the mode that
+        // resolves both halves, so offering to assign it would offer to store
+        // something the keyboard would never read back.
+        val assignable = shown.mode != ThemePreviewMode.Dynamic
         // The second half of a paired subject is the dark one, which is the
         // order the previews are drawn in. A single theme has no second half,
         // so both assign buttons point at the one theme on screen.
@@ -307,15 +300,22 @@ internal fun ThemeCatalogScreen(
                     subject = null
                 },
                 assignLight = {
-                    onAssignThemeSlot(ThemeSelectionSlot.Light, shown.themeValue)
+                    onAssignThemeSlotFollowingSystem(
+                        ThemeSelectionSlot.Light,
+                        shown.themeValue,
+                    )
                     subject = null
                 },
                 assignDark = {
-                    onAssignThemeSlot(ThemeSelectionSlot.Dark, darkValue)
+                    onAssignThemeSlotFollowingSystem(ThemeSelectionSlot.Dark, darkValue)
                     subject = null
                 },
-                assignLightEnabled = lightSelectable,
-                assignDarkEnabled = darkSelectable,
+                assignLightEnabled = assignable,
+                assignDarkEnabled = assignable,
+                // The buttons carry the mode switch with them, so say so while
+                // that switch is still a change the user has not made. Once the
+                // mode is on they do what they say and nothing else.
+                assignEnablesFollowSystem = assignable && !systemAuto,
             ),
             onDismiss = { subject = null },
         )

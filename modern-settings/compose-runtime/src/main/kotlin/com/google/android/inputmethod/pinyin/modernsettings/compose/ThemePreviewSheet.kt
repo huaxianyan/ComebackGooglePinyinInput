@@ -67,13 +67,18 @@ internal data class ThemePreviewSubject(
  *
  * The sheet does not decide any of this. Which theme an assign button writes
  * depends on whether the subject is a pair, and whether the two assign buttons
- * can be pressed depends on the mode the keyboard is in - both of which the
- * screen knows and the sheet does not. Passing the answers in keeps the sheet a
- * picture and three buttons.
+ * can be pressed depends on whether the subject has a slot to write at all -
+ * both of which the screen knows and the sheet does not. Passing the answers in
+ * keeps the sheet a picture and three buttons.
  *
  * [assignLightEnabled] and [assignDarkEnabled] are separate rather than one
  * flag because the rule that produces them is stated per slot; today it
  * answers the same for both, and folding them together here would hide that.
+ *
+ * [assignEnablesFollowSystem] is true while the two buttons are live and the
+ * mode they write to is still off, because pressing either one is what turns it
+ * on. The sheet says so rather than leaving the user to find out: a button that
+ * quietly switches a second setting is worth one line of warning.
  */
 internal data class ThemePreviewActions(
     val apply: () -> Unit,
@@ -81,6 +86,7 @@ internal data class ThemePreviewActions(
     val assignDark: () -> Unit,
     val assignLightEnabled: Boolean,
     val assignDarkEnabled: Boolean,
+    val assignEnablesFollowSystem: Boolean,
 )
 
 /**
@@ -96,9 +102,10 @@ internal data class ThemePreviewActions(
  * The key-border switch works, and redraws the preview when it changes. The
  * three theme buttons write: apply makes the subject the theme in use, and the
  * two assign buttons point one half of the follow-the-system mode at it. The
- * assign pair is disabled whenever that mode is off, because a slot is not read
- * in any other mode - a live-looking button there would store a value the
- * keyboard never consults.
+ * assign pair is live for every subject that has a slot to write, and pressing
+ * one turns that mode on if it is off, because a slot is not read in any other
+ * mode - [ThemePreviewActions.assignEnablesFollowSystem] is what the caption
+ * above the pair is drawn from, so the switch is never a silent one.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -140,6 +147,19 @@ internal fun ThemePreviewSheet(
                     ThemePreviewBridge.setKeyBorderEnabled(context, enabled)
                 },
             )
+            if (actions.assignEnablesFollowSystem) {
+                Text(
+                    text = stringResource(
+                        R.string.modern_settings_theme_assign_enables_follow_system,
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .padding(top = 12.dp),
+                )
+            }
             Row(
                 modifier = Modifier
                     .fillMaxWidth()

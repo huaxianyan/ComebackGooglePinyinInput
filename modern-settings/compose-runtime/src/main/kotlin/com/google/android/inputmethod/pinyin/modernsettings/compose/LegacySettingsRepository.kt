@@ -256,6 +256,34 @@ class LegacySettingsRepository(context: Context) {
     }
 
     /**
+     * Points one half of the follow-the-system pair at [themeValue], switching
+     * that mode on first.
+     *
+     * A slot is only read while that mode is on, so an assignment made in any
+     * other mode would be stored and never drawn. Leaving the two assign
+     * buttons disabled until the mode is picked is the other way to say that,
+     * but the sheet has nowhere to say *why* they are dead, and the mode is
+     * picked on a different tile - which is how the pair came to look broken
+     * rather than gated. Pressing one of them is the user saying which theme
+     * they want in light or dark, and the mode is what makes that sentence
+     * true, so the write carries it.
+     *
+     * Turning the mode on also releases the generated palette, in the bridge,
+     * because the two cannot both own the pair. The slot is written last and
+     * through [assignThemeSlot], so the rule that guards it stays stated once.
+     */
+    fun assignThemeSlotFollowingSystem(
+        slot: ThemeSelectionSlot,
+        themeValue: String,
+    ): SettingsSnapshot {
+        require(themeValue.isNotEmpty()) { "Empty theme value" }
+        if (!preferences.getBoolean(SystemAutoThemeSetting.preferenceKey, false)) {
+            setSystemAutoThemeEnabled(true)
+        }
+        return assignThemeSlot(slot, themeValue)
+    }
+
+    /**
      * Makes the custom theme the builder just wrote the one in use.
      *
      * [fileName] is the bare name the builder returns, so the `files:` prefix
