@@ -101,7 +101,7 @@ internal fun androidx.compose.foundation.lazy.LazyListScope.keyboardAppearanceSe
                 R.string.modern_settings_theme_title,
             ),
             supporting = stringResource(R.string.modern_settings_theme_page_summary),
-            onClick = { navigateTo(SettingsRoute.ThemeBackground) },
+            onClick = { navigateTo(SettingsRoute.ThemeCatalog) },
         )
     }
     if (snapshot.capabilities.oneHandedModeVisible) {
@@ -130,99 +130,6 @@ internal fun androidx.compose.foundation.lazy.LazyListScope.keyboardAppearanceSe
             maximumIndex = SliderSettingContracts.keyboardHeight.values.lastIndex,
             editable = true,
             onValueCommit = actions.onKeyboardHeightChange,
-        )
-    }
-}
-
-internal fun androidx.compose.foundation.lazy.LazyListScope.themeBackgroundSettingsItems(
-    snapshot: SettingsSnapshot,
-    actions: SettingsActions,
-    navigateTo: (SettingsRoute) -> Unit,
-) {
-    val followTheme = snapshot.systemAutoThemeEnabled
-    val dynamicColor = snapshot.dynamicColorEnabled
-    // While the generated palette is on it owns the resolved theme pair, so
-    // every other row on this page is shown as unavailable rather than hidden.
-    // The page keeps its shape and the reason stays visible.
-    val suppressedSummary = R.string.modern_settings_theme_requires_dynamic_disabled
-    if (snapshot.capabilities.dynamicColorVisible) {
-        item {
-            SettingsSwitchRow(
-                title = stringResource(R.string.modern_settings_dynamic_color_title),
-                supporting = stringResource(R.string.modern_settings_dynamic_color_summary),
-                checked = dynamicColor,
-                onCheckedChange = actions.onDynamicColorEnabledChange,
-            )
-        }
-    }
-    item {
-        SettingsSwitchRow(
-            title = stringResource(R.string.modern_settings_system_auto_theme_title),
-            supporting = stringResource(
-                if (dynamicColor) suppressedSummary
-                else R.string.modern_settings_system_auto_theme_summary,
-            ),
-            checked = followTheme,
-            enabled = !dynamicColor,
-            onCheckedChange = actions.onSystemAutoThemeEnabledChange,
-        )
-    }
-    item {
-        SettingsNavigationRow(
-            title = stringResource(R.string.modern_settings_light_mode_theme_title),
-            supporting = stringResource(
-                when {
-                    dynamicColor -> suppressedSummary
-                    followTheme -> R.string.modern_settings_light_mode_theme_summary
-                    else -> R.string.modern_settings_theme_requires_follow_enabled
-                },
-            ),
-            enabled = ThemeSettingRules.canSelect(
-                ThemeSelectionSlot.Light, followTheme, dynamicColor,
-            ),
-            onClick = { actions.onOpenThemeSelector(ThemeSelectionSlot.Light) },
-        )
-    }
-    item {
-        SettingsNavigationRow(
-            title = stringResource(R.string.modern_settings_dark_mode_theme_title),
-            supporting = stringResource(
-                when {
-                    dynamicColor -> suppressedSummary
-                    followTheme -> R.string.modern_settings_dark_mode_theme_summary
-                    else -> R.string.modern_settings_theme_requires_follow_enabled
-                },
-            ),
-            enabled = ThemeSettingRules.canSelect(
-                ThemeSelectionSlot.Dark, followTheme, dynamicColor,
-            ),
-            onClick = { actions.onOpenThemeSelector(ThemeSelectionSlot.Dark) },
-        )
-    }
-    item {
-        SettingsNavigationRow(
-            title = stringResource(R.string.modern_settings_fixed_theme_title),
-            supporting = stringResource(
-                when {
-                    dynamicColor -> suppressedSummary
-                    followTheme -> R.string.modern_settings_theme_requires_follow_disabled
-                    else -> R.string.modern_settings_fixed_theme_summary
-                },
-            ),
-            enabled = ThemeSettingRules.canSelect(
-                ThemeSelectionSlot.Fixed, followTheme, dynamicColor,
-            ),
-            onClick = { actions.onOpenThemeSelector(ThemeSelectionSlot.Fixed) },
-        )
-    }
-    // Read-only, so it stays reachable while either automatic mode owns the
-    // resolved pair: knowing which theme a slot holds is exactly what a
-    // suppressed slot cannot be inspected for elsewhere.
-    item {
-        SettingsNavigationRow(
-            title = stringResource(R.string.modern_settings_theme_catalog_title),
-            supporting = stringResource(R.string.modern_settings_theme_catalog_summary),
-            onClick = { navigateTo(SettingsRoute.ThemeCatalog) },
         )
     }
 }

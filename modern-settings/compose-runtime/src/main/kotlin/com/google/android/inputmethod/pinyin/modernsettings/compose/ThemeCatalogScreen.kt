@@ -53,12 +53,12 @@ import androidx.compose.ui.unit.dp
  * make the page look like it offered four light themes.
  *
  * Nothing here changes which theme is in use on its own. Three things do, and
- * all three go through the sheet: apply makes the theme being previewed the one
- * in use, and the two assign buttons point a half of the follow-the-system mode
- * at it. The key-border switch in the sheet also writes, but it is not a theme,
- * and the generated palette package the dynamic-colour tile needs is built
- * ahead of any tap - building it leaves the mode alone, so the tile can be
- * previewed before the mode is switched on.
+ * all three go through the sheet: apply commits whatever the sheet is showing -
+ * a theme, or the mode the tile stands for - and the two assign buttons point a
+ * half of the follow-the-system mode at a theme. The key-border switch in the
+ * sheet also writes, but it is not a theme, and the generated palette package
+ * the dynamic-colour tile needs is built ahead of any tap - building it leaves
+ * the mode alone, so the tile can be previewed before the mode is switched on.
  *
  * The add tile leaves the page entirely: it opens the legacy builder, which is
  * where a theme is made from a picture, and the theme it returns is applied on
@@ -73,6 +73,7 @@ internal fun ThemeCatalogScreen(
     onApplyTheme: (String) -> Unit,
     onAssignThemeSlot: (ThemeSelectionSlot, String) -> Unit,
     onFollowSystemEnabledChange: (Boolean) -> Unit,
+    onDynamicColorEnabledChange: (Boolean) -> Unit,
     onAddTheme: () -> Unit,
 ) {
     val catalog = snapshot.themeCatalog
@@ -181,7 +182,14 @@ internal fun ThemeCatalogScreen(
                     DynamicColorTile(
                         themeValue = dynamicValue,
                         selected = dynamicColor,
-                        onClick = { dynamicValue?.let { subject = ThemePreviewSubject(it) } },
+                        onClick = {
+                            dynamicValue?.let {
+                                subject = ThemePreviewSubject(
+                                    themeValue = it,
+                                    mode = ThemePreviewMode.Dynamic,
+                                )
+                            }
+                        },
                         label = stringResource(R.string.modern_settings_dynamic_color_title),
                     )
                 }
@@ -199,8 +207,9 @@ internal fun ThemeCatalogScreen(
                         // keyboard would use rather than the packaged default.
                         onClick = {
                             subject = ThemePreviewSubject(
-                                lightSlotValue ?: lightPreset.value,
-                                darkSlotValue ?: darkPreset.value,
+                                themeValue = lightSlotValue ?: lightPreset.value,
+                                pairedValue = darkSlotValue ?: darkPreset.value,
+                                mode = ThemePreviewMode.FollowSystem,
                             )
                         },
                         label = stringResource(R.string.modern_settings_system_auto_theme_title),
@@ -276,15 +285,16 @@ internal fun ThemeCatalogScreen(
         ThemePreviewSheet(
             subject = shown,
             actions = ThemePreviewActions(
-                // Applying a pair means switching to the mode that uses it,
-                // not making one of its halves the fixed theme. The tile is
-                // the mode, and the sheet opens on the mode, so the button
-                // has to be the mode too.
+                // Applying a tile that offers a mode switches that mode on. The
+                // theme drawn on the tile is what the mode resolves to, not
+                // what the button offers, so applying it as a fixed theme would
+                // pin one half of the pair - and for the generated palette it
+                // would turn the mode off, which is the opposite of the tile.
                 apply = {
-                    if (shown.pairedValue == null) {
-                        onApplyTheme(shown.themeValue)
-                    } else {
-                        onFollowSystemEnabledChange(true)
+                    when (shown.mode) {
+                        ThemePreviewMode.Dynamic -> onDynamicColorEnabledChange(true)
+                        ThemePreviewMode.FollowSystem -> onFollowSystemEnabledChange(true)
+                        null -> onApplyTheme(shown.themeValue)
                     }
                     subject = null
                 },

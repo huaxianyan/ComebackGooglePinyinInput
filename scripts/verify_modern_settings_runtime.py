@@ -51,7 +51,6 @@ def main() -> int:
             "SettingsScreen(",
             "override fun onResume()",
             "snapshot = controller.read()",
-            "LegacySettingsNavigation.themeSelectorIntent(this)",
             "setContent {",
             "CompositionLocalProvider(LocalLayoutDirection provides layoutDirection)",
             "context.resources.configuration.layoutDirection",
@@ -88,19 +87,16 @@ def main() -> int:
             "snapshot.systemAutoThemeEnabled",
             "SystemAutoThemeSetting.preferenceKey",
             '"com.google.android.inputmethod.pinyin.SystemAutoThemeCompat"',
-            "val onOpenThemeSelector: (ThemeSelectionSlot) -> Unit",
-            "actions.onOpenThemeSelector(ThemeSelectionSlot.Light)",
-            "actions.onOpenThemeSelector(ThemeSelectionSlot.Dark)",
-            "actions.onOpenThemeSelector(ThemeSelectionSlot.Fixed)",
-            "SettingsRoute.ThemeBackground",
-            "themeBackgroundSettingsItems(",
             "snapshot, actions, navigateTo,",
             "SettingsRoute.ThemeCatalog",
             "ThemeCatalogScreen(",
             "onApplyTheme = actions.onApplyTheme",
             "onAssignThemeSlot = actions.onAssignThemeSlot",
             "onFollowSystemEnabledChange = actions.onSystemAutoThemeEnabledChange",
+            "onDynamicColorEnabledChange = actions.onDynamicColorEnabledChange",
             "onAddTheme = actions.onAddTheme",
+            "ThemePreviewMode.Dynamic",
+            "ThemePreviewMode.FollowSystem",
             "ThemeCatalogRules.builtinNames(",
             "ThemeCatalogRules.builtinCatalog(",
             "ThemeCatalogRules.userCatalog(",
@@ -231,6 +227,15 @@ def main() -> int:
         ),
         "official Compose Material 3 settings modules",
     )
+    # The theme catalog replaced the old theme-background page outright. It is
+    # the page the appearance entry opens now, so a leftover row set or route
+    # would be a second, unreachable copy of the same screen.
+    for retired in (
+        "ThemeBackground",
+        "themeBackgroundSettingsItems",
+    ):
+        if retired in kotlin_text:
+            raise RuntimeError(f"retired theme-background page still present: {retired}")
     for forbidden in ("android.widget.SeekBar", "onDraw(", "Md3SliderView"):
         if forbidden in kotlin_text:
             raise RuntimeError(f"modern settings must not simulate Slider: {forbidden}")
@@ -302,17 +307,8 @@ def main() -> int:
                 'name="modern_settings_theme_title"',
                 'name="modern_settings_theme_page_summary"',
                 'name="modern_settings_system_auto_theme_title"',
-                'name="modern_settings_system_auto_theme_summary"',
-                'name="modern_settings_light_mode_theme_title"',
-                'name="modern_settings_light_mode_theme_summary"',
-                'name="modern_settings_dark_mode_theme_title"',
-                'name="modern_settings_dark_mode_theme_summary"',
-                'name="modern_settings_fixed_theme_title"',
-                'name="modern_settings_fixed_theme_summary"',
-                'name="modern_settings_theme_requires_follow_enabled"',
-                'name="modern_settings_theme_requires_follow_disabled"',
+                'name="modern_settings_dynamic_color_title"',
                 'name="modern_settings_theme_catalog_title"',
-                'name="modern_settings_theme_catalog_summary"',
                 'name="modern_settings_theme_catalog_in_use"',
                 'name="modern_settings_theme_catalog_builtin"',
                 'name="modern_settings_theme_catalog_custom"',
@@ -815,8 +811,6 @@ def main() -> int:
     require(
         legacy_navigation,
         (
-            '"com.google.android.apps.inputmethod.libs.theme.preference.ThemeSelectorActivity"',
-            "Intent().setClassName(context, themeSelectorActivity)",
             '"com.google.android.apps.inputmethod.libs.theme.preference.ThemeBuilderActivity"',
             'const val newThemeFileNameExtra = "intent_extra_key_new_theme_file_name"',
             "fun themeBuilderIntent(context: Context): Intent",
@@ -944,8 +938,6 @@ def main() -> int:
             "fun applyTheme(themeValue: String)",
             "fun assignThemeSlot(slot: ThemeSelectionSlot, themeValue: String)",
             "fun applyCustomTheme(fileName: String)",
-            "fun beginThemeSelection(slot: ThemeSelectionSlot)",
-            "fun finishThemeSelection()",
             "preferences.edit().putString(contract.key, contract.valueAt(index)).apply()",
         ),
         "staged legacy settings repository",

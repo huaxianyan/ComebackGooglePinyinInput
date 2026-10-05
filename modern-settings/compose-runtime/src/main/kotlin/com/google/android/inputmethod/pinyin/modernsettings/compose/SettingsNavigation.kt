@@ -13,7 +13,6 @@ internal enum class SettingsRoute {
     EnglishInput,
     Keyboard,
     KeyboardAppearance,
-    ThemeBackground,
     ThemeCatalog,
     KeyboardKeys,
     KeyboardFeedback,

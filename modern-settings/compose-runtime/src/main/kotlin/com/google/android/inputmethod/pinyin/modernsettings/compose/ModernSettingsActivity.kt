@@ -53,11 +53,6 @@ class ModernSettingsActivity : ComponentActivity() {
             if (current.backupInProgress) mainHandler.postDelayed(this, 500L)
         }
     }
-    private val themeSelector = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult(),
-    ) {
-        if (::controller.isInitialized) snapshot = controller.finishThemeSelection()
-    }
     /**
      * The custom-theme builder's result.
      *
@@ -206,12 +201,6 @@ class ModernSettingsActivity : ComponentActivity() {
                             },
                             onSystemAutoThemeEnabledChange = { enabled ->
                                 snapshot = controller.setSystemAutoThemeEnabled(enabled)
-                            },
-                            onOpenThemeSelector = { slot ->
-                                snapshot = controller.beginThemeSelection(slot)
-                                themeSelector.launch(
-                                    LegacySettingsNavigation.themeSelectorIntent(this)
-                                )
                             },
                             onApplyTheme = { themeValue ->
                                 snapshot = controller.applyTheme(themeValue)

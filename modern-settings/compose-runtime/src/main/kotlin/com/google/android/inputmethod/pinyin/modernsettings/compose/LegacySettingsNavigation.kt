@@ -9,9 +9,6 @@ internal object LegacySettingsNavigation {
     const val repositoryUrl =
         "https://github.com/huaxianyan/ComebackGooglePinyinInput"
 
-    const val themeSelectorActivity =
-        "com.google.android.apps.inputmethod.libs.theme.preference.ThemeSelectorActivity"
-
     /**
      * The custom-theme builder, which is also where a theme is created from a
      * picture.
@@ -29,9 +26,6 @@ internal object LegacySettingsNavigation {
      * it, which is what [ThemeSource.User] also does for the same directory.
      */
     const val newThemeFileNameExtra = "intent_extra_key_new_theme_file_name"
-
-    fun themeSelectorIntent(context: Context): Intent =
-        Intent().setClassName(context, themeSelectorActivity)
 
     /**
      * Opens the builder to create a theme.

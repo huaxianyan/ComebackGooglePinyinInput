@@ -70,7 +70,6 @@ import kotlin.math.roundToInt
 data class SettingsActions(
     val onDynamicColorEnabledChange: (Boolean) -> Unit,
     val onSystemAutoThemeEnabledChange: (Boolean) -> Unit,
-    val onOpenThemeSelector: (ThemeSelectionSlot) -> Unit,
     val onApplyTheme: (String) -> Unit,
     val onAssignThemeSlot: (ThemeSelectionSlot, String) -> Unit,
     val onAddTheme: () -> Unit,
@@ -211,6 +210,7 @@ private fun SettingsRoutePage(
             onApplyTheme = actions.onApplyTheme,
             onAssignThemeSlot = actions.onAssignThemeSlot,
             onFollowSystemEnabledChange = actions.onSystemAutoThemeEnabledChange,
+            onDynamicColorEnabledChange = actions.onDynamicColorEnabledChange,
             onAddTheme = actions.onAddTheme,
         )
         return
@@ -256,9 +256,6 @@ private fun SettingsRoutePage(
                 SettingsRoute.KeyboardAppearance -> keyboardAppearanceSettingsItems(
                     snapshot, actions, navigateTo,
                 )
-                SettingsRoute.ThemeBackground -> themeBackgroundSettingsItems(
-                    snapshot, actions, navigateTo,
-                )
                 SettingsRoute.ThemeCatalog -> error("Theme catalog uses its dedicated screen")
                 SettingsRoute.KeyboardKeys -> keyboardKeysSettingsItems(
                     snapshot, actions, millisecondsText,
@@ -302,7 +299,6 @@ private fun routeTitle(route: SettingsRoute): String = when (route) {
     SettingsRoute.KeyboardAppearance -> stringResource(
         R.string.modern_settings_keyboard_appearance_title,
     )
-    SettingsRoute.ThemeBackground -> stringResource(R.string.modern_settings_theme_title)
     SettingsRoute.ThemeCatalog -> stringResource(R.string.modern_settings_theme_catalog_title)
     SettingsRoute.KeyboardKeys -> stringResource(R.string.modern_settings_keyboard_keys_title)
     SettingsRoute.KeyboardFeedback -> stringResource(R.string.modern_settings_section_key_feedback)

@@ -28,16 +28,38 @@ import androidx.compose.foundation.clickable
 import androidx.compose.ui.unit.dp
 
 /**
+ * The two modes a tile can stand for instead of a single theme.
+ *
+ * Both are drawn as one or two theme previews, so neither can be told from a
+ * plain theme by looking at the picture. What differs is what applying it
+ * means: the theme on screen is not what the tile offers, the mode is. Without
+ * this the sheet would apply the light half of the follow-the-system pair as a
+ * fixed theme, which is the one thing that tile does not mean.
+ */
+internal enum class ThemePreviewMode {
+    /** The palette generated from the wallpaper. */
+    Dynamic,
+
+    /** The two themes the slots hold, picked by the system's light/dark mode. */
+    FollowSystem,
+}
+
+/**
  * What a tile asks the sheet to show.
  *
  * Most tiles are one theme and fill in only [themeValue]. The mode that follows
  * the system is a pair: it is two themes with a rule for picking between them,
  * and previewing only the light half would show it as a fixed light theme,
  * which is the one thing it is not. [pairedValue] carries the second half.
+ *
+ * [mode] is set only by the tiles that offer a mode rather than a theme, and it
+ * is what the sheet's apply button reads to decide whether it is choosing a
+ * theme or switching one on.
  */
 internal data class ThemePreviewSubject(
     val themeValue: String,
     val pairedValue: String? = null,
+    val mode: ThemePreviewMode? = null,
 )
 
 /**

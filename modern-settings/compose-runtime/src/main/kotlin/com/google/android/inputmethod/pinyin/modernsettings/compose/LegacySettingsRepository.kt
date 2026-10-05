@@ -205,34 +205,6 @@ class LegacySettingsRepository(context: Context) {
         return readSnapshot()
     }
 
-    fun beginThemeSelection(slot: ThemeSelectionSlot): SettingsSnapshot {
-        val followThemeEnabled = preferences.getBoolean(
-            SystemAutoThemeSetting.preferenceKey,
-            false,
-        )
-        val dynamicColorEnabled = preferences.getBoolean(
-            DynamicColorSetting.preferenceKey,
-            false,
-        )
-        require(ThemeSettingRules.canSelect(slot, followThemeEnabled, dynamicColorEnabled)) {
-            "Theme slot is disabled: ${slot.persistedValue}"
-        }
-        Class.forName(SYSTEM_AUTO_THEME_BRIDGE).getMethod(
-            "beginSelection",
-            Context::class.java,
-            String::class.java,
-        ).invoke(null, applicationContext, slot.persistedValue)
-        return readSnapshot()
-    }
-
-    fun finishThemeSelection(): SettingsSnapshot {
-        Class.forName(SYSTEM_AUTO_THEME_BRIDGE).getMethod(
-            "finishSelection",
-            Context::class.java,
-        ).invoke(null, applicationContext)
-        return readSnapshot()
-    }
-
     /**
      * Makes [themeValue] the theme in use.
      *
