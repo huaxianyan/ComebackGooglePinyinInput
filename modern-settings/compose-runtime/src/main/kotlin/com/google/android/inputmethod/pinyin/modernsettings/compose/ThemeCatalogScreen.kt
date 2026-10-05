@@ -16,12 +16,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -38,9 +40,14 @@ import androidx.compose.ui.unit.dp
 /**
  * Theme picker, laid out the way Gboard lays its own out.
  *
- * Three sections rather than one long run of tiles: the themes you made, the
- * four modes the keyboard can be in, and the packaged colours. The split into
+ * Three sections rather than one long run of tiles: the four modes the keyboard
+ * can be in, the packaged colours, and the themes you made. The split into
  * sections is the point, so each one is titled even when it holds a single row.
+ *
+ * The user's own themes come last. Most keyboards are never given a picture, so
+ * that section is empty for most people, and a section that is usually empty
+ * belongs below the two that never are - the top of the page is what the page is
+ * mostly about.
  *
  * Tapping a tile opens [ThemePreviewSheet] instead of moving a preview pinned
  * to the top of the page. The preview is about one theme, so it belongs next to
@@ -75,10 +82,13 @@ internal fun ThemeCatalogScreen(
     onFollowSystemEnabledChange: (Boolean) -> Unit,
     onDynamicColorEnabledChange: (Boolean) -> Unit,
     onAddTheme: () -> Unit,
+    onEditTheme: (String) -> Unit,
+    onDeleteTheme: (String) -> Unit,
 ) {
     val catalog = snapshot.themeCatalog
     val context = LocalContext.current
     var subject by remember { mutableStateOf<ThemePreviewSubject?>(null) }
+    var pendingDelete by remember { mutableStateOf<String?>(null) }
     var colorsExpanded by remember { mutableStateOf(true) }
     // The stored value is empty on a device that never picked a theme, while
     // the keyboard still draws one. The engine resolves that, so ask it.
@@ -169,21 +179,6 @@ internal fun ThemeCatalogScreen(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            themeSection(R.string.modern_settings_theme_catalog_section_mine)
-            item(key = "theme_add") {
-                AddThemeTile(
-                    onClick = onAddTheme,
-                    label = stringResource(R.string.modern_settings_theme_catalog_add),
-                )
-            }
-            items(catalog.user, key = { "theme_user_" + it.value }) { entry ->
-                ThemeTile(
-                    themeValue = entry.value,
-                    selected = entry.value == markedValue,
-                    onClick = { subject = ThemePreviewSubject(entry.value) },
-                )
-            }
-
             themeSection(R.string.modern_settings_theme_catalog_section_default)
             if (snapshot.capabilities.dynamicColorVisible) {
                 item(key = "theme_mode_dynamic") {
@@ -268,6 +263,26 @@ internal fun ThemeCatalogScreen(
                     )
                 }
             }
+
+            // Last, and with the tile that creates one, because the section is
+            // about the same packages either way: the add tile is where the
+            // list below it comes from.
+            themeSection(R.string.modern_settings_theme_catalog_section_mine)
+            item(key = "theme_add") {
+                AddThemeTile(
+                    onClick = onAddTheme,
+                    label = stringResource(R.string.modern_settings_theme_catalog_add),
+                )
+            }
+            items(catalog.user, key = { "theme_user_" + it.value }) { entry ->
+                ThemeTile(
+                    themeValue = entry.value,
+                    selected = entry.value == markedValue,
+                    onClick = {
+                        subject = ThemePreviewSubject(entry.value, userMade = true)
+                    },
+                )
+            }
         }
     }
 
@@ -283,6 +298,14 @@ internal fun ThemeCatalogScreen(
         // order the previews are drawn in. A single theme has no second half,
         // so both assign buttons point at the one theme on screen.
         val darkValue = shown.pairedValue ?: shown.themeValue
+        // Editing and deleting act on the package, and only a theme the user
+        // made has one. Both close the sheet first: the editor is a whole
+        // screen and the confirmation is a dialog, and leaving the sheet open
+        // behind either would stack two things the user has to dismiss.
+        fun closeThen(action: (String) -> Unit): () -> Unit = {
+            action(shown.themeValue)
+            subject = null
+        }
         ThemePreviewSheet(
             subject = shown,
             actions = ThemePreviewActions(
@@ -316,8 +339,37 @@ internal fun ThemeCatalogScreen(
                 // that switch is still a change the user has not made. Once the
                 // mode is on they do what they say and nothing else.
                 assignEnablesFollowSystem = assignable && !systemAuto,
+                editTheme = if (shown.userMade) closeThen(onEditTheme) else null,
+                deleteTheme = if (shown.userMade) closeThen { pendingDelete = it } else null,
             ),
             onDismiss = { subject = null },
+        )
+    }
+
+    pendingDelete?.let { value ->
+        AlertDialog(
+            onDismissRequest = { pendingDelete = null },
+            title = {
+                Text(stringResource(R.string.modern_settings_theme_delete_confirm_title))
+            },
+            text = {
+                Text(stringResource(R.string.modern_settings_theme_delete_confirm_message))
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        pendingDelete = null
+                        onDeleteTheme(value)
+                    },
+                ) {
+                    Text(stringResource(R.string.modern_settings_theme_delete_confirm_action))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingDelete = null }) {
+                    Text(stringResource(R.string.modern_settings_cancel))
+                }
+            },
         )
     }
 }

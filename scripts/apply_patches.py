@@ -2957,6 +2957,76 @@ def apply(
         "smali/com/google/android/apps/inputmethod/libs/theme/preference/"
         "ThemeSelectorActivity.smali"
     )
+    # The keyboard's own theme shortcut, the first-run theme preview and the
+    # legacy settings page all arrive here. On the API levels the Compose
+    # settings page serves, hand them to it instead, opening on the theme page
+    # so the shortcut still lands where the selector would have put it. The
+    # route is a path because the Compose hierarchy is a stack: back walks up
+    # through the pages that would normally have led there.
+    #
+    # Same shape as the settings-Activity redirect above, including the
+    # queryIntentActivities gate: apktool-only isolated audit builds omit the
+    # Compose runtime, and a redirect into an Activity the package does not
+    # declare would leave the user with nothing at all.
+    replace_once(
+        theme_selector_activity,
+        ".method public onCreate(Landroid/os/Bundle;)V\n"
+        "    .locals 3\n\n"
+        "    .prologue\n"
+        "    .line 2\n"
+        "    invoke-super {p0, p1}, Landroid/app/Activity;->onCreate("
+        "Landroid/os/Bundle;)V\n\n"
+        "    .line 3",
+        ".method public onCreate(Landroid/os/Bundle;)V\n"
+        "    .locals 4\n\n"
+        "    .prologue\n"
+        "    .line 2\n"
+        "    invoke-super {p0, p1}, Landroid/app/Activity;->onCreate("
+        "Landroid/os/Bundle;)V\n\n"
+        "    sget v0, Landroid/os/Build$VERSION;->SDK_INT:I\n\n"
+        "    const/16 v1, 0x23\n\n"
+        "    if-lt v0, v1, :theme_selector_legacy\n\n"
+        "    invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/libs/theme/"
+        "preference/ThemeSelectorActivity;->getIntent()Landroid/content/Intent;\n\n"
+        "    move-result-object v0\n\n"
+        "    const-string v1, \"modern_settings_use_legacy\"\n\n"
+        "    const/4 v2, 0x0\n\n"
+        "    invoke-virtual {v0, v1, v2}, Landroid/content/Intent;->getBooleanExtra("
+        "Ljava/lang/String;Z)Z\n\n"
+        "    move-result v0\n\n"
+        "    if-nez v0, :theme_selector_legacy\n\n"
+        "    new-instance v0, Landroid/content/Intent;\n\n"
+        "    invoke-direct {v0}, Landroid/content/Intent;-><init>()V\n\n"
+        "    invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/libs/theme/"
+        "preference/ThemeSelectorActivity;->getPackageName()Ljava/lang/String;\n\n"
+        "    move-result-object v1\n\n"
+        "    const-string v2, \"com.google.android.inputmethod.pinyin."
+        "modernsettings.compose.ModernSettingsActivity\"\n\n"
+        "    invoke-virtual {v0, v1, v2}, Landroid/content/Intent;->setClassName("
+        "Ljava/lang/String;Ljava/lang/String;)Landroid/content/Intent;\n\n"
+        "    const-string v1, \"modern_settings_route_path\"\n\n"
+        "    const-string v2, \"Home/Keyboard/KeyboardAppearance/ThemeCatalog\"\n\n"
+        "    invoke-virtual {v0, v1, v2}, Landroid/content/Intent;->putExtra("
+        "Ljava/lang/String;Ljava/lang/String;)Landroid/content/Intent;\n\n"
+        "    invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/libs/theme/"
+        "preference/ThemeSelectorActivity;->getPackageManager()"
+        "Landroid/content/pm/PackageManager;\n\n"
+        "    move-result-object v3\n\n"
+        "    const/4 v2, 0x0\n\n"
+        "    invoke-virtual {v3, v0, v2}, Landroid/content/pm/PackageManager;"
+        "->queryIntentActivities(Landroid/content/Intent;I)Ljava/util/List;\n\n"
+        "    move-result-object v3\n\n"
+        "    invoke-interface {v3}, Ljava/util/List;->isEmpty()Z\n\n"
+        "    move-result v3\n\n"
+        "    if-nez v3, :theme_selector_legacy\n\n"
+        "    invoke-virtual {p0, v0}, Lcom/google/android/apps/inputmethod/libs/theme/"
+        "preference/ThemeSelectorActivity;->startActivity(Landroid/content/Intent;)V\n\n"
+        "    invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/libs/theme/"
+        "preference/ThemeSelectorActivity;->finish()V\n\n"
+        "    return-void\n\n"
+        "    :theme_selector_legacy\n\n"
+        "    .line 3",
+    )
     replace_once(
         theme_selector_activity,
         "    const v0, 0x7f0401cc\n\n"

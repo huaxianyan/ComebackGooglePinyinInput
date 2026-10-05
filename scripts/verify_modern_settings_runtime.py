@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import re
 from pathlib import Path
 from zipfile import ZIP_STORED, ZipFile
 
@@ -95,6 +96,24 @@ def main() -> int:
             "onFollowSystemEnabledChange = actions.onSystemAutoThemeEnabledChange",
             "onDynamicColorEnabledChange = actions.onDynamicColorEnabledChange",
             "onAddTheme = actions.onAddTheme",
+            "onEditTheme = actions.onEditTheme",
+            "onDeleteTheme = actions.onDeleteTheme",
+            "val onEditTheme: (String) -> Unit",
+            "val onDeleteTheme: (String) -> Unit",
+            "LegacySettingsNavigation.themeEditorIntent(this, themeValue)",
+            "controller.deleteUserTheme(themeValue)",
+            "controller.applyCustomThemeEditResult(result.data)",
+            "LegacySettingsNavigation.routePathExtra",
+            # The sheet draws its edit and delete buttons from a null callback
+            # rather than from a flag beside one, so a subject with no action
+            # cannot be drawn as a button that does nothing.
+            "editTheme = if (shown.userMade) closeThen(onEditTheme) else null",
+            "deleteTheme = if (shown.userMade) closeThen { pendingDelete = it } else null",
+            "subject = ThemePreviewSubject(entry.value, userMade = true)",
+            "val editTheme: (() -> Unit)? = null",
+            "val deleteTheme: (() -> Unit)? = null",
+            "R.string.modern_settings_theme_delete_confirm_title",
+            "R.string.modern_settings_theme_delete_confirm_action",
             "ThemePreviewMode.Dynamic",
             "ThemePreviewMode.FollowSystem",
             "val markedValue = if (fixedInUse) activeValue else",
@@ -245,6 +264,28 @@ def main() -> int:
         if retired in kotlin_text:
             raise RuntimeError(f"retired theme-background page still present: {retired}")
 
+    # The user's own themes are the last section, below the packaged colours.
+    # That section is empty for anyone who has never built a theme, so it must
+    # not be the part the page opens on.
+    theme_catalog_screen = next(kotlin_root.rglob("ThemeCatalogScreen.kt")).read_text(
+        encoding="utf-8"
+    )
+    section_offsets = []
+    for section in (
+        "modern_settings_theme_catalog_section_default",
+        "modern_settings_theme_catalog_section_color",
+        "modern_settings_theme_catalog_section_mine",
+    ):
+        reference = f"R.string.{section}"
+        if reference not in theme_catalog_screen:
+            raise RuntimeError(f"theme catalog is missing its {section} heading")
+        section_offsets.append(theme_catalog_screen.index(reference))
+    if section_offsets != sorted(section_offsets):
+        raise RuntimeError(
+            "theme catalog sections must read Defaults, Colors, My themes; "
+            f"found offsets {section_offsets}"
+        )
+
     # Every inflated swatch has to be keyed on its theme value. `AndroidView`
     # runs its factory only on the first composition, so an unkeyed one keeps
     # drawing whatever theme was passed when the page was opened - which is
@@ -330,6 +371,11 @@ def main() -> int:
                 'name="modern_settings_theme_title"',
                 'name="modern_settings_theme_page_summary"',
                 'name="modern_settings_theme_assign_enables_follow_system"',
+                'name="modern_settings_theme_edit"',
+                'name="modern_settings_theme_delete"',
+                'name="modern_settings_theme_delete_confirm_title"',
+                'name="modern_settings_theme_delete_confirm_message"',
+                'name="modern_settings_theme_delete_confirm_action"',
                 'name="modern_settings_system_auto_theme_title"',
                 'name="modern_settings_dynamic_color_title"',
                 'name="modern_settings_theme_catalog_title"',
@@ -806,9 +852,22 @@ def main() -> int:
             'FIXED_BASE_KEY = "compat_theme_fixed_keyboard"',
             "public static void captureFixedTheme(Context context)",
             "public static void reconcileCustomThemeEdit(Context context, Intent data)",
+            "public static void applyCustomThemeEditResult(Context context, Intent data)",
+            "public static boolean deleteUserTheme(Context context, String themeValue)",
             "public static void applyTheme(Context context, String additional)",
             "public static void assignSlot(Context context, String slot, String additional)",
             'additional.startsWith("files:user_theme_") && additional.endsWith(deleted)',
+            # A removed custom theme must not leave a slot naming a package that
+            # is gone, and the slot it was assigned to has to land on the same
+            # theme it was initialized with rather than on whatever happens to be
+            # live when the delete runs.
+            "private static void repointSlots(Context context, String held, String replacement)",
+            "private static String defaultAdditional(Context context, String slot)",
+            "private static String customThemeName(String themeValue)",
+            "USER_THEME_VALUE_PREFIX = \"files:\"",
+            "USER_THEME_NAME_PREFIX = \"user_theme_\"",
+            "return context.getString(MATERIAL_DARK_THEME)",
+            "return context.getString(MATERIAL_LIGHT_THEME)",
             "public static boolean applyOnCreate(Context context)",
             "public static boolean applyIfEnabled(Context context, Configuration configuration)",
             'Class.forName("baq")',
@@ -850,6 +909,18 @@ def main() -> int:
             'const val newThemeFileNameExtra = "intent_extra_key_new_theme_file_name"',
             "fun themeBuilderIntent(context: Context): Intent",
             ".setAction(Intent.ACTION_MAIN)",
+            # The editor is the legacy selector's own, reached directly because
+            # the grid that used to open it is what this page replaces. Its
+            # delete button is suppressed: deleting is a button on the sheet.
+            '"com.google.android.apps.inputmethod.libs.theme.preference.ThemeEditorActivity"',
+            'const val themeEditorTargetExtra = "target_user_image_theme_file_name"',
+            'const val themeEditorNoDeleteExtra = "intent_extra_key_no_delete_button"',
+            'const val themeEditorCreatedExtra = "intent_extra_key_new_theme_file_name"',
+            'const val themeEditorDeletedExtra = "intent_extra_key_deleted_theme_file_name"',
+            "fun themeEditorIntent(context: Context, themeValue: String): Intent",
+            ".putExtra(themeEditorNoDeleteExtra, true)",
+            'const val themeRoutePath = "Home/Keyboard/KeyboardAppearance/ThemeCatalog"',
+            'const val routePathExtra = "modern_settings_route_path"',
             "const val repositoryUrl =",
             '"https://github.com/huaxianyan/ComebackGooglePinyinInput"',
             "fun repositoryIntent(): Intent = Intent(Intent.ACTION_VIEW, Uri.parse(repositoryUrl))",
@@ -1107,6 +1178,34 @@ def main() -> int:
         ),
         "API-35 modern settings route",
     )
+    # The keyboard's own theme shortcut, the first-run theme preview and the
+    # legacy settings page all open the old theme selector. On the API levels
+    # the Compose page serves, that Activity hands them to it instead, opening
+    # on the theme page so the shortcut still lands where the selector would
+    # have put it. The route is a path because the Compose hierarchy is a
+    # stack: back walks up through the pages that normally lead there.
+    require(
+        patch_script,
+        (
+            "preference/ThemeSelectorActivity;->getPackageName()Ljava/lang/String;",
+            "preference/ThemeSelectorActivity;->startActivity(Landroid/content/Intent;)V",
+            "preference/ThemeSelectorActivity;->finish()V",
+            'const-string v1, \\"modern_settings_route_path\\"',
+            'const-string v2, \\"Home/Keyboard/KeyboardAppearance/ThemeCatalog\\"',
+            ":theme_selector_legacy",
+        ),
+        "legacy theme page redirect",
+    )
+    # The two sides of that redirect cannot share a constant across the DEX
+    # boundary, so the literal is checked on both sides rather than written once.
+    # The patch script carries it inside escaped quotes, which is why the bare
+    # path is what is looked for.
+    for source, label in (
+        (patch_script, "scripts/apply_patches.py"),
+        (kotlin_text, "the Compose settings module"),
+    ):
+        if "Home/Keyboard/KeyboardAppearance/ThemeCatalog" not in source:
+            raise RuntimeError(f"theme shortcut route path missing from {label}")
     for forbidden_legacy_dictionary_route in (
         "onOpenLegacyDictionaryOperations",
         '"modern_settings_use_legacy"',
@@ -1130,6 +1229,30 @@ def main() -> int:
                     raise RuntimeError(
                         f"English runtime payload must be uncompressed: {entry}"
                     )
+            # The strings have to be in the DEX that ships, not only in the
+            # patch script that writes them. The decoded tree carries the
+            # primary DEX alone, so the secondary DEX - where the Compose
+            # Activity lives - is only reachable from here.
+            dex_bytes = b"".join(
+                archive.read(entry)
+                for entry in archive.namelist()
+                if entry.endswith(".dex")
+            )
+        for literal in (
+            # The keyboard shortcut's redirect, and the route it passes.
+            b"Home/Keyboard/KeyboardAppearance/ThemeCatalog",
+            b"modern_settings_route_path",
+            b"modernsettings.compose.ModernSettingsActivity",
+            # The custom-theme lifecycle the sheet's two buttons call into.
+            b"deleteUserTheme",
+            b"applyCustomThemeEditResult",
+            b"target_user_image_theme_file_name",
+            b"intent_extra_key_no_delete_button",
+        ):
+            if literal not in dex_bytes:
+                raise RuntimeError(
+                    "shipped DEX is missing " + literal.decode("ascii")
+                )
 
     if args.decoded is not None:
         decoded = args.decoded
@@ -1166,13 +1289,21 @@ def main() -> int:
             ("minSdkVersion: 17", "targetSdkVersion: 36"),
             "combined host SDK contract",
         )
+        # The Compose runtime must not install a process entry point in the
+        # legacy process. The prepared manifest names these components only to
+        # have the merger drop them, so a `tools:node="remove"` marker is the
+        # guard and not the violation; checking the bare name would flag the
+        # guard itself. Remove the marked elements first, then look.
+        guarded_manifest = re.sub(
+            r'<[a-z]+[^>]*tools:node="remove"[^>]*/>', "", manifest_text
+        )
         for forbidden in (
             "androidx.startup.InitializationProvider",
             "androidx.profileinstaller.ProfileInstallReceiver",
             "android:appComponentFactory=",
             "android.permission.QUERY_ALL_PACKAGES",
         ):
-            if forbidden in manifest_text:
+            if forbidden in guarded_manifest:
                 raise RuntimeError(f"unguarded AndroidX process entry point: {forbidden}")
 
         app_base = decoded / (
@@ -1211,8 +1342,16 @@ def main() -> int:
                 "SystemAutoThemeCompat;->disable(Landroid/content/Context;)V",
                 "SystemAutoThemeCompat;->reconcileCustomThemeEdit(Landroid/content/Context;Landroid/content/Intent;)V",
                 "SystemAutoThemeCompat;->captureFixedTheme(Landroid/content/Context;)V",
+                # The redirect has to survive into the DEX, not just into the
+                # patch script: it is the only thing that stops the keyboard's
+                # theme shortcut from opening this page on the API levels the
+                # Compose settings page serves.
+                "modernsettings.compose.ModernSettingsActivity",
+                '"modern_settings_route_path"',
+                '"Home/Keyboard/KeyboardAppearance/ThemeCatalog"',
+                ":theme_selector_legacy",
             ),
-            "theme selector Insets and automatic-mode hooks",
+            "theme selector Insets, automatic-mode hooks and Compose redirect",
         )
         theme_insets_helper = decoded / (
             "smali/com/google/android/inputmethod/pinyin/"
@@ -1233,6 +1372,11 @@ def main() -> int:
                 '"compat_theme_fixed_keyboard"',
                 ".method public static captureFixedTheme(Landroid/content/Context;)V",
                 ".method public static reconcileCustomThemeEdit(Landroid/content/Context;Landroid/content/Intent;)V",
+                ".method public static applyCustomThemeEditResult(Landroid/content/Context;Landroid/content/Intent;)V",
+                ".method public static deleteUserTheme(Landroid/content/Context;Ljava/lang/String;)Z",
+                ".method private static repointSlots(Landroid/content/Context;Ljava/lang/String;Ljava/lang/String;)V",
+                ".method private static defaultAdditional(Landroid/content/Context;Ljava/lang/String;)Ljava/lang/String;",
+                ".method private static customThemeName(Ljava/lang/String;)Ljava/lang/String;",
                 ".method public static applyOnCreate(Landroid/content/Context;)Z",
                 '"baq"',
             ),
@@ -1386,8 +1530,16 @@ def main() -> int:
                 "ModernSettingsActivity.smali"
             )
         )
-        if len(compose_activities) != 1:
-            raise RuntimeError(f"expected one Compose activity in secondary DEX, found {compose_activities}")
+        # A tree produced by decoding the original APK carries the primary DEX
+        # only; the Compose classes arrive as a secondary DEX during the host
+        # build and are never written back here. The count is therefore checked
+        # only when the tree has secondary DEX directories at all, and the
+        # shipped APK is where the Activity is verified otherwise.
+        secondary_dex_directories = list(decoded.glob("smali_classes*"))
+        if secondary_dex_directories and len(compose_activities) != 1:
+            raise RuntimeError(
+                f"expected one Compose activity in secondary DEX, found {compose_activities}"
+            )
 
     print("official Compose Material 3 settings runtime verified")
     return 0

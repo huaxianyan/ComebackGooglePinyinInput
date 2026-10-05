@@ -73,6 +73,18 @@ public final class SystemAutoThemeCompat {
     private static final String DYNAMIC_ADDITIONAL_PREFIX = "files:";
 
     /**
+     * How a custom theme is addressed and where it lives.
+     *
+     * <p>The value prefix is what the legacy resolver maps onto the app's own
+     * files directory, and the name prefix is what its directory filter accepts.
+     * A custom theme is one package file directly in that directory, so the part
+     * of the value after the prefix is both the file name and the only identity
+     * the theme has.</p>
+     */
+    private static final String USER_THEME_VALUE_PREFIX = "files:";
+    private static final String USER_THEME_NAME_PREFIX = "user_theme_";
+
+    /**
      * The preview renderer's rasterised keyboards, as it names them.
      *
      * <p>Each file is one drawn keyboard, keyed on the theme value it was drawn
@@ -424,6 +436,12 @@ public final class SystemAutoThemeCompat {
      * <p>The original editor has already materialized its replacement or
      * fallback before this method runs. Reusing that resolved pair preserves
      * its lifecycle semantics without parsing or classifying theme files.</p>
+     *
+     * <p>This is the legacy selector's own result handling, and it stays
+     * because that selector is still the theme page below API 35.
+     * {@link #applyCustomThemeEditResult} is what the Compose settings page
+     * uses: it opens the editor directly, so nothing has materialized a
+     * replacement for it and it has to say for itself what the slots become.</p>
      */
     public static void reconcileCustomThemeEdit(Context context, Intent data) {
         ensureInitialized(context);
@@ -453,9 +471,145 @@ public final class SystemAutoThemeCompat {
         }
     }
 
-    /** IME process startup materializes the configured slot. */
-    public static boolean applyOnCreate(Context context) {
+    /**
+     * Removes one custom theme and points every slot that held it at a default.
+     *
+     * <p>A custom theme is a single package file in the app's own files
+     * directory. Deleting it is not enough on its own: a light or dark slot
+     * remembers the value it was assigned, and that value now names a package
+     * that is gone, so the keyboard would go on resolving a theme that no longer
+     * exists. Every slot that held the removed theme goes back to the theme it
+     * was initialized with - the light slot to the light material package and
+     * the dark slot to the dark one, which is the same pair
+     * {@link #ensureInitialized} seeds them with.</p>
+     *
+     * <p>The fixed slot has no package of its own to fall back to: it is seeded
+     * from whichever theme was live when the slots were first created. It takes
+     * the light slot's neutral default instead, which is a package the engine
+     * always has, rather than a value derived from the theme being removed.</p>
+     *
+     * <p>Returns whether the package file was removed.</p>
+     */
+    public static boolean deleteUserTheme(Context context, String themeValue) {
         ensureInitialized(context);
+        String name = customThemeName(themeValue);
+        if (name == null) {
+            return false;
+        }
+        File packageFile = new File(context.getFilesDir(), name);
+        if (packageFile.isFile() && !packageFile.delete()) {
+            debugLog(context, "custom theme delete failed");
+            return false;
+        }
+        repointSlots(context, themeValue, null);
+        applyConfiguredTheme(context, context.getResources().getConfiguration());
+        return true;
+    }
+
+    /**
+     * Applies what the custom-theme editor reported.
+     *
+     * <p>The editor reports two names rather than a state: the package it wrote
+     * and the one it removed. A rewrite carries both, because it writes under a
+     * new name and deletes the old one; a removal carries only the second. The
+     * written name is therefore what tells the two apart, and the slots that
+     * held the old name have to follow it to the new one rather than be sent
+     * back to a default - the theme still exists, under the name it was just
+     * given.</p>
+     *
+     * <p>Only a name that is empty on both sides leaves everything alone. That
+     * is the editor reporting a cancel, and a cancel changes nothing.</p>
+     */
+    public static void applyCustomThemeEditResult(Context context, Intent data) {
+        ensureInitialized(context);
+        if (data == null || data.getExtras() == null) {
+            return;
+        }
+        String removed = data.getExtras().getString("intent_extra_key_deleted_theme_file_name");
+        if (removed == null || removed.length() == 0) {
+            return;
+        }
+        String held = USER_THEME_VALUE_PREFIX + removed;
+        String created = data.getExtras().getString("intent_extra_key_new_theme_file_name");
+        repointSlots(
+                context,
+                held,
+                created == null || created.length() == 0
+                        ? null
+                        : USER_THEME_VALUE_PREFIX + created);
+        applyConfiguredTheme(context, context.getResources().getConfiguration());
+    }
+
+    /**
+     * Points every slot holding one theme value at another, or at a default.
+     *
+     * <p>{@code replacement} is the value to point them at, or {@code null} to
+     * send each slot back to its own default. The live pair is written too: it
+     * is normally the materialized output of one slot and would follow, but a
+     * value the legacy selector wrote has no slot behind it, and leaving it
+     * would keep the keyboard on the theme being removed.</p>
+     */
+    private static void repointSlots(Context context, String held, String replacement) {
+        SharedPreferences preferences = preferences(context);
+        SharedPreferences.Editor editor = preferences.edit();
+        boolean changed = false;
+        String[] slots = new String[] { SLOT_LIGHT, SLOT_DARK, SLOT_FIXED };
+        for (int index = 0; index < slots.length; index++) {
+            String slot = slots[index];
+            if (!held.equals(preferences.getString(additionalKey(slot), ""))) {
+                continue;
+            }
+            editor.putString(baseKey(slot), context.getString(BASE_MATERIAL_THEME));
+            editor.putString(
+                    additionalKey(slot),
+                    replacement != null ? replacement : defaultAdditional(context, slot));
+            changed = true;
+        }
+        String additionalThemeKey = context.getString(PREF_KEY_ADDITIONAL_THEME);
+        if (held.equals(preferences.getString(additionalThemeKey, ""))) {
+            editor.putString(context.getString(PREF_KEY_KEYBOARD_THEME),
+                    context.getString(BASE_MATERIAL_THEME));
+            editor.putString(
+                    additionalThemeKey,
+                    replacement != null
+                            ? replacement
+                            : defaultAdditional(context, SLOT_FIXED));
+            changed = true;
+        }
+        if (changed) {
+            editor.commit();
+        }
+    }
+
+    /**
+     * The theme a slot falls back to once the one it held is gone.
+     *
+     * <p>The light and dark slots take the packages they were initialized with.
+     * The fixed slot shares the light slot's, for the reason
+     * {@link #deleteUserTheme} gives.</p>
+     */
+    private static String defaultAdditional(Context context, String slot) {
+        if (SLOT_DARK.equals(slot)) {
+            return context.getString(MATERIAL_DARK_THEME);
+        }
+        return context.getString(MATERIAL_LIGHT_THEME);
+    }
+
+    /** The package file name a custom theme value names, or null when it is not one. */
+    private static String customThemeName(String themeValue) {
+        String prefix = USER_THEME_VALUE_PREFIX + USER_THEME_NAME_PREFIX;
+        if (themeValue == null || !themeValue.startsWith(prefix)) {
+            return null;
+        }
+        String name = themeValue.substring(USER_THEME_VALUE_PREFIX.length());
+        if (name.indexOf('/') >= 0 || name.indexOf('\\') >= 0 || name.indexOf("..") >= 0) {
+            return null;
+        }
+        return name;
+    }
+
+    /** IME process startup materializes the configured slot. */
+    public static boolean applyOnCreate(Context context) {        ensureInitialized(context);
         return applyConfiguredTheme(context, context.getResources().getConfiguration());
     }
 

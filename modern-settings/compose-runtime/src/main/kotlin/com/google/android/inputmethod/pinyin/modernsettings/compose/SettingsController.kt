@@ -1,5 +1,7 @@
 package com.google.android.inputmethod.pinyin.modernsettings.compose
 
+import android.content.Intent
+
 /** Coordinates typed persistence and one-shot platform effects without owning Compose state. */
 class SettingsController(
     private val repository: LegacySettingsRepository,
@@ -23,6 +25,12 @@ class SettingsController(
 
     fun applyCustomTheme(fileName: String): SettingsSnapshot =
         repository.applyCustomTheme(fileName)
+
+    fun deleteUserTheme(themeValue: String): SettingsSnapshot =
+        repository.deleteUserTheme(themeValue)
+
+    fun applyCustomThemeEditResult(data: Intent?): SettingsSnapshot =
+        repository.applyCustomThemeEditResult(data)
 
     fun setLauncherIconVisible(visible: Boolean): SettingsSnapshot =
         repository.setLauncherIconVisible(visible)

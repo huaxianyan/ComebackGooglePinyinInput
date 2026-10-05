@@ -75,6 +75,25 @@ class ModernSettingsActivity : ComponentActivity() {
             controller.read()
         }
     }
+    /**
+     * The custom-theme editor's result.
+     *
+     * The editor reports the package it wrote and the one it removed rather than
+     * a state, and the bridge turns that pair into the slot writes: a rewrite
+     * moves every slot that held the old name onto the new one, and a removal
+     * sends them back to a default. The inventory is re-read either way, because
+     * the editor can leave files behind on a cancel too.
+     */
+    private val themeEditor = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult(),
+    ) { result ->
+        if (!::controller.isInitialized) return@registerForActivityResult
+        snapshot = if (result.resultCode == Activity.RESULT_OK) {
+            controller.applyCustomThemeEditResult(result.data)
+        } else {
+            controller.read()
+        }
+    }
     private val contactsPermission = registerForActivityResult(
         ActivityResultContracts.RequestPermission(),
     ) { granted ->
@@ -195,6 +214,13 @@ class ModernSettingsActivity : ComponentActivity() {
                         dictionaryImport = dictionaryImport,
                         dictionaryClear = dictionaryClear,
                         rimeSync = rimeSync,
+                        // The keyboard's shortcut is the one caller that opens
+                        // this hierarchy anywhere but at its top, so it says
+                        // where to start. Every other entry leaves the extra
+                        // off and lands on the home page.
+                        initialRoutePath = intent
+                            ?.getStringExtra(LegacySettingsNavigation.routePathExtra)
+                            ?: SettingsRouteStack.initialPath,
                         actions = SettingsActions(
                             onDynamicColorEnabledChange = { enabled ->
                                 snapshot = controller.setDynamicColorEnabled(enabled)
@@ -215,6 +241,14 @@ class ModernSettingsActivity : ComponentActivity() {
                                 themeBuilder.launch(
                                     LegacySettingsNavigation.themeBuilderIntent(this)
                                 )
+                            },
+                            onEditTheme = { themeValue ->
+                                themeEditor.launch(
+                                    LegacySettingsNavigation.themeEditorIntent(this, themeValue)
+                                )
+                            },
+                            onDeleteTheme = { themeValue ->
+                                snapshot = controller.deleteUserTheme(themeValue)
                             },
                             onOpenTerms = {
                                 startActivity(LegacySettingsNavigation.legacyWebIntent(this, "tos_url"))

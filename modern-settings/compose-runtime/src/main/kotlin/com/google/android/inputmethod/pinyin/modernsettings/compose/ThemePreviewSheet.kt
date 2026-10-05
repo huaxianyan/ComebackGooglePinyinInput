@@ -5,8 +5,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
@@ -55,21 +60,27 @@ internal enum class ThemePreviewMode {
  * [mode] is set only by the tiles that offer a mode rather than a theme, and it
  * is what the sheet's apply button reads to decide whether it is choosing a
  * theme or switching one on.
+ *
+ * [userMade] says whether this is a theme the user built. By the time a value
+ * reaches the sheet, a packaged theme and a custom one are the same kind of
+ * string, and only the section it was tapped in knows which it is - so the
+ * screen says so here rather than the sheet re-deriving it from the prefix.
  */
 internal data class ThemePreviewSubject(
     val themeValue: String,
     val pairedValue: String? = null,
     val mode: ThemePreviewMode? = null,
+    val userMade: Boolean = false,
 )
 
 /**
- * What the sheet's three theme buttons do.
+ * What the sheet's buttons do.
  *
  * The sheet does not decide any of this. Which theme an assign button writes
  * depends on whether the subject is a pair, and whether the two assign buttons
  * can be pressed depends on whether the subject has a slot to write at all -
  * both of which the screen knows and the sheet does not. Passing the answers in
- * keeps the sheet a picture and three buttons.
+ * keeps the sheet a picture and a set of buttons.
  *
  * [assignLightEnabled] and [assignDarkEnabled] are separate rather than one
  * flag because the rule that produces them is stated per slot; today it
@@ -79,6 +90,11 @@ internal data class ThemePreviewSubject(
  * mode they write to is still off, because pressing either one is what turns it
  * on. The sheet says so rather than leaving the user to find out: a button that
  * quietly switches a second setting is worth one line of warning.
+ *
+ * [editTheme] and [deleteTheme] are null for everything that is not a theme the
+ * user made, and the sheet draws no buttons at all in that case. A flag beside
+ * a callback would let the two disagree; a null callback cannot be pressed and
+ * is what "there is no button here" already means.
  */
 internal data class ThemePreviewActions(
     val apply: () -> Unit,
@@ -87,6 +103,8 @@ internal data class ThemePreviewActions(
     val assignLightEnabled: Boolean,
     val assignDarkEnabled: Boolean,
     val assignEnablesFollowSystem: Boolean,
+    val editTheme: (() -> Unit)? = null,
+    val deleteTheme: (() -> Unit)? = null,
 )
 
 /**
@@ -106,6 +124,11 @@ internal data class ThemePreviewActions(
  * one turns that mode on if it is off, because a slot is not read in any other
  * mode - [ThemePreviewActions.assignEnablesFollowSystem] is what the caption
  * above the pair is drawn from, so the switch is never a silent one.
+ *
+ * A theme the user made also carries its two own actions in the top right
+ * corner, which is where the app this replaces puts them: edit, and delete.
+ * They are about the package rather than about which theme is in use, so they
+ * sit apart from the buttons below rather than in that row.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -139,6 +162,7 @@ internal fun ThemePreviewSheet(
                 .fillMaxWidth()
                 .padding(bottom = 24.dp),
         ) {
+            ThemeActionsRow(edit = actions.editTheme, delete = actions.deleteTheme)
             PreviewRow(subject = subject, keyBorder = keyBorder)
             KeyBorderRow(
                 checked = keyBorder,
@@ -209,6 +233,53 @@ internal fun ThemePreviewSheet(
                 ) {
                     Text(stringResource(R.string.modern_settings_apply))
                 }
+            }
+        }
+    }
+}
+
+/**
+ * The two actions a theme the user made carries, or nothing.
+ *
+ * Drawn above the preview rather than beside the apply button: apply and the
+ * assign pair are about which theme the keyboard uses, and these two are about
+ * the package itself, so putting them in one row would read as four ways to
+ * pick a theme.
+ *
+ * Both buttons are shown whenever either action is: a theme that can be edited
+ * can also be removed, so the pair is drawn together and the corner either has
+ * both or neither.
+ */
+@Composable
+private fun ThemeActionsRow(
+    edit: (() -> Unit)?,
+    delete: (() -> Unit)?,
+) {
+    if (edit == null && delete == null) return
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp)
+            .padding(top = 4.dp),
+        horizontalArrangement = Arrangement.End,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (edit != null) {
+            IconButton(onClick = edit) {
+                Icon(
+                    imageVector = Icons.Filled.Edit,
+                    contentDescription = stringResource(R.string.modern_settings_theme_edit),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        if (delete != null) {
+            IconButton(onClick = delete) {
+                Icon(
+                    imageVector = Icons.Filled.Delete,
+                    contentDescription = stringResource(R.string.modern_settings_theme_delete),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         }
     }

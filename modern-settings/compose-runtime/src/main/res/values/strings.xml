@@ -38,6 +38,11 @@
     <string name="modern_settings_theme_assign_light">Set as light mode theme</string>
     <string name="modern_settings_theme_assign_dark">Set as dark mode theme</string>
     <string name="modern_settings_theme_assign_enables_follow_system">Turns on Auto (system); the light and dark themes only apply in that mode</string>
+    <string name="modern_settings_theme_edit">Edit theme</string>
+    <string name="modern_settings_theme_delete">Delete theme</string>
+    <string name="modern_settings_theme_delete_confirm_title">Delete this theme?</string>
+    <string name="modern_settings_theme_delete_confirm_message">The theme and its picture are removed from this device. A light or dark slot that was using it goes back to that slot\'s default theme.</string>
+    <string name="modern_settings_theme_delete_confirm_action">Delete</string>
     <string name="modern_settings_theme_catalog_in_use">In use</string>
     <string name="modern_settings_theme_catalog_builtin">Built-in themes</string>
     <string name="modern_settings_theme_catalog_custom">Custom themes</string>

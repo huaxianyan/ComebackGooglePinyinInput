@@ -38,6 +38,11 @@
     <string name="modern_settings_theme_assign_light">设为浅色模式主题</string>
     <string name="modern_settings_theme_assign_dark">设为深色模式主题</string>
     <string name="modern_settings_theme_assign_enables_follow_system">将开启「系统自动」；浅色与深色主题只在该模式下生效</string>
+    <string name="modern_settings_theme_edit">编辑主题</string>
+    <string name="modern_settings_theme_delete">删除主题</string>
+    <string name="modern_settings_theme_delete_confirm_title">删除这个主题？</string>
+    <string name="modern_settings_theme_delete_confirm_message">该主题及其图片会从本机移除。引用了它的浅色或深色槽会回到该槽的默认主题。</string>
+    <string name="modern_settings_theme_delete_confirm_action">删除</string>
     <string name="modern_settings_theme_catalog_in_use">当前使用</string>
     <string name="modern_settings_theme_catalog_builtin">内置主题</string>
     <string name="modern_settings_theme_catalog_custom">自定义主题</string>

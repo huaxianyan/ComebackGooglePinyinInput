@@ -73,6 +73,8 @@ data class SettingsActions(
     val onApplyTheme: (String) -> Unit,
     val onAssignThemeSlotFollowingSystem: (ThemeSelectionSlot, String) -> Unit,
     val onAddTheme: () -> Unit,
+    val onEditTheme: (String) -> Unit,
+    val onDeleteTheme: (String) -> Unit,
     val onOpenTerms: () -> Unit,
     val onOpenPrivacyPolicy: () -> Unit,
     val onOpenRepository: () -> Unit,
@@ -125,8 +127,18 @@ fun SettingsScreen(
     dictionaryClear: DictionaryClearState,
     rimeSync: RimeSyncUiState,
     actions: SettingsActions,
+    /**
+     * Where the page opens, for callers that are not the settings launcher.
+     *
+     * The keyboard's own shortcut opens one page of this hierarchy rather than
+     * the home screen, and the hierarchy is a stack rather than a single page -
+     * so it arrives as a path and not as a route. Anything below the top of the
+     * path is what back returns to, which is why the shortcut passes the whole
+     * chain down to the theme page instead of the theme page alone.
+     */
+    initialRoutePath: String = SettingsRouteStack.initialPath,
 ) {
-    var routePath by rememberSaveable { mutableStateOf(SettingsRouteStack.initialPath) }
+    var routePath by rememberSaveable { mutableStateOf(initialRoutePath) }
     val route = SettingsRouteStack.current(routePath)
     val navigateTo: (SettingsRoute) -> Unit = { destination ->
         routePath = SettingsRouteStack.push(routePath, destination)
@@ -212,6 +224,8 @@ private fun SettingsRoutePage(
             onFollowSystemEnabledChange = actions.onSystemAutoThemeEnabledChange,
             onDynamicColorEnabledChange = actions.onDynamicColorEnabledChange,
             onAddTheme = actions.onAddTheme,
+            onEditTheme = actions.onEditTheme,
+            onDeleteTheme = actions.onDeleteTheme,
         )
         return
     }

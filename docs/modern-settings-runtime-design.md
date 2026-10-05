@@ -367,6 +367,33 @@ sliders do not justify a home-screen destination. This navigation change does
 not alter either handwriting key, storage type, default, preview, or Slider
 contract.
 
+The theme page is the one destination that is also reachable without the
+settings hierarchy at all. The keyboard's own shortcut, the first-run theme
+preview and the legacy settings page all opened the original theme selector; on
+the API levels the Compose page serves, that Activity now redirects them to the
+theme route instead. It passes the path `Home/Keyboard/KeyboardAppearance/
+ThemeCatalog` rather than the destination alone, so Back walks up through the
+pages that would normally have led there. The redirect is gated on
+`Build.VERSION.SDK_INT >= 35` and on the Activity resolving, which keeps
+apktool-only audit builds - which omit the Compose runtime - on the legacy page.
+
+The page itself is three sections in the order Defaults, Colors, My themes. The
+user's own themes come last because that section is empty for anyone who has
+never built one, and the top of a page should be what the page is mostly about.
+Tapping a tile opens the preview sheet; for a theme the user made, that sheet
+also carries edit and delete in its top-right corner. Editing is the original
+`ThemeEditorActivity`, opened directly with the package's absolute path and with
+its own delete button suppressed, because deleting is the sheet's button.
+Deleting removes the package and then points every slot that held it back at a
+default - the light slot to the light material package and the dark slot to the
+dark one, which is the pair slot initialization seeds them with - so a slot is
+never left naming a package that is gone. The fixed slot has no package of its
+own to fall back to and takes the light slot's, and the live pair is rewritten
+too, because a value the legacy selector wrote has no slot behind it. An edit
+reports the removed and the written name together, and the slots that held the
+old name follow it to the new one rather than being reset: the theme still
+exists, under the name it was just given.
+
 Dictionary and backup remains one domain with user-dictionary, backup/restore,
 and shortcuts sections. Its Compose page now owns typed presentation state but
 continues to delegate dictionary inspection, SAF directory validation, native

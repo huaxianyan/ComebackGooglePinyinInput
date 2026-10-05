@@ -1,6 +1,7 @@
 package com.google.android.inputmethod.pinyin.modernsettings.compose
 
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.ApplicationInfo
 import android.os.Build
@@ -293,9 +294,10 @@ class LegacySettingsRepository(context: Context) {
      * is the theme they asked for, so there is nothing left to confirm.
      *
      * The other half of the legacy result handling - repointing the slots that
-     * referenced an edited or deleted custom theme - has no counterpart here,
-     * because this page only ever opens the builder, and the builder only
-     * creates. Deleting is a job for the editor, which this page does not open.
+     * referenced an edited or deleted custom theme - belongs to
+     * [applyCustomThemeEditResult], because the builder only ever creates. A
+     * theme that already exists is changed or removed by the editor, which
+     * reports the two names back instead of a new theme to apply.
      */
     fun applyCustomTheme(fileName: String): SettingsSnapshot {
         require(fileName.isNotEmpty()) { "Empty theme file name" }
@@ -304,6 +306,43 @@ class LegacySettingsRepository(context: Context) {
             Context::class.java,
             String::class.java,
         ).invoke(null, applicationContext, ThemeSource.User.valuePrefix + fileName)
+        return readSnapshot()
+    }
+
+    /**
+     * Removes one custom theme, and points the slots that held it at a default.
+     *
+     * Both halves belong to the bridge: the package is the app's own file and
+     * the slots are its keys, and doing the removal here in two steps would let
+     * a slot survive naming a package that is already gone. This only carries
+     * the value across.
+     */
+    fun deleteUserTheme(themeValue: String): SettingsSnapshot {
+        require(themeValue.startsWith(ThemeSource.User.valuePrefix)) {
+            "Not a custom theme value: $themeValue"
+        }
+        Class.forName(SYSTEM_AUTO_THEME_BRIDGE).getMethod(
+            "deleteUserTheme",
+            Context::class.java,
+            String::class.java,
+        ).invoke(null, applicationContext, themeValue)
+        return readSnapshot()
+    }
+
+    /**
+     * Applies what the custom-theme editor reported.
+     *
+     * The editor reports two names rather than a state: the package it wrote
+     * and the one it removed. A rewrite carries both and a removal only the
+     * second, so the bridge reads the pair and this class does not have to
+     * decide which of the two happened.
+     */
+    fun applyCustomThemeEditResult(data: Intent?): SettingsSnapshot {
+        Class.forName(SYSTEM_AUTO_THEME_BRIDGE).getMethod(
+            "applyCustomThemeEditResult",
+            Context::class.java,
+            Intent::class.java,
+        ).invoke(null, applicationContext, data)
         return readSnapshot()
     }
 
