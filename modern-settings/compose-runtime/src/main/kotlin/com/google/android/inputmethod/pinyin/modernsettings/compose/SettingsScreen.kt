@@ -71,6 +71,8 @@ data class SettingsActions(
     val onDynamicColorEnabledChange: (Boolean) -> Unit,
     val onSystemAutoThemeEnabledChange: (Boolean) -> Unit,
     val onOpenThemeSelector: (ThemeSelectionSlot) -> Unit,
+    val onApplyTheme: (String) -> Unit,
+    val onAssignThemeSlot: (ThemeSelectionSlot, String) -> Unit,
     val onOpenTerms: () -> Unit,
     val onOpenPrivacyPolicy: () -> Unit,
     val onOpenRepository: () -> Unit,
@@ -202,7 +204,13 @@ private fun SettingsRoutePage(
         return
     }
     if (route == SettingsRoute.ThemeCatalog) {
-        ThemeCatalogScreen(snapshot = snapshot, onNavigateBack = navigateBack)
+        ThemeCatalogScreen(
+            snapshot = snapshot,
+            onNavigateBack = navigateBack,
+            onApplyTheme = actions.onApplyTheme,
+            onAssignThemeSlot = actions.onAssignThemeSlot,
+            onFollowSystemEnabledChange = actions.onSystemAutoThemeEnabledChange,
+        )
         return
     }
     val context = LocalContext.current

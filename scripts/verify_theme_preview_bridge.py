@@ -107,6 +107,18 @@ PALETTE_BUILDER_JAVA = (
     / "patches/java/com/google/android/inputmethod/pinyin/SystemAutoThemeCompat.java"
 )
 
+# The builder methods the bridge calls, keyed by the constant that names each
+# one, with the signature the injected smali has to declare. All three are
+# writes or builders rather than reads, so a missing one is not a fallback: the
+# sheet would keep showing a theme the keyboard is not using.
+PALETTE_BUILDER_METHODS = {
+    "DYNAMIC_PREPARE_METHOD": "(Landroid/content/Context;)Ljava/lang/String;",
+    "DYNAMIC_APPLY_METHOD": "(Landroid/content/Context;Ljava/lang/String;)V",
+    "DYNAMIC_ASSIGN_METHOD": (
+        "(Landroid/content/Context;Ljava/lang/String;Ljava/lang/String;)V"
+    ),
+}
+
 # The renderer's snapshot cache. It names each rasterised keyboard after the
 # theme value it was drawn from and never after the package behind that value,
 # so a palette rebuilt in place leaves every snapshot showing the previous
@@ -534,7 +546,6 @@ def main() -> int:
     # runtime, and against the bridge's own constant so a rename cannot pass by
     # falling back to a default that no longer matches.
     builder_class = constants.get("DYNAMIC_PREPARE_CLASS")
-    builder_method = constants.get("DYNAMIC_PREPARE_METHOD")
     if builder_class is None:
         failures.append("the bridge declares no DYNAMIC_PREPARE_CLASS")
     elif builder_class != PALETTE_BUILDER_CLASS:
@@ -542,21 +553,22 @@ def main() -> int:
             f"DYNAMIC_PREPARE_CLASS is {builder_class}, but the injected class is "
             f"{PALETTE_BUILDER_CLASS}"
         )
-    if builder_method is None:
-        failures.append("the bridge declares no DYNAMIC_PREPARE_METHOD")
-    elif builder_class == PALETTE_BUILDER_CLASS:
+    if builder_class == PALETTE_BUILDER_CLASS:
         if not PALETTE_BUILDER_SMALI.is_file():
             failures.append(f"no injected smali at {PALETTE_BUILDER_SMALI}")
         else:
-            member = (
-                f".method public static {builder_method}"
-                "(Landroid/content/Context;)Ljava/lang/String;"
-            )
-            if member not in PALETTE_BUILDER_SMALI.read_text(encoding="utf-8"):
-                failures.append(
-                    f"{PALETTE_BUILDER_CLASS} no longer declares {member}; the "
-                    f"Java source and the generated smali are out of step"
-                )
+            injected = PALETTE_BUILDER_SMALI.read_text(encoding="utf-8")
+            for constant, signature in PALETTE_BUILDER_METHODS.items():
+                method_name = constants.get(constant)
+                if method_name is None:
+                    failures.append(f"the bridge declares no {constant}")
+                    continue
+                member = f".method public static {method_name}{signature}"
+                if member not in injected:
+                    failures.append(
+                        f"{PALETTE_BUILDER_CLASS} no longer declares {member}; the "
+                        f"Java source and the generated smali are out of step"
+                    )
 
     # The snapshot drop is the only thing between a rebuilt palette and previews
     # that keep drawing the old one. Both halves are checked: the prefix and
@@ -678,7 +690,7 @@ def main() -> int:
         f"{len(PRESET_VALUES)} default presets, "
         f"{len(SWATCH_TAGS)} swatch tags, "
         f"{ambiguous} return-type overloads, "
-        f"1 injected palette builder, "
+        f"{len(PALETTE_BUILDER_METHODS)} injected palette builder calls, "
         f"1 snapshot drop)"
     )
     return 0

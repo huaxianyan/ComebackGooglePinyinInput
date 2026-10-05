@@ -41,6 +41,27 @@ internal data class ThemePreviewSubject(
 )
 
 /**
+ * What the sheet's three theme buttons do.
+ *
+ * The sheet does not decide any of this. Which theme an assign button writes
+ * depends on whether the subject is a pair, and whether the two assign buttons
+ * can be pressed depends on the mode the keyboard is in - both of which the
+ * screen knows and the sheet does not. Passing the answers in keeps the sheet a
+ * picture and three buttons.
+ *
+ * [assignLightEnabled] and [assignDarkEnabled] are separate rather than one
+ * flag because the rule that produces them is stated per slot; today it
+ * answers the same for both, and folding them together here would hide that.
+ */
+internal data class ThemePreviewActions(
+    val apply: () -> Unit,
+    val assignLight: () -> Unit,
+    val assignDark: () -> Unit,
+    val assignLightEnabled: Boolean,
+    val assignDarkEnabled: Boolean,
+)
+
+/**
  * What tapping a theme tile opens.
  *
  * The preview is here rather than pinned to the top of the page because it is
@@ -51,14 +72,17 @@ internal data class ThemePreviewSubject(
  * the same order the keyboard itself switches between.
  *
  * The key-border switch works, and redraws the preview when it changes. The
- * three theme buttons do not: applying a theme and assigning one to a slot are
- * the write path, which lands on its own. They are disabled rather than left
- * looking live, so a tap that did nothing cannot be mistaken for a failure.
+ * three theme buttons write: apply makes the subject the theme in use, and the
+ * two assign buttons point one half of the follow-the-system mode at it. The
+ * assign pair is disabled whenever that mode is off, because a slot is not read
+ * in any other mode - a live-looking button there would store a value the
+ * keyboard never consults.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun ThemePreviewSheet(
     subject: ThemePreviewSubject,
+    actions: ThemePreviewActions,
     onDismiss: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -102,8 +126,8 @@ internal fun ThemePreviewSheet(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 OutlinedButton(
-                    onClick = {},
-                    enabled = false,
+                    onClick = actions.assignLight,
+                    enabled = actions.assignLightEnabled,
                     modifier = Modifier.weight(1f),
                 ) {
                     Text(
@@ -113,8 +137,8 @@ internal fun ThemePreviewSheet(
                     )
                 }
                 OutlinedButton(
-                    onClick = {},
-                    enabled = false,
+                    onClick = actions.assignDark,
+                    enabled = actions.assignDarkEnabled,
                     modifier = Modifier.weight(1f),
                 ) {
                     Text(
@@ -138,8 +162,7 @@ internal fun ThemePreviewSheet(
                     Text(stringResource(R.string.modern_settings_cancel))
                 }
                 Button(
-                    onClick = {},
-                    enabled = false,
+                    onClick = actions.apply,
                     modifier = Modifier.weight(1f),
                 ) {
                     Text(stringResource(R.string.modern_settings_apply))

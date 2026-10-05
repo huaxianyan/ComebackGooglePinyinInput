@@ -233,6 +233,56 @@ class LegacySettingsRepository(context: Context) {
         return readSnapshot()
     }
 
+    /**
+     * Makes [themeValue] the theme in use.
+     *
+     * The follow-the-system and generated-palette modes are the two other
+     * owners of the resolved theme, and both override whatever is stored here,
+     * so applying a theme has to take them off - otherwise the sheet would
+     * show the theme the user picked while the keyboard went on drawing
+     * something else. The bridge does that rather than this class, so the
+     * three flags can never be left describing two different modes.
+     */
+    fun applyTheme(themeValue: String): SettingsSnapshot {
+        require(themeValue.isNotEmpty()) { "Empty theme value" }
+        Class.forName(SYSTEM_AUTO_THEME_BRIDGE).getMethod(
+            "applyTheme",
+            Context::class.java,
+            String::class.java,
+        ).invoke(null, applicationContext, themeValue)
+        return readSnapshot()
+    }
+
+    /**
+     * Points one half of the follow-the-system mode at [themeValue].
+     *
+     * Guarded by the same rule the buttons use. A slot is only read while that
+     * mode is on, so a write from any other mode would be stored and never
+     * drawn; the bridge refuses it too, and this check is here so the two
+     * refusals are the same one rather than two that can drift apart.
+     */
+    fun assignThemeSlot(slot: ThemeSelectionSlot, themeValue: String): SettingsSnapshot {
+        val followThemeEnabled = preferences.getBoolean(
+            SystemAutoThemeSetting.preferenceKey,
+            false,
+        )
+        val dynamicColorEnabled = preferences.getBoolean(
+            DynamicColorSetting.preferenceKey,
+            false,
+        )
+        require(ThemeSettingRules.canSelect(slot, followThemeEnabled, dynamicColorEnabled)) {
+            "Theme slot is disabled: ${slot.persistedValue}"
+        }
+        require(themeValue.isNotEmpty()) { "Empty theme value" }
+        Class.forName(SYSTEM_AUTO_THEME_BRIDGE).getMethod(
+            "assignSlot",
+            Context::class.java,
+            String::class.java,
+            String::class.java,
+        ).invoke(null, applicationContext, slot.persistedValue, themeValue)
+        return readSnapshot()
+    }
+
     fun setLauncherIconVisible(visible: Boolean): SettingsSnapshot {
         preferences.edit().putBoolean(LAUNCHER_ICON_KEY, visible).apply()
         return readSnapshot()

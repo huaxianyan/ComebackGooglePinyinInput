@@ -19,6 +19,12 @@ class SettingsController(
     fun finishThemeSelection(): SettingsSnapshot =
         repository.finishThemeSelection()
 
+    fun applyTheme(themeValue: String): SettingsSnapshot =
+        repository.applyTheme(themeValue)
+
+    fun assignThemeSlot(slot: ThemeSelectionSlot, themeValue: String): SettingsSnapshot =
+        repository.assignThemeSlot(slot, themeValue)
+
     fun setLauncherIconVisible(visible: Boolean): SettingsSnapshot =
         repository.setLauncherIconVisible(visible)
 

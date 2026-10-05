@@ -129,6 +129,12 @@ internal object ThemePreviewBridge {
     /** Builds that package, without switching the mode on. */
     private const val DYNAMIC_PREPARE_METHOD = "prepareDynamicTheme"
 
+    /** Makes a theme the one in use, and leaves both automatic modes. */
+    private const val DYNAMIC_APPLY_METHOD = "applyTheme"
+
+    /** Writes one slot, for the mode that swaps between two themes. */
+    private const val DYNAMIC_ASSIGN_METHOD = "assignSlot"
+
     /** `baq.a(Context)`: the theme descriptor actually in effect. */
     private const val DESCRIPTOR_FACTORY = "a"
 
@@ -410,6 +416,55 @@ internal object ThemePreviewBridge {
             .getMethod(DYNAMIC_PREPARE_METHOD, Context::class.java)
             .invoke(null, context) as? String
     }.getOrNull()?.takeIf { it.isNotEmpty() }
+
+    /**
+     * Makes [themeValue] the theme the keyboard uses.
+     *
+     * This is the write behind the sheet's apply button. It turns both
+     * automatic modes off as a side effect, because they are the two things
+     * that would otherwise keep overriding the value: the theme just applied
+     * would be stored and then never drawn.
+     *
+     * Only the preference the engine actually reads is written. The engine
+     * short-circuits on `additional_keyboard_theme` and ignores
+     * `keyboard_theme` whenever the former is set, so writing both would leave
+     * a second value that looks authoritative and is never consulted.
+     *
+     * Failures are not swallowed. Unlike the read paths above, a write that
+     * silently did nothing would leave the sheet showing a theme the keyboard
+     * is not using, which is the failure mode this whole bridge exists to
+     * avoid.
+     */
+    fun applyTheme(context: Context, themeValue: String) {
+        require(themeValue.isNotEmpty()) { "Empty theme value" }
+        engineMethod(
+            DYNAMIC_PREPARE_CLASS,
+            DYNAMIC_APPLY_METHOD,
+            Void.TYPE,
+            Context::class.java,
+            String::class.java,
+        ).invoke(null, context, themeValue)
+    }
+
+    /**
+     * Points one slot of the follow-the-system mode at [themeValue].
+     *
+     * The slot only has an effect while that mode is on, which is why the
+     * sheet disables the two buttons in every other mode rather than writing a
+     * value that would sit unused. The engine enforces the same rule, so a
+     * stale screen cannot write one anyway.
+     */
+    fun assignThemeSlot(context: Context, slot: ThemeSelectionSlot, themeValue: String) {
+        require(themeValue.isNotEmpty()) { "Empty theme value" }
+        engineMethod(
+            DYNAMIC_PREPARE_CLASS,
+            DYNAMIC_ASSIGN_METHOD,
+            Void.TYPE,
+            Context::class.java,
+            String::class.java,
+            String::class.java,
+        ).invoke(null, context, slot.persistedValue, themeValue)
+    }
 
 
     private fun inflateCard(context: Context, themeValue: String): ViewGroup =

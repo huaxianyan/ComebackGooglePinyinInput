@@ -190,6 +190,12 @@ class ModernSettingsActivity : ComponentActivity() {
                                     LegacySettingsNavigation.themeSelectorIntent(this)
                                 )
                             },
+                            onApplyTheme = { themeValue ->
+                                snapshot = controller.applyTheme(themeValue)
+                            },
+                            onAssignThemeSlot = { slot, themeValue ->
+                                snapshot = controller.assignThemeSlot(slot, themeValue)
+                            },
                             onOpenTerms = {
                                 startActivity(LegacySettingsNavigation.legacyWebIntent(this, "tos_url"))
                             },

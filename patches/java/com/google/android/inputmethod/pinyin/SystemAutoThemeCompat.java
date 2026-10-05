@@ -410,6 +410,59 @@ public final class SystemAutoThemeCompat {
     }
 
     /**
+     * Points the keyboard at one theme package and gives up every automatic mode.
+     *
+     * <p>This is the sequence the original selector runs when a theme is tapped:
+     * {@link #disable} releases the automatic pair, the write lands on the live
+     * preferences, and {@link #captureFixedTheme} stores the result as the
+     * durable fixed slot. Keeping the order here rather than in the settings UI
+     * leaves one place that knows it.</p>
+     *
+     * <p>The base theme is deliberately not written. It is the device's own
+     * theme id - on a real device every slot holds the same one - and the engine
+     * ignores it: {@code baq.a(Context)} short-circuits {@code keyboard_theme}
+     * and only {@code additional_keyboard_theme} reaches the renderer.</p>
+     */
+    public static void applyTheme(Context context, String additional) {
+        ensureInitialized(context);
+        if (additional == null || additional.length() == 0) {
+            throw new IllegalArgumentException("Empty theme value");
+        }
+        disable(context);
+        preferences(context).edit()
+                .putString(context.getString(PREF_KEY_ADDITIONAL_THEME), additional)
+                .commit();
+        captureFixedTheme(context);
+        applyConfiguredTheme(context, context.getResources().getConfiguration());
+    }
+
+    /**
+     * Assigns one theme package to a light, dark or fixed slot.
+     *
+     * <p>Unlike {@link #applyTheme} this leaves the mode flags alone, because
+     * assigning a slot only means something while the mode that reads it is the
+     * one in effect. The guard is the same one {@link #beginSelection} applies,
+     * so the two write paths cannot disagree about which slot is open. The
+     * caller is expected to have checked the generated palette separately: it
+     * owns the resolved pair while it is on, which is not visible from here.</p>
+     */
+    public static void assignSlot(Context context, String slot, String additional) {
+        ensureInitialized(context);
+        if (additional == null || additional.length() == 0) {
+            throw new IllegalArgumentException("Empty theme value");
+        }
+        boolean automatic = isEnabled(context);
+        if (!isSelectableSlot(slot)
+                || (SLOT_FIXED.equals(slot) ? automatic : !automatic)) {
+            throw new IllegalStateException("Theme slot is disabled");
+        }
+        preferences(context).edit()
+                .putString(additionalKey(slot), additional)
+                .commit();
+        applyConfiguredTheme(context, context.getResources().getConfiguration());
+    }
+
+    /**
      * Repoints every slot that referenced an edited or deleted user theme.
      *
      * <p>The original editor has already materialized its replacement or

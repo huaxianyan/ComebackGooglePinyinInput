@@ -453,7 +453,7 @@
 .method private static additionalKey(Ljava/lang/String;)Ljava/lang/String;
     .locals 1
 
-    .line 1117
+    .line 1170
     const-string v0, "light"
 
     invoke-virtual {v0, p0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
@@ -466,7 +466,7 @@
 
     return-object p0
 
-    .line 1118
+    .line 1171
     :cond_0
     const-string v0, "dark"
 
@@ -480,7 +480,7 @@
 
     return-object p0
 
-    .line 1119
+    .line 1172
     :cond_1
     const-string v0, "fixed"
 
@@ -494,7 +494,7 @@
 
     return-object p0
 
-    .line 1120
+    .line 1173
     :cond_2
     const-string v0, "dynamic"
 
@@ -508,7 +508,7 @@
 
     return-object p0
 
-    .line 1121
+    .line 1174
     :cond_3
     new-instance p0, Ljava/lang/IllegalArgumentException;
 
@@ -522,7 +522,7 @@
 .method private static applyConfiguredTheme(Landroid/content/Context;Landroid/content/res/Configuration;)Z
     .locals 3
 
-    .line 499
+    .line 552
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->hasSelectionSession(Landroid/content/Context;)Z
 
     move-result v0
@@ -531,10 +531,10 @@
 
     if-eqz v0, :cond_0
 
-    .line 500
+    .line 553
     return v1
 
-    .line 502
+    .line 555
     :cond_0
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->isDynamicEnabled(Landroid/content/Context;)Z
 
@@ -542,23 +542,23 @@
 
     if-eqz v0, :cond_5
 
-    .line 503
+    .line 556
     invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->isDark(Landroid/content/res/Configuration;)Z
 
     move-result v0
 
-    .line 504
+    .line 557
     invoke-static {p0, v0}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->syncDynamicTheme(Landroid/content/Context;Z)I
 
     move-result v2
 
-    .line 505
+    .line 558
     if-eqz v2, :cond_4
 
-    .line 506
+    .line 559
     nop
 
-    .line 509
+    .line 562
     if-eqz v0, :cond_1
 
     const-string p1, "resolved target=dynamic-dark"
@@ -568,7 +568,7 @@
     :cond_1
     const-string p1, "resolved target=dynamic-light"
 
-    .line 506
+    .line 559
     :goto_0
     const-string v0, "dynamic"
 
@@ -576,7 +576,7 @@
 
     move-result p0
 
-    .line 513
+    .line 566
     const/4 p1, 0x2
 
     if-eq v2, p1, :cond_2
@@ -589,13 +589,13 @@
     :cond_3
     return v1
 
-    .line 520
+    .line 573
     :cond_4
     const-string v0, "dynamic package unavailable, resolving the legacy pair"
 
     invoke-static {p0, v0}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->debugLog(Landroid/content/Context;Ljava/lang/String;)V
 
-    .line 522
+    .line 575
     :cond_5
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->isEnabled(Landroid/content/Context;)Z
 
@@ -603,15 +603,15 @@
 
     if-eqz v0, :cond_8
 
-    .line 523
+    .line 576
     invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->isDark(Landroid/content/res/Configuration;)Z
 
     move-result p1
 
-    .line 524
+    .line 577
     nop
 
-    .line 526
+    .line 579
     if-eqz p1, :cond_6
 
     const-string v0, "dark"
@@ -621,7 +621,7 @@
     :cond_6
     const-string v0, "light"
 
-    .line 527
+    .line 580
     :goto_1
     if-eqz p1, :cond_7
 
@@ -632,7 +632,7 @@
     :cond_7
     const-string p1, "resolved target=light"
 
-    .line 524
+    .line 577
     :goto_2
     invoke-static {p0, v0, p1}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->writeSlot(Landroid/content/Context;Ljava/lang/String;Ljava/lang/String;)Z
 
@@ -640,7 +640,7 @@
 
     return p0
 
-    .line 529
+    .line 582
     :cond_8
     const-string p1, "fixed"
 
@@ -656,7 +656,7 @@
 .method public static applyIfEnabled(Landroid/content/Context;Landroid/content/res/Configuration;)Z
     .locals 2
 
-    .line 455
+    .line 508
     new-instance v0, Ljava/lang/StringBuilder;
 
     invoke-direct {v0}, Ljava/lang/StringBuilder;-><init>()V
@@ -679,10 +679,10 @@
 
     invoke-static {p0, v0}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->debugLog(Landroid/content/Context;Ljava/lang/String;)V
 
-    .line 456
+    .line 509
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->ensureInitialized(Landroid/content/Context;)V
 
-    .line 457
+    .line 510
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->hasSelectionSession(Landroid/content/Context;)Z
 
     move-result v0
@@ -691,10 +691,10 @@
 
     if-eqz v0, :cond_0
 
-    .line 458
+    .line 511
     return v1
 
-    .line 464
+    .line 517
     :cond_0
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->isDynamicEnabled(Landroid/content/Context;)Z
 
@@ -702,14 +702,14 @@
 
     if-eqz v0, :cond_1
 
-    .line 465
+    .line 518
     invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->applyConfiguredTheme(Landroid/content/Context;Landroid/content/res/Configuration;)Z
 
     move-result p0
 
     return p0
 
-    .line 467
+    .line 520
     :cond_1
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->isEnabled(Landroid/content/Context;)Z
 
@@ -717,14 +717,14 @@
 
     if-nez v0, :cond_2
 
-    .line 468
+    .line 521
     return v1
 
-    .line 470
+    .line 523
     :cond_2
     nop
 
-    .line 472
+    .line 525
     invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->isDark(Landroid/content/res/Configuration;)Z
 
     move-result v0
@@ -738,7 +738,7 @@
     :cond_3
     const-string v0, "light"
 
-    .line 473
+    .line 526
     :goto_0
     invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->isDark(Landroid/content/res/Configuration;)Z
 
@@ -753,7 +753,7 @@
     :cond_4
     const-string p1, "resolved target=light"
 
-    .line 470
+    .line 523
     :goto_1
     invoke-static {p0, v0, p1}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->writeSlot(Landroid/content/Context;Ljava/lang/String;Ljava/lang/String;)Z
 
@@ -765,10 +765,10 @@
 .method public static applyOnCreate(Landroid/content/Context;)Z
     .locals 2
 
-    .line 449
+    .line 502
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->ensureInitialized(Landroid/content/Context;)V
 
-    .line 450
+    .line 503
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->preferences(Landroid/content/Context;)Landroid/content/SharedPreferences;
 
     move-result-object v0
@@ -785,7 +785,7 @@
 
     invoke-interface {v0}, Landroid/content/SharedPreferences$Editor;->commit()Z
 
-    .line 451
+    .line 504
     invoke-virtual {p0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
 
     move-result-object v0
@@ -804,23 +804,23 @@
 .method public static applyOnKeyboardShown(Landroid/content/Context;)Z
     .locals 1
 
-    .line 486
+    .line 539
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->isDynamicEnabled(Landroid/content/Context;)Z
 
     move-result v0
 
     if-nez v0, :cond_0
 
-    .line 487
+    .line 540
     const/4 p0, 0x0
 
     return p0
 
-    .line 489
+    .line 542
     :cond_0
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->ensureInitialized(Landroid/content/Context;)V
 
-    .line 490
+    .line 543
     invoke-virtual {p0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
 
     move-result-object v0
@@ -836,10 +836,179 @@
     return p0
 .end method
 
+.method public static applyTheme(Landroid/content/Context;Ljava/lang/String;)V
+    .locals 2
+
+    .line 427
+    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->ensureInitialized(Landroid/content/Context;)V
+
+    .line 428
+    if-eqz p1, :cond_0
+
+    invoke-virtual {p1}, Ljava/lang/String;->length()I
+
+    move-result v0
+
+    if-eqz v0, :cond_0
+
+    .line 431
+    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->disable(Landroid/content/Context;)V
+
+    .line 432
+    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->preferences(Landroid/content/Context;)Landroid/content/SharedPreferences;
+
+    move-result-object v0
+
+    invoke-interface {v0}, Landroid/content/SharedPreferences;->edit()Landroid/content/SharedPreferences$Editor;
+
+    move-result-object v0
+
+    .line 433
+    const v1, 0x7f11023a
+
+    invoke-virtual {p0, v1}, Landroid/content/Context;->getString(I)Ljava/lang/String;
+
+    move-result-object v1
+
+    invoke-interface {v0, v1, p1}, Landroid/content/SharedPreferences$Editor;->putString(Ljava/lang/String;Ljava/lang/String;)Landroid/content/SharedPreferences$Editor;
+
+    move-result-object p1
+
+    .line 434
+    invoke-interface {p1}, Landroid/content/SharedPreferences$Editor;->commit()Z
+
+    .line 435
+    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->captureFixedTheme(Landroid/content/Context;)V
+
+    .line 436
+    invoke-virtual {p0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
+
+    move-result-object p1
+
+    invoke-virtual {p1}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
+
+    move-result-object p1
+
+    invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->applyConfiguredTheme(Landroid/content/Context;Landroid/content/res/Configuration;)Z
+
+    .line 437
+    return-void
+
+    .line 429
+    :cond_0
+    new-instance p0, Ljava/lang/IllegalArgumentException;
+
+    const-string p1, "Empty theme value"
+
+    invoke-direct {p0, p1}, Ljava/lang/IllegalArgumentException;-><init>(Ljava/lang/String;)V
+
+    throw p0
+.end method
+
+.method public static assignSlot(Landroid/content/Context;Ljava/lang/String;Ljava/lang/String;)V
+    .locals 2
+
+    .line 450
+    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->ensureInitialized(Landroid/content/Context;)V
+
+    .line 451
+    if-eqz p2, :cond_2
+
+    invoke-virtual {p2}, Ljava/lang/String;->length()I
+
+    move-result v0
+
+    if-eqz v0, :cond_2
+
+    .line 454
+    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->isEnabled(Landroid/content/Context;)Z
+
+    move-result v0
+
+    .line 455
+    invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->isSelectableSlot(Ljava/lang/String;)Z
+
+    move-result v1
+
+    if-eqz v1, :cond_1
+
+    .line 456
+    const-string v1, "fixed"
+
+    invoke-virtual {v1, p1}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+
+    move-result v1
+
+    if-eqz v1, :cond_0
+
+    if-nez v0, :cond_1
+
+    goto :goto_0
+
+    :cond_0
+    if-eqz v0, :cond_1
+
+    .line 459
+    :goto_0
+    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->preferences(Landroid/content/Context;)Landroid/content/SharedPreferences;
+
+    move-result-object v0
+
+    invoke-interface {v0}, Landroid/content/SharedPreferences;->edit()Landroid/content/SharedPreferences$Editor;
+
+    move-result-object v0
+
+    .line 460
+    invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->additionalKey(Ljava/lang/String;)Ljava/lang/String;
+
+    move-result-object p1
+
+    invoke-interface {v0, p1, p2}, Landroid/content/SharedPreferences$Editor;->putString(Ljava/lang/String;Ljava/lang/String;)Landroid/content/SharedPreferences$Editor;
+
+    move-result-object p1
+
+    .line 461
+    invoke-interface {p1}, Landroid/content/SharedPreferences$Editor;->commit()Z
+
+    .line 462
+    invoke-virtual {p0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
+
+    move-result-object p1
+
+    invoke-virtual {p1}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
+
+    move-result-object p1
+
+    invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->applyConfiguredTheme(Landroid/content/Context;Landroid/content/res/Configuration;)Z
+
+    .line 463
+    return-void
+
+    .line 457
+    :cond_1
+    new-instance p0, Ljava/lang/IllegalStateException;
+
+    const-string p1, "Theme slot is disabled"
+
+    invoke-direct {p0, p1}, Ljava/lang/IllegalStateException;-><init>(Ljava/lang/String;)V
+
+    throw p0
+
+    .line 452
+    :cond_2
+    new-instance p0, Ljava/lang/IllegalArgumentException;
+
+    const-string p1, "Empty theme value"
+
+    invoke-direct {p0, p1}, Ljava/lang/IllegalArgumentException;-><init>(Ljava/lang/String;)V
+
+    throw p0
+.end method
+
 .method private static baseKey(Ljava/lang/String;)Ljava/lang/String;
     .locals 1
 
-    .line 1109
+    .line 1162
     const-string v0, "light"
 
     invoke-virtual {v0, p0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
@@ -852,7 +1021,7 @@
 
     return-object p0
 
-    .line 1110
+    .line 1163
     :cond_0
     const-string v0, "dark"
 
@@ -866,7 +1035,7 @@
 
     return-object p0
 
-    .line 1111
+    .line 1164
     :cond_1
     const-string v0, "fixed"
 
@@ -880,7 +1049,7 @@
 
     return-object p0
 
-    .line 1112
+    .line 1165
     :cond_2
     const-string v0, "dynamic"
 
@@ -894,7 +1063,7 @@
 
     return-object p0
 
-    .line 1113
+    .line 1166
     :cond_3
     new-instance p0, Ljava/lang/IllegalArgumentException;
 
@@ -1032,12 +1201,12 @@
         }
     .end annotation
 
-    .line 627
+    .line 680
     new-instance v0, Ljava/util/HashMap;
 
     invoke-direct {v0}, Ljava/util/HashMap;-><init>()V
 
-    .line 628
+    .line 681
     const/4 v1, 0x0
 
     :goto_0
@@ -1047,7 +1216,7 @@
 
     if-ge v1, v2, :cond_1
 
-    .line 629
+    .line 682
     sget-object v2, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->BORDER_SHEET_SOURCES:[Ljava/lang/String;
 
     aget-object v2, v2, v1
@@ -1058,23 +1227,23 @@
 
     check-cast v2, Ljava/lang/Integer;
 
-    .line 630
+    .line 683
     if-eqz v2, :cond_0
 
-    .line 631
+    .line 684
     sget-object v3, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->BORDER_SHEET_NAMES:[Ljava/lang/String;
 
     aget-object v3, v3, v1
 
     invoke-interface {v0, v3, v2}, Ljava/util/Map;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 
-    .line 628
+    .line 681
     :cond_0
     add-int/lit8 v1, v1, 0x1
 
     goto :goto_0
 
-    .line 634
+    .line 687
     :cond_1
     return-object v0
 .end method
@@ -1093,7 +1262,7 @@
         }
     .end annotation
 
-    .line 679
+    .line 732
     if-eqz p1, :cond_0
 
     const-string v0, "dark"
@@ -1103,7 +1272,7 @@
     :cond_0
     const-string v0, "light"
 
-    .line 680
+    .line 733
     :goto_0
     new-instance v1, Ljava/lang/StringBuilder;
 
@@ -1129,7 +1298,7 @@
 
     move-result-object v1
 
-    .line 681
+    .line 734
     new-instance v4, Ljava/lang/StringBuilder;
 
     invoke-direct {v4}, Ljava/lang/StringBuilder;-><init>()V
@@ -1152,12 +1321,12 @@
 
     move-result-object v2
 
-    .line 682
+    .line 735
     invoke-static {p2}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->borderSheetColors(Ljava/util/Map;)Ljava/util/Map;
 
     move-result-object v4
 
-    .line 683
+    .line 736
     if-eqz p1, :cond_1
 
     sget-object p1, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->DYNAMIC_ENTRIES_DARK:[Ljava/lang/String;
@@ -1167,13 +1336,13 @@
     :cond_1
     sget-object p1, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->DYNAMIC_ENTRIES_LIGHT:[Ljava/lang/String;
 
-    .line 684
+    .line 737
     :goto_1
     array-length v5, p1
 
     new-array v5, v5, [[B
 
-    .line 685
+    .line 738
     const/4 v6, 0x0
 
     const/4 v7, 0x0
@@ -1183,18 +1352,18 @@
 
     if-ge v7, v8, :cond_6
 
-    .line 686
+    .line 739
     aget-object v8, p1, v7
 
-    .line 687
+    .line 740
     invoke-static {p0, v8}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->templateBytes(Landroid/content/Context;Ljava/lang/String;)[B
 
     move-result-object v9
 
-    .line 688
+    .line 741
     if-nez v9, :cond_2
 
-    .line 689
+    .line 742
     new-instance p1, Ljava/lang/StringBuilder;
 
     invoke-direct {p1}, Ljava/lang/StringBuilder;-><init>()V
@@ -1215,10 +1384,10 @@
 
     invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->debugLog(Landroid/content/Context;Ljava/lang/String;)V
 
-    .line 690
+    .line 743
     return v6
 
-    .line 692
+    .line 745
     :cond_2
     invoke-virtual {v1, v8}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
 
@@ -1226,14 +1395,14 @@
 
     if-eqz v10, :cond_3
 
-    .line 693
+    .line 746
     invoke-static {v9, p2}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->rewriteStyleSheetColors([BLjava/util/Map;)[B
 
     move-result-object v9
 
     goto :goto_3
 
-    .line 694
+    .line 747
     :cond_3
     invoke-virtual {v2, v8}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
 
@@ -1241,17 +1410,17 @@
 
     if-eqz v10, :cond_4
 
-    .line 695
+    .line 748
     invoke-static {v9, v4}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->rewriteStyleSheetColors([BLjava/util/Map;)[B
 
     move-result-object v9
 
-    .line 697
+    .line 750
     :cond_4
     :goto_3
     if-nez v9, :cond_5
 
-    .line 698
+    .line 751
     new-instance p1, Ljava/lang/StringBuilder;
 
     invoke-direct {p1}, Ljava/lang/StringBuilder;-><init>()V
@@ -1272,19 +1441,19 @@
 
     invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->debugLog(Landroid/content/Context;Ljava/lang/String;)V
 
-    .line 699
+    .line 752
     return v6
 
-    .line 701
+    .line 754
     :cond_5
     aput-object v9, v5, v7
 
-    .line 685
+    .line 738
     add-int/lit8 v7, v7, 0x1
 
     goto :goto_2
 
-    .line 703
+    .line 756
     :cond_6
     new-instance p2, Ljava/lang/StringBuilder;
 
@@ -1312,24 +1481,24 @@
 
     move-result-object p2
 
-    .line 704
+    .line 757
     if-nez p2, :cond_7
 
-    .line 705
+    .line 758
     const-string p1, "dynamic template missing: metadata"
 
     invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->debugLog(Landroid/content/Context;Ljava/lang/String;)V
 
-    .line 706
+    .line 759
     return v6
 
-    .line 708
+    .line 761
     :cond_7
     invoke-static {p2}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->withFormatVersion([B)[B
 
     move-result-object p2
 
-    .line 710
+    .line 763
     new-instance v0, Ljava/io/File;
 
     invoke-virtual {p0}, Landroid/content/Context;->getFilesDir()Ljava/io/File;
@@ -1340,7 +1509,7 @@
 
     invoke-direct {v0, v1, v2}, Ljava/io/File;-><init>(Ljava/io/File;Ljava/lang/String;)V
 
-    .line 711
+    .line 764
     new-instance v1, Ljava/io/File;
 
     invoke-virtual {p0}, Landroid/content/Context;->getFilesDir()Ljava/io/File;
@@ -1351,10 +1520,10 @@
 
     invoke-direct {v1, v2, v3}, Ljava/io/File;-><init>(Ljava/io/File;Ljava/lang/String;)V
 
-    .line 712
+    .line 765
     nop
 
-    .line 714
+    .line 767
     const/4 v2, 0x0
 
     :try_start_0
@@ -1368,13 +1537,13 @@
     :try_end_0
     .catch Ljava/io/IOException; {:try_start_0 .. :try_end_0} :catch_1
 
-    .line 715
+    .line 768
     :try_start_1
     const-string v2, "metadata.binarypb"
 
     invoke-static {v3, v2, p2}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->putStoredEntry(Ljava/util/zip/ZipOutputStream;Ljava/lang/String;[B)V
 
-    .line 716
+    .line 769
     const/4 p2, 0x0
 
     :goto_4
@@ -1382,7 +1551,7 @@
 
     if-ge p2, v2, :cond_8
 
-    .line 717
+    .line 770
     aget-object v2, p1, p2
 
     aget-object v4, v5, p2
@@ -1391,26 +1560,26 @@
     :try_end_1
     .catch Ljava/io/IOException; {:try_start_1 .. :try_end_1} :catch_0
 
-    .line 716
+    .line 769
     add-int/lit8 p2, p2, 0x1
 
     goto :goto_4
 
-    .line 724
+    .line 777
     :cond_8
     nop
 
-    .line 725
+    .line 778
     invoke-static {v3}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->closeQuietly(Ljava/io/Closeable;)V
 
-    .line 727
+    .line 780
     invoke-virtual {v1, v0}, Ljava/io/File;->renameTo(Ljava/io/File;)Z
 
     move-result p1
 
     if-nez p1, :cond_a
 
-    .line 730
+    .line 783
     invoke-virtual {v0}, Ljava/io/File;->delete()Z
 
     move-result p1
@@ -1423,25 +1592,25 @@
 
     if-nez p1, :cond_a
 
-    .line 731
+    .line 784
     :cond_9
     invoke-virtual {v1}, Ljava/io/File;->delete()Z
 
-    .line 732
+    .line 785
     const-string p1, "dynamic theme package replace failed"
 
     invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->debugLog(Landroid/content/Context;Ljava/lang/String;)V
 
-    .line 733
+    .line 786
     return v6
 
-    .line 736
+    .line 789
     :cond_a
     const/4 p0, 0x1
 
     return p0
 
-    .line 719
+    .line 772
     :catch_0
     move-exception p1
 
@@ -1452,19 +1621,19 @@
     :catch_1
     move-exception p1
 
-    .line 720
+    .line 773
     :goto_5
     const-string p1, "dynamic theme package write failed"
 
     invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->debugLog(Landroid/content/Context;Ljava/lang/String;)V
 
-    .line 721
+    .line 774
     invoke-static {v2}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->closeQuietly(Ljava/io/Closeable;)V
 
-    .line 722
+    .line 775
     invoke-virtual {v1}, Ljava/io/File;->delete()Z
 
-    .line 723
+    .line 776
     return v6
 .end method
 
@@ -1531,27 +1700,27 @@
 .method private static closeQuietly(Ljava/io/Closeable;)V
     .locals 0
 
-    .line 1004
+    .line 1057
     if-nez p0, :cond_0
 
-    .line 1005
+    .line 1058
     return-void
 
-    .line 1008
+    .line 1061
     :cond_0
     :try_start_0
     invoke-interface {p0}, Ljava/io/Closeable;->close()V
     :try_end_0
     .catch Ljava/io/IOException; {:try_start_0 .. :try_end_0} :catch_0
 
-    .line 1011
+    .line 1064
     goto :goto_0
 
-    .line 1009
+    .line 1062
     :catch_0
     move-exception p0
 
-    .line 1012
+    .line 1065
     :goto_0
     return-void
 .end method
@@ -1559,7 +1728,7 @@
 .method private static debugLog(Landroid/content/Context;Ljava/lang/String;)V
     .locals 0
 
-    .line 1130
+    .line 1183
     invoke-virtual {p0}, Landroid/content/Context;->getApplicationInfo()Landroid/content/pm/ApplicationInfo;
 
     move-result-object p0
@@ -1570,12 +1739,12 @@
 
     if-eqz p0, :cond_0
 
-    .line 1131
+    .line 1184
     const-string p0, "SystemAutoTheme"
 
     invoke-static {p0, p1}, Landroid/util/Log;->d(Ljava/lang/String;Ljava/lang/String;)I
 
-    .line 1133
+    .line 1186
     :cond_0
     return-void
 .end method
@@ -1640,7 +1809,7 @@
         }
     .end annotation
 
-    .line 638
+    .line 691
     new-instance v0, Ljava/lang/StringBuilder;
 
     if-eqz p0, :cond_0
@@ -1655,7 +1824,7 @@
     :goto_0
     invoke-direct {v0, p0}, Ljava/lang/StringBuilder;-><init>(Ljava/lang/String;)V
 
-    .line 642
+    .line 695
     const-string p0, "@v"
 
     invoke-virtual {v0, p0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
@@ -1666,7 +1835,7 @@
 
     invoke-virtual {p0, v1}, Ljava/lang/StringBuilder;->append(I)Ljava/lang/StringBuilder;
 
-    .line 643
+    .line 696
     const-string p0, "@r"
 
     invoke-virtual {v0, p0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
@@ -1675,7 +1844,7 @@
 
     invoke-virtual {p0, v1}, Ljava/lang/StringBuilder;->append(I)Ljava/lang/StringBuilder;
 
-    .line 644
+    .line 697
     const/4 p0, 0x0
 
     :goto_1
@@ -1685,7 +1854,7 @@
 
     if-ge p0, v1, :cond_2
 
-    .line 645
+    .line 698
     sget-object v1, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->DYNAMIC_SLOT_NAMES:[Ljava/lang/String;
 
     aget-object v1, v1, p0
@@ -1696,15 +1865,15 @@
 
     check-cast v1, Ljava/lang/Integer;
 
-    .line 646
+    .line 699
     const/16 v2, 0x3a
 
     invoke-virtual {v0, v2}, Ljava/lang/StringBuilder;->append(C)Ljava/lang/StringBuilder;
 
-    .line 647
+    .line 700
     if-eqz v1, :cond_1
 
-    .line 648
+    .line 701
     invoke-virtual {v1}, Ljava/lang/Integer;->intValue()I
 
     move-result v1
@@ -1715,13 +1884,13 @@
 
     invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 
-    .line 644
+    .line 697
     :cond_1
     add-int/lit8 p0, p0, 0x1
 
     goto :goto_1
 
-    .line 651
+    .line 704
     :cond_2
     invoke-virtual {v0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
 
@@ -1737,13 +1906,13 @@
 
     monitor-enter v0
 
-    .line 1029
+    .line 1082
     :try_start_0
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->preferences(Landroid/content/Context;)Landroid/content/SharedPreferences;
 
     move-result-object v1
 
-    .line 1030
+    .line 1083
     invoke-static {v1}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->hasEverySlotKey(Landroid/content/SharedPreferences;)Z
 
     move-result v2
@@ -1752,19 +1921,19 @@
 
     if-eqz v2, :cond_0
 
-    .line 1031
+    .line 1084
     monitor-exit v0
 
     return-void
 
-    .line 1033
+    .line 1086
     :cond_0
     :try_start_1
     invoke-interface {v1}, Landroid/content/SharedPreferences;->edit()Landroid/content/SharedPreferences$Editor;
 
     move-result-object v2
 
-    .line 1034
+    .line 1087
     const-string v3, "compat_theme_fixed_keyboard"
 
     invoke-interface {v1, v3}, Landroid/content/SharedPreferences;->contains(Ljava/lang/String;)Z
@@ -1781,13 +1950,13 @@
 
     if-nez v3, :cond_2
 
-    .line 1038
+    .line 1091
     :cond_1
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->resolveCurrentTheme(Landroid/content/Context;)[Ljava/lang/String;
 
     move-result-object v3
 
-    .line 1039
+    .line 1092
     const-string v4, "compat_theme_fixed_keyboard"
 
     const/4 v5, 0x0
@@ -1796,7 +1965,7 @@
 
     invoke-static {v2, v1, v4, v5}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->putIfAbsent(Landroid/content/SharedPreferences$Editor;Landroid/content/SharedPreferences;Ljava/lang/String;Ljava/lang/String;)V
 
-    .line 1040
+    .line 1093
     const-string v4, "compat_theme_fixed_additional"
 
     const/4 v5, 0x1
@@ -1805,7 +1974,7 @@
 
     invoke-static {v2, v1, v4, v3}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->putIfAbsent(Landroid/content/SharedPreferences$Editor;Landroid/content/SharedPreferences;Ljava/lang/String;Ljava/lang/String;)V
 
-    .line 1042
+    .line 1095
     :cond_2
     const v3, 0x7f110226
 
@@ -1813,12 +1982,12 @@
 
     move-result-object v3
 
-    .line 1043
+    .line 1096
     const-string v4, "compat_theme_light_keyboard"
 
     invoke-static {v2, v1, v4, v3}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->putIfAbsent(Landroid/content/SharedPreferences$Editor;Landroid/content/SharedPreferences;Ljava/lang/String;Ljava/lang/String;)V
 
-    .line 1044
+    .line 1097
     const-string v4, "compat_theme_light_additional"
 
     const v5, 0x7f110225
@@ -1829,12 +1998,12 @@
 
     invoke-static {v2, v1, v4, v5}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->putIfAbsent(Landroid/content/SharedPreferences$Editor;Landroid/content/SharedPreferences;Ljava/lang/String;Ljava/lang/String;)V
 
-    .line 1045
+    .line 1098
     const-string v4, "compat_theme_dark_keyboard"
 
     invoke-static {v2, v1, v4, v3}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->putIfAbsent(Landroid/content/SharedPreferences$Editor;Landroid/content/SharedPreferences;Ljava/lang/String;Ljava/lang/String;)V
 
-    .line 1046
+    .line 1099
     const-string v4, "compat_theme_dark_additional"
 
     const v5, 0x7f110224
@@ -1845,29 +2014,29 @@
 
     invoke-static {v2, v1, v4, p0}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->putIfAbsent(Landroid/content/SharedPreferences$Editor;Landroid/content/SharedPreferences;Ljava/lang/String;Ljava/lang/String;)V
 
-    .line 1047
+    .line 1100
     const-string p0, "compat_theme_dynamic_keyboard"
 
     invoke-static {v2, v1, p0, v3}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->putIfAbsent(Landroid/content/SharedPreferences$Editor;Landroid/content/SharedPreferences;Ljava/lang/String;Ljava/lang/String;)V
 
-    .line 1048
+    .line 1101
     const-string p0, "compat_theme_dynamic_additional"
 
     const-string v3, "files:dynamic_theme.zip"
 
     invoke-static {v2, v1, p0, v3}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->putIfAbsent(Landroid/content/SharedPreferences$Editor;Landroid/content/SharedPreferences;Ljava/lang/String;Ljava/lang/String;)V
 
-    .line 1053
+    .line 1106
     invoke-interface {v2}, Landroid/content/SharedPreferences$Editor;->commit()Z
     :try_end_1
     .catchall {:try_start_1 .. :try_end_1} :catchall_0
 
-    .line 1054
+    .line 1107
     monitor-exit v0
 
     return-void
 
-    .line 1028
+    .line 1081
     :catchall_0
     move-exception p0
 
@@ -1972,7 +2141,7 @@
 .method private static hasEverySlotKey(Landroid/content/SharedPreferences;)Z
     .locals 1
 
-    .line 1065
+    .line 1118
     const-string v0, "compat_theme_fixed_keyboard"
 
     invoke-interface {p0, v0}, Landroid/content/SharedPreferences;->contains(Ljava/lang/String;)Z
@@ -1981,7 +2150,7 @@
 
     if-eqz v0, :cond_0
 
-    .line 1066
+    .line 1119
     const-string v0, "compat_theme_fixed_additional"
 
     invoke-interface {p0, v0}, Landroid/content/SharedPreferences;->contains(Ljava/lang/String;)Z
@@ -1990,7 +2159,7 @@
 
     if-eqz v0, :cond_0
 
-    .line 1067
+    .line 1120
     const-string v0, "compat_theme_light_keyboard"
 
     invoke-interface {p0, v0}, Landroid/content/SharedPreferences;->contains(Ljava/lang/String;)Z
@@ -1999,7 +2168,7 @@
 
     if-eqz v0, :cond_0
 
-    .line 1068
+    .line 1121
     const-string v0, "compat_theme_light_additional"
 
     invoke-interface {p0, v0}, Landroid/content/SharedPreferences;->contains(Ljava/lang/String;)Z
@@ -2008,7 +2177,7 @@
 
     if-eqz v0, :cond_0
 
-    .line 1069
+    .line 1122
     const-string v0, "compat_theme_dark_keyboard"
 
     invoke-interface {p0, v0}, Landroid/content/SharedPreferences;->contains(Ljava/lang/String;)Z
@@ -2017,7 +2186,7 @@
 
     if-eqz v0, :cond_0
 
-    .line 1070
+    .line 1123
     const-string v0, "compat_theme_dark_additional"
 
     invoke-interface {p0, v0}, Landroid/content/SharedPreferences;->contains(Ljava/lang/String;)Z
@@ -2026,7 +2195,7 @@
 
     if-eqz v0, :cond_0
 
-    .line 1071
+    .line 1124
     const-string v0, "compat_theme_dynamic_keyboard"
 
     invoke-interface {p0, v0}, Landroid/content/SharedPreferences;->contains(Ljava/lang/String;)Z
@@ -2035,7 +2204,7 @@
 
     if-eqz v0, :cond_0
 
-    .line 1072
+    .line 1125
     const-string v0, "compat_theme_dynamic_additional"
 
     invoke-interface {p0, v0}, Landroid/content/SharedPreferences;->contains(Ljava/lang/String;)Z
@@ -2051,7 +2220,7 @@
     :cond_0
     const/4 p0, 0x0
 
-    .line 1065
+    .line 1118
     :goto_0
     return p0
 .end method
@@ -2059,7 +2228,7 @@
 .method private static hasSelectionSession(Landroid/content/Context;)Z
     .locals 2
 
-    .line 1100
+    .line 1153
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->preferences(Landroid/content/Context;)Landroid/content/SharedPreferences;
 
     move-result-object p0
@@ -2082,15 +2251,15 @@
 .method private static invalidatePreviewSnapshots(Landroid/content/Context;)V
     .locals 8
 
-    .line 761
+    .line 814
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->transientCacheDirectories(Landroid/content/Context;)[Ljava/io/File;
 
     move-result-object v0
 
-    .line 762
+    .line 815
     nop
 
-    .line 763
+    .line 816
     const/4 v1, 0x0
 
     const/4 v2, 0x0
@@ -2102,20 +2271,20 @@
 
     if-ge v2, v4, :cond_3
 
-    .line 764
+    .line 817
     aget-object v4, v0, v2
 
     invoke-virtual {v4}, Ljava/io/File;->listFiles()[Ljava/io/File;
 
     move-result-object v4
 
-    .line 765
+    .line 818
     if-nez v4, :cond_0
 
-    .line 766
+    .line 819
     goto :goto_2
 
-    .line 768
+    .line 821
     :cond_0
     const/4 v5, 0x0
 
@@ -2124,14 +2293,14 @@
 
     if-ge v5, v6, :cond_2
 
-    .line 769
+    .line 822
     aget-object v6, v4, v5
 
     invoke-virtual {v6}, Ljava/io/File;->getName()Ljava/lang/String;
 
     move-result-object v6
 
-    .line 770
+    .line 823
     const-string v7, "keyboardsnapshotcache_"
 
     invoke-virtual {v6, v7}, Ljava/lang/String;->startsWith(Ljava/lang/String;)Z
@@ -2140,7 +2309,7 @@
 
     if-eqz v7, :cond_1
 
-    .line 771
+    .line 824
     const-string v7, ".png"
 
     invoke-virtual {v6, v7}, Ljava/lang/String;->endsWith(Ljava/lang/String;)Z
@@ -2151,30 +2320,30 @@
 
     aget-object v6, v4, v5
 
-    .line 772
+    .line 825
     invoke-virtual {v6}, Ljava/io/File;->delete()Z
 
     move-result v6
 
     if-eqz v6, :cond_1
 
-    .line 773
+    .line 826
     add-int/lit8 v3, v3, 0x1
 
-    .line 768
+    .line 821
     :cond_1
     add-int/lit8 v5, v5, 0x1
 
     goto :goto_1
 
-    .line 763
+    .line 816
     :cond_2
     :goto_2
     add-int/lit8 v2, v2, 0x1
 
     goto :goto_0
 
-    .line 777
+    .line 830
     :cond_3
     new-instance v0, Ljava/lang/StringBuilder;
 
@@ -2196,14 +2365,14 @@
 
     invoke-static {p0, v0}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->debugLog(Landroid/content/Context;Ljava/lang/String;)V
 
-    .line 778
+    .line 831
     return-void
 .end method
 
 .method private static isDark(Landroid/content/res/Configuration;)Z
     .locals 1
 
-    .line 1125
+    .line 1178
     iget p0, p0, Landroid/content/res/Configuration;->uiMode:I
 
     and-int/lit8 p0, p0, 0x30
@@ -2282,7 +2451,7 @@
 .method private static isSelectableSlot(Ljava/lang/String;)Z
     .locals 1
 
-    .line 1105
+    .line 1158
     const-string v0, "light"
 
     invoke-virtual {v0, p0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
@@ -2325,24 +2494,24 @@
 .method public static logInputViewRebuild(Landroid/content/Context;)V
     .locals 1
 
-    .line 495
+    .line 548
     const-string v0, "rebuilding InputView after automatic theme resolution"
 
     invoke-static {p0, v0}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->debugLog(Landroid/content/Context;Ljava/lang/String;)V
 
-    .line 496
+    .line 549
     return-void
 .end method
 
 .method private static preferences(Landroid/content/Context;)Landroid/content/SharedPreferences;
     .locals 2
 
-    .line 1136
+    .line 1189
     new-instance v0, Ljava/lang/StringBuilder;
 
     invoke-direct {v0}, Ljava/lang/StringBuilder;-><init>()V
 
-    .line 1137
+    .line 1190
     invoke-virtual {p0}, Landroid/content/Context;->getPackageName()Ljava/lang/String;
 
     move-result-object v1
@@ -2361,7 +2530,7 @@
 
     move-result-object v0
 
-    .line 1136
+    .line 1189
     const/4 v1, 0x0
 
     invoke-virtual {p0, v0, v1}, Landroid/content/Context;->getSharedPreferences(Ljava/lang/String;I)Landroid/content/SharedPreferences;
@@ -2423,17 +2592,17 @@
 .method private static putIfAbsent(Landroid/content/SharedPreferences$Editor;Landroid/content/SharedPreferences;Ljava/lang/String;Ljava/lang/String;)V
     .locals 0
 
-    .line 1058
+    .line 1111
     invoke-interface {p1, p2}, Landroid/content/SharedPreferences;->contains(Ljava/lang/String;)Z
 
     move-result p1
 
     if-nez p1, :cond_0
 
-    .line 1059
+    .line 1112
     invoke-interface {p0, p2, p3}, Landroid/content/SharedPreferences$Editor;->putString(Ljava/lang/String;Ljava/lang/String;)Landroid/content/SharedPreferences$Editor;
 
-    .line 1061
+    .line 1114
     :cond_0
     return-void
 .end method
@@ -2446,72 +2615,72 @@
         }
     .end annotation
 
-    .line 958
+    .line 1011
     new-instance v0, Ljava/util/zip/CRC32;
 
     invoke-direct {v0}, Ljava/util/zip/CRC32;-><init>()V
 
-    .line 959
+    .line 1012
     invoke-virtual {v0, p2}, Ljava/util/zip/CRC32;->update([B)V
 
-    .line 960
+    .line 1013
     new-instance v1, Ljava/util/zip/ZipEntry;
 
     invoke-direct {v1, p1}, Ljava/util/zip/ZipEntry;-><init>(Ljava/lang/String;)V
 
-    .line 961
+    .line 1014
     const/4 p1, 0x0
 
     invoke-virtual {v1, p1}, Ljava/util/zip/ZipEntry;->setMethod(I)V
 
-    .line 962
+    .line 1015
     array-length p1, p2
 
     int-to-long v2, p1
 
     invoke-virtual {v1, v2, v3}, Ljava/util/zip/ZipEntry;->setSize(J)V
 
-    .line 963
+    .line 1016
     array-length p1, p2
 
     int-to-long v2, p1
 
     invoke-virtual {v1, v2, v3}, Ljava/util/zip/ZipEntry;->setCompressedSize(J)V
 
-    .line 964
+    .line 1017
     invoke-virtual {v0}, Ljava/util/zip/CRC32;->getValue()J
 
     move-result-wide v2
 
     invoke-virtual {v1, v2, v3}, Ljava/util/zip/ZipEntry;->setCrc(J)V
 
-    .line 965
+    .line 1018
     invoke-virtual {p0, v1}, Ljava/util/zip/ZipOutputStream;->putNextEntry(Ljava/util/zip/ZipEntry;)V
 
-    .line 966
+    .line 1019
     invoke-virtual {p0, p2}, Ljava/util/zip/ZipOutputStream;->write([B)V
 
-    .line 967
+    .line 1020
     invoke-virtual {p0}, Ljava/util/zip/ZipOutputStream;->closeEntry()V
 
-    .line 968
+    .line 1021
     return-void
 .end method
 
 .method private static readVarint([BI[J)I
     .locals 7
 
-    .line 972
+    .line 1025
     nop
 
-    .line 973
+    .line 1026
     const-wide/16 v0, 0x0
 
     const/4 v2, 0x0
 
     const/4 v3, 0x0
 
-    .line 975
+    .line 1028
     :goto_0
     array-length v4, p0
 
@@ -2523,16 +2692,16 @@
 
     goto :goto_1
 
-    .line 978
+    .line 1031
     :cond_0
     aget-byte v4, p0, p1
 
     and-int/lit16 v4, v4, 0xff
 
-    .line 979
+    .line 1032
     add-int/lit8 p1, p1, 0x1
 
-    .line 980
+    .line 1033
     and-int/lit8 v5, v4, 0x7f
 
     int-to-long v5, v5
@@ -2541,28 +2710,28 @@
 
     or-long/2addr v0, v5
 
-    .line 981
+    .line 1034
     and-int/lit16 v4, v4, 0x80
 
     if-nez v4, :cond_1
 
-    .line 982
+    .line 1035
     nop
 
-    .line 986
+    .line 1039
     aput-wide v0, p2, v2
 
-    .line 987
+    .line 1040
     return p1
 
-    .line 984
+    .line 1037
     :cond_1
     add-int/lit8 v3, v3, 0x7
 
-    .line 985
+    .line 1038
     goto :goto_0
 
-    .line 976
+    .line 1029
     :cond_2
     :goto_1
     const/4 p0, -0x1
@@ -2573,10 +2742,10 @@
 .method public static reconcileCustomThemeEdit(Landroid/content/Context;Landroid/content/Intent;)V
     .locals 11
 
-    .line 420
+    .line 473
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->ensureInitialized(Landroid/content/Context;)V
 
-    .line 421
+    .line 474
     if-eqz p1, :cond_6
 
     invoke-virtual {p1}, Landroid/content/Intent;->getExtras()Landroid/os/Bundle;
@@ -2587,7 +2756,7 @@
 
     goto :goto_2
 
-    .line 424
+    .line 477
     :cond_0
     invoke-virtual {p1}, Landroid/content/Intent;->getExtras()Landroid/os/Bundle;
 
@@ -2599,7 +2768,7 @@
 
     move-result-object p1
 
-    .line 425
+    .line 478
     if-eqz p1, :cond_5
 
     invoke-virtual {p1}, Ljava/lang/String;->length()I
@@ -2610,26 +2779,26 @@
 
     goto :goto_1
 
-    .line 428
+    .line 481
     :cond_1
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->resolveCurrentTheme(Landroid/content/Context;)[Ljava/lang/String;
 
     move-result-object v0
 
-    .line 429
+    .line 482
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->preferences(Landroid/content/Context;)Landroid/content/SharedPreferences;
 
     move-result-object p0
 
-    .line 430
+    .line 483
     invoke-interface {p0}, Landroid/content/SharedPreferences;->edit()Landroid/content/SharedPreferences$Editor;
 
     move-result-object v1
 
-    .line 431
+    .line 484
     nop
 
-    .line 432
+    .line 485
     const/4 v2, 0x3
 
     new-array v3, v2, [Ljava/lang/String;
@@ -2652,7 +2821,7 @@
 
     aput-object v4, v3, v7
 
-    .line 433
+    .line 486
     const/4 v4, 0x0
 
     const/4 v7, 0x0
@@ -2660,10 +2829,10 @@
     :goto_0
     if-ge v4, v2, :cond_3
 
-    .line 434
+    .line 487
     aget-object v8, v3, v4
 
-    .line 435
+    .line 488
     invoke-static {v8}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->additionalKey(Ljava/lang/String;)Ljava/lang/String;
 
     move-result-object v9
@@ -2674,7 +2843,7 @@
 
     move-result-object v9
 
-    .line 436
+    .line 489
     const-string v10, "files:user_theme_"
 
     invoke-virtual {v9, v10}, Ljava/lang/String;->startsWith(Ljava/lang/String;)Z
@@ -2689,7 +2858,7 @@
 
     if-eqz v9, :cond_2
 
-    .line 437
+    .line 490
     invoke-static {v8}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->baseKey(Ljava/lang/String;)Ljava/lang/String;
 
     move-result-object v7
@@ -2698,7 +2867,7 @@
 
     invoke-interface {v1, v7, v9}, Landroid/content/SharedPreferences$Editor;->putString(Ljava/lang/String;Ljava/lang/String;)Landroid/content/SharedPreferences$Editor;
 
-    .line 438
+    .line 491
     invoke-static {v8}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->additionalKey(Ljava/lang/String;)Ljava/lang/String;
 
     move-result-object v7
@@ -2707,32 +2876,32 @@
 
     invoke-interface {v1, v7, v8}, Landroid/content/SharedPreferences$Editor;->putString(Ljava/lang/String;Ljava/lang/String;)Landroid/content/SharedPreferences$Editor;
 
-    .line 439
+    .line 492
     const/4 v7, 0x1
 
-    .line 433
+    .line 486
     :cond_2
     add-int/lit8 v4, v4, 0x1
 
     goto :goto_0
 
-    .line 442
+    .line 495
     :cond_3
     if-eqz v7, :cond_4
 
-    .line 443
+    .line 496
     invoke-interface {v1}, Landroid/content/SharedPreferences$Editor;->commit()Z
 
-    .line 445
+    .line 498
     :cond_4
     return-void
 
-    .line 426
+    .line 479
     :cond_5
     :goto_1
     return-void
 
-    .line 422
+    .line 475
     :cond_6
     :goto_2
     return-void
@@ -2741,7 +2910,7 @@
 .method private static resolveCurrentTheme(Landroid/content/Context;)[Ljava/lang/String;
     .locals 8
 
-    .line 1077
+    .line 1130
     const-string v0, "a"
 
     const/4 v1, 0x2
@@ -2757,7 +2926,7 @@
 
     move-result-object v4
 
-    .line 1078
+    .line 1131
     new-array v5, v2, [Ljava/lang/Class;
 
     const-class v6, Landroid/content/Context;
@@ -2768,7 +2937,7 @@
 
     move-result-object v5
 
-    .line 1079
+    .line 1132
     new-array v6, v2, [Ljava/lang/Object;
 
     aput-object p0, v6, v3
@@ -2779,29 +2948,29 @@
 
     move-result-object v5
 
-    .line 1080
+    .line 1133
     invoke-virtual {v4, v0}, Ljava/lang/Class;->getField(Ljava/lang/String;)Ljava/lang/reflect/Field;
 
     move-result-object v0
 
-    .line 1081
+    .line 1134
     const-string v6, "b"
 
     invoke-virtual {v4, v6}, Ljava/lang/Class;->getField(Ljava/lang/String;)Ljava/lang/reflect/Field;
 
     move-result-object v4
 
-    .line 1082
+    .line 1135
     nop
 
-    .line 1083
+    .line 1136
     invoke-virtual {v0, v5}, Ljava/lang/reflect/Field;->get(Ljava/lang/Object;)Ljava/lang/Object;
 
     move-result-object v0
 
     check-cast v0, Ljava/lang/String;
 
-    .line 1084
+    .line 1137
     invoke-virtual {v4, v5}, Ljava/lang/reflect/Field;->get(Ljava/lang/Object;)Ljava/lang/Object;
 
     move-result-object v4
@@ -2816,48 +2985,48 @@
     :try_end_0
     .catch Ljava/lang/Exception; {:try_start_0 .. :try_end_0} :catch_0
 
-    .line 1082
+    .line 1135
     return-object v5
 
-    .line 1086
+    .line 1139
     :catch_0
     move-exception v0
 
-    .line 1087
+    .line 1140
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->preferences(Landroid/content/Context;)Landroid/content/SharedPreferences;
 
     move-result-object v0
 
-    .line 1088
+    .line 1141
     nop
 
-    .line 1090
+    .line 1143
     const v4, 0x7f110282
 
     invoke-virtual {p0, v4}, Landroid/content/Context;->getString(I)Ljava/lang/String;
 
     move-result-object v4
 
-    .line 1091
+    .line 1144
     const v5, 0x7f110226
 
     invoke-virtual {p0, v5}, Landroid/content/Context;->getString(I)Ljava/lang/String;
 
     move-result-object v5
 
-    .line 1089
+    .line 1142
     invoke-interface {v0, v4, v5}, Landroid/content/SharedPreferences;->getString(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
 
     move-result-object v4
 
-    .line 1093
+    .line 1146
     const v5, 0x7f11023a
 
     invoke-virtual {p0, v5}, Landroid/content/Context;->getString(I)Ljava/lang/String;
 
     move-result-object p0
 
-    .line 1092
+    .line 1145
     const-string v5, ""
 
     invoke-interface {v0, p0, v5}, Landroid/content/SharedPreferences;->getString(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
@@ -2870,7 +3039,7 @@
 
     aput-object p0, v0, v2
 
-    .line 1088
+    .line 1141
     return-object v0
 .end method
 
@@ -2888,17 +3057,17 @@
         }
     .end annotation
 
-    .line 597
+    .line 650
     invoke-virtual {p0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
 
     move-result-object v0
 
-    .line 598
+    .line 651
     invoke-virtual {p0}, Landroid/content/Context;->getTheme()Landroid/content/res/Resources$Theme;
 
     move-result-object p0
 
-    .line 599
+    .line 652
     if-eqz p1, :cond_0
 
     const-string p1, "_dark"
@@ -2908,13 +3077,13 @@
     :cond_0
     const-string p1, "_light"
 
-    .line 600
+    .line 653
     :goto_0
     new-instance v1, Ljava/util/HashMap;
 
     invoke-direct {v1}, Ljava/util/HashMap;-><init>()V
 
-    .line 601
+    .line 654
     const/4 v2, 0x0
 
     :goto_1
@@ -2924,7 +3093,7 @@
 
     if-ge v2, v3, :cond_2
 
-    .line 602
+    .line 655
     new-instance v3, Ljava/lang/StringBuilder;
 
     invoke-direct {v3}, Ljava/lang/StringBuilder;-><init>()V
@@ -2945,7 +3114,7 @@
 
     move-result-object v3
 
-    .line 603
+    .line 656
     const-string v4, "color"
 
     const-string v5, "android"
@@ -2954,20 +3123,20 @@
 
     move-result v3
 
-    .line 604
+    .line 657
     if-nez v3, :cond_1
 
-    .line 605
+    .line 658
     goto :goto_2
 
-    .line 608
+    .line 661
     :cond_1
     :try_start_0
     sget-object v4, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->DYNAMIC_SLOT_NAMES:[Ljava/lang/String;
 
     aget-object v4, v4, v2
 
-    .line 610
+    .line 663
     invoke-virtual {v0, v3, p0}, Landroid/content/res/Resources;->getColor(ILandroid/content/res/Resources$Theme;)I
 
     move-result v3
@@ -2976,25 +3145,25 @@
 
     move-result-object v3
 
-    .line 608
+    .line 661
     invoke-interface {v1, v4, v3}, Ljava/util/Map;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
     :try_end_0
     .catch Ljava/lang/RuntimeException; {:try_start_0 .. :try_end_0} :catch_0
 
-    .line 614
+    .line 667
     goto :goto_2
 
-    .line 611
+    .line 664
     :catch_0
     move-exception v3
 
-    .line 601
+    .line 654
     :goto_2
     add-int/lit8 v2, v2, 0x1
 
     goto :goto_1
 
-    .line 616
+    .line 669
     :cond_2
     return-object v1
 .end method
@@ -3011,7 +3180,7 @@
         }
     .end annotation
 
-    .line 826
+    .line 879
     move-object/from16 v0, p0
 
     move-object/from16 v1, p1
@@ -3026,7 +3195,7 @@
 
     goto/16 :goto_7
 
-    .line 829
+    .line 882
     :cond_0
     new-instance v3, Ljava/io/ByteArrayOutputStream;
 
@@ -3034,19 +3203,19 @@
 
     invoke-direct {v3, v4}, Ljava/io/ByteArrayOutputStream;-><init>(I)V
 
-    .line 830
+    .line 883
     array-length v4, v0
 
-    .line 831
+    .line 884
     const/4 v5, 0x0
 
     const/4 v6, 0x0
 
-    .line 832
+    .line 885
     :goto_0
     if-ge v6, v4, :cond_13
 
-    .line 833
+    .line 886
     aget-byte v7, v0, v6
 
     and-int/lit16 v7, v7, 0xff
@@ -3055,41 +3224,41 @@
 
     if-eq v7, v8, :cond_1
 
-    .line 834
+    .line 887
     goto/16 :goto_6
 
-    .line 836
+    .line 889
     :cond_1
     add-int/lit8 v6, v6, 0x1
 
-    .line 837
+    .line 890
     const/4 v7, 0x1
 
     new-array v9, v7, [J
 
-    .line 838
+    .line 891
     invoke-static {v0, v6, v9}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->readVarint([BI[J)I
 
     move-result v6
 
-    .line 839
+    .line 892
     if-gez v6, :cond_2
 
-    .line 840
+    .line 893
     return-object v2
 
-    .line 842
+    .line 895
     :cond_2
     nop
 
-    .line 843
+    .line 896
     aget-wide v10, v9, v5
 
     long-to-int v9, v10
 
     add-int/2addr v9, v6
 
-    .line 844
+    .line 897
     if-gt v9, v4, :cond_12
 
     if-ge v9, v6, :cond_3
@@ -3098,23 +3267,23 @@
 
     goto/16 :goto_5
 
-    .line 848
+    .line 901
     :cond_3
     nop
 
-    .line 849
+    .line 902
     nop
 
-    .line 850
+    .line 903
     nop
 
-    .line 851
+    .line 904
     nop
 
-    .line 852
+    .line 905
     nop
 
-    .line 854
+    .line 907
     move-object v11, v2
 
     move v10, v6
@@ -3125,7 +3294,7 @@
 
     const/4 v14, 0x0
 
-    .line 855
+    .line 908
     :goto_1
     const/16 v15, 0x8
 
@@ -3137,32 +3306,32 @@
 
     if-ge v10, v9, :cond_e
 
-    .line 856
+    .line 909
     aget-byte v2, v0, v10
 
     and-int/lit16 v2, v2, 0xff
 
-    .line 857
+    .line 910
     add-int/lit8 v10, v10, 0x1
 
-    .line 858
+    .line 911
     if-ne v2, v5, :cond_6
 
-    .line 859
+    .line 912
     new-array v2, v7, [J
 
-    .line 860
+    .line 913
     invoke-static {v0, v10, v2}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->readVarint([BI[J)I
 
     move-result v5
 
-    .line 861
+    .line 914
     if-gez v5, :cond_4
 
-    .line 862
+    .line 915
     return-object v16
 
-    .line 864
+    .line 917
     :cond_4
     aget-wide v10, v2, v17
 
@@ -3170,13 +3339,13 @@
 
     add-int/2addr v11, v5
 
-    .line 865
+    .line 918
     if-le v11, v9, :cond_5
 
-    .line 866
+    .line 919
     return-object v16
 
-    .line 868
+    .line 921
     :cond_5
     new-instance v10, Ljava/lang/String;
 
@@ -3188,10 +3357,10 @@
 
     invoke-direct {v10, v0, v5, v2, v7}, Ljava/lang/String;-><init>([BIILjava/nio/charset/Charset;)V
 
-    .line 869
+    .line 922
     nop
 
-    .line 870
+    .line 923
     move v2, v11
 
     move-object v11, v10
@@ -3207,23 +3376,23 @@
 
     if-ne v2, v5, :cond_b
 
-    .line 871
+    .line 924
     const/4 v2, 0x1
 
     new-array v5, v2, [J
 
-    .line 872
+    .line 925
     invoke-static {v0, v10, v5}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->readVarint([BI[J)I
 
     move-result v2
 
-    .line 873
+    .line 926
     if-gez v2, :cond_7
 
-    .line 874
+    .line 927
     return-object v16
 
-    .line 876
+    .line 929
     :cond_7
     aget-wide v7, v5, v17
 
@@ -3231,13 +3400,13 @@
 
     add-int/2addr v5, v2
 
-    .line 877
+    .line 930
     if-le v5, v9, :cond_8
 
-    .line 878
+    .line 931
     return-object v16
 
-    .line 880
+    .line 933
     :cond_8
     if-ge v2, v5, :cond_a
 
@@ -3247,12 +3416,12 @@
 
     if-ne v7, v15, :cond_a
 
-    .line 881
+    .line 934
     const/4 v7, 0x1
 
     new-array v8, v7, [J
 
-    .line 882
+    .line 935
     add-int/lit8 v2, v2, 0x1
 
     invoke-static {v0, v2, v8}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->readVarint([BI[J)I
@@ -3261,21 +3430,21 @@
 
     if-gez v2, :cond_9
 
-    .line 883
+    .line 936
     return-object v16
 
-    .line 885
+    .line 938
     :cond_9
     aget-wide v7, v8, v17
 
-    .line 886
+    .line 939
     const/4 v12, 0x1
 
-    .line 888
+    .line 941
     :cond_a
     nop
 
-    .line 889
+    .line 942
     move v10, v5
 
     const/4 v2, 0x1
@@ -3287,45 +3456,45 @@
 
     if-ne v2, v5, :cond_d
 
-    .line 890
+    .line 943
     const/4 v2, 0x1
 
     new-array v5, v2, [J
 
-    .line 891
+    .line 944
     invoke-static {v0, v10, v5}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->readVarint([BI[J)I
 
     move-result v7
 
-    .line 892
+    .line 945
     if-gez v7, :cond_c
 
-    .line 893
+    .line 946
     return-object v16
 
-    .line 895
+    .line 948
     :cond_c
     aget-wide v13, v5, v17
 
     long-to-int v14, v13
 
-    .line 896
+    .line 949
     nop
 
-    .line 897
+    .line 950
     move v10, v7
 
     const/4 v13, 0x1
 
     goto :goto_2
 
-    .line 898
+    .line 951
     :cond_d
     const/4 v2, 0x1
 
     move v10, v9
 
-    .line 900
+    .line 953
     :goto_2
     move-object/from16 v2, v16
 
@@ -3337,7 +3506,7 @@
 
     goto :goto_1
 
-    .line 902
+    .line 955
     :cond_e
     if-nez v11, :cond_f
 
@@ -3352,28 +3521,28 @@
 
     check-cast v2, Ljava/lang/Integer;
 
-    .line 903
+    .line 956
     :goto_3
     if-eqz v2, :cond_11
 
     if-eqz v12, :cond_11
 
-    .line 904
+    .line 957
     sget-object v6, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->UTF_8:Ljava/nio/charset/Charset;
 
     invoke-virtual {v11, v6}, Ljava/lang/String;->getBytes(Ljava/nio/charset/Charset;)[B
 
     move-result-object v6
 
-    .line 905
+    .line 958
     new-instance v7, Ljava/io/ByteArrayOutputStream;
 
     invoke-direct {v7}, Ljava/io/ByteArrayOutputStream;-><init>()V
 
-    .line 906
+    .line 959
     invoke-virtual {v7, v15}, Ljava/io/ByteArrayOutputStream;->write(I)V
 
-    .line 907
+    .line 960
     invoke-virtual {v2}, Ljava/lang/Integer;->longValue()J
 
     move-result-wide v10
@@ -3384,118 +3553,118 @@
 
     invoke-static {v7, v10, v11}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->writeVarint(Ljava/io/ByteArrayOutputStream;J)V
 
-    .line 908
+    .line 961
     invoke-virtual {v7}, Ljava/io/ByteArrayOutputStream;->toByteArray()[B
 
     move-result-object v2
 
-    .line 910
+    .line 963
     new-instance v7, Ljava/io/ByteArrayOutputStream;
 
     invoke-direct {v7}, Ljava/io/ByteArrayOutputStream;-><init>()V
 
-    .line 911
+    .line 964
     invoke-virtual {v7, v5}, Ljava/io/ByteArrayOutputStream;->write(I)V
 
-    .line 912
+    .line 965
     array-length v5, v6
 
     int-to-long v10, v5
 
     invoke-static {v7, v10, v11}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->writeVarint(Ljava/io/ByteArrayOutputStream;J)V
 
-    .line 913
+    .line 966
     array-length v5, v6
 
     const/4 v8, 0x0
 
     invoke-virtual {v7, v6, v8, v5}, Ljava/io/ByteArrayOutputStream;->write([BII)V
 
-    .line 914
+    .line 967
     const/16 v5, 0x12
 
     invoke-virtual {v7, v5}, Ljava/io/ByteArrayOutputStream;->write(I)V
 
-    .line 915
+    .line 968
     array-length v5, v2
 
     int-to-long v5, v5
 
     invoke-static {v7, v5, v6}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->writeVarint(Ljava/io/ByteArrayOutputStream;J)V
 
-    .line 916
+    .line 969
     array-length v5, v2
 
     invoke-virtual {v7, v2, v8, v5}, Ljava/io/ByteArrayOutputStream;->write([BII)V
 
-    .line 917
+    .line 970
     if-eqz v13, :cond_10
 
-    .line 918
+    .line 971
     const/16 v5, 0x1a
 
     invoke-virtual {v7, v5}, Ljava/io/ByteArrayOutputStream;->write(I)V
 
-    .line 919
+    .line 972
     int-to-long v5, v14
 
     and-long v5, v5, v18
 
     invoke-static {v7, v5, v6}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->writeVarint(Ljava/io/ByteArrayOutputStream;J)V
 
-    .line 921
+    .line 974
     :cond_10
     invoke-virtual {v7}, Ljava/io/ByteArrayOutputStream;->toByteArray()[B
 
     move-result-object v2
 
-    .line 923
+    .line 976
     const/16 v5, 0x12
 
     invoke-virtual {v3, v5}, Ljava/io/ByteArrayOutputStream;->write(I)V
 
-    .line 924
+    .line 977
     array-length v5, v2
 
     int-to-long v5, v5
 
     invoke-static {v3, v5, v6}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->writeVarint(Ljava/io/ByteArrayOutputStream;J)V
 
-    .line 925
+    .line 978
     array-length v5, v2
 
     const/4 v8, 0x0
 
     invoke-virtual {v3, v2, v8, v5}, Ljava/io/ByteArrayOutputStream;->write([BII)V
 
-    .line 926
+    .line 979
     goto :goto_4
 
-    .line 903
+    .line 956
     :cond_11
     const/4 v8, 0x0
 
-    .line 927
+    .line 980
     sub-int v2, v9, v6
 
-    .line 928
+    .line 981
     const/16 v5, 0x12
 
     invoke-virtual {v3, v5}, Ljava/io/ByteArrayOutputStream;->write(I)V
 
-    .line 929
+    .line 982
     int-to-long v10, v2
 
     invoke-static {v3, v10, v11}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->writeVarint(Ljava/io/ByteArrayOutputStream;J)V
 
-    .line 930
+    .line 983
     invoke-virtual {v3, v0, v6, v2}, Ljava/io/ByteArrayOutputStream;->write([BII)V
 
-    .line 932
+    .line 985
     :goto_4
     nop
 
-    .line 933
+    .line 986
     move v6, v9
 
     move-object/from16 v2, v16
@@ -3504,15 +3673,15 @@
 
     goto/16 :goto_0
 
-    .line 844
+    .line 897
     :cond_12
     move-object/from16 v16, v2
 
-    .line 845
+    .line 898
     :goto_5
     return-object v16
 
-    .line 934
+    .line 987
     :cond_13
     :goto_6
     invoke-virtual {v3}, Ljava/io/ByteArrayOutputStream;->toByteArray()[B
@@ -3521,11 +3690,11 @@
 
     return-object v0
 
-    .line 826
+    .line 879
     :cond_14
     move-object/from16 v16, v2
 
-    .line 827
+    .line 880
     :goto_7
     return-object v16
 .end method
@@ -3680,22 +3849,22 @@
 .method private static syncDynamicTheme(Landroid/content/Context;Z)I
     .locals 6
 
-    .line 571
+    .line 624
     invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->resolveDynamicColors(Landroid/content/Context;Z)Ljava/util/Map;
 
     move-result-object v0
 
-    .line 572
+    .line 625
     invoke-static {p1, v0}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->dynamicSignature(ZLjava/util/Map;)Ljava/lang/String;
 
     move-result-object v1
 
-    .line 573
+    .line 626
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->preferences(Landroid/content/Context;)Landroid/content/SharedPreferences;
 
     move-result-object v2
 
-    .line 574
+    .line 627
     new-instance v3, Ljava/io/File;
 
     invoke-virtual {p0}, Landroid/content/Context;->getFilesDir()Ljava/io/File;
@@ -3706,7 +3875,7 @@
 
     invoke-direct {v3, v4, v5}, Ljava/io/File;-><init>(Ljava/io/File;Ljava/lang/String;)V
 
-    .line 575
+    .line 628
     invoke-virtual {v3}, Ljava/io/File;->isFile()Z
 
     move-result v4
@@ -3715,7 +3884,7 @@
 
     if-eqz v4, :cond_0
 
-    .line 576
+    .line 629
     const/4 v4, 0x0
 
     invoke-interface {v2, v5, v4}, Landroid/content/SharedPreferences;->getString(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
@@ -3728,17 +3897,17 @@
 
     if-eqz v4, :cond_0
 
-    .line 577
+    .line 630
     const-string p1, "dynamic palette unchanged"
 
     invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->debugLog(Landroid/content/Context;Ljava/lang/String;)V
 
-    .line 578
+    .line 631
     const/4 p0, 0x1
 
     return p0
 
-    .line 580
+    .line 633
     :cond_0
     invoke-static {p0, p1, v0}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->buildDynamicThemePackage(Landroid/content/Context;ZLjava/util/Map;)Z
 
@@ -3746,19 +3915,19 @@
 
     if-nez p1, :cond_1
 
-    .line 581
+    .line 634
     const-string p1, "dynamic theme package build failed"
 
     invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->debugLog(Landroid/content/Context;Ljava/lang/String;)V
 
-    .line 582
+    .line 635
     invoke-virtual {v3}, Ljava/io/File;->isFile()Z
 
     move-result p0
 
     return p0
 
-    .line 584
+    .line 637
     :cond_1
     invoke-interface {v2}, Landroid/content/SharedPreferences;->edit()Landroid/content/SharedPreferences$Editor;
 
@@ -3770,15 +3939,15 @@
 
     invoke-interface {p1}, Landroid/content/SharedPreferences$Editor;->commit()Z
 
-    .line 590
+    .line 643
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->invalidatePreviewSnapshots(Landroid/content/Context;)V
 
-    .line 591
+    .line 644
     const-string p1, "dynamic theme package rebuilt"
 
     invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->debugLog(Landroid/content/Context;Ljava/lang/String;)V
 
-    .line 592
+    .line 645
     const/4 p0, 0x2
 
     return p0
@@ -3787,10 +3956,10 @@
 .method private static templateBytes(Landroid/content/Context;Ljava/lang/String;)[B
     .locals 4
 
-    .line 938
+    .line 991
     nop
 
-    .line 940
+    .line 993
     const/4 v0, 0x0
 
     :try_start_0
@@ -3823,18 +3992,18 @@
     .catch Ljava/io/IOException; {:try_start_0 .. :try_end_0} :catch_1
     .catchall {:try_start_0 .. :try_end_0} :catchall_1
 
-    .line 941
+    .line 994
     :try_start_1
     new-instance p1, Ljava/io/ByteArrayOutputStream;
 
     invoke-direct {p1}, Ljava/io/ByteArrayOutputStream;-><init>()V
 
-    .line 942
+    .line 995
     const/16 v1, 0x1000
 
     new-array v1, v1, [B
 
-    .line 944
+    .line 997
     :goto_0
     invoke-virtual {p0, v1}, Ljava/io/InputStream;->read([B)I
 
@@ -3842,14 +4011,14 @@
 
     if-lez v2, :cond_0
 
-    .line 945
+    .line 998
     const/4 v3, 0x0
 
     invoke-virtual {p1, v1, v3, v2}, Ljava/io/ByteArrayOutputStream;->write([BII)V
 
     goto :goto_0
 
-    .line 947
+    .line 1000
     :cond_0
     invoke-virtual {p1}, Ljava/io/ByteArrayOutputStream;->toByteArray()[B
 
@@ -3858,13 +4027,13 @@
     .catch Ljava/io/IOException; {:try_start_1 .. :try_end_1} :catch_0
     .catchall {:try_start_1 .. :try_end_1} :catchall_0
 
-    .line 951
+    .line 1004
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->closeQuietly(Ljava/io/Closeable;)V
 
-    .line 947
+    .line 1000
     return-object p1
 
-    .line 951
+    .line 1004
     :catchall_0
     move-exception p1
 
@@ -3872,72 +4041,72 @@
 
     goto :goto_1
 
-    .line 948
+    .line 1001
     :catch_0
     move-exception p1
 
     goto :goto_2
 
-    .line 951
+    .line 1004
     :catchall_1
     move-exception p1
 
     :goto_1
     invoke-static {v0}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->closeQuietly(Ljava/io/Closeable;)V
 
-    .line 952
+    .line 1005
     throw p1
 
-    .line 948
+    .line 1001
     :catch_1
     move-exception p0
 
     move-object p0, v0
 
-    .line 949
+    .line 1002
     :goto_2
     nop
 
-    .line 951
+    .line 1004
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->closeQuietly(Ljava/io/Closeable;)V
 
-    .line 949
+    .line 1002
     return-object v0
 .end method
 
 .method private static transientCacheDirectories(Landroid/content/Context;)[Ljava/io/File;
     .locals 4
 
-    .line 794
+    .line 847
     invoke-virtual {p0}, Landroid/content/Context;->getFilesDir()Ljava/io/File;
 
     move-result-object p0
 
-    .line 795
+    .line 848
     if-nez p0, :cond_0
 
-    .line 796
+    .line 849
     const/4 p0, 0x0
 
     new-array p0, p0, [Ljava/io/File;
 
     return-object p0
 
-    .line 798
+    .line 851
     :cond_0
     new-instance v0, Ljava/util/ArrayList;
 
     invoke-direct {v0}, Ljava/util/ArrayList;-><init>()V
 
-    .line 799
+    .line 852
     invoke-interface {v0, p0}, Ljava/util/List;->add(Ljava/lang/Object;)Z
 
-    .line 800
+    .line 853
     invoke-virtual {p0}, Ljava/io/File;->getAbsolutePath()Ljava/lang/String;
 
     move-result-object p0
 
-    .line 801
+    .line 854
     const-string v1, "/user/"
 
     invoke-virtual {p0, v1}, Ljava/lang/String;->contains(Ljava/lang/CharSequence;)Z
@@ -3946,7 +4115,7 @@
 
     if-eqz v2, :cond_1
 
-    .line 802
+    .line 855
     new-instance v2, Ljava/io/File;
 
     const-string v3, "/user_de/"
@@ -3959,7 +4128,7 @@
 
     invoke-interface {v0, v2}, Ljava/util/List;->add(Ljava/lang/Object;)Z
 
-    .line 804
+    .line 857
     :cond_1
     invoke-interface {v0}, Ljava/util/List;->size()I
 
@@ -3979,7 +4148,7 @@
 .method private static withFormatVersion([B)[B
     .locals 3
 
-    .line 663
+    .line 716
     new-instance v0, Ljava/io/ByteArrayOutputStream;
 
     array-length v1, p0
@@ -3988,24 +4157,24 @@
 
     invoke-direct {v0, v1}, Ljava/io/ByteArrayOutputStream;-><init>(I)V
 
-    .line 664
+    .line 717
     const/16 v1, 0x8
 
     invoke-virtual {v0, v1}, Ljava/io/ByteArrayOutputStream;->write(I)V
 
-    .line 665
+    .line 718
     const/4 v1, 0x3
 
     invoke-virtual {v0, v1}, Ljava/io/ByteArrayOutputStream;->write(I)V
 
-    .line 666
+    .line 719
     const/4 v1, 0x0
 
     array-length v2, p0
 
     invoke-virtual {v0, p0, v1, v2}, Ljava/io/ByteArrayOutputStream;->write([BII)V
 
-    .line 667
+    .line 720
     invoke-virtual {v0}, Ljava/io/ByteArrayOutputStream;->toByteArray()[B
 
     move-result-object p0
@@ -4016,26 +4185,26 @@
 .method private static writeSlot(Landroid/content/Context;Ljava/lang/String;Ljava/lang/String;)Z
     .locals 6
 
-    .line 533
+    .line 586
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->preferences(Landroid/content/Context;)Landroid/content/SharedPreferences;
 
     move-result-object v0
 
-    .line 534
+    .line 587
     const v1, 0x7f110282
 
     invoke-virtual {p0, v1}, Landroid/content/Context;->getString(I)Ljava/lang/String;
 
     move-result-object v1
 
-    .line 535
+    .line 588
     const v2, 0x7f11023a
 
     invoke-virtual {p0, v2}, Landroid/content/Context;->getString(I)Ljava/lang/String;
 
     move-result-object v2
 
-    .line 536
+    .line 589
     invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->baseKey(Ljava/lang/String;)Ljava/lang/String;
 
     move-result-object v3
@@ -4046,7 +4215,7 @@
 
     move-result-object v3
 
-    .line 537
+    .line 590
     invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->additionalKey(Ljava/lang/String;)Ljava/lang/String;
 
     move-result-object p1
@@ -4055,10 +4224,10 @@
 
     move-result-object p1
 
-    .line 538
+    .line 591
     invoke-static {p0, p2}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->debugLog(Landroid/content/Context;Ljava/lang/String;)V
 
-    .line 539
+    .line 592
     invoke-virtual {v3}, Ljava/lang/String;->isEmpty()Z
 
     move-result p2
@@ -4075,7 +4244,7 @@
 
     goto :goto_1
 
-    .line 547
+    .line 600
     :cond_0
     const/4 p2, 0x0
 
@@ -4089,7 +4258,7 @@
 
     if-eqz v5, :cond_1
 
-    .line 548
+    .line 601
     invoke-interface {v0, v2, p2}, Landroid/content/SharedPreferences;->getString(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
 
     move-result-object p2
@@ -4100,36 +4269,36 @@
 
     if-eqz p2, :cond_1
 
-    .line 549
+    .line 602
     const-string p1, "legacy theme pair already resolved"
 
     invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->debugLog(Landroid/content/Context;Ljava/lang/String;)V
 
-    .line 550
+    .line 603
     return v4
 
-    .line 552
+    .line 605
     :cond_1
     invoke-interface {v0}, Landroid/content/SharedPreferences;->edit()Landroid/content/SharedPreferences$Editor;
 
     move-result-object p2
 
-    .line 553
+    .line 606
     invoke-interface {p2, v1, v3}, Landroid/content/SharedPreferences$Editor;->putString(Ljava/lang/String;Ljava/lang/String;)Landroid/content/SharedPreferences$Editor;
 
     move-result-object p2
 
-    .line 554
+    .line 607
     invoke-interface {p2, v2, p1}, Landroid/content/SharedPreferences$Editor;->putString(Ljava/lang/String;Ljava/lang/String;)Landroid/content/SharedPreferences$Editor;
 
     move-result-object p1
 
-    .line 555
+    .line 608
     invoke-interface {p1}, Landroid/content/SharedPreferences$Editor;->commit()Z
 
     move-result p1
 
-    .line 556
+    .line 609
     if-eqz p1, :cond_2
 
     const-string p2, "legacy theme pair committed"
@@ -4142,24 +4311,24 @@
     :goto_0
     invoke-static {p0, p2}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->debugLog(Landroid/content/Context;Ljava/lang/String;)V
 
-    .line 557
+    .line 610
     return p1
 
-    .line 544
+    .line 597
     :cond_3
     :goto_1
     const-string p1, "theme slot is empty, keeping the current theme"
 
     invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->debugLog(Landroid/content/Context;Ljava/lang/String;)V
 
-    .line 545
+    .line 598
     return v4
 .end method
 
 .method private static writeVarint(Ljava/io/ByteArrayOutputStream;J)V
     .locals 4
 
-    .line 992
+    .line 1045
     nop
 
     :goto_0
@@ -4169,30 +4338,30 @@
 
     long-to-int v1, v0
 
-    .line 993
+    .line 1046
     const/4 v0, 0x7
 
     ushr-long/2addr p1, v0
 
-    .line 994
+    .line 1047
     const-wide/16 v2, 0x0
 
     cmp-long v0, p1, v2
 
     if-eqz v0, :cond_0
 
-    .line 995
+    .line 1048
     or-int/lit16 v0, v1, 0x80
 
     invoke-virtual {p0, v0}, Ljava/io/ByteArrayOutputStream;->write(I)V
 
-    .line 1000
+    .line 1053
     goto :goto_0
 
-    .line 997
+    .line 1050
     :cond_0
     invoke-virtual {p0, v1}, Ljava/io/ByteArrayOutputStream;->write(I)V
 
-    .line 998
+    .line 1051
     return-void
 .end method

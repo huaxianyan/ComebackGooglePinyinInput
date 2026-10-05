@@ -52,18 +52,22 @@ import androidx.compose.ui.unit.dp
  * row above it is where they belong and drawing them twice on one page would
  * make the page look like it offered four light themes.
  *
- * Nothing here changes which theme is in use. The mode tiles read state and the
- * sheet's assign buttons are inert until the theme write path lands. Two things
- * do write, and neither of them is a theme: the key-border switch in the sheet,
- * which is a plain preference with no slot behind it, and the generated palette
- * package, which the dynamic-colour tile has to have on disk before it can show
- * anything at all.
+ * Nothing here changes which theme is in use on its own. Three things do, and
+ * all three go through the sheet: apply makes the theme being previewed the one
+ * in use, and the two assign buttons point a half of the follow-the-system mode
+ * at it. The key-border switch in the sheet also writes, but it is not a theme,
+ * and the generated palette package the dynamic-colour tile needs is built
+ * ahead of any tap - building it leaves the mode alone, so the tile can be
+ * previewed before the mode is switched on.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun ThemeCatalogScreen(
     snapshot: SettingsSnapshot,
     onNavigateBack: () -> Unit,
+    onApplyTheme: (String) -> Unit,
+    onAssignThemeSlot: (ThemeSelectionSlot, String) -> Unit,
+    onFollowSystemEnabledChange: (Boolean) -> Unit,
 ) {
     val catalog = snapshot.themeCatalog
     val context = LocalContext.current
@@ -245,8 +249,50 @@ internal fun ThemeCatalogScreen(
     }
 
     subject?.let { shown ->
+        // A slot is only read while the follow-the-system mode is on, so this
+        // is also what the assign buttons are enabled by. It is asked per slot
+        // even though both answers are the same today: the rule is stated per
+        // slot, and the sheet takes one flag per button so that stays visible.
+        val lightSelectable = ThemeSettingRules.canSelect(
+            ThemeSelectionSlot.Light,
+            followThemeEnabled = systemAuto,
+            dynamicColorEnabled = dynamicColor,
+        )
+        val darkSelectable = ThemeSettingRules.canSelect(
+            ThemeSelectionSlot.Dark,
+            followThemeEnabled = systemAuto,
+            dynamicColorEnabled = dynamicColor,
+        )
+        // The second half of a paired subject is the dark one, which is the
+        // order the previews are drawn in. A single theme has no second half,
+        // so both assign buttons point at the one theme on screen.
+        val darkValue = shown.pairedValue ?: shown.themeValue
         ThemePreviewSheet(
             subject = shown,
+            actions = ThemePreviewActions(
+                // Applying a pair means switching to the mode that uses it,
+                // not making one of its halves the fixed theme. The tile is
+                // the mode, and the sheet opens on the mode, so the button
+                // has to be the mode too.
+                apply = {
+                    if (shown.pairedValue == null) {
+                        onApplyTheme(shown.themeValue)
+                    } else {
+                        onFollowSystemEnabledChange(true)
+                    }
+                    subject = null
+                },
+                assignLight = {
+                    onAssignThemeSlot(ThemeSelectionSlot.Light, shown.themeValue)
+                    subject = null
+                },
+                assignDark = {
+                    onAssignThemeSlot(ThemeSelectionSlot.Dark, darkValue)
+                    subject = null
+                },
+                assignLightEnabled = lightSelectable,
+                assignDarkEnabled = darkSelectable,
+            ),
             onDismiss = { subject = null },
         )
     }
