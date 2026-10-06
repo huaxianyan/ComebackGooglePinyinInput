@@ -872,3 +872,134 @@ FAIL the bridge resolves BORDER_STATE_METHOD with getMethod, …
 
 这是本文件里第一条**管行为而不只是管名字**的断言：前面那些只能发现改名，
 这一条能发现「名字没变但取错了那一个」。
+
+## 十七、退场比入场快：退场那条弹簧更硬（2026-10-06）
+
+### 17.1 现象
+
+上一节把六个按钮的退场动画接上了，与点遮罩等价。用户实测后反馈：
+**「缩回去的速度比弹开的速度要快，有点不协调」**。
+
+录屏抽帧量化。判据是**弹层拖拽把手所在的行**（中心列里最亮的那一行），
+因为把手和弹层刚性相连，它的行号就是弹层的位移。设备 120 Hz，一帧约 8.3 ms。
+
+| 方向 | 位移段 | 时长 |
+| --- | --- | --- |
+| 弹开 | 40% → 100%（1012 px） | 224 ms |
+| 缩回，修复前（点遮罩） | 0 → 968 px | 34 ms |
+| 缩回，修复前（点取消） | 0 → 988 px | 25 ms |
+| 缩回，修复后（点遮罩） | 0 → 1072 px | 76 ms |
+| 缩回，修复后（点取消） | 0 → 1074 px | 74 ms |
+
+修复前两条缩回的曲线**完全同形**，所以按钮路径与遮罩路径已经等价，
+问题不在按钮这一侧。
+
+### 17.2 定位：两个方向不是同一条弹簧
+
+把每一段位移拟合弹簧解析解：
+
+| 段 | damping | stiffness | rms |
+| --- | --- | --- | --- |
+| 弹开 | 0.90 | 700 | 5.6 px |
+| 缩回，修复前 | 1.00 | 3800 | 13.3 px |
+| 缩回，修复后 | 0.90 | 700 | 9.1 px |
+
+`0.9 / 700` 就是 `StandardMotionTokens.DefaultSpatial`，`1.0 / 3800` 就是 `FastEffects`。
+**两个方向用的不是同一条弹簧**，缩回那条刚度是弹开的 5.4 倍。
+
+### 17.3 根因：`hideMotionSpec` 拿到的是 `FastEffects`
+
+`ModalBottomSheet` 里有一段 `remember` + `SideEffect`，把三个规格写进 `SheetState`：
+
+```text
+showMotionSpec             = MotionSchemeKeyTokens.DefaultSpatial
+hideMotionSpec             = MotionSchemeKeyTokens.FastEffects
+anchoredDraggableMotionSpec = MotionSchemeKeyTokens.DefaultSpatial
+```
+
+`show()` 读 `showMotionSpec`、`hide()` 读 `hideMotionSpec`（两个字段与 setter 都是
+**internal**，Kotlin 侧写不到）。点遮罩和点按钮两条路都走 `hide()`，
+所以两条都跑在那条 3800 的弹簧上——**同一条距离下，它比入场快一倍多**。
+
+真机探针（反射读回 `SheetState` 的私有字段）与之一致：`show` 与 `anchored`
+是**同一个 `SpringSpec` 实例**（同 token 被 `remember` 复用），`hide` 是另一个：
+
+```text
+before-hide show=SpringSpec@f195665a hide=SpringSpec@f5ed8000 anchored=SpringSpec@f195665a
+            velocity=0.0 offset=723.0 current=Expanded
+after-hide  show=SpringSpec@f195665a hide=SpringSpec@f5ed8000 anchored=SpringSpec@f195665a
+            velocity=0.0 offset=2410.0 current=Hidden
+hide returned after 248ms
+```
+
+顺带纠正一个容易想当然的地方：**`SheetState.offset` 是「离展开位置的距离」**，
+不是「离屏幕顶的距离」。实测 `Expanded` 时是 723、`Hidden` 时是 2410
+（不是 0 和 1687），所以**关闭要走的位移比打开还长**（1687 px 对 1182 px）。
+把它当成 0 起点就会得出「退场路程更短」的错结论。
+
+还有一条：`show()` / `hide()` 都调 `animateTo$material3$default(..., mask = 4)`，
+mask = 4 表示**初速走默认值**，即 `AnchoredDraggableState.getLastVelocity()`。
+而 `lastVelocity` 只在 `AnchoredDragScope.dragTo(offset, velocity)` 里被写，
+也就是**动画每帧把自己的当前速度写进去**；静止时约等于 0（探针实测 `velocity = 0.0`）。
+所以退场的「快」不是初速带来的，是弹簧本身硬。
+
+### 17.4 修法：把入场那条弹簧复制给退场
+
+让退场用**入场那条**——也就是用户自己认可为「弹开」的那条。两个字段都是 internal，
+只能走生成的访问器 `getShowMotionSpec$material3()` / `setHideMotionSpec$material3(...)`。
+
+写的位置是**两处**，缺一不可：
+
+1. `LaunchedEffect(sheetState) { snapshotFlow { sheetOffset(sheetState) }.collect { … } }`。
+   `ModalBottomSheet` 的 `SideEffect` **每次重组合都把三个规格写回来**，
+   只在开头写一次会在任何人点击之前被覆盖。跟着 offset 写，就只在弹层真正移动的帧上写，
+   而且弹层静止之后最后一次写入是这一侧的——**点遮罩那条走的是 M3 自己的 `hide()`，
+   钩不到，只能靠这里兜住**。
+2. `hide()` 之前，同一个协程里、中间不挂起。`hide()` 在第一次挂起之前就读完了字段，
+   所以这一笔**不可能被重组合覆盖**。
+
+失败不是致命的：`runCatching` 兜住，弹层就退回 M3 原本的走法，也就是修之前的样子。
+
+### 17.5 真机验证
+
+修复后同一次录制里，弹开与两条缩回**都拟合到 `0.9 / 700`、位移都是 1687 px**
+（见 17.2 的表），也就是同一条弹簧、同一段距离，时长因此一致。
+把手的行号在两条缩回路径上逐帧同形，说明按钮路径与遮罩路径仍然等价。
+
+修复前那次录制的弹层比修复后**矮 86 px**——因为录制时「系统自动」是开着的，
+弹层里那行说明文字没画出来。拟合对总位移不敏感（`d` 取 1560 与 1687，
+rms 分别是 13.3 与 22.0 px，都指向 `1.0 / 3800`），所以这一处差异不影响结论。
+
+### 17.6 门禁
+
+`scripts/verify_modern_settings_runtime.py` 增加两组断言：
+
+- 源码侧：`leaveTheWayItArrived` / `sheetOffset` / `getShowMotionSpec$material3` /
+  `setHideMotionSpec$material3` / `snapshotFlow { sheetOffset(sheetState) }` 必须在。
+  原有的 `scope.launch { sheetState.hide() }.invokeOnCompletion {` 一条要改形状——
+  `hide()` 前面多了一次写入，字面量不再匹配。
+- 出货 DEX 侧：`leaveTheWayItArrived` / `getShowMotionSpec` / `setHideMotionSpec`
+  必须在；并且 **`ThemeSheetProbe` / `probeSheet` 必须不在**——那是用来读回真实规格的
+  临时探针，它会在每次关闭时写 logcat，绝不能进正式包。
+
+### 17.7 教训：字节码里「先入栈」不等于「第一个参数」
+
+这一节一开始判断错了，错在把三个 `MotionSchemeKt.value` 调用**入栈的顺序**
+当成了三个参数**收到的顺序**。反编译看到的是：
+
+```text
+1146  value(DefaultSpatial) -> 局部变量 23
+1158  value(DefaultSpatial) -> 局部变量 24
+1170  value(FastEffects)    -> 局部变量 25
+1305  invokedynamic 捕获 (sheetState, 24, 25, 23)
+```
+
+入栈顺序是 `(DefaultSpatial, DefaultSpatial, FastEffects)`，而 lambda 收到的是
+`(24, 25, 23)`——`hide` 拿到的是 `25`，也就是 `FastEffects`。
+按入栈顺序读会得出「show 和 hide 是同一个 token」，于是把方向差异推给初速，
+去追一个根本不存在的 `lastVelocity`。
+
+**教训：`remember` 的 lambda 捕获顺序由编译器决定，和赋值顺序无关。**
+「参数位置决定语义」的 API，静态阅读只能给出假设，定性要靠真机读回
+（`show` 与 `anchored` 是同一个实例、`hide` 是另一个，探针一眼看出来）。
+另外 `offset` 的零点在哪儿，同样只能实测。

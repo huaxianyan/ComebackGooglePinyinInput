@@ -117,8 +117,27 @@ def main() -> int:
             # button that ran its action directly made the sheet vanish instead
             # of leave - only the scrim, whose dismissal Material 3 routes
             # through a hide of its own, had an exit.
-            "scope.launch { sheetState.hide() }.invokeOnCompletion {",
+            "scope.launch {",
+            "leaveTheWayItArrived(sheetState)",
+            "sheetState.hide()",
+            "}.invokeOnCompletion {",
             "if (!sheetState.isVisible) action()",
+            # The exit runs on the spring the sheet arrived on. Material 3
+            # hands the sheet a stiffer spring for hiding than for showing -
+            # measured, the way in covers the height in about 200 ms and the
+            # way out covers it in under 50 - which is what read as the sheet
+            # being yanked off the screen. Neither field is reachable from
+            # Kotlin, so the copy goes through the generated accessors.
+            "getShowMotionSpec\\$material3",
+            "setHideMotionSpec\\$material3",
+            "FiniteAnimationSpec::class.java",
+            "private fun leaveTheWayItArrived(state: SheetState)",
+            # Material 3 writes both specs back on every recomposition, so the
+            # copy is re-applied on the frames the sheet is actually moving on.
+            # That observer is also the only thing that reaches the scrim's
+            # dismissal, which is the component's own hide and cannot be hooked.
+            "snapshotFlow { sheetOffset(sheetState) }",
+            "private fun sheetOffset(state: SheetState): Float",
             "onClick = { dismissThen(onDismiss) }",
             "onClick = { dismissThen(actions.apply) }",
             "onClick = { dismissThen(actions.assignLight) }",
@@ -1261,10 +1280,24 @@ def main() -> int:
             b"applyCustomThemeEditResult",
             b"target_user_image_theme_file_name",
             b"intent_extra_key_no_delete_button",
+            # The exit spring the sheet copies onto its own hide, and the two
+            # accessors it goes through - neither is reachable from Kotlin.
+            b"leaveTheWayItArrived",
+            b"getShowMotionSpec",
+            b"setHideMotionSpec",
         ):
             if literal not in dex_bytes:
                 raise RuntimeError(
                     "shipped DEX is missing " + literal.decode("ascii")
+                )
+        # A probe that reads the sheet's real animation specs back was used to
+        # find the stiffness difference and must never ship: it logs on every
+        # hide and would tell a user's logcat which spring the sheet uses.
+        for retired in (b"ThemeSheetProbe", b"probeSheet"):
+            if retired in dex_bytes:
+                raise RuntimeError(
+                    "temporary sheet probe still shipped in DEX: "
+                    + retired.decode("ascii")
                 )
 
     if args.decoded is not None:

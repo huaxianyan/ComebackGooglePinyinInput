@@ -19,12 +19,16 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.SheetState
+import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -139,6 +143,10 @@ internal data class ThemePreviewActions(
  * have that problem - Material 3 hides the sheet before it reports the
  * dismissal - so the buttons borrow the same hide and only run their action
  * once the sheet is gone.
+ *
+ * The hide is also put back on the spring the sheet came in on, because the
+ * component's own choice for it is far stiffer and the sheet read as being
+ * yanked off the screen. See [leaveTheWayItArrived].
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -154,6 +162,17 @@ internal fun ThemePreviewSheet(
     // to, so the half-open state is never useful here.
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
+    // The exit spring has to be re-applied as the sheet moves. Material 3 hands
+    // the component a stiffer spring for hiding than for showing and writes
+    // both back on every recomposition, so a single write at the start is
+    // overwritten before anyone taps. Watching the offset does it on the frames
+    // the sheet is actually moving on and not otherwise, and it leaves the last
+    // word with this side once the sheet comes to rest - which is when the
+    // scrim, whose hide is the component's own and cannot be hooked, is tapped.
+    LaunchedEffect(sheetState) {
+        snapshotFlow { sheetOffset(sheetState) }
+            .collect { leaveTheWayItArrived(sheetState) }
+    }
     // Every button that closes the sheet hides it first. Setting the subject to
     // null takes the sheet out of the tree on the same frame, and a sheet that
     // is removed is not animated out - only the scrim, whose dismissal Material
@@ -165,7 +184,13 @@ internal fun ThemePreviewSheet(
         // action twice - for the editor that is a second editor on the stack.
         if (dismissing) return
         dismissing = true
-        scope.launch { sheetState.hide() }.invokeOnCompletion {
+        scope.launch {
+            // The observer above has already done this, but this is the write
+            // that cannot lose: the hide reads the spec before it suspends, so
+            // nothing can be recomposed in between.
+            leaveTheWayItArrived(sheetState)
+            sheetState.hide()
+        }.invokeOnCompletion {
             // Still visible means the hide was cut short by something else
             // closing the sheet, which has already done this action's job.
             if (!sheetState.isVisible) action()
@@ -383,5 +408,46 @@ private fun KeyBorderRow(
             color = MaterialTheme.colorScheme.onSurface,
         )
         Switch(checked = checked, onCheckedChange = onCheckedChange)
+    }
+}
+
+/**
+ * How far the sheet is from its open position, in pixels.
+ *
+ * `requireOffset` answers with nothing until the sheet has been laid out once,
+ * and a value that is missing is not a reason to drop the observer - the flow
+ * just reports it as no movement, which is what it is.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+private fun sheetOffset(state: SheetState): Float =
+    runCatching { state.requireOffset() }.getOrDefault(0f)
+
+/**
+ * Makes the sheet leave on the spring it arrived on.
+ *
+ * Material 3 gives the sheet one spec for showing and a stiffer one for hiding.
+ * Measured on the device, the way in covers the height in about 200 ms while
+ * the way out covers the same distance in under 50, which is what makes the
+ * sheet read as being yanked away instead of put back. The two are not
+ * interchangeable settings: they are what the component chose, and neither is
+ * reachable from Kotlin - `showMotionSpec` and `hideMotionSpec` are internal,
+ * so they are copied through the generated accessors.
+ *
+ * The copy has to land immediately before the hide, in the same coroutine and
+ * with nothing suspending in between. `ModalBottomSheet` rewrites both specs
+ * from a side effect on every recomposition, and the hide reads its field
+ * before its first suspension, so a recomposition in between would put the
+ * stiff spec back.
+ *
+ * Failing is not fatal: the sheet then leaves the way Material 3 wanted it to,
+ * which is where this started.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+private fun leaveTheWayItArrived(state: SheetState) {
+    runCatching {
+        val type = state.javaClass
+        val entry = type.getMethod("getShowMotionSpec\$material3").invoke(state)
+        type.getMethod("setHideMotionSpec\$material3", FiniteAnimationSpec::class.java)
+            .invoke(state, entry)
     }
 }
