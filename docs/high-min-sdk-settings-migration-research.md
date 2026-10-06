@@ -202,13 +202,16 @@ minSdk 提到 23 后，这份例外清单可以整个删掉，少一处脆弱的
 
 ### 阶段 2：补齐 Compose 侧缺口
 
-6. **新主题选择页**（见第五节，独立专项）。
-   **只读切片已落地**（见 5.5）：清单、槽位解析、四槽当前指向。
-   **键盘预览也已落地**（见 5.5 与 `docs/compose-theme-preview-design.md`），
-   真机验证待做。**写入路径仍未做。**
-7. 词典破坏性操作入口的 Compose 化，或明确保留旧 fragment 并写清理由。
-8. 许可证页的 Compose 化。
-9. 首次引导（若阶段 0 决定一并做）。
+6. **新主题选择页**（见第五节，独立专项）。**已收口（2026-10-06）**：
+   清单、槽位解析、四槽当前指向、引擎渲染的键盘预览、四槽写入、自定义主题的编辑与删除、
+   键盘快捷入口改指新页都已落地，并在 API 36 真机验收。
+   仍是复用旧活动的部分：自定义主题的创建与编辑走 `ThemeBuilderActivity` / `ThemeEditorActivity`。
+7. 词典破坏性操作入口的 Compose 化，或明确保留旧 fragment 并写清理由。**已做**：
+   API 35+ 的联系人建议授权与清除用户词典已在当前页实现。
+8. 许可证页的 Compose 化。**部分**：「关于」子页是 Compose，许可证本身仍是旧
+   `UnquantumLicenseMenuActivity`。
+9. 首次引导（若阶段 0 决定一并做）。**未做**：Compose 侧没有首次引导文件，
+   现在仍是旧 Activity 用 `values-v35/first_run_md3.xml` 重绘。
 
 ### 阶段 3：弃用旧页的工程落地
 
@@ -326,7 +329,7 @@ minSdk 提到 23 后，这份例外清单可以整个删掉，少一处脆弱的
    动态槽只有开关没有选择器。它的值是 `files:dynamic_theme.zip`（生成包），
    清单里作为 `ThemeSource.Generated` 单独构造，**不会被 `user_theme_` 目录扫描捞到**。
 
-**仍未做、也是唯一的真难点：键盘预览**。旧页用
+**当时仍未做、也是唯一的真难点：键盘预览**。旧页用
 `KeyboardPreviewRenderer$KeyboardPreviewRequestCanceler` +
 `onKeyboardPreviewReady(String, Drawable)` 拿引擎渲染的预览图，
 不是纯资源渲染；Compose 侧要么反射这条路，要么自绘。
@@ -340,6 +343,19 @@ minSdk 提到 23 后，这份例外清单可以整个删掉，少一处脆弱的
 **该方案已落地**（同日）：`ThemePreviewBridge.kt` + `ThemePreview.kt`，
 清单页顶部固定预览、点行切换。新增门禁 `scripts/verify_theme_preview_bridge.py`
 把「上游类改名」变成构建期失败。单元测试 83 通过 / 0 失败。**真机验证待做。**
+
+### 5.6 写入与收口（2026-10-06）
+
+上面留到「下一刀」的两项都做完了：引擎渲染预览已在 API 36 真机验收，
+写入路径（四槽成对预览、浅色/深色/固定/动态槽、自定义主题的编辑与删除）也已落地。
+清单页取代了「主题背景」页，磁贴改为模式单选，键盘快捷入口改指新路径。
+细节与全部实测记录见 [主题预览设计](compose-theme-preview-design.md)。
+
+唯一保留的降级项：弹层开着时切系统深浅色，预览不刷新（记录、不修）。
+
+**仍未 Compose 化**：自定义主题的创建与编辑仍复用旧
+`ThemeBuilderActivity` / `ThemeEditorActivity`，与第八节「一并 Compose 化，不拆阶段」
+的决策不完全一致——现在是「入口 Compose 化、生命周期仍归旧活动」。
 
 ## 六、风险
 
@@ -400,9 +416,22 @@ minSdk 提到 23 后，这份例外清单可以整个删掉，少一处脆弱的
 | 动态配色诊断版本 | **不再实施**（根因已定位并修复，见下方解除说明） |
 | 本工程（新设置页） | **进行中** |
 
-进行中的具体位置：**阶段 1 的验证面确认已收口**。五档实测通过（23、26、30、31、34），
-27–29 是本机验证台盲区，见 10.7。下一步是**阶段 2 的 Compose 侧补齐**，
-其中主题选择页按 5.2 的建议先做只读部分。
+进行中的具体位置：**阶段 2 的主题选择页已收口（2026-10-06）**。清单、槽位解析、引擎渲染预览、
+四槽写入、自定义主题的编辑与删除、键盘快捷入口改指新页都已落地，并在 API 36 真机验收
+（见 [主题预览设计](compose-theme-preview-design.md)）。阶段 2 剩下第 9 条**首次引导
+Compose 化**，以及第 6、8 条里仍是复用旧活动的那两处：自定义主题的创建与编辑走
+`ThemeBuilderActivity` / `ThemeEditorActivity`，许可证页走 `UnquantumLicenseMenuActivity`。
+TV 设置（`TVSettingsActivity`）也还没有归属。
+
+**阶段 3 尚未开始**。当前实测值：`minSdkVersion` 仍是 17；两道闸仍是 35
+（`apply_patches.py` 的 `const/16 v1, 0x23`，以及 `modern_settings_runtime_enabled` 的
+基础 `false` / `values-v35` `true`）；IME 的 `settingsActivity` 仍指向旧 `SettingsActivity`
+（`patches/res/xml/method.xml` 与 `patches/res/xml-v19/method.xml` 两份都没改）。
+**含义**：这一刀做好的主题页目前在 API 34 及以下不可见，正是下放阶段要解决的问题。
+
+顺序提醒：实际推进顺序与 9.1 相反。9.1 定的中间态（minSdk 提到 23 + 摘掉旧入口 +
+改指 `settingsActivity`）本应在主题页与首次引导之前，实际是先做了主题页。
+恢复推进时要么按 9.1 补中间态，要么明确调整顺序。
 
 历史背景（已解除）：用户曾反馈 **2.1.4 的动态配色键盘在用户设备上不工作**，
 且无法取得该设备，原计划先做一个带诊断日志与导出功能的 debug 版本，
