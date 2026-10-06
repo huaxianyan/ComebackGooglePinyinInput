@@ -85,6 +85,7 @@ pref_key_en_t9_multitap_interval_ms  String  默认 600，依赖上面的开关
 
 - 兼容类的父类、`Runnable` 实现、开关读取，以及关闭时对 `handle`、联想、自动纠错、标点候选四个入口的 `invoke-super` 回退
 - 打开时的 composing 组合路径、窗口定时器、字母分组顺序和间隔钳位方向
+- 不出现 raw `InputConnection` 写入（`getCurrentInputConnection`、`InputConnection;->commitText(`）和中文九键路径。`IImeDelegate` 自身的 `commitText` 是被审计的路径而不是绕过它：配对符号补全用它提交右半边，禁止项因此按 `InputConnection` 收窄而不是按方法名匹配
 - 键盘选择页不再有独立多击布局；`ime_en_9key.xml` 只改 IME 类，`string_id`、键盘组和标签保留
 - `keyboard_en_9key.xml` 与 `softkeys_9key.xml` 未被改写
 - 旧设置页与 Compose 使用同一 key、同一默认值、同一组取值和同一父子关系

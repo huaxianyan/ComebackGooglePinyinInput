@@ -95,10 +95,13 @@ def verify_sources() -> None:
     )
     # The keyboard must compose through the native IImeActionDelegate, exactly
     # like its English, Latin and 9-key parents, and never touch raw
-    # InputConnection writes or the Chinese 9-key path.
+    # InputConnection writes or the Chinese 9-key path. The forbidden entry is
+    # the InputConnection write, not the method name: the delegate's own
+    # commitText is how the paired punctuation completion commits its closing
+    # half, and it is the audited path rather than a way around it.
     for forbidden in (
         "getCurrentInputConnection",
-        "commitText(",
+        "InputConnection;->commitText(",
         "Pinyin9Key",
         "HmmPinyinT9",
         # These inverted clamp branches silently pinned every interval to 2000 ms.
