@@ -51,6 +51,7 @@ class ModernThemeBuilderActivity : ComponentActivity() {
     private var bitmap by mutableStateOf<Bitmap?>(null)
     private var failure by mutableStateOf(false)
     private var editTarget: File? = null
+    private var title: String? = null
     private var initialTransparency = ThemeBuilderBridge.DEFAULT_TRANSPARENCY
     private var initialCropScale = 0f
     private var initialCropCenter = 0f to 0f
@@ -94,6 +95,10 @@ class ModernThemeBuilderActivity : ComponentActivity() {
     private fun reopen(target: File): ByteArray? {
         val pkg = ThemeBuilderBridge.openPackage(target) ?: return null
         val bytes = ThemeBuilderBridge.packageImage(pkg) ?: return null
+        // The name the theme was created with is carried forward, which is what
+        // the legacy editor did. The wizard never shows it, but a package
+        // without one is not a package the legacy wizard would have produced.
+        title = ThemeBuilderBridge.packageTitle(pkg)
         // The previous framing is restored so that re-editing a theme does not
         // silently discard the crop and the brightness the user chose last time.
         initialTransparency = ThemeBuilderBridge.styleValue(
@@ -126,6 +131,11 @@ class ModernThemeBuilderActivity : ComponentActivity() {
             setContent { Wizard() }
             return
         }
+        // A new theme is named the way the legacy builder named it; a re-edited
+        // one keeps the name it already had.
+        val resolved = title ?: ThemeBuilderBridge.defaultTitle(this)
+        ThemeBuilderBridge.setTitle(built, resolved)
+        title = resolved
         model = built
         bitmap = decoded
         setContent { Wizard() }

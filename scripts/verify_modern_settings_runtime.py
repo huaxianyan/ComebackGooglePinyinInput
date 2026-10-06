@@ -988,6 +988,12 @@ def main() -> int:
             'const val RESULT_DELETED_NAME = "intent_extra_key_deleted_theme_file_name"',
             "ThemeBuilderBridge.openPackage(target)",
             "ThemeBuilderBridge.packageImage(pkg)",
+            # The theme's own name is part of the package the legacy wizard
+            # wrote, and the legacy editor carried it across an edit. Nothing
+            # reads it back, which is exactly why it is easy to drop.
+            "ThemeBuilderBridge.packageTitle(pkg)",
+            "ThemeBuilderBridge.setTitle(built, resolved)",
+            "ThemeBuilderBridge.defaultTitle(this)",
         ),
         "compose custom theme wizard host",
     )
@@ -1010,9 +1016,38 @@ def main() -> int:
             "ThemeBuilderBridge.setTransparency(model, transparency)",
             "detectTransformGestures",
             "writePackage(context, model)?.let(onSave)",
+            # The host draws edge to edge, so the wizard has to keep its own
+            # controls out of the system bars. Without this the instruction line
+            # sits under the status bar and NEXT sits under the navigation bar,
+            # which is where the device pass found it.
+            "windowInsetsPadding(WindowInsets.safeDrawing)",
+            # A draw scope paints onto the window's canvas without clipping, so
+            # the picture - scaled to cover the crop window and therefore taller
+            # and wider than the container - covers the instruction line above it
+            # unless the canvas clips itself. Found on the device: the picture's
+            # top edge landed 341px above the canvas.
+            "clipRect {",
+            # The picture follows the finger. Dragging is the one gesture whose
+            # direction cannot be checked without a device, and the sign is easy
+            # to get backwards because the legacy page subtracts its deltas and
+            # a Compose pan is measured the other way round.
+            "nextCenter.x + pan.x,",
+            "nextCenter.y + pan.y,",
+            # The gesture handler must only report gestures. A pointerInput block
+            # is installed once and is not restarted when the framing changes,
+            # so any framing arithmetic done inside it reads values frozen at
+            # install time - which on the device turned a 600px drag into a 4px
+            # one, the last event's delta and nothing else.
+            "onGesture = { centroid, pan, zoom ->",
+            "onGesture(centroid, pan, zoom)",
         ),
         "compose custom theme wizard",
     )
+    for stale in ("onTransform(nextScale, nextCenter)", "onTransform: (Float, Offset) -> Unit"):
+        if stale in theme_builder_screen:
+            raise RuntimeError(
+                f"the crop gesture handler must not do the framing arithmetic itself: {stale}"
+            )
 
     theme_builder_bridge = (settings_source_dir / "ThemeBuilderBridge.kt").read_text(
         encoding="utf-8"
@@ -1028,7 +1063,16 @@ def main() -> int:
             # The obfuscated members share names across types, so every lookup
             # has to match the type as well as the name.
             "private fun findField(instance: Any, name: String, fieldType: Class<*>): Field?",
+            "private fun findFieldType(owner: Class<*>, name: String, fieldType: Class<*>): Field?",
             "private fun findMethod(",
+            # A new theme is named in the app's own format, and the index is the
+            # first one no existing package has taken - the loop the legacy
+            # builder ran. Dropping it produces a package whose metadata has no
+            # title, which is what the device pass found.
+            'private const val TITLE_FORMAT_RESOURCE = "user_theme_name_format"',
+            "fun defaultTitle(context: Context): String",
+            "fun packageTitle(pkg: Any): String?",
+            "fun setTitle(model: Any, title: String)",
         ),
         "custom theme engine bridge",
     )

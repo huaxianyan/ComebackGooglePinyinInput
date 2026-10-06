@@ -43,6 +43,25 @@ minScale = max(cropW / bitmapW, cropH / bitmapH)
 不是常量——横屏用不同值，而旧页的裁剪窗宽就是从它推出来的。键盘高来自 `ats`，是
 `headerHeight + bodyHeight * scale`，与预览渲染器同一个来源。
 
+**这里有一个必须写下来的陷阱：窗口高不含导航栏。** 真机上（1080 宽）窗口是 864×592，
+比例 1.4595，正是键盘自身内容区 1080:740 的比例，所以图片进键盘不会被拉伸。而旧页画给
+用户看的白框是 **864×692**——它比真实裁剪区高 100 px。原因是那个白框根本是另一个视图：
+`bcp.onCreate` 用 `ats.b(...) + stableNavigationHeightOr(navInset)` 给它设 LayoutParams，
+量的是键盘在屏幕上的整块占地；真正算裁剪的 `bcp.a()` 只用 `ats.b(...)`，没有导航栏那一段。
+
+```smali
+# bcp.onCreate —— 预览视图（白框），含导航栏
+height = (int) ((width / widthPixels) * (ats.b(context, {HEADER, BODY}) + navInset))
+
+# bcp.a() —— 裁剪窗，不含导航栏
+aspect = ats.b(context, {HEADER, BODY}) / (float) ats.a(context)
+windowHeight = (int) ((g * previewRatio) * aspect)
+```
+
+**结论是跟 `a()`，不跟白框。** 旧页的白框比它实际裁掉的区域大，用户框进去的最上面
+100 px 会被丢掉。从设备上拉回来的主题包证实了这一点而不是白框：包内裁剪矩形是源图
+409×281 像素，409/281 = 1.4555（对应 592 高的窗口），若是 692 高的窗口该是 1.2470。
+
 图片放置约定：`viewX = centre.x + (bitmapX - bitmapW / 2) * scale`。三处由它派生：
 
 - **开图取景**：`initialScale = max(minScale, fitScale)`，`fitScale` 是整图装进容器的比例。
@@ -70,8 +89,33 @@ bai.a(Rect(left, 0, right, bottom),     // 背景条：顶边钉在图片自身�
 两个 `Rect` 共享三个边，只差顶边——所以桥接里是两个参数而不是一个。**第一个 Rect 的
 `top` 被钉为 0** 是旧页的行为，不是笔误。
 
-**手势**：缩放绕手势焦点（`centroid`）做，然后统一过 `clampCenter`；拖动是 `centre -= pan`。
-`minScale` 是缩放下限。
+包里还有一个**名字**。旧新建页在解码出位图之后，用应用自己的 `user_theme_name_format`
+（`主题 (%1$d)，创建日期：%2$s`，日期是 `DateFormat.MEDIUM`）生成一个名字，序号取
+「现有包里还没人用过的第一个」，从 1 数到 1000；旧编辑器则把打开的那个包的名字原样
+抄给新模型。名字**没有任何界面读它**——主题网格不显示、预览弹层不显示，`bbl` 连一个
+返回 String 的方法都没有——所以漏掉它不会有人立刻发现，但包的内容就与旧向导的不一致了。
+真机验收时对比包内 `metadata.binarypb` 才看出来：旧包 70 字节（含标题字段），我的 24 字节。
+现在补上了：新建走 `defaultTitle`，编辑走 `packageTitle` 转抄。
+
+**手势**：缩放绕手势焦点（`centroid`）做，然后统一过 `clampCenter`；拖动是
+`centre += pan`，即图片跟着手指走。**符号容易反**：旧页写的是 `centre -= distanceX`，
+但 `GestureDetector` 的 `distanceX` 是 `last - current`，与 Compose 的 `pan`（手指位移）
+方向相反，两边一负一正指的是同一件事。写成 `-= pan` 会让图片朝手指的反方向跑，
+而且只有真机能发现。
+
+**算术必须留在持有取景的那一层，手势回调只转交原始手势。** 这是真机上踩到的第二个坑，
+而且比符号坑更隐蔽：`pointerInput` 里的变换处理器**只在 key 变化时重建**，所以它只能看见
+安装那一刻的 `scale` / `centre`。如果裁剪页把这两个值当参数传给画布、又在处理器里读，
+处理器拿到的就是页面刚打开时那份取景——每次事件都从初始位置重算，只剩最后一个事件的
+位移。实测表现是 600 px 的滑动只让图片挪 4 px，看上去像「手势没生效」。
+现在 `CropStep` 的 `onGesture` 只转交 `(centroid, pan, zoom)`，加减与钳制都在
+`CustomThemeBuilderScreen` 里做——那里的 lambda 闭包持有的是状态对象本身，读到的永远是
+当前值。
+
+画布必须自己裁剪（`clipRect`）。Compose 的绘制作用域直接画在窗口的 canvas 上，不按
+布局边界裁剪；图片为了盖满窗口本来就比容器大，不裁就会溢到上面的说明文字与下面的
+按钮上——真机上实测图片顶边落在画布上方 341 px 处。旧页没这个问题，它的图片活在
+一个会裁子视图的 ViewGroup 里。
 
 **重新播种的时机**：`onGeometry` 只在 `geometry == null || 窗口尺寸变了` 时播种。每次布局
 都播种会把用户刚调好的取景冲掉；而本活动自己处理配置变更（见下），旋转后容器尺寸会变，
@@ -148,14 +192,37 @@ centre = 容器中心 - (storedCentre - bitmapSize/2) * scale
 - `scripts/verify_modern_settings_runtime.py`：新增三段源码断言（活动、向导页、桥接的
   关键调用与样式键常量），manifest 断言新增 `ModernThemeBuilderActivity`，并**反向断言**
   `ThemeBuilderActivity` / `ThemeEditorActivity` 不得再出现在本模块的 Kotlin 里。
+  其中三条是真机踩出来的，写在断言旁边：
+  - `windowInsetsPadding(WindowInsets.safeDrawing)`——不消费 insets 时说明文字压状态栏、
+    「下一步」被导航栏盖住。
+  - `clipRect {`——不裁剪时图片溢到画布外。
+  - `onGesture = { centroid, pan, zoom ->` 与 `onGesture(centroid, pan, zoom)`——算术必须
+    在持有取景的那一层，并且**反向断言** `onTransform(nextScale, nextCenter)` 这类写法不得
+    回来。
 - `src/test/kotlin/.../ThemeCropGeometryTest.kt`：7 个用例（窗口尺寸、最小与初始 scale、
   开图取景、窗口宽高比、拖动钳制、`seed` 往返、小图放大覆盖）。
   **注意**：本机跑不了 `:compose-runtime:test`（`kotlin-test-junit` 不在离线缓存），
   这些用例从未在本机执行过，不能当作「测试通过」。
 
-## 七、遗留
+## 七、真机验收（2026-10-06，Pixel 10 Pro / Android 16 / 1080×2410）
+
+创建与编辑两条流程都走通了，四条结论都有像素或包内容作证：
+
+| 项 | 证据 |
+| --- | --- |
+| 安全区 | `取消` / `下一步` / `保存` 的 bounds 都在导航栏之上，说明文字不被状态栏压 |
+| 画布裁剪 | 顶部三条带（状态栏 / 说明行上方 / 说明行）的亮像素占比从 0–2% 变成 96–99% |
+| 拖动 | 向下滑 400 px，图片下移 396 px（差的 4 px 是触摸 slop）；反向再滑 400 px 回到原位（净 19 px） |
+| 缩放 | 双指捏合后窗口内容明显放大 |
+| 编辑往返 | 打开旧包时裁剪与亮度（40%）都被还原；保存后旧包被删、新包写出 |
+| 包几何 | 新包裁剪矩形 409×281，与旧包的 409×281 同形（位置不同是因为拖动过） |
+
+**验收里修掉的两个 bug 都不是「看起来不对」那一类**，而是功能性的：手势只走最后一个事件、
+图片画到画布外。前者在旧实现下每次手势只挪几像素，很容易被当成「模拟器手势不准」放过去。
+
+## 八、遗留
 
 - 单测无法在本机执行（见上）。逻辑核对靠人工 + 门禁脚本覆盖。
-- **真机验收尚未完成**：远程调试通道地址变更后连接被立即重置，通道恢复前无法上机。
-  裁剪几何与「编辑已有主题」的往返是验收重点——前者错了只会取景不同、不会崩，
-  后者错了会静默丢掉用户上次的裁剪与亮度，两者都必须在真机上看一眼。
+- 弹层预览在切系统深浅色时不刷新（记录、不修、不作为验收障碍）。
+- `ThemeCropGeometryTest.kt` 里没有覆盖「手势处理器不得自己算取景」这一条——它是架构约束
+  而不是几何约束，靠门禁的反向断言盯着。

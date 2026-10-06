@@ -11,10 +11,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
@@ -37,6 +40,7 @@ import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
@@ -137,6 +141,22 @@ internal data class ThemeCropGeometry(
  * derived from it rather than hard-coded because that is what the legacy page
  * did: the frame the user sees is the keyboard's shape, so what they frame is
  * what the keyboard will show.
+ *
+ * It is the keyboard's *drawable* shape, header and body together, and it
+ * deliberately excludes the navigation bar - the legacy page's crop window did
+ * the same, and the two numbers are close enough to look like a mistake:
+ *
+ * * the crop window is `w` by `w * headerAndBody / widthPixels`, i.e. 864 by 592
+ *   on a 1080-wide screen, which is 1.4595 - exactly the 1080:740 the keyboard
+ *   itself has, so the picture reaches it undistorted;
+ * * the white rectangle the legacy page drew is 864 by 692, because that
+ *   outline is a *separate* view sized from `headerAndBody + navigationBar`,
+ *   the keyboard's whole on-screen footprint.
+ *
+ * So the legacy guide framed 100px more than it cropped. This one frames what
+ * it crops. A theme package pulled off the device confirms the arithmetic
+ * rather than the outline: its crop rectangle is 409 by 281 source pixels, and
+ * 409/281 is 1.4555, not the 1.2470 a 692-tall window would give.
  */
 internal fun themeCropGeometry(
     containerWidth: Int,
@@ -208,7 +228,16 @@ internal fun CustomThemeBuilderScreen(
     val bitmapWidth = bitmap.width
     val bitmapHeight = bitmap.height
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            // The host draws edge to edge, so the instruction line and the two
+            // button rows have to be kept clear of the status and navigation
+            // bars themselves. The crop canvas sits inside the same padding on
+            // purpose: a crop window that reached under the navigation bar
+            // could not be dragged, and the NEXT button would be unreachable.
+            .windowInsetsPadding(WindowInsets.safeDrawing),
+    ) {
         Text(
             text = stringResource(
                 when (step) {
@@ -260,9 +289,52 @@ internal fun CustomThemeBuilderScreen(
                         geometry = fresh
                     }
                 },
-                onTransform = { newScale, newCenter ->
-                    scale = newScale
-                    center = newCenter
+                onGesture = { centroid, pan, zoom ->
+                    // The framing is read and written here, not inside the
+                    // gesture handler, because this lambda closes over the state
+                    // itself while the handler only ever holds the values that
+                    // were current when it was installed. The handler is
+                    // installed once and is deliberately not restarted when the
+                    // framing changes, so a copy taken there would pin every
+                    // gesture to the framing the page opened with. That is what
+                    // the device showed: a 600px drag moved the picture 4px,
+                    // the last event's own delta and nothing before it.
+                    val current = geometry
+                    if (current != null && scale > 0f) {
+                        var nextScale = scale
+                        var nextCenter = center
+                        if (zoom != 1f) {
+                            // Zoom about the gesture's own focus point, the way
+                            // the legacy page did; the clamp below then pulls the
+                            // picture back if that pushed an edge inside the
+                            // window.
+                            nextScale = max(current.minScale, scale * zoom)
+                            val ratio = nextScale / scale
+                            val translateX = center.x - scale * bitmapWidth / 2f
+                            val translateY = center.y - scale * bitmapHeight / 2f
+                            nextCenter = Offset(
+                                centroid.x + (translateX - centroid.x) * ratio +
+                                    bitmapWidth * nextScale / 2f,
+                                centroid.y + (translateY - centroid.y) * ratio +
+                                    bitmapHeight * nextScale / 2f,
+                            )
+                        }
+                        // The picture follows the finger. The legacy page got
+                        // this by subtracting its scroll deltas, which are
+                        // measured the other way round from a gesture's pan -
+                        // `distanceX` is `last - current` - so the two look
+                        // opposite and mean the same thing. Adding here is what
+                        // makes dragging move the picture rather than the frame.
+                        nextCenter = current.clampCenter(
+                            nextCenter.x + pan.x,
+                            nextCenter.y + pan.y,
+                            nextScale,
+                            bitmapWidth.toFloat(),
+                            bitmapHeight.toFloat(),
+                        )
+                        scale = nextScale
+                        center = nextCenter
+                    }
                 },
             )
 
@@ -384,6 +456,15 @@ internal fun writePackage(context: Context, model: Any): String? {
     return target.name
 }
 
+/**
+ * The crop surface: the picture, the crop window, and the raw gestures on it.
+ *
+ * It reports gestures rather than framing. A transform handler installed through
+ * `pointerInput` is not restarted when the framing changes, so it can only ever
+ * see the values that were current when it was installed; whoever holds the
+ * framing has to do the arithmetic. See the note on [CustomThemeBuilderScreen]'s
+ * `onGesture`.
+ */
 @Composable
 private fun CropStep(
     image: ImageBitmap,
@@ -395,7 +476,7 @@ private fun CropStep(
     center: Offset,
     modifier: Modifier,
     onGeometry: (ThemeCropGeometry) -> Unit,
-    onTransform: (Float, Offset) -> Unit,
+    onGesture: (centroid: Offset, pan: Offset, zoom: Float) -> Unit,
 ) {
     BoxWithConstraints(modifier = modifier.background(Color.Black)) {
         val width = constraints.maxWidth
@@ -416,68 +497,54 @@ private fun CropStep(
                 .fillMaxSize()
                 .pointerInput(bitmapWidth, bitmapHeight, geometry) {
                     detectTransformGestures { centroid, pan, zoom, _ ->
-                        var nextScale = scale
-                        var nextCenter = center
-                        if (zoom != 1f && scale > 0f) {
-                            // Zoom about the gesture's own focus point, the way
-                            // the legacy page did; the clamp below then pulls the
-                            // picture back if that pushed an edge inside the
-                            // window.
-                            nextScale = max(geometry.minScale, scale * zoom)
-                            val ratio = nextScale / scale
-                            val translateX = center.x - scale * bitmapWidth / 2f
-                            val translateY = center.y - scale * bitmapHeight / 2f
-                            nextCenter = Offset(
-                                centroid.x + (translateX - centroid.x) * ratio +
-                                    bitmapWidth * nextScale / 2f,
-                                centroid.y + (translateY - centroid.y) * ratio +
-                                    bitmapHeight * nextScale / 2f,
-                            )
-                        }
-                        nextCenter = geometry.clampCenter(
-                            nextCenter.x - pan.x,
-                            nextCenter.y - pan.y,
-                            nextScale,
-                            bitmapWidth.toFloat(),
-                            bitmapHeight.toFloat(),
-                        )
-                        onTransform(nextScale, nextCenter)
+                        onGesture(centroid, pan, zoom)
                     }
                 },
         ) {
             if (scale <= 0f) return@Canvas
-            drawImage(
-                image = image,
-                dstOffset = IntOffset(
-                    (center.x - scale * bitmapWidth / 2f).roundToInt(),
-                    (center.y - scale * bitmapHeight / 2f).roundToInt(),
-                ),
-                dstSize = IntSize(
-                    (bitmapWidth * scale).roundToInt(),
-                    (bitmapHeight * scale).roundToInt(),
-                ),
-                filterQuality = FilterQuality.Medium,
-            )
-            val window = geometry.window
-            val scrim = Color.Black.copy(alpha = 0.6f)
-            drawRect(scrim, topLeft = Offset.Zero, size = Size(size.width, window.top))
-            drawRect(
-                scrim,
-                topLeft = Offset(0f, window.bottom),
-                size = Size(size.width, size.height - window.bottom),
-            )
-            drawRect(scrim, topLeft = Offset(0f, window.top), size = Size(window.left, window.height))
-            drawRect(
-                scrim,
-                topLeft = Offset(window.right, window.top),
-                size = Size(size.width - window.right, window.height),
-            )
-            drawRect(
-                color = Color.White,
-                topLeft = Offset(window.left, window.top),
-                size = Size(window.width, window.height),
-                style = Stroke(width = 2.dp.toPx()),
-            )
+            // A draw scope paints onto the window's own canvas, so without this
+            // the picture - which is scaled to cover the crop window and is
+            // routinely wider and taller than the container - overhangs onto
+            // the instruction line above and the buttons below. The legacy page
+            // got the clip for free from the view group its picture lived in.
+            clipRect {
+                drawImage(
+                    image = image,
+                    dstOffset = IntOffset(
+                        (center.x - scale * bitmapWidth / 2f).roundToInt(),
+                        (center.y - scale * bitmapHeight / 2f).roundToInt(),
+                    ),
+                    dstSize = IntSize(
+                        (bitmapWidth * scale).roundToInt(),
+                        (bitmapHeight * scale).roundToInt(),
+                    ),
+                    filterQuality = FilterQuality.Medium,
+                )
+                val window = geometry.window
+                val scrim = Color.Black.copy(alpha = 0.6f)
+                drawRect(scrim, topLeft = Offset.Zero, size = Size(size.width, window.top))
+                drawRect(
+                    scrim,
+                    topLeft = Offset(0f, window.bottom),
+                    size = Size(size.width, size.height - window.bottom),
+                )
+                drawRect(
+                    scrim,
+                    topLeft = Offset(0f, window.top),
+                    size = Size(window.left, window.height),
+                )
+                drawRect(
+                    scrim,
+                    topLeft = Offset(window.right, window.top),
+                    size = Size(size.width - window.right, window.height),
+                )
+                drawRect(
+                    color = Color.White,
+                    topLeft = Offset(window.left, window.top),
+                    size = Size(window.width, window.height),
+                    style = Stroke(width = 2.dp.toPx()),
+                )
+            }
         }
     }
 }

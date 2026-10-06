@@ -3,8 +3,11 @@ package com.google.android.inputmethod.pinyin.modernsettings.compose
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Rect
+import android.os.Build
 import java.io.File
 import java.lang.reflect.Field
+import java.text.DateFormat
+import java.util.Date
 
 /**
  * The legacy custom-theme package engine, reached by reflection.
@@ -48,6 +51,16 @@ internal object ThemeBuilderBridge {
 
     private const val STYLE_SHEET_PROTO =
         "com.google.android.apps.inputmethod.libs.theme.proto.nano.StyleSheetProto\$StyleSheet"
+
+    private const val METADATA_PROTO =
+        "com.google.android.apps.inputmethod.libs.theme.proto.nano" +
+            ".ThemePackageProto\$ThemePackageMetadata"
+
+    /** The string a new theme's name is built from, resolved by name. */
+    private const val TITLE_FORMAT_RESOURCE = "user_theme_name_format"
+
+    /** How far the legacy builder counted before giving up on a free name. */
+    private const val MAX_TITLE_INDEX = 1000
 
     /** The style key the builder writes the crop scale under. */
     const val KEY_CROPPING_SCALE = "__cropping_scale"
@@ -164,6 +177,86 @@ internal object ThemeBuilderBridge {
             findMethod(utilities, "b", File::class.java, Context::class.java)
                 ?.invoke(null, context) as? File
         }.getOrNull()
+    }
+
+    /**
+     * The name a brand-new theme gets.
+     *
+     * Nothing in the app reads a user theme's name back - not the grid, not the
+     * preview sheet - but the legacy builder wrote one and the legacy editor
+     * copied it forward, so a package without it is not a package the wizard
+     * this replaces would have produced. The format is the app's own
+     * `user_theme_name_format`, and the index is the first one no existing
+     * package has taken, which is exactly the loop the legacy builder ran.
+     *
+     * Returns an empty string when the format is missing, which is the legacy
+     * builder's own answer once it has tried every index.
+     */
+    fun defaultTitle(context: Context): String = runCatching {
+        val resources = context.resources
+        val id = resources.getIdentifier(
+            TITLE_FORMAT_RESOURCE,
+            "string",
+            context.packageName,
+        )
+        if (id == 0) return@runCatching ""
+        val format = resources.getString(id)
+        @Suppress("DEPRECATION")
+        val locale = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            resources.configuration.locales[0]
+        } else {
+            resources.configuration.locale
+        }
+        val date = DateFormat.getDateInstance(DateFormat.MEDIUM, locale).format(Date())
+        val taken = existingTitles(context)
+        for (index in 1..MAX_TITLE_INDEX) {
+            val candidate = String.format(locale, format, index, date)
+            if (candidate !in taken) return@runCatching candidate
+        }
+        ""
+    }.getOrDefault("")
+
+    /**
+     * The name inside an opened package, so re-editing keeps it.
+     *
+     * The legacy editor read the package's own metadata and wrote it back onto
+     * its model; without that step a re-edited theme would silently lose the
+     * name it was created with.
+     */
+    fun packageTitle(pkg: Any): String? = runCatching {
+        val metadataType = type(METADATA_PROTO) ?: return@runCatching null
+        val metadata = findMethod(pkg.javaClass, "getMetadata", metadataType)
+            ?.invoke(pkg) ?: return@runCatching null
+        // The metadata declares `a` six times over - an int, a string, a
+        // boolean and three arrays - and field lookup by name alone is a coin
+        // flip between them. `Class.getField` is no better: it matches on the
+        // name and leaves the type to chance.
+        findFieldType(metadataType, "a", String::class.java)?.get(metadata) as? String
+    }.getOrNull()
+
+    /**
+     * Sets the model's title, the field the package writer copies into the
+     * metadata.
+     *
+     * `bai.a` is declared seven times over with seven types; the string one is
+     * the title, and the lookup matches on type so it cannot pick another.
+     */
+    fun setTitle(model: Any, title: String) {
+        runCatching {
+            findField(model, "a", String::class.java)?.set(model, title)
+        }
+    }
+
+    /** Every title already in use, which is what a new one has to avoid. */
+    private fun existingTitles(context: Context): Set<String> {
+        val utilities = type(UTILITIES) ?: return emptySet()
+        val files = runCatching {
+            findMethod(utilities, "a", Array<File>::class.java, Context::class.java)
+                ?.invoke(null, context) as? Array<*>
+        }.getOrNull() ?: return emptySet()
+        return files.mapNotNull { entry ->
+            (entry as? File)?.let(::openPackage)?.let(::packageTitle)
+        }.toSet()
     }
 
     /**
@@ -324,8 +417,12 @@ internal object ThemeBuilderBridge {
      * different types, so a name-only lookup is a coin flip between the
      * transparency, the sample size, the bitmap and the title.
      */
-    private fun findField(instance: Any, name: String, fieldType: Class<*>): Field? {
-        var current: Class<*>? = instance.javaClass
+    private fun findField(instance: Any, name: String, fieldType: Class<*>): Field? =
+        findFieldType(instance.javaClass, name, fieldType)
+
+    /** [findField] for a class that has not been instantiated yet. */
+    private fun findFieldType(owner: Class<*>, name: String, fieldType: Class<*>): Field? {
+        var current: Class<*>? = owner
         while (current != null) {
             for (field in current.declaredFields) {
                 if (field.name == name && field.type == fieldType) {
