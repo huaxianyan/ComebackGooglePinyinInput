@@ -13,7 +13,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
@@ -23,6 +25,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
@@ -801,12 +804,22 @@ class ModernSettingsActivity : ComponentActivity() {
 }
 
 /**
- * The one theme both Compose hosts draw with.
+ * The one theme every Compose host draws with.
  *
- * The settings screen and the first-run guide are two activities, but they are
- * one product: a guide that picked its own colours would look like it came from
- * somewhere else. Dynamic colour on API 31+, the static scheme below it, and the
- * same layout-direction source for both.
+ * The settings screen, the first-run guide and the custom-theme wizard are three
+ * activities, but they are one product: a page that picked its own colours would
+ * look like it came from somewhere else. Dynamic colour on API 31+, the static
+ * scheme below it, and the same layout-direction source for all of them.
+ *
+ * The surface is painted here rather than left to each host, and that is not a
+ * matter of taste. Every host is declared with a fixed Light framework theme -
+ * `@android:style/Theme.Material.Light.NoActionBar` - so its window background
+ * is `#FAFAFA` whatever the night mode says, and a host that draws no background
+ * of its own shows that white page with the dark scheme's own light-toned text
+ * and buttons on top of it: a dark-mode screen that reads as washed out and far
+ * too bright. The wizard did exactly that, which is why the wizard and not the
+ * settings screen was the page that looked wrong. What decides the colours
+ * paints the surface they are drawn on, so no host can forget.
  */
 @Composable
 internal fun ModernSettingsTheme(content: @Composable () -> Unit) {
@@ -822,7 +835,9 @@ internal fun ModernSettingsTheme(content: @Composable () -> Unit) {
         context.resources.configuration.layoutDirection,
     )
     CompositionLocalProvider(LocalLayoutDirection provides layoutDirection) {
-        MaterialTheme(colorScheme = colors, content = content)
+        MaterialTheme(colorScheme = colors) {
+            Surface(modifier = Modifier.fillMaxSize()) { content() }
+        }
     }
 }
 

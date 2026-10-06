@@ -199,14 +199,45 @@ centre = 容器中心 - (storedCentre - bitmapSize/2) * scale
   - `onGesture = { centroid, pan, zoom ->` 与 `onGesture(centroid, pan, zoom)`——算术必须
     在持有取景的那一层，并且**反向断言** `onTransform(nextScale, nextCenter)` 这类写法不得
     回来。
+  - `Surface(modifier = Modifier.fillMaxSize()) { content() }`——共享主题必须铺自己的底色，
+    否则宿主会露出框架 Light 主题的白色窗口底（见第七节）。断言放在活动那一段，因为它盯的
+    是 `ModernSettingsTheme`，不是向导页。
 - `src/test/kotlin/.../ThemeCropGeometryTest.kt`：7 个用例（窗口尺寸、最小与初始 scale、
   开图取景、窗口宽高比、拖动钳制、`seed` 往返、小图放大覆盖）。
   **注意**：本机跑不了 `:compose-runtime:test`（`kotlin-test-junit` 不在离线缓存），
   这些用例从未在本机执行过，不能当作「测试通过」。
 
-## 七、真机验收（2026-10-06，Pixel 10 Pro / Android 16 / 1080×2410）
+## 七、深浅色：底色归共享主题管
 
-创建与编辑两条流程都走通了，四条结论都有像素或包内容作证：
+深色模式下向导页「整体偏亮」，而设置首页正常。两者的配色判断是同一个
+`ModernSettingsTheme`，所以差别不在判断上：
+
+- 向导页活动自己的 `CurrentConfiguration` 里确实带 `night`，`enableEdgeToEdge()` 也按
+  深色处理：状态栏图标是白的，导航栏压的是深色 scrim 而不是浅色底。说明文字
+  `(172, 170, 173)` 与按钮的浅色 `primary` 也都取自动态深色那一套。
+- 但**页面底色是 `(250, 250, 250)`**，正好是 `Theme.Material.Light` 的 `windowBackground`
+  （`#FAFAFA`）。三个 Compose 宿主在清单里都是
+  `@android:style/Theme.Material.Light.NoActionBar`，固定 Light，窗口底色与夜间模式无关。
+
+所以**配色是对的，缺的是底色**。设置首页之所以没事，只是因为它用了 `Scaffold`，默认
+`containerColor` 会铺满整页。向导页的 `Column` 只加了 `windowInsetsPadding`，深色那套浅色
+文字就直接压在框架主题的白色窗口底上，观感正是「深色模式但界面发亮」。
+
+修法放在共享主题里，而不是补在向导页上：
+
+```kotlin
+MaterialTheme(colorScheme = colors) {
+    Surface(modifier = Modifier.fillMaxSize()) { content() }
+}
+```
+
+三个宿主（设置页、首次运行、向导）一次都盖到，下一个忘记铺底的宿主也不会再踩。真机复核：
+向导页的页面底色、状态栏带、导航栏带三处现在与设置首页、主题清单页逐像素同值，分别是
+`(14, 14, 15)`、`(18, 19, 19)`、`(31, 31, 32)`。
+
+## 八、真机验收（2026-10-06，Pixel 10 Pro / Android 16 / 1080×2410）
+
+创建与编辑两条流程都走通了，下面每一条都有像素或包内容作证：
 
 | 项 | 证据 |
 | --- | --- |
@@ -216,13 +247,19 @@ centre = 容器中心 - (storedCentre - bitmapSize/2) * scale
 | 缩放 | 双指捏合后窗口内容明显放大 |
 | 编辑往返 | 打开旧包时裁剪与亮度（40%）都被还原；保存后旧包被删、新包写出 |
 | 包几何 | 新包裁剪矩形 409×281，与旧包的 409×281 同形（位置不同是因为拖动过） |
+| 深色底色 | 页面底色从 `(250, 250, 250)` 变成 `(14, 14, 15)`，与设置首页、主题清单页同值 |
+| 手势未回归 | 共享主题新包了 `Surface`，重测：编辑路径短滑 100 px 图片下移 78 px（差的 22 px 是 `detectTransformGestures` 的触摸 slop）。同一路径长滑撞在 214 px 的竖直钳制上，与上表创建路径的 396 px 不矛盾，两次的取景余量本来就不同 |
 
 **验收里修掉的两个 bug 都不是「看起来不对」那一类**，而是功能性的：手势只走最后一个事件、
 图片画到画布外。前者在旧实现下每次手势只挪几像素，很容易被当成「模拟器手势不准」放过去。
 
-## 八、遗留
+## 九、遗留
 
 - 单测无法在本机执行（见上）。逻辑核对靠人工 + 门禁脚本覆盖。
 - 弹层预览在切系统深浅色时不刷新（记录、不修、不作为验收障碍）。
-- `ThemeCropGeometryTest.kt` 里没有覆盖「手势处理器不得自己算取景」这一条——它是架构约束
+- `ThemeCropGeometryTest.kt` 里没有覆盖「手势处理器不得自己算取景」这一条，它是架构约束
   而不是几何约束，靠门禁的反向断言盯着。
+- 活动启动那一帧仍是框架 Light 主题的窗口底色。共享主题铺底只解决首帧之后，启动到首帧
+  之间系统画的是 `windowBackground`，深色模式下理论上会闪一下白。本次没有观察到可分辨的
+  闪烁，也没有为此加资源（要给宿主换成带 `values-night` 的窗口底色，等于新增样式资源并进
+  `public.xml`），先记录。

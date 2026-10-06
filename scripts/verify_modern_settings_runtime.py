@@ -971,6 +971,25 @@ def main() -> int:
         "legacy specialized settings navigation",
     )
 
+    # The theme paints the surface its own colours are drawn on, and every host
+    # goes through the theme. This is not decoration: the hosts are declared with
+    # a fixed Light framework theme, so their window background is #FAFAFA in any
+    # night mode, and a host that painted nothing of its own showed a white page
+    # under the dark scheme's light-toned text. That is what the wizard did on the
+    # device - measured background (250, 250, 250) against the settings screen's
+    # (14, 14, 15) - and the settings screen only escaped it because Scaffold
+    # happened to fill the page. Keeping the surface here means the next host
+    # cannot forget.
+    require(
+        activity_text,
+        (
+            "internal fun ModernSettingsTheme(content: @Composable () -> Unit)",
+            "MaterialTheme(colorScheme = colors) {",
+            "Surface(modifier = Modifier.fillMaxSize()) { content() }",
+        ),
+        "shared Compose theme surface",
+    )
+
     # The custom-theme wizard is Compose now, both halves of it: creating from a
     # picture and re-editing an existing theme were two legacy activities and are
     # one wizard here. The result extra names stay the legacy ones because they
