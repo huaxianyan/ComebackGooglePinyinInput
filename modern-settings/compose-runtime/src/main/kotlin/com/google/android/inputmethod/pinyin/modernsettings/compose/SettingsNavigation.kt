@@ -20,6 +20,7 @@ internal enum class SettingsRoute {
     Dictionary,
     Other,
     About,
+    Licenses,
     FuzzyPinyin,
 }
 

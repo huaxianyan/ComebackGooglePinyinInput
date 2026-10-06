@@ -261,9 +261,6 @@ class ModernSettingsActivity : ComponentActivity() {
                             onOpenRepository = {
                                 startActivity(LegacySettingsNavigation.repositoryIntent())
                             },
-                            onOpenLicenses = {
-                                startActivity(LegacySettingsNavigation.licensesIntent(this))
-                            },
                             onRefreshDictionaryHealth = ::refreshDictionaryHealth,
                             onAutomaticBackupEnabledChange = { enabled ->
                                 if (!enabled) {
@@ -796,8 +793,16 @@ class ModernSettingsActivity : ComponentActivity() {
     }
 }
 
+/**
+ * The one theme both Compose hosts draw with.
+ *
+ * The settings screen and the first-run guide are two activities, but they are
+ * one product: a guide that picked its own colours would look like it came from
+ * somewhere else. Dynamic colour on API 31+, the static scheme below it, and the
+ * same layout-direction source for both.
+ */
 @Composable
-private fun ModernSettingsTheme(content: @Composable () -> Unit) {
+internal fun ModernSettingsTheme(content: @Composable () -> Unit) {
     val context = LocalContext.current
     val dark = (context.resources.configuration.uiMode and 0x30) == 0x20
     val colors = when {

@@ -122,6 +122,7 @@ internal fun androidx.compose.foundation.lazy.LazyListScope.otherSettingsItems(
 
 internal fun androidx.compose.foundation.lazy.LazyListScope.aboutSettingsItems(
     actions: SettingsActions,
+    navigateTo: (SettingsRoute) -> Unit,
 ) {
     item {
         SettingsActionRow(
@@ -155,7 +156,7 @@ internal fun androidx.compose.foundation.lazy.LazyListScope.aboutSettingsItems(
                 "setting_license_summary",
                 R.string.modern_settings_licenses_summary,
             ),
-            onClick = actions.onOpenLicenses,
+            onClick = { navigateTo(SettingsRoute.Licenses) },
         )
     }
     item {

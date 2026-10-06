@@ -198,11 +198,31 @@ def main() -> int:
             "dictionaryRepository.startClear(callback)",
             "SettingsRoute.About",
             "LegacySettingsNavigation.legacyWebIntent",
-            "LegacySettingsNavigation.licensesIntent",
+            # The licence page is Compose now. Its list comes from the packaged
+            # raw pair, and the legacy licences activity must not be reachable
+            # from this module any more.
+            "SettingsRoute.Licenses",
+            "LicensesScreen(onNavigateBack = navigateBack)",
+            "navigateTo(SettingsRoute.Licenses)",
+            "readPackagedLicenses(context)",
+            '"third_party_license_metadata"',
+            '"third_party_licenses"',
             "val onOpenRepository: () -> Unit",
             "actions.onOpenRepository",
             "LegacySettingsNavigation.repositoryUrl",
             "LegacySettingsNavigation.repositoryIntent()",
+            # The first-run guide is Compose now, on the same terms as the
+            # licence page: the legacy activity keeps the launch gate and the
+            # state, and hands the page itself over on the API levels this
+            # module serves.
+            "class ModernFirstRunActivity : ComponentActivity()",
+            "FirstRunScreen(",
+            "readFirstRunSetupState(this)",
+            "FirstRunStateBridge.activityCreated()",
+            "FirstRunStateBridge.activityDestroyed(this)",
+            "FirstRunStateBridge.complete(this)",
+            "Settings.ACTION_INPUT_METHOD_SETTINGS",
+            "showInputMethodPicker()",
             '"https://github.com/huaxianyan/ComebackGooglePinyinInput"',
             "val onLauncherIconVisibleChange: (Boolean) -> Unit",
             "actions.onLauncherIconVisibleChange",
@@ -1249,6 +1269,21 @@ def main() -> int:
                 + forbidden_legacy_dictionary_route
             )
 
+    # The licence page is Compose now. It reads the packaged raw pair itself, so
+    # nothing in this module may open the legacy licences activity any more.
+    if "UnquantumLicenseMenuActivity" in kotlin_text:
+        raise RuntimeError("the licence page must not open the legacy licences activity")
+
+    # The first-run redirect lives in the patch script and in its own helper,
+    # which is where the primary DEX names the Compose host from.
+    for literal in (
+        "FirstRunRoutingCompat;->redirectToModernGuide",
+        "FirstRunRoutingCompat;->consumeRedirect",
+        "FirstRunRoutingCompat.smali",
+    ):
+        if literal not in patch_script:
+            raise RuntimeError(f"first-run redirect missing from the patch script: {literal}")
+
     if args.apk is not None:
         with ZipFile(args.apk) as archive:
             for entry in (
@@ -1309,6 +1344,7 @@ def main() -> int:
                 "com.google.android.apps.inputmethod.pinyin.PinyinApp",
                 "com.google.android.inputmethod.pinyin.PinyinIME",
                 "ModernSettingsActivity",
+                "ModernFirstRunActivity",
                 "com.google.android.apps.inputmethod.libs.theme.preference.ThemeSelectorActivity",
                 "com.google.android.apps.inputmethod.libs.framework.core.LauncherActivity",
                 'android:enabled="@bool/modern_settings_runtime_enabled"',

@@ -18,6 +18,7 @@
     <string name="modern_settings_repository_title">GitHub repository</string>
     <string name="modern_settings_licenses_title">Open source licenses</string>
     <string name="modern_settings_licenses_summary">License details for open source software</string>
+    <string name="modern_settings_licenses_unavailable">The license list could not be read from this installation.</string>
     <string name="modern_settings_version_title">Current version</string>
     <string name="modern_settings_version_unknown">Unknown</string>
     <string name="modern_settings_chinese_input_summary">Pinyin scheme, mixed input, prediction, and Fuzzy Pinyin</string>
@@ -295,4 +296,16 @@
     <string name="modern_settings_rime_health_counts">Last successful sync: %1$d shared entries, %2$d kept only in Rime</string>
     <string name="modern_settings_health_details">Show details</string>
     <string name="modern_settings_health_hide_details">Hide details</string>
+    <string name="modern_first_run_title">Set up Google Pinyin Input</string>
+    <string name="modern_first_run_description">Finish both steps to start typing</string>
+    <string name="modern_first_run_enable_step">Step 1</string>
+    <string name="modern_first_run_enable_title">Enable the keyboard</string>
+    <string name="modern_first_run_enable_summary">Turn on Google Pinyin Input in system settings</string>
+    <string name="modern_first_run_enable_action">Enable</string>
+    <string name="modern_first_run_select_step">Step 2</string>
+    <string name="modern_first_run_select_title">Select the keyboard</string>
+    <string name="modern_first_run_select_summary">Make Google Pinyin Input the current keyboard</string>
+    <string name="modern_first_run_select_action">Select</string>
+    <string name="modern_first_run_finish">Finish</string>
+    <string name="modern_first_run_done">Done</string>
 </resources>

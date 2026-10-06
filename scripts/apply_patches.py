@@ -960,6 +960,17 @@ def apply(
         "    invoke-static {}, Lcom/google/android/inputmethod/pinyin/firstrun/"
         "FirstRunStateCompat;->activityCreated()V\n\n"
         "    invoke-super {p0, p1}, Lapy;->onCreate(Landroid/os/Bundle;)V\n\n"
+        "    # API 35+ hands the page itself to the Compose host. The launch gate\n"
+        "    # above still decides whether a guide is due at all, and the redirect\n"
+        "    # keeps the claim, so the two hosts cannot both show one. This runs\n"
+        "    # after super: the redirect starts another activity and finishes this\n"
+        "    # one, and an early return here would leave super.onCreate uncalled.\n"
+        "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/firstrun/"
+        "FirstRunRoutingCompat;->redirectToModernGuide(Landroid/app/Activity;)Z\n\n"
+        "    move-result v0\n\n"
+        "    if-eqz v0, :compat_legacy_guide\n\n"
+        "    return-void\n\n"
+        "    :compat_legacy_guide\n"
         "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/firstrun/"
         "FirstRunStateCompat;->isComplete(Landroid/content/Context;)Z\n\n"
         "    move-result v0\n\n"
@@ -973,7 +984,17 @@ def apply(
         "    return-void\n"
         ".end method\n\n"
         ".method protected onDestroy()V\n"
-        "    .locals 0\n\n"
+        "    .locals 1\n\n"
+        "    # A redirect finishes this activity while the Compose host has already\n"
+        "    # taken the launch claim. Releasing it here would open a window in\n"
+        "    # which IME startup could enqueue a second guide.\n"
+        "    invoke-static {}, Lcom/google/android/inputmethod/pinyin/firstrun/"
+        "FirstRunRoutingCompat;->consumeRedirect()Z\n\n"
+        "    move-result v0\n\n"
+        "    if-eqz v0, :compat_release_claim\n\n"
+        "    invoke-super {p0}, Lapy;->onDestroy()V\n\n"
+        "    return-void\n\n"
+        "    :compat_release_claim\n"
         "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/firstrun/"
         "FirstRunStateCompat;->activityDestroyed(Landroid/content/Context;)V\n\n"
         "    invoke-super {p0}, Lapy;->onDestroy()V\n\n"
@@ -3327,6 +3348,11 @@ def apply(
             "FirstRunStateCompat.smali",
             "smali/com/google/android/inputmethod/pinyin/firstrun/"
             "FirstRunStateCompat.smali",
+        ),
+        (
+            "FirstRunRoutingCompat.smali",
+            "smali/com/google/android/inputmethod/pinyin/firstrun/"
+            "FirstRunRoutingCompat.smali",
         ),
         (
             "Md3SettingsCompat.smali",

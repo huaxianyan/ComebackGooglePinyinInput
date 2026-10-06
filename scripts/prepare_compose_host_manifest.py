@@ -72,6 +72,10 @@ ACTIVITY = (
     "com.google.android.inputmethod.pinyin.modernsettings.compose."
     "ModernSettingsActivity"
 )
+FIRST_RUN_ACTIVITY = (
+    "com.google.android.inputmethod.pinyin.modernsettings.compose."
+    "ModernFirstRunActivity"
+)
 LEGACY_LAUNCHER_ACTIVITY = (
     "com.google.android.apps.inputmethod.libs.framework.core.LauncherActivity"
 )
@@ -177,6 +181,15 @@ def main() -> int:
         action.set(A + "name", "android.intent.action.MAIN")
         category = ET.SubElement(intent_filter, "category")
         category.set(A + "name", "android.intent.category.LAUNCHER")
+
+    # The Compose first-run guide. Not exported and not launched by the system:
+    # the legacy first-run activity names it explicitly on the API levels it
+    # serves, which is also why it needs no intent filter of its own.
+    first_run_activity = ET.SubElement(application, "activity")
+    first_run_activity.set(A + "name", FIRST_RUN_ACTIVITY)
+    first_run_activity.set(A + "exported", "false")
+    first_run_activity.set(A + "enabled", "@bool/modern_settings_runtime_enabled")
+    first_run_activity.set(A + "theme", "@android:style/Theme.Material.Light.NoActionBar")
 
     values = args.decoded / "res/values"
     values_v35 = args.decoded / "res/values-v35"

@@ -95,8 +95,30 @@ def main() -> None:
             "FirstRunStateCompat;->isComplete(Landroid/content/Context;)Z",
             "FirstRunStateCompat;->prepareIncompleteGuideLaunch(Landroid/content/Context;)V",
             "Lapy;->a(Landroid/content/Context;Ljava/lang/Class;)Z",
+            # API 35+ hands the page to the Compose host, and the redirect keeps
+            # the launch claim so the two hosts cannot both show a guide.
+            "FirstRunRoutingCompat;->redirectToModernGuide(Landroid/app/Activity;)Z",
+            "FirstRunRoutingCompat;->consumeRedirect()Z",
         ),
         "re-enterable incomplete first-run route",
+    )
+
+    routing = (
+        decoded
+        / "smali/com/google/android/inputmethod/pinyin/firstrun/FirstRunRoutingCompat.smali"
+    )
+    if not routing.exists():
+        raise RuntimeError("the first-run redirect helper is missing")
+    require(
+        routing.read_text(encoding="utf-8"),
+        (
+            "const-string v2, \"com.google.android.inputmethod.pinyin.modernsettings."
+            "compose.ModernFirstRunActivity\"",
+            "Landroid/content/pm/PackageManager;->queryIntentActivities("
+            "Landroid/content/Intent;I)Ljava/util/List;",
+            "Landroid/app/Activity;->finish()V",
+        ),
+        "first-run redirect to the Compose host",
     )
 
     state = (
@@ -153,11 +175,20 @@ def main() -> None:
             (
                 'android:state_enabled="false"',
                 'android:color="@android:color/transparent"',
-                'android:width="1.0dip"',
                 'android:color="@color/first_run_md3_outline"',
             ),
             f"visible disabled first-run button boundary in {name}",
         )
+        # 1dp and 1.0dip are the same width, and which spelling is present
+        # depends on whether the file came from patches/ or from the decoder,
+        # so both are accepted the way the text colors below are.
+        if not any(
+            value in disabled_background
+            for value in ('android:width="1dp"', 'android:width="1.0dip"')
+        ):
+            raise RuntimeError(
+                f"disabled first-run button must keep a 1dp outline in {name}"
+            )
     for name in ("first_run_md3_button_text.xml", "first_run_md3_tonal_button_text.xml"):
         disabled_text = (decoded / "res/color" / name).read_text(encoding="utf-8")
         if not any(

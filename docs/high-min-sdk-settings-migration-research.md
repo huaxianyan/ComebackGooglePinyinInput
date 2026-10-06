@@ -208,10 +208,14 @@ minSdk 提到 23 后，这份例外清单可以整个删掉，少一处脆弱的
    仍是复用旧活动的部分：自定义主题的创建与编辑走 `ThemeBuilderActivity` / `ThemeEditorActivity`。
 7. 词典破坏性操作入口的 Compose 化，或明确保留旧 fragment 并写清理由。**已做**：
    API 35+ 的联系人建议授权与清除用户词典已在当前页实现。
-8. 许可证页的 Compose 化。**部分**：「关于」子页是 Compose，许可证本身仍是旧
-   `UnquantumLicenseMenuActivity`。
-9. 首次引导（若阶段 0 决定一并做）。**未做**：Compose 侧没有首次引导文件，
-   现在仍是旧 Activity 用 `values-v35/first_run_md3.xml` 重绘。
+8. 许可证页的 Compose 化。**已做（2026-10-06）**：列表与正文都从打包的
+   `res/raw/third_party_license_metadata` 与 `third_party_licenses` 读出，
+   列表与正文是同一 destination 的两页，旧 `UnquantumLicenseMenuActivity`
+   不再被这个模块引用。
+9. 首次引导（若阶段 0 决定一并做）。**已做（2026-10-06）**：新建
+   `ModernFirstRunActivity`。启动门控、完成标记与启动权仍由旧的
+   `PinyinFirstRunActivity` / `FirstRunStateCompat` 持有，API 35+ 只把**页面**
+   交给 Compose；重定向期间启动权不释放，避免 IME 启动时再排一个引导。
 
 ### 阶段 3：弃用旧页的工程落地
 

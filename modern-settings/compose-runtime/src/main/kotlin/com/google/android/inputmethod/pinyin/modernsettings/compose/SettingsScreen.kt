@@ -78,7 +78,6 @@ data class SettingsActions(
     val onOpenTerms: () -> Unit,
     val onOpenPrivacyPolicy: () -> Unit,
     val onOpenRepository: () -> Unit,
-    val onOpenLicenses: () -> Unit,
     val onRefreshDictionaryHealth: () -> Unit,
     val onAutomaticBackupEnabledChange: (Boolean) -> Unit,
     val onChooseBackupLocation: () -> Unit,
@@ -229,6 +228,10 @@ private fun SettingsRoutePage(
         )
         return
     }
+    if (route == SettingsRoute.Licenses) {
+        LicensesScreen(onNavigateBack = navigateBack)
+        return
+    }
     val context = LocalContext.current
     val percentText: (Int) -> String = {
         context.getString(R.string.modern_settings_percent_format, it)
@@ -290,7 +293,8 @@ private fun SettingsRoutePage(
                     dictionaryShortcutSettingsItems(dictionarySnapshot, actions)
                 }
                 SettingsRoute.Other -> otherSettingsItems(snapshot, actions, navigateTo)
-                SettingsRoute.About -> aboutSettingsItems(actions)
+                SettingsRoute.About -> aboutSettingsItems(actions, navigateTo)
+                SettingsRoute.Licenses -> error("Licenses uses its dedicated screen")
                 SettingsRoute.FuzzyPinyin -> error("Fuzzy Pinyin uses its dedicated screen")
             }
         }
@@ -323,6 +327,7 @@ private fun routeTitle(route: SettingsRoute): String = when (route) {
         "setting_about_title",
         R.string.modern_settings_about_title,
     )
+    SettingsRoute.Licenses -> stringResource(R.string.modern_settings_licenses_title)
     SettingsRoute.FuzzyPinyin -> legacyString(
         "setting_fuzzy_pinyin_detail_title",
         R.string.modern_settings_fuzzy_pinyin_detail_title,

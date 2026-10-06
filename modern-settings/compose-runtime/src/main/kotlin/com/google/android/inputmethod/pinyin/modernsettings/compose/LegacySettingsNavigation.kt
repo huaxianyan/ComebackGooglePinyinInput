@@ -122,9 +122,4 @@ internal object LegacySettingsNavigation {
     }
 
     fun repositoryIntent(): Intent = Intent(Intent.ACTION_VIEW, Uri.parse(repositoryUrl))
-
-    fun licensesIntent(context: Context): Intent = Intent().setClassName(
-        context,
-        "com.google.android.libraries.social.licenses.UnquantumLicenseMenuActivity",
-    )
 }
