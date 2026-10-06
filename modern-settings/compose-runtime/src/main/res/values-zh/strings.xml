@@ -305,4 +305,13 @@
     <string name="modern_first_run_select_action">选择</string>
     <string name="modern_first_run_finish">完成</string>
     <string name="modern_first_run_done">已完成</string>
+    <string name="modern_theme_builder_crop_instruction">双指缩放，拖动移动</string>
+    <string name="modern_theme_builder_brightness_instruction">调整亮度</string>
+    <string name="modern_theme_builder_brightness_value">%1$d%%</string>
+    <string name="modern_theme_builder_next">下一步</string>
+    <string name="modern_theme_builder_back">返回</string>
+    <string name="modern_theme_builder_save">保存</string>
+    <string name="modern_theme_builder_cancel">取消</string>
+    <string name="modern_theme_builder_error_load">无法打开这张图片。</string>
+    <string name="modern_theme_builder_error_write">无法保存这个主题。</string>
 </resources>

@@ -26,6 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
+import java.io.File
 import java.util.Locale
 import java.util.Random
 
@@ -67,7 +68,7 @@ class ModernSettingsActivity : ComponentActivity() {
     ) { result ->
         if (!::controller.isInitialized) return@registerForActivityResult
         val fileName = result.data
-            ?.getStringExtra(LegacySettingsNavigation.newThemeFileNameExtra)
+            ?.getStringExtra(ModernThemeBuilderActivity.RESULT_NEW_NAME)
             .orEmpty()
         snapshot = if (result.resultCode == Activity.RESULT_OK && fileName.isNotEmpty()) {
             controller.applyCustomTheme(fileName)
@@ -238,13 +239,19 @@ class ModernSettingsActivity : ComponentActivity() {
                                 )
                             },
                             onAddTheme = {
-                                themeBuilder.launch(
-                                    LegacySettingsNavigation.themeBuilderIntent(this)
-                                )
+                                themeBuilder.launch(ModernThemeBuilderActivity.intent(this))
                             },
                             onEditTheme = { themeValue ->
                                 themeEditor.launch(
-                                    LegacySettingsNavigation.themeEditorIntent(this, themeValue)
+                                    ModernThemeBuilderActivity.intent(
+                                        this,
+                                        File(
+                                            filesDir,
+                                            themeValue.removePrefix(
+                                                ThemeSource.User.valuePrefix,
+                                            ),
+                                        ),
+                                    ),
                                 )
                             },
                             onDeleteTheme = { themeValue ->

@@ -38,8 +38,8 @@ res/raw/third_party_licenses           295 KB 正文，偏移由上面指过来
 
 首次引导不属于设置层级：
 
-- 它在输入法还没启用时就要显示；
-- 从它返回是回桌面，不是回某个设置页；
+- 它在输入法还没启用时就要显示。
+- 从它返回是回桌面，不是回某个设置页。
 - 完成它是写标记后**另起**一个设置任务。
 
 把它塞进 `SettingsRouteStack` 会在设置首页之上多出一页，而返回键还得跳过它。
@@ -84,7 +84,7 @@ ModernFirstRunActivity.onDestroy  →  activityDestroyed（未完成则释放）
 
 ### 2.4 两个步骤的状态从框架读
 
-- 启用 = 本包出现在 `InputMethodManager.getEnabledInputMethodList()` 里；
+- 启用 = 本包出现在 `InputMethodManager.getEnabledInputMethodList()` 里。
 - 选择 = `Settings.Secure.DEFAULT_INPUT_METHOD` 等于本包 IME 的 id。
 
 两者都是系统所有、都可能在本页退到后台时改变，所以**每次 `onResume` 重读**。
@@ -103,8 +103,15 @@ ModernFirstRunActivity.onDestroy  →  activityDestroyed（未完成则释放）
 - `scripts/verify_md3.py`：断言重定向落在 `PinyinFirstRunActivity.smali` 里，
   且 `FirstRunRoutingCompat.smali` 带着类名字符串与包可见性查询。
 
-## 四、仍未 Compose 化的部分
+## 四、当时仍未 Compose 化的部分（已补）
 
-自定义主题的创建与编辑仍复用旧 `ThemeBuilderActivity` / `ThemeEditorActivity`。
-按维护者 2026-10-06 的意见，只要**展现给用户的界面**不是旧的即可，底层走旧实现不影响——
-这两处的界面本身仍是旧活动的界面，所以它们不在本次范围内，但也不属于「已 Compose 化」。
+写这份文件时，自定义主题的创建与编辑还复用旧 `ThemeBuilderActivity` /
+`ThemeEditorActivity`。按维护者 2026-10-06 的意见，只要**展现给用户的界面**不是旧的即可，
+底层走旧实现不影响——而这两处的界面本身仍是旧活动的界面，所以当时记在这里。
+
+**该口子已于同日补上**：`ModernThemeBuilderActivity` 同时替代了旧的两个活动，裁剪页与
+亮度页都在 Compose 侧。旧引擎（`bai` / `cac` / `gc` / `bbl` / `ats`）仍被复用，但只经反射
+调用，不再有旧活动出现在用户面前。细节见
+[自定义主题构建器的 Compose 化](compose-theme-builder-design.md)。
+
+至此阶段 2 第 6 条没有残留的旧界面。

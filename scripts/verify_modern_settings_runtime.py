@@ -100,7 +100,12 @@ def main() -> int:
             "onDeleteTheme = actions.onDeleteTheme",
             "val onEditTheme: (String) -> Unit",
             "val onDeleteTheme: (String) -> Unit",
-            "LegacySettingsNavigation.themeEditorIntent(this, themeValue)",
+            # The wizard is a Compose host of this module's own now, so the
+            # settings page names it directly instead of asking the legacy
+            # navigation helper for an intent aimed at a legacy activity.
+            "themeBuilder.launch(ModernThemeBuilderActivity.intent(this))",
+            "ModernThemeBuilderActivity.intent(",
+            "ModernThemeBuilderActivity.RESULT_NEW_NAME",
             "controller.deleteUserTheme(themeValue)",
             "controller.applyCustomThemeEditResult(result.data)",
             "LegacySettingsNavigation.routePathExtra",
@@ -957,20 +962,6 @@ def main() -> int:
     require(
         legacy_navigation,
         (
-            '"com.google.android.apps.inputmethod.libs.theme.preference.ThemeBuilderActivity"',
-            'const val newThemeFileNameExtra = "intent_extra_key_new_theme_file_name"',
-            "fun themeBuilderIntent(context: Context): Intent",
-            ".setAction(Intent.ACTION_MAIN)",
-            # The editor is the legacy selector's own, reached directly because
-            # the grid that used to open it is what this page replaces. Its
-            # delete button is suppressed: deleting is a button on the sheet.
-            '"com.google.android.apps.inputmethod.libs.theme.preference.ThemeEditorActivity"',
-            'const val themeEditorTargetExtra = "target_user_image_theme_file_name"',
-            'const val themeEditorNoDeleteExtra = "intent_extra_key_no_delete_button"',
-            'const val themeEditorCreatedExtra = "intent_extra_key_new_theme_file_name"',
-            'const val themeEditorDeletedExtra = "intent_extra_key_deleted_theme_file_name"',
-            "fun themeEditorIntent(context: Context, themeValue: String): Intent",
-            ".putExtra(themeEditorNoDeleteExtra, true)",
             'const val themeRoutePath = "Home/Keyboard/KeyboardAppearance/ThemeCatalog"',
             'const val routePathExtra = "modern_settings_route_path"',
             "const val repositoryUrl =",
@@ -978,6 +969,68 @@ def main() -> int:
             "fun repositoryIntent(): Intent = Intent(Intent.ACTION_VIEW, Uri.parse(repositoryUrl))",
         ),
         "legacy specialized settings navigation",
+    )
+
+    # The custom-theme wizard is Compose now, both halves of it: creating from a
+    # picture and re-editing an existing theme were two legacy activities and are
+    # one wizard here. The result extra names stay the legacy ones because they
+    # are the contract with the slot bridge in the primary DEX.
+    theme_builder = (settings_source_dir / "ModernThemeBuilderActivity.kt").read_text(
+        encoding="utf-8"
+    )
+    require(
+        theme_builder,
+        (
+            "class ModernThemeBuilderActivity : ComponentActivity()",
+            "ActivityResultContracts.GetContent()",
+            'const val EXTRA_TARGET = "target_user_image_theme_file_name"',
+            'const val RESULT_NEW_NAME = "intent_extra_key_new_theme_file_name"',
+            'const val RESULT_DELETED_NAME = "intent_extra_key_deleted_theme_file_name"',
+            "ThemeBuilderBridge.openPackage(target)",
+            "ThemeBuilderBridge.packageImage(pkg)",
+        ),
+        "compose custom theme wizard host",
+    )
+
+    theme_builder_screen = (settings_source_dir / "CustomThemeBuilderScreen.kt").read_text(
+        encoding="utf-8"
+    )
+    require(
+        theme_builder_screen,
+        (
+            "internal fun themeCropGeometry(",
+            "internal data class ThemeCropGeometry(",
+            "internal enum class ThemeBuilderStep { Crop, Brightness }",
+            # The crop is stored in units of the preview ratio and the centre in
+            # source pixels, which is what the legacy page wrote and the legacy
+            # editor read back.
+            "ThemeBuilderBridge.setCropScale(model, scale / previewRatio)",
+            "ThemeBuilderBridge.setCropCenter(",
+            "ThemeBuilderBridge.setRects(",
+            "ThemeBuilderBridge.setTransparency(model, transparency)",
+            "detectTransformGestures",
+            "writePackage(context, model)?.let(onSave)",
+        ),
+        "compose custom theme wizard",
+    )
+
+    theme_builder_bridge = (settings_source_dir / "ThemeBuilderBridge.kt").read_text(
+        encoding="utf-8"
+    )
+    require(
+        theme_builder_bridge,
+        (
+            "internal object ThemeBuilderBridge",
+            'const val KEY_CROPPING_SCALE = "__cropping_scale"',
+            'const val KEY_CROPPING_CENTER_X = "__cropping_rect_center_x"',
+            'const val KEY_CROPPING_CENTER_Y = "__cropping_rect_center_y"',
+            'const val KEY_OVERLAY_TRANSPARENCY = "__overlay_transparency"',
+            # The obfuscated members share names across types, so every lookup
+            # has to match the type as well as the name.
+            "private fun findField(instance: Any, name: String, fieldType: Class<*>): Field?",
+            "private fun findMethod(",
+        ),
+        "custom theme engine bridge",
     )
 
     navigation_test = next(
@@ -1274,6 +1327,16 @@ def main() -> int:
     if "UnquantumLicenseMenuActivity" in kotlin_text:
         raise RuntimeError("the licence page must not open the legacy licences activity")
 
+    # The custom-theme wizard is Compose now. Its two legacy activities are the
+    # last thing this module opened that drew its own UI, so nothing in it may
+    # name either of them any more. Matched on a word boundary because this
+    # module's own replacement is `ModernThemeBuilderActivity`, which contains
+    # the legacy name as a substring - a plain `in` test would flag the fix
+    # itself and make the assertion unpassable.
+    for retired in ("ThemeBuilderActivity", "ThemeEditorActivity"):
+        if re.search(rf"(?<![A-Za-z0-9_]){retired}(?![A-Za-z0-9_])", kotlin_text):
+            raise RuntimeError(f"the custom theme wizard must not open the legacy {retired}")
+
     # The first-run redirect lives in the patch script and in its own helper,
     # which is where the primary DEX names the Compose host from.
     for literal in (
@@ -1345,6 +1408,7 @@ def main() -> int:
                 "com.google.android.inputmethod.pinyin.PinyinIME",
                 "ModernSettingsActivity",
                 "ModernFirstRunActivity",
+                "ModernThemeBuilderActivity",
                 "com.google.android.apps.inputmethod.libs.theme.preference.ThemeSelectorActivity",
                 "com.google.android.apps.inputmethod.libs.framework.core.LauncherActivity",
                 'android:enabled="@bool/modern_settings_runtime_enabled"',

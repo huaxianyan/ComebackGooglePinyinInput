@@ -76,6 +76,10 @@ FIRST_RUN_ACTIVITY = (
     "com.google.android.inputmethod.pinyin.modernsettings.compose."
     "ModernFirstRunActivity"
 )
+THEME_BUILDER_ACTIVITY = (
+    "com.google.android.inputmethod.pinyin.modernsettings.compose."
+    "ModernThemeBuilderActivity"
+)
 LEGACY_LAUNCHER_ACTIVITY = (
     "com.google.android.apps.inputmethod.libs.framework.core.LauncherActivity"
 )
@@ -190,6 +194,22 @@ def main() -> int:
     first_run_activity.set(A + "exported", "false")
     first_run_activity.set(A + "enabled", "@bool/modern_settings_runtime_enabled")
     first_run_activity.set(A + "theme", "@android:style/Theme.Material.Light.NoActionBar")
+
+    # The Compose custom-theme wizard. Not exported and not launched by the
+    # system either: the settings page names it, for both halves of what the
+    # legacy builder and editor activities used to do.
+    theme_builder_activity = ET.SubElement(application, "activity")
+    theme_builder_activity.set(A + "name", THEME_BUILDER_ACTIVITY)
+    theme_builder_activity.set(A + "exported", "false")
+    theme_builder_activity.set(A + "enabled", "@bool/modern_settings_runtime_enabled")
+    theme_builder_activity.set(
+        A + "theme",
+        "@android:style/Theme.Material.Light.NoActionBar",
+    )
+    theme_builder_activity.set(
+        A + "configChanges",
+        "orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|uiMode",
+    )
 
     values = args.decoded / "res/values"
     values_v35 = args.decoded / "res/values-v35"

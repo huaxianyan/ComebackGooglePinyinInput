@@ -308,4 +308,13 @@
     <string name="modern_first_run_select_action">Select</string>
     <string name="modern_first_run_finish">Finish</string>
     <string name="modern_first_run_done">Done</string>
+    <string name="modern_theme_builder_crop_instruction">Pinch to scale, drag to move</string>
+    <string name="modern_theme_builder_brightness_instruction">Adjust brightness</string>
+    <string name="modern_theme_builder_brightness_value">%1$d%%</string>
+    <string name="modern_theme_builder_next">Next</string>
+    <string name="modern_theme_builder_back">Back</string>
+    <string name="modern_theme_builder_save">Save</string>
+    <string name="modern_theme_builder_cancel">Cancel</string>
+    <string name="modern_theme_builder_error_load">This picture could not be opened.</string>
+    <string name="modern_theme_builder_error_write">The theme could not be saved.</string>
 </resources>

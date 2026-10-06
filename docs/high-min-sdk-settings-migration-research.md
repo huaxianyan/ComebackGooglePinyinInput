@@ -205,7 +205,10 @@ minSdk 提到 23 后，这份例外清单可以整个删掉，少一处脆弱的
 6. **新主题选择页**（见第五节，独立专项）。**已收口（2026-10-06）**：
    清单、槽位解析、四槽当前指向、引擎渲染的键盘预览、四槽写入、自定义主题的编辑与删除、
    键盘快捷入口改指新页都已落地，并在 API 36 真机验收。
-   仍是复用旧活动的部分：自定义主题的创建与编辑走 `ThemeBuilderActivity` / `ThemeEditorActivity`。
+   **已收口（2026-10-06，第二轮）**：自定义主题的创建与编辑也已 Compose 化——
+   `ModernThemeBuilderActivity` 同时替代旧 `ThemeBuilderActivity` / `ThemeEditorActivity`，
+   旧引擎只经反射复用。见 [主题构建器设计](compose-theme-builder-design.md)。
+   至此第 6 条没有残留的旧界面。
 7. 词典破坏性操作入口的 Compose 化，或明确保留旧 fragment 并写清理由。**已做**：
    API 35+ 的联系人建议授权与清除用户词典已在当前页实现。
 8. 许可证页的 Compose 化。**已做（2026-10-06）**：列表与正文都从打包的
@@ -357,9 +360,11 @@ minSdk 提到 23 后，这份例外清单可以整个删掉，少一处脆弱的
 
 唯一保留的降级项：弹层开着时切系统深浅色，预览不刷新（记录、不修）。
 
-**仍未 Compose 化**：自定义主题的创建与编辑仍复用旧
-`ThemeBuilderActivity` / `ThemeEditorActivity`，与第八节「一并 Compose 化，不拆阶段」
-的决策不完全一致——现在是「入口 Compose 化、生命周期仍归旧活动」。
+**自定义主题的创建与编辑**：已补（2026-10-06 第二轮）。旧
+`ThemeBuilderActivity` / `ThemeEditorActivity` 的页面换成 `ModernThemeBuilderActivity`，
+引擎仍复用但只经反射。此前与第八节「一并 Compose 化，不拆阶段」的决策不完全一致
+（当时是「入口 Compose 化、生命周期仍归旧活动」），现在一致了。见
+[主题构建器设计](compose-theme-builder-design.md)。
 
 ## 六、风险
 
@@ -420,11 +425,11 @@ minSdk 提到 23 后，这份例外清单可以整个删掉，少一处脆弱的
 | 动态配色诊断版本 | **不再实施**（根因已定位并修复，见下方解除说明） |
 | 本工程（新设置页） | **进行中** |
 
-进行中的具体位置：**阶段 2 的主题选择页已收口（2026-10-06）**。清单、槽位解析、引擎渲染预览、
-四槽写入、自定义主题的编辑与删除、键盘快捷入口改指新页都已落地，并在 API 36 真机验收
-（见 [主题预览设计](compose-theme-preview-design.md)）。阶段 2 剩下第 9 条**首次引导
-Compose 化**，以及第 6、8 条里仍是复用旧活动的那两处：自定义主题的创建与编辑走
-`ThemeBuilderActivity` / `ThemeEditorActivity`，许可证页走 `UnquantumLicenseMenuActivity`。
+进行中的具体位置：**阶段 2 的第 6、8、9 条全部收口（2026-10-06）**。主题选择页（清单、槽位解析、
+引擎渲染预览、四槽写入、自定义主题的创建/编辑/删除、键盘快捷入口改指新页）、许可证页、
+首次引导都已 Compose 化，并在 API 36 真机验收（见 [主题预览设计](compose-theme-preview-design.md)、
+[主题构建器设计](compose-theme-builder-design.md)、
+[首次引导与许可证页设计](compose-first-run-licenses-design.md)）。
 TV 设置（`TVSettingsActivity`）也还没有归属。
 
 **阶段 3 尚未开始**。当前实测值：`minSdkVersion` 仍是 17；两道闸仍是 35
