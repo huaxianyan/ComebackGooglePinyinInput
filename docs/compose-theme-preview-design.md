@@ -748,8 +748,8 @@ Gboard 的磁贴其实是**三件套**（`work/shots/41a-gboard-colors-zoom.png`
 `scripts/verify_theme_preview_bridge.py` 增加三项断言，都从两侧读、不重复写：
 
 - `SNAPSHOT_CACHE_PREFIX` / `SNAPSHOT_CACHE_SUFFIX` 的字面量从 Java 源读出，
-  必须与注入 smali 里的字段声明一致；
-- `.method private static invalidatePreviewSnapshots(Landroid/content/Context;)V` 必须存在；
+  必须与注入 smali 里的字段声明一致。
+- `.method private static invalidatePreviewSnapshots(Landroid/content/Context;)V` 必须存在。
 - 该方法必须真的被调用，即 `->invalidatePreviewSnapshots(Landroid/content/Context;)V`
   出现在 smali 里。
 
@@ -856,9 +856,9 @@ gc 同时声明了   c(Landroid/content/Context;)Ljava/io/File;     ← 文件 2
 `scripts/verify_theme_preview_bridge.py` 新增一组「返回类型重载」断言
 （`RETURN_TYPE_LOOKUPS`，5 项）。对每一项：
 
-1. 期望的那个重载必须仍在（名字 + 参数 + **返回类型**全对）；
+1. 期望的那个重载必须仍在（名字 + 参数 + **返回类型**全对）。
 2. 若该类在同一名字和参数下声明了**多于一个**方法（返回类型不同），
-   桥接必须通过 `engineMethod(<类常量>, …)` 去取；
+   桥接必须通过 `engineMethod(<类常量>, …)` 去取。
 3. 桥接源码里不得出现 `getMethod(BORDER_STATE_METHOD` 或
    `getMethod(PREFERENCES_ACCESSOR`。
 
