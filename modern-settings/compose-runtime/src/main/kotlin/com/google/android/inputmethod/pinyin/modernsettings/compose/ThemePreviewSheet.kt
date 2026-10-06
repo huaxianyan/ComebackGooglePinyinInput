@@ -23,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,6 +32,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 
 /**
  * The two modes a tile can stand for instead of a single theme.
@@ -129,6 +131,14 @@ internal data class ThemePreviewActions(
  * corner, which is where the app this replaces puts them: edit, and delete.
  * They are about the package rather than about which theme is in use, so they
  * sit apart from the buttons below rather than in that row.
+ *
+ * Every way out of the sheet animates, including the six buttons. The caller
+ * closes the sheet by clearing its subject, and clearing it takes the sheet out
+ * of the tree on the same frame, so a button that called its action directly
+ * would make the sheet vanish rather than leave. Tapping the scrim does not
+ * have that problem - Material 3 hides the sheet before it reports the
+ * dismissal - so the buttons borrow the same hide and only run their action
+ * once the sheet is gone.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -143,6 +153,30 @@ internal fun ThemePreviewSheet(
     // height instead of dismissing it. There is nothing below the fold to scroll
     // to, so the half-open state is never useful here.
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val scope = rememberCoroutineScope()
+    // Every button that closes the sheet hides it first. Setting the subject to
+    // null takes the sheet out of the tree on the same frame, and a sheet that
+    // is removed is not animated out - only the scrim, whose dismissal Material
+    // 3 routes through a hide of its own, gets an exit. Sending the buttons
+    // through the same hide is what gives them the same exit as the scrim.
+    var dismissing by remember { mutableStateOf(false) }
+    fun dismissThen(action: () -> Unit) {
+        // The hide takes a few frames, and a second tap inside it would run the
+        // action twice - for the editor that is a second editor on the stack.
+        if (dismissing) return
+        dismissing = true
+        scope.launch { sheetState.hide() }.invokeOnCompletion {
+            // Still visible means the hide was cut short by something else
+            // closing the sheet, which has already done this action's job.
+            if (!sheetState.isVisible) action()
+        }
+    }
+    // The same for an action that may not exist. A null stays null, which is
+    // what "this theme has no such button" already means.
+    fun closingAction(action: (() -> Unit)?): (() -> Unit)? {
+        if (action == null) return null
+        return { dismissThen(action) }
+    }
     // The switch and the picture are the same value on purpose: it is read once
     // here and then handed to the renderer, rather than the renderer resolving
     // the preference for itself. Two lookups of one setting is how the two came
@@ -162,7 +196,10 @@ internal fun ThemePreviewSheet(
                 .fillMaxWidth()
                 .padding(bottom = 24.dp),
         ) {
-            ThemeActionsRow(edit = actions.editTheme, delete = actions.deleteTheme)
+            ThemeActionsRow(
+                edit = closingAction(actions.editTheme),
+                delete = closingAction(actions.deleteTheme),
+            )
             PreviewRow(subject = subject, keyBorder = keyBorder)
             KeyBorderRow(
                 checked = keyBorder,
@@ -192,7 +229,7 @@ internal fun ThemePreviewSheet(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 OutlinedButton(
-                    onClick = actions.assignLight,
+                    onClick = { dismissThen(actions.assignLight) },
                     enabled = actions.assignLightEnabled,
                     modifier = Modifier.weight(1f),
                 ) {
@@ -203,7 +240,7 @@ internal fun ThemePreviewSheet(
                     )
                 }
                 OutlinedButton(
-                    onClick = actions.assignDark,
+                    onClick = { dismissThen(actions.assignDark) },
                     enabled = actions.assignDarkEnabled,
                     modifier = Modifier.weight(1f),
                 ) {
@@ -222,13 +259,13 @@ internal fun ThemePreviewSheet(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 TextButton(
-                    onClick = onDismiss,
+                    onClick = { dismissThen(onDismiss) },
                     modifier = Modifier.weight(1f),
                 ) {
                     Text(stringResource(R.string.modern_settings_cancel))
                 }
                 Button(
-                    onClick = actions.apply,
+                    onClick = { dismissThen(actions.apply) },
                     modifier = Modifier.weight(1f),
                 ) {
                     Text(stringResource(R.string.modern_settings_apply))

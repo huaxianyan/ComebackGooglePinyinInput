@@ -394,6 +394,14 @@ reports the removed and the written name together, and the slots that held the
 old name follow it to the new one rather than being reset: the theme still
 exists, under the name it was just given.
 
+Every way out of that sheet animates. Clearing the subject - which is how the
+screen closes the sheet - takes it out of the tree on the same frame, so a
+button that ran its action directly made the sheet vanish rather than leave.
+Only the scrim had an exit, because Material 3 hides the sheet before it reports
+the dismissal. The six buttons therefore hide the sheet first and run their
+action once it is gone, which also means the editor opens and the delete
+confirmation appears after the sheet has left rather than over it.
+
 Dictionary and backup remains one domain with user-dictionary, backup/restore,
 and shortcuts sections. Its Compose page now owns typed presentation state but
 continues to delegate dictionary inspection, SAF directory validation, native

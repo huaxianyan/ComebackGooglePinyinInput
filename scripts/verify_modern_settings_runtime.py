@@ -112,6 +112,19 @@ def main() -> int:
             "subject = ThemePreviewSubject(entry.value, userMade = true)",
             "val editTheme: (() -> Unit)? = null",
             "val deleteTheme: (() -> Unit)? = null",
+            # Every button that closes the sheet hides it first. Clearing the
+            # subject takes the sheet out of the tree on the same frame, so a
+            # button that ran its action directly made the sheet vanish instead
+            # of leave - only the scrim, whose dismissal Material 3 routes
+            # through a hide of its own, had an exit.
+            "scope.launch { sheetState.hide() }.invokeOnCompletion {",
+            "if (!sheetState.isVisible) action()",
+            "onClick = { dismissThen(onDismiss) }",
+            "onClick = { dismissThen(actions.apply) }",
+            "onClick = { dismissThen(actions.assignLight) }",
+            "onClick = { dismissThen(actions.assignDark) }",
+            "edit = closingAction(actions.editTheme)",
+            "delete = closingAction(actions.deleteTheme)",
             "R.string.modern_settings_theme_delete_confirm_title",
             "R.string.modern_settings_theme_delete_confirm_action",
             "ThemePreviewMode.Dynamic",
