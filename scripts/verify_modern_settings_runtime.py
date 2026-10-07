@@ -1331,6 +1331,48 @@ def main() -> int:
         ),
         "guarded legacy manifest",
     )
+    # The launch window background. It is the only frame the system paints
+    # before Compose does, so a fixed Light theme leaked #FAFAFA into every
+    # night mode. Both halves are generated from these constants; the decoded
+    # tree is checked separately below, where the XML actually lands.
+    require(
+        manifest_prep,
+        (
+            'HOST_THEME = "ModernSettingsHostTheme"',
+            'HOST_THEME_DAY_PARENT = "@android:style/Theme.Material.Light.NoActionBar"',
+            'HOST_THEME_NIGHT_PARENT = "@android:style/Theme.Material.NoActionBar"',
+            'HOST_THEME_DAY_BACKGROUND = "#FFFEF7FF"',
+            'HOST_THEME_NIGHT_BACKGROUND = "#FF141218"',
+            'values_night = args.decoded / "res/values-night"',
+            'values_night.mkdir(parents=True, exist_ok=True)',
+            "host_activities = []",
+            "host_activities.append(activity)",
+            "host_activities.append(first_run_activity)",
+            "host_activities.append(theme_builder_activity)",
+            "for host in host_activities:",
+            'host.set(A + "theme", "@style/" + HOST_THEME)',
+            "(values, HOST_THEME_DAY_PARENT, HOST_THEME_DAY_BACKGROUND)",
+            "(values_night, HOST_THEME_NIGHT_PARENT, HOST_THEME_NIGHT_BACKGROUND)",
+            'modern_settings_host_theme.xml',
+            '<item name="android:windowBackground">{background}</item>',
+            '<item name="android:colorBackground">{background}</item>',
+        ),
+        "host launch theme",
+    )
+    # Page colour is never configured per host: the shared ModernSettingsTheme
+    # resolves the dynamic scheme, and the launch theme above only supplies the
+    # window background. Declaring a theme on one activity would be the first
+    # step back to hosts drifting apart.
+    for one_off in (
+        'activity.set(A + "theme"',
+        'first_run_activity.set(A + "theme"',
+        'theme_builder_activity.set(A + "theme"',
+    ):
+        if one_off in manifest_prep:
+            raise RuntimeError(
+                f"a Compose host sets its own theme instead of taking the shared "
+                f"one: {one_off}"
+            )
     require(
         patch_script,
         (
@@ -1491,6 +1533,21 @@ def main() -> int:
                 '<bool name="modern_settings_runtime_enabled">true</bool>',
             ),
             "API-35 modern activity gate",
+        )
+        # The two halves of the launch theme, as they land in the decoded tree.
+        require(
+            values_text,
+            (
+                '<style name="ModernSettingsHostTheme" parent="@android:style/'
+                'Theme.Material.Light.NoActionBar">',
+                '<style name="ModernSettingsHostTheme" parent="@android:style/'
+                'Theme.Material.NoActionBar">',
+                '<item name="android:windowBackground">#FFFEF7FF</item>',
+                '<item name="android:windowBackground">#FF141218</item>',
+                '<item name="android:colorBackground">#FFFEF7FF</item>',
+                '<item name="android:colorBackground">#FF141218</item>',
+            ),
+            "host launch theme day/night split",
         )
         apktool_yml = (decoded / "apktool.yml").read_text(encoding="utf-8")
         require(

@@ -809,17 +809,18 @@ class ModernSettingsActivity : ComponentActivity() {
  * The settings screen, the first-run guide and the custom-theme wizard are three
  * activities, but they are one product: a page that picked its own colours would
  * look like it came from somewhere else. Dynamic colour on API 31+, the static
- * scheme below it, and the same layout-direction source for all of them.
+ * scheme below it, and the same layout-direction source for all of them, so a
+ * host added later takes the colours of the system without being configured.
  *
  * The surface is painted here rather than left to each host, and that is not a
- * matter of taste. Every host is declared with a fixed Light framework theme -
- * `@android:style/Theme.Material.Light.NoActionBar` - so its window background
- * is `#FAFAFA` whatever the night mode says, and a host that draws no background
- * of its own shows that white page with the dark scheme's own light-toned text
- * and buttons on top of it: a dark-mode screen that reads as washed out and far
- * too bright. The wizard did exactly that, which is why the wizard and not the
- * settings screen was the page that looked wrong. What decides the colours
- * paints the surface they are drawn on, so no host can forget.
+ * matter of taste. A host that draws no background of its own shows its window
+ * background instead, and the window background cannot come from this scheme:
+ * the system resolves it before the app runs, so the launch theme in the
+ * manifest carries a fixed day and night pair instead of the dynamic palette.
+ * That pair is the fallback surface, a few levels away from the dynamic one, so
+ * the page only lines up with the frame beneath it if the page paints itself.
+ * The wizard is the host that did neither, which is why it and not the settings
+ * screen was the page that looked wrong.
  */
 @Composable
 internal fun ModernSettingsTheme(content: @Composable () -> Unit) {
