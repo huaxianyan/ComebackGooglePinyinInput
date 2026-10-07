@@ -203,9 +203,13 @@ centre = 容器中心 - (storedCentre - bitmapSize/2) * scale
     否则宿主会露出框架 Light 主题的白色窗口底（见第七节）。断言放在活动那一段，因为它盯的
     是 `ModernSettingsTheme`，不是向导页。
 - `src/test/kotlin/.../ThemeCropGeometryTest.kt`：7 个用例（窗口尺寸、最小与初始 scale、
-  开图取景、窗口宽高比、拖动钳制、`seed` 往返、小图放大覆盖）。
-  **注意**：本机跑不了 `:compose-runtime:test`（`kotlin-test-junit` 不在离线缓存），
-  这些用例从未在本机执行过，不能当作「测试通过」。
+  开图取景、窗口宽高比、拖动钳制、`seed` 往返、小图放大覆盖）。**这些用例在本机跑得起来**：
+  `modern-settings/` 下 `./gradlew :compose-runtime:test --offline`，约 3 分钟，94 个用例。
+  （此前记录的「`kotlin-test-junit` 不在离线缓存」已不成立，jar 现在在缓存里。）
+  首轮跑出 1 个失败：`aPictureSmallerThanTheWindowIsScaledUpToCoverIt` 断言
+  `initialScale == 8`，而实现与第二节写的都是 `max(minScale, fitScale)`，该用例是 `100 x 100`
+  的图，`fitScale = 10` 大于 `minScale = 8`，所以开图取景是 10。断言写错了（它自写下起
+  从未执行过），已改正。
 
 ## 七、深浅色：底色归共享主题管
 
@@ -312,7 +316,8 @@ MaterialTheme(colorScheme = colors) {
 
 ## 九、遗留
 
-- 单测无法在本机执行（见上）。逻辑核对靠人工 + 门禁脚本覆盖。
+- 单测能在本机执行，但**没有接进任何门禁**：`./gradlew :compose-runtime:test --offline` 要手动跑
+  （见第六节）。`ThemeCropGeometryTest.kt` 里那条写错的断言就是这么留下来的。
 - 弹层预览在切系统深浅色时不刷新（记录、不修、不作为验收障碍）。
 - `ThemeCropGeometryTest.kt` 里没有覆盖「手势处理器不得自己算取景」这一条，它是架构约束
   而不是几何约束，靠门禁的反向断言盯着。

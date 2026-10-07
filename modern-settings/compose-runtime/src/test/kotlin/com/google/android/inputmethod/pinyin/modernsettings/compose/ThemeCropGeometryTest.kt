@@ -121,8 +121,10 @@ class ThemeCropGeometryTest {
         )
 
         // 800/100 = 8 on the width, 400/100 = 4 on the height, so covering takes
-        // the larger; fitting would have used the smaller and left a gap.
+        // the larger. The whole picture also fits the container at 10, and that
+        // is larger than the cover scale, so that is where it opens - the same
+        // rule as minimumScaleIsTheOneThatCoversTheWindow.
         assertEquals(8f, small.minScale, 0.001f)
-        assertEquals(8f, small.initialScale, 0.001f)
+        assertEquals(10f, small.initialScale, 0.001f)
     }
 }
