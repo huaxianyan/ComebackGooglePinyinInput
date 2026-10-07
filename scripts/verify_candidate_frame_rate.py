@@ -67,8 +67,10 @@ def verify_decoded(decoded: Path) -> None:
         if "onAnimationEnd(Landroid/animation/Animator;)V" not in text:
             raise RuntimeError(f"{name} no longer has the native animation end seam")
 
-    # Only the legacy primary DEX is loaded on API 17-34. Compose's separately
-    # gated modern DEX may use its own SDK-specific implementation classes.
+    # The primary DEX is loaded on every supported version, and Compose's
+    # separately gated modern DEX may use its own SDK-specific implementation
+    # classes. A direct API 36 reference in the primary DEX would therefore
+    # resolve on a device that cannot run it.
     direct_refs = []
     for path in (decoded / "smali").rglob("*.smali"):
         if DIRECT_API in path.read_text(encoding="utf-8"):

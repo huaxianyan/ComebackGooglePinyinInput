@@ -1292,7 +1292,7 @@ def main() -> int:
     require(
         host_build,
         (
-            "minSdk = 17",
+            "minSdk = 23",
             "targetSdk = 36",
             'hostVersionName = providers.gradleProperty("hostVersionName")',
             'hostVersionCode = providers.gradleProperty("hostVersionCode")',
@@ -1305,6 +1305,24 @@ def main() -> int:
             "checkReleaseBuilds = false",
         ),
         "reconstructed host build",
+    )
+    # The native-library packaging is a cross-artifact contract that this file is
+    # the only place able to see both halves of, so both halves are asserted.
+    # AGP picks android:extractNativeLibs from minSdk: false from 23 up, which
+    # promises the libraries are stored uncompressed and page aligned. Five of
+    # the six are copied out of the original APK deflated, so that promise is
+    # false, and Android 6 answers with INSTALL_FAILED_INVALID_APK from
+    # NativeLibraryHelper before the app runs at all - no crash log, no stack,
+    # nothing pointing back here. Pinning the legacy packaging is what keeps the
+    # manifest and the archive saying the same thing.
+    require(
+        host_build,
+        (
+            "packaging {",
+            "jniLibs {",
+            "useLegacyPackaging = true",
+        ),
+        "host native-library packaging",
     )
     patch_script = Path("scripts/apply_patches.py").read_text(encoding="utf-8")
     require(
@@ -1338,10 +1356,6 @@ def main() -> int:
             "androidx.startup.InitializationProvider",
             "androidx.profileinstaller.ProfileInstallReceiver",
             'application.set(T + "remove", "android:appComponentFactory")',
-            'activity.set(A + "enabled", "@bool/modern_settings_runtime_enabled")',
-            'values_v35 / "modern_settings_runtime.xml"',
-            'uses_sdk.set(T + "overrideLibrary"',
-            '"androidx.compose.material.icons"',
             'queries = root.find("queries")',
             'action.set(A + "name", "android.view.InputMethod")',
             'activity.set(A + "exported", "true" if args.audit_launcher else "false")',
@@ -1353,6 +1367,23 @@ def main() -> int:
         ),
         "guarded legacy manifest",
     )
+    # The two mechanisms that existed only to bridge the old 17 floor are gone,
+    # and their absence is the assertion. Either one coming back would re-open
+    # the gap this closes: an override list would let the app declare a floor
+    # below its libraries again, and a below-minSdk host switch would register
+    # the Compose hosts as disabled on levels the route now sends them to.
+    for retired in (
+        "OVERRIDE_LIBRARIES",
+        "overrideLibrary",
+        "modern_settings_runtime_enabled",
+        "values-v35",
+    ):
+        if retired in manifest_prep:
+            raise RuntimeError(
+                f"{retired} is back in the host manifest preparation; the app now "
+                "shares the Compose minSdk, so neither the library override list "
+                "nor a below-minSdk host switch has anything left to do"
+            )
     # The launch window background. It is the only frame the system paints
     # before Compose does, so a fixed Light theme leaked #FAFAFA into every
     # night mode. Both halves are generated from these constants; the decoded
@@ -1400,7 +1431,7 @@ def main() -> int:
         (
             'const-string v1, \\"app_icon\\"',
             'PinyinFirstRunActivity;->b(Landroid/content/Context;)Z',
-            'const/16 v1, 0x23',
+            'const/16 v1, 0x17',
             'const-string v1, \\"modern_settings_use_legacy\\"',
             'modernsettings.compose.ModernSettingsActivity',
             '->setClassName(',
@@ -1408,7 +1439,7 @@ def main() -> int:
             'Ljava/util/List;->isEmpty()Z',
             'preference/SettingsActivity;->finish()V',
         ),
-        "API-35 modern settings route",
+        "modern settings route",
     )
     # The keyboard's own theme shortcut, the first-run theme preview and the
     # legacy settings page all open the old theme selector. On the API levels
@@ -1486,6 +1517,20 @@ def main() -> int:
                     raise RuntimeError(
                         f"English runtime payload must be uncompressed: {entry}"
                     )
+            # The assembler merges the AGP host with the original APK, and the
+            # libraries come from the original. Losing one would leave a package
+            # that installs and then dies on the first call into it, which is the
+            # failure mode the native packaging above is pinned against.
+            for library in (
+                "libandroidx.graphics.path.so",
+                "liben_data_bundle.so",
+                "libgnustl_shared.so",
+                "libhmm_gesture_hwr_zh.so",
+                "libhwrword.so",
+                "libpinyin_data_bundle.so",
+            ):
+                if f"lib/arm64-v8a/{library}" not in archive.namelist():
+                    raise RuntimeError(f"assembled APK is missing {library}")
             # The strings have to be in the DEX that ships, not only in the
             # patch script that writes them. The decoded tree carries the
             # primary DEX alone, so the secondary DEX - where the Compose
@@ -1538,24 +1583,32 @@ def main() -> int:
                 "ModernThemeBuilderActivity",
                 "com.google.android.apps.inputmethod.libs.theme.preference.ThemeSelectorActivity",
                 "com.google.android.apps.inputmethod.libs.framework.core.LauncherActivity",
-                'android:enabled="@bool/modern_settings_runtime_enabled"',
                 '<queries>',
                 'android:name="android.view.InputMethod"',
             ),
             "combined host manifest",
         )
+        # The Compose hosts are declared like any other Activity now. The
+        # below-minSdk switch they used to carry is gone, and its absence is the
+        # assertion: a host registered as disabled on some level would be
+        # unreachable exactly where the route now sends the user.
+        if "modern_settings_runtime_enabled" in manifest_text:
+            raise RuntimeError(
+                "the Compose hosts are still gated by modern_settings_runtime_enabled; "
+                "the settings route starts at the app's minSdk now, so there is no "
+                "level left where a host may be disabled"
+            )
         values_text = "\n".join(
             path.read_text(encoding="utf-8")
             for path in decoded.glob("res/values*/**/*.xml")
         )
-        require(
-            values_text,
-            (
-                '<bool name="modern_settings_runtime_enabled">false</bool>',
-                '<bool name="modern_settings_runtime_enabled">true</bool>',
-            ),
-            "API-35 modern activity gate",
-        )
+        # Same for the resource itself, in whatever qualified directory it would
+        # land in. The old shape was a false base with a v35 twin that turned it
+        # true; both halves are gone, so the name must not appear at all.
+        if "modern_settings_runtime_enabled" in values_text:
+            raise RuntimeError(
+                "modern_settings_runtime_enabled survived into the merged resources"
+            )
         # The two halves of the launch theme, as they land in the decoded tree.
         require(
             values_text,
@@ -1574,9 +1627,48 @@ def main() -> int:
         apktool_yml = (decoded / "apktool.yml").read_text(encoding="utf-8")
         require(
             apktool_yml,
-            ("minSdkVersion: 17", "targetSdkVersion: 36"),
+            ("targetSdkVersion: 36",),
             "combined host SDK contract",
         )
+        # The floor and the settings route have to agree, and this is the only
+        # place that can see both. Raising the route above the floor hands a
+        # version range back to the legacy Preference UI, which is what the
+        # rollout removed; dropping it below the floor is meaningless. Every
+        # number here is read out of a built artifact rather than compared to a
+        # literal, so changing any one of the three alone fails rather than
+        # ships.
+        host_min_sdk = re.search(r"minSdk = (\d+)", host_build)
+        apk_min_sdk = re.search(r"minSdkVersion: (\d+)", apktool_yml)
+        if host_min_sdk is None or apk_min_sdk is None:
+            raise RuntimeError("could not read minSdk from the host build or apktool.yml")
+        if host_min_sdk.group(1) != apk_min_sdk.group(1):
+            raise RuntimeError(
+                "the host module and the packaged APK disagree on minSdk: "
+                f"{host_min_sdk.group(1)} vs {apk_min_sdk.group(1)}"
+            )
+        min_sdk = int(apk_min_sdk.group(1))
+        route_threshold = f"const/16 v1, 0x{min_sdk:02x}"
+        for relative, label in (
+            (
+                "smali/com/google/android/apps/inputmethod/pinyin/preference/"
+                "SettingsActivity.smali",
+                "legacy settings redirect",
+            ),
+            (
+                "smali/com/google/android/apps/inputmethod/libs/theme/preference/"
+                "ThemeSelectorActivity.smali",
+                "legacy theme selector redirect",
+            ),
+        ):
+            route_text = (decoded / relative).read_text(encoding="utf-8")
+            if route_threshold not in route_text:
+                raise RuntimeError(
+                    f"the {label} does not gate on the app's minSdk ({route_threshold})"
+                )
+            if "const/16 v1, 0x23" in route_text:
+                raise RuntimeError(
+                    f"the {label} still gates on API 35; the route starts at minSdk now"
+                )
         # The Compose runtime must not install a process entry point in the
         # legacy process. The prepared manifest names these components only to
         # have the merger drop them, so a `tools:node="remove"` marker is the
@@ -1780,7 +1872,10 @@ def main() -> int:
             "DictionarySettingsFragment.smali"
         )
         if not legacy_dictionary_fragment.is_file():
-            raise RuntimeError("legacy dictionary settings must remain for API 17-34")
+            raise RuntimeError(
+                "the legacy dictionary settings fragment must remain in the APK "
+                "even though the Compose route no longer reaches it"
+            )
 
         legacy_ime = decoded / "smali/com/google/android/inputmethod/pinyin/PinyinIME.smali"
         if not legacy_ime.is_file():
@@ -1795,7 +1890,7 @@ def main() -> int:
                 'const-string v1, "app_icon"',
                 "PinyinFirstRunActivity;->b(Landroid/content/Context;)Z",
                 "Build$VERSION;->SDK_INT:I",
-                "const/16 v1, 0x23",
+                "const/16 v1, 0x17",
                 'const-string v1, "modern_settings_use_legacy"',
                 "modernsettings.compose.ModernSettingsActivity",
                 "->setClassName(",
@@ -1803,7 +1898,7 @@ def main() -> int:
                 "Ljava/util/List;->isEmpty()Z",
                 "SettingsActivity;->finish()V",
             ),
-            "primary-DEX API-35 settings route",
+            "primary-DEX settings route",
         )
         if "Lcom/google/android/inputmethod/pinyin/modernsettings/compose/ModernSettingsActivity;" in settings_activity_text:
             raise RuntimeError("primary DEX must reference the modern Activity by string only")

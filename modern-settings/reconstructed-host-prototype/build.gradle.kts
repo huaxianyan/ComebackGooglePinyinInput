@@ -15,13 +15,30 @@ android {
 
     defaultConfig {
         applicationId = hostApplicationId.get()
-        minSdk = 17
+        minSdk = 23
         targetSdk = 36
         versionCode = hostVersionCode.get()
         versionName = hostVersionName.get()
         multiDexEnabled = true
         ndk {
             abiFilters += "arm64-v8a"
+        }
+    }
+
+    // AGP flips its native-library default the moment minSdk reaches 23: it
+    // stops extracting at install and writes android:extractNativeLibs="false".
+    // That contract only holds if every lib/*.so is stored uncompressed and page
+    // aligned, and this package is not: assemble_compose_host_apk.py carries
+    // five of the six libraries straight over from the original APK, which has
+    // them deflated. The result was a package contradicting its own manifest,
+    // which Android 6 refuses with INSTALL_FAILED_INVALID_APK out of
+    // NativeLibraryHelper - before a single line of this app runs, and with no
+    // crash log to point at it. Keep the legacy packaging the release pipeline
+    // has always shipped until the assembler can store and align every library
+    // on its own.
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
         }
     }
 

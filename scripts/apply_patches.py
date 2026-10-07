@@ -67,7 +67,7 @@ def apply(
     replace_once(
         decoded / "apktool.yml",
         "sdkInfo:\n  minSdkVersion: 17\n  targetSdkVersion: 26",
-        "sdkInfo:\n  minSdkVersion: 17\n  targetSdkVersion: 36",
+        "sdkInfo:\n  minSdkVersion: 23\n  targetSdkVersion: 36",
     )
     if version_code <= 0:
         raise ValueError("versionCode must be positive")
@@ -190,7 +190,7 @@ def apply(
     # target-34 app dynamically registers for a non-system broadcast. This
     # GServices cache invalidation action is sent by another Google package,
     # so preserve the legacy cross-package behavior with RECEIVER_EXPORTED.
-    # Keep the two-argument overload below API 33 so minSdk 17 remains valid.
+    # Keep the two-argument overload below API 33 so minSdk 23 remains valid.
     replace_once(
         decoded / "smali/btp.smali",
         "    invoke-virtual {v1, v0, v4}, Landroid/content/Context;->registerReceiver("
@@ -605,12 +605,18 @@ def apply(
         "    .line 7",
     )
 
-    # API 35+ uses the source-built Compose host for every normal settings
-    # entry. Keep the legacy Activity as the API 17-34 implementation and as a
+    # The source-built Compose host serves every normal settings entry. The
+    # legacy Activity survives as a thin redirect (the block below) and as a
     # narrowly gated same-package host for operations whose permission,
     # confirmation, and destructive task lifecycles have not been migrated.
     # The modern class is referenced only by name so primary DEX verification
-    # and API 17-34 startup never resolve an AndroidX/Compose type.
+    # and pre-Compose startup never resolve an AndroidX/Compose type.
+    #
+    # The threshold below equals the APK's minSdkVersion, so no supported
+    # release reaches the legacy Preference UI: it is retained, not reachable.
+    # Raising one without the other is what would silently hand a version range
+    # back to the old page, so verify_modern_settings_runtime.py reads both out
+    # of the built artifacts and requires them to be equal.
     settings_activity = decoded / (
         "smali/com/google/android/apps/inputmethod/pinyin/preference/"
         "SettingsActivity.smali"
@@ -628,7 +634,7 @@ def apply(
         "    .locals 4\n\n"
         "    invoke-super {p0, p1}, Labu;->onCreate(Landroid/os/Bundle;)V\n\n"
         "    # The legacy first-run gate normally runs from the superclass'\n"
-        "    # onResume(). The API-35 Compose redirect happens in onCreate(), so\n"
+        "    # onResume(). The Compose redirect happens in onCreate(), so\n"
         "    # preserve that gate explicitly for launcher-icon entry before the\n"
         "    # redirect can finish this intermediary Activity.\n"
         "    invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/pinyin/"
@@ -651,7 +657,7 @@ def apply(
         "    return-void\n\n"
         "    :modern_route\n"
         "    sget v0, Landroid/os/Build$VERSION;->SDK_INT:I\n\n"
-        "    const/16 v1, 0x23\n\n"
+        "    const/16 v1, 0x17\n\n"
         "    if-lt v0, v1, :legacy_settings\n\n"
         "    invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/pinyin/"
         "preference/SettingsActivity;->getIntent()Landroid/content/Intent;\n\n"
@@ -1572,9 +1578,9 @@ def apply(
     # User-selected local SAF exports survive clear-data/uninstall. Backup and
     # the integrated import list share one persisted tree URI; configuration
     # remains outside the preferences registered with BackupAgent.
-    # The Rime synchronization group sits on the same page. Its status entry is
-    # the only entrance for API 17-34 users, so it stays visible before the
-    # synchronization directory is configured.
+    # The Rime synchronization group sits on the same page. That page is no
+    # longer routed to, but it is kept intact, so its status entry still has to
+    # stay visible before the synchronization directory is configured.
     replace_once(
         dictionary_settings_xml,
         '        <Preference android:persistent="false" '
@@ -3005,7 +3011,7 @@ def apply(
         "    invoke-super {p0, p1}, Landroid/app/Activity;->onCreate("
         "Landroid/os/Bundle;)V\n\n"
         "    sget v0, Landroid/os/Build$VERSION;->SDK_INT:I\n\n"
-        "    const/16 v1, 0x23\n\n"
+        "    const/16 v1, 0x17\n\n"
         "    if-lt v0, v1, :theme_selector_legacy\n\n"
         "    invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/libs/theme/"
         "preference/ThemeSelectorActivity;->getIntent()Landroid/content/Intent;\n\n"

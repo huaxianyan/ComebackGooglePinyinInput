@@ -183,13 +183,21 @@ minSdk 提到 23 后，这份例外清单可以整个删掉，少一处脆弱的
 
 ## 四、先期工作清单
 
-按依赖排序，`→` 表示前置。
+按依赖排序，`→` 表示前置。**十六条第 1–12、13–16 条全部收口（2026-10-07）**，
+唯一仍开放的是第 3 条里「首次引导是否随设置页一并下放」，见第十一节。
 
-### 阶段 0：决策（阻塞全部）
+### 阶段 0：决策
 
-1. **定 minSdk 目标值**（见第三节）。
-2. **定「弃用」的落地形式**：旧设置类是从 manifest 摘掉入口，还是保留入口但不路由？
-3. **定首次引导是否一并 Compose 化**，还是继续用已重绘的旧 Activity。
+1. **定 minSdk 目标值**（见第三节）。**已定 23**（2026-10-07）：依赖库的实测下限，
+   也正是「新设置页最低可应用的版本」这句话的直接答案。
+2. ~~定「弃用」的落地形式~~ **已定：保留入口做薄壳跳转，而且早已实现**（2026-10-07 核实）。
+   `SettingsActivity.onCreate` 现在是 `scripts/apply_patches.py` 注入的一段纯重定向，
+   系统设置的齿轮仍然指向它。摘掉 manifest 里的声明会直接丢掉这个系统入口，
+   所以两个候选里只剩这一个。
+3. ~~定首次引导是否一并 Compose 化~~ **页面已实现**（阶段 2 第 9 条，
+   `ModernFirstRunActivity`）。但它的启用阈值是**独立的一处**
+   （`patches/smali/FirstRunRoutingCompat.smali` 的 `const/16 v1, 0x23`），
+   是否随设置页一并向 23 下放**仍未决**，见第十一节。
 
 ### 阶段 1：验证面确认（定完 minSdk 立刻做）
 
@@ -231,21 +239,34 @@ minSdk 提到 23 后，这份例外清单可以整个删掉，少一处脆弱的
         "com.google.android.apps.inputmethod.pinyin.preference.SettingsActivity" />
     ```
 
-    弃用旧页后，它要么保留为薄壳跳转，要么改指新活动。
-    这一条**最容易漏**，漏了会导致系统设置里的入口点不进去。
-    注意 `patches/res/xml/` 与 `patches/res/xml-v19/` 两份都要改，只改一份会漏掉一个版本区间。
-11. 旧 Preference XML 与 smali 保留不动，但不再有可达路径。
-12. 静态门禁确认旧路径不可达，并更新所有绑定 minSdk 17 与分流逻辑的断言。
-    **注意分流有两道闸**（见 10.5）：除 smali 阈值外，
-    还要改 `modern_settings_runtime_enabled` 这个 bool 资源，
-    否则路由过去了但目标活动仍被禁用。
+    它列的两个选项里，「保留为薄壳跳转」**已经实现**，所以这一条**实际不需要改动**
+    （2026-10-07 核实）：`SettingsActivity.onCreate` 被注入成一段纯重定向，
+    阈值一降到 minSdk，两份 `method.xml` 的声明就自动把齿轮送进新页。
+    「摘掉入口」不可行：`settingsActivity` 一去掉，系统设置里的入口就没了。
+11. 旧 Preference XML 与 smali 保留不动，但不再有可达路径。**已做**（2026-10-07）：
+    阈值降到 minSdk 后，`SettingsActivity` 与 `ThemeSelectorActivity` 的重定向
+    对全部受支持版本都成立，旧页与旧 fragment 都留在 APK 里但走不到。
+12. 静态门禁确认旧路径不可达，并更新所有绑定 minSdk 与分流逻辑的断言。**已做**：
+    `verify_modern_settings_runtime.py` 现在从产物里分别解析 `apktool.yml` 的
+    `minSdkVersion`、宿主模块的 `minSdk` 和两个重定向 smali 里的阈值，要求三者相等，
+    单改任何一处都会失败。
+    **第二道闸不是被改掉，而是被删掉了**：阈值等于 minSdk 之后
+    `modern_settings_runtime_enabled` 恒为真，留着一个恒真的开关只会让人以为还有闸。
+    这一条推翻了 10.5 节当时「中间态必须同时改这两处」的结论。
+    那时阈值还在 35，两道闸并存，现在它们合并成了一条不变量。
 
 ### 阶段 4：文档与门禁
 
-13. 更新 `docs/modern-settings-runtime-design.md` 的迁移边界。
-14. 更新 `docs/modern-settings-preference-inventory.md` 的「Formal routing gate」。
-15. 更新 `AGENTS.md` 的项目基线条目（当前写的是 `minSdkVersion=17`）。
-16. 新增门禁：确认旧路径不可达、确认新路径在目标区间可路由。
+13. 更新 `docs/modern-settings-runtime-design.md` 的迁移边界。**已做**：迁移边界、
+    已验证宿主模型清单、审计启动器段落、主题选择页重定向、RTL 隔离、词典页归属
+    与「下一阶段」条目都已按 23 重写。
+14. 更新 `docs/modern-settings-preference-inventory.md` 的「Formal routing gate」。**已做**。
+15. 更新 `AGENTS.md` 的项目基线条目（当时写的是 `minSdkVersion=17`）。**已做**：
+    区分「已发布的正式基线」与「本分支把 minSdk 提到 23」，并更新门禁版本清单。
+16. 新增门禁：确认旧路径不可达、确认新路径在目标区间可路由。**已做**：
+    不是新增脚本，而是把不变量加进已有的
+    `scripts/verify_modern_settings_runtime.py`，它已经同时持有解码树与宿主工程，
+    另起一个脚本只会把这些产物重新解析一遍。断言内容见第 12 条。
 
 ## 五、主题选择页专项
 
@@ -423,24 +444,26 @@ minSdk 提到 23 后，这份例外清单可以整个删掉，少一处脆弱的
 | --- | --- |
 | 2.1.4 重新发布 + 升级路径真机复测 | **已完成**，见 [2026-10-02 交接记录](handoff/2026-10-02.md) |
 | 动态配色诊断版本 | **不再实施**（根因已定位并修复，见下方解除说明） |
-| 本工程（新设置页） | **进行中** |
+| 本工程（新设置页） | **已下放**（2026-10-07） |
 
-进行中的具体位置：**阶段 2 的第 6、8、9 条全部收口（2026-10-06）**。主题选择页（清单、槽位解析、
+阶段 2 的第 6、8、9 条于 2026-10-06 收口：主题选择页（清单、槽位解析、
 引擎渲染预览、四槽写入、自定义主题的创建/编辑/删除、键盘快捷入口改指新页）、许可证页、
 首次引导都已 Compose 化，并在 API 36 真机验收（见 [主题预览设计](compose-theme-preview-design.md)、
 [主题构建器设计](compose-theme-builder-design.md)、
 [首次引导与许可证页设计](compose-first-run-licenses-design.md)）。
-TV 设置（`TVSettingsActivity`）也还没有归属。
 
-**阶段 3 尚未开始**。当前实测值：`minSdkVersion` 仍是 17；两道闸仍是 35
-（`apply_patches.py` 的 `const/16 v1, 0x23`，以及 `modern_settings_runtime_enabled` 的
-基础 `false` / `values-v35` `true`）；IME 的 `settingsActivity` 仍指向旧 `SettingsActivity`
-（`patches/res/xml/method.xml` 与 `patches/res/xml-v19/method.xml` 两份都没改）。
-**含义**：这一刀做好的主题页目前在 API 34 及以下不可见，正是下放阶段要解决的问题。
+阶段 3 与阶段 4 于 2026-10-07 落地。当前实测值：`minSdkVersion` 是 **23**；
+路由阈值也是 **23**（`apply_patches.py` 里两处 `const/16 v1, 0x17`）；
+第二道闸已删除；IME 的 `settingsActivity` 仍指向 `SettingsActivity`，
+而它现在是重定向壳。**含义**：旧 Preference 设置页在全部受支持版本上都不可达。
 
 顺序提醒：实际推进顺序与 9.1 相反。9.1 定的中间态（minSdk 提到 23 + 摘掉旧入口 +
 改指 `settingsActivity`）本应在主题页与首次引导之前，实际是先做了主题页。
-恢复推进时要么按 9.1 补中间态，要么明确调整顺序。
+下放阶段照 9.1 补了中间态，但「改指 `settingsActivity`」这一步证明不需要，
+薄壳跳转早就实现了，见第四阶段第 10 条。
+
+**仍未归属的两项**：TV 设置（`TVSettingsActivity`）只存在于原版 manifest，
+本项目 `patches/` 里没有任何引用；首次引导的启用阈值是独立的一处，见第十一节。
 
 历史背景（已解除）：用户曾反馈 **2.1.4 的动态配色键盘在用户设备上不工作**，
 且无法取得该设备，原计划先做一个带诊断日志与导出功能的 debug 版本，
@@ -629,8 +652,13 @@ ro.enable.native.bridge.exec   1
 
 `docs/modern-settings-runtime-design.md` 记了这件事，但**本文的阶段 3 原清单没写**，
 现已补进第 12 条。只改 smali 阈值会得到「路由过去了、目标活动却不可用」。
-中间态必须同时改这两处；`scripts/verify_modern_settings_runtime.py:1056-1063`
-断言了 `false` / `true` 两个变体并存，也要一并改掉。
+
+**（2026-10-07 更新）第二道闸已删除，不再需要「同时改两处」。**
+阈值降到 minSdk 之后，`modern_settings_runtime_enabled` 在所有受支持版本上都该为真，
+留一个恒真的开关只会让人以为还有闸。所以删掉的是资源本身、三个活动上的
+`android:enabled` 属性，以及生成它们的 `values-v35` 目录；
+门禁改为断言这个名字不再出现在合并后的清单与资源里。
+上面那张表里的「现值」两列因此只描述 2026-10-02 的现场。
 
 实测手法：`pm enable <组件>` 临时启用后即可启动，10.1 的截图就是这么拿到的。
 
@@ -692,3 +720,91 @@ ro.enable.native.bridge.exec   1
 
 **边界不变**：模拟器验的是 Compose 运行时与布局，验不了 IME 窗口交互与厂商 ROM 差异。
 3.4 里写明的那条不因本次实测而改变。
+
+## 十一、SDK 阈值清单（2026-10-07 盘点）
+
+这次下放暴露出一件事：`const/16 v1, 0x23` 在 `patches/smali/` 里出现五次，
+但只有两处是设置页路由。按字面量全局替换会把两个与平台行为绑定、必须留在 35 的闸一起改掉。
+
+| 位置 | 现值 | 性质 | 下放时 |
+| --- | --- | --- | --- |
+| `apply_patches.py` 的 `:modern_route` 块（注入 `SettingsActivity.onCreate`） | 23 | **设置页路由** | 跟着 minSdk |
+| `apply_patches.py` 的 `ThemeSelectorActivity.onCreate` 块 | 23 | **设置页路由**（主题页快捷入口） | 跟着 minSdk |
+| `patches/smali/FirstRunRoutingCompat.smali` | 35 | 首次引导用不用 Compose 页 | **未决**，见下 |
+| `patches/smali/Md3SettingsCompat.smali`（两处） | 35 | 旧 Preference 页的 MD3 换肤 | **不动** |
+| `patches/smali/EdgeToEdgeCompat.smali`（两处） | 35 | 边到边适配 | **不动** |
+
+后三处不是「现代设置的门」，而是平台行为的门：
+
+- **边到边**从 API 35 起才被平台强制。设备跑在 34 以下时，targetSdk 36 不会触发它，
+  所以 `EdgeToEdgeCompat` 必须继续按设备 API 判断，降到 23 会让低版本走上一条平台不认的路径。
+- **`Md3SettingsCompat`** 给旧 Preference 页换 MD3 外观。旧页现在不可达，这个闸实际上已经不会命中，
+  但它描述的是「旧页长什么样」，与路由无关，留着比改掉更清楚。
+  它依赖的 `res/values-v35/{first_run_md3,md3_settings}.xml` 来自原版 APK，同样不动。
+
+**唯一仍开放的一项**：首次引导的页面在 2026-10-06 已经 Compose 化（`ModernFirstRunActivity`），
+但它的启用阈值独立于设置页。现在的结果是：API 23–34 进 Compose 设置页，却仍然看旧版首次引导。
+这是产品取舍，不是遗漏。一起下放需要重跑引导页的验收面，属于阶段 0 第 3 条那条决策，尚未拍板。
+
+**门禁怎么盯**：`verify_modern_settings_runtime.py` 从产物里解析 `apktool.yml` 的
+`minSdkVersion`、宿主模块的 `minSdk` 与两个路由 smali 的阈值，要求三者相等，
+并显式要求这两个文件里不再出现 `0x23`。它只盯路由那两处，不碰上面标「不动」的三处。
+
+## 十二、下放时暴露的一个打包陷阱（2026-10-07）
+
+把 minSdk 从 17 提到 23 之后，第一次在 API 23 模拟器上装包就失败了：
+
+```text
+Failure [INSTALL_FAILED_INVALID_APK]
+W/NativeHelper: Failure copying native libraries [errorCode=-2]
+```
+
+**根因**：AGP 用 minSdk 决定原生库的打包方式。minSdk 低于 23 时默认
+`useLegacyPackaging = true`，清单写 `android:extractNativeLibs="true"`，装包时把 `.so` 解压出来；
+minSdk 到 23 时默认翻成 `false`，承诺「不解压，直接从 APK 里 mmap」。
+这个承诺成立的前提是每个 `lib/*.so` 都**未压缩且按页对齐**。
+
+本项目满足不了这个前提：`scripts/assemble_compose_host_apk.py` 把 AGP 宿主包与原版 APK 合并，
+六个原生库里**有五个是从原版 APK 直接搬过来的**，而原版 APK 里它们是压缩态。
+于是包和它自己的清单互相矛盾，Android 6 的 `NativeLibraryHelper` 在装包阶段就把它拒了。
+
+**为什么以前没暴露**：minSdk 是 17，AGP 走解压那条路，压缩态 `.so` 完全合法。
+这个缺陷一直潜伏着，是下放把它翻出来的。
+
+**修法**：在 `reconstructed-host-prototype/build.gradle.kts` 里显式钉住
+`packaging { jniLibs { useLegacyPackaging = true } }`，恢复发布管线一直在用的那套打包方式。
+没有改成「未压缩 + 对齐」那条路，是因为那要动 `assemble_compose_host_apk.py`，
+还要保证搬运过来的库真的被对齐，而本轮实测 `zipalign -P 16 -f 4` 并没有改变这些条目的偏移，
+原因未查。那是独立的一件事，不该混进这次下放。
+
+**门禁**：`verify_modern_settings_runtime.py` 断言宿主工程里 `useLegacyPackaging = true` 必须存在，
+并断言成品 APK 里六个原生库一个都不少。
+
+**教训**：这类失败没有崩溃日志、没有栈，装包命令只回一句 `INSTALL_FAILED_INVALID_APK`。
+清单写的是「不解压」，包里放的是压缩过的库，两边对不上只有真装一次才知道。
+
+## 十三、下放的验收记录（2026-10-07）
+
+下放后在两台模拟器上各跑一次，脚本是 `work/emulator/check-rollout.sh`
+（未入库；与 `check-api.sh` 的区别见下）。
+
+| 项 | API 23（arm64 / TCG） | API 34（x86_64 / WHPX + 转译） |
+| --- | --- | --- |
+| 安装 `dist/pinyin-dev-preview.apk` | Success | Success |
+| 包管理器报告的 SDK | （API 23 的 dumpsys 不打印 minSdk 行） | `minSdk=23 targetSdk=36` |
+| 是否手工 `pm enable` | **否** | **否** |
+| 从旧入口 `SettingsActivity` 启动 | `mResumedActivity` = `ModernSettingsActivity` | `topResumedActivity` = `ModernSettingsActivity` |
+| 崩溃缓冲区 | 空 | 空 |
+| 截图 | `work/emulator/shots/api23-rollout.png` | `work/emulator/shots/api34-rollout.png` |
+
+两条结论：
+
+1. **路由在 minSdk 上就成立**。`check-api.sh` 过去必须先 `pm enable` 那个活动，因为它在 35 以下是禁用组件。
+   现在**没有这一步**，而这一步的缺席本身就是断言。API 34 是旧阈值的最后一档，
+   它从旧设置页翻到 Compose 页，正是「旧路径不可达」在运行期的证据。
+2. **页面渲染正常**。API 34 截图四个分区完整；API 23 截图同样渲染出了页面，
+   画面上的「Process system isn't responding」是 SystemUI 在 TCG 软件模拟下被饿死，
+   属验证台自身的性能问题，与上一次记录一致，不是应用缺陷。
+
+**边界不变**：模拟器验的是 Compose 运行时、布局与路由，验不了真机 IME 窗口交互与厂商 ROM 差异。
+真机验收仍只有 Pixel 10 Pro / API 36。

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Verify the Rime synchronization contract on the legacy dictionary page.
 
-The legacy page is the only entrance for API 17-34 users, so its wiring has to
-survive every later resource merge and Smali regeneration. The checks below pin
-the injection points, the request code, the resource coverage and the listener
-lifecycle that the Compose page keeps in Kotlin.
+The legacy page is retained but no longer routed to, so its wiring still has to
+survive every later resource merge and Smali regeneration: it is the record of
+what the Compose page reimplements in Kotlin. The checks below pin the injection
+points, the request code, the resource coverage and the listener lifecycle.
 """
 
 from __future__ import annotations

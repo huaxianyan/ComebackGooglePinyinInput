@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Prepare the patched legacy manifest for an API-35+ Compose settings host.
+"""Prepare the patched legacy manifest for the Compose settings host.
 
-Compose/AndroidX has minSdk 23, while the reconstructed IME intentionally retains
-minSdk 17. The modern activity is never routed to below API 35. Library min-SDK
-overrides are therefore explicit, and every AndroidX auto-start component is
-removed so old processes cannot load modern classes during Application startup.
+The reconstructed IME now shares the Compose/AndroidX floor: minSdk 23, the same
+level those libraries declare, so no library min-SDK override is needed any more.
+Every AndroidX auto-start component is still removed, so an old process cannot
+load modern classes during Application startup.
 """
 
 from __future__ import annotations
@@ -17,56 +17,6 @@ ANDROID = "http://schemas.android.com/apk/res/android"
 TOOLS = "http://schemas.android.com/tools"
 A = f"{{{ANDROID}}}"
 T = f"{{{TOOLS}}}"
-
-OVERRIDE_LIBRARIES = (
-    "androidx.activity",
-    "androidx.activity.compose",
-    "androidx.activity.ktx",
-    "androidx.annotation.experimental",
-    "androidx.compose.animation",
-    "androidx.compose.animation.core",
-    "androidx.compose.foundation",
-    "androidx.compose.foundation.layout",
-    "androidx.compose.material.icons",
-    "androidx.compose.material.ripple",
-    "androidx.compose.material3",
-    "androidx.compose.runtime",
-    "androidx.compose.runtime.annotation",
-    "androidx.compose.runtime.retain",
-    "androidx.compose.runtime.saveable",
-    "androidx.compose.ui",
-    "androidx.compose.ui.geometry",
-    "androidx.compose.ui.graphics",
-    "androidx.compose.ui.text",
-    "androidx.compose.ui.tooling.preview",
-    "androidx.compose.ui.unit",
-    "androidx.compose.ui.util",
-    "androidx.core",
-    "androidx.core.ktx",
-    "androidx.core.viewtree",
-    "androidx.graphics.path",
-    "androidx.lifecycle.ktx",
-    "androidx.lifecycle.livedata",
-    "androidx.lifecycle.livedata.core",
-    "androidx.lifecycle.livedata.core.ktx",
-    "androidx.lifecycle.process",
-    "androidx.lifecycle.runtime",
-    "androidx.lifecycle.runtime.compose",
-    "androidx.lifecycle.viewmodel",
-    "androidx.lifecycle.lifecycle.viewmodel.anchor",
-    "androidx.lifecycle.viewmodel.ktx",
-    "androidx.lifecycle.viewmodel.savedstate",
-    "androidx.navigationevent",
-    "androidx.navigationevent.compose",
-    "androidx.profileinstaller",
-    "androidx.savedstate",
-    "androidx.savedstate.compose",
-    "androidx.savedstate.ktx",
-    "androidx.transition",
-    "androidx.window",
-    "androidx.window.core",
-    "com.google.android.inputmethod.pinyin.modernsettings.compose",
-)
 
 ACTIVITY = (
     "com.google.android.inputmethod.pinyin.modernsettings.compose."
@@ -133,15 +83,14 @@ def main() -> int:
     # historical manifest package attribute.
     root.attrib.pop("package")
 
+    # AGP 9 takes the SDK levels from the Gradle DSL, and the app now shares the
+    # Compose/AndroidX floor of 23, so this element has nothing left to carry:
+    # no level to declare and no library exception to grant. Removing it is
+    # clearer than leaving an empty element that reads as though something were
+    # still being configured here.
     uses_sdk = root.find("uses-sdk")
-    if uses_sdk is None:
-        uses_sdk = ET.Element("uses-sdk")
-        root.insert(0, uses_sdk)
-    # AGP 9 requires SDK levels in Gradle DSL; the manifest keeps only the
-    # guarded-library exception.
-    uses_sdk.attrib.pop(A + "minSdkVersion", None)
-    uses_sdk.attrib.pop(A + "targetSdkVersion", None)
-    uses_sdk.set(T + "overrideLibrary", ",".join(OVERRIDE_LIBRARIES))
+    if uses_sdk is not None:
+        root.remove(uses_sdk)
 
     application = root.find("application")
     if application is None:
@@ -196,7 +145,6 @@ def main() -> int:
     activity = ET.SubElement(application, "activity")
     activity.set(A + "name", ACTIVITY)
     activity.set(A + "exported", "true" if args.audit_launcher else "false")
-    activity.set(A + "enabled", "@bool/modern_settings_runtime_enabled")
     host_activities.append(activity)
     if args.audit_launcher:
         activity.set(A + "label", "Material 3 设置审计")
@@ -212,7 +160,6 @@ def main() -> int:
     first_run_activity = ET.SubElement(application, "activity")
     first_run_activity.set(A + "name", FIRST_RUN_ACTIVITY)
     first_run_activity.set(A + "exported", "false")
-    first_run_activity.set(A + "enabled", "@bool/modern_settings_runtime_enabled")
     host_activities.append(first_run_activity)
 
     # The Compose custom-theme wizard. Not exported and not launched by the
@@ -221,7 +168,6 @@ def main() -> int:
     theme_builder_activity = ET.SubElement(application, "activity")
     theme_builder_activity.set(A + "name", THEME_BUILDER_ACTIVITY)
     theme_builder_activity.set(A + "exported", "false")
-    theme_builder_activity.set(A + "enabled", "@bool/modern_settings_runtime_enabled")
     theme_builder_activity.set(
         A + "configChanges",
         "orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|uiMode",
@@ -237,22 +183,15 @@ def main() -> int:
     for host in host_activities:
         host.set(A + "theme", "@style/" + HOST_THEME)
 
+    # The hosts used to be registered as disabled below API 35 through a bool
+    # resource with a matching qualifier directory to turn them back on. The
+    # settings route now starts at the app's own minSdk, so there is no level
+    # left where a host must stay off: the resource and its qualifier directory
+    # are gone rather than left behind as a switch that is always on.
     values = args.decoded / "res/values"
     values_night = args.decoded / "res/values-night"
-    values_v35 = args.decoded / "res/values-v35"
     values.mkdir(parents=True, exist_ok=True)
     values_night.mkdir(parents=True, exist_ok=True)
-    values_v35.mkdir(parents=True, exist_ok=True)
-    (values / "modern_settings_runtime.xml").write_text(
-        '<?xml version="1.0" encoding="utf-8"?>\n'
-        '<resources><bool name="modern_settings_runtime_enabled">false</bool></resources>\n',
-        encoding="utf-8",
-    )
-    (values_v35 / "modern_settings_runtime.xml").write_text(
-        '<?xml version="1.0" encoding="utf-8"?>\n'
-        '<resources><bool name="modern_settings_runtime_enabled">true</bool></resources>\n',
-        encoding="utf-8",
-    )
 
     # The host theme. It exists for one thing: the window background, i.e. the
     # frame the system draws from the launch until Compose's first frame.

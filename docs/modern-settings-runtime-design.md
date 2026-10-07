@@ -2,8 +2,8 @@
 
 ## Decision
 
-The API 35+ settings surface will be rebuilt with official Compose Material 3
-components. It will not simulate Material 3 by drawing over legacy
+The settings surface is rebuilt with official Compose Material 3
+components. It does not simulate Material 3 by drawing over legacy
 `android.preference` or `android.widget` controls.
 
 `targetSdkVersion` selects platform behavior compatibility; it does not replace
@@ -21,7 +21,8 @@ resource names. The first complete resource merge produced duplicate definitions
 including `navigationMode`, `actionBarSize`, `tintMode`, and `fontStyle`.
 
 Deleting the old definitions or allowing modern dependencies to overwrite them
-would change resources consumed by the legacy IME and the API 17-34 fallback.
+would change resources consumed by the legacy IME and by the retained legacy
+settings surface.
 That is not an acceptable migration boundary.
 
 The Compose Material 3 dependency graph does not bring the AppCompat widget
@@ -37,13 +38,14 @@ not regenerated.
 The first host prototype established all of the following on the Pixel 10 Pro:
 
 - real `androidx.compose.material3` controls compile and render;
-- the reconstructed application retains `minSdkVersion=17` and
+- the reconstructed application shares the Compose floor: `minSdkVersion=23` and
   `targetSdkVersion=36`;
 - all 6,633 legacy public resources retain their original numeric IDs;
 - the patched legacy application remains `classes.dex`;
 - Compose and AndroidX occupy `classes2.dex` and later;
 - legacy startup types remain in the primary DEX without AndroidX MultiDex;
-- the Compose activity is routed only on API 35+;
+- the Compose activity is routed on every supported version, because the route
+  threshold equals `minSdkVersion`;
 - AndroidX Startup, ProfileInstaller, and `appComponentFactory` automatic process
   entry points are removed, so old processes do not load modern classes;
 - the original IME service, application, backup agent, activities, receivers,
@@ -56,11 +58,15 @@ The isolated audit identity is
 `com.google.android.inputmethod.pinyin.materialcomposehostaudit`. It must never
 be published as a formal build.
 
-`minSdkVersion=17` is a manifest/Java compatibility declaration, not the
-installable ABI floor. This APK contains only AArch64 native libraries, while
-Android did not support the `arm64-v8a` application ABI before API 21. There is
-therefore no genuine API 17 runtime that can install this payload. API 17 gates
-are static only; they must not be reported as runtime acceptance.
+`minSdkVersion=23` is now the real floor, not a compatibility declaration: it is
+the level `androidx.compose.ui`, `runtime`, `foundation` and `activity-compose`
+declare, and it is where the settings route starts. Raising it any lower is not
+possible without dropping Compose.
+
+This APK contains only AArch64 native libraries, so the installable ABI floor is
+API 21 regardless. The 23 floor is enforced by the manifest and by static gates;
+it has been exercised on emulators from API 23 up (see the migration research
+document), but never on a physical device below API 36.
 
 ## Resource and DEX invariants
 
@@ -81,12 +87,16 @@ modern settings activity starts.
 
 ## Migration boundary
 
-The first production implementation will route settings as follows:
+The production implementation routes settings as follows:
 
 ```text
-API 17-34   existing Preference settings
-API 35+     Compose Material 3 settings
+API 23+     Compose Material 3 settings
 ```
+
+There is no version range left on the legacy Preference surface. It is retained
+in the APK, and its entry Activity survives as a thin redirect, but no supported
+release reaches it. The route threshold and `minSdkVersion` are the same number
+and a static gate requires them to stay equal.
 
 The Compose UI will use a typed `SettingsRepository`. UI state must not directly
 reinterpret legacy stored values. Each setting requires an audited contract for:
@@ -307,10 +317,12 @@ independent English glide, the shared gesture parent, and Chinese regression.
 
 For device testing, `build_modern_settings_host.py --audit-launcher` can add a
 launcher entry labelled「Material 3 设置审计」to an isolated audit package. The
-activity is always guarded by `@bool/modern_settings_runtime_enabled`: false in
-base resources and true only in `values-v35`, so API 17–34 cannot launch or load
-the Compose activity. Formal host builds omit the audit launcher and will route
-from the legacy settings entry point instead.
+Compose hosts carry no `enabled` gate: the settings route starts at the app's own
+`minSdkVersion`, so there is no level left where a host has to stay off. They
+used to be registered as disabled below API 35 through a bool resource with a
+`values-v35` twin; both halves were removed with the rollout rather than left
+behind as a switch that is always on. Formal host builds omit the audit launcher
+and route from the legacy settings entry point instead.
 Section and title strings are still prototype-only, but enum value labels now
 come from the original localized `entries_*` arrays (for example low, normal,
 high) while their exact stored values remain separate in the contract. A
@@ -374,8 +386,9 @@ the API levels the Compose page serves, that Activity now redirects them to the
 theme route instead. It passes the path `Home/Keyboard/KeyboardAppearance/
 ThemeCatalog` rather than the destination alone, so Back walks up through the
 pages that would normally have led there. The redirect is gated on
-`Build.VERSION.SDK_INT >= 35` and on the Activity resolving, which keeps
-apktool-only audit builds - which omit the Compose runtime - on the legacy page.
+`Build.VERSION.SDK_INT >= 23`, which is the app's `minSdkVersion`, and on the
+Activity resolving, which keeps apktool-only audit builds - which omit the
+Compose runtime - on the legacy page.
 
 The page itself is three sections in the order Defaults, Colors, My themes. The
 user's own themes come last because that section is empty for anyone who has
@@ -437,10 +450,10 @@ callback. Device speech includes state, title, supporting text, role, and action
 and the remaining focus, Slider, disabled-item, dialog, and Back matrix passes.
 
 The original application intentionally remains without application-wide
-`supportsRtl=true`: enabling it would also mirror the API 17-34 legacy runtime
+`supportsRtl=true`: enabling it would also mirror the retained legacy runtime
 and native IME. `ModernSettingsActivity` instead maps its received
 `Configuration.layoutDirection` into `LocalLayoutDirection`, isolating RTL to
-the API 35+ Compose subtree. Forced-RTL device acceptance confirms mirrored
+the Compose subtree. Forced-RTL device acceptance confirms mirrored
 navigation/Back icons, Switches, Sliders, dialogs, About, and Dictionary layouts;
 LTR is unchanged when the configuration is restored.
 
@@ -464,13 +477,14 @@ the APK with `INSTALL_FAILED_NO_MATCHING_ABIS`; deleting native entries fails in
 on this x86_64 host (`QEMU2 emulator does not support arm64 CPU architecture`).
 API 23 runtime acceptance is therefore environment-blocked rather than passed.
 
-Contact suggestions and clearing now remain inside the API 35+ Compose
+Contact suggestions and clearing now remain inside the Compose
 dictionary page. Compose owns permission explanation/result state, the random
 four-digit destructive confirmation, progress, success, failure, recreation,
 and concurrent-submit rejection. A narrow pure-Java primary-DEX
 `DictionaryOperationsCompat` bridge owns only the old Preference contract and
 the original `bdz`/`UserDictClearTask` controller boundary; it contains no
-AndroidX or API-35 static type and does not expose contact or dictionary content.
+AndroidX or newer-API static type and does not expose contact or dictionary
+content.
 Before starting the authoritative clear task, the bridge forces the removed
 account-sync preference off, matching the accepted legacy page and preventing a
 stale restored value from reviving obsolete network behavior. The modern
@@ -478,12 +492,14 @@ Activity reattaches its callback after recreation and reflects an already
 running primary-DEX task without opening a second confirmation dialog.
 
 The legacy `DictionarySettingsFragment`, `AbstractDictionarySettings`, and
-`setting_dictionary.xml` remain intact and authoritative on API 17–34. Static
-gates reject any modern route back to that page. API 34 translated-ARM64 runtime
-instrumentation confirms the old `SettingsActivity` still starts and that the
-new bridge loads without resolving Compose/AndroidX. Actual dictionary clearing
-is deliberately untested until a separately authorized destructive audit;
-implementation and non-destructive lifecycle validation are not evidence that
+`setting_dictionary.xml` are retained intact but are no longer reachable: the
+settings route leaves the legacy Preference surface on every supported version.
+Static gates reject any modern route back to that page. API 34 translated-ARM64
+runtime instrumentation confirms the old `SettingsActivity` still starts and that
+the new bridge loads without resolving Compose/AndroidX. Actual dictionary
+clearing is deliberately untested until a separately authorized destructive
+audit; implementation and non-destructive lifecycle validation are not evidence
+that
 user data was cleared successfully.
 
 Other owns launcher visibility plus a nested About route that reuses the
@@ -528,9 +544,9 @@ screen.
 3. The formally signed `2.0.1` candidate has been installed with explicit
    authorization and passed an initial functional check. Release remains blocked
    on the next planned feature and its final formal-ID regression.
-4. Keep API 23 runtime acceptance open until usable ARM64 hardware/emulation is
-   available; keep API 17 static-only. Keep native 16 KiB runtime acceptance,
-   predictive Back, and API 37 isolated.
+4. API 23-34 acceptance stays at emulator level (five levels exercised) until
+   usable ARM64 hardware is available; physical-device acceptance remains API 36.
+   Keep native 16 KiB runtime acceptance, predictive Back, and API 37 isolated.
 5. Create `v2.0.1` and publish only after the maintainer explicitly approves the
    final candidate. The workflow now derives version/tag/artifact identity from
    `version.properties` and rejects mismatches; this does not itself authorize a

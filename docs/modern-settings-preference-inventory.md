@@ -359,11 +359,13 @@ format or replacement screen is implied.
 
 ## Formal routing gate
 
-The gate is now enabled: normal `SettingsActivity` entries route by class-name
-string to `ModernSettingsActivity` on API 35+, while API 17–34 continues to use
-the legacy Preference implementation without resolving a Compose type. The
-legacy Dictionary operations Intent carries a narrow same-package bypass to
-avoid a routing loop. Device acceptance covers the launcher/system settings
-route, nested legacy entry and Back return. A same-signature final-application-ID
+The gate is open on every supported version: normal `SettingsActivity` entries
+route by class-name string to `ModernSettingsActivity` from the app's
+`minSdkVersion` (23) up, and the legacy Preference implementation is no longer
+reached at all. `SettingsActivity` survives as a thin redirect, which is what
+keeps the system settings entry point and the launcher icon working. The legacy
+Dictionary operations Intent carries a narrow same-package bypass to avoid a
+routing loop. Device acceptance covers the launcher/system settings route,
+nested legacy entry and Back return. A same-signature final-application-ID
 upgrade from published `v2.0.0` retained existing data and
 `switch_to_other_imes`; this was an installation test only, not a new release.

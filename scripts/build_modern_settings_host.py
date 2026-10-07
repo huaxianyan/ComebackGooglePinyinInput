@@ -45,7 +45,7 @@ def main() -> int:
     parser.add_argument(
         "--audit-launcher",
         action="store_true",
-        help="add an API-35+-guarded launcher entry to an isolated audit package",
+        help="add a launcher entry to an isolated audit package",
     )
     parser.add_argument(
         "--launcher-label",
