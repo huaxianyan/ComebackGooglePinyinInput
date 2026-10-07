@@ -86,6 +86,17 @@ scripts/verify_rime_legacy_settings.py
 scripts/verify_stable_resource_ids.py
 ```
 
+另有一类不走 Python 的门禁：Compose 的单元测试。CI 里它是独立一步
+（`Run Compose state and contract tests`），本地用同一条命令跑：
+
+```text
+modern-settings/gradlew.bat -p modern-settings :compose-runtime:testDebugUnitTest
+```
+
+它要 Gradle 而不是 Python，`GRADLE_USER_HOME` 指向 `work/modern-settings-gradle-home`
+即可离线执行。改过 `modern-settings/` 下任何 Kotlin 之后都要跑一次：断言写错这类问题
+只有跑起来才看得见。
+
 代码变化后至少应执行：
 
 ```text

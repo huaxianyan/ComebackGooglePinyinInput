@@ -1016,6 +1016,28 @@ def main() -> int:
         ),
         "compose custom theme wizard host",
     )
+    # Every failure path has to compose the notice, not just raise the flag. The
+    # flag on its own leaves an empty window: no message, and no way out but the
+    # system Back gesture. Counting the writes is what catches a new caller that
+    # forgets, because the flag is private and a missing setContent is invisible
+    # to anything that only reads it.
+    if theme_builder.count("failure = true") != 1:
+        raise RuntimeError(
+            "every failure path must go through fail(), which composes the "
+            "notice as well as raising the flag; found "
+            f"{theme_builder.count('failure = true')} writes of the flag"
+        )
+    require(
+        theme_builder,
+        (
+            "private fun fail() {",
+            "private fun leave() {",
+            # The notice carries its own way out: this activity is opened from the
+            # theme list, so a message with no button is a dead end.
+            "TextButton(onClick = ::leave)",
+        ),
+        "compose custom theme wizard failure notice",
+    )
 
     theme_builder_screen = (settings_source_dir / "CustomThemeBuilderScreen.kt").read_text(
         encoding="utf-8"

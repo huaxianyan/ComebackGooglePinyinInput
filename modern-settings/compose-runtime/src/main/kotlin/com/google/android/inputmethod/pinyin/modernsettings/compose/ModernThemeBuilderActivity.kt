@@ -12,15 +12,19 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import java.io.File
 
@@ -60,12 +64,11 @@ class ModernThemeBuilderActivity : ComponentActivity() {
         if (uri == null) {
             // A cancelled picker is a cancelled wizard: there is nothing to go
             // back to, so leave rather than sit on an empty screen.
-            setResult(Activity.RESULT_CANCELED)
-            finish()
+            leave()
             return@registerForActivityResult
         }
         val bytes = readBytes(uri)
-        if (bytes == null) failure = true else start(bytes)
+        if (bytes == null) fail() else start(bytes)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -79,8 +82,7 @@ class ModernThemeBuilderActivity : ComponentActivity() {
             return
         }
         if (!ThemeBuilderBridge.available) {
-            failure = true
-            setContent { Wizard() }
+            fail()
             return
         }
         val target = editTarget
@@ -88,7 +90,7 @@ class ModernThemeBuilderActivity : ComponentActivity() {
             picker.launch(IMAGE_TYPE)
         } else {
             val bytes = reopen(target)
-            if (bytes == null) failure = true else start(bytes)
+            if (bytes == null) fail() else start(bytes)
         }
     }
 
@@ -123,12 +125,31 @@ class ModernThemeBuilderActivity : ComponentActivity() {
         return bytes
     }
 
+    /**
+     * Show the failure notice, and nothing else.
+     *
+     * Every path that cannot get as far as a decoded picture has to come through
+     * here. Setting the flag without composing is not enough: the window stays
+     * empty, so the user gets no message at all and no way out but the system
+     * Back gesture. Three of the four callers used to do exactly that, and it is
+     * invisible in every test that only checks the flag.
+     */
+    private fun fail() {
+        failure = true
+        setContent { Wizard() }
+    }
+
+    /** Leave without a theme, which is what cancelling the picker also means. */
+    private fun leave() {
+        setResult(Activity.RESULT_CANCELED)
+        finish()
+    }
+
     private fun start(bytes: ByteArray) {
         val built = ThemeBuilderBridge.newModel(bytes)
         val decoded = built?.let(ThemeBuilderBridge::sourceBitmap)
         if (built == null || decoded == null) {
-            failure = true
-            setContent { Wizard() }
+            fail()
             return
         }
         // A new theme is named the way the legacy builder named it; a re-edited
@@ -161,15 +182,20 @@ class ModernThemeBuilderActivity : ComponentActivity() {
                 initialTransparency = initialTransparency,
                 initialCropScale = initialCropScale,
                 initialCropCenter = initialCropCenter,
-                onCancel = {
-                    setResult(Activity.RESULT_CANCELED)
-                    finish()
-                },
+                onCancel = ::leave,
                 onSave = ::complete,
             )
         }
     }
 
+    /**
+     * What the user sees when there is nothing to edit.
+     *
+     * A message alone is a dead end: this activity was opened from the theme
+     * list, so the way back has to be on screen rather than left to the system
+     * Back gesture. Cancelling is the same outcome as cancelling the picker, so
+     * it reports the same result and the caller does nothing.
+     */
     @androidx.compose.runtime.Composable
     private fun FailureNotice() {
         Column(
@@ -180,13 +206,17 @@ class ModernThemeBuilderActivity : ComponentActivity() {
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                text = androidx.compose.ui.res.stringResource(
+                text = stringResource(
                     if (failure) R.string.modern_theme_builder_error_load
                     else R.string.modern_theme_builder_error_write,
                 ),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurface,
             )
+            Spacer(Modifier.height(16.dp))
+            TextButton(onClick = ::leave) {
+                Text(stringResource(R.string.modern_theme_builder_cancel))
+            }
         }
     }
 
