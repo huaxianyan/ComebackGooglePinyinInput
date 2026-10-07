@@ -33,7 +33,12 @@ import java.io.File
 import java.util.Locale
 import java.util.Random
 
-/** API-35+-guarded host for the staged official Compose Material 3 settings runtime. */
+/**
+ * Host for the official Compose Material 3 settings runtime.
+ *
+ * Every supported version lands here; the legacy Preference page is retained but no
+ * longer routed to, from minSdk up.
+ */
 class ModernSettingsActivity : ComponentActivity() {
     private enum class TreePurpose { Location, Enable, Import, RimeSync }
 

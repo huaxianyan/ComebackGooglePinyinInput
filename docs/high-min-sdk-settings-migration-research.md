@@ -38,32 +38,34 @@
 
 | 项 | 值 | 来源 |
 | --- | --- | --- |
-| `minSdkVersion` | 17 | `scripts/apply_patches.py` 的 apktool.yml `sdkInfo` |
+| `minSdkVersion` | 23 | `scripts/apply_patches.py` 的 apktool.yml `sdkInfo` |
 | `targetSdkVersion` | 36 | 同上，与 `version.properties` 一致 |
-| Compose 库 minSdk | 23 | `scripts/prepare_compose_host_manifest.py` 注释 |
+| Compose 库 minSdk | 23 | 应用下限与这些库相同，不再需要 `overrideLibrary` 例外 |
 
 分流门禁**已启用**（`docs/modern-settings-preference-inventory.md` 的「Formal routing gate」）：
 
 ```text
-API 17-34   旧 Preference 实现
-API 35+     ModernSettingsActivity（按类名字符串路由）
+API 23+     ModernSettingsActivity（按类名字符串路由）
 ```
 
-分流**不是一处开关，而是两扇独立的门**。2026-10-02 在 API 23 模拟器上实跑确认，
-改 minSdk 时必须同时处理这两处：
+> 上面这一行的前身是 2026-10-02 的现场记录：`API 17-34 旧 Preference 实现 /
+> API 35+ ModernSettingsActivity`。2026-10-07 下放后，受支持版本的每一档都走
+> Compose，旧页保留但不可达。
+
+分流**曾经不是一处开关，而是两扇独立的门**。2026-10-02 在 API 23 模拟器上实跑确认：
 
 | # | 门 | 位置 | 表现 |
 | --- | --- | --- | --- |
-| 1 | smali 里的 `SDK_INT` 阈值 | `scripts/apply_patches.py:654`（`const/16 v1, 0x23`） | 35 以下不走 `setClassName` 重定向 |
-| 2 | 清单里的组件启用开关 | `bool/modern_settings_runtime_enabled`，由 `scripts/prepare_compose_host_manifest.py:171` / `:187` / `:192` 生成 | 基础 `false`、仅 `values-v35` 为 `true`；35 以下组件被注册为**禁用** |
+| 1 | smali 里的 `SDK_INT` 阈值 | `scripts/apply_patches.py` 的 `:modern_route` 块 | 阈值以下不走 `setClassName` 重定向 |
+| 2 | 清单里的组件启用开关 | `bool/modern_settings_runtime_enabled`，由 `scripts/prepare_compose_host_manifest.py` 生成 | 基础 `false`、仅 `values-v35` 为 `true`；35 以下组件被注册为**禁用** |
 
-第 2 扇门最容易漏：只把 smali 的 `0x23` 改成 `0x17`，在 API 23 上仍会得到
+第 2 扇门最容易漏：只把阈值改掉，在低版本上仍会得到
 `Error type 3: Activity class does not exist`（实测必须 `pm enable` 才起得来）。
 实测记录见 10.5。
 
-Compose host 的 `AndroidManifest.xml` 里 `minSdkVersion` 与 `targetSdkVersion` 都被**移除**
-（AGP 9 要求写在 Gradle DSL），只留 `overrideLibrary` 例外清单，
-用来放行 Compose 库的 minSdk 23 高于应用 minSdk 17 这件事。
+**（2026-10-07 更新）第二道闸已删除**，理由与做法见 10.5 末尾。同一轮里
+`<uses-sdk>` 元素与 `overrideLibrary` 例外清单也一并移除：应用下限与
+Compose/AndroidX 相同之后，既没有更低的目标需要声明例外，也没有级别需要在清单里声明。
 
 ### 2.2 现代设置页的规模与覆盖
 
@@ -87,7 +89,7 @@ Compose host 的 `AndroidManifest.xml` 里 `minSdkVersion` 与 `targetSdkVersion
 | 词典破坏性操作 | 联系人建议、清空词典仍在旧 fragment | 偏好清单「Specialized pages」 |
 | 快捷方式词典编辑器 | 走系统 `android.settings.USER_DICTIONARY_SETTINGS` | 同上 |
 | 许可证页 | 旧 `UnquantumLicenseMenuActivity` | `LegacySettingsNavigation.kt:28` |
-| 首次引导 | 旧 `PinyinFirstRunActivity`，但已重绘为 MD3 风格 | 原版 manifest + `apply_patches.py` |
+| 首次引导 | 已 Compose 化（`ModernFirstRunActivity`），阈值 2026-10-07 随设置页下放 | [首次引导与许可证页设计](compose-first-run-licenses-design.md) |
 | TV 设置 | 旧 `TVSettingsActivity` | 原版 manifest |
 
 ### 2.4 主题选择页现状（用户点名的部分）
@@ -183,8 +185,8 @@ minSdk 提到 23 后，这份例外清单可以整个删掉，少一处脆弱的
 
 ## 四、先期工作清单
 
-按依赖排序，`→` 表示前置。**十六条第 1–12、13–16 条全部收口（2026-10-07）**，
-唯一仍开放的是第 3 条里「首次引导是否随设置页一并下放」，见第十一节。
+按依赖排序，`→` 表示前置。**十六条第 1–16 条全部收口**（2026-10-07），
+包括第 3 条里「首次引导是否随设置页一并下放」，见第十一节。
 
 ### 阶段 0：决策
 
@@ -195,9 +197,9 @@ minSdk 提到 23 后，这份例外清单可以整个删掉，少一处脆弱的
    系统设置的齿轮仍然指向它。摘掉 manifest 里的声明会直接丢掉这个系统入口，
    所以两个候选里只剩这一个。
 3. ~~定首次引导是否一并 Compose 化~~ **页面已实现**（阶段 2 第 9 条，
-   `ModernFirstRunActivity`）。但它的启用阈值是**独立的一处**
-   （`patches/smali/FirstRunRoutingCompat.smali` 的 `const/16 v1, 0x23`），
-   是否随设置页一并向 23 下放**仍未决**，见第十一节。
+   `ModernFirstRunActivity`），**阈值也已下放**（2026-10-07）：
+   `patches/smali/FirstRunRoutingCompat.smali` 的阈值与设置页一起降到 23，
+   见第十一节。
 
 ### 阶段 1：验证面确认（定完 minSdk 立刻做）
 
@@ -452,18 +454,25 @@ minSdk 提到 23 后，这份例外清单可以整个删掉，少一处脆弱的
 [主题构建器设计](compose-theme-builder-design.md)、
 [首次引导与许可证页设计](compose-first-run-licenses-design.md)）。
 
+> **（2026-10-07 更正）** 上面这句对首次引导说过头了。当天收口时它只有**页面**，
+> 重定向从未在设备上跑通过：`FirstRunRoutingCompat` 的分支写反了（`if-ge`），
+> 于是「SDK 高于阈值」反而留在旧引导页。见第十三节。真机验收当时记录的是
+> 「首次引导重置脚本待设备恢复」。
+
 阶段 3 与阶段 4 于 2026-10-07 落地。当前实测值：`minSdkVersion` 是 **23**；
-路由阈值也是 **23**（`apply_patches.py` 里两处 `const/16 v1, 0x17`）；
-第二道闸已删除；IME 的 `settingsActivity` 仍指向 `SettingsActivity`，
-而它现在是重定向壳。**含义**：旧 Preference 设置页在全部受支持版本上都不可达。
+三处路由阈值也都是 **23**（`apply_patches.py` 里两处 `const/16 v1, 0x17`，
+`patches/smali/FirstRunRoutingCompat.smali` 一处）；第二道闸已删除；IME 的
+`settingsActivity` 仍指向 `SettingsActivity`，而它现在是重定向壳。
+**含义**：旧 Preference 设置页与旧首次引导在全部受支持版本上都不可达。
 
 顺序提醒：实际推进顺序与 9.1 相反。9.1 定的中间态（minSdk 提到 23 + 摘掉旧入口 +
 改指 `settingsActivity`）本应在主题页与首次引导之前，实际是先做了主题页。
 下放阶段照 9.1 补了中间态，但「改指 `settingsActivity`」这一步证明不需要，
 薄壳跳转早就实现了，见第四阶段第 10 条。
 
-**仍未归属的两项**：TV 设置（`TVSettingsActivity`）只存在于原版 manifest，
-本项目 `patches/` 里没有任何引用；首次引导的启用阈值是独立的一处，见第十一节。
+**仍未归属的一项**：TV 设置（`TVSettingsActivity`）只存在于原版 manifest，
+本项目 `patches/` 里没有任何引用。首次引导的阈值原先是独立的一处，
+已随设置页一并下放，见第十一节。
 
 历史背景（已解除）：用户曾反馈 **2.1.4 的动态配色键盘在用户设备上不工作**，
 且无法取得该设备，原计划先做一个带诊断日志与导出功能的 debug 版本，
@@ -724,17 +733,18 @@ ro.enable.native.bridge.exec   1
 ## 十一、SDK 阈值清单（2026-10-07 盘点）
 
 这次下放暴露出一件事：`const/16 v1, 0x23` 在 `patches/smali/` 里出现五次，
-但只有两处是设置页路由。按字面量全局替换会把两个与平台行为绑定、必须留在 35 的闸一起改掉。
+但只有三处是「把旧页换掉」的闸。按字面量全局替换会把两个与平台行为绑定、
+必须留在 35 的闸一起改掉。
 
 | 位置 | 现值 | 性质 | 下放时 |
 | --- | --- | --- | --- |
 | `apply_patches.py` 的 `:modern_route` 块（注入 `SettingsActivity.onCreate`） | 23 | **设置页路由** | 跟着 minSdk |
 | `apply_patches.py` 的 `ThemeSelectorActivity.onCreate` 块 | 23 | **设置页路由**（主题页快捷入口） | 跟着 minSdk |
-| `patches/smali/FirstRunRoutingCompat.smali` | 35 | 首次引导用不用 Compose 页 | **未决**，见下 |
+| `patches/smali/FirstRunRoutingCompat.smali` | 23 | **首次引导路由** | 跟着 minSdk |
 | `patches/smali/Md3SettingsCompat.smali`（两处） | 35 | 旧 Preference 页的 MD3 换肤 | **不动** |
 | `patches/smali/EdgeToEdgeCompat.smali`（两处） | 35 | 边到边适配 | **不动** |
 
-后三处不是「现代设置的门」，而是平台行为的门：
+后两处不是「现代设置的门」，而是平台行为的门：
 
 - **边到边**从 API 35 起才被平台强制。设备跑在 34 以下时，targetSdk 36 不会触发它，
   所以 `EdgeToEdgeCompat` 必须继续按设备 API 判断，降到 23 会让低版本走上一条平台不认的路径。
@@ -742,13 +752,16 @@ ro.enable.native.bridge.exec   1
   但它描述的是「旧页长什么样」，与路由无关，留着比改掉更清楚。
   它依赖的 `res/values-v35/{first_run_md3,md3_settings}.xml` 来自原版 APK，同样不动。
 
-**唯一仍开放的一项**：首次引导的页面在 2026-10-06 已经 Compose 化（`ModernFirstRunActivity`），
-但它的启用阈值独立于设置页。现在的结果是：API 23–34 进 Compose 设置页，却仍然看旧版首次引导。
-这是产品取舍，不是遗漏。一起下放需要重跑引导页的验收面，属于阶段 0 第 3 条那条决策，尚未拍板。
+**首次引导已下放（2026-10-07）**：页面在 2026-10-06 就已 Compose 化
+（`ModernFirstRunActivity`），但阈值原先独立在 35，结果是 API 23–34 进 Compose
+设置页却仍看旧版引导。把这一处一起降到 23 之后，受支持版本的每一档都走 Compose
+引导，旧引导页保留但不可达，与设置页共用同一套「阈值 == minSdk」不变量。
 
 **门禁怎么盯**：`verify_modern_settings_runtime.py` 从产物里解析 `apktool.yml` 的
-`minSdkVersion`、宿主模块的 `minSdk` 与两个路由 smali 的阈值，要求三者相等，
-并显式要求这两个文件里不再出现 `0x23`。它只盯路由那两处，不碰上面标「不动」的三处。
+`minSdkVersion`、宿主模块的 `minSdk` 与三处路由 smali 的阈值，要求它们相等，
+并显式要求这三个文件里不再出现 `0x23`。它还要求阈值后面跟的比较是 `if-lt` 而不是
+`if-ge`：分支目标是旧页，写反了就是「阈值及以上全部留在旧页」，而数值检查看不出这一点
+（见第十四节）。它只盯路由那三处，不碰上面标「不动」的两处。
 
 ## 十二、下放时暴露的一个打包陷阱（2026-10-07）
 
@@ -794,8 +807,21 @@ minSdk 到 23 时默认翻成 `false`，承诺「不解压，直接从 APK 里 m
 | 包管理器报告的 SDK | （API 23 的 dumpsys 不打印 minSdk 行） | `minSdk=23 targetSdk=36` |
 | 是否手工 `pm enable` | **否** | **否** |
 | 从旧入口 `SettingsActivity` 启动 | `mResumedActivity` = `ModernSettingsActivity` | `topResumedActivity` = `ModernSettingsActivity` |
+| 首次引导（`SettingsActivity` + `entry=app_icon`，见下） | `mResumedActivity` = `ModernFirstRunActivity` | `topResumedActivity` = `ModernFirstRunActivity` |
+| 键盘反馈页提交振动强度（见下） | 写入 `vibration_duration=54`，崩溃缓冲区空 | —（未跑） |
 | 崩溃缓冲区 | 空 | 空 |
 | 截图 | `work/emulator/shots/api23-rollout.png` | `work/emulator/shots/api34-rollout.png` |
+
+后两行是同一轮补做的验收，脚本与上面不同：首次引导走 `work/emulator/check-first-run.sh`，
+振动预览走 `work/emulator/check-vibration-preview.sh`（都未入库）。两条都从**旧入口**进去，
+因为要验的正是「旧页不再出现在用户面前」。首次引导的截图另见
+`shots/api23-firstrun.png` 与 `shots/api34-firstrun.png`。
+
+首次引导的入口必须带 `--es entry app_icon`：那是桌面图标传的值，也是唯一会跑旧引导闸的取值，
+其余取值（含系统设置里的齿轮）会跳过闸门。该入口未导出，所以两台客户机都要先 `adb root`
+才能由 shell 启动——**API 34 上不给 root 会失败得很有迷惑性**：`am start` 回一段 Binder 栈、
+前台仍是 Launcher，看起来像「重定向没生效」。同一原因还让
+`/data/data/<pkg>/shared_prefs/` 读不出来（报 `Permission denied`），而引导状态恰好在那里。
 
 两条结论：
 
@@ -808,3 +834,136 @@ minSdk 到 23 时默认翻成 `false`，承诺「不解压，直接从 APK 里 m
 
 **边界不变**：模拟器验的是 Compose 运行时、布局与路由，验不了真机 IME 窗口交互与厂商 ROM 差异。
 真机验收仍只有 Pixel 10 Pro / API 36。
+
+## 十四、首次引导重定向：三个缺陷叠在同一段（2026-10-07）
+
+`FirstRunRoutingCompat.redirectToModernGuide` 是「首次引导走 Compose 页还是旧页」的唯一闸。
+把它降到 minSdk 时，设备实测发现重定向**从未生效过**。查下去是三个独立缺陷，
+而且都在同一个方法里、彼此遮蔽，所以「改一处、再测、还是不通」重复了两轮。
+
+### 14.1 阈值分支写反：`if-ge` 应为 `if-lt`
+
+```smali
+sget v0, Landroid/os/Build$VERSION;->SDK_INT:I
+const/16 v1, 0x23
+if-ge v0, v1, :legacy_guide
+```
+
+分支目标是旧页，所以比较必须是「低于阈值才回旧页」。写成 `if-ge` 之后，
+阈值等于 minSdk 时 `SDK_INT >= 阈值` 恒成立，**每一个受支持版本都留在旧页**，
+只有比阈值更老的版本才会重定向——与意图正好相反。
+
+### 14.2 完成态分支写反：`if-eqz` 应为 `if-nez`
+
+改完阈值分支，设备上仍然不重定向。第二个条件就在它下面几行：
+
+```smali
+invoke-static {p0}, FirstRunStateCompat;->isComplete(Landroid/content/Context;)Z
+move-result v0
+if-eqz v0, :legacy_guide
+```
+
+注释写的是「已经完成的引导由旧活动自己收尾」，也就是**完成才不重定向**。
+`if-eqz` 表达的是「未完成就回旧页」，把重定向关得比阈值分支更彻底：
+未完成的启动全部回旧页，而唯一会被重定向的，是「已经完成、本来就无事可做」的那种。
+
+### 14.3 存在性检查问错了对象：`queryIntentActivities`
+
+```smali
+invoke-virtual {p0}, Landroid/app/Activity;->getPackageManager()...
+invoke-virtual {v1, v0, v2}, Landroid/content/pm/PackageManager;->queryIntentActivities(...)
+```
+
+`queryIntentActivities` 从 intent-filter 解析表里取答案，看不见**没有 `<intent-filter>` 的宿主**。
+`ModernFirstRunActivity` 正是这样声明的——旧活动用类名显式点名它，不需要过滤器。
+于是这个查询对「已经声明了的构建」也返回空，闸门判为「未声明」，静默保留旧引导。
+换成 `getActivityInfo(ComponentName, 0)` 并捕获 `NameNotFoundException`，
+问的就是代码真正想问的那个问题。
+
+### 14.4 为什么三轮都没发现
+
+- **值检查看不出方向**。门禁当时读的是 `const/16 v1, 0x23` 这个字面量，
+  比较写成 `if-ge` 还是 `if-lt`、`if-eqz` 还是 `if-nez`，都不影响它。
+- **重定向此前从未在设备上跑过**。2026-10-06 记的「首次引导已 Compose 化并验收」只验了页面本身，
+  没验路由。三个缺陷里有两个只在真机上走一次才会露出来。
+- **缺陷互相遮蔽**。只修阈值分支，第二个分支仍然把重定向关死，现象一模一样，
+  很容易得出「改了没用」的错结论。
+
+### 14.5 修法与门禁
+
+三处分别改成 `if-lt`、`if-nez`、`getActivityInfo`。
+
+`verify_modern_settings_runtime.py` 现在**同时钉住阈值与它后面那个分支的方向**，
+并对首次引导额外要求完成态分支是 `if-nez`。`verify_md3.py` 保留一条反向断言：
+`FirstRunRoutingCompat` 的**指令行**里不得出现 `queryIntentActivities`。
+方向断言做过反向验证——把 `if-nez` 改回 `if-eqz`，门禁报
+`the legacy first-run redirect branches on if-eqz after isComplete`。
+
+那条反向断言只看指令行，不看注释：这个文件正好写着「为什么不能用 `queryIntentActivities`」，
+纯子串检查会把解释当成违规，而满足它的最省事办法就是把解释删掉。
+
+### 14.6 教训
+
+**分支目标是旧页的条件，有一个方向；方向不是数值。**
+一个 `if-XX` 写反了照样汇编、照样读得通顺、照样过所有字面量断言。
+同一段里连着两个，就会形成「修一个还有一个、现象不变」的假象。
+凡是「某个分支通往被废弃的那条路」的判断，门禁要连方向一起钉。
+
+## 十五、下放激活的第二个潜伏缺陷：振动预览用了 API 26 的类（2026-10-07）
+
+第一节那个打包陷阱不是孤例。下放 minSdk 会**把原先只在 35+ 可达的代码路径全部激活**，
+其中任何一处用了高于 minSdk 的 API，就变成新的崩溃点。
+
+**现象**：API 23 上，设置页 → 键盘反馈 → 拖「振动强度」滑块，进程崩溃。
+
+```text
+java.lang.NoClassDefFoundError: Failed resolution of: Landroid/os/VibrationEffect;
+    at ...modernsettings.compose.ThemeBuilderBridge$$ExternalSyntheticApiModelOutline0.m(D8$$SyntheticClass:0)
+    at ...modernsettings.compose.SettingsPreviewEffects.previewVibration(SettingsPreviewEffects.kt:22)
+    at ...modernsettings.compose.SettingsController.setVibrationDuration(SettingsController.kt:71)
+    at ...modernsettings.compose.ModernSettingsActivity.onCreate$lambda$146$...$127(ModernSettingsActivity.kt:480)
+    at ...modernsettings.compose.AdjustmentControlsKt$DefaultAwareAdjustment$1$1$5$1.invoke(AdjustmentControls.kt:145)
+    at androidx.compose.material3.SliderState.gestureEndAction$lambda$1(Slider.kt:2828)
+```
+
+**根因**：`VibrationEffect` 是 API 26 引入的。这段预览代码原先不可达，因为 Compose
+设置页只在 35+ 路由；下放之后 API 23–25 也走这一页，滑块一提交就崩。
+
+**为什么「读代码判断它不会被走到」不算数**：`VibrationEffect` 的引用是**真实存在**的。
+D8 已经把 `createOneShot` 与 `vibrate(VibrationEffect)` 两处脱糖进合成类
+`ApiModelOutline0.m(...)`，`previewVibration` 自己只 `invoke-static` 那个合成类。
+API 23 上崩掉的第一帧正是合成类里的指令——不是 `SettingsPreviewEffects` 的加载失败，
+也不是「某个分支没走到」。所以闸必须真的写出来，不能靠阅读推断。
+
+**修法**：按版本分开，26 及以上走 `VibrationEffect.createOneShot(ms, DEFAULT_AMPLITUDE)`，
+以下走已废弃但语义相同的 `vibrator.vibrate(long)`——一次脉冲、默认振幅。
+两边的用户可见行为一致，低版本不会丢掉预览反馈。
+
+**门禁**：`verify_modern_settings_runtime.py` 新增一条——`compose-runtime` 的 Kotlin
+源码里，高版本 API 符号的**使用点**（注释与 `import` 行都不算）之前必须出现过版本闸。
+符号表目前只列 `VibrationEffect` 一项，是**刻意的短表**：它记的是「本模块用到了哪些
+高于 minSdk 的符号」，不是通用 API 等级库，以后遇到新的就往里加一条并附上对应的闸。
+反向验证做过——去掉闸，门禁报
+`SettingsPreviewEffects.kt reaches VibrationEffect without an SDK_INT guard above it`。
+
+**验收**：`work/emulator/check-vibration-preview.sh`（未入库）在设备上打开键盘反馈页，
+拖一次振动强度滑块，断言崩溃缓冲区为空、进程仍在、且 `vibration_duration` 真的写进了偏好。
+拖不中时偏好不会变，脚本会失败而不是假通过。API 23 实测：从拇指位置拖到轨道三分之二处，
+写入 `vibration_duration=54`，页面仍在 `mResumedActivity`，崩溃缓冲区空。
+
+滑块位置取自**无障碍树**而不是截图（`work/emulator/find_control.py`，同未入库）。
+两条理由：软件光栅化下 SystemUI 会被饿死并弹出「Process system isn't responding」，
+那个弹窗既压暗整屏、又抢走触摸事件；而 Material 3 滑块在树里是有名字的
+（`content-desc="Vibration strength on keypress, System default, adjustable"`），
+按名字取比按颜色带取更稳，也更好读。Compose 通过 `AccessibilityNodeProvider` 发布语义，
+所以 API 23 上这棵树同样成立。
+
+写这个脚本时踩了一个**本项目已有的**坑：解释器是原生 Windows 构建，打不开 Git Bash 给出的
+`/e/...` 路径，而失败只进 stderr——被 `2>/dev/null` 吞掉后，输出为空，读起来正好像
+「控件不在页面上」。所以定位器的调用把 stderr 一起收进日志，并且
+「控件不存在」输出 `none`、退出 0，只有真读不到文件才退出 2，两者在脚本里走不同的分支。
+
+**教训**：改 minSdk 不是改一个数字。它是一份「从现在起，这些路径都会被执行」的声明，
+所以每一处都要问一遍「它在 23 上会走到什么」。Android Lint 的 `NewApi` 正是查这个的，
+但本项目在发布构建里关掉了 lint（见 `reconstructed-host-prototype/build.gradle.kts`），
+所以这一类只能靠上面那张短表 + 设备实测兜住。

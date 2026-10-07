@@ -66,9 +66,29 @@ Compose 侧通过 `FirstRunStateBridge` 反射这四件事：`isComplete`、`act
 `FirstRunRoutingCompat;->redirectToModernGuide(Activity)` 在 `PinyinFirstRunActivity`
 的 `onCreate` 里调用，位置是 `activityCreated()` 与 `invoke-super onCreate` **之后**：
 它会启动另一个 Activity 并 finish 自己，提前返回会把 `super.onCreate` 落下
-（`SuperNotCalledException`），也会在窗口尚未挂上时就 finish。条件三条：API 35+、
-未完成、且 `queryIntentActivities` 能解析到目标活动（给不含 Compose 运行时的
-apktool-only 审计构建留的逃生口）。命中就启动新 Activity 并 `finish()` 自己。
+（`SuperNotCalledException`），也会在窗口尚未挂上时就 finish。条件三条：达到应用
+的 `minSdkVersion`（现为 23）、**引导未完成**、且 `getActivityInfo` 能在包里解析到目标
+活动（给不含 Compose 运行时的 apktool-only 审计构建留的逃生口）。命中就启动新 Activity
+并 `finish()` 自己。
+
+**分支方向是这个方法唯一会静默写反的地方，而它写反了两次。** 两处分支的目标都是
+`:legacy_guide`（旧页）：
+
+- **阈值那处**必须是 `if-lt`（低于阈值才去旧页）。写成 `if-ge` 一样能汇编、读起来也
+  一样通顺，效果却是「阈值及以上全部留在旧页，只有更低版本才重定向」。
+- **完成态那处**必须是 `if-nez`（已完成才去旧页，交给旧活动自己收尾）。写成 `if-eqz`
+  表达的是「未完成就回旧页」，把重定向关得比阈值那处更死。
+
+两处自 2026-10-06 建起就都写反了，直到 2026-10-07 下放时才被设备上的实测翻出来：
+阈值降到等于 minSdk 后 `SDK_INT >= 阈值` 恒成立，加上第二个分支，重定向一次都发生
+不了。门禁现在同时钉住阈值数值、阈值后那个分支的方向，以及完成态分支的方向，见
+[高版本下放调研](high-min-sdk-settings-migration-research.md) 第十四节。
+
+存在性检查也不能用 `queryIntentActivities`：它从 intent-filter 解析表里取答案，
+看不见没有 `<intent-filter>` 的宿主，而 `ModernFirstRunActivity` 正是这样声明的
+（旧活动用类名显式点名它）。那个查询对「已经声明了的构建」同样返回空，闸门会静默
+判为未声明。`getActivityInfo(ComponentName, 0)` 加捕获 `NameNotFoundException` 问的
+才是真正想问的问题。
 
 **启动权的交接是这里唯一容易出错的地方。** 旧 Activity 被 finish 时，它的
 `onDestroy` 会调 `activityDestroyed`，未完成就把启动权释放；而 Compose 侧刚在
@@ -93,6 +113,26 @@ ModernFirstRunActivity.onDestroy  →  activityDestroyed（未完成则释放）
 
 完成按钮在两项都满足前不可用；第二步的按钮在第一步完成前不可用——选择器不会
 列出系统里没启用的输入法。
+
+### 2.5 图标不能走 `painterResource`
+
+页面顶部的 logo 来自原版 APK 的 `ic_first_run_page_app_logo_alia`，它在包里是一个
+`<bitmap>` XML 包装：
+
+```xml
+<bitmap android:src="@drawable/ic_first_run_page_app_logo" />
+```
+
+这对平台是合法 drawable——旧引导页一直正常显示它——但 Compose 的 `painterResource`
+不接受：它读 XML，发现根节点既不是 `<vector>` 也不是图片文件，就抛
+`IllegalArgumentException("Only VectorDrawables and rasterized asset types are supported
+ex. PNG, JPG, WEBP")`。**这与 API 等级无关**，同一个调用在任何版本上都失败，所以这一页
+第一次被真正打开时就崩了——路由修好之前它从没被打开过，崩溃也就一直没露面。
+
+改法是绕开包装：用 `Context.getDrawable` 拿到 drawable，画进一张 `Bitmap`，再交给
+`BitmapPainter`。这样对任何 drawable 类型都成立，将来把资源换成矢量也不会把这个崩溃
+带回来。三档密度图是 108/144/216 px，即 hdpi/xhdpi/xxhdpi 下的 72 dp，与布局的
+`Modifier.size(72.dp)` 一致，所以栅格化是 1:1，不重采样。
 
 ## 三、门禁
 

@@ -1,6 +1,8 @@
 package com.google.android.inputmethod.pinyin.modernsettings.compose
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.provider.Settings
 import android.view.inputmethod.InputMethodManager
 import androidx.compose.foundation.Image
@@ -32,8 +34,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
@@ -95,12 +99,13 @@ internal fun FirstRunScreen(
     onFinish: () -> Unit,
 ) {
     val context = LocalContext.current
-    val logoId = remember(context) {
-        context.resources.getIdentifier(
+    val logo = remember(context) {
+        val id = context.resources.getIdentifier(
             FIRST_RUN_LOGO_RESOURCE,
             "drawable",
             context.packageName,
         )
+        if (id != 0) legacyLogoPainter(context, id) else null
     }
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -113,9 +118,9 @@ internal fun FirstRunScreen(
                 .padding(horizontal = 24.dp, vertical = 40.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            if (logoId != 0) {
+            if (logo != null) {
                 Image(
-                    painter = painterResource(logoId),
+                    painter = logo,
                     contentDescription = null,
                     modifier = Modifier.size(72.dp),
                 )
@@ -298,6 +303,39 @@ private fun FirstRunStepCard(
             }
         }
     }
+}
+
+/**
+ * Resolves the guide logo the way the platform would, instead of with `painterResource`.
+ *
+ * The logo comes from the legacy APK, where `ic_first_run_page_app_logo_alia` is a
+ * `<bitmap>` XML drawable that wraps a PNG:
+ *
+ *     <bitmap android:src="@drawable/ic_first_run_page_app_logo" />
+ *
+ * That is an ordinary drawable - the legacy guide has always shown it - but it is not
+ * one Compose's `painterResource` accepts. That function reads the XML, finds neither a
+ * `<vector>` root nor an image file, and throws `IllegalArgumentException("Only
+ * VectorDrawables and rasterized asset types are supported ex. PNG, JPG, WEBP")`. The
+ * wrapper is the problem, not the API level: the same call fails on every version, which
+ * is why the guide crashed the first time it was ever actually opened.
+ *
+ * Rasterising whatever `getDrawable` returns also covers the case where this resource is
+ * later swapped for a vector, so the crash cannot come back through a resource change.
+ *
+ * The three density variants are 108/144/216 px for hdpi/xhdpi/xxhdpi, i.e. 72 dp, and
+ * the layout draws the logo at 72 dp - so on any density this rasterises at exactly the
+ * size it is displayed at, with no resampling.
+ */
+private fun legacyLogoPainter(context: Context, id: Int): Painter? {
+    val drawable = context.getDrawable(id) ?: return null
+    val width = drawable.intrinsicWidth
+    val height = drawable.intrinsicHeight
+    if (width <= 0 || height <= 0) return null
+    val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+    drawable.setBounds(0, 0, width, height)
+    drawable.draw(Canvas(bitmap))
+    return BitmapPainter(bitmap.asImageBitmap())
 }
 
 private const val FIRST_RUN_LOGO_RESOURCE = "ic_first_run_page_app_logo_alia"

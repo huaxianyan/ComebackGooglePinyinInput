@@ -16,7 +16,7 @@ internal object LegacySettingsNavigation {
      * drops the user into the theme page, and back walks up through the pages
      * that would normally have led there. The legacy theme selector is what
      * this shortcut used to open, and `apply_patches.py` redirects that
-     * Activity here on the API levels this page serves.
+     * Activity here on every supported version.
      */
     const val themeRoutePath = "Home/Keyboard/KeyboardAppearance/ThemeCatalog"
 

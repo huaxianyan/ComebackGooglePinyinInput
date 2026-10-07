@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """Combine the AGP Compose host with the patched legacy DEX and APK payload.
 
-The legacy DEX stays classes.dex so API 17-20 can start without AndroidX
-MultiDex. Compose/AndroidX DEX files begin at classes2.dex and are only routed to
-on API 35+. Resources and the manifest come from the stable-ID AGP host.
+The legacy DEX stays classes.dex, so the IME's own startup path is what the
+primary DEX carries. Compose/AndroidX classes live from classes2.dex on and are
+resolved only when a Compose host starts; the primary DEX names those hosts by
+string alone. Every supported version routes to them now. Resources and the
+manifest come from the stable-ID AGP host.
 """
 
 from __future__ import annotations

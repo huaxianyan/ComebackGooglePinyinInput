@@ -24,7 +24,7 @@ import androidx.compose.runtime.setValue
  *
  * The legacy [PinyinFirstRunActivity] still owns the launch gate - it decides
  * whether a guide is due at all, and discards a late singleTask intent - and
- * hands the guide over to this activity on the API levels this one serves. The
+ * hands the guide over to this activity on every supported version. The
  * completion marker, the launch claim and the legacy-key migration all stay in
  * [FirstRunStateBridge], so both hosts read and write one state.
  */
@@ -86,7 +86,7 @@ class ModernFirstRunActivity : ComponentActivity() {
      * The order matters: the marker is committed synchronously first, so the
      * IME starting up in the same window cannot enqueue the guide again. The
      * legacy settings activity is named as a string because it lives in the
-     * primary DEX; on the API levels this activity serves it redirects to the
+     * primary DEX; on every supported version it redirects to the
      * Compose settings screen on its own.
      */
     private fun finishGuide() {

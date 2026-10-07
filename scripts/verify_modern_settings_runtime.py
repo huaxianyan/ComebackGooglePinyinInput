@@ -15,6 +15,23 @@ def require(text: str, fragments: tuple[str, ...], label: str) -> None:
         raise RuntimeError(f"{label} is incomplete: {missing}")
 
 
+def strip_kotlin_comments(source: str) -> str:
+    """Drop // and /* */ comments, so a symbol named in prose is not a hit."""
+    out: list[str] = []
+    index = 0
+    while index < len(source):
+        if source.startswith("//", index):
+            end = source.find("\n", index)
+            index = len(source) if end < 0 else end
+        elif source.startswith("/*", index):
+            end = source.find("*/", index + 2)
+            index = len(source) if end < 0 else end + 2
+        else:
+            out.append(source[index])
+            index += 1
+    return "".join(out)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--project", type=Path, default=Path("modern-settings"))
@@ -320,6 +337,44 @@ def main() -> int:
     ):
         if retired in kotlin_text:
             raise RuntimeError(f"retired theme-background page still present: {retired}")
+
+    # A symbol added after minSdk has to sit behind a version check. Not a
+    # hypothetical: the vibration preview called `VibrationEffect` (API 26)
+    # unconditionally, which was unreachable while this page only served API 35+
+    # and killed the process with `NoClassDefFoundError: Failed resolution of:
+    # Landroid/os/VibrationEffect;` the moment minSdk made the page reachable at
+    # 23. The reference is real even where the class is not - D8 outlines it into
+    # a synthetic holder - so the guard has to exist, and reading the call site
+    # for "it is only reached on new versions" is not the same thing.
+    #
+    # The table is short on purpose: it lists symbols this module uses above
+    # minSdk, not a general API-level database. Add an entry when a new one
+    # appears, together with the guard that makes it safe.
+    above_min_sdk = {
+        "VibrationEffect": (
+            "Build.VERSION.SDK_INT >= Build.VERSION_CODES.O",
+            "Build.VERSION.SDK_INT >= 26",
+        ),
+    }
+    for path in kotlin_files:
+        code = strip_kotlin_comments(path.read_text(encoding="utf-8"))
+        # An import names the symbol without reaching for it - it emits nothing,
+        # and by construction it sits above every guard in the file. Only a use
+        # site can throw.
+        code = "\n".join(
+            line
+            for line in code.splitlines()
+            if not line.strip().startswith("import ")
+        )
+        for symbol, guards in above_min_sdk.items():
+            index = code.find(symbol)
+            if index < 0:
+                continue
+            if not any(guard in code[:index] for guard in guards):
+                raise RuntimeError(
+                    f"{path.name} reaches {symbol} without an SDK_INT guard above it; "
+                    f"{symbol} does not exist below the API level that introduced it"
+                )
 
     # The user's own themes are the last section, below the packaged colours.
     # That section is empty for anyone who has never built a theme, so it must
@@ -1630,13 +1685,12 @@ def main() -> int:
             ("targetSdkVersion: 36",),
             "combined host SDK contract",
         )
-        # The floor and the settings route have to agree, and this is the only
-        # place that can see both. Raising the route above the floor hands a
-        # version range back to the legacy Preference UI, which is what the
-        # rollout removed; dropping it below the floor is meaningless. Every
-        # number here is read out of a built artifact rather than compared to a
-        # literal, so changing any one of the three alone fails rather than
-        # ships.
+        # The floor and the three redirects have to agree, and this is the only
+        # place that can see all of them. Raising a redirect above the floor
+        # hands a version range back to a legacy page, which is what the rollout
+        # removed; dropping one below the floor is meaningless. Every number
+        # here is read out of a built artifact rather than compared to a
+        # literal, so changing any one of them alone fails rather than ships.
         host_min_sdk = re.search(r"minSdk = (\d+)", host_build)
         apk_min_sdk = re.search(r"minSdkVersion: (\d+)", apktool_yml)
         if host_min_sdk is None or apk_min_sdk is None:
@@ -1659,6 +1713,11 @@ def main() -> int:
                 "ThemeSelectorActivity.smali",
                 "legacy theme selector redirect",
             ),
+            (
+                "smali/com/google/android/inputmethod/pinyin/firstrun/"
+                "FirstRunRoutingCompat.smali",
+                "legacy first-run redirect",
+            ),
         ):
             route_text = (decoded / relative).read_text(encoding="utf-8")
             if route_threshold not in route_text:
@@ -1669,6 +1728,45 @@ def main() -> int:
                 raise RuntimeError(
                     f"the {label} still gates on API 35; the route starts at minSdk now"
                 )
+            # The value alone says nothing: the branch target is the legacy page,
+            # so the comparison has to send everything BELOW the threshold there.
+            # `if-ge` is the inverse, assembles just as cleanly, and reads just as
+            # plausibly. The first-run helper shipped that way and kept the legacy
+            # guide on every version at or above the threshold.
+            branch = re.search(
+                re.escape(route_threshold) + r"\s*\n\s*(if-\w+) v0, v1,", route_text
+            )
+            if branch is None:
+                raise RuntimeError(f"the {label} has no branch after its threshold")
+            if branch.group(1) != "if-lt":
+                raise RuntimeError(
+                    f"the {label} branches on {branch.group(1)}; the branch target is "
+                    "the legacy page, so the comparison must be if-lt (below the "
+                    "threshold) rather than its inverse"
+                )
+            # The first-run helper has a second gate with the same failure shape:
+            # it keeps the legacy guide when a guide is already complete, and the
+            # inverted form keeps it always. That is the branch the redirect
+            # actually died on - the threshold was one bug, this was the next
+            # condition down, and a value check would have passed both.
+            if label == "legacy first-run redirect":
+                completion = re.search(
+                    r"invoke-static \{p0\}, Lcom/google/android/inputmethod/pinyin/"
+                    r"firstrun/FirstRunStateCompat;->isComplete\(Landroid/content/"
+                    r"Context;\)Z\s*\n\s*move-result v0\s*\n\s*(if-\w+) v0, :legacy_guide",
+                    route_text,
+                )
+                if completion is None:
+                    raise RuntimeError(
+                        "the legacy first-run redirect has no completion branch"
+                    )
+                if completion.group(1) != "if-nez":
+                    raise RuntimeError(
+                        "the legacy first-run redirect branches on "
+                        f"{completion.group(1)} after isComplete; the branch target is "
+                        "the legacy guide, so it must be taken when the guide is "
+                        "already complete (if-nez)"
+                    )
         # The Compose runtime must not install a process entry point in the
         # legacy process. The prepared manifest names these components only to
         # have the merger drop them, so a `tools:node="remove"` marker is the

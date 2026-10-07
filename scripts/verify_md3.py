@@ -95,8 +95,9 @@ def main() -> None:
             "FirstRunStateCompat;->isComplete(Landroid/content/Context;)Z",
             "FirstRunStateCompat;->prepareIncompleteGuideLaunch(Landroid/content/Context;)V",
             "Lapy;->a(Landroid/content/Context;Ljava/lang/Class;)Z",
-            # API 35+ hands the page to the Compose host, and the redirect keeps
-            # the launch claim so the two hosts cannot both show a guide.
+            # The Compose host takes the page on every supported version, and
+            # the redirect keeps the launch claim so the two hosts cannot both
+            # show a guide.
             "FirstRunRoutingCompat;->redirectToModernGuide(Landroid/app/Activity;)Z",
             "FirstRunRoutingCompat;->consumeRedirect()Z",
         ),
@@ -109,17 +110,36 @@ def main() -> None:
     )
     if not routing.exists():
         raise RuntimeError("the first-run redirect helper is missing")
+    routing_text = routing.read_text(encoding="utf-8")
     require(
-        routing.read_text(encoding="utf-8"),
+        routing_text,
         (
             "const-string v2, \"com.google.android.inputmethod.pinyin.modernsettings."
             "compose.ModernFirstRunActivity\"",
-            "Landroid/content/pm/PackageManager;->queryIntentActivities("
-            "Landroid/content/Intent;I)Ljava/util/List;",
+            "Landroid/content/pm/PackageManager;->getActivityInfo("
+            "Landroid/content/ComponentName;I)Landroid/content/pm/ActivityInfo;",
+            "Landroid/content/pm/PackageManager$NameNotFoundException;",
             "Landroid/app/Activity;->finish()V",
         ),
         "first-run redirect to the Compose host",
     )
+    # The existence check has to ask the package manager for the component. The
+    # resolver-based query cannot see a host that declares no <intent-filter>,
+    # which is how this one is declared, so it would report "not declared" for a
+    # build that has it and silently keep the legacy guide on every version.
+    #
+    # Comments are stripped first. The helper documents this very rule, so a
+    # plain substring test reads the explanation as the violation - and the
+    # cheapest way to satisfy it would then be to delete the explanation. The
+    # assertion is about the instruction, not the prose.
+    routing_code = "\n".join(
+        line.split("#", 1)[0] for line in routing_text.splitlines()
+    )
+    if "queryIntentActivities" in routing_code:
+        raise RuntimeError(
+            "the first-run redirect must not gate on queryIntentActivities; the "
+            "intent-filter resolver cannot see a host declared without a filter"
+        )
 
     state = (
         decoded

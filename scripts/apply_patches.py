@@ -289,8 +289,9 @@ def apply(
         2,
     )
 
-    # API 35+ receives an MD3-inspired first-run surface with day/night colors,
-    # rounded filled buttons, current typography and a finish-only final action.
+    # The legacy guide's MD3-inspired surface (day/night colors, rounded filled
+    # buttons, current typography, finish-only final action) is retained rather
+    # than reachable: the redirect hands the guide to the Compose host first.
     resource_patches = ROOT / "patches/res"
     for source in resource_patches.rglob("*"):
         if not source.is_file():
@@ -387,7 +388,7 @@ def apply(
     # original English input category. The switch is the master opt-in, so the
     # window list hangs off it through the platform dependency contract:
     # disabled while the switch is off, and the previously chosen value is kept.
-    # Keys, types and defaults are shared with the API 35+ Compose settings
+    # Keys, types and defaults are shared with the Compose settings page
     # through the same preference names.
     setting_input = decoded / "res/xml/setting_input.xml"
     replace_once(
@@ -966,11 +967,12 @@ def apply(
         "    invoke-static {}, Lcom/google/android/inputmethod/pinyin/firstrun/"
         "FirstRunStateCompat;->activityCreated()V\n\n"
         "    invoke-super {p0, p1}, Lapy;->onCreate(Landroid/os/Bundle;)V\n\n"
-        "    # API 35+ hands the page itself to the Compose host. The launch gate\n"
-        "    # above still decides whether a guide is due at all, and the redirect\n"
-        "    # keeps the claim, so the two hosts cannot both show one. This runs\n"
-        "    # after super: the redirect starts another activity and finishes this\n"
-        "    # one, and an early return here would leave super.onCreate uncalled.\n"
+        "    # The Compose host takes the page on every supported version. The\n"
+        "    # launch gate above still decides whether a guide is due at all, and\n"
+        "    # the redirect keeps the claim, so the two hosts cannot both show one.\n"
+        "    # This runs after super: the redirect starts another activity and\n"
+        "    # finishes this one, and an early return here would leave super.onCreate\n"
+        "    # uncalled.\n"
         "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/firstrun/"
         "FirstRunRoutingCompat;->redirectToModernGuide(Landroid/app/Activity;)Z\n\n"
         "    move-result v0\n\n"
