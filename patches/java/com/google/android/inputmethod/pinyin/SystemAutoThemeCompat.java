@@ -8,6 +8,10 @@ import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.os.Build;
 import android.util.Log;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.widget.ImageView;
 
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
@@ -20,6 +24,10 @@ import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.WeakHashMap;
 import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -77,6 +85,29 @@ public final class SystemAutoThemeCompat {
     private static final String MODE_LIGHT = "light";
     private static final String MODE_DARK = "dark";
 
+    // files: packages need the current-format marker; unversioned packages
+    // pass through the legacy selector converter, unlike built-in assets.
+    private static final int THEME_PACKAGE_FORMAT_VERSION = 3;
+    private static final int DYNAMIC_PALETTE_REVISION = 5;
+
+    // Original Material icons bake 60% opacity into their pixel masks. Keep
+    // metadata, disabled-key and drawable alpha separate from that mask.
+    private static final int LEGACY_FUNCTION_ICON_ALPHA = 153;
+    private static final int PRIMARY_ICON_ID = 0x7f0f0057;
+    private static final int[] DYNAMIC_FUNCTION_KEYS = {
+        0x7f0f0221, // del
+        0x7f0f0222, // del_composing
+        0x7f0f020e, // candidate_del
+        0x7f0f020f, // candidate_del_composing
+        0x7f0f036e, // shift
+        0x7f0f0371, // shift_locked
+        0x7f0f0373, // shift_no_lock
+        0x7f0f0374, // shift_shifted
+        0x7f0f0375, // shift_shifted_combo
+        0x7f0f0376, // shift_shifted_no_lock
+    };
+    private static final Map<Bitmap, Bitmap> DYNAMIC_ICON_MASKS = new WeakHashMap<Bitmap, Bitmap>();
+
     /**
      * Outcome of a palette sync. "Rebuilt" and "unchanged" are both usable, but
      * only a rebuild means the view on screen is now showing stale colors and
@@ -90,8 +121,8 @@ public final class SystemAutoThemeCompat {
      * Zip entries other than metadata, in the exact order the original
      * packaging tool used. Entry names equal the asset template names, so the
      * generated package can be diffed against {@code assets/theme/} directly.
-     * The entry named {@code style_sheet_material_<mode>.binarypb} is the one
-     * that gets recolored; every other entry is copied byte for byte.
+     * Both the material sheet and its border override are recolored. Other
+     * entries remain byte-identical to the original templates.
      */
     private static final String[] DYNAMIC_ENTRIES_LIGHT = {
         "style_sheet_color_common.binarypb",
@@ -115,53 +146,50 @@ public final class SystemAutoThemeCompat {
     };
 
     /**
-     * Keyboard style slot to Material You color name. The concrete resource is
-     * this name plus {@code _light} or {@code _dark}. Both arrays must stay in
-     * step; they are parallel by index so the mapping reads as a table.
+     * One definition per role: semantic resource stem, then API-31 tonal
+     * fallback. A light|dark pair selects the stem before adding the suffix
+     * (semantic resources only). Tonal resources already have complete names.
      */
-    private static final String[] DYNAMIC_SLOT_NAMES = {
-        "color_base",
-        "color_header",
-        "color_popup_background",
-        "color_access_points_menu_background",
-        "color_access_point_panel_item_background",
-        "color_label",
-        "color_label_header_active",
-        "color_popup_label",
-        "color_icon",
-        "color_state_action",
-        "color_state_action_pressed",
-        "color_action_default",
-        "color_label_dynamic",
-        "color_keyboard_editing_button",
-        "color_keyboard_editing_button_background",
-        "color_key_paging_scrollbar",
-        "color_notice_text",
-        "color_state_popup_item_pressed",
-        "color_generic_extension_background_activated",
-        "color_keyboard_separator",
+    private static final String[][] DYNAMIC_COLOR_ROLES = {
+        {"base", "surface_container", "neutral1_100|neutral1_900"},
+        {"surface", "surface", "neutral1_10|neutral1_900"},
+        {"letter", "surface_container_lowest|surface_bright", "neutral1_0|neutral1_800"},
+        {"high", "surface_container_high", "neutral1_100|neutral1_800"},
+        {"highest", "surface_container_highest", "neutral1_200|neutral1_800"},
+        {"on_surface", "on_surface", "neutral1_900|neutral1_100"},
+        {"function", "secondary_container", "accent2_100|accent2_700"},
+        {"on_function", "on_secondary_container", "accent2_900|accent2_100"},
+        {"primary", "primary", "accent1_600|accent1_200"},
+        {"primary_container", "primary_container", "accent1_100|accent1_700"},
+        {"outline", "outline_variant", "neutral2_200|neutral2_700"},
     };
-    private static final String[] DYNAMIC_SLOT_RESOURCES = {
-        "system_surface",
-        "system_surface_container",
-        "system_surface_container_high",
-        "system_surface",
-        "system_surface",
-        "system_on_surface",
-        "system_on_surface",
-        "system_on_surface",
-        "system_on_surface_variant",
-        "system_primary",
-        "system_primary_container",
-        "system_primary",
-        "system_primary",
-        "system_primary",
-        "system_primary_container",
-        "system_primary",
-        "system_primary",
-        "system_primary_container",
-        "system_secondary_container",
-        "system_outline_variant",
+
+    /** Native variable to role. Shared by ordinary and bordered sheets. */
+    private static final String[][] DYNAMIC_STYLE_ROLES = {
+        {"color_base", "base"},
+        {"color_header", "surface"},
+        {"color_popup_background", "high"},
+        {"color_access_points_menu_background", "surface"},
+        {"color_access_point_panel_item_background", "surface"},
+        {"color_label", "on_surface"},
+        {"color_label_header_active", "on_surface"},
+        {"color_popup_label", "on_surface"},
+        {"color_icon", "on_surface"},
+        {"color_label_function_key", "on_surface"},
+        {"color_label_space_key", "on_surface"},
+        {"color_icon_action", "on_function"},
+        {"color_state_action", "function"},
+        {"color_action_default", "primary"},
+        {"color_label_dynamic", "primary"},
+        {"color_keyboard_editing_button", "primary"},
+        {"color_keyboard_editing_button_background", "primary_container"},
+        {"color_key_paging_scrollbar", "primary"},
+        {"color_notice_text", "primary"},
+        {"color_state_popup_item_pressed", "primary_container"},
+        {"color_generic_extension_background_activated", "function"},
+        {"color_keyboard_separator", "outline"},
+        {"color_state_border_key_action", "function"},
+        {"color_state_space_bar", "letter"},
     };
 
     private static final Charset UTF_8 = Charset.forName("UTF-8");
@@ -438,6 +466,10 @@ public final class SystemAutoThemeCompat {
      */
     private static int syncDynamicTheme(Context context, boolean dark) {
         Map<String, Integer> colors = resolveDynamicColors(context, dark);
+        if (colors == null) {
+            debugLog(context, "system palette unavailable, retaining the ordinary theme");
+            return SYNC_UNAVAILABLE;
+        }
         String signature = dynamicSignature(dark, colors);
         SharedPreferences preferences = preferences(context);
         File target = new File(context.getFilesDir(), DYNAMIC_PACKAGE_NAME);
@@ -455,38 +487,122 @@ public final class SystemAutoThemeCompat {
         return SYNC_REBUILT;
     }
 
-    /** Reads the platform palette by resource name; missing entries keep the template color. */
+    /** Native icon-binding extension; only generated dynamic themes own this path. */
+    public static synchronized void applyDynamicFunctionIcon(Context context, int keyId, ImageView icon) {
+        if (icon.getId() != PRIMARY_ICON_ID) return;
+        boolean functionKey = false;
+        for (int supported : DYNAMIC_FUNCTION_KEYS) {
+            if (keyId == supported) { functionKey = true; break; }
+        }
+        if (!functionKey || !isDynamicEnabled(context)) return;
+        String active = preferences(context).getString(context.getString(PREF_KEY_ADDITIONAL_THEME), null);
+        if (!(DYNAMIC_ADDITIONAL_PREFIX + DYNAMIC_PACKAGE_NAME).equals(active)) return;
+        Drawable drawable = icon.getDrawable();
+        if (!(drawable instanceof BitmapDrawable)) return;
+        Bitmap source = ((BitmapDrawable)drawable).getBitmap();
+        Bitmap normalized = DYNAMIC_ICON_MASKS.get(source);
+        if (normalized == null) {
+            int width = source.getWidth();
+            int height = source.getHeight();
+            int[] pixels = new int[width * height];
+            source.getPixels(pixels, 0, width, 0, 0, width, height);
+            int maximum = 0;
+            for (int pixel : pixels) maximum = Math.max(maximum, pixel >>> 24);
+            if (maximum != LEGACY_FUNCTION_ICON_ALPHA) return;
+            for (int index = 0; index < pixels.length; index++) {
+                int alpha = (pixels[index] >>> 24) * 255 / LEGACY_FUNCTION_ICON_ALPHA;
+                pixels[index] = (pixels[index] & 0xffffff) | (alpha << 24);
+            }
+            normalized = Bitmap.createBitmap(pixels, width, height, Bitmap.Config.ARGB_8888);
+            normalized.setDensity(source.getDensity());
+            DYNAMIC_ICON_MASKS.put(source, normalized);
+        }
+        icon.setImageBitmap(normalized);
+        icon.getDrawable().setColorFilter(drawable.getColorFilter());
+        icon.getDrawable().setAlpha(drawable.getAlpha());
+    }
+
+    private static String modeStem(String entry, boolean dark) {
+        int separator = entry.indexOf('|');
+        if (separator < 0) return entry;
+        return dark ? entry.substring(separator + 1) : entry.substring(0, separator);
+    }
+
+    /** Resolves complete roles instead of mixing missing roles with template teal. */
     private static Map<String, Integer> resolveDynamicColors(Context context, boolean dark) {
+        Map<String, Integer> roles = new HashMap<String, Integer>();
+        for (String[] role : DYNAMIC_COLOR_ROLES) {
+            String semantic = "system_" + modeStem(role[1], dark)
+                    + (dark ? "_dark" : "_light");
+            Integer value = systemColor(context, semantic);
+            if (value == null) {
+                value = systemColor(context, "system_" + modeStem(role[2], dark));
+            }
+            if (value == null) return null;
+            roles.put(role[0], value);
+        }
+        return roles;
+    }
+
+    private static Integer systemColor(Context context, String name) {
         Resources resources = context.getResources();
-        Resources.Theme theme = context.getTheme();
-        String suffix = dark ? "_dark" : "_light";
-        Map<String, Integer> colors = new HashMap<String, Integer>();
-        for (int index = 0; index < DYNAMIC_SLOT_NAMES.length; index++) {
-            String resource = DYNAMIC_SLOT_RESOURCES[index] + suffix;
-            int identifier = resources.getIdentifier(resource, "color", "android");
-            if (identifier == 0) {
-                continue;
-            }
-            try {
-                colors.put(
-                        DYNAMIC_SLOT_NAMES[index],
-                        Integer.valueOf(resources.getColor(identifier, theme)));
-            } catch (RuntimeException ignored) {
-                // A ROM that declares the name but cannot resolve it falls back
-                // to the template color for this one slot only.
-            }
+        int identifier = resources.getIdentifier(name, "color", "android");
+        if (identifier == 0) return null;
+        try {
+            return Integer.valueOf(resources.getColor(identifier, context.getTheme()));
+        } catch (Resources.NotFoundException unavailable) {
+            return null;
+        }
+    }
+
+    /** A 10% foreground state layer, using integer channel compositing. */
+    private static int pressedColor(int background, int foreground) {
+        int result = 0xff000000;
+        for (int shift = 0; shift <= 16; shift += 8) {
+            int base = (background >>> shift) & 255;
+            int front = (foreground >>> shift) & 255;
+            result |= ((base * 9 + front) / 10) << shift;
+        }
+        return result;
+    }
+
+    private static Map<String, Integer> dynamicStyleColors(
+            Map<String, Integer> roles, boolean dark, boolean bordered) {
+        Map<String, Integer> colors = new TreeMap<String, Integer>();
+        for (String[] slot : DYNAMIC_STYLE_ROLES) {
+            colors.put(slot[0], roles.get(slot[1]));
+        }
+        int function = roles.get("function").intValue();
+        int onFunction = roles.get("on_function").intValue();
+        int onSurface = roles.get("on_surface").intValue();
+        int letter = roles.get("letter").intValue();
+        int functionPressed = pressedColor(function, onFunction);
+        int letterPressed = dark ? pressedColor(letter, onSurface)
+                : roles.get("highest").intValue();
+        colors.put("color_state_action_pressed", Integer.valueOf(functionPressed));
+        colors.put("color_state_border_key_action_pressed", Integer.valueOf(functionPressed));
+        colors.put("color_state_space_bar_pressed", Integer.valueOf(letterPressed));
+        if (bordered) {
+            colors.put("color_state_key", Integer.valueOf(letter));
+            colors.put("color_state_key_pressed", Integer.valueOf(letterPressed));
+            colors.put("color_state_key_dark", Integer.valueOf(function));
+            colors.put("color_state_key_dark_pressed", Integer.valueOf(functionPressed));
+            colors.put("color_icon", Integer.valueOf(onFunction));
+            colors.put("color_label_function_key", Integer.valueOf(onFunction));
+        } else {
+            int background = roles.get("base").intValue();
+            colors.put("color_state_key_pressed", Integer.valueOf(pressedColor(background, onSurface)));
+            colors.put("color_state_key_dark_pressed", Integer.valueOf(pressedColor(background, onSurface)));
         }
         return colors;
     }
 
     private static String dynamicSignature(boolean dark, Map<String, Integer> colors) {
         StringBuilder builder = new StringBuilder(dark ? MODE_DARK : MODE_LIGHT);
-        for (int index = 0; index < DYNAMIC_SLOT_NAMES.length; index++) {
-            Integer value = colors.get(DYNAMIC_SLOT_NAMES[index]);
-            builder.append(':');
-            if (value != null) {
-                builder.append(Integer.toHexString(value.intValue()));
-            }
+        builder.append("@v").append(THEME_PACKAGE_FORMAT_VERSION);
+        builder.append("@r").append(DYNAMIC_PALETTE_REVISION);
+        for (String[] role : DYNAMIC_COLOR_ROLES) {
+            builder.append(':').append(Integer.toHexString(colors.get(role[0]).intValue()));
         }
         return builder.toString();
     }
@@ -502,6 +618,9 @@ public final class SystemAutoThemeCompat {
             Context context, boolean dark, Map<String, Integer> colors) {
         String mode = dark ? MODE_DARK : MODE_LIGHT;
         String materialName = MATERIAL_TEMPLATE_PREFIX + mode + ".binarypb";
+        String borderName = MATERIAL_TEMPLATE_PREFIX + mode + "_border.binarypb";
+        Map<String, Integer> mainColors = dynamicStyleColors(colors, dark, false);
+        Map<String, Integer> borderColors = dynamicStyleColors(colors, dark, true);
         String[] entries = dark ? DYNAMIC_ENTRIES_DARK : DYNAMIC_ENTRIES_LIGHT;
         byte[][] payloads = new byte[entries.length][];
         for (int index = 0; index < entries.length; index++) {
@@ -512,11 +631,13 @@ public final class SystemAutoThemeCompat {
                 return false;
             }
             if (materialName.equals(name)) {
-                data = rewriteStyleSheetColors(data, colors);
-                if (data == null) {
-                    debugLog(context, "dynamic style sheet rewrite failed");
-                    return false;
-                }
+                data = rewriteStyleSheetColors(data, mainColors);
+            } else if (borderName.equals(name)) {
+                data = rewriteStyleSheetColors(data, borderColors);
+            }
+            if (data == null) {
+                debugLog(context, "dynamic style sheet rewrite failed");
+                return false;
             }
             payloads[index] = data;
         }
@@ -525,6 +646,12 @@ public final class SystemAutoThemeCompat {
             debugLog(context, "dynamic template missing: metadata");
             return false;
         }
+
+        ByteArrayOutputStream versioned = new ByteArrayOutputStream(metadata.length + 2);
+        versioned.write(0x08);
+        versioned.write(THEME_PACKAGE_FORMAT_VERSION);
+        versioned.write(metadata, 0, metadata.length);
+        metadata = versioned.toByteArray();
 
         File target = new File(context.getFilesDir(), DYNAMIC_PACKAGE_NAME);
         File temporary = new File(context.getFilesDir(), DYNAMIC_PACKAGE_TEMP_NAME);
@@ -535,22 +662,22 @@ public final class SystemAutoThemeCompat {
             for (int index = 0; index < entries.length; index++) {
                 putStoredEntry(zip, entries[index], payloads[index]);
             }
+            // Closing writes the central directory. A failure here must not
+            // publish an incomplete archive or mark the palette as rebuilt.
+            zip.close();
         } catch (IOException e) {
             debugLog(context, "dynamic theme package write failed");
             closeQuietly(zip);
             temporary.delete();
             return false;
         }
-        closeQuietly(zip);
 
         if (!temporary.renameTo(target)) {
-            // Some volumes refuse an in-place replace; retry once without the
-            // previous package so a stale file can never win over the new one.
-            if (!target.delete() || !temporary.renameTo(target)) {
-                temporary.delete();
-                debugLog(context, "dynamic theme package replace failed");
-                return false;
-            }
+            // Both paths are in the app's files directory. If replacement
+            // fails, retain the previous usable package for the caller.
+            temporary.delete();
+            debugLog(context, "dynamic theme package replace failed");
+            return false;
         }
         return true;
     }
@@ -578,6 +705,7 @@ public final class SystemAutoThemeCompat {
             return null;
         }
         ByteArrayOutputStream output = new ByteArrayOutputStream(source.length);
+        Set<String> present = new HashSet<String>();
         int total = source.length;
         int position = 0;
         while (position < total) {
@@ -597,7 +725,6 @@ public final class SystemAutoThemeCompat {
             }
 
             String name = null;
-            long color = 0L;
             boolean hasColor = false;
             int selector = 0;
             boolean hasSelector = false;
@@ -633,7 +760,6 @@ public final class SystemAutoThemeCompat {
                         if (readVarint(source, cursor + 1, value) < 0) {
                             return null;
                         }
-                        color = value[0];
                         hasColor = true;
                     }
                     cursor = valueEnd;
@@ -650,30 +776,10 @@ public final class SystemAutoThemeCompat {
                 }
             }
 
+            if (name != null) present.add(name);
             Integer replacement = name == null ? null : colorMap.get(name);
             if (replacement != null && hasColor) {
-                byte[] nameBytes = name.getBytes(UTF_8);
-                ByteArrayOutputStream value = new ByteArrayOutputStream();
-                value.write(0x08);
-                writeVarint(value, replacement.longValue() & 0xFFFFFFFFL);
-                byte[] valueBytes = value.toByteArray();
-
-                ByteArrayOutputStream body = new ByteArrayOutputStream();
-                body.write(0x0A);
-                writeVarint(body, nameBytes.length);
-                body.write(nameBytes, 0, nameBytes.length);
-                body.write(0x12);
-                writeVarint(body, valueBytes.length);
-                body.write(valueBytes, 0, valueBytes.length);
-                if (hasSelector) {
-                    body.write(0x1A);
-                    writeVarint(body, selector & 0xFFFFFFFFL);
-                }
-                byte[] bodyBytes = body.toByteArray();
-
-                output.write(0x12);
-                writeVarint(output, bodyBytes.length);
-                output.write(bodyBytes, 0, bodyBytes.length);
+                writeColorRule(output, name, replacement.intValue(), hasSelector, selector);
             } else {
                 int ruleLength = ruleEnd - ruleStart;
                 output.write(0x12);
@@ -682,7 +788,38 @@ public final class SystemAutoThemeCompat {
             }
             position = ruleEnd;
         }
+        // Border sheets can override variables declared only in the main sheet.
+        // Append their definitions in stable order instead of retaining a main
+        // foreground while changing the corresponding key fill.
+        for (Map.Entry<String, Integer> entry : new TreeMap<String, Integer>(colorMap).entrySet()) {
+            if (present.contains(entry.getKey())) continue;
+            writeColorRule(output, entry.getKey(), entry.getValue().intValue(), false, 0);
+        }
         return output.toByteArray();
+    }
+
+    private static void writeColorRule(ByteArrayOutputStream output, String name,
+            int color, boolean hasSelector, int selector) {
+        byte[] nameBytes = name.getBytes(UTF_8);
+        ByteArrayOutputStream value = new ByteArrayOutputStream();
+        value.write(0x08);
+        writeVarint(value, color & 0xffffffffL);
+        byte[] payload = value.toByteArray();
+        ByteArrayOutputStream body = new ByteArrayOutputStream();
+        body.write(0x0a);
+        writeVarint(body, nameBytes.length);
+        body.write(nameBytes, 0, nameBytes.length);
+        body.write(0x12);
+        writeVarint(body, payload.length);
+        body.write(payload, 0, payload.length);
+        if (hasSelector) {
+            body.write(0x1a);
+            writeVarint(body, selector & 0xffffffffL);
+        }
+        byte[] rule = body.toByteArray();
+        output.write(0x12);
+        writeVarint(output, rule.length);
+        output.write(rule, 0, rule.length);
     }
 
     private static byte[] templateBytes(Context context, String name) {

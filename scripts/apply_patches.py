@@ -33,6 +33,22 @@ def replace_exactly(path: Path, old: str, new: str, expected: int) -> None:
     path.write_text(text.replace(old, new), encoding="utf-8", newline="\n")
 
 
+def patch_dynamic_icon_binding(decoded: Path) -> None:
+    """Keep icon color/opacity adaptation at the native icon-binding boundary."""
+    path = decoded / "smali/com/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyView.smali"
+    anchor = "    invoke-virtual {v0, v1}, Landroid/widget/ImageView;->setAlpha(I)V\n"
+    replace_once(
+        path,
+        anchor,
+        anchor
+        + "\n    invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyView;->getContext()Landroid/content/Context;\n"
+        + "    move-result-object v1\n"
+        + "    iget-object v2, p0, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyView;->a:Lcom/google/android/apps/inputmethod/libs/framework/core/metadata/SoftKeyDef;\n"
+        + "    iget v2, v2, Lcom/google/android/apps/inputmethod/libs/framework/core/metadata/SoftKeyDef;->a:I\n"
+        + "    invoke-static {v1, v2, v0}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->applyDynamicFunctionIcon(Landroid/content/Context;ILandroid/widget/ImageView;)V\n",
+    )
+
+
 def apply(
     decoded: Path,
     application_id: str,
@@ -45,6 +61,7 @@ def apply(
     if debuggable and application_id == FORMAL_APPLICATION_ID:
         raise RuntimeError("Refusing to make the formal application ID debuggable")
 
+    patch_dynamic_icon_binding(decoded)
     replace_once(
         decoded / "AndroidManifest.xml",
         "</application>",
