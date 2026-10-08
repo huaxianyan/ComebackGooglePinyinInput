@@ -419,7 +419,7 @@ jobs:
               "$env:APK_PATH#$env:RELEASE_APK_NAME" `
               "$env:APK_PATH.sha256#$env:RELEASE_APK_NAME.sha256" `
               --repo $env:GITHUB_REPOSITORY --verify-tag `
-              --title "v$env:EXPECTED_VERSION_NAME - $env:EXPECTED_RELEASE_TITLE" `
+              --title "v$env:EXPECTED_VERSION_NAME" `
               --notes-file release-notes.md
           }
 

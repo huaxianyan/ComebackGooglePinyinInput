@@ -6,8 +6,8 @@
 - Compatibility v10+ package：`com.google.android.inputmethod.pinyin.compat`
 - 原版 versionName：`4.5.2.193126728-arm64-v8a`
 - 原版 versionCode：`4520313`
-- 最新已发布正式版：`v2.1.4`（versionCode `4520406`，targetSdk 36）
-- 当前发布候选：`v2.1.5`（versionCode `4520407`，targetSdk 36）
+- 最新已发布正式版：`v2.1.5`（versionCode `4520407`，targetSdk 36）
+- 上一正式版：`v2.1.4`（versionCode `4520406`，targetSdk 36）
 - 当前源码 minSdk：23（Android 6.0），与 Compose/AndroidX 依赖下限一致
 - 原版 targetSdk：26
 - 已验收并合并的现代化阶段：targetSdk 29、30、31、32、33、34、35、36
