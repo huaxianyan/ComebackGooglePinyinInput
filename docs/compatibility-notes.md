@@ -6,14 +6,14 @@
 - Compatibility v10+ package：`com.google.android.inputmethod.pinyin.compat`
 - 原版 versionName：`4.5.2.193126728-arm64-v8a`
 - 原版 versionCode：`4520313`
-- 最新已发布正式版：`v2.0.0`（versionCode `4520385`，targetSdk 36）
-- 上一正式版：`v1.0.3`（versionCode `4520384`，targetSdk 28）
-- minSdk：17
+- 最新已发布正式版：`v2.1.4`（versionCode `4520406`，targetSdk 36）
+- 当前发布候选：`v2.1.5`（versionCode `4520407`，targetSdk 36）
+- 当前源码 minSdk：23（Android 6.0），与 Compose/AndroidX 依赖下限一致
 - 原版 targetSdk：26
 - 已验收并合并的现代化阶段：targetSdk 29、30、31、32、33、34、35、36
 - Android 17 / targetSdk 37：独立后续调查
 - 架构：arm64-v8a
-- 有效 ABI 运行下限：API 21；虽然 Manifest `minSdkVersion=17`，但 Android 在 API 21 前不存在 `arm64-v8a` 应用 ABI，且本 APK 不含 32 位 native payload，因此 API 17 只能做静态门禁，不能进行真实安装/启动验收
+- 当前安装下限：API 23。`v2.1.4` 及此前版本的 Manifest 下限为 17，但由于只包含 ARM64，其真实 ABI 安装下限为 API 21，API 17 仅属历史静态门禁范围
 
 ## 原生库
 
@@ -130,8 +130,8 @@ java.lang.IllegalArgumentException: Invalid Region.Op - only INTERSECT and DIFFE
 
 以下限制在多个版本中反复出现，统一记录在这里，版本化 Release Notes 不再重复：
 
-- **架构**：APK 仅提供 `arm64-v8a`。Manifest 的 `minSdkVersion` 为 17，但 Android 在 API 21 之前不存在 ARM64 应用 ABI，因此 API 17 只能做静态门禁，不能描述为真实安装或启动验收。
-- **旧 ART 隔离**：API 17–29 不解析 API 30 的 Inline Autofill 类，API 17–35 不解析 API 36 的帧率方法。旧运行时保持静态隔离结论，不描述为真机运行时验收。
+- **架构**：APK 仅提供 `arm64-v8a`，当前最低支持 API 23。Manifest 下限 17 与 ABI 下限 21 的说明仅适用于 `v2.1.4` 及此前版本。
+- **旧 ART 隔离**：受支持的 API 23–29 不解析 API 30 的 Inline Autofill 类，API 23–35 不解析 API 36 的帧率方法。低版本设置与引导验证采用模拟器，API 27–29 未实测，不描述为真机验收。
 - **Inline Autofill 依赖**：需要 Android 11/API 30 及以上，实际能力取决于当前 App、Android Autofill Framework 和用户选择的 Autofill Provider。
 - **TalkBack 与 Inline Suggestions**：touch exploration 下尚未完成独立验收，因此继续不声明 `supportsInlineSuggestionsWithTouchExploration`。
 - **16 KiB native page-size**：`libhmm_gesture_hwr_zh.so` 的 `PT_LOAD Align 0x1000` 仍未解决，ZIP alignment 不能代替 native 运行时验收，目前只有 4 KiB 真机回归和模拟器结论。

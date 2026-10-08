@@ -13,6 +13,7 @@
 ```text
 Application ID: com.google.android.inputmethod.pinyin.compat
 Architecture:   arm64-v8a
+min SDK:        23（Android 6.0）
 target SDK:     36
 ```
 
@@ -38,7 +39,9 @@ target SDK:     36
 
 ### 设置与首次引导
 
-- Android 15/API 35 及以上使用源码构建的官方 Compose Material 3 设置界面，Android 14 及以下继续使用原版 Preference 设置。
+- 全部受支持版本（Android 6.0/API 23 起）使用源码构建的官方 Compose Material 3 设置界面。
+- 主题清单支持键盘预览、模式选择及浅色/深色主题分配，自定义主题的创建、裁剪和编辑也使用 Compose。
+- 首次引导和许可证页使用同一套现代界面，旧 Preference 设置页保留为历史代码，不再作为正常设置入口。
 - 现代设置保留原 Preference key、类型、默认值、依赖和业务回调，并支持动态配色、RTL、大字体、横屏、分屏和 TalkBack 语义。
 - 「关于」页面提供当前项目的 [GitHub 仓库](https://github.com/huaxianyan/ComebackGooglePinyinInput) 入口。
 - 首次引导整理为同页完成「启用输入法」和「选择输入法」，避免旧权限页、失效统计和重复引导状态。
@@ -46,10 +49,10 @@ target SDK:     36
 ### 动态配色主题
 
 - 键盘配色可以直接取用系统 Material You 调色板，深浅色模式各用一套，切换系统深浅色时键盘跟随。
-- 开关位于「设置 → 键盘 → 外观与布局 → 主题背景」最上方，默认关闭，关闭时三个原有主题槽位的行为不变。
-- 开启动态配色后，「跟随主题」与浅色、深色、固定三个槽位入口一并置灰，避免两套机制同时改写生效键。关闭后四行立即恢复可选，此前的选择原样保留。
-- 取不到的系统色保留主题模板原值，单个槽位缺失不会让整包失效。
-- 依赖系统调色板，Android 12（API 31）以下的设备上不显示该开关。
+- 在「设置 → 键盘 → 主题」中选择「动态配色」模式，默认使用普通主题，原有主题选择与浅深色分配继续保留。
+- 动态配色与「系统自动」及固定主题是互斥模式，键盘背景、按键、文字和回车键使用配套的系统颜色。
+- 缺少语义颜色资源时使用系统 tonal palette，完整配色不可用时使用普通主题。
+- 动态配色需要 Android 12（API 31）及以上。
 
 ### 用户词典与隐私
 
@@ -67,8 +70,7 @@ target SDK:     36
 - 同步只处理多字词条的存在与删除，不换算历史词频，也不改写 Rime 的词频记录。
 - 暂时无法由 Google 拼音直接接收的词条保留在 Rime，不阻塞其他词条，不修改原编码，也不转写英文用户词典。
 - 更换同步目录时延续原有设备身份、盐、基线和保留标记，迁移完整合法的原有数据不需要删除任何设备文件夹。
-- 旧设置页也能配置同一套 Rime 同步，API 17 至 34 上不必依赖现代设置页。状态、同步目录、设备名、快照文件名、自动同步与间隔、立即同步和重新建立同步状态共 8 项。
-- 两处设置页共用同一套执行与恢复逻辑，旧页写入的配置与现代页读到的值一致，不存在各自保存偏好。
+- 全部受支持版本在现代设置页配置 Rime 同步，原有目录、间隔和处理规则继续使用，执行与恢复逻辑保持一致。
 
 ### 成对标点自动补全
 
@@ -127,7 +129,7 @@ target SDK:     36
   <tr>
     <td width="50%" align="center">
       <img src="images/material3-settings.png" alt="Compose Material 3 设置首页" width="270"><br>
-      Android 15 及以上使用官方 Compose Material 3 设置界面
+      Android 6.0 及以上使用官方 Compose Material 3 设置界面
     </td>
     <td width="50%" align="center">
       <img src="images/dictionary-and-backup.png" alt="词典健康状态、Rime 同步与自动备份设置" width="270"><br>
@@ -140,10 +142,11 @@ target SDK:     36
 
 ## 兼容性说明
 
-- APK 只包含 `arm64-v8a` 原生库。Manifest 的 `minSdkVersion` 为 17，但 ARM64 Android 应用实际从 API 21 才存在。
-- API 35+ 设置使用 Compose Material 3，API 17–34 保持旧设置路径，启动时不解析 Compose/AndroidX 设置类。
-- Rime 同步设置在现代设置页与旧设置页都可配置：API 35 及以上走 Compose 设置界面，API 17 至 34 走旧设置页，两者写入同一套配置。自动同步依赖系统 JobScheduler，从 Android 5.0/API 21 起可用，执行时机由系统后台调度安排。
-- 复古 9 键设置位于英文输入分类，旧设置页与现代设置页都可以配置，开关变化立即生效。
+- APK 只包含 `arm64-v8a` 原生库，最低支持 Android 6.0/API 23。Android 5.x 及以下设备请使用此前版本。
+- 全部受支持版本使用 Compose Material 3 设置、首次引导、许可证与自定义主题界面。
+- API 23、26、30、31、34 的低版本验证使用模拟器，API 27–29 的适用性属于推断，不描述为实测。真机验收范围见各专项文档。
+- Rime 自动同步依赖系统 JobScheduler，执行时机由系统后台调度安排。
+- 复古 9 键设置位于英文输入分类，开关变化立即生效。
 - Inline Autofill 需要 Android 11/API 30 及以上，并取决于当前 App、Android Autofill Framework 和用户选择的 Autofill Provider。
 - TalkBack touch exploration 下的 Inline Suggestions 尚未声明支持，系统会采用自身回退路径。
 - Android 17/API 37、Predictive Back 和最终 16 KiB native page-size 运行时验收属于独立后续工作。
@@ -161,13 +164,13 @@ target SDK:     36
 Rime 同步让 Google 拼音的用户词典与 Rime 生成的 `pinyin_simp.userdb.txt` 快照双向互通，适合手机与电脑共用一份词库。
 
 1. 在 Rime 一端确认已经生成用户词典快照，并让快照与其他设备位于同一个同步目录中。
-2. 打开「设置 → 词典与备份 → Rime 同步」，选择同步目录，填写本设备名称和 Rime 用户词典文件名。API 34 及以下的旧设置页入口在「词典与备份 → 用户词典」下。
+2. 打开「设置 → 词典与备份 → Rime 同步」，选择同步目录，填写本设备名称和 Rime 用户词典文件名。
 3. 点击「立即同步」完成第一次同步。首次会出现一次处理规则说明，确认后按同一规则处理后续条目。
 4. 需要自动同步时打开「自动同步」开关并选择间隔。开启说明会指出同步包含删除行为。
 
 同步只处理多字词条的存在与删除，不换算历史词频。逐条查看仅保留在 Rime 的条目不是完成同步的前置步骤。目录授权、文件到达时机和离线能力由所选 DocumentsProvider 与外部同步软件负责，应用只处理执行时目录中已有的快照。
 
-Rime 同步在 API 35 及以上的现代设置页和 API 17 至 34 的旧设置页都能配置，两处共用同一套配置与执行逻辑。详细设计见 [Rime 自动同步设计](docs/rime-auto-sync-design.md)。
+Rime 同步在全部受支持版本的现代设置页配置，继续使用原有配置与执行逻辑。详细设计见 [Rime 自动同步设计](docs/rime-auto-sync-design.md)。
 
 ## 复古 9 键
 
@@ -187,7 +190,7 @@ Rime 同步在 API 35 及以上的现代设置页和 API 17 至 34 的旧设置�
 ```text
 original/        已校验的 Google 拼音 4.5.2 arm64-v8a 原始 APK
 patches/         Java 源码、生成 Smali 和兼容资源
-modern-settings/ API 35+ Compose Material 3 设置运行时
+modern-settings/ API 23+ Compose Material 3 设置运行时
 scripts/         补丁、构建和静态验证脚本
 docs/            设计、研究、验收和兼容边界
 ```

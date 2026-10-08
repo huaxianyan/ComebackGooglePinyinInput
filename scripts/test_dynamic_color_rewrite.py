@@ -1,499 +1,204 @@
 #!/usr/bin/env python3
-"""Stage A gate: the Java and Python StyleSheet recoloring must agree byte for byte.
-
-The device-verified probe recolored the style sheet in Python. The shipped
-implementation recolors it in Java. If the two ever diverge, the package that
-ships is not the package that was verified, so this script compiles the Java
-rewriter, runs it against the real templates, runs the Python rewriter on the
-same inputs, and compares the SHA-256 of both outputs.
-
-It also asserts that every slot named in the Java mapping actually exists in the
-template. A mapping entry that matches no rule would be silently dead.
-
-Two things keep this runnable from a clean checkout:
-
-* The Python reference below is a verbatim copy of
-  ``work/dynamic-color-probe/style_sheet_tool.py``. ``work/`` is not tracked, so
-  a copy is the only way CI can run this gate. When the probe *is* present the
-  script cross-checks the two and fails if they have drifted apart.
-* Templates come from a decoded tree when one exists and straight out of the
-  original APK otherwise, so no decode step is required.
-"""
-
+"""Check native sheet rewriting and fixed role/state fixtures from a clean checkout."""
 from __future__ import annotations
 
 import argparse
-import hashlib
-import json
 import os
 import re
 import subprocess
-import sys
 import tempfile
 from pathlib import Path
 from zipfile import ZipFile
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = ROOT / "patches/java/com/google/android/inputmethod/pinyin/SystemAutoThemeCompat.java"
-PROBE = ROOT / "work/dynamic-color-probe"
-PROBE_TOOL = PROBE / "style_sheet_tool.py"
-MATERIAL_TEMPLATES = (
-    "style_sheet_material_light.binarypb",
-    "style_sheet_material_dark.binarypb",
-)
-# The engine layers these over the material sheet whenever key borders are on,
-# so the generator recolors them too and they have to be gated the same way.
-BORDER_TEMPLATES = (
-    "style_sheet_material_light_border.binarypb",
-    "style_sheet_material_dark_border.binarypb",
-)
-TEMPLATES = MATERIAL_TEMPLATES + BORDER_TEMPLATES
-ASSET_PREFIX = "assets/theme/"
+SOURCE = ROOT / 'patches/java/com/google/android/inputmethod/pinyin/SystemAutoThemeCompat.java'
+TEMPLATES = tuple(f'style_sheet_material_{mode}{border}.binarypb'
+                  for mode in ('light', 'dark') for border in ('', '_border'))
 
-# A decoded tree is a build artifact and gets recreated under different names,
-# so search the known locations instead of pinning one that may have been
-# rebuilt since.
-TEMPLATE_CANDIDATES = (
-    "work/decoded/assets/theme",
-    "work/dyn-host/decoded/assets/theme",
-    "work/decoded-dyn/assets/theme",
-    "work/decoded-fresh/assets/theme",
-    "work/decoded-verify/assets/theme",
-)
-
-# Keyboard style slot -> system color resource name. Mirrors the mapping the
-# device probe used, so the measured colors can be replayed without importing
-# the probe module.
-PROBE_MAPPING = {
-    "color_base": "system_surface_light",
-    "color_header": "system_surface_container_light",
-    "color_popup_background": "system_surface_container_high_light",
-    "color_access_points_menu_background": "system_surface_light",
-    "color_access_point_panel_item_background": "system_surface_light",
-    "color_label": "system_on_surface_light",
-    "color_label_header_active": "system_on_surface_light",
-    "color_popup_label": "system_on_surface_light",
-    "color_icon": "system_on_surface_variant_light",
-    "color_state_action": "system_primary_light",
-    "color_state_action_pressed": "system_primary_container_light",
-    "color_action_default": "system_primary_light",
-    "color_label_dynamic": "system_primary_light",
-    "color_keyboard_editing_button": "system_primary_light",
-    "color_keyboard_editing_button_background": "system_primary_container_light",
-    "color_key_paging_scrollbar": "system_primary_light",
-    "color_notice_text": "system_primary_light",
-    "color_state_popup_item_pressed": "system_primary_container_light",
-    "color_generic_extension_background_activated": "system_secondary_container_light",
-    "color_keyboard_separator": "system_outline_variant_light",
-}
-
-HARNESS = """
+HARNESS = r'''
 import com.google.android.inputmethod.pinyin.SystemAutoThemeCompat;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 public final class RewriteHarness {
     public static void main(String[] args) throws Exception {
-        byte[] source = read(new File(args[0]));
-        Map<String, Integer> colors = new HashMap<String, Integer>();
-        String[] pairs = args[1].split(",");
-        for (int index = 0; index < pairs.length; index++) {
-            String pair = pairs[index];
-            if (pair.length() == 0) {
-                continue;
-            }
-            int equals = pair.indexOf('=');
-            colors.put(
-                    pair.substring(0, equals),
-                    Integer.valueOf((int) Long.parseLong(pair.substring(equals + 1), 16)));
+        if (args[0].equals("roles")) {
+            Map<String, Integer> roles = parse("base=ff19191b,surface=ff0e0e0f,letter=ff2b2c2f,"
+                + "high=ff232428,highest=ff36373a,on_surface=ffe7e5e8,function=ff3a3b41,"
+                + "on_function=ffbfbfc5,primary=ffc2c6d6,primary_container=ff44495e,outline=ff46484d");
+            java.lang.reflect.Method method = SystemAutoThemeCompat.class.getDeclaredMethod(
+                "dynamicStyleColors", Map.class, boolean.class, boolean.class);
+            method.setAccessible(true);
+            emit("dark-border", (Map<String, Integer>)method.invoke(null, roles, true, true));
+            emit("dark-plain", (Map<String, Integer>)method.invoke(null, roles, true, false));
+            emit("light-border", (Map<String, Integer>)method.invoke(null, roles, false, true));
+        } else {
+            byte[] result = SystemAutoThemeCompat.rewriteStyleSheetColors(
+                Files.readAllBytes(Paths.get(args[0])), parse(args[1]));
+            Files.write(Paths.get(args[2]), result);
         }
-        byte[] result = SystemAutoThemeCompat.rewriteStyleSheetColors(source, colors);
-        if (result == null) {
-            throw new IllegalStateException("rewriteStyleSheetColors returned null");
-        }
-        FileOutputStream output = new FileOutputStream(args[2]);
-        output.write(result);
-        output.close();
     }
-
-    private static byte[] read(File file) throws Exception {
-        FileInputStream input = new FileInputStream(file);
-        byte[] buffer = new byte[(int) file.length()];
-        int offset = 0;
-        while (offset < buffer.length) {
-            int read = input.read(buffer, offset, buffer.length - offset);
-            if (read <= 0) {
-                break;
-            }
-            offset += read;
+    private static Map<String, Integer> parse(String input) {
+        Map<String, Integer> colors = new HashMap<String, Integer>();
+        for (String pair : input.split(",")) {
+            String[] parts = pair.split("=");
+            colors.put(parts[0], Integer.valueOf((int)Long.parseLong(parts[1], 16)));
         }
-        input.close();
-        return buffer;
+        return colors;
+    }
+    private static void emit(String label, Map<String, Integer> values) {
+        for (Map.Entry<String, Integer> entry : new TreeMap<String, Integer>(values).entrySet()) {
+            System.out.println(label + ":" + entry.getKey() + "=" + Integer.toHexString(entry.getValue()));
+        }
     }
 }
-"""
-
-# --------------------------------------------------------------------------
-# Verbatim copy of work/dynamic-color-probe/style_sheet_tool.py.
-# Keep byte-compatible with the probe; the cross-check below enforces it.
-# --------------------------------------------------------------------------
+'''
 
 
-def read_varint(buf, pos):
-    value = 0
-    shift = 0
+def varint(data: bytes, pos: int) -> tuple[int, int]:
+    result = shift = 0
     while True:
-        b = buf[pos]
+        byte = data[pos]
         pos += 1
-        value |= (b & 0x7F) << shift
-        if not (b & 0x80):
-            break
+        result |= (byte & 127) << shift
+        if byte < 128:
+            return result, pos
         shift += 7
-    return value, pos
 
 
-def write_varint(value):
-    out = bytearray()
-    while True:
-        b = value & 0x7F
+def encode(value: int) -> bytes:
+    result = bytearray()
+    while value > 127:
+        result.append((value & 127) | 128)
         value >>= 7
-        if value:
-            out.append(b | 0x80)
-        else:
-            out.append(b)
-            break
-    return bytes(out)
+    result.append(value)
+    return bytes(result)
 
 
-def parse_rules(data):
-    """Return list of (name, color_or_None, offset_span)."""
-    rules = []
+def field_bytes(tag: int, payload: bytes) -> bytes:
+    return bytes([tag]) + encode(len(payload)) + payload
+
+
+def fields(data: bytes):
     pos = 0
-    total = len(data)
-
-    while pos < total:
-        tag = data[pos]
-        if tag != 0x12:
-            break
-        pos += 1
-        length, pos = read_varint(data, pos)
-        rule_start = pos
-        rule_end = pos + length
-
-        name = None
-        color = None
-
-        rp = rule_start
-        while rp < rule_end:
-            ftag = data[rp]
-            rp += 1
-            if ftag == 0x0A:
-                nlen, rp = read_varint(data, rp)
-                name = data[rp:rp + nlen].decode("utf-8", "replace")
-                rp += nlen
-            elif ftag == 0x12:
-                vlen, rp = read_varint(data, rp)
-                vstart = rp
-                vend = rp + vlen
-                if vstart < vend and data[vstart] == 0x08:
-                    cp = vstart + 1
-                    color, cp = read_varint(data, cp)
-                rp = vend
-            elif ftag == 0x1A:
-                _, rp = read_varint(data, rp)
-            else:
-                rp = rule_end
-
-        rules.append({"name": name, "color": color, "span": (rule_start, rule_end)})
-        pos = rule_end
-
-    return rules
-
-
-def rebuild_with_colors(data, color_map):
-    """Rebuild data, replacing colors for names present in color_map."""
-    rules = parse_rules(data)
-    out = bytearray()
-    changed = []
-
-    for rule in rules:
-        start, end = rule["span"]
-        name = rule["name"]
-        rule_body = bytearray(data[start:end])
-
-        if name in color_map and rule["color"] is not None:
-            new_color = color_map[name] & 0xFFFFFFFF
-            new_body = bytearray()
-
-            nb = name.encode("utf-8")
-            new_body.append(0x0A)
-            new_body += write_varint(len(nb))
-            new_body += nb
-
-            inner = bytes([0x08]) + write_varint(new_color)
-            new_body.append(0x12)
-            new_body += write_varint(len(inner))
-            new_body += inner
-
-            sp = 0
-            while sp < len(rule_body):
-                if rule_body[sp] == 0x1A:
-                    sp += 1
-                    val, sp2 = read_varint(rule_body, sp)
-                    new_body.append(0x1A)
-                    new_body += write_varint(val)
-                    sp = sp2
-                    break
-                else:
-                    break
-
-            out.append(0x12)
-            out += write_varint(len(new_body))
-            out += new_body
-            changed.append((name, rule["color"], new_color))
+    while pos < len(data):
+        start = pos
+        tag, pos = varint(data, pos)
+        if tag & 7 == 2:
+            size, pos = varint(data, pos)
+            value = data[pos:pos + size]
+            pos += size
+        elif tag & 7 == 0:
+            value, pos = varint(data, pos)
         else:
-            out.append(0x12)
-            out += write_varint(len(rule_body))
-            out += rule_body
-
-    return bytes(out), changed
+            raise ValueError(f'Unexpected sheet wire type {tag & 7}')
+        yield tag, value, data[start:pos]
 
 
-# --------------------------------------------------------------------------
-
-
-def java_slot_names(source: str) -> list[str]:
-    """Read the slot list out of the shipped Java so the gate cannot drift from it."""
-    return java_array(source, "DYNAMIC_SLOT_NAMES")
-
-
-def java_array(source: str, name: str) -> list[str]:
-    block = re.search(re.escape(name) + r"\s*=\s*\{(.*?)\};", source, re.DOTALL)
-    if not block:
-        raise RuntimeError(name + " not found in " + str(SOURCE))
-    values = re.findall(r'"([^"]+)"', block.group(1))
-    if not values:
-        raise RuntimeError(name + " is empty")
+def sheet_values(data: bytes) -> dict[str, int]:
+    values = {}
+    for tag, body, _ in fields(data):
+        if tag != 18:
+            continue
+        parts = {t: v for t, v, _ in fields(body)}
+        value_parts = dict((t, v) for t, v, _ in fields(parts[18]))
+        if 8 in value_parts:
+            values[parts[10].decode()] = value_parts[8]
     return values
 
 
-def java_border_mapping(source: str) -> tuple[list[str], list[str]]:
-    """The border-sheet variable -> slot table, as two parallel lists."""
-    names = java_array(source, "BORDER_SHEET_NAMES")
-    sources = java_array(source, "BORDER_SHEET_SOURCES")
-    if len(names) != len(sources):
-        raise RuntimeError(
-            f"BORDER_SHEET_NAMES has {len(names)} entries but "
-            f"BORDER_SHEET_SOURCES has {len(sources)}"
-        )
-    return names, sources
-
-
-def border_map(color_map: dict[str, int], names: list[str], sources: list[str]) -> dict[str, int]:
-    """The colors the border sheet is written with, derived from the palette map."""
-    derived = {name: color_map[source] for name, source in zip(names, sources) if source in color_map}
-    return derived
-
-
-def load_templates(template_dir: Path | None, apk: Path | None) -> tuple[dict[str, bytes], str]:
-    """Return the templates plus a note about where they came from."""
-    if template_dir is not None:
-        missing = [name for name in TEMPLATES if not (template_dir / name).is_file()]
-        if missing:
-            raise FileNotFoundError(f"{template_dir} is missing {missing}")
-        return (
-            {name: (template_dir / name).read_bytes() for name in TEMPLATES},
-            str(template_dir),
-        )
-
-    for candidate in TEMPLATE_CANDIDATES:
-        path = ROOT / candidate
-        if all((path / name).is_file() for name in TEMPLATES):
-            return ({name: (path / name).read_bytes() for name in TEMPLATES}, str(path))
-
-    if apk is not None:
-        with ZipFile(apk) as archive:
-            available = set(archive.namelist())
-            missing = [n for n in TEMPLATES if ASSET_PREFIX + n not in available]
-            if missing:
-                raise FileNotFoundError(f"{apk} is missing assets/theme/{missing}")
-            return (
-                {name: archive.read(ASSET_PREFIX + name) for name in TEMPLATES},
-                f"{apk}!{ASSET_PREFIX}",
-            )
-
-    raise FileNotFoundError(
-        "no decoded assets/theme found and no --apk given; decode the original APK "
-        "or pass --template-dir/--apk"
-    )
-
-
-def synthetic_map(slots: list[str]) -> dict[str, int]:
-    """Deterministic, distinct, fully opaque colors so every slot is exercised."""
-    return {
-        name: 0xFF000000 | ((index * 0x00070301) & 0xFFFFFF)
-        for index, name in enumerate(slots)
-    }
-
-
-def device_map(slots: list[str]) -> dict[str, int] | None:
-    """The colors actually measured on the device, when that evidence is present."""
-    colors_path = PROBE / "system_colors.json"
-    if not colors_path.is_file():
-        return None
-    raw = json.loads(colors_path.read_text(encoding="utf-8"))
-
-    def resolve(name: str) -> int | None:
-        value = raw.get(name)
-        if value is None:
-            return None
-        if isinstance(value, str):
-            return int(value.lstrip("#").lstrip("0x"), 16) & 0xFFFFFFFF
-        return int(value) & 0xFFFFFFFF
-
-    resolved: dict[str, int] = {}
-    for slot in slots:
-        resource = PROBE_MAPPING.get(slot)
-        if resource is None:
+def reference_rewrite(data: bytes, colors: dict[str, int]) -> bytes:
+    """Independent wire-level reference; preserve existing field order and selectors."""
+    output = bytearray()
+    present = set()
+    for tag, body, raw in fields(data):
+        if tag != 18:
+            output += raw
             continue
-        value = resolve(resource)
-        if value is not None:
-            resolved[slot] = value
-    return resolved or None
-
-
-def probe_cross_check(template: bytes, color_map: dict[str, int]) -> str | None:
-    """Compare the embedded reference with the on-disk probe, when it exists.
-
-    Returns a failure message, or None when they agree or the probe is absent.
-    """
-    if not PROBE_TOOL.is_file():
-        return None
-    sys.path.insert(0, str(PROBE))
-    from style_sheet_tool import rebuild_with_colors as probe_rebuild
-
-    embedded, _ = rebuild_with_colors(template, color_map)
-    reference, _ = probe_rebuild(template, color_map)
-    if embedded != reference:
-        return "embedded reference has drifted from work/dynamic-color-probe/style_sheet_tool.py"
-    return None
-
-
-def digest(payload: bytes) -> str:
-    return hashlib.sha256(payload).hexdigest()
+        parts = list(fields(body))
+        name = next(v.decode() for t, v, _ in parts if t == 10)
+        present.add(name)
+        replacement = colors.get(name)
+        if replacement is None:
+            output += raw
+            continue
+        encoded_body = bytearray()
+        for inner_tag, value, original in parts:
+            if inner_tag == 18:
+                encoded_body += field_bytes(18, b'\x08' + encode(replacement))
+            else:
+                encoded_body += original
+        output += field_bytes(18, encoded_body)
+    for name in sorted(colors.keys() - present):
+        body = field_bytes(10, name.encode()) + field_bytes(18, b'\x08' + encode(colors[name]))
+        output += field_bytes(18, body)
+    return bytes(output)
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--android-jar", type=Path, required=True)
-    parser.add_argument("--jdk", type=Path, required=True)
-    parser.add_argument("--template-dir", type=Path)
-    parser.add_argument("--apk", type=Path)
+    parser.add_argument('--android-jar', type=Path, required=True)
+    parser.add_argument('--jdk', type=Path, required=True)
+    parser.add_argument('--template-dir', type=Path)
+    parser.add_argument('--apk', type=Path)
     args = parser.parse_args()
-
-    android_jar = args.android_jar.resolve()
-    jdk = args.jdk.resolve()
-    javac = jdk / "bin/javac.exe"
-    java = jdk / "bin/java.exe"
-    for path in (SOURCE, javac, java, android_jar):
-        if not path.exists():
-            raise FileNotFoundError(path)
-
-    templates, origin = load_templates(args.template_dir, args.apk)
-    print(f"templates: {origin}")
-
-    slots = java_slot_names(SOURCE.read_text(encoding="utf-8"))
-    print(f"Java mapping declares {len(slots)} slots")
-    border_names, border_sources = java_border_mapping(SOURCE.read_text(encoding="utf-8"))
-    print(f"Java border mapping declares {len(border_names)} variables")
-
-    maps: list[tuple[str, dict[str, int]]] = [("synthetic", synthetic_map(slots))]
-    measured = device_map(slots)
-    if measured is not None:
-        maps.append(("device-measured", measured))
+    if args.template_dir:
+        templates = {name: (args.template_dir / name).read_bytes() for name in TEMPLATES}
     else:
-        print("note: system_colors.json absent, only the synthetic map is checked")
+        apk = args.apk or ROOT / 'original/google-pinyin-input-4.5.2.193126728-arm64-v8a.apk'
+        with ZipFile(apk) as archive:
+            templates = {name: archive.read('assets/theme/' + name) for name in TEMPLATES}
 
-    failures: list[str] = []
-    drift = probe_cross_check(templates[TEMPLATES[0]], maps[0][1])
-    print(f"probe cross-check: {'skipped (probe absent)' if drift is None and not PROBE_TOOL.is_file() else ('FAILED' if drift else 'agree')}")
-    if drift:
-        failures.append(drift)
-
-    with tempfile.TemporaryDirectory(prefix="dynamic-rewrite-gate-") as temporary:
+    source = SOURCE.read_text(encoding='utf-8')
+    table = re.search(r'DYNAMIC_STYLE_ROLES\s*=\s*\{(.*?)\};', source, re.S).group(1)
+    names = re.findall(r'\{"([^"]+)"', table)
+    names += re.findall(r'colors\.put\("([^"]+)"', source)
+    names = sorted(set(names))
+    # Arbitrary externally assigned inputs, not expected values derived from the role resolver.
+    colors = {name: 0xff123400 + index for index, name in enumerate(names)}
+    encoded = ','.join(f'{name}={value:08x}' for name, value in colors.items())
+    with tempfile.TemporaryDirectory(prefix='dynamic-rewrite-') as temporary:
         work = Path(temporary)
-        (work / "RewriteHarness.java").write_text(HARNESS, encoding="utf-8")
-        classes = work / "classes"
+        harness = work / 'RewriteHarness.java'
+        harness.write_text(HARNESS, encoding='utf-8')
+        classes = work / 'classes'
         classes.mkdir()
-        subprocess.run(
-            [str(javac), "-source", "7", "-target", "7",
-             "-bootclasspath", str(android_jar),
-             "-d", str(classes), str(SOURCE), str(work / "RewriteHarness.java")],
-            check=True,
-        )
-
-        for template_name in TEMPLATES:
-            data = templates[template_name]
-            is_border = template_name in BORDER_TEMPLATES
-            print(f"\n{template_name}  {len(data)} bytes")
-            source_file = work / "template.bin"
-            source_file.write_bytes(data)
-            for label, color_map in maps:
-                if is_border:
-                    color_map = border_map(color_map, border_names, border_sources)
-                    label = label + "+border"
-                encoded = ",".join(f"{k}={v & 0xFFFFFFFF:08x}" for k, v in color_map.items())
-                java_out = work / "java.bin"
-                subprocess.run(
-                    [str(java), "-cp", f"{classes}{os.pathsep}{android_jar}",
-                     "RewriteHarness", str(source_file), encoded, str(java_out)],
-                    check=True,
-                )
-                java_bytes = java_out.read_bytes()
-                python_bytes, changed = rebuild_with_colors(data, color_map)
-                rewritten = len(changed)
-
-                java_digest = digest(java_bytes)
-                python_digest = digest(python_bytes)
-                same = java_digest == python_digest
-                print(
-                    f"  {label:<24} rules rewritten={rewritten:<3} "
-                    f"java={len(java_bytes)}B python={len(python_bytes)}B "
-                    f"{'MATCH' if same else 'MISMATCH'}"
-                )
-                if not same:
-                    failures.append(
-                        f"{template_name}/{label}: {java_digest} != {python_digest}"
-                    )
-
-    # Coverage: a slot that matches no rule would be a silently dead mapping entry.
-    for template_name, names, what in (
-        (MATERIAL_TEMPLATES[0], slots, "mapping slots"),
-        (BORDER_TEMPLATES[0], border_names, "border mapping variables"),
-    ):
-        present = {rule["name"] for rule in parse_rules(templates[template_name])}
-        absent = [name for name in names if name not in present]
-        print(f"\ncoverage: {len(names) - len(absent)}/{len(names)} {what} present in {template_name}")
-        if absent:
-            failures.append(f"{what} absent from {template_name}: " + ", ".join(absent))
-
-    # A border source that names no slot would silently fall back to the template
-    # color, which is exactly the teal this mapping exists to remove.
-    unknown = [source for source in border_sources if source not in slots]
-    if unknown:
-        failures.append("border mapping sources that are not slots: " + ", ".join(unknown))
-
-    if failures:
-        print("\nFAILED")
-        for failure in failures:
-            print("  -", failure)
-        return 1
-    print("\nAll recoloring outputs match byte for byte.")
+        subprocess.run([str(args.jdk / 'bin/javac.exe'), '-source', '7', '-target', '7',
+                        '-classpath', str(args.android_jar), '-d', str(classes), str(SOURCE), str(harness)],
+                       check=True, timeout=30)
+        command = [str(args.jdk / 'bin/java.exe'), '-cp', f'{classes}{os.pathsep}{args.android_jar}',
+                   'RewriteHarness']
+        result = subprocess.run(command + ['roles'], check=True, capture_output=True,
+                                text=True, timeout=10)
+        actual = dict(line.split('=', 1) for line in result.stdout.splitlines())
+        expected = {
+            'dark-border:color_state_border_key_action': 'ff3a3b41',
+            'dark-border:color_icon_action': 'ffbfbfc5',
+            'dark-border:color_icon': 'ffbfbfc5',
+            'dark-border:color_state_key_dark_pressed': 'ff47484e',
+            'dark-border:color_state_key_pressed': 'ff3d3e41',
+            'dark-plain:color_base': 'ff19191b',
+            'dark-plain:color_icon': 'ffe7e5e8',
+            'dark-plain:color_state_action': 'ff3a3b41',
+            'light-border:color_state_key_pressed': 'ff36373a',
+        }
+        for name, value in expected.items():
+            assert actual.get(name) == value, (name, value, actual.get(name))
+        print('Action foreground, key contrast and pressed roles: PASS')
+        for name, data in templates.items():
+            src, dst = work / 'source.pb', work / 'result.pb'
+            src.write_bytes(data)
+            subprocess.run(command + [str(src), encoded, str(dst)], check=True, timeout=10)
+            output = dst.read_bytes()
+            assert output == reference_rewrite(data, colors), name + ': wire output differs'
+            values = sheet_values(output)
+            assert all(values.get(key) == value for key, value in colors.items()), name
+            print(f'{name}: MATCH, {len(colors)} assigned colors present')
     return 0
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     raise SystemExit(main())
