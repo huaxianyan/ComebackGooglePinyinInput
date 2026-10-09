@@ -240,6 +240,12 @@ def main() -> int:
             "class ModernFirstRunActivity : ComponentActivity()",
             "FirstRunScreen(",
             "readFirstRunSetupState(this)",
+            # The picker changes the default while the guide stays resumed.
+            "object : ContentObserver(Handler(Looper.getMainLooper()))",
+            "override fun onChange(selfChange: Boolean) = refreshSetupState()",
+            "Settings.Secure.getUriFor(Settings.Secure.DEFAULT_INPUT_METHOD)",
+            "contentResolver.registerContentObserver(",
+            "contentResolver.unregisterContentObserver(inputMethodObserver)",
             "FirstRunStateBridge.activityCreated()",
             "FirstRunStateBridge.activityDestroyed(this)",
             "FirstRunStateBridge.complete(this)",

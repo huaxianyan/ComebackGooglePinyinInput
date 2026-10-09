@@ -1,7 +1,10 @@
 package com.google.android.inputmethod.pinyin.modernsettings.compose
 
 import android.content.Intent
+import android.database.ContentObserver
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
 import android.view.inputmethod.InputMethodManager
 import androidx.activity.ComponentActivity
@@ -30,6 +33,9 @@ import androidx.compose.runtime.setValue
  */
 class ModernFirstRunActivity : ComponentActivity() {
     private var setupState by mutableStateOf(FirstRunSetupState())
+    private val inputMethodObserver = object : ContentObserver(Handler(Looper.getMainLooper())) {
+        override fun onChange(selfChange: Boolean) = refreshSetupState()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
@@ -55,15 +61,28 @@ class ModernFirstRunActivity : ComponentActivity() {
         }
     }
 
-    /**
-     * Re-reads both system states on every resume.
-     *
-     * The two step buttons leave for framework screens, so the only moment the
-     * answer can have changed is on the way back - and the framework does not
-     * report a result for either of them.
-     */
+    override fun onStart() {
+        super.onStart()
+        // The system picker can change the default while this Activity remains
+        // resumed. Observe the actual setting instead of relying on re-entry.
+        contentResolver.registerContentObserver(
+            Settings.Secure.getUriFor(Settings.Secure.DEFAULT_INPUT_METHOD),
+            false,
+            inputMethodObserver,
+        )
+    }
+
     override fun onResume() {
         super.onResume()
+        refreshSetupState()
+    }
+
+    override fun onStop() {
+        contentResolver.unregisterContentObserver(inputMethodObserver)
+        super.onStop()
+    }
+
+    private fun refreshSetupState() {
         setupState = readFirstRunSetupState(this)
     }
 
