@@ -13,6 +13,7 @@ import shutil
 from pathlib import Path
 
 from theme_header_styles import patch_header_styles
+from rewrite_elf_16kb import rewrite_native_libraries
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -75,6 +76,8 @@ def apply(
     if debuggable and application_id == FORMAL_APPLICATION_ID:
         raise RuntimeError("Refusing to make the formal application ID debuggable")
 
+    # Preserve RELRO while re-layouting the exact legacy native payload for 16 KiB.
+    rewrite_native_libraries(decoded / "lib/arm64-v8a")
     patch_dynamic_key_binding(decoded)
     patch_header_styles(decoded)
     replace_once(
