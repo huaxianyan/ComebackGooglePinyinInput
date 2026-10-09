@@ -3467,6 +3467,8 @@ def apply(
     if not header_platform_src.is_dir():
         raise RuntimeError(f"Missing Header platform Smali: {header_platform_src}")
     shutil.copytree(header_platform_src, header_platform_dst)
+    from header_motion_patches import apply_header_motion
+    apply_header_motion(decoded)
 
     # API 30 bridge uses the official AndroidX Inline UI style Bundle protocol.
     # These classes are isolated from API 17–29 startup and are only resolved by

@@ -301,10 +301,12 @@ def main() -> int:
             "}\n",
             encoding="utf-8",
         )
+        from generate_header_platform_smali import write_frame_rate_binding_stub
+        frame_rate_stub = write_frame_rate_binding_stub(root)
         subprocess.run(
             [str(javac), "-source", "7", "-target", "7",
              "-bootclasspath", str(android_jar), "-d", str(root),
-             *[str(path) for path in sources], str(feedback_stub), str(harness)],
+             *[str(path) for path in sources], str(feedback_stub), str(frame_rate_stub), str(harness)],
             check=True,
         )
         subprocess.run(

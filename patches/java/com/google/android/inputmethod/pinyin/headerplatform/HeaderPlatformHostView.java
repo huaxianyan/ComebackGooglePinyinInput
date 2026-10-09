@@ -96,6 +96,12 @@ public final class HeaderPlatformHostView extends FrameLayout
     }
 
     @Override
+    protected void onWindowVisibilityChanged(int visibility) {
+        super.onWindowVisibilityChanged(visibility);
+        if (visibility != VISIBLE) HeaderMotionCoordinator.finishNativeMotion(getContext());
+    }
+
+    @Override
     public void onNativeCandidateStateChanged(boolean active, boolean clipboardOnly) {
         if (controller != null && boundHeaderToken > 0L
                 && controller.getCurrentHeaderToken() == boundHeaderToken) {

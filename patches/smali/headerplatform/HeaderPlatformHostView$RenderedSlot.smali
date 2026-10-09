@@ -30,23 +30,23 @@
 .method constructor <init>(Landroid/widget/FrameLayout;Z)V
     .locals 0
 
-    .line 227
+    .line 233
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
-    .line 228
+    .line 234
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$RenderedSlot;->container:Landroid/widget/FrameLayout;
 
-    .line 229
+    .line 235
     iput-boolean p2, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$RenderedSlot;->fillWidth:Z
 
-    .line 230
+    .line 236
     return-void
 .end method
 
 .method static synthetic access$200(Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$RenderedSlot;)Landroid/widget/FrameLayout;
     .locals 0
 
-    .line 220
+    .line 226
     iget-object p0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$RenderedSlot;->container:Landroid/widget/FrameLayout;
 
     return-object p0
@@ -55,7 +55,7 @@
 .method static synthetic access$300(Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$RenderedSlot;)Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderRenderedContent;
     .locals 0
 
-    .line 220
+    .line 226
     iget-object p0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$RenderedSlot;->content:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderRenderedContent;
 
     return-object p0
@@ -64,7 +64,7 @@
 .method static synthetic access$302(Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$RenderedSlot;Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderRenderedContent;)Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderRenderedContent;
     .locals 0
 
-    .line 220
+    .line 226
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$RenderedSlot;->content:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderRenderedContent;
 
     return-object p1
@@ -73,7 +73,7 @@
 .method static synthetic access$402(Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$RenderedSlot;Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderContribution;)Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderContribution;
     .locals 0
 
-    .line 220
+    .line 226
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$RenderedSlot;->contribution:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderContribution;
 
     return-object p1
@@ -82,7 +82,7 @@
 .method static synthetic access$502(Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$RenderedSlot;J)J
     .locals 0
 
-    .line 220
+    .line 226
     iput-wide p1, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$RenderedSlot;->renderGeneration:J
 
     return-wide p1
@@ -93,7 +93,7 @@
 .method childLayoutParams()Landroid/widget/FrameLayout$LayoutParams;
     .locals 3
 
-    .line 233
+    .line 239
     new-instance v0, Landroid/widget/FrameLayout$LayoutParams;
 
     iget-boolean v1, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$RenderedSlot;->fillWidth:Z
@@ -106,26 +106,26 @@
 
     goto :goto_0
 
-    .line 234
+    .line 240
     :cond_0
     const/4 v1, -0x2
 
     :goto_0
     invoke-direct {v0, v1, v2}, Landroid/widget/FrameLayout$LayoutParams;-><init>(II)V
 
-    .line 233
+    .line 239
     return-object v0
 .end method
 
 .method clear()V
     .locals 2
 
-    .line 248
+    .line 254
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$RenderedSlot;->container:Landroid/widget/FrameLayout;
 
     invoke-virtual {v0}, Landroid/widget/FrameLayout;->removeAllViews()V
 
-    .line 249
+    .line 255
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$RenderedSlot;->content:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderRenderedContent;
 
     if-eqz v0, :cond_0
@@ -134,28 +134,28 @@
 
     invoke-interface {v0}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderRenderedContent;->release()V
 
-    .line 250
+    .line 256
     :cond_0
     const/4 v0, 0x0
 
     iput-object v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$RenderedSlot;->content:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderRenderedContent;
 
-    .line 251
+    .line 257
     iput-object v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$RenderedSlot;->contribution:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderContribution;
 
-    .line 252
+    .line 258
     const-wide/16 v0, 0x0
 
     iput-wide v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$RenderedSlot;->renderGeneration:J
 
-    .line 253
+    .line 259
     return-void
 .end method
 
 .method prepare(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderContribution;JLcom/google/android/inputmethod/pinyin/headerplatform/HeaderRendererRegistry;Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderChromeFactory;)Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$PendingSlot;
     .locals 7
 
-    .line 239
+    .line 245
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$RenderedSlot;->contribution:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderContribution;
 
     invoke-static {v0, p2}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView;->access$100(Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderContribution;Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderContribution;)Z
@@ -164,7 +164,7 @@
 
     if-eqz v0, :cond_0
 
-    .line 240
+    .line 246
     new-instance v0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$PendingSlot;
 
     const/4 v5, 0x0
@@ -181,7 +181,7 @@
 
     return-object v0
 
-    .line 242
+    .line 248
     :cond_0
     if-nez p2, :cond_1
 
@@ -191,7 +191,7 @@
 
     goto :goto_0
 
-    .line 243
+    .line 249
     :cond_1
     invoke-virtual {p5, p1, p2, p6}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderRendererRegistry;->prepare(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderContribution;Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderChromeFactory;)Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderRenderedContent;
 
@@ -199,7 +199,7 @@
 
     move-object v5, v0
 
-    .line 244
+    .line 250
     :goto_0
     new-instance v0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$PendingSlot;
 

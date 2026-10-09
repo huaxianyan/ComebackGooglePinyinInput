@@ -32,25 +32,25 @@
 .method constructor <init>(Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$RenderedSlot;Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderContribution;JLcom/google/android/inputmethod/pinyin/headerplatform/HeaderRenderedContent;Z)V
     .locals 0
 
-    .line 265
+    .line 271
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
-    .line 266
+    .line 272
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$PendingSlot;->target:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$RenderedSlot;
 
-    .line 267
+    .line 273
     iput-object p2, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$PendingSlot;->contribution:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderContribution;
 
-    .line 268
+    .line 274
     iput-wide p3, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$PendingSlot;->renderGeneration:J
 
-    .line 269
+    .line 275
     iput-object p5, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$PendingSlot;->prepared:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderRenderedContent;
 
-    .line 270
+    .line 276
     iput-boolean p6, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$PendingSlot;->unchanged:Z
 
-    .line 271
+    .line 277
     return-void
 .end method
 
@@ -59,7 +59,7 @@
 .method cancel()V
     .locals 1
 
-    .line 298
+    .line 304
     iget-boolean v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$PendingSlot;->committed:Z
 
     if-nez v0, :cond_0
@@ -72,20 +72,20 @@
 
     invoke-interface {v0}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderRenderedContent;->release()V
 
-    .line 299
+    .line 305
     :cond_0
     const/4 v0, 0x0
 
     iput-object v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$PendingSlot;->prepared:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderRenderedContent;
 
-    .line 300
+    .line 306
     return-void
 .end method
 
 .method commit()V
     .locals 6
 
-    .line 274
+    .line 280
     iget-boolean v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$PendingSlot;->committed:Z
 
     const/4 v1, 0x1
@@ -98,7 +98,7 @@
 
     goto/16 :goto_2
 
-    .line 278
+    .line 284
     :cond_0
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$PendingSlot;->prepared:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderRenderedContent;
 
@@ -117,16 +117,16 @@
 
     move-result-object v0
 
-    .line 279
+    .line 285
     :goto_0
     if-eqz v0, :cond_3
 
-    .line 280
+    .line 286
     invoke-virtual {v0}, Landroid/view/View;->getParent()Landroid/view/ViewParent;
 
     move-result-object v3
 
-    .line 281
+    .line 287
     instance-of v4, v3, Landroid/view/ViewGroup;
 
     if-eqz v4, :cond_2
@@ -135,7 +135,7 @@
 
     invoke-virtual {v3, v0}, Landroid/view/ViewGroup;->removeView(Landroid/view/View;)V
 
-    .line 282
+    .line 288
     :cond_2
     iget-object v3, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$PendingSlot;->target:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$RenderedSlot;
 
@@ -151,7 +151,7 @@
 
     invoke-virtual {v3, v0, v4}, Landroid/widget/FrameLayout;->addView(Landroid/view/View;Landroid/view/ViewGroup$LayoutParams;)V
 
-    .line 284
+    .line 290
     :cond_3
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$PendingSlot;->target:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$RenderedSlot;
 
@@ -159,7 +159,7 @@
 
     move-result-object v0
 
-    .line 285
+    .line 291
     if-nez v0, :cond_4
 
     move-object v3, v2
@@ -171,7 +171,7 @@
 
     move-result-object v3
 
-    .line 286
+    .line 292
     :goto_1
     if-eqz v3, :cond_5
 
@@ -187,7 +187,7 @@
 
     if-ne v4, v5, :cond_5
 
-    .line 287
+    .line 293
     iget-object v4, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$PendingSlot;->target:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$RenderedSlot;
 
     invoke-static {v4}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$RenderedSlot;->access$200(Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$RenderedSlot;)Landroid/widget/FrameLayout;
@@ -196,7 +196,7 @@
 
     invoke-virtual {v4, v3}, Landroid/widget/FrameLayout;->removeView(Landroid/view/View;)V
 
-    .line 289
+    .line 295
     :cond_5
     iget-object v3, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$PendingSlot;->target:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$RenderedSlot;
 
@@ -204,40 +204,40 @@
 
     invoke-static {v3, v4}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$RenderedSlot;->access$302(Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$RenderedSlot;Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderRenderedContent;)Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderRenderedContent;
 
-    .line 290
+    .line 296
     iget-object v3, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$PendingSlot;->target:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$RenderedSlot;
 
     iget-object v4, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$PendingSlot;->contribution:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderContribution;
 
     invoke-static {v3, v4}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$RenderedSlot;->access$402(Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$RenderedSlot;Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderContribution;)Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderContribution;
 
-    .line 291
+    .line 297
     iget-object v3, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$PendingSlot;->target:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$RenderedSlot;
 
     iget-wide v4, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$PendingSlot;->renderGeneration:J
 
     invoke-static {v3, v4, v5}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$RenderedSlot;->access$502(Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$RenderedSlot;J)J
 
-    .line 292
+    .line 298
     iput-object v2, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$PendingSlot;->prepared:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderRenderedContent;
 
-    .line 293
+    .line 299
     iput-boolean v1, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$PendingSlot;->committed:Z
 
-    .line 294
+    .line 300
     if-eqz v0, :cond_6
 
     invoke-interface {v0}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderRenderedContent;->release()V
 
-    .line 295
+    .line 301
     :cond_6
     return-void
 
-    .line 275
+    .line 281
     :cond_7
     :goto_2
     iput-boolean v1, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$PendingSlot;->committed:Z
 
-    .line 276
+    .line 282
     return-void
 .end method

@@ -32,7 +32,7 @@
         }
     .end annotation
 
-    .line 109
+    .line 115
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$1;->this$0:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView;
 
     iput-object p2, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$1;->val$plan:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderRenderPlan;
@@ -47,7 +47,7 @@
 .method public run()V
     .locals 2
 
-    .line 110
+    .line 116
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$1;->this$0:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView;
 
     iget-object v1, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformHostView$1;->val$plan:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderRenderPlan;
