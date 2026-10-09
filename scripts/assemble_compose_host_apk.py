@@ -16,10 +16,13 @@ import re
 from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
 DEX = re.compile(r"^classes(?:(\d+))?\.dex$")
+ZIP_TIMESTAMP = (1980, 1, 1, 0, 0, 0)
 
 
 def clone_info(source: ZipInfo, name: str) -> ZipInfo:
-    target = ZipInfo(name, source.date_time)
+    # apktool stamps rebuilt payloads with wall-clock time. Archive metadata
+    # must not make identical payloads produce different signed APKs.
+    target = ZipInfo(name, ZIP_TIMESTAMP)
     target.compress_type = source.compress_type
     target.comment = source.comment
     target.extra = source.extra
@@ -65,7 +68,7 @@ def main() -> int:
                 output.writestr(clone_info(entry, name), host.read(entry))
                 written.add(name)
 
-            legacy_info = ZipInfo("classes.dex", (1980, 1, 1, 0, 0, 0))
+            legacy_info = ZipInfo("classes.dex", ZIP_TIMESTAMP)
             legacy_info.compress_type = ZIP_DEFLATED
             output.writestr(legacy_info, args.legacy_dex.read_bytes())
             written.add("classes.dex")

@@ -136,6 +136,12 @@ jobs:
             throw "An isolated audit build requires an unambiguous launcher and IME label"
           }
 
+      - name: Verify deterministic APK payload assembly
+        shell: pwsh
+        run: |
+          python scripts/test_assemble_compose_host_apk.py
+          if ($LASTEXITCODE -ne 0) { throw "APK payload assembly is not deterministic" }
+
       - name: Install Android SDK packages
         shell: pwsh
         run: |
