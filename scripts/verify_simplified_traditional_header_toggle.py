@@ -162,7 +162,7 @@ def verify_decoded(decoded: Path) -> None:
     require_all(native_key, (
         "instance-of v6, p0, Lcom/google/android/inputmethod/pinyin/SimplifiedTraditionalToggleKeyView;",
         "SoftKeyDef;->f:I",
-        "SystemAutoThemeCompat;->applyDynamicHeaderLabel(Landroid/content/Context;Landroid/widget/TextView;I)V",
+        "SimplifiedTraditionalToggleKeyView;->applyNativeHeaderLabel(Landroid/widget/TextView;I)V",
     ), "Header-only native label binding")
 
     packaged_smali = decoded / (

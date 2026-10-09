@@ -227,6 +227,7 @@ class ModernSettingsActivity : ComponentActivity() {
                         // this hierarchy anywhere but at its top, so it says
                         // where to start. Every other entry leaves the extra
                         // off and lands on the home page.
+                        onExit = ::finish,
                         initialRoutePath = intent
                             ?.getStringExtra(LegacySettingsNavigation.routePathExtra)
                             ?: SettingsRouteStack.initialPath,

@@ -12,13 +12,11 @@ internal object LegacySettingsNavigation {
     /**
      * The page the keyboard's own theme shortcut opens, as a route path.
      *
-     * A path rather than a route because the hierarchy is a stack: the shortcut
-     * drops the user into the theme page, and back walks up through the pages
-     * that would normally have led there. The legacy theme selector is what
-     * this shortcut used to open, and `apply_patches.py` redirects that
-     * Activity here on every supported version.
+     * The shortcut's actual entry page is its stack root. Back closes the host
+     * instead of visiting settings pages the user never opened.
+     * `apply_patches.py` redirects the legacy selector here on supported versions.
      */
-    const val themeRoutePath = "Home/Keyboard/KeyboardAppearance/ThemeCatalog"
+    const val themeRoutePath = "ThemeCatalog"
 
     /**
      * The extra carrying [themeRoutePath].

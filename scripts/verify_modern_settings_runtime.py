@@ -1017,7 +1017,7 @@ def main() -> int:
     require(
         legacy_navigation,
         (
-            'const val themeRoutePath = "Home/Keyboard/KeyboardAppearance/ThemeCatalog"',
+            'const val themeRoutePath = "ThemeCatalog"',
             'const val routePathExtra = "modern_settings_route_path"',
             "const val repositoryUrl =",
             '"https://github.com/huaxianyan/ComebackGooglePinyinInput"',
@@ -1509,7 +1509,7 @@ def main() -> int:
             "preference/ThemeSelectorActivity;->startActivity(Landroid/content/Intent;)V",
             "preference/ThemeSelectorActivity;->finish()V",
             'const-string v1, \\"modern_settings_route_path\\"',
-            'const-string v2, \\"Home/Keyboard/KeyboardAppearance/ThemeCatalog\\"',
+            'const-string v2, \\"ThemeCatalog\\"',
             ":theme_selector_legacy",
         ),
         "legacy theme page redirect",
@@ -1522,7 +1522,7 @@ def main() -> int:
         (patch_script, "scripts/apply_patches.py"),
         (kotlin_text, "the Compose settings module"),
     ):
-        if "Home/Keyboard/KeyboardAppearance/ThemeCatalog" not in source:
+        if "ThemeCatalog" not in source:
             raise RuntimeError(f"theme shortcut route path missing from {label}")
     for forbidden_legacy_dictionary_route in (
         "onOpenLegacyDictionaryOperations",
@@ -1562,6 +1562,14 @@ def main() -> int:
 
     if args.apk is not None:
         with ZipFile(args.apk) as archive:
+            # Regression: the assembler once copied original assets after patching
+            # decoded themes, silently restoring the old menu-color rules.
+            if args.decoded is not None:
+                for name in ("style_sheet_color_rules.binarypb", "style_sheet_color_rules_border.binarypb"):
+                    entry = "assets/theme/" + name
+                    expected = (args.decoded / entry).read_bytes()
+                    if archive.read(entry) != expected:
+                        raise RuntimeError(f"patched theme asset missing from APK: {entry}")
             for entry in (
                 "res/raw/main_en_d3_20160715.gzip",
                 "res/raw/metadata.json",
@@ -1572,7 +1580,7 @@ def main() -> int:
                     raise RuntimeError(
                         f"English runtime payload must be uncompressed: {entry}"
                     )
-            # The assembler merges the AGP host with the original APK, and the
+            # The assembler merges the AGP host with the patched legacy APK, and the
             # libraries come from the original. Losing one would leave a package
             # that installs and then dies on the first call into it, which is the
             # failure mode the native packaging above is pinned against.
@@ -1597,7 +1605,7 @@ def main() -> int:
             )
         for literal in (
             # The keyboard shortcut's redirect, and the route it passes.
-            b"Home/Keyboard/KeyboardAppearance/ThemeCatalog",
+            b"ThemeCatalog",
             b"modern_settings_route_path",
             b"modernsettings.compose.ModernSettingsActivity",
             # The custom-theme lifecycle the sheet's two buttons call into.
@@ -1826,7 +1834,7 @@ def main() -> int:
                 # Compose settings page serves.
                 "modernsettings.compose.ModernSettingsActivity",
                 '"modern_settings_route_path"',
-                '"Home/Keyboard/KeyboardAppearance/ThemeCatalog"',
+                '"ThemeCatalog"',
                 ":theme_selector_legacy",
             ),
             "theme selector Insets, automatic-mode hooks and Compose redirect",

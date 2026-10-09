@@ -12,7 +12,6 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.widget.ImageView;
-import android.widget.TextView;
 
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
@@ -113,9 +112,7 @@ public final class SystemAutoThemeCompat {
     // files: packages need the current-format marker; unversioned packages
     // pass through the legacy selector converter, unlike built-in assets.
     private static final int THEME_PACKAGE_FORMAT_VERSION = 3;
-    private static final int DYNAMIC_PALETTE_REVISION = 6;
-    private static final Map<TextView, Float> DYNAMIC_HEADER_LABEL_ALPHAS =
-            new WeakHashMap<TextView, Float>();
+    private static final int DYNAMIC_PALETTE_REVISION = 7;
 
     // Original Material icons bake 60% opacity into their pixel masks. Keep
     // metadata, disabled-key and drawable alpha separate from that mask.
@@ -765,24 +762,6 @@ public final class SystemAutoThemeCompat {
             result |= ((base * 9 + front) / 10) << shift;
         }
         return result;
-    }
-
-    /** Shares the native Header icon opacity without replacing native text colors. */
-    public static synchronized void applyDynamicHeaderLabel(
-            Context context, TextView label, int nativeIconAlpha) {
-        Float original = DYNAMIC_HEADER_LABEL_ALPHAS.get(label);
-        if (!usesDynamicThemePackage(context)) {
-            if (original != null) {
-                label.setAlpha(original.floatValue());
-                DYNAMIC_HEADER_LABEL_ALPHAS.remove(label);
-            }
-            return;
-        }
-        if (original == null) {
-            original = Float.valueOf(label.getAlpha());
-            DYNAMIC_HEADER_LABEL_ALPHAS.put(label, original);
-        }
-        label.setAlpha(original.floatValue() * nativeIconAlpha / 255.0f);
     }
 
     private static boolean usesDynamicThemePackage(Context context) {

@@ -12,6 +12,8 @@ import argparse
 import shutil
 from pathlib import Path
 
+from theme_header_styles import patch_header_styles
+
 
 ROOT = Path(__file__).resolve().parents[1]
 FORMAL_APPLICATION_ID = "com.google.android.inputmethod.pinyin.compat"
@@ -56,9 +58,7 @@ def patch_dynamic_key_binding(decoded: Path) -> None:
         + "    if-eqz v6, :compat_header_label_bound\n"
         + "    iget-object v6, p0, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyView;->a:Lcom/google/android/apps/inputmethod/libs/framework/core/metadata/SoftKeyDef;\n"
         + "    iget v7, v6, Lcom/google/android/apps/inputmethod/libs/framework/core/metadata/SoftKeyDef;->f:I\n"
-        + "    invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyView;->getContext()Landroid/content/Context;\n"
-        + "    move-result-object v6\n"
-        + "    invoke-static {v6, v0, v7}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->applyDynamicHeaderLabel(Landroid/content/Context;Landroid/widget/TextView;I)V\n"
+        + "    invoke-static {v0, v7}, Lcom/google/android/inputmethod/pinyin/SimplifiedTraditionalToggleKeyView;->applyNativeHeaderLabel(Landroid/widget/TextView;I)V\n"
         + "    :compat_header_label_bound\n",
     )
 
@@ -76,6 +76,7 @@ def apply(
         raise RuntimeError("Refusing to make the formal application ID debuggable")
 
     patch_dynamic_key_binding(decoded)
+    patch_header_styles(decoded)
     replace_once(
         decoded / "AndroidManifest.xml",
         "</application>",
@@ -330,6 +331,7 @@ def apply(
         destination = decoded / "res" / source.relative_to(resource_patches)
         destination.parent.mkdir(parents=True, exist_ok=True)
         overwritten_layouts = {
+            "access_points_menu_background.xml",
             "first_run.xml",
             "first_run_page_done.xml",
             "first_run_page_footer.xml",
@@ -3065,7 +3067,7 @@ def apply(
         "    invoke-virtual {v0, v1, v2}, Landroid/content/Intent;->setClassName("
         "Ljava/lang/String;Ljava/lang/String;)Landroid/content/Intent;\n\n"
         "    const-string v1, \"modern_settings_route_path\"\n\n"
-        "    const-string v2, \"Home/Keyboard/KeyboardAppearance/ThemeCatalog\"\n\n"
+        "    const-string v2, \"ThemeCatalog\"\n\n"
         "    invoke-virtual {v0, v1, v2}, Landroid/content/Intent;->putExtra("
         "Ljava/lang/String;Ljava/lang/String;)Landroid/content/Intent;\n\n"
         "    invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/libs/theme/"
@@ -3243,6 +3245,7 @@ def apply(
         "SystemAutoThemeCompat.smali",
         "SensitiveClipboardCompat.smali",
         "SimplifiedTraditionalToggleKeyView.smali",
+        "HeaderMenuBackgroundView.smali",
         "EnglishT9MultiTapIme.smali",
         "PairedPunctuationEnglishIme.smali",
     ):

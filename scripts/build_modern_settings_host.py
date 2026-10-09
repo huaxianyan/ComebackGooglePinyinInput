@@ -196,7 +196,7 @@ def main() -> int:
             "--legacy-dex",
             str(legacy_dex),
             "--original",
-            str(args.original.resolve()),
+            str(legacy_apk),
             "--output",
             str(unaligned),
         ]

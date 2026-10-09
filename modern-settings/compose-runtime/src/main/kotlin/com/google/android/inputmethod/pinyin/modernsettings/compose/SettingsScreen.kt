@@ -129,13 +129,11 @@ fun SettingsScreen(
     /**
      * Where the page opens, for callers that are not the settings launcher.
      *
-     * The keyboard's own shortcut opens one page of this hierarchy rather than
-     * the home screen, and the hierarchy is a stack rather than a single page -
-     * so it arrives as a path and not as a route. Anything below the top of the
-     * path is what back returns to, which is why the shortcut passes the whole
-     * chain down to the theme page instead of the theme page alone.
+     * Only pages actually visited belong to the stack. A shortcut can open a
+     * page as the root without manufacturing its settings ancestors.
      */
     initialRoutePath: String = SettingsRouteStack.initialPath,
+    onExit: () -> Unit,
 ) {
     var routePath by rememberSaveable { mutableStateOf(initialRoutePath) }
     val route = SettingsRouteStack.current(routePath)
@@ -143,7 +141,11 @@ fun SettingsScreen(
         routePath = SettingsRouteStack.push(routePath, destination)
     }
     val navigateBack: () -> Unit = {
-        routePath = SettingsRouteStack.pop(routePath)
+        if (SettingsRouteStack.canPop(routePath)) {
+            routePath = SettingsRouteStack.pop(routePath)
+        } else {
+            onExit()
+        }
     }
     val canNavigateBack = SettingsRouteStack.canPop(routePath)
     val layoutDirection = LocalLayoutDirection.current

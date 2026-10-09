@@ -62,11 +62,13 @@ public final class ColorProbe extends Instrumentation {
                 android.widget.TextView headerLabel = new android.widget.TextView(context);
                 headerLabel.setAlpha(0.8f);
                 headerLabel.setTextColor(0xff123456);
-                Method headerBind = bridge.getMethod("applyDynamicHeaderLabel",
-                        Context.class, android.widget.TextView.class, int.class);
-                headerBind.invoke(null, context, headerLabel, 153);
-                headerBind.invoke(null, context, headerLabel, 153);
-                if (Math.abs(headerLabel.getAlpha() - 0.48f) > 0.0001f
+                Class<?> header = context.getClassLoader().loadClass(
+                        "com.google.android.inputmethod.pinyin.SimplifiedTraditionalToggleKeyView");
+                Method headerBind = header.getMethod("applyNativeHeaderLabel",
+                        android.widget.TextView.class, int.class);
+                headerBind.invoke(null, headerLabel, 153);
+                headerBind.invoke(null, headerLabel, 153);
+                if (Math.abs(headerLabel.getAlpha() - 0.6f) > 0.0001f
                         || headerLabel.getCurrentTextColor() != 0xff123456) {
                     throw new AssertionError("Header opacity or native color changed");
                 }
@@ -111,9 +113,9 @@ public final class ColorProbe extends Instrumentation {
                     throw new AssertionError("Disabled Shift appearance changed");
                 }
                 enable.invoke(null, context, false);
-                headerBind.invoke(null, context, headerLabel, 153);
-                if (Math.abs(headerLabel.getAlpha() - 0.8f) > 0.0001f) {
-                    throw new AssertionError("Ordinary Header opacity was not restored");
+                headerBind.invoke(null, headerLabel, 153);
+                if (Math.abs(headerLabel.getAlpha() - 0.6f) > 0.0001f) {
+                    throw new AssertionError("Ordinary Header opacity differs from native metadata");
                 }
                 result.putString("header-opacity", "PASS");
                 ImageView ordinary = image(context, mask);

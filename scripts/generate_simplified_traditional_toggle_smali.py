@@ -65,13 +65,15 @@ def main() -> int:
         dex.mkdir()
         subprocess.run(
             [str(javac), "-source", "7", "-target", "7", "-bootclasspath",
-             str(android_jar), "-d", str(classes), str(stub), str(SOURCE)],
+             str(android_jar), "-d", str(classes), str(stub), str(SOURCE), str(SOURCE.with_name("HeaderMenuBackgroundView.java"))],
             check=True, env=env,
         )
         compiled = root / "toggle.jar"
         subprocess.run(
             [str(jar), "cf", str(compiled), "-C", str(classes),
-             "com/google/android/inputmethod/pinyin/SimplifiedTraditionalToggleKeyView.class"],
+             "com/google/android/inputmethod/pinyin/SimplifiedTraditionalToggleKeyView.class",
+             "-C", str(classes),
+             "com/google/android/inputmethod/pinyin/HeaderMenuBackgroundView.class"],
             check=True, env=env,
         )
         subprocess.run(
@@ -94,6 +96,9 @@ def main() -> int:
         if not generated.is_file():
             raise FileNotFoundError(generated)
         OUTPUT.write_bytes(generated.read_bytes())
+        OUTPUT.with_name("HeaderMenuBackgroundView.smali").write_bytes(
+            generated.with_name("HeaderMenuBackgroundView.smali").read_bytes()
+        )
 
     print(f"Generated {OUTPUT}")
     return 0

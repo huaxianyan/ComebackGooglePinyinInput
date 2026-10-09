@@ -89,10 +89,26 @@
     return-void
 .end method
 
+.method public static applyNativeHeaderLabel(Landroid/widget/TextView;I)V
+    .locals 1
+
+    .line 49
+    int-to-float p1, p1
+
+    const/high16 v0, 0x437f0000    # 255.0f
+
+    div-float/2addr p1, v0
+
+    invoke-virtual {p0, p1}, Landroid/widget/TextView;->setAlpha(F)V
+
+    .line 50
+    return-void
+.end method
+
 .method private applyVisibility()V
     .locals 1
 
-    .line 97
+    .line 102
     iget-boolean v0, p0, Lcom/google/android/inputmethod/pinyin/SimplifiedTraditionalToggleKeyView;->preferenceHidden:Z
 
     if-nez v0, :cond_1
@@ -115,14 +131,14 @@
     :goto_1
     invoke-virtual {p0, v0}, Lcom/google/android/inputmethod/pinyin/SimplifiedTraditionalToggleKeyView;->setVisibility(I)V
 
-    .line 98
+    .line 103
     return-void
 .end method
 
 .method private static descendantRect(Landroid/view/ViewGroup;Landroid/view/View;)Landroid/graphics/Rect;
     .locals 4
 
-    .line 130
+    .line 135
     new-instance v0, Landroid/graphics/Rect;
 
     invoke-virtual {p1}, Landroid/view/View;->getWidth()I
@@ -137,17 +153,17 @@
 
     invoke-direct {v0, v3, v3, v1, v2}, Landroid/graphics/Rect;-><init>(IIII)V
 
-    .line 131
+    .line 136
     invoke-virtual {p0, p1, v0}, Landroid/view/ViewGroup;->offsetDescendantRectToMyCoords(Landroid/view/View;Landroid/graphics/Rect;)V
 
-    .line 132
+    .line 137
     return-object v0
 .end method
 
 .method private findExplicitSlot(Landroid/view/ViewGroup;Ljava/lang/String;)Landroid/view/View;
     .locals 3
 
-    .line 125
+    .line 130
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/SimplifiedTraditionalToggleKeyView;->getResources()Landroid/content/res/Resources;
 
     move-result-object v0
@@ -166,7 +182,7 @@
 
     move-result p2
 
-    .line 126
+    .line 131
     if-nez p2, :cond_0
 
     const/4 p1, 0x0
@@ -185,7 +201,7 @@
 .method private hasAvailableHeaderSpace()Z
     .locals 9
 
-    .line 101
+    .line 106
     iget v0, p0, Lcom/google/android/inputmethod/pinyin/SimplifiedTraditionalToggleKeyView;->shortcutWidth:I
 
     const/4 v1, 0x0
@@ -194,7 +210,7 @@
 
     return v1
 
-    .line 102
+    .line 107
     :cond_0
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/SimplifiedTraditionalToggleKeyView;->getParent()Landroid/view/ViewParent;
 
@@ -206,7 +222,7 @@
 
     return v1
 
-    .line 103
+    .line 108
     :cond_1
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/SimplifiedTraditionalToggleKeyView;->getParent()Landroid/view/ViewParent;
 
@@ -214,7 +230,7 @@
 
     check-cast v0, Landroid/view/ViewGroup;
 
-    .line 104
+    .line 109
     invoke-virtual {v0}, Landroid/view/ViewGroup;->getParent()Landroid/view/ViewParent;
 
     move-result-object v2
@@ -225,7 +241,7 @@
 
     return v1
 
-    .line 105
+    .line 110
     :cond_2
     invoke-virtual {v0}, Landroid/view/ViewGroup;->getParent()Landroid/view/ViewParent;
 
@@ -233,17 +249,17 @@
 
     check-cast v2, Landroid/view/ViewGroup;
 
-    .line 106
+    .line 111
     const-string v3, "access_points_overlay_view"
 
     invoke-direct {p0, v2, v3}, Lcom/google/android/inputmethod/pinyin/SimplifiedTraditionalToggleKeyView;->findExplicitSlot(Landroid/view/ViewGroup;Ljava/lang/String;)Landroid/view/View;
 
     move-result-object v3
 
-    .line 107
+    .line 112
     if-eqz v3, :cond_9
 
-    .line 108
+    .line 113
     invoke-virtual {v3}, Landroid/view/View;->getVisibility()I
 
     move-result v3
@@ -252,7 +268,7 @@
 
     goto :goto_2
 
-    .line 109
+    .line 114
     :cond_3
     const-string v3, "key_pos_header_voice"
 
@@ -260,7 +276,7 @@
 
     move-result-object v3
 
-    .line 110
+    .line 115
     if-eqz v3, :cond_8
 
     invoke-virtual {v3}, Landroid/view/View;->getParent()Landroid/view/ViewParent;
@@ -269,7 +285,7 @@
 
     if-ne v4, v0, :cond_8
 
-    .line 111
+    .line 116
     invoke-virtual {v3}, Landroid/view/View;->getVisibility()I
 
     move-result v0
@@ -278,16 +294,16 @@
 
     goto :goto_1
 
-    .line 113
+    .line 118
     :cond_4
     invoke-static {v2, v3}, Lcom/google/android/inputmethod/pinyin/SimplifiedTraditionalToggleKeyView;->descendantRect(Landroid/view/ViewGroup;Landroid/view/View;)Landroid/graphics/Rect;
 
     move-result-object v0
 
-    .line 114
+    .line 119
     nop
 
-    .line 115
+    .line 120
     sget-object v3, Lcom/google/android/inputmethod/pinyin/SimplifiedTraditionalToggleKeyView;->LEFT_SLOT_IDS:[Ljava/lang/String;
 
     array-length v4, v3
@@ -301,12 +317,12 @@
 
     aget-object v7, v3, v5
 
-    .line 116
+    .line 121
     invoke-direct {p0, v2, v7}, Lcom/google/android/inputmethod/pinyin/SimplifiedTraditionalToggleKeyView;->findExplicitSlot(Landroid/view/ViewGroup;Ljava/lang/String;)Landroid/view/View;
 
     move-result-object v7
 
-    .line 117
+    .line 122
     if-eqz v7, :cond_5
 
     invoke-virtual {v7}, Landroid/view/View;->getVisibility()I
@@ -315,7 +331,7 @@
 
     if-nez v8, :cond_5
 
-    .line 118
+    .line 123
     invoke-static {v2, v7}, Lcom/google/android/inputmethod/pinyin/SimplifiedTraditionalToggleKeyView;->descendantRect(Landroid/view/ViewGroup;Landroid/view/View;)Landroid/graphics/Rect;
 
     move-result-object v7
@@ -326,13 +342,13 @@
 
     move-result v6
 
-    .line 115
+    .line 120
     :cond_5
     add-int/lit8 v5, v5, 0x1
 
     goto :goto_0
 
-    .line 121
+    .line 126
     :cond_6
     iget v0, v0, Landroid/graphics/Rect;->left:I
 
@@ -347,12 +363,12 @@
     :cond_7
     return v1
 
-    .line 111
+    .line 116
     :cond_8
     :goto_1
     return v1
 
-    .line 108
+    .line 113
     :cond_9
     :goto_2
     return v1
@@ -361,14 +377,14 @@
 .method private updatePreferenceVisibility()V
     .locals 3
 
-    .line 91
+    .line 96
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/SimplifiedTraditionalToggleKeyView;->preferences:Landroid/content/SharedPreferences;
 
     if-eqz v0, :cond_0
 
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/SimplifiedTraditionalToggleKeyView;->preferences:Landroid/content/SharedPreferences;
 
-    .line 92
+    .line 97
     const-string v1, "show_simplified_traditional_header_toggle"
 
     const/4 v2, 0x1
@@ -387,10 +403,10 @@
     :goto_0
     iput-boolean v2, p0, Lcom/google/android/inputmethod/pinyin/SimplifiedTraditionalToggleKeyView;->preferenceHidden:Z
 
-    .line 93
+    .line 98
     invoke-direct {p0}, Lcom/google/android/inputmethod/pinyin/SimplifiedTraditionalToggleKeyView;->applyVisibility()V
 
-    .line 94
+    .line 99
     return-void
 .end method
 
@@ -399,10 +415,10 @@
 .method protected onAttachedToWindow()V
     .locals 1
 
-    .line 49
+    .line 54
     invoke-super {p0}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyView;->onAttachedToWindow()V
 
-    .line 50
+    .line 55
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/SimplifiedTraditionalToggleKeyView;->getContext()Landroid/content/Context;
 
     move-result-object v0
@@ -413,34 +429,34 @@
 
     iput-object v0, p0, Lcom/google/android/inputmethod/pinyin/SimplifiedTraditionalToggleKeyView;->preferences:Landroid/content/SharedPreferences;
 
-    .line 51
+    .line 56
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/SimplifiedTraditionalToggleKeyView;->preferences:Landroid/content/SharedPreferences;
 
     invoke-interface {v0, p0}, Landroid/content/SharedPreferences;->registerOnSharedPreferenceChangeListener(Landroid/content/SharedPreferences$OnSharedPreferenceChangeListener;)V
 
-    .line 52
+    .line 57
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/SimplifiedTraditionalToggleKeyView;->getViewTreeObserver()Landroid/view/ViewTreeObserver;
 
     move-result-object v0
 
     invoke-virtual {v0, p0}, Landroid/view/ViewTreeObserver;->addOnPreDrawListener(Landroid/view/ViewTreeObserver$OnPreDrawListener;)V
 
-    .line 53
+    .line 58
     invoke-direct {p0}, Lcom/google/android/inputmethod/pinyin/SimplifiedTraditionalToggleKeyView;->updatePreferenceVisibility()V
 
-    .line 54
+    .line 59
     return-void
 .end method
 
 .method protected onDetachedFromWindow()V
     .locals 2
 
-    .line 58
+    .line 63
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/SimplifiedTraditionalToggleKeyView;->getViewTreeObserver()Landroid/view/ViewTreeObserver;
 
     move-result-object v0
 
-    .line 59
+    .line 64
     invoke-virtual {v0}, Landroid/view/ViewTreeObserver;->isAlive()Z
 
     move-result v1
@@ -449,34 +465,34 @@
 
     invoke-virtual {v0, p0}, Landroid/view/ViewTreeObserver;->removeOnPreDrawListener(Landroid/view/ViewTreeObserver$OnPreDrawListener;)V
 
-    .line 60
+    .line 65
     :cond_0
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/SimplifiedTraditionalToggleKeyView;->preferences:Landroid/content/SharedPreferences;
 
     if-eqz v0, :cond_1
 
-    .line 61
+    .line 66
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/SimplifiedTraditionalToggleKeyView;->preferences:Landroid/content/SharedPreferences;
 
     invoke-interface {v0, p0}, Landroid/content/SharedPreferences;->unregisterOnSharedPreferenceChangeListener(Landroid/content/SharedPreferences$OnSharedPreferenceChangeListener;)V
 
-    .line 62
+    .line 67
     const/4 v0, 0x0
 
     iput-object v0, p0, Lcom/google/android/inputmethod/pinyin/SimplifiedTraditionalToggleKeyView;->preferences:Landroid/content/SharedPreferences;
 
-    .line 64
+    .line 69
     :cond_1
     invoke-super {p0}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyView;->onDetachedFromWindow()V
 
-    .line 65
+    .line 70
     return-void
 .end method
 
 .method public onPreDraw()Z
     .locals 3
 
-    .line 74
+    .line 79
     iget-boolean v0, p0, Lcom/google/android/inputmethod/pinyin/SimplifiedTraditionalToggleKeyView;->preferenceHidden:Z
 
     const/4 v1, 0x1
@@ -485,24 +501,24 @@
 
     return v1
 
-    .line 75
+    .line 80
     :cond_0
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/SimplifiedTraditionalToggleKeyView;->getMeasuredWidth()I
 
     move-result v0
 
-    .line 76
+    .line 81
     if-lez v0, :cond_1
 
     iput v0, p0, Lcom/google/android/inputmethod/pinyin/SimplifiedTraditionalToggleKeyView;->shortcutWidth:I
 
-    .line 77
+    .line 82
     :cond_1
     invoke-direct {p0}, Lcom/google/android/inputmethod/pinyin/SimplifiedTraditionalToggleKeyView;->hasAvailableHeaderSpace()Z
 
     move-result v0
 
-    .line 78
+    .line 83
     xor-int/2addr v0, v1
 
     iget-boolean v2, p0, Lcom/google/android/inputmethod/pinyin/SimplifiedTraditionalToggleKeyView;->geometryHidden:Z
@@ -511,17 +527,17 @@
 
     return v1
 
-    .line 79
+    .line 84
     :cond_2
     iput-boolean v0, p0, Lcom/google/android/inputmethod/pinyin/SimplifiedTraditionalToggleKeyView;->geometryHidden:Z
 
-    .line 80
+    .line 85
     invoke-direct {p0}, Lcom/google/android/inputmethod/pinyin/SimplifiedTraditionalToggleKeyView;->applyVisibility()V
 
-    .line 81
+    .line 86
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/SimplifiedTraditionalToggleKeyView;->requestLayout()V
 
-    .line 82
+    .line 87
     const/4 v0, 0x0
 
     return v0
@@ -530,7 +546,7 @@
 .method public onSharedPreferenceChanged(Landroid/content/SharedPreferences;Ljava/lang/String;)V
     .locals 0
 
-    .line 69
+    .line 74
     const-string p1, "show_simplified_traditional_header_toggle"
 
     invoke-virtual {p1, p2}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
@@ -541,7 +557,7 @@
 
     invoke-direct {p0}, Lcom/google/android/inputmethod/pinyin/SimplifiedTraditionalToggleKeyView;->updatePreferenceVisibility()V
 
-    .line 70
+    .line 75
     :cond_0
     return-void
 .end method
@@ -549,7 +565,7 @@
 .method public setVisibility(I)V
     .locals 1
 
-    .line 87
+    .line 92
     iget-boolean v0, p0, Lcom/google/android/inputmethod/pinyin/SimplifiedTraditionalToggleKeyView;->preferenceHidden:Z
 
     if-nez v0, :cond_0
@@ -564,6 +580,6 @@
     :cond_1
     invoke-super {p0, p1}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyView;->setVisibility(I)V
 
-    .line 88
+    .line 93
     return-void
 .end method

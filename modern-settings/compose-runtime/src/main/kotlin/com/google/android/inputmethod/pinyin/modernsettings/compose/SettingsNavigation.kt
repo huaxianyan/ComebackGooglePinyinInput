@@ -32,9 +32,7 @@ internal object SettingsRouteStack {
         val routes = path.split('/').mapNotNull { name ->
             SettingsRoute.entries.firstOrNull { it.name == name }
         }
-        return if (routes.firstOrNull() == SettingsRoute.Home) routes else {
-            listOf(SettingsRoute.Home)
-        }
+        return routes.ifEmpty { listOf(SettingsRoute.Home) }
     }
 
     fun current(path: String): SettingsRoute = decode(path).last()
@@ -48,7 +46,7 @@ internal object SettingsRouteStack {
 
     fun pop(path: String): String {
         val routes = decode(path)
-        return if (routes.size <= 1) initialPath
+        return if (routes.size <= 1) routes.single().name
         else routes.dropLast(1).joinToString("/") { it.name }
     }
 

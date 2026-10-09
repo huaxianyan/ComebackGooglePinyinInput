@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.inputmethod.pinyin.HeaderMenuBackgroundView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_gravity="center"
+    android:tag=".background-icon.access-points-menu"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:src="@drawable/bg_access_points_menu"
+    android:alpha="?BgAccessPointsMenuAlpha" />

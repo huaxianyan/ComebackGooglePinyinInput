@@ -44,6 +44,11 @@ public final class SimplifiedTraditionalToggleKeyView extends SoftKeyView
         super(context, attrs, defStyleAttr);
     }
 
+    /** Same metadata opacity as the native Header icon, after native color binding. */
+    public static void applyNativeHeaderLabel(android.widget.TextView label, int iconAlpha) {
+        label.setAlpha(iconAlpha / 255.0f);
+    }
+
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();

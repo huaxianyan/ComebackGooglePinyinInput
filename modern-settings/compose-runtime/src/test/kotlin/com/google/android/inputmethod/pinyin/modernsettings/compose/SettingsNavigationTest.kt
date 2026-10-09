@@ -56,28 +56,18 @@ class SettingsNavigationTest {
         assertEquals(SettingsRoute.Home, SettingsRouteStack.current("RemovedRoute"))
     }
 
-    /**
-     * The keyboard's theme shortcut opens the theme page, and the pages above it
-     * are what back walks through - so the path has to be the whole chain and
-     * not the destination alone.
-     */
     @Test
-    fun shortcutPathOpensThemeCatalogUnderTheAppearancePage() {
-        val path = LegacySettingsNavigation.themeRoutePath
+    fun keyboardThemeShortcutOpensAsRootAndSettingsEntryReturnsToAppearance() {
+        val shortcut = LegacySettingsNavigation.themeRoutePath
+        assertEquals(listOf(SettingsRoute.ThemeCatalog), SettingsRouteStack.decode(shortcut))
+        assertFalse(SettingsRouteStack.canPop(shortcut))
+        assertEquals(shortcut, SettingsRouteStack.pop(shortcut))
 
-        assertEquals(SettingsRoute.ThemeCatalog, SettingsRouteStack.current(path))
-        assertEquals(
-            listOf(
-                SettingsRoute.Home,
-                SettingsRoute.Keyboard,
-                SettingsRoute.KeyboardAppearance,
-                SettingsRoute.ThemeCatalog,
-            ),
-            SettingsRouteStack.decode(path),
-        )
-        assertEquals(
+        val appearance = SettingsRouteStack.push(
+            SettingsRouteStack.push(SettingsRouteStack.initialPath, SettingsRoute.Keyboard),
             SettingsRoute.KeyboardAppearance,
-            SettingsRouteStack.current(SettingsRouteStack.pop(path)),
         )
+        val theme = SettingsRouteStack.push(appearance, SettingsRoute.ThemeCatalog)
+        assertEquals(appearance, SettingsRouteStack.pop(theme))
     }
 }
