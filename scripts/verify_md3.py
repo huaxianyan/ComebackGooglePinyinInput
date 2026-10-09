@@ -104,6 +104,21 @@ def main() -> None:
         "re-enterable incomplete first-run route",
     )
 
+    # Real regression: Lapy.a() launches an Activity before returning its boolean.
+    # Checking the claim afterwards allowed IME activation to reopen the guide.
+    gate = first_run_activity.split(
+        ".method public static b(Landroid/content/Context;)Z", 1
+    )[1].split(".end method", 1)[0]
+    claim = gate.index("FirstRunStateCompat;->claimGuideLaunch")
+    launch = gate.index("Lapy;->a(Landroid/content/Context;Ljava/lang/Class;)Z")
+    if claim >= launch:
+        raise RuntimeError("guide launch claim is checked after the Activity has already started")
+    require(gate[claim:launch], ("if-eqz v0, :blocked",), "active guide launch gate")
+    require(gate[launch:], (
+        "if-nez v0, :launched",
+        "FirstRunStateCompat;->releaseGuideLaunch(Landroid/content/Context;)V",
+    ), "skipped native launch releases the claim")
+
     routing = (
         decoded
         / "smali/com/google/android/inputmethod/pinyin/firstrun/FirstRunRoutingCompat.smali"

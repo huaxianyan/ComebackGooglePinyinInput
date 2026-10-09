@@ -954,44 +954,62 @@ def apply(
 .end method"""
     replace_once(first_run_activity, old_page_selector, new_page_selector)
 
-    # A completion marker in a separate, non-backed-up preferences file closes
-    # the race between removing the guide task and IME service startup. Keep the
-    # historical HAD_FIRST_RUN check as migration fallback for existing users.
-    replace_once(
-        first_run_activity,
-        ".method public static b(Landroid/content/Context;)Z\n"
-        "    .locals 1\n\n"
-        "    .prologue\n"
-        "    .line 2\n"
-        "    sget-boolean v0, Laik;->h:Z",
-        ".method public static b(Landroid/content/Context;)Z\n"
-        "    .locals 1\n\n"
-        "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/firstrun/"
-        "FirstRunStateCompat;->isComplete(Landroid/content/Context;)Z\n\n"
-        "    move-result v0\n\n"
-        "    if-eqz v0, :check_legacy_first_run\n\n"
-        "    const/4 v0, 0x0\n\n"
-        "    return v0\n\n"
-        "    :check_legacy_first_run\n"
-        "    .prologue\n"
-        "    .line 2\n"
-        "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/firstrun/"
-        "FirstRunStateCompat;->prepareIncompleteGuideLaunch(Landroid/content/Context;)V\n\n"
-        "    sget-boolean v0, Laik;->h:Z",
-    )
-    replace_once(
-        first_run_activity,
-        "    const/4 v0, 0x1\n\n"
-        "    .line 4\n"
-        "    :goto_0\n"
-        "    return v0",
-        "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/firstrun/"
-        "FirstRunStateCompat;->claimGuideLaunch(Landroid/content/Context;)Z\n\n"
-        "    move-result v0\n\n"
-        "    .line 4\n"
-        "    :goto_0\n"
-        "    return v0",
-    )
+    # Lapy.a() starts an Activity, not just a predicate. Claim BEFORE calling
+    # it: the previous post-launch check let IME startup reopen a visible guide.
+    original_gate = """.method public static b(Landroid/content/Context;)Z
+    .locals 1
+
+    .prologue
+    .line 2
+    sget-boolean v0, Laik;->h:Z
+
+    if-nez v0, :cond_0
+
+    const-class v0, Lcom/google/android/apps/inputmethod/pinyin/firstrun/PinyinFirstRunActivity;
+
+    .line 3
+    invoke-static {p0, v0}, Lapy;->a(Landroid/content/Context;Ljava/lang/Class;)Z
+
+    move-result v0
+
+    if-eqz v0, :cond_0
+
+    const/4 v0, 0x1
+
+    .line 4
+    :goto_0
+    return v0
+
+    .line 3
+    :cond_0
+    const/4 v0, 0x0
+
+    .line 4
+    goto :goto_0
+.end method"""
+    guarded_gate = """.method public static b(Landroid/content/Context;)Z
+    .locals 1
+
+    sget-boolean v0, Laik;->h:Z
+    if-nez v0, :blocked
+
+    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/firstrun/FirstRunStateCompat;->claimGuideLaunch(Landroid/content/Context;)Z
+    move-result v0
+    if-eqz v0, :blocked
+
+    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/firstrun/FirstRunStateCompat;->prepareIncompleteGuideLaunch(Landroid/content/Context;)V
+    const-class v0, Lcom/google/android/apps/inputmethod/pinyin/firstrun/PinyinFirstRunActivity;
+    invoke-static {p0, v0}, Lapy;->a(Landroid/content/Context;Ljava/lang/Class;)Z
+    move-result v0
+    if-nez v0, :launched
+
+    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/firstrun/FirstRunStateCompat;->releaseGuideLaunch(Landroid/content/Context;)V
+    :blocked
+    const/4 v0, 0x0
+    :launched
+    return v0
+.end method"""
+    replace_once(first_run_activity, original_gate, guarded_gate)
     replace_once(
         first_run_activity,
         "\n\n# virtual methods\n.method protected final a()I",
@@ -1037,7 +1055,7 @@ def apply(
         "    return-void\n\n"
         "    :compat_release_claim\n"
         "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/firstrun/"
-        "FirstRunStateCompat;->activityDestroyed(Landroid/content/Context;)V\n\n"
+        "FirstRunStateCompat;->releaseGuideLaunch(Landroid/content/Context;)V\n\n"
         "    invoke-super {p0}, Lapy;->onDestroy()V\n\n"
         "    return-void\n"
         ".end method\n\n"

@@ -45,7 +45,7 @@ internal object FirstRunStateBridge {
     /** Releases the claim while the guide is still unfinished, so it can be shown again. */
     fun activityDestroyed(context: Context) {
         runCatching {
-            stateType?.getMethod("activityDestroyed", Context::class.java)?.invoke(null, context)
+            stateType?.getMethod("releaseGuideLaunch", Context::class.java)?.invoke(null, context)
         }
     }
 

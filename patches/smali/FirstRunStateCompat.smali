@@ -148,7 +148,7 @@
     return-void
 .end method
 
-.method public static activityDestroyed(Landroid/content/Context;)V
+.method public static releaseGuideLaunch(Landroid/content/Context;)V
     .locals 1
 
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/firstrun/FirstRunStateCompat;->isComplete(Landroid/content/Context;)Z
