@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
+from xml.etree import ElementTree
 
 ROOT = Path(__file__).resolve().parents[1]
 PREF_KEY = "show_simplified_traditional_header_toggle"
@@ -78,6 +79,9 @@ def verify_sources() -> None:
         'keycode="KEYBOARD_STATE_OFF" data="ENABLE_SC_TC_CONVERSION"',
         'value="@string/label_traditional_chinese_mode"',
     ), "native Simplified/Traditional soft keys")
+    for key in ElementTree.fromstring(softkeys).iter("softkey"):
+        if key.get("alpha") != "@attr/IconAlpha":
+            raise RuntimeError("Header shortcut must use native icon opacity")
 
     mapping = (ROOT / (
         "patches/res/xml/keymapping_header_simplified_traditional_toggle.xml"
@@ -151,6 +155,15 @@ def verify_decoded(decoded: Path) -> None:
         '<key_mapping state="NO_MICROPHONE">',
         'key_id="@id/softkey_hide_keyboard"',
     ), "original voice/hide-keyboard mapping")
+
+    native_key = (decoded / (
+        "smali/com/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyView.smali"
+    )).read_text(encoding="utf-8")
+    require_all(native_key, (
+        "instance-of v6, p0, Lcom/google/android/inputmethod/pinyin/SimplifiedTraditionalToggleKeyView;",
+        "SoftKeyDef;->f:I",
+        "SystemAutoThemeCompat;->applyDynamicHeaderLabel(Landroid/content/Context;Landroid/widget/TextView;I)V",
+    ), "Header-only native label binding")
 
     packaged_smali = decoded / (
         "smali/com/google/android/inputmethod/pinyin/"

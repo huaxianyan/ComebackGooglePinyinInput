@@ -180,6 +180,8 @@ def main() -> int:
             'dark-border:color_icon': 'ffbfbfc5',
             'dark-border:color_state_key_dark_pressed': 'ff47484e',
             'dark-border:color_state_key_pressed': 'ff3d3e41',
+            'dark-border:color_access_points_menu_background': 'ff19191b',
+            'dark-plain:color_access_points_menu_background': 'ff0e0e0f',
             'dark-plain:color_base': 'ff19191b',
             'dark-plain:color_icon': 'ffe7e5e8',
             'dark-plain:color_state_action': 'ff3a3b41',

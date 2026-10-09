@@ -12,6 +12,7 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
@@ -112,7 +113,9 @@ public final class SystemAutoThemeCompat {
     // files: packages need the current-format marker; unversioned packages
     // pass through the legacy selector converter, unlike built-in assets.
     private static final int THEME_PACKAGE_FORMAT_VERSION = 3;
-    private static final int DYNAMIC_PALETTE_REVISION = 5;
+    private static final int DYNAMIC_PALETTE_REVISION = 6;
+    private static final Map<TextView, Float> DYNAMIC_HEADER_LABEL_ALPHAS =
+            new WeakHashMap<TextView, Float>();
 
     // Original Material icons bake 60% opacity into their pixel masks. Keep
     // metadata, disabled-key and drawable alpha separate from that mask.
@@ -193,7 +196,6 @@ public final class SystemAutoThemeCompat {
         {"color_base", "base"},
         {"color_header", "surface"},
         {"color_popup_background", "high"},
-        {"color_access_points_menu_background", "surface"},
         {"color_access_point_panel_item_background", "surface"},
         {"color_label", "on_surface"},
         {"color_label_header_active", "on_surface"},
@@ -695,9 +697,7 @@ public final class SystemAutoThemeCompat {
         for (int supported : DYNAMIC_FUNCTION_KEYS) {
             if (keyId == supported) { functionKey = true; break; }
         }
-        if (!functionKey || !isDynamicEnabled(context)) return;
-        String active = preferences(context).getString(context.getString(PREF_KEY_ADDITIONAL_THEME), null);
-        if (!(DYNAMIC_ADDITIONAL_PREFIX + DYNAMIC_PACKAGE_NAME).equals(active)) return;
+        if (!functionKey || !usesDynamicThemePackage(context)) return;
         Drawable drawable = icon.getDrawable();
         if (!(drawable instanceof BitmapDrawable)) return;
         Bitmap source = ((BitmapDrawable)drawable).getBitmap();
@@ -767,6 +767,31 @@ public final class SystemAutoThemeCompat {
         return result;
     }
 
+    /** Shares the native Header icon opacity without replacing native text colors. */
+    public static synchronized void applyDynamicHeaderLabel(
+            Context context, TextView label, int nativeIconAlpha) {
+        Float original = DYNAMIC_HEADER_LABEL_ALPHAS.get(label);
+        if (!usesDynamicThemePackage(context)) {
+            if (original != null) {
+                label.setAlpha(original.floatValue());
+                DYNAMIC_HEADER_LABEL_ALPHAS.remove(label);
+            }
+            return;
+        }
+        if (original == null) {
+            original = Float.valueOf(label.getAlpha());
+            DYNAMIC_HEADER_LABEL_ALPHAS.put(label, original);
+        }
+        label.setAlpha(original.floatValue() * nativeIconAlpha / 255.0f);
+    }
+
+    private static boolean usesDynamicThemePackage(Context context) {
+        if (!isDynamicEnabled(context)) return false;
+        String active = preferences(context).getString(
+                context.getString(PREF_KEY_ADDITIONAL_THEME), null);
+        return (DYNAMIC_ADDITIONAL_PREFIX + DYNAMIC_PACKAGE_NAME).equals(active);
+    }
+
     private static Map<String, Integer> dynamicStyleColors(
             Map<String, Integer> roles, boolean dark, boolean bordered) {
         Map<String, Integer> colors = new TreeMap<String, Integer>();
@@ -783,6 +808,8 @@ public final class SystemAutoThemeCompat {
         colors.put("color_state_action_pressed", Integer.valueOf(functionPressed));
         colors.put("color_state_border_key_action_pressed", Integer.valueOf(functionPressed));
         colors.put("color_state_space_bar_pressed", Integer.valueOf(letterPressed));
+        // Native color_rules_border switches keyboard-header-area from surface to base.
+        colors.put("color_access_points_menu_background", roles.get(bordered ? "base" : "surface"));
         if (bordered) {
             colors.put("color_state_key", Integer.valueOf(letter));
             colors.put("color_state_key_pressed", Integer.valueOf(letterPressed));

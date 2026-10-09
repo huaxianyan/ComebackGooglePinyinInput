@@ -59,6 +59,17 @@ public final class ColorProbe extends Instrumentation {
                     result.putString("preview-mode-preserved", "PASS");
                 } finally { marker.delete(); }
                 enable.invoke(null, context, true);
+                android.widget.TextView headerLabel = new android.widget.TextView(context);
+                headerLabel.setAlpha(0.8f);
+                headerLabel.setTextColor(0xff123456);
+                Method headerBind = bridge.getMethod("applyDynamicHeaderLabel",
+                        Context.class, android.widget.TextView.class, int.class);
+                headerBind.invoke(null, context, headerLabel, 153);
+                headerBind.invoke(null, context, headerLabel, 153);
+                if (Math.abs(headerLabel.getAlpha() - 0.48f) > 0.0001f
+                        || headerLabel.getCurrentTextColor() != 0xff123456) {
+                    throw new AssertionError("Header opacity or native color changed");
+                }
                 Bitmap mask = Bitmap.createBitmap(
                         new int[] {0x99000000, 0x4c000000, 0, 0x99ffffff},
                         2, 2, Bitmap.Config.ARGB_8888);
@@ -100,6 +111,11 @@ public final class ColorProbe extends Instrumentation {
                     throw new AssertionError("Disabled Shift appearance changed");
                 }
                 enable.invoke(null, context, false);
+                headerBind.invoke(null, context, headerLabel, 153);
+                if (Math.abs(headerLabel.getAlpha() - 0.8f) > 0.0001f) {
+                    throw new AssertionError("Ordinary Header opacity was not restored");
+                }
+                result.putString("header-opacity", "PASS");
                 ImageView ordinary = image(context, mask);
                 bind.invoke(null, context, 0x7f0f0221, ordinary);
                 if (((BitmapDrawable) ordinary.getDrawable()).getBitmap().getPixel(0, 0)

@@ -33,8 +33,8 @@ def replace_exactly(path: Path, old: str, new: str, expected: int) -> None:
     path.write_text(text.replace(old, new), encoding="utf-8", newline="\n")
 
 
-def patch_dynamic_icon_binding(decoded: Path) -> None:
-    """Keep icon color/opacity adaptation at the native icon-binding boundary."""
+def patch_dynamic_key_binding(decoded: Path) -> None:
+    """Adapt generated-theme rendering at native icon and label binding boundaries."""
     path = decoded / "smali/com/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyView.smali"
     anchor = "    invoke-virtual {v0, v1}, Landroid/widget/ImageView;->setAlpha(I)V\n"
     replace_once(
@@ -46,6 +46,20 @@ def patch_dynamic_icon_binding(decoded: Path) -> None:
         + "    iget-object v2, p0, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyView;->a:Lcom/google/android/apps/inputmethod/libs/framework/core/metadata/SoftKeyDef;\n"
         + "    iget v2, v2, Lcom/google/android/apps/inputmethod/libs/framework/core/metadata/SoftKeyDef;->a:I\n"
         + "    invoke-static {v1, v2, v0}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->applyDynamicFunctionIcon(Landroid/content/Context;ILandroid/widget/ImageView;)V\n",
+    )
+    anchor = "    invoke-static {v0, v6}, Lmh;->a(Landroid/view/View;I)V\n"
+    replace_once(
+        path,
+        anchor,
+        anchor
+        + "\n    instance-of v6, p0, Lcom/google/android/inputmethod/pinyin/SimplifiedTraditionalToggleKeyView;\n"
+        + "    if-eqz v6, :compat_header_label_bound\n"
+        + "    iget-object v6, p0, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyView;->a:Lcom/google/android/apps/inputmethod/libs/framework/core/metadata/SoftKeyDef;\n"
+        + "    iget v7, v6, Lcom/google/android/apps/inputmethod/libs/framework/core/metadata/SoftKeyDef;->f:I\n"
+        + "    invoke-virtual {p0}, Lcom/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyView;->getContext()Landroid/content/Context;\n"
+        + "    move-result-object v6\n"
+        + "    invoke-static {v6, v0, v7}, Lcom/google/android/inputmethod/pinyin/SystemAutoThemeCompat;->applyDynamicHeaderLabel(Landroid/content/Context;Landroid/widget/TextView;I)V\n"
+        + "    :compat_header_label_bound\n",
     )
 
 
@@ -61,7 +75,7 @@ def apply(
     if debuggable and application_id == FORMAL_APPLICATION_ID:
         raise RuntimeError("Refusing to make the formal application ID debuggable")
 
-    patch_dynamic_icon_binding(decoded)
+    patch_dynamic_key_binding(decoded)
     replace_once(
         decoded / "AndroidManifest.xml",
         "</application>",
