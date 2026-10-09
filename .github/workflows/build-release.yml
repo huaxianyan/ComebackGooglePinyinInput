@@ -363,11 +363,7 @@ jobs:
       - name: Verify native 16 KiB ELF and RELRO layout
         shell: pwsh
         run: |
-          $signed = @(Get-ChildItem dist -Filter "*-aligned-signed.apk")
-          if ($signed.Count -ne 1) {
-            throw "Expected exactly one signed APK for the native audit, found $($signed.Count)"
-          }
-          python scripts/audit_elf_page_size.py $signed[0].FullName
+          python scripts/audit_elf_page_size.py "dist/$env:RELEASE_APK_NAME"
           if ($LASTEXITCODE -ne 0) { throw "Native 16 KiB audit failed" }
 
       - name: Prepare release artifact
