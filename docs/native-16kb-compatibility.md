@@ -51,7 +51,17 @@ It does not establish full handwriting/gesture, Rime synchronization, prolonged
 dictionary persistence, performance, or every layout/theme path. Those paths
 remain explicit limits, with ordinary-device functional acceptance still
 pending. No physical device was accessed during this overnight stage. Local
-evidence and the prepared APK are in `work/native16kb-current/`.
+evidence and the prepared APK are in `work/native16kb-current/`. Both emulator
+packages were removed, the emulator stopped, and this run's fresh AVD data was
+cleaned after testing.
+
+Actions `37971977923` at `c1fd259` passed all steps, including the native audit
+and byte-identical signed rebuild. It uploaded only Artifact `11636977207`;
+the Release step was skipped. The initial integration run failed because the
+old native gate guessed an obsolete output filename. The corrected gate uses
+`RELEASE_APK_NAME`, the same identity as the current build step. Local runtime
+evidence refers to the separately audit-signed test APK described above, not
+the CI artifact's signing identity.
 
 ## Baseline finding (historical investigation)
 

@@ -8,7 +8,7 @@
 
 - 仓库：`https://github.com/huaxianyan/ComebackGooglePinyinInput`。
 - 正式包名：`com.google.android.inputmethod.pinyin.compat`。
-- 当前正式基线：`v2.1.3`（`master` 已含成对标点补全的成对删除与智能跳过，三条路径各三条场景全部通过真机验收），`targetSdkVersion=36`，`minSdkVersion=17`。
+- 当前正式基线：`v2.1.5`，`targetSdkVersion=36`，`minSdkVersion=23`。后续开发从最新 `master` 创建分支，不能把旧实验基线当作当前基线。
 - 正式签名身份必须保持不变。私钥、口令和其他签名材料只保存在仓库外或 GitHub Actions Secrets 中。
 - 默认不修改原生输入、候选、学习权重、词典格式、手写、主题、分页和触摸语义，以修复已定位缺陷为默认立场。
 
@@ -65,5 +65,5 @@
 - 英文 IME 定义里的 `extra_value_latin_enable_suspend_prediction_on_backspace` 不能改成 `false`。`adw.a(JLchw;)Z` 里 `cgp.h == false` 会**无条件**进入挂起分支，改 `false` 会让候选缺失的退格全部被吞，问题加重。详见 [英文符号引发后续建议与首次退格被吞的调研](../symbol-backspace-swallow-research.md)。
 - 符号后第一次退格被吞由各语言的 `symbols_word_separators` 决定，与符号自身无关。会结束词的符号，其后退格被解码器挂起。同上。
 - 「只让符号不引发预测、保留字母的下一词预测」在补全钩子里做不到：清空联想容器的 `azh.b()V` 是私有方法，框架侧可达的 `textCandidatesUpdated` 与 `finishComposingText` 都只是向外通知。同上。
-- 16 KiB native page-size 最终验收搁置，`fix/native-16kb-page-size` 的实现和证据保留。
+- 2026-10-10 用户恢复 16 KiB 工作并更新验收标准，替代此前「等待原生 16 KiB 实机而搁置」的决定。真实 16 KiB 页大小模拟器验证通过，加普通 4 KiB 实机正常使用通过，即可验收合并。ARM 转译与未测试边界如实说明，未来真实 16 KiB 设备发现问题再开独立分支修复。当前实施与历史边界以 [16 KiB 专项记录](../native-16kb-compatibility.md) 为准，旧分支保留为历史来源。
 - Gboard 的「点击主题立即出预览」与动态配色是**两条独立链路**：预览机制负责渲染，配色由主题提供器产出。我们做动态配色时落地形态是一个新的主题提供器，**列表项与预览链路可原样复用，预览不需要重写**。机制为「内存 Bitmap 缓存 + 占位图 + 异步回填」三件套，可用平台原生类实现，不引入新依赖。详见 [Gboard 预览机制](../gboard-preview-mechanism.md)。
