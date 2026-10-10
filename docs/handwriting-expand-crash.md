@@ -48,4 +48,6 @@
 
 第二版为 `2.1.5-handwriting-test.2`，versionCode `4520417`，沿用隔离 ID 与审计签名，非 Debug、min SDK 23、target SDK 36。27,825,642 字节，SHA-256 `8947e121363aedba84d026f4330624801d0c937c34ff929f8000d9117c968bdd`，v1/v2/v3、16 KiB ZIP alignment 及设备安装哈希通过。成品 DEX 不含临时 `MotionProbe`。辅助包已卸载，手机保留并选中无探针第二版，正式包及数据未动，本轮没有设备公共存储文件。
 
+第二版提交 `0492a8c` 的隔离 Actions `38027773455` 全部通过，包括成品门禁、签名构建一致性与 ELF／RELRO，只上传 Artifact，Release 步骤跳过。调度时本地代理的 GitHub API 连续 EOF，改为本进程直连后成功，没有永久改动网络配置。
+
 完整旧 API ART、全布局、动画主观观感及长期功耗仍未验证。用户负责第二版视觉与完整功能验收，未获确认前不合并，不发布。
