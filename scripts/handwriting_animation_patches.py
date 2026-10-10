@@ -54,3 +54,5 @@ def apply_handwriting_animation(decoded: Path) -> None:
 
 '''
     path.write_text(text.replace(start, hook + start, 1), encoding='utf-8')
+    from handwriting_layout_patches import apply_first_handwriting_layout
+    apply_first_handwriting_layout(decoded)

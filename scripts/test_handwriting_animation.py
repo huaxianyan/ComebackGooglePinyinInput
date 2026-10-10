@@ -10,7 +10,7 @@ with tempfile.TemporaryDirectory(dir='work/tmp') as tmp:
     root = Path(tmp)
     (root / 'smali').mkdir()
     original = (source / 'smali/axs.smali').read_text(encoding='utf-8')
-    for name in ['axs', 'aky']:
+    for name in ['axs', 'aky', 'akx']:
         (root / f'smali/{name}.smali').write_bytes((source / f'smali/{name}.smali').read_bytes())
     try:
         verify(root)
@@ -27,7 +27,7 @@ with tempfile.TemporaryDirectory(dir='work/tmp') as tmp:
     for removed in [
         '    if-lez v2, :compat_geometry_unready\n',
         '    const/4 v0, 0x0\n    return v0\n',
-        '    iput v2, v1, Landroid/view/ViewGroup$LayoutParams;->height:I\n',
+        '    iput v1, v0, Landroid/view/ViewGroup$LayoutParams;->height:I\n',
         '    invoke-interface {v2}, Ljava/lang/Runnable;->run()V\n',
     ]:
         (root / 'smali/axs.smali').write_text(patched.replace(removed, '', 1), encoding='utf-8')

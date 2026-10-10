@@ -9,7 +9,8 @@
 # annotations
 .annotation system Ldalvik/annotation/MemberClasses;
     value = {
-        Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$Motion;
+        Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$Motion;,
+        Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$LayoutWait;
     }
 .end annotation
 
@@ -20,6 +21,8 @@
 
 # instance fields
 .field private active:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$Motion;
+
+.field private pending:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$LayoutWait;
 
 
 # direct methods
@@ -32,7 +35,25 @@
     return-void
 .end method
 
-.method static synthetic access$000(Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator;)Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$Motion;
+.method static synthetic access$000(Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator;)Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$LayoutWait;
+    .locals 0
+
+    .line 12
+    iget-object p0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator;->pending:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$LayoutWait;
+
+    return-object p0
+.end method
+
+.method static synthetic access$002(Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator;Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$LayoutWait;)Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$LayoutWait;
+    .locals 0
+
+    .line 12
+    iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator;->pending:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$LayoutWait;
+
+    return-object p1
+.end method
+
+.method static synthetic access$100(Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator;)Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$Motion;
     .locals 0
 
     .line 12
@@ -41,7 +62,7 @@
     return-object p0
 .end method
 
-.method static synthetic access$002(Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator;Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$Motion;)Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$Motion;
+.method static synthetic access$102(Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator;Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$Motion;)Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$Motion;
     .locals 0
 
     .line 12
@@ -50,20 +71,95 @@
     return-object p1
 .end method
 
+.method public static awaitNativeLayout(Landroid/view/View;[Landroid/view/View;Ljava/lang/Runnable;Ljava/lang/Runnable;)Z
+    .locals 9
+
+    .line 63
+    invoke-virtual {p0}, Landroid/view/View;->getContext()Landroid/content/Context;
+
+    move-result-object v0
+
+    invoke-static {v0}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformOwners;->find(Landroid/content/Context;)Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformOwner;
+
+    move-result-object v0
+
+    .line 64
+    const/4 v1, 0x0
+
+    if-nez v0, :cond_0
+
+    return v1
+
+    .line 65
+    :cond_0
+    invoke-interface {v0}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformOwner;->getHeaderPlatformController()Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformController;
+
+    move-result-object v0
+
+    const-string v2, "native-motion"
+
+    invoke-virtual {v0, v2}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformController;->getRegisteredModule(Ljava/lang/String;)Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderModule;
+
+    move-result-object v0
+
+    .line 66
+    instance-of v2, v0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator;
+
+    if-nez v2, :cond_1
+
+    return v1
+
+    .line 67
+    :cond_1
+    move-object v4, v0
+
+    check-cast v4, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator;
+
+    .line 68
+    invoke-virtual {v4}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator;->finish()V
+
+    .line 69
+    new-instance v3, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$LayoutWait;
+
+    invoke-virtual {v4}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
+
+    move-object v5, p0
+
+    move-object v6, p1
+
+    move-object v7, p2
+
+    move-object v8, p3
+
+    invoke-direct/range {v3 .. v8}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$LayoutWait;-><init>(Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator;Landroid/view/View;[Landroid/view/View;Ljava/lang/Runnable;Ljava/lang/Runnable;)V
+
+    iput-object v3, v4, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator;->pending:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$LayoutWait;
+
+    .line 70
+    iget-object p0, v4, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator;->pending:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$LayoutWait;
+
+    invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$LayoutWait;->begin()V
+
+    .line 71
+    const/4 p0, 0x1
+
+    return p0
+.end method
+
 .method public static finishNativeMotion(Landroid/content/Context;)V
     .locals 1
 
-    .line 39
+    .line 40
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformOwners;->find(Landroid/content/Context;)Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformOwner;
 
     move-result-object p0
 
-    .line 40
+    .line 41
     if-nez p0, :cond_0
 
     return-void
 
-    .line 41
+    .line 42
     :cond_0
     invoke-interface {p0}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformOwner;->getHeaderPlatformController()Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformController;
 
@@ -75,7 +171,7 @@
 
     move-result-object p0
 
-    .line 42
+    .line 43
     instance-of v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator;
 
     if-eqz v0, :cond_1
@@ -84,7 +180,7 @@
 
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator;->finish()V
 
-    .line 43
+    .line 44
     :cond_1
     return-void
 .end method
@@ -92,7 +188,7 @@
 .method public static prepareNativeMotion(Landroid/animation/Animator;[Landroid/view/View;)V
     .locals 2
 
-    .line 28
+    .line 29
     sget v0, Landroid/os/Build$VERSION;->SDK_INT:I
 
     const/16 v1, 0x24
@@ -115,7 +211,7 @@
 
     goto :goto_0
 
-    .line 29
+    .line 30
     :cond_0
     aget-object v0, p1, v0
 
@@ -127,10 +223,10 @@
 
     move-result-object v0
 
-    .line 30
+    .line 31
     if-eqz v0, :cond_1
 
-    .line 31
+    .line 32
     invoke-interface {v0}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformOwner;->getHeaderPlatformController()Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformController;
 
     move-result-object v0
@@ -141,21 +237,21 @@
 
     move-result-object v0
 
-    .line 32
+    .line 33
     instance-of v1, v0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator;
 
     if-eqz v1, :cond_1
 
-    .line 33
+    .line 34
     check-cast v0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator;
 
     invoke-virtual {v0, p0, p1}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator;->prepare(Landroid/animation/Animator;[Landroid/view/View;)V
 
-    .line 36
+    .line 37
     :cond_1
     return-void
 
-    .line 28
+    .line 29
     :cond_2
     :goto_0
     return-void
@@ -164,9 +260,9 @@
 
 # virtual methods
 .method public finish()V
-    .locals 1
+    .locals 2
 
-    .line 61
+    .line 75
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator;->active:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$Motion;
 
     if-eqz v0, :cond_0
@@ -175,15 +271,27 @@
 
     invoke-virtual {v0}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$Motion;->close()V
 
-    .line 62
+    .line 76
     :cond_0
+    iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator;->pending:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$LayoutWait;
+
+    if-eqz v0, :cond_1
+
+    iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator;->pending:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$LayoutWait;
+
+    const/4 v1, 0x0
+
+    invoke-virtual {v0, v1}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$LayoutWait;->complete(Z)V
+
+    .line 77
+    :cond_1
     return-void
 .end method
 
 .method public getDefaultPriority()I
     .locals 1
 
-    .line 17
+    .line 18
     const/4 v0, 0x0
 
     return v0
@@ -192,7 +300,7 @@
 .method public getModuleId()Ljava/lang/String;
     .locals 1
 
-    .line 16
+    .line 17
     const-string v0, "native-motion"
 
     return-object v0
@@ -201,14 +309,14 @@
 .method public onAttach(Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderPlatformContext;)V
     .locals 0
 
-    .line 18
+    .line 19
     return-void
 .end method
 
 .method public onDetach()V
     .locals 0
 
-    .line 25
+    .line 26
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator;->finish()V
 
     return-void
@@ -217,7 +325,7 @@
 .method public onFinishInput(J)V
     .locals 0
 
-    .line 24
+    .line 25
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator;->finish()V
 
     return-void
@@ -226,14 +334,14 @@
 .method public onHeaderAvailable(Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderHandle;)V
     .locals 0
 
-    .line 19
+    .line 20
     return-void
 .end method
 
 .method public onHeaderUnavailable(J)V
     .locals 0
 
-    .line 21
+    .line 22
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator;->finish()V
 
     return-void
@@ -242,14 +350,14 @@
 .method public onNativeCandidateStateChanged(Z)V
     .locals 0
 
-    .line 22
+    .line 23
     return-void
 .end method
 
 .method public onStartInput(Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderEditorContext;J)V
     .locals 0
 
-    .line 20
+    .line 21
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator;->finish()V
 
     return-void
@@ -258,7 +366,7 @@
 .method public onThemeChanged(J)V
     .locals 0
 
-    .line 23
+    .line 24
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator;->finish()V
 
     return-void
@@ -267,15 +375,15 @@
 .method public prepare(Landroid/animation/Animator;[Landroid/view/View;)V
     .locals 6
 
-    .line 46
+    .line 47
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator;->finish()V
 
-    .line 47
+    .line 48
     new-instance v0, Ljava/util/LinkedHashSet;
 
     invoke-direct {v0}, Ljava/util/LinkedHashSet;-><init>()V
 
-    .line 48
+    .line 49
     array-length v1, p2
 
     const/4 v2, 0x0
@@ -287,33 +395,33 @@
 
     aget-object v4, p2, v3
 
-    .line 49
+    .line 50
     if-nez v4, :cond_0
 
     goto :goto_1
 
-    .line 50
+    .line 51
     :cond_0
     invoke-virtual {v0, v4}, Ljava/util/LinkedHashSet;->add(Ljava/lang/Object;)Z
 
-    .line 51
+    .line 52
     instance-of v5, v4, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionTargetSource;
 
     if-eqz v5, :cond_1
 
-    .line 52
+    .line 53
     check-cast v4, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionTargetSource;
 
     invoke-interface {v4, v0}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionTargetSource;->appendHeaderMotionTargets(Ljava/util/Collection;)V
 
-    .line 48
+    .line 49
     :cond_1
     :goto_1
     add-int/lit8 v3, v3, 0x1
 
     goto :goto_0
 
-    .line 55
+    .line 56
     :cond_2
     invoke-virtual {v0}, Ljava/util/LinkedHashSet;->isEmpty()Z
 
@@ -323,7 +431,7 @@
 
     return-void
 
-    .line 56
+    .line 57
     :cond_3
     new-instance v1, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$Motion;
 
@@ -333,11 +441,11 @@
 
     iput-object v1, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator;->active:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$Motion;
 
-    .line 57
+    .line 58
     iget-object p2, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator;->active:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$Motion;
 
     invoke-virtual {p1, p2}, Landroid/animation/Animator;->addListener(Landroid/animation/Animator$AnimatorListener;)V
 
-    .line 58
+    .line 59
     return-void
 .end method

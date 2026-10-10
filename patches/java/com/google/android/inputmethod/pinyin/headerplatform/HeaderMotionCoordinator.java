@@ -12,6 +12,7 @@ import java.util.LinkedHashSet;
 public final class HeaderMotionCoordinator implements HeaderModule {
     private static final String MODULE_ID = "native-motion";
     private Motion active;
+    private LayoutWait pending;
 
     @Override public String getModuleId() { return MODULE_ID; }
     @Override public int getDefaultPriority() { return 0; }
@@ -57,8 +58,87 @@ public final class HeaderMotionCoordinator implements HeaderModule {
         animator.addListener(active);
     }
 
+    public static boolean awaitNativeLayout(View anchor, View[] views,
+            Runnable resume, Runnable fallback) {
+        HeaderPlatformOwner owner = HeaderPlatformOwners.find(anchor.getContext());
+        if (owner == null) return false;
+        HeaderModule module = owner.getHeaderPlatformController().getRegisteredModule(MODULE_ID);
+        if (!(module instanceof HeaderMotionCoordinator)) return false;
+        HeaderMotionCoordinator coordinator = (HeaderMotionCoordinator) module;
+        coordinator.finish();
+        coordinator.pending = coordinator.new LayoutWait(anchor, views, resume, fallback);
+        coordinator.pending.begin();
+        return true;
+    }
+
     public void finish() {
         if (active != null) active.close();
+        if (pending != null) pending.complete(false);
+    }
+
+    private final class LayoutWait implements Runnable, View.OnAttachStateChangeListener,
+            View.OnLayoutChangeListener, ViewTreeObserver.OnPreDrawListener {
+        final View anchor;
+        final View[] views;
+        final Runnable resume, fallback;
+        final float panelAlpha;
+        ViewTreeObserver observer;
+        boolean queued, closed;
+
+        LayoutWait(View anchor, View[] views, Runnable resume, Runnable fallback) {
+            this.anchor = anchor; this.views = views;
+            this.resume = resume; this.fallback = fallback;
+            panelAlpha = views[2].getAlpha();
+        }
+
+        void begin() {
+            views[2].setAlpha(0f);
+            anchor.addOnAttachStateChangeListener(this);
+            for (View view : views) view.addOnLayoutChangeListener(this);
+            observer = anchor.getViewTreeObserver();
+            observer.addOnPreDrawListener(this);
+            check();
+        }
+
+        boolean ready() {
+            for (View view : views) if (view.getHeight() <= 0 || view.isLayoutRequested()) return false;
+            return true;
+        }
+
+        void check() {
+            if (closed) return;
+            if (!anchor.isShown() || anchor.getWindowVisibility() != View.VISIBLE) {
+                complete(false);
+            } else if (!queued && ready()) {
+                queued = true;
+                anchor.post(this);
+            }
+        }
+
+        @Override public void run() {
+            queued = false;
+            if (!closed && ready() && anchor.isShown()
+                    && anchor.getWindowVisibility() == View.VISIBLE) complete(true);
+            else check();
+        }
+
+        void complete(boolean start) {
+            if (closed) return;
+            closed = true;
+            anchor.removeCallbacks(this);
+            anchor.removeOnAttachStateChangeListener(this);
+            for (View view : views) view.removeOnLayoutChangeListener(this);
+            if (observer != null && observer.isAlive()) observer.removeOnPreDrawListener(this);
+            views[2].setAlpha(panelAlpha);
+            if (pending == this) pending = null;
+            if (start) resume.run(); else fallback.run();
+        }
+
+        @Override public boolean onPreDraw() { check(); return true; }
+        @Override public void onLayoutChange(View v, int l, int t, int r, int b,
+                int oldL, int oldT, int oldR, int oldB) { check(); }
+        @Override public void onViewAttachedToWindow(View view) { check(); }
+        @Override public void onViewDetachedFromWindow(View view) { complete(false); }
     }
 
     private final class Motion extends AnimatorListenerAdapter

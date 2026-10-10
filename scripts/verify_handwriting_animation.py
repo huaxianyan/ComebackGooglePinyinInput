@@ -22,14 +22,22 @@ def verify(decoded: Path) -> None:
     assert 'iget-object v2, p0, Laxs;->a:Ljava/lang/Runnable;' in fallback
     assert 'invoke-interface {v2}, Ljava/lang/Runnable;->run()V' in fallback
     assert 'const/4 v0, 0x0' in fallback
-    assert 'LayoutParams;->height:I' in clean
-    assert clean.index('LayoutParams;->height:I') < guards[0].start()
-    assert clean.count('LayoutParams;->height:I') == 1
-    assert 'const/4 v2, -0x2' in clean[:guards[0].start()]
+    assert clean.index('Laxs;->restoreBodyLayout(Landroid/view/View;)V') < guards[0].start()
+    restore = text.split('.method public static restoreBodyLayout', 1)[1].split('.end method', 1)[0]
+    assert 'const/4 v1, -0x2' in restore
+    assert 'LayoutParams;->height:I' in restore
+    assert text.count('LayoutParams;->height:I') == 1
+    deferred = text.split('.method public deferFirstExpansion', 1)[1].split('.end method', 1)[0]
+    assert 'Laxs;->a:Z' in deferred and 'Laxs;->b:Z' in deferred
+    assert 'awaitNativeLayout' in deferred
+    action = (decoded / 'smali/akx.smali').read_text(encoding='utf-8')
+    assert action.index('deferKeyboardViewSwitch') < action.index('->animateKeyboardViewSwitch')
+    cancel = text.split('.method public final cancelPreviousAnimation', 1)[1].split('.end method', 1)[0]
+    assert 'finishNativeMotion' in cancel
     assert 'HeaderMotionCoordinator;->prepareNativeMotion(Landroid/animation/Animator;[Landroid/view/View;)V' in entry
     assert entry.count('iput-boolean v1, p0, Laxs;->b:Z') == 1
     assert entry.index('iput-boolean v1, p0, Laxs;->b:Z') < entry.index('invoke-virtual {v2}, Laxp;->c()V')
-    assert 'const/4 v1, 0x0' in clean[clean.index('setLayoutParams'):clean.index('Laxp;->c()V')]
+    assert 'const/4 v1, 0x0' in clean[clean.index('restoreBodyLayout'):clean.index('Laxp;->c()V')]
     assert 'invoke-virtual {p0, v0}, Laxs;->a(F)V' in entry
     assert 'invoke-virtual {v0}, Landroid/animation/AnimatorSet;->start()V' in entry
     interpolation = text.split('.method final a(F)V', 1)[1].split('.end method', 1)[0]

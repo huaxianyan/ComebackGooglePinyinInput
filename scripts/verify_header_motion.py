@@ -34,6 +34,13 @@ def verify(decoded: Path) -> None:
     assert 'HeaderModule;' in module and 'getRegisteredModule' in module
     assert 'const/16 v1, 0x24' in module or 'const/16 v0, 0x24' in module
     assert 'appendHeaderMotionTargets' in module
+    wait = (platform/'HeaderMotionCoordinator$LayoutWait.smali').read_text(encoding='utf-8')
+    for contract in ['isLayoutRequested', 'onLayoutChange', 'onViewDetachedFromWindow',
+                     'removeCallbacks', 'removeOnLayoutChangeListener', 'removeOnPreDrawListener',
+                     'panelAlpha:F', 'closed:Z']:
+        assert contract in wait, contract
+    assert 'postDelayed' not in wait
+    assert 'awaitNativeLayout' in module
     for callback in ['onAnimationEnd','onAnimationCancel','onViewDetachedFromWindow','onPreDraw']:
         assert callback in motion, callback
     assert 'ViewFrameRateCompat;->requestHigh(Landroid/view/View;Z)V' in motion
