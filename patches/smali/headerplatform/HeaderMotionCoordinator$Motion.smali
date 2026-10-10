@@ -54,19 +54,19 @@
         }
     .end annotation
 
-    .line 67
+    .line 72
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$Motion;->this$0:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator;
 
     invoke-direct {p0}, Landroid/animation/AnimatorListenerAdapter;-><init>()V
 
-    .line 68
+    .line 73
     iput-object p2, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$Motion;->animator:Landroid/animation/Animator;
 
     iput-object p3, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$Motion;->anchor:Landroid/view/View;
 
     iput-object p4, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$Motion;->targets:Ljava/util/LinkedHashSet;
 
-    .line 69
+    .line 74
     return-void
 .end method
 
@@ -75,17 +75,17 @@
 .method close()V
     .locals 3
 
-    .line 80
+    .line 85
     iget-boolean v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$Motion;->requested:Z
 
     if-eqz v0, :cond_0
 
-    .line 81
+    .line 86
     const/4 v0, 0x0
 
     iput-boolean v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$Motion;->requested:Z
 
-    .line 82
+    .line 87
     iget-object v1, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$Motion;->targets:Ljava/util/LinkedHashSet;
 
     invoke-virtual {v1}, Ljava/util/LinkedHashSet;->iterator()Ljava/util/Iterator;
@@ -109,13 +109,13 @@
 
     goto :goto_0
 
-    .line 84
+    .line 89
     :cond_0
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$Motion;->anchor:Landroid/view/View;
 
     invoke-virtual {v0, p0}, Landroid/view/View;->removeOnAttachStateChangeListener(Landroid/view/View$OnAttachStateChangeListener;)V
 
-    .line 85
+    .line 90
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$Motion;->observer:Landroid/view/ViewTreeObserver;
 
     if-eqz v0, :cond_1
@@ -132,18 +132,18 @@
 
     invoke-virtual {v0, p0}, Landroid/view/ViewTreeObserver;->removeOnPreDrawListener(Landroid/view/ViewTreeObserver$OnPreDrawListener;)V
 
-    .line 86
+    .line 91
     :cond_1
     const/4 v0, 0x0
 
     iput-object v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$Motion;->observer:Landroid/view/ViewTreeObserver;
 
-    .line 87
+    .line 92
     iget-object v1, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$Motion;->animator:Landroid/animation/Animator;
 
     invoke-virtual {v1, p0}, Landroid/animation/Animator;->removeListener(Landroid/animation/Animator$AnimatorListener;)V
 
-    .line 88
+    .line 93
     iget-object v1, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$Motion;->this$0:Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator;
 
     invoke-static {v1}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator;->access$000(Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator;)Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$Motion;
@@ -156,7 +156,7 @@
 
     invoke-static {v1, v0}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator;->access$002(Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator;Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$Motion;)Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$Motion;
 
-    .line 89
+    .line 94
     :cond_2
     return-void
 .end method
@@ -164,7 +164,7 @@
 .method public onAnimationCancel(Landroid/animation/Animator;)V
     .locals 0
 
-    .line 92
+    .line 97
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$Motion;->close()V
 
     return-void
@@ -173,7 +173,7 @@
 .method public onAnimationEnd(Landroid/animation/Animator;)V
     .locals 0
 
-    .line 91
+    .line 96
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$Motion;->close()V
 
     return-void
@@ -182,12 +182,12 @@
 .method public onAnimationStart(Landroid/animation/Animator;)V
     .locals 2
 
-    .line 72
+    .line 77
     const/4 p1, 0x1
 
     iput-boolean p1, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$Motion;->requested:Z
 
-    .line 73
+    .line 78
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$Motion;->targets:Ljava/util/LinkedHashSet;
 
     invoke-virtual {v0}, Ljava/util/LinkedHashSet;->iterator()Ljava/util/Iterator;
@@ -211,13 +211,13 @@
 
     goto :goto_0
 
-    .line 74
+    .line 79
     :cond_0
     iget-object p1, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$Motion;->anchor:Landroid/view/View;
 
     invoke-virtual {p1, p0}, Landroid/view/View;->addOnAttachStateChangeListener(Landroid/view/View$OnAttachStateChangeListener;)V
 
-    .line 75
+    .line 80
     iget-object p1, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$Motion;->anchor:Landroid/view/View;
 
     invoke-virtual {p1}, Landroid/view/View;->getViewTreeObserver()Landroid/view/ViewTreeObserver;
@@ -226,19 +226,19 @@
 
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$Motion;->observer:Landroid/view/ViewTreeObserver;
 
-    .line 76
+    .line 81
     iget-object p1, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$Motion;->observer:Landroid/view/ViewTreeObserver;
 
     invoke-virtual {p1, p0}, Landroid/view/ViewTreeObserver;->addOnPreDrawListener(Landroid/view/ViewTreeObserver$OnPreDrawListener;)V
 
-    .line 77
+    .line 82
     return-void
 .end method
 
 .method public onPreDraw()Z
     .locals 3
 
-    .line 96
+    .line 101
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$Motion;->targets:Ljava/util/LinkedHashSet;
 
     invoke-virtual {v0}, Ljava/util/LinkedHashSet;->iterator()Ljava/util/Iterator;
@@ -268,25 +268,25 @@
 
     return v2
 
-    .line 97
+    .line 102
     :cond_1
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$Motion;->close()V
 
-    .line 98
+    .line 103
     return v2
 .end method
 
 .method public onViewAttachedToWindow(Landroid/view/View;)V
     .locals 0
 
-    .line 94
+    .line 99
     return-void
 .end method
 
 .method public onViewDetachedFromWindow(Landroid/view/View;)V
     .locals 0
 
-    .line 93
+    .line 98
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/headerplatform/HeaderMotionCoordinator$Motion;->close()V
 
     return-void

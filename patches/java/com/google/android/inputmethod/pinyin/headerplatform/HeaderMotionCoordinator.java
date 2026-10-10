@@ -24,13 +24,13 @@ public final class HeaderMotionCoordinator implements HeaderModule {
     @Override public void onFinishInput(long token) { finish(); }
     @Override public void onDetach() { finish(); }
 
-    public static void prepareNativeMotion(Animator animator, View menu, View bar) {
-        if (Build.VERSION.SDK_INT < 36 || animator == null || menu == null || bar == null) return;
-        HeaderPlatformOwner owner = HeaderPlatformOwners.find(menu.getContext());
+    public static void prepareNativeMotion(Animator animator, View[] views) {
+        if (Build.VERSION.SDK_INT < 36 || animator == null || views == null || views.length == 0 || views[0] == null) return;
+        HeaderPlatformOwner owner = HeaderPlatformOwners.find(views[0].getContext());
         if (owner != null) {
             HeaderModule module = owner.getHeaderPlatformController().getRegisteredModule(MODULE_ID);
             if (module instanceof HeaderMotionCoordinator) {
-                ((HeaderMotionCoordinator) module).prepare(animator, menu, bar);
+                ((HeaderMotionCoordinator) module).prepare(animator, views);
             }
         }
     }
@@ -42,13 +42,18 @@ public final class HeaderMotionCoordinator implements HeaderModule {
         if (module instanceof HeaderMotionCoordinator) ((HeaderMotionCoordinator) module).finish();
     }
 
-    public void prepare(Animator animator, View menu, View bar) {
+    public void prepare(Animator animator, View[] views) {
         finish();
         LinkedHashSet<View> targets = new LinkedHashSet<View>();
-        ((HeaderMotionTargetSource) menu).appendHeaderMotionTargets(targets);
-        ((HeaderMotionTargetSource) bar).appendHeaderMotionTargets(targets);
+        for (View view : views) {
+            if (view == null) continue;
+            targets.add(view);
+            if (view instanceof HeaderMotionTargetSource) {
+                ((HeaderMotionTargetSource) view).appendHeaderMotionTargets(targets);
+            }
+        }
         if (targets.isEmpty()) return;
-        active = new Motion(animator, menu, targets);
+        active = new Motion(animator, views[0], targets);
         animator.addListener(active);
     }
 

@@ -100,12 +100,63 @@ def apply_header_motion(decoded: Path) -> None:
             raise RuntimeError(f'Native Header motion entry changed: {relative}')
         hook = f'''    iget-object v{locals_count}, {owner_register}, {HELPER}->a:{KEY}
     iget-object v{locals_count+1}, {owner_register}, {HELPER}->a:{owner}
-    invoke-static {{v0, v{locals_count}, v{locals_count+1}}}, {PKG}HeaderMotionCoordinator;->prepareNativeMotion(Landroid/animation/Animator;Landroid/view/View;Landroid/view/View;)V
+    filled-new-array {{v{locals_count}, v{locals_count+1}}}, [Landroid/view/View;
+    move-result-object v{locals_count}
+    invoke-static {{v0, v{locals_count}}}, {PKG}HeaderMotionCoordinator;->prepareNativeMotion(Landroid/animation/Animator;[Landroid/view/View;)V
 
 '''
         path.write_text(source[:start] + block.replace(needle, hook + needle) + source[end:], encoding="utf-8")
 
+    patch_keyboard_renderer_targets(decoded)
     register_header_motion(decoded)
+
+
+def patch_keyboard_renderer_targets(decoded: Path) -> None:
+    import xml.etree.ElementTree as ET
+    resources = ET.parse(decoded / 'res/values/public.xml').getroot()
+    overlay_id = next(e.attrib['id'] for e in resources if e.get('type') == 'id' and e.get('name') == 'handwriting_overlay_view')
+    owner = 'Lcom/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyboardView;'
+    path = decoded / 'smali/com/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyboardView.smali'
+    text = path.read_text(encoding='utf-8')
+    text = text.replace('.source "PG"', '.source "PG"\n\n.implements ' + PKG + 'HeaderMotionTargetSource;', 1)
+    text += f'''
+.method public appendHeaderMotionTargets(Ljava/util/Collection;)V
+    .locals 4
+    invoke-interface {{p1, p0}}, Ljava/util/Collection;->add(Ljava/lang/Object;)Z
+    const/4 v1, 0x0
+    :motion_children
+    invoke-virtual {{p0}}, Landroid/view/ViewGroup;->getChildCount()I
+    move-result v2
+    if-ge v1, v2, :motion_keys
+    invoke-virtual {{p0, v1}}, Landroid/view/ViewGroup;->getChildAt(I)Landroid/view/View;
+    move-result-object v3
+    invoke-interface {{p1, v3}}, Ljava/util/Collection;->add(Ljava/lang/Object;)Z
+    add-int/lit8 v1, v1, 0x1
+    goto :motion_children
+    :motion_keys
+    iget-object v0, p0, {owner}->b:Landroid/util/SparseArray;
+    const/4 v1, 0x0
+    :motion_key_loop
+    invoke-virtual {{v0}}, Landroid/util/SparseArray;->size()I
+    move-result v2
+    if-ge v1, v2, :motion_drawing
+    invoke-virtual {{v0, v1}}, Landroid/util/SparseArray;->valueAt(I)Ljava/lang/Object;
+    move-result-object v3
+    check-cast v3, {KEY}
+    invoke-virtual {{v3, p1}}, {KEY}->appendHeaderMotionTargets(Ljava/util/Collection;)V
+    add-int/lit8 v1, v1, 0x1
+    goto :motion_key_loop
+    :motion_drawing
+    const v1, {overlay_id}
+    invoke-virtual {{p0, v1}}, Landroid/view/View;->findViewById(I)Landroid/view/View;
+    move-result-object v3
+    if-eqz v3, :motion_done
+    invoke-interface {{p1, v3}}, Ljava/util/Collection;->add(Ljava/lang/Object;)Z
+    :motion_done
+    return-void
+.end method
+'''
+    path.write_text(text, encoding='utf-8')
 
 
 def register_header_motion(decoded: Path) -> None:

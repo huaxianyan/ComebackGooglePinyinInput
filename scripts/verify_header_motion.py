@@ -21,7 +21,15 @@ def verify(decoded: Path) -> None:
     assert 'invoke-interface {p1, p0}' in provider
     # c(I) is removeAt, not valueAt. Renderer enumeration must retain its cache.
     assert 'Lkx;->c(I)Ljava/lang/Object;' not in provider
+    body = (smali / 'com/google/android/apps/inputmethod/libs/framework/keyboard/SoftKeyboardView.smali').read_text(encoding='utf-8')
+    assert 'HeaderMotionTargetSource;' in body
+    body_renderer = body.split('.method public appendHeaderMotionTargets', 1)[1].split('.end method', 1)[0]
+    assert 'SoftKeyboardView;->b:Landroid/util/SparseArray;' in body_renderer
+    assert 'SparseArray;->valueAt(I)Ljava/lang/Object;' in body_renderer
+    assert 'SoftKeyView;->appendHeaderMotionTargets' in body_renderer
+    assert 'View;->findViewById(I)Landroid/view/View;' in body_renderer
     module = (platform/'HeaderMotionCoordinator.smali').read_text(encoding='utf-8')
+    assert 'prepareNativeMotion(Landroid/animation/Animator;[Landroid/view/View;)V' in module
     motion = (platform/'HeaderMotionCoordinator$Motion.smali').read_text(encoding='utf-8')
     assert 'HeaderModule;' in module and 'getRegisteredModule' in module
     assert 'const/16 v1, 0x24' in module or 'const/16 v0, 0x24' in module
@@ -35,6 +43,7 @@ def verify(decoded: Path) -> None:
     for filename in ['AccessPointsManager','AccessPointsViewHelper']:
         source=(smali/f'com/google/android/apps/inputmethod/libs/framework/core/{filename}.smali').read_text(encoding='utf-8')
         assert source.count('HeaderMotionCoordinator;->prepareNativeMotion') == 1
+        assert 'prepareNativeMotion(Landroid/animation/Animator;[Landroid/view/View;)V' in source
         point=source.index('HeaderMotionCoordinator;->prepareNativeMotion')
         assert source.index('Animator;->start()V',point)>point
     host=(platform/'HeaderPlatformHostView.smali').read_text(encoding='utf-8')

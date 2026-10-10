@@ -18,10 +18,18 @@ def verify(decoded: Path) -> None:
     assert 'iget-object v2, p0, Laxs;->e:Landroid/view/View;' in before_guard
     assert 'invoke-virtual {p1}, Landroid/view/View;->getHeight()I' in before_guard
     assert 'invoke-virtual {p2}, Landroid/view/View;->getHeight()I' in before_guard
-    fallback = guards[0].group(1) + '\nconst/4 v0, 0x0\nreturn v0'
-    assert fallback in clean
+    fallback = clean.split('\n' + guards[0].group(1) + '\n', 1)[1].split('return v0', 1)[0]
+    assert 'iget-object v2, p0, Laxs;->a:Ljava/lang/Runnable;' in fallback
+    assert 'invoke-interface {v2}, Ljava/lang/Runnable;->run()V' in fallback
+    assert 'const/4 v0, 0x0' in fallback
+    assert 'LayoutParams;->height:I' in clean
+    assert clean.index('LayoutParams;->height:I') < guards[0].start()
+    assert clean.count('LayoutParams;->height:I') == 1
+    assert 'const/4 v2, -0x2' in clean[:guards[0].start()]
+    assert 'HeaderMotionCoordinator;->prepareNativeMotion(Landroid/animation/Animator;[Landroid/view/View;)V' in entry
     assert entry.count('iput-boolean v1, p0, Laxs;->b:Z') == 1
     assert entry.index('iput-boolean v1, p0, Laxs;->b:Z') < entry.index('invoke-virtual {v2}, Laxp;->c()V')
+    assert 'const/4 v1, 0x0' in clean[clean.index('setLayoutParams'):clean.index('Laxp;->c()V')]
     assert 'invoke-virtual {p0, v0}, Laxs;->a(F)V' in entry
     assert 'invoke-virtual {v0}, Landroid/animation/AnimatorSet;->start()V' in entry
     interpolation = text.split('.method final a(F)V', 1)[1].split('.end method', 1)[0]
