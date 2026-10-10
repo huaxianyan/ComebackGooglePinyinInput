@@ -22,15 +22,17 @@
 
 ## 本阶段验证
 
-已从原始 APK 完整重建一次。成品 Manifest 策略检查通过，包名为既有隔离 ID `com.google.android.inputmethod.pinyin.handwritingtest`，避免另建需要首次引导的测试身份。正式 ID 不变，手机上的既有第三版尚未覆盖。
+首次从原始 APK 完整重建后，成品 Manifest 策略检查通过，当时准备复用手写隔离身份，尚未安装。用户随后通知设备已远程连接，并授权清除手写测试版，因此重新构建为独立 `com.google.android.inputmethod.pinyin.predictivebacktest`，用审计设置入口直接测试现代页面，不复用旧包数据，也不主动启动或更改首次引导。
 
-产物为 `work/predictive-back/GooglePinyin-2.1.5-predictive-back-test.1.apk`，版本名 `2.1.5-predictive-back-test.1`、versionCode `4520419`、min SDK 23、target SDK 36、ARM64、非 Debug，沿用审计签名。27,825,642 字节，SHA-256 `f3da4273493d65542a425277d538b56ff601f73331d6848da11b1272231f2391`。构建中的 v1/v2/v3 签名与 16 KiB ZIP alignment 检查通过。记录在本地 `work/predictive-back/`。
+产物为 `work/predictive-back/GooglePinyin-2.1.5-predictive-back-test.1.apk`，版本名 `2.1.5-predictive-back-test.1`、versionCode `4520419`、min SDK 23、target SDK 36、ARM64、非 Debug，沿用审计签名。27,825,642 字节，独立身份版本的 SHA-256 为 `82d6a45ea2ab2dc523e0d3687a185db96d7b25f00e720a942a720a3238992314`。构建中的 v1/v2/v3 签名与 16 KiB ZIP alignment 检查通过。记录在本地 `work/predictive-back/`。
 
-实机验证阻塞：本机没有目标设备，远程及备用代理路径未得到有效 ADB 连接。没有安装、启动 Activity、修改手机设置或读取截图。返回提交、取消、系统预览、对话框和子页返回均未实测，旧 API ART 也未补测。没有启动额外 CI 或创建 Release。
+设备随后已通过远程 ADB 正常查询。前台为 Launcher，未锁屏，使用三按钮导航，默认输入法已为正式版。独立包的流式安装失败，推送安装又因连接重置失败，因此停止重复安装。失败推送的确切临时路径已清理。
+
+已按用户授权通过 `pm uninstall` 清除手写第三版及其私有数据，设备本项目仅保留正式包，默认输入法仍为正式包。未启动新 Activity、切换导航模式或读取截图。返回提交、取消、系统预览、对话框和子页返回均未实测，旧 API ART 也未补测。没有启动额外 CI 或创建 Release。当前阻塞是安装传输失败，而非设备离线。
 
 ## 下一步
 
-1. 设备可用后，检查前台任务和锁屏，再覆盖既有隔离身份，保留数据及默认输入法。正式包不动。
+1. 安装传输恢复后，检查前台任务和锁屏，安装独立预测性返回审计包。默认输入法和正式包保持原状，首次引导不主动启动或改写。
 2. 经真实入口检查根页面返回的提交与取消、内部子页和对话框返回顺序。设置取消手势应停留原页，提交应退出 Activity，内部子页应只退一层。
 3. 主题编辑取消与结果回传单独检查，测试图片仅用明确授权的素材，不改壁纸。
 4. 首次引导退出路径和 IME 原生返回链作为后续阶段，先确认回调及任务语义，再决定接入，不启用全应用属性绕过这些检查。
