@@ -15,6 +15,15 @@ def require(text: str, fragments: tuple[str, ...], label: str) -> None:
         raise RuntimeError(f"{label} is incomplete: {missing}")
 
 
+def require_branch_target(text: str, prefix: str, label: str) -> None:
+    """Check an actual conditional branch without relying on source label names."""
+    branch = re.search(prefix + r"(:[\w$]+)", text)
+    if branch is None or not re.search(
+        r"(?m)^\s*" + re.escape(branch.group(1)) + r"\s*$", text
+    ):
+        raise RuntimeError(f"{label} has no defined conditional branch target")
+
+
 def strip_kotlin_comments(source: str) -> str:
     """Drop // and /* */ comments, so a symbol named in prose is not a hit."""
     out: list[str] = []
@@ -206,7 +215,12 @@ def main() -> int:
             "DictionaryAutoBackupCompat\\$BackupListCallback",
             'getMethod("startNativeImport", Context::class.java, Uri::class.java)',
             "DictionaryImportStateReducer.open()",
-            "AnimatedContent(",
+            "transition.AnimatedContent(",
+            "SeekableTransitionState(routePath)",
+            "PredictiveBackHandler(enabled = canNavigateBack)",
+            "transitionState.seekTo(event.progress, destination)",
+            "transitionState.animateTo(origin)",
+            "if (routePath == origin) routePath = destination",
             "SettingsRouteStack.direction(initialState, targetState)",
             "slideInHorizontally(tween(300))",
             "slideOutHorizontally(tween(220))",
@@ -1680,9 +1694,14 @@ def main() -> int:
             raise RuntimeError(
                 "modern_settings_runtime_enabled survived into the merged resources"
             )
+        # Apktool normalizes ARGB literals to lowercase on a final-APK decode.
+        # Compare the same color values, without changing resource identifiers.
+        launch_theme_text = re.sub(
+            r"#[0-9a-fA-F]{8}\b", lambda match: match.group().upper(), values_text
+        )
         # The two halves of the launch theme, as they land in the decoded tree.
         require(
-            values_text,
+            launch_theme_text,
             (
                 '<style name="ModernSettingsHostTheme" parent="@android:style/'
                 'Theme.Material.Light.NoActionBar">',
@@ -1750,7 +1769,7 @@ def main() -> int:
             # plausibly. The first-run helper shipped that way and kept the legacy
             # guide on every version at or above the threshold.
             branch = re.search(
-                re.escape(route_threshold) + r"\s*\n\s*(if-\w+) v0, v1,", route_text
+                re.escape(route_threshold) + r"\s*\n\s*(if-\w+) v0, v1, (:[\w$]+)", route_text
             )
             if branch is None:
                 raise RuntimeError(f"the {label} has no branch after its threshold")
@@ -1769,13 +1788,17 @@ def main() -> int:
                 completion = re.search(
                     r"invoke-static \{p0\}, Lcom/google/android/inputmethod/pinyin/"
                     r"firstrun/FirstRunStateCompat;->isComplete\(Landroid/content/"
-                    r"Context;\)Z\s*\n\s*move-result v0\s*\n\s*(if-\w+) v0, :legacy_guide",
+                    r"Context;\)Z\s*\n\s*move-result v0\s*\n\s*(if-\w+) v0, (:[\w$]+)",
                     route_text,
                 )
                 if completion is None:
                     raise RuntimeError(
                         "the legacy first-run redirect has no completion branch"
                     )
+                # Final DEX decoding renames source labels. Both gates must
+                # still target the same legacy branch, whatever its label.
+                if completion.group(2) != branch.group(2):
+                    raise RuntimeError("first-run completion and SDK gates have different targets")
                 if completion.group(1) != "if-nez":
                     raise RuntimeError(
                         "the legacy first-run redirect branches on "
@@ -1843,9 +1866,13 @@ def main() -> int:
                 "modernsettings.compose.ModernSettingsActivity",
                 '"modern_settings_route_path"',
                 '"ThemeCatalog"',
-                ":theme_selector_legacy",
             ),
             "theme selector Insets, automatic-mode hooks and Compose redirect",
+        )
+        require_branch_target(
+            theme_selector_text,
+            re.escape(f"const/16 v1, 0x{min_sdk:x}") + r"\s*if-lt v0, v1, ",
+            "theme selector SDK redirect",
         )
         theme_insets_helper = decoded / (
             "smali/com/google/android/inputmethod/pinyin/"
@@ -1941,10 +1968,15 @@ def main() -> int:
                 "SystemAutoThemeCompat;->logInputViewRebuild(Landroid/content/Context;)V",
                 "SystemAutoThemeCompat;->applyOnKeyboardShown(Landroid/content/Context;)Z",
                 "move-result v7",
-                ":system_auto_theme_shown_done",
                 "GoogleInputMethodService;->c()V",
             ),
             "IME System Auto configuration hooks",
+        )
+        require_branch_target(
+            google_ime_text,
+            r"applyOnKeyboardShown\(Landroid/content/Context;\)Z\s*"
+            r"move-result v7\s*if-eqz v7, ",
+            "IME keyboard-popup theme rebuild guard",
         )
         if google_ime_text.count(
             "SystemAutoThemeCompat;->logInputViewRebuild(Landroid/content/Context;)V"

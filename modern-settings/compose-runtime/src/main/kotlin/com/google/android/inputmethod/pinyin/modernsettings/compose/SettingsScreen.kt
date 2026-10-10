@@ -1,8 +1,10 @@
 package com.google.android.inputmethod.pinyin.modernsettings.compose
 
-import androidx.activity.compose.BackHandler
+import androidx.activity.compose.PredictiveBackHandler
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.SeekableTransitionState
+import androidx.compose.animation.core.rememberTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -47,6 +49,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -66,6 +69,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.isActive
 
 data class SettingsActions(
     val onDynamicColorEnabledChange: (Boolean) -> Unit,
@@ -150,9 +157,35 @@ fun SettingsScreen(
     val canNavigateBack = SettingsRouteStack.canPop(routePath)
     val layoutDirection = LocalLayoutDirection.current
 
-    BackHandler(enabled = canNavigateBack, onBack = navigateBack)
-    AnimatedContent(
-        targetState = routePath,
+    val transitionState = remember { SeekableTransitionState(routePath) }
+    val transition = rememberTransition(transitionState, label = "settings-route")
+    var backGestureInProgress by remember { mutableStateOf(false) }
+
+    LaunchedEffect(routePath, backGestureInProgress) {
+        if (!backGestureInProgress) transitionState.animateTo(routePath)
+    }
+    PredictiveBackHandler(enabled = canNavigateBack) { progress ->
+        val origin = routePath
+        val destination = SettingsRouteStack.pop(origin)
+        backGestureInProgress = true
+        try {
+            // A back gesture begins from the selected page, even during entry.
+            transitionState.snapTo(origin)
+            progress.collect { event ->
+                transitionState.seekTo(event.progress, destination)
+            }
+            transitionState.animateTo(destination)
+            if (routePath == origin) routePath = destination
+        } catch (cancelled: CancellationException) {
+            // Gesture cancellation leaves the stack untouched. Lifecycle
+            // cancellation must not start another animation after disposal.
+            if (!currentCoroutineContext().isActive) throw cancelled
+            transitionState.animateTo(origin)
+        } finally {
+            backGestureInProgress = false
+        }
+    }
+    transition.AnimatedContent(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surface)
@@ -174,7 +207,6 @@ fun SettingsScreen(
                         fadeOut(tween(140)))
             }
         },
-        label = "settings-route",
     ) { targetPath ->
         SettingsRoutePage(
             route = SettingsRouteStack.current(targetPath),
