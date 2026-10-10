@@ -3472,6 +3472,8 @@ def apply(
     shutil.copytree(header_platform_src, header_platform_dst)
     from header_motion_patches import apply_header_motion
     apply_header_motion(decoded)
+    from handwriting_animation_patches import apply_handwriting_animation
+    apply_handwriting_animation(decoded)
 
     # API 30 bridge uses the official AndroidX Inline UI style Bundle protocol.
     # These classes are isolated from API 17–29 startup and are only resolved by
