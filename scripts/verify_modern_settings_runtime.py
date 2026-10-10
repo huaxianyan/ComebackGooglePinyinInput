@@ -24,6 +24,23 @@ def require_branch_target(text: str, prefix: str, label: str) -> None:
         raise RuntimeError(f"{label} has no defined conditional branch target")
 
 
+def verify_opaque_predictive_transition(source: str) -> None:
+    """Regression for the reported loss of page contrast halfway through Back."""
+    source = strip_kotlin_comments(source)
+    marker = "if (backPhase != SettingsBackPhase.Idle) {"
+    if marker not in source:
+        raise RuntimeError("settings predictive Back has no opaque transition")
+    preview = source.split(marker, 1)[1].split("} else {", 1)[0]
+    require(
+        preview,
+        ("slideInHorizontally", "slideOutHorizontally", "LinearEasing",
+         "targetContentZIndex = if (returning) -1f else 1f"),
+        "opaque predictive Back transition",
+    )
+    if "fadeIn(" in preview or "fadeOut(" in preview:
+        raise RuntimeError("predictive Back cross-fades both readable pages")
+
+
 def strip_kotlin_comments(source: str) -> str:
     """Drop // and /* */ comments, so a symbol named in prose is not a hit."""
     out: list[str] = []
@@ -218,6 +235,7 @@ def main() -> int:
             "transition.AnimatedContent(",
             "SeekableTransitionState(routePath)",
             "PredictiveBackHandler(enabled = canNavigateBack)",
+            "backPhase = SettingsBackPhase.Settling",
             "transitionState.seekTo(event.progress, destination)",
             "transitionState.animateTo(origin)",
             "if (routePath == origin) routePath = destination",
@@ -1652,6 +1670,12 @@ def main() -> int:
                     "temporary sheet probe still shipped in DEX: "
                     + retired.decode("ascii")
                 )
+
+    settings_screen = project / (
+        "compose-runtime/src/main/kotlin/com/google/android/inputmethod/pinyin/"
+        "modernsettings/compose/SettingsScreen.kt"
+    )
+    verify_opaque_predictive_transition(settings_screen.read_text(encoding="utf-8"))
 
     if args.decoded is not None:
         decoded = args.decoded

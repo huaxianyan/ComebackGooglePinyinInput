@@ -3,6 +3,7 @@ package com.google.android.inputmethod.pinyin.modernsettings.compose
 import androidx.activity.compose.PredictiveBackHandler
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.SeekableTransitionState
 import androidx.compose.animation.core.rememberTransition
 import androidx.compose.animation.core.tween
@@ -73,6 +74,8 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.isActive
+
+private enum class SettingsBackPhase { Idle, Gesture, Settling }
 
 data class SettingsActions(
     val onDynamicColorEnabledChange: (Boolean) -> Unit,
@@ -159,15 +162,18 @@ fun SettingsScreen(
 
     val transitionState = remember { SeekableTransitionState(routePath) }
     val transition = rememberTransition(transitionState, label = "settings-route")
-    var backGestureInProgress by remember { mutableStateOf(false) }
+    var backPhase by remember { mutableStateOf(SettingsBackPhase.Idle) }
 
-    LaunchedEffect(routePath, backGestureInProgress) {
-        if (!backGestureInProgress) transitionState.animateTo(routePath)
+    LaunchedEffect(routePath, backPhase) {
+        if (backPhase != SettingsBackPhase.Gesture) {
+            transitionState.animateTo(routePath)
+            backPhase = SettingsBackPhase.Idle
+        }
     }
     PredictiveBackHandler(enabled = canNavigateBack) { progress ->
         val origin = routePath
         val destination = SettingsRouteStack.pop(origin)
-        backGestureInProgress = true
+        backPhase = SettingsBackPhase.Gesture
         try {
             // A back gesture begins from the selected page, even during entry.
             transitionState.snapTo(origin)
@@ -182,7 +188,9 @@ fun SettingsScreen(
             if (!currentCoroutineContext().isActive) throw cancelled
             transitionState.animateTo(origin)
         } finally {
-            backGestureInProgress = false
+            // Keep the opaque preview transform until commit or cancellation
+            // has settled, including cancellation of the gesture coroutine.
+            backPhase = SettingsBackPhase.Settling
         }
     }
     transition.AnimatedContent(
@@ -201,10 +209,24 @@ fun SettingsScreen(
                 } else {
                     -layoutSign
                 }
-                (slideInHorizontally(tween(300)) { width -> forwardSign * width / 5 } +
-                    fadeIn(tween(durationMillis = 220, delayMillis = 60))) togetherWith
-                    (slideOutHorizontally(tween(220)) { width -> -forwardSign * width / 5 } +
-                        fadeOut(tween(140)))
+                if (backPhase != SettingsBackPhase.Idle) {
+                    val returning = direction == SettingsNavigationDirection.Backward
+                    (slideInHorizontally(tween(300, easing = LinearEasing)) { width ->
+                        forwardSign * if (returning) width / 5 else width
+                    } togetherWith slideOutHorizontally(tween(300, easing = LinearEasing)) { width ->
+                        -forwardSign * if (returning) width else width / 5
+                    }).apply {
+                        // The current page covers the previous page until it
+                        // slides away. On cancellation the returning page is
+                        // placed back on top, with both surfaces fully opaque.
+                        targetContentZIndex = if (returning) -1f else 1f
+                    }
+                } else {
+                    (slideInHorizontally(tween(300)) { width -> forwardSign * width / 5 } +
+                        fadeIn(tween(durationMillis = 220, delayMillis = 60))) togetherWith
+                        (slideOutHorizontally(tween(220)) { width -> -forwardSign * width / 5 } +
+                            fadeOut(tween(140)))
+                }
             }
         },
     ) { targetPath ->
