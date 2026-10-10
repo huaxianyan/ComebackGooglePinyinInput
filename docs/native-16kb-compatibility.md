@@ -12,7 +12,10 @@ emulator pass plus ordinary native AArch64 4 KiB device regression is sufficient
 for merging. Native AArch64 16 KiB hardware is no longer a prerequisite. Any
 future hardware-specific problem will be repaired in a separate branch.
 Emulator ARM translation and untested paths must still be reported explicitly.
-This work does not create a Release.
+The maintainer accepted the current branch on 2026-10-10 after ordinary-device
+use. This work does not create a Release. The reported handwriting-expand
+crash also occurs in the installed Release and has the same Java NaN scale
+stack, so it is tracked as a separate defect rather than a 16 KiB blocker.
 
 ## Current-baseline revalidation (2026-10-10)
 
@@ -75,8 +78,9 @@ or complete maintainer functional acceptance.
 
 The helper and the previously accepted Header audit package were removed. The
 new isolated test IME is selected for maintainer testing; the formal package and
-its data remain unchanged. Full functional feedback is still pending, so this
-branch is not merged. Evidence is in `work/native16kb-current/phone-*`.
+its data remain unchanged. The maintainer subsequently reported normal operation and accepted the branch.
+A reproducible handwriting-expand Java animation crash was separately reported
+in both this APK and the existing Release; it moves to its own repair branch. Evidence is in `work/native16kb-current/phone-*`.
 
 ## Baseline finding (historical investigation)
 
