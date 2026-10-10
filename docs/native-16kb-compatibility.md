@@ -63,6 +63,21 @@ old native gate guessed an obsolete output filename. The corrected gate uses
 evidence refers to the separately audit-signed test APK described above, not
 the CI artifact's signing identity.
 
+## Ordinary-device basic regression (2026-10-10)
+
+After the maintainer connected the ordinary physical device, its current page
+size reported `4096`. The same audit-signed `2.1.5-native16kb-test.1` APK was
+installed with its hash verified. Five legacy libraries loaded, the actual
+Chinese nine-key input/commit fixture matched, and the modern graphics library
+and real settings window startup passed. The target package had no crash-buffer
+entry. This is ordinary-device basic regression, not 16 KiB hardware execution
+or complete maintainer functional acceptance.
+
+The helper and the previously accepted Header audit package were removed. The
+new isolated test IME is selected for maintainer testing; the formal package and
+its data remain unchanged. Full functional feedback is still pending, so this
+branch is not merged. Evidence is in `work/native16kb-current/phone-*`.
+
 ## Baseline finding (historical investigation)
 
 The accepted V19 APK contains five AArch64 shared libraries. The first audit
