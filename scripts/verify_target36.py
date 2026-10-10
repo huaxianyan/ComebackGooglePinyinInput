@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""Verify the narrow Android 16 target-SDK baseline.
+"""Verify the accepted Android 16 IME geometry and legacy-wrapper baseline.
 
-The first API 36 candidate inherits the accepted API 35 edge-to-edge model and
-explicitly freezes legacy Back dispatch. Predictive Back is intentionally a
-later, separately attributable migration.
+Modern ComponentActivity hosts migrate Back independently, as checked by the
+Compose host manifest gate. Legacy IME and wrapper dispatch remains unchanged.
 """
 
 from __future__ import annotations
@@ -30,14 +29,13 @@ def main() -> None:
     application_tag = manifest[application_start:application_end]
     if 'android:enableOnBackInvokedCallback="false"' not in application_tag:
         raise RuntimeError(
-            "Initial target-36 baseline must explicitly preserve legacy Back dispatch"
+            "Legacy IME and wrapper default must preserve their Back dispatch"
         )
     if "windowOptOutEdgeToEdgeEnforcement" in manifest:
         raise RuntimeError("Android 16 must retain the real edge-to-edge implementation")
 
-    # Keep predictive Back out of the first target-only candidate. Existing
-    # onBackPressed behavior remains the accepted authority until a dedicated
-    # migration adds and tests callbacks independently.
+    # These legacy wrappers and IME Insets code are not modern Activity hosts.
+    # Their native dispatch stays intact during the selective host migration.
     patched_sources = [
         decoded
         / "smali/com/google/android/apps/inputmethod/pinyin/firstrun/"
@@ -54,7 +52,7 @@ def main() -> None:
         for token in ("OnBackInvokedDispatcher", "OnBackInvokedCallback"):
             if token in text:
                 raise RuntimeError(
-                    f"Predictive Back was mixed into the target-only baseline: {path}"
+                    f"Legacy wrapper/IME Back changed outside the host migration: {path}"
                 )
 
     first_run = patched_sources[0].read_text(encoding="utf-8")
@@ -183,7 +181,7 @@ def main() -> None:
 
     print(
         "Android 16 baseline verified: targetSdkVersion 36, accepted edge-to-edge "
-        "implementation retained, legacy Back dispatch explicitly frozen, and "
+        "implementation retained, legacy IME/wrapper Back retained, and "
         "transitional navigation geometry rejected"
     )
 

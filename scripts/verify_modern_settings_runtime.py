@@ -1642,6 +1642,8 @@ def main() -> int:
     if args.decoded is not None:
         decoded = args.decoded
         manifest_text = (decoded / "AndroidManifest.xml").read_text(encoding="utf-8")
+        from prepare_compose_host_manifest import verify_predictive_back_manifest
+        verify_predictive_back_manifest(manifest_text)
         require(
             manifest_text,
             (

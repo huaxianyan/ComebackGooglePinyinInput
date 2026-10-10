@@ -30,6 +30,10 @@ THEME_BUILDER_ACTIVITY = (
     "com.google.android.inputmethod.pinyin.modernsettings.compose."
     "ModernThemeBuilderActivity"
 )
+# Migrate only hosts whose root Back already delegates to ComponentActivity.
+# The guide's explicit Home/task-removal path and the legacy IME stay unchanged.
+PREDICTIVE_BACK_ACTIVITIES = (ACTIVITY, THEME_BUILDER_ACTIVITY)
+
 LEGACY_LAUNCHER_ACTIVITY = (
     "com.google.android.apps.inputmethod.libs.framework.core.LauncherActivity"
 )
@@ -57,6 +61,20 @@ def remove_component(application: ET.Element, tag: str, name: str) -> None:
     marker = ET.SubElement(application, tag)
     marker.set(A + "name", name)
     marker.set(T + "node", "remove")
+
+
+def verify_predictive_back_manifest(manifest_text: str) -> None:
+    application = ET.fromstring(manifest_text).find("application")
+    if application is None or application.get(A + "enableOnBackInvokedCallback") != "false":
+        raise RuntimeError("Legacy IME and activities must retain their Back dispatch")
+    activities = {node.get(A + "name"): node for node in application.findall("activity")}
+    for name in PREDICTIVE_BACK_ACTIVITIES:
+        node = activities.get(name)
+        if node is None or node.get(A + "enableOnBackInvokedCallback") != "true":
+            raise RuntimeError(f"Modern predictive Back host missing: {name}")
+    for name, node in activities.items():
+        if name not in PREDICTIVE_BACK_ACTIVITIES and node.get(A + "enableOnBackInvokedCallback") == "true":
+            raise RuntimeError(f"Back migration lacks a reviewed return path: {name}")
 
 
 def main() -> int:
@@ -182,6 +200,8 @@ def main() -> int:
     # of them, rather than repeated per activity.
     for host in host_activities:
         host.set(A + "theme", "@style/" + HOST_THEME)
+        if host.get(A + "name") in PREDICTIVE_BACK_ACTIVITIES:
+            host.set(A + "enableOnBackInvokedCallback", "true")
 
     # The hosts used to be registered as disabled below API 35 through a bool
     # resource with a matching qualifier directory to turn them back on. The
@@ -226,6 +246,7 @@ def main() -> int:
     ET.register_namespace("android", ANDROID)
     ET.register_namespace("tools", TOOLS)
     tree.write(manifest, encoding="utf-8", xml_declaration=True)
+    verify_predictive_back_manifest(manifest.read_text(encoding="utf-8"))
     print(f"prepared Compose host manifest at {manifest}")
     return 0
 
