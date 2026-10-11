@@ -828,6 +828,7 @@ class ModernSettingsActivity : ComponentActivity() {
  * The wizard is the host that did neither, which is why it and not the settings
  * screen was the page that looked wrong.
  */
+@OptIn(androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun ModernSettingsTheme(content: @Composable () -> Unit) {
     val context = LocalContext.current
@@ -842,7 +843,10 @@ internal fun ModernSettingsTheme(content: @Composable () -> Unit) {
         context.resources.configuration.layoutDirection,
     )
     CompositionLocalProvider(LocalLayoutDirection provides layoutDirection) {
-        MaterialTheme(colorScheme = colors) {
+        MaterialTheme(
+            colorScheme = colors,
+            motionScheme = androidx.compose.material3.MotionScheme.expressive(),
+        ) {
             Surface(modifier = Modifier.fillMaxSize()) { content() }
         }
     }

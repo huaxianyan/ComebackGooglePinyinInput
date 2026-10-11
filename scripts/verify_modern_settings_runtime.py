@@ -24,21 +24,16 @@ def require_branch_target(text: str, prefix: str, label: str) -> None:
         raise RuntimeError(f"{label} has no defined conditional branch target")
 
 
-def verify_opaque_predictive_transition(source: str) -> None:
-    """Regression for the reported loss of page contrast halfway through Back."""
-    source = strip_kotlin_comments(source)
-    marker = "if (backPhase != SettingsBackPhase.Idle) {"
-    if marker not in source:
-        raise RuntimeError("settings predictive Back has no opaque transition")
-    preview = source.split(marker, 1)[1].split("} else {", 1)[0]
-    require(
-        preview,
-        ("slideInHorizontally", "slideOutHorizontally", "LinearEasing",
-         "targetContentZIndex = if (returning) -1f else 1f"),
-        "opaque predictive Back transition",
-    )
-    if "fadeIn(" in preview or "fadeOut(" in preview:
-        raise RuntimeError("predictive Back cross-fades both readable pages")
+def verify_motion_timing(resources: str) -> None:
+    """Keep both pages readable halfway through the reported Back gesture."""
+    import xml.etree.ElementTree as ET
+    values = {node.attrib["name"]: int(node.text or "0")
+              for node in ET.fromstring(resources).findall("integer")}
+    foreground = values["settings_motion_foreground_duration"]
+    fade = values["settings_motion_fade_duration"]
+    delay = values["settings_motion_foreground_fade_delay"]
+    if not (0 < fade < foreground / 2 < delay and delay + fade <= foreground):
+        raise RuntimeError("page fade timing loses readable content halfway through Back")
 
 
 def strip_kotlin_comments(source: str) -> str:
@@ -166,26 +161,12 @@ def main() -> int:
             # of leave - only the scrim, whose dismissal Material 3 routes
             # through a hide of its own, had an exit.
             "scope.launch {",
-            "leaveTheWayItArrived(sheetState)",
             "sheetState.hide()",
             "}.invokeOnCompletion {",
             "if (!sheetState.isVisible) action()",
-            # The exit runs on the spring the sheet arrived on. Material 3
-            # hands the sheet a stiffer spring for hiding than for showing -
-            # measured, the way in covers the height in about 200 ms and the
-            # way out covers it in under 50 - which is what read as the sheet
-            # being yanked off the screen. Neither field is reachable from
-            # Kotlin, so the copy goes through the generated accessors.
-            "getShowMotionSpec\\$material3",
-            "setHideMotionSpec\\$material3",
-            "FiniteAnimationSpec::class.java",
-            "private fun leaveTheWayItArrived(state: SheetState)",
-            # Material 3 writes both specs back on every recomposition, so the
-            # copy is re-applied on the frames the sheet is actually moving on.
-            # That observer is also the only thing that reaches the scrim's
-            # dismissal, which is the component's own hide and cannot be hooked.
-            "snapshotFlow { sheetOffset(sheetState) }",
-            "private fun sheetOffset(state: SheetState): Float",
+            "motionScheme = androidx.compose.material3.MotionScheme.expressive()",
+            "MaterialTheme.motionScheme.defaultSpatialSpec()",
+            "MaterialTheme.motionScheme.defaultEffectsSpec()",
             "onClick = { dismissThen(onDismiss) }",
             "onClick = { dismissThen(actions.apply) }",
             "onClick = { dismissThen(actions.assignLight) }",
@@ -233,15 +214,16 @@ def main() -> int:
             'getMethod("startNativeImport", Context::class.java, Uri::class.java)',
             "DictionaryImportStateReducer.open()",
             "transition.AnimatedContent(",
-            "SeekableTransitionState(routePath)",
-            "PredictiveBackHandler(enabled = canNavigateBack)",
+            "SeekableTransitionState(state)",
+            "PredictiveBackHandler(enabled = active && previous != null)",
             "backPhase = SettingsBackPhase.Settling",
-            "transitionState.seekTo(event.progress, destination)",
+            "transitionState.seekTo(it.progress, destination)",
             "transitionState.animateTo(origin)",
-            "if (routePath == origin) routePath = destination",
-            "SettingsRouteStack.direction(initialState, targetState)",
-            "slideInHorizontally(tween(300))",
-            "slideOutHorizontally(tween(220))",
+            "if (latestState == origin) onNavigateBack()",
+            "SettingsRouteStack::direction",
+            "motion.transition(direction(initialState, targetState), layoutDirection)",
+            "slideInHorizontally(tween(incomingDuration, easing = FastOutSlowInEasing))",
+            "slideOutHorizontally(tween(outgoingDuration, easing = FastOutSlowInEasing))",
             ".background(MaterialTheme.colorScheme.surface)",
             ".clipToBounds()",
             "actions.onShortcutsEnabledChange",
@@ -1077,7 +1059,8 @@ def main() -> int:
         activity_text,
         (
             "internal fun ModernSettingsTheme(content: @Composable () -> Unit)",
-            "MaterialTheme(colorScheme = colors) {",
+            "colorScheme = colors,",
+            "motionScheme = androidx.compose.material3.MotionScheme.expressive(),",
             "Surface(modifier = Modifier.fillMaxSize()) { content() }",
         ),
         "shared Compose theme surface",
@@ -1653,9 +1636,8 @@ def main() -> int:
             b"intent_extra_key_no_delete_button",
             # The exit spring the sheet copies onto its own hide, and the two
             # accessors it goes through - neither is reachable from Kotlin.
-            b"leaveTheWayItArrived",
-            b"getShowMotionSpec",
-            b"setHideMotionSpec",
+            b"SettingsNavigationContentKt",
+            b"SettingsMotion",
         ):
             if literal not in dex_bytes:
                 raise RuntimeError(
@@ -1664,18 +1646,18 @@ def main() -> int:
         # A probe that reads the sheet's real animation specs back was used to
         # find the stiffness difference and must never ship: it logs on every
         # hide and would tell a user's logcat which spring the sheet uses.
-        for retired in (b"ThemeSheetProbe", b"probeSheet"):
+        for retired in (b"ThemeSheetProbe", b"probeSheet", b"leaveTheWayItArrived"):
             if retired in dex_bytes:
                 raise RuntimeError(
                     "temporary sheet probe still shipped in DEX: "
                     + retired.decode("ascii")
                 )
 
-    settings_screen = project / (
-        "compose-runtime/src/main/kotlin/com/google/android/inputmethod/pinyin/"
-        "modernsettings/compose/SettingsScreen.kt"
-    )
-    verify_opaque_predictive_transition(settings_screen.read_text(encoding="utf-8"))
+    module = project / "compose-runtime/src/main"
+    verify_motion_timing((module / "res/values/settings_motion.xml").read_text(encoding="utf-8"))
+    sheet_source = (module / "kotlin/com/google/android/inputmethod/pinyin/modernsettings/compose/ThemePreviewSheet.kt").read_text(encoding="utf-8")
+    if "getShowMotionSpec" in sheet_source or "setHideMotionSpec" in sheet_source:
+        raise RuntimeError("theme sheet still reflects internal animation fields")
 
     if args.decoded is not None:
         decoded = args.decoded

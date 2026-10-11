@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <fraction name="settings_motion_foreground_offset">-100%</fraction>
+    <fraction name="settings_motion_background_offset">25%</fraction>
+</resources>

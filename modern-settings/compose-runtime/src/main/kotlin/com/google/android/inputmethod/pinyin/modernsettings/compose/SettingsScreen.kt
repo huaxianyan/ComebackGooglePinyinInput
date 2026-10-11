@@ -1,17 +1,6 @@
 package com.google.android.inputmethod.pinyin.modernsettings.compose
 
-import androidx.activity.compose.PredictiveBackHandler
 import androidx.annotation.StringRes
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.SeekableTransitionState
-import androidx.compose.animation.core.rememberTransition
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -50,7 +39,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -59,23 +47,14 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.isActive
-
-private enum class SettingsBackPhase { Idle, Gesture, Settling }
 
 data class SettingsActions(
     val onDynamicColorEnabledChange: (Boolean) -> Unit,
@@ -158,77 +137,11 @@ fun SettingsScreen(
         }
     }
     val canNavigateBack = SettingsRouteStack.canPop(routePath)
-    val layoutDirection = LocalLayoutDirection.current
-
-    val transitionState = remember { SeekableTransitionState(routePath) }
-    val transition = rememberTransition(transitionState, label = "settings-route")
-    var backPhase by remember { mutableStateOf(SettingsBackPhase.Idle) }
-
-    LaunchedEffect(routePath, backPhase) {
-        if (backPhase != SettingsBackPhase.Gesture) {
-            transitionState.animateTo(routePath)
-            backPhase = SettingsBackPhase.Idle
-        }
-    }
-    PredictiveBackHandler(enabled = canNavigateBack) { progress ->
-        val origin = routePath
-        val destination = SettingsRouteStack.pop(origin)
-        backPhase = SettingsBackPhase.Gesture
-        try {
-            // A back gesture begins from the selected page, even during entry.
-            transitionState.snapTo(origin)
-            progress.collect { event ->
-                transitionState.seekTo(event.progress, destination)
-            }
-            transitionState.animateTo(destination)
-            if (routePath == origin) routePath = destination
-        } catch (cancelled: CancellationException) {
-            // Gesture cancellation leaves the stack untouched. Lifecycle
-            // cancellation must not start another animation after disposal.
-            if (!currentCoroutineContext().isActive) throw cancelled
-            transitionState.animateTo(origin)
-        } finally {
-            // Keep the opaque preview transform until commit or cancellation
-            // has settled, including cancellation of the gesture coroutine.
-            backPhase = SettingsBackPhase.Settling
-        }
-    }
-    transition.AnimatedContent(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface)
-            .clipToBounds(),
-        transitionSpec = {
-            val direction = SettingsRouteStack.direction(initialState, targetState)
-            if (direction == SettingsNavigationDirection.None) {
-                fadeIn(tween(120)) togetherWith fadeOut(tween(120))
-            } else {
-                val layoutSign = if (layoutDirection == LayoutDirection.Ltr) 1 else -1
-                val forwardSign = if (direction == SettingsNavigationDirection.Forward) {
-                    layoutSign
-                } else {
-                    -layoutSign
-                }
-                if (backPhase != SettingsBackPhase.Idle) {
-                    val returning = direction == SettingsNavigationDirection.Backward
-                    (slideInHorizontally(tween(300, easing = LinearEasing)) { width ->
-                        forwardSign * if (returning) width / 5 else width
-                    } togetherWith slideOutHorizontally(tween(300, easing = LinearEasing)) { width ->
-                        -forwardSign * if (returning) width else width / 5
-                    }).apply {
-                        // The current page covers the previous page until it
-                        // slides away. On cancellation the returning page is
-                        // placed back on top, with both surfaces fully opaque.
-                        targetContentZIndex = if (returning) -1f else 1f
-                    }
-                } else {
-                    (slideInHorizontally(tween(300)) { width -> forwardSign * width / 5 } +
-                        fadeIn(tween(durationMillis = 220, delayMillis = 60))) togetherWith
-                        (slideOutHorizontally(tween(220)) { width -> -forwardSign * width / 5 } +
-                            fadeOut(tween(140)))
-                }
-            }
-        },
+    SettingsNavigationContent(
+        state = routePath,
+        previous = if (canNavigateBack) SettingsRouteStack.pop(routePath) else null,
+        onNavigateBack = navigateBack,
+        direction = SettingsRouteStack::direction,
     ) { targetPath ->
         SettingsRoutePage(
             route = SettingsRouteStack.current(targetPath),

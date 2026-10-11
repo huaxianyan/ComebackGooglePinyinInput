@@ -1,0 +1,55 @@
+# 设置界面动效统一
+
+## 范围与分支
+
+用户认可预测性返回第三版，但希望参考 Pixel Text，统一普通切页、返回及应用界面的其他动画。范围包含设置、首次引导、主题编辑、许可列表与正文、弹窗、底部面板和状态展开，不修改键盘、候选、快捷菜单和手写的原生动画。保存、取消、返回栈和首次引导退出语义保持不变。
+
+实现位于独立 `feat/unified-settings-motion`，明确以预测性返回第三版检查点 `b41236a` 为基底。`feat/predictive-back` 保留，不改写检查点，不合主线、不发布。该基底尚未合入主线，后续整合不能当作已验收主线直接推进。
+
+## 参考依据
+
+参考 Pixel Text 的公开 [页面导航](https://github.com/Pixel-Tailor-CN/PixelText/blob/main/app/src/main/java/vip/mystery0/pixel/text/ui/AppNavigation.kt)、[主题](https://github.com/Pixel-Tailor-CN/PixelText/blob/main/app/src/main/java/vip/mystery0/pixel/text/ui/theme/Theme.kt) 和 [依赖声明](https://github.com/Pixel-Tailor-CN/PixelText/blob/main/gradle/libs.versions.toml)。没有读取其用户短信或截图，也未核对用户设备上的版本，公开主线不等于该安装版本的精确实现。
+
+页面动效采用前景完整位移、背景短距离位移、轻微缩放和缓动。进入淡化较快，前景退出淡化延后，避免预测性返回中段同时丢失两页可读性。普通返回与预测性返回共用转场配置。组件主题使用官方 Expressive 动效，不把页面滑动机械套用到所有控件。
+
+本项目按这些公开动效参数独立实现，没有引入短信业务、导航数据模型或用户内容。
+
+## 一个页面转场与生命周期
+
+- `SettingsMotion.kt` 是 Compose 页面转场的唯一实现。普通前进、顶部返回和手势返回共用它，不再分别选择淡化或不透明滑动。
+- 参数只在 `res/values/settings_motion.xml` 定义：前景 300 ms、背景 260 ms，进入淡化 90 ms，前景退出淡化延迟 210 ms。背景位移为页面宽度的四分之一，缩放保持轻微，方向资源覆盖 RTL。
+- `SettingsNavigationContent.kt` 统一手势进度、取消、提交和活动页面的返回所有权。设置返回栈与许可列表／正文都是调用方，保留各自的保存状态与业务返回栈，不通过转场复制一份业务状态。
+- 上一页预览及退出中的子宿主不抢占当前页的返回回调。只有手势完成并结束转场后，才通过原调用方提交业务返回，取消不提交。
+- 4 份 Activity XML 动画引用同一批参数，现代 Activity 的宿主主题关联该窗口动画。首次引导完成与退出、主题编辑保存与取消的 Kotlin 回调没有改动。系统图片选择器、输入法选择器、外部网页和 Launcher 的动画仍归系统或外部应用管理。
+
+## 官方组件动效与依赖边界
+
+模块编译先确认当前稳定 Material 3 `1.4.0` 把 `MotionScheme` 及相关主题重载标为内部 API。没有通过反射、可见性抑制或手绘控件绕过，用户要求继续后，选用提供公开接口的 `1.5.0-alpha17`。
+
+该版本声明的 Compose 依赖下限为 `1.11.0-beta02`，与项目已固定的 `1.11.4` 兼容，AAR 要求 min compile SDK 35。本轮仅固定 Material 3 版本，保留 Compose BOM、Kotlin、AGP、JDK、min SDK 23、compile SDK 36、target SDK 36，不照搬 Pixel Text 的 `alpha29` 与 Compose 1.12 依赖。模块编译及正式宿主的 Manifest 合并已通过。
+
+**Material 3 是预发布依赖**，没有把它称为稳定版。全部控件与旧 API 运行时仍需验收，构建成功不能替代这部分回归。
+
+共享 `ModernSettingsTheme` 通过公开 `MotionScheme.expressive()` 配置官方组件动效，原有配色、布局方向和字体配置保留。词库状态展开、箭头旋转和指示器颜色变化也取用同一官方空间／效果动效规范。词库刷新、备份及同步回调不变。
+
+主题面板仍通过 `sheetState.hide()` 完成退出后才执行按钮动作，但已删除复制内部 show/hide 弹簧的反射方法及逐帧覆盖观察器。进入、退出、遮罩和控件由官方组件按共享动效方案管理，不再维持第二份内部弹簧状态。
+
+## 构建与设备证据
+
+从原始 APK 完整重建一次，非 Debug 独立包 `2.1.5-settings-motion-test.1`（`4520422`）保留原返回审计 ID `com.google.android.inputmethod.pinyin.predictivebacktest`，以审计签名覆盖安装并保留测试数据。APK 28,268,342 字节，SHA-256 `8eda16d2615120fe7503a526fc3c0e393a74b134f075b49225e01feacfe04810`。包身份、min／target SDK、ARM64、审计证书、v1/v2/v3 签名、16 KiB ZIP alignment 与设备安装后的完整哈希通过。
+
+- Compose 模块 19 组、94 项单元测试通过，更新后的页面中段可读性静态回归通过。
+- 6,633 个原始资源 ID 保持，构建中间树及成品解码的现代设置和 target 36 门禁通过。门禁不再锁定已删除的反射方法，检查共享页面实现、官方组件动效与中段淡化时序。
+- 真机真实「首页进入输入设置，再返回首页」检查了拖动中、取消及提交。两个拖动位置的固定软件标签同时存在于呈现树，位置及尺寸变化，取消后原页恢复，提交后首页恢复。不读取截图，不记录设置值。
+- 4 份 Activity 动画通过 Android `AnimationUtils` 实际加载及初始化，时长符合共享资源。该证据是资源解析通过，不等于首次引导及主题编辑的完整窗口转场已经验收。
+- 许可正文专项尝试因辅助工具未找到页面标签而中止，没有完成嵌套返回的设备验证，不能记为通过。未据此断定应用缺陷，也不继续无限扩展辅助工具。停止后确认探针已卸载，三按钮导航及正式默认输入法已恢复。一次紧接恢复命令的读取早于系统完成更新，随后状态核对确认恢复。
+
+本轮未主动启动首次引导、读取图片或操作正式包。临时手势导航只用于测试，按每次测试前状态恢复，本轮测试前为三按钮导航。Action Launcher 未切换。
+
+## 尚未验收
+
+用户负责整体动画观感，尤其基本切页、顶部返回、手势中段、取消收尾、面板进入／退出和控件响应。许可正文的嵌套返回、主题面板设备回归、主题编辑取消／结果回传及首次引导窗口转场仍待确认。首次引导继续遵守不提前启动的测试边界，图片测试需单独授权。
+
+旧 API ART、RTL、字体缩放、快速重复操作、生命周期中断、帧时间与长期功耗未补测，没有额外 CI。Native 16 KiB 原生库算法、键盘和候选没有改动，不以本轮构建替代其旧证据或新增运行时承诺。
+
+本地证据在 `work/predictive-back/`：`runtime-test4.json`、`package-verification-test4.json`、`install-test4.json`、`unit-unified-motion.log`、`runtime-unified-license.json`、`after-license-attempt.json` 和成品解码树。完整源码在正常源码与脚本目录，不以本地证据目录作为唯一实现来源。

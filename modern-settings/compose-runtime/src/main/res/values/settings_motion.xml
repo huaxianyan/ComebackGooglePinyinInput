@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Shared by Compose navigation and framework Activity animations. -->
+    <integer name="settings_motion_foreground_duration">300</integer>
+    <integer name="settings_motion_background_duration">260</integer>
+    <integer name="settings_motion_fade_duration">90</integer>
+    <integer name="settings_motion_background_fade_delay">120</integer>
+    <integer name="settings_motion_foreground_fade_delay">210</integer>
+    <fraction name="settings_motion_foreground_offset">100%</fraction>
+    <fraction name="settings_motion_background_offset">-25%</fraction>
+    <fraction name="settings_motion_foreground_entry_scale">96%</fraction>
+    <fraction name="settings_motion_foreground_exit_scale">90%</fraction>
+    <fraction name="settings_motion_background_scale">92%</fraction>
+    <style name="SettingsActivityAnimations" parent="@android:style/Animation.Activity">
+        <item name="android:activityOpenEnterAnimation">@anim/settings_page_open_enter</item>
+        <item name="android:activityOpenExitAnimation">@anim/settings_page_open_exit</item>
+        <item name="android:activityCloseEnterAnimation">@anim/settings_page_close_enter</item>
+        <item name="android:activityCloseExitAnimation">@anim/settings_page_close_exit</item>
+    </style>
+</resources>

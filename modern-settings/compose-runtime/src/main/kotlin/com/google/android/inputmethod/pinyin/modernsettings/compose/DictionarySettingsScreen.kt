@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class)
+
 package com.google.android.inputmethod.pinyin.modernsettings.compose
 
 import androidx.compose.foundation.clickable
@@ -343,6 +345,7 @@ private fun DictionaryHealthRow(
     var expanded by rememberSaveable { mutableStateOf(false) }
     val dark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
     val color by animateColorAsState(
+        animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec(),
         targetValue = when {
             state.loading || state.tone == DictionaryHealthTone.Unknown -> MaterialTheme.colorScheme.outline
             state.tone == DictionaryHealthTone.Healthy -> if (dark) Color(0xFF81C784) else Color(0xFF2E7D32)
@@ -360,9 +363,12 @@ private fun DictionaryHealthRow(
         state.tone == DictionaryHealthTone.Notice -> R.string.modern_settings_health_notice
         else -> R.string.modern_settings_health_unconfirmed
     })
-    val detailsEnter = expandVertically() + fadeIn()
-    val detailsExit = shrinkVertically() + fadeOut()
+    val detailsEnter = expandVertically(MaterialTheme.motionScheme.defaultSpatialSpec()) +
+        fadeIn(MaterialTheme.motionScheme.defaultEffectsSpec())
+    val detailsExit = shrinkVertically(MaterialTheme.motionScheme.defaultSpatialSpec()) +
+        fadeOut(MaterialTheme.motionScheme.defaultEffectsSpec())
     val expansionRotation by animateFloatAsState(
+        animationSpec = MaterialTheme.motionScheme.defaultSpatialSpec(),
         targetValue = if (expanded) 180f else 0f,
         label = "dictionary details expansion",
     )

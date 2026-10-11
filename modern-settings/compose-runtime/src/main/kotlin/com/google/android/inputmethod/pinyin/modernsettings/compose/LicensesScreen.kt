@@ -1,7 +1,6 @@
 package com.google.android.inputmethod.pinyin.modernsettings.compose
 
 import android.content.Context
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -111,14 +110,34 @@ internal fun LicensesScreen(
     val context = LocalContext.current
     val licenses = remember(context) { readPackagedLicenses(context) }
     var openedIndex by rememberSaveable { mutableIntStateOf(-1) }
-    val opened = licenses.getOrNull(openedIndex)
-
-    if (opened != null) {
-        BackHandler { openedIndex = -1 }
-        LicenseTextPage(license = opened, onNavigateBack = { openedIndex = -1 })
-        return
+    SettingsNavigationContent(
+        state = openedIndex,
+        previous = if (licenses.getOrNull(openedIndex) != null) -1 else null,
+        onNavigateBack = { openedIndex = -1 },
+        direction = { from, to ->
+            when {
+                from == to -> SettingsNavigationDirection.None
+                to < 0 -> SettingsNavigationDirection.Backward
+                else -> SettingsNavigationDirection.Forward
+            }
+        },
+    ) { index ->
+        val opened = licenses.getOrNull(index)
+        if (opened != null) {
+            LicenseTextPage(license = opened, onNavigateBack = { openedIndex = -1 })
+        } else {
+            LicenseList(licenses, onNavigateBack, onOpen = { openedIndex = it })
+        }
     }
+}
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun LicenseList(
+    licenses: List<PackagedLicense>,
+    onNavigateBack: () -> Unit,
+    onOpen: (Int) -> Unit,
+) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -155,7 +174,7 @@ internal fun LicensesScreen(
             itemsIndexed(licenses) { index, license ->
                 SettingsActionRow(
                     title = license.name,
-                    onClick = { openedIndex = index },
+                    onClick = { onOpen(index) },
                 )
             }
         }

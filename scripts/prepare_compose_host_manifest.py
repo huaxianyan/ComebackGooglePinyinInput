@@ -235,6 +235,7 @@ def main() -> int:
             f'    <style name="{HOST_THEME}" parent="{parent}">\n'
             f'        <item name="android:windowBackground">{background}</item>\n'
             f'        <item name="android:colorBackground">{background}</item>\n'
+            '        <item name="android:windowAnimationStyle">@style/SettingsActivityAnimations</item>\n'
             "    </style>\n"
             "</resources>\n",
             encoding="utf-8",
