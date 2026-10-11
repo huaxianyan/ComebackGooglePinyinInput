@@ -6,8 +6,8 @@
 - Compatibility v10+ package：`com.google.android.inputmethod.pinyin.compat`
 - 原版 versionName：`4.5.2.193126728-arm64-v8a`
 - 原版 versionCode：`4520313`
-- 最新已发布正式版：`v2.1.5`（versionCode `4520407`，targetSdk 36）
-- 上一正式版：`v2.1.4`（versionCode `4520406`，targetSdk 36）
+- 本轮发布版本：`v2.1.6`（versionCode `4520423`，targetSdk 36）
+- 上一正式版：`v2.1.5`（versionCode `4520407`，targetSdk 36）
 - 当前源码 minSdk：23（Android 6.0），与 Compose/AndroidX 依赖下限一致
 - 原版 targetSdk：26
 - 已验收并合并的现代化阶段：targetSdk 29、30、31、32、33、34、35、36
@@ -17,6 +17,8 @@
 
 ## 原生库
 
+以下为原始 APK 的对齐，不代表本轮构建产物。当前构建的重排与实际运行证据见 [16 KiB 专项记录](native-16kb-compatibility.md)。
+
 | 文件 | AArch64 | LOAD alignment |
 |---|---:|---:|
 | liben_data_bundle.so | 是 | 64 KiB |
@@ -25,7 +27,7 @@
 | libhwrword.so | 是 | 64 KiB |
 | libpinyin_data_bundle.so | 是 | 64 KiB |
 
-`libhmm_gesture_hwr_zh.so` 同时包含 HMM、滑行输入和中文手写 JNI。拼音能够工作说明该库至少可以被加载，但不能排除其手写路径存在 16 KiB page-size 或旧 native 实现问题。
+`libhmm_gesture_hwr_zh.so` 同时包含 HMM、滑行输入和中文手写 JNI，当前构建保留完整能力并重排库布局。16 KiB 模拟器已验证库加载与基本输入，普通 4 KiB 真机及用户体验通过。模拟器使用 ARM 转译，未将该证据扩大为全部 JNI 路径或原生 AArch64 16 KiB 真机验收。
 
 ## 导航栏问题
 
@@ -134,5 +136,6 @@ java.lang.IllegalArgumentException: Invalid Region.Op - only INTERSECT and DIFFE
 - **旧 ART 隔离**：受支持的 API 23–29 不解析 API 30 的 Inline Autofill 类，API 23–35 不解析 API 36 的帧率方法。低版本设置与引导验证采用模拟器，API 27–29 未实测，不描述为真机验收。
 - **Inline Autofill 依赖**：需要 Android 11/API 30 及以上，实际能力取决于当前 App、Android Autofill Framework 和用户选择的 Autofill Provider。
 - **TalkBack 与 Inline Suggestions**：touch exploration 下尚未完成独立验收，因此继续不声明 `supportsInlineSuggestionsWithTouchExploration`。
-- **16 KiB native page-size**：`libhmm_gesture_hwr_zh.so` 的 `PT_LOAD Align 0x1000` 仍未解决，ZIP alignment 不能代替 native 运行时验收，目前只有 4 KiB 真机回归和模拟器结论。
-- **Android 17 / API 37**、预测返回和 Material You 后续阶段均为独立工作，不与已发布版本混合。
+- **16 KiB native page-size**：原生库布局已适配并经实际 16 KiB 模拟器验证，普通 4 KiB 实机回归通过。ZIP alignment 与 ELF 校验分别执行，原生 AArch64 16 KiB 真机未测，完整路径和转译边界见专项记录。
+- **预测性返回与动效**：现代设置的当前范围已验收，不要求主题编辑、首次引导或原生键盘使用同一返回方式。Material 3 使用公开 Expressive 接口的预发布版本，最新依赖的完整旧 API 专项未测。
+- **Android 17 / API 37**：设备尚未升级，适配暂缓，后续独立实施。

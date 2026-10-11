@@ -24,9 +24,10 @@ target SDK:     36
 ### 现代 Android 兼容
 
 - 完成 target SDK 29–36 的逐版本适配与验收，支持 Android 16 的 covering-IME、系统导航区域和 edge-to-edge 行为。
-- 修复 Android 16 手写首笔崩溃，保留原有离屏画布、压感宽度、路径平滑和原生识别流程。
+- 修复 Android 16 手写首笔与首次扩大崩溃，布局就绪后播放首次扩大动画，保留原生识别和高度切换。
+- 原生库已适配 16 KiB 页大小，通过实际 16 KiB 模拟器及普通 4 KiB 实机验证，模拟器的 ARM 转译边界见专项记录。
 - 修复候选、标点、符号和表情滚动/翻页后的误触问题。
-- Android 16 高刷新率屏幕上的候选面板展开/收起动画会在运动期间动态请求高刷，结束后立即释放，避免键盘空闲时持续锁定高刷新率。
+- Android 16 高刷新率屏幕上的候选、符号分页、快捷面板及手写切换在实际运动期间动态请求高刷，结束后恢复系统调度。
 - 补齐现代 Android 所需的组件导出、PendingIntent 和动态 Receiver 安全要求。
 
 ### 统一 Header、简繁切换、剪贴板与 Autofill
@@ -43,6 +44,7 @@ target SDK:     36
 - 主题清单支持键盘预览、模式选择及浅色/深色主题分配，自定义主题的创建、裁剪和编辑也使用 Compose。
 - 首次引导和许可证页使用同一套现代界面，旧 Preference 设置页保留为历史代码，不再作为正常设置入口。
 - 现代设置保留原 Preference key、类型、默认值、依赖和业务回调，并支持动态配色、RTL、大字体、横屏、分屏和 TalkBack 语义。
+- 现代设置支持预测性返回，普通切页、顶部返回与手势返回共用分层转场，控件和底部面板使用官方 Expressive 动效。主题编辑、首次引导及键盘保留各自业务返回语义。
 - 「关于」页面提供当前项目的 [GitHub 仓库](https://github.com/huaxianyan/ComebackGooglePinyinInput) 入口。
 - 首次引导整理为同页完成「启用输入法」和「选择输入法」，避免旧权限页、失效统计和重复引导状态。
 
@@ -149,7 +151,9 @@ target SDK:     36
 - 复古 9 键设置位于英文输入分类，开关变化立即生效。
 - Inline Autofill 需要 Android 11/API 30 及以上，并取决于当前 App、Android Autofill Framework 和用户选择的 Autofill Provider。
 - TalkBack touch exploration 下的 Inline Suggestions 尚未声明支持，系统会采用自身回退路径。
-- Android 17/API 37、Predictive Back 和最终 16 KiB native page-size 运行时验收属于独立后续工作。
+- 当前范围的预测性返回与统一动效已验收，未执行的专项和旧 API 回归边界见 [统一动效记录](docs/settings-motion-unification.md)。Material 3 动效接口使用预发布依赖，不称为稳定版本。
+- 16 KiB 属于模拟器验证，不是原生 AArch64 16 KiB 真机验收，完整边界见 [原生兼容记录](docs/native-16kb-compatibility.md)。
+- Android 17/API 37 适配暂缓，后续以独立分支开展。
 
 ## 用户词典备份与恢复
 

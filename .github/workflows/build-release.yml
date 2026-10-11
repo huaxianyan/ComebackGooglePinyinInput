@@ -258,7 +258,11 @@ jobs:
 
       - name: Verify versioned release notes
         shell: pwsh
-        run: python scripts/verify_release_notes.py
+        run: |
+          python scripts/test_verify_release_notes.py
+          if ($LASTEXITCODE -ne 0) { throw "Release notes regression tests failed" }
+          python scripts/verify_release_notes.py
+          if ($LASTEXITCODE -ne 0) { throw "Release notes format failed" }
 
       - name: Decode and verify final APK
         shell: pwsh
@@ -410,14 +414,16 @@ jobs:
           $notes = @"
           ## 构建信息
 
-          - Architecture: ``arm64-v8a``
-          - Android versionName: ``$env:EXPECTED_VERSION_NAME``
-          - Android versionCode: ``$env:EXPECTED_VERSION_CODE``
-          - target SDK: ``$env:EXPECTED_TARGET_SDK``
-          - Application ID: ``$env:APPLICATION_ID``
-          - APK SHA-256: ``$env:APK_SHA256``
-          - Signing certificate SHA-256: ``$env:EXPECTED_CERT_SHA256``
-          - Source commit: ``${{ github.sha }}``
+          | 项目 | 值 |
+          | --- | --- |
+          | 版本 | ``$env:TAG_NAME`` |
+          | versionCode | ``$env:EXPECTED_VERSION_CODE`` |
+          | 架构 | ``arm64-v8a`` |
+          | min / target SDK | ``23 / $env:EXPECTED_TARGET_SDK`` |
+          | 包名 | ``$env:APPLICATION_ID`` |
+          | APK SHA-256 | ``$env:APK_SHA256`` |
+          | 签名证书 SHA-256 | ``$env:EXPECTED_CERT_SHA256`` |
+          | 源码提交 | ``${{ github.sha }}``
           "@
           $releaseNotesSource = "docs/releases/v$env:EXPECTED_VERSION_NAME.md"
           if (-not (Test-Path $releaseNotesSource)) {
@@ -425,6 +431,8 @@ jobs:
           }
           Get-Content $releaseNotesSource -Raw | Out-File release-notes.md -Encoding utf8
           Add-Content release-notes.md "`n$notes"
+          python scripts/verify_release_notes.py release-notes.md
+          if ($LASTEXITCODE -ne 0) { throw "Assembled release body format failed" }
           gh release view $env:TAG_NAME --repo $env:GITHUB_REPOSITORY *> $null
           if ($LASTEXITCODE -eq 0) {
             throw "Release $env:TAG_NAME already exists; published releases and assets are immutable"
