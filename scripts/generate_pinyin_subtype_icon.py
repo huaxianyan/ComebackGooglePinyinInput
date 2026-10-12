@@ -30,7 +30,12 @@ DEFAULT_FONT = ROOT / "work/NotoSansCJK-Regular.ttc"
 DEFAULT_OUTPUT = ROOT / "patches/res/drawable/ic_ime_subtype_pinyin.xml"
 CHARACTER = "拼"
 VIEWPORT = 24.0
-PADDING = 2.0
+# The glyph is fitted into a 10-unit box inside the 24-unit viewport. At
+# 420 dpi that renders the ink about 26 px tall, which sits within a few
+# percent of Gboard's 「あ」 subtype mark (~24.5 px). Filling the viewport
+# instead makes the icon roughly twice the size of every other entry in the
+# switcher.
+PADDING = 7.0
 
 
 def pick_simplified_chinese(collection: TTCollection):
