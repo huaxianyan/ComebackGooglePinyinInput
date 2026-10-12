@@ -664,7 +664,8 @@ Pixel 10 Pro / Android 16 最终几何：
 - 唯一明确需要改动的是 `System.load()` 的 DCL-C 只读要求。原生库加载器的三级回退链最后一级会把 `.so` 解压到应用可写目录再加载，正常路径下不会走到。
 - static final 反射限制、`MessageQueue` 无锁实现、LAN 权限、ContactsProvider CP2 两项、后台音频与大屏方向限制，静态审计判定为不涉及或低风险，理由见调查文档。
 - CJKV IME 无障碍 API 属新增能力，按项目约定需要独立分支与「默认关闭」例外流程，本轮只登记。
-- 真机基线待设备连接后采集。
+- 真机基线已于 2026-10-12 采集：API 37、`sdk_full=37.1`、4 KiB 页、三键导航，升级后无新的异常退出。冒烟测试待设备恢复后补完。
+- 版本声明已定：`apktool.yml` 的 `targetSdkVersion` 写 `37`，Compose 宿主写 `compileSdk = 37` 加 `compileSdkMinor = 2`。次版本号只在编译侧存在。
 
 后续实施仍按本文的共同完成条件执行，并新增 `scripts/verify_target37.py`。
 

@@ -7,9 +7,23 @@
 ## 调查基线
 
 - 当前正式基线 `v2.1.6`，`targetSdkVersion=36`、`minSdkVersion=23`。
-- 本机 SDK 已安装 `android-37.2` 平台，其 `build.prop` 为 `ro.build.version.sdk=37`、`sdk_full=37.2`、`release=17`。设备侧报的是 `sdk_full=37.1`。**平台目录名带次版本号，且两侧次版本号并不一致**，`compileSdk` 与 `targetSdk` 的写法需单独确认，不能照抄目录名。
+- 本机 SDK 已安装 `android-37.2` 平台，其 `build.prop` 为 `ro.build.version.sdk=37`、`sdk_full=37.2`、`release=17`；设备侧报的是 `sdk_full=37.1`。两侧次版本号并不一致，写法结论见下。
 - 静态审计基于本次生成的原始 APK 干净解码树 `work/a17-audit/decoded/`（`apktool d -f`，3264 个 smali 文件，无任何补丁）。
 - **结论边界**：行为变更判定全部来自静态审计，没有在 API 37 设备上运行验证。真机基线已于 2026-10-12 采集（见 3.2），但只做了只读检查，冒烟测试未完成。标注「需实测」的项目必须真机确认后才能写进验收记录。
+
+### 次版本号声明（已定）
+
+Android 17 的 SDK 首次出现 `major.minor` 形式的平台目录（本机 `android-37.2`，设备 `sdk_full=37.1`）。结论是**只有编译侧能写次版本号，目标侧不能**：
+
+| 位置 | 写法 | 依据 |
+| --- | --- | --- |
+| `apktool.yml` 的 `sdkInfo.targetSdkVersion` | `37`（纯整数） | 平台自带的 `data/res/values/attrs_manifest.xml` 里，`<uses-sdk>` 只定义 `minSdkVersion`、`targetSdkVersion`、`maxSdkVersion` 三个属性，且全文没有次版本号属性 |
+| Compose 宿主的 `compileSdk` | `37` | AGP 9.3.1 的 `LibraryExtension` 提供了公开的 `compileSdkMinor` |
+| Compose 宿主的 `compileSdkMinor` | `2` | 本机只有 `platforms/android-37.2`，没有 `platforms/android-37`；不写次版本号 AGP 找不到平台 |
+
+依据是本地构件而不是文档：`com.android.build.gradle.LibraryExtension` 在 AGP 9.3.1 与 9.4.0 里都有 `getCompileSdkMinor` / `setCompileSdkMinor`，`CompileSdkDelegate` 带 `compileSdkMinor` 与 `getMinorApiLevel`；同一版本里**没有** `targetSdkMinor`，`TargetSdkSpecImpl` 也不含任何次版本字段，与平台清单属性一致。
+
+项目清单不声明 `compileSdkVersion`，因此 apktool 侧不需要额外处理。设备 `37.1` 与本机平台 `37.2` 是不同构建分支（设备 `CP3A.260905.009`，平台 `CP41.260814.003.B1`），不影响上述写法。
 
 ## 一、官方行为变更归集
 
@@ -26,7 +40,7 @@
 | `static final` 字段不可修改 | 反射改 `static final` 抛 `IllegalAccessException`，JNI 改会导致崩溃 | 未发现同类用法，见 2.4 |
 | CJKV IME 无障碍支持 | 新增 `TextAttribute.Builder.setTextSuggestionSelected()` 与 `AccessibilityEvent.setTextChangeTypes()` | 可选增强，不构成阻断，见 3.1 |
 | ECH 默认启用 | TLS 连接默认启用加密客户端问候 | 不涉及。应用无自有 TLS 连接 |
-| `ACCESS_LOCAL_NETWORK` | 局域网访问需要新的运行时权限 | 不涉及。全树无套接字使用 |
+| `ACCESS_LOCAL_NETWORK` | 局域网访问需要新的运行时权限 | 不涉及。全树无套接字使用。target 36 期间的隐式授权见 3.2 |
 | 物理设备隐藏密码 | `show_passwords_physical` 对外接键盘生效 | 不涉及。没有密码输入框 |
 | 标准短信 OTP 保护 | 短信验证码延迟 3 小时 | 不涉及。不读短信 |
 | Activity 安全性加固 | 后台 Activity 启动限制扩展到 `IntentSender`，需从 `MODE_BACKGROUND_ACTIVITY_START_ALLOWED` 迁移 | 低风险。`IntentSender` 只出现在 GMS 的 `GoogleApiActivity`，Google 账户同步已移除，该路径不可达 |
@@ -129,10 +143,10 @@ Android 17 为中日韩越输入法新增了两个 API：输入法在设置合�
 - 更早的三条 `APP CRASH` 发生在 2026-10-08 与 10-10，构建是 Android 16，包是 `2.1.5`，堆栈为已知的手写 `scaleY=NaN`（`axs.a` → `animateKeyboardViewSwitch`），已由 2.1.6 修复，不是 Android 17 回归。
 - DropBox 中本包条目同样属于 `2.1.5` 时代。当前 crash buffer 与运行日志没有 `VerifyError`、隐藏 API 拒绝或 `UnsatisfiedLinkError`。
 
-两点需要后续核对：
+采集时留下的两点疑问已经查清：
 
-- **次版本号错位**：设备报 `sdk_full=37.1`，本机 SDK 平台是 `android-37.2`。`compileSdk` 与 `targetSdk` 的写法要在这个背景下确认。
-- 正式包被授予了 `ACCESS_LOCAL_NETWORK: granted=true`，而清单里没有声明该权限。需要确认这是平台给存量应用的兼容预授权，还是别的原因。本项目不使用局域网，无论哪种都不需要申请。
+- **次版本号错位**：设备 `sdk_full=37.1`、本机平台 `android-37.2`，两者来自不同构建分支（设备 `CP3A.260905.009`，平台 `CP41.260814.003.B1`）。这不影响 target 写法，结论见「调查基线」下的次版本号声明。
+- **`ACCESS_LOCAL_NETWORK` 被授予**：本包声明了 `INTERNET` 且 target 36，平台按拆分权限模型给了隐式授权。官方文档原文是「拥有 `INTERNET` 权限的应用将获得 `ACCESS_LOCAL_NETWORK` 的隐式授权，从而允许其保留访问权限。这是暂时的，一旦应用将目标 SDK 提升至 37，此访问权限将默认被阻止」。本项目不使用套接字，提升 target 后该权限被收回不会造成任何功能变化，也不需要在清单里声明。
 
 ### 3.3 尚未覆盖
 
@@ -146,10 +160,9 @@ Android 17 为中日韩越输入法新增了两个 API：输入法在设置合�
 ## 四、下一步
 
 1. 设备恢复连接后补完冒烟：键盘几何与触摸区域、按键音、内存变化、首次引导与设置页显示。
-2. 确认 `compileSdk` 与 `targetSdk` 在次版本号（设备 37.1 / SDK 平台 37.2）背景下的写法。
-3. 从 `master` 创建 `feat/target-sdk-37`，先做**纯 target 提升**，不预置猜测性补丁，观察 DCL-C 回退链是否真的触发。
-4. 新增 `scripts/verify_target37.py`，固定 target 37、只读原生库加载、以及 1.1 中已判定「不涉及」的清单项。
-5. 按 target 29–36 的既有完成条件走构建、静态门禁、真机 ART 与功能回归。
+2. 从 `master` 创建 `feat/target-sdk-37`，先做**纯 target 提升**——`apktool.yml` 写 `targetSdkVersion: 37`，Compose 宿主写 `compileSdk = 37` 加 `compileSdkMinor = 2`——不预置猜测性补丁，观察 DCL-C 回退链是否真的触发。
+3. 新增 `scripts/verify_target37.py`，固定 target 37、只读原生库加载、以及 1.1 中已判定「不涉及」的清单项。
+4. 按 target 29–36 的既有完成条件走构建、静态门禁、真机 ART 与功能回归。
 
 ## 相关文档
 
