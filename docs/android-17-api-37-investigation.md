@@ -85,6 +85,8 @@ Android 17 的 SDK 首次出现 `major.minor` 形式的平台目录（本机 `an
 
 处置方向有两个：给解压产物补 `setReadOnly()`，或者删掉这条回退。倾向后者，但需要先确认没有设备真的会走到它。
 
+**实测确认（见 3.4）**：target 提升到 37 的隔离包在真机上，`nativeloader` 从解压目录直接加载并返回 `ok`，`library_path` 里的 APK 回退段一次都没有用到。也就是说回退链在本项目的打包方式下确实不可达，无需补丁。
+
 ### 2.2 按键音
 
 按键音走 `AudioManager.playSoundEffect(int, float)`，调用点在按键音效模块与音量预览控件。键盘可见时进程处于有效生命周期，预期不受后台音频限制影响。**需真机确认按键音与音量预览音仍然发声。**
@@ -169,17 +171,50 @@ Android 17 为中日韩越输入法新增了两个 API：输入法在设置合�
 
 另外发现一处与 Android 17 无关但值得确认的现象：`HeaderPlatformHostView.java:133` 是无条件的 `Log.i`，一轮 36 次点击（32 次按键加 4 次候选）产生 32 条 `HeaderPlatformAudit` 记录，成对出现（`native=false idle=true` 与 `native=true idle=false`）。正式包保留这个粒度的日志值得确认是否有意。
 
-### 3.4 尚未覆盖
+### 3.4 target 37 纯提升实测（2026-10-12 采集）
 
-- 按键音与音量预览音：设备处于免打扰，被压制的正是键盘音效所在的 `STREAM_SYSTEM`。需要先关掉免打扰才能测，而免打扰由用户用 MacroDroid 设置，未改动。临时打开的「按键声音」已还原为关闭。
-- 首次引导在 Android 17 上的显示：需要新装隔离包并重置 `guide_complete`，尚未取得授权。
+分支 `feat/target-sdk-37`，只改 target 相关声明，不预置任何猜测性补丁。改动面：
+
+| 文件 | 改动 |
+| --- | --- |
+| `scripts/apply_patches.py` | `apktool.yml` 写 `targetSdkVersion: 37` |
+| `version.properties` | `TARGET_SDK=37` |
+| `modern-settings/reconstructed-host-prototype/build.gradle.kts` | `compileSdk = 37` 加 `compileSdkMinor = 2` |
+| `modern-settings/compose-runtime/build.gradle.kts` | 同上 |
+| `modern-settings/gradle.properties` | 新增 `android.suppressUnsupportedCompileSdk=37.2` |
+| `scripts/verify_target36.py` | 接受 36 或 37，作为过渡门禁 |
+| `scripts/verify_modern_settings_runtime.py` | 断言字符串 `targetSdk = 37` |
+| `.github/workflows/build-release.yml`、`docs/build-and-release.md` | 同步平台与版本号 |
+
+构建 `BUILD SUCCESSFUL in 17m 21s`，59 个 task，产物 v1/v2/v3 签名与 16 KiB zipalign 均通过。`compileSdk = 37` 加 `compileSdkMinor = 2` 确实解析到了 `platforms/android-37.2`。
+
+**AGP 警告**：AGP 9.3.1 打印「tested up to compile SDK version 37.1」。本机只有 `platforms/android-37.2`，没有 `android-37` 可退，而设备 `sdk_full` 恰好是 37.1，所以这条警告无法靠选平台规避。以 `android.suppressUnsupportedCompileSdk=37.2` 知情接受，理由写进了 `gradle.properties` 注释：警告语义是「未验证」而非「不支持」，替代方案是完全不按 37 编译；升级 AGP 属独立议题，会牵动可复现门禁。压制后重新配置确认警告消失。
+
+**DCL-C 实测**——本轮提升的核心目的：
+
+| 项目 | 观测 |
+| --- | --- |
+| 落地形式 | 安装目录下出现 `lib/`，`legacyNativeLibraryDir` 指向它，说明 `useLegacyPackaging = true` 生效，`.so` 由包管理器解压 |
+| 文件权限 | `lib/arm64/` 为 `drwxr-xr-x`，6 个 `.so` 全为 `-rwxr-xr-x`，**均无写位**，满足 DCL-C 的只读要求 |
+| 命名空间配置 | `target_sdk_version=37`，`library_path` 为两段式：`.../lib/arm64` 在前、`.../base.apk!/lib/arm64-v8a` 在后 |
+| 实际加载 | 3 条 `nativeloader: Load /data/app/.../lib/arm64/<lib>.so ... : ok`，全部命中第一段；回退段未被使用 |
+| 错误 | 无 `UnsatisfiedLinkError`，无 DCL 相关告警 |
+
+结论：在 `useLegacyPackaging = true` 的打包方式下，DCL-C 回退链**不可达**，2.1 节标为「潜在风险」的判断得到实测支持，无需为它写补丁。
+
+**首次引导**：隔离包 `com.google.android.inputmethod.pinyin.target37test`（`2.1.7-target37.1`，versionCode 4520500，targetSdk 37）为全新安装，冷启动 264 ms 后直接落到 `ModernFirstRunActivity`。引导页渲染正常：标题「设置 Google 拼音输入法」、两项步骤、步骤 1 按钮可用而步骤 2 因未启用而置灰、底部「完成」置灰，深色主题与三键导航均正确。这一步留给用户自行走完，未代为操作。
+
+### 3.5 尚未覆盖
+
+- 按键音与音量预览音：设备处于免打扰，被压制的正是键盘音效所在的 `STREAM_SYSTEM`。需要先关掉免打扰才能测，而免打扰由用户用 MacroDroid 设置，未改动。临时打开的「按键声音」已还原为关闭。采集本次数据时 `zen_mode` 仍为 1。
+- 首次引导的**流程本身**：隔离包已装、页面已确认渲染正常（见 3.4），但启用输入法、选择输入法、完成这三步由用户自行走完，助手未代跑，因此流程结果待用户反馈。
 - 旋转后 IME 可见性：静态判定为不适用（见 2.6），未做旋转实测。
 
 ## 四、下一步
 
-1. 按键音与首次引导两项冒烟需要授权后才能补，见 3.4。
-2. 从 `master` 创建 `feat/target-sdk-37`，先做**纯 target 提升**——`apktool.yml` 写 `targetSdkVersion: 37`，Compose 宿主写 `compileSdk = 37` 加 `compileSdkMinor = 2`——不预置猜测性补丁，观察 DCL-C 回退链是否真的触发。
-3. 新增 `scripts/verify_target37.py`，固定 target 37、只读原生库加载、以及 1.1 中已判定「不涉及」的清单项。
+1. 按键音与音量预览音需要用户先关掉免打扰才能补测，见 3.5。
+2. ~~从 `master` 创建 `feat/target-sdk-37`，先做纯 target 提升，观察 DCL-C 回退链是否真的触发。~~ **已完成，见 3.4。**回退链未触发，无需补丁。
+3. 新增 `scripts/verify_target37.py`，固定 target 37、只读原生库加载、以及 1.1 中已判定「不涉及」的清单项。现有 `verify_target36.py` 是过渡态，接受 36 或 37，应在新门禁就位后收回。
 4. 按 target 29–36 的既有完成条件走构建、静态门禁、真机 ART 与功能回归。
 
 ## 相关文档
