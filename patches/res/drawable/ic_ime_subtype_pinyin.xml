@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!--
+        The 拼 glyph from Noto Sans CJK SC Regular. Android 17
+        renders each input method's subtype icon as a small monochrome
+        mark, so pointing at the full-colour app icon only produced a
+        block. Black on purpose: the system tints subtype icons itself.
+    -->
+    <path
+        android:fillColor="#FF000000"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="0.5"
+        android:strokeLineJoin="round"
+        android:strokeLineCap="round"
+        android:pathData="M6.506 12.828 6.732 13.698C7.722 13.376 8.997 12.947 10.189 12.542L10.069 11.732C8.758 12.161 7.412 12.578 6.518 12.828ZM6.673 8.895V9.730H10.189V8.895ZM8.127 6.500V16.320C8.127 16.487 8.067 16.535 7.912 16.535C7.781 16.547 7.328 16.547 6.816 16.535C6.935 16.785 7.042 17.178 7.078 17.405C7.817 17.405 8.282 17.369 8.580 17.226C8.878 17.083 8.985 16.821 8.985 16.320V6.500ZM10.844 9.015V9.873H17.220V9.015ZM10.451 12.268V13.126H17.494V12.268ZM14.872 9.265V17.417H15.754V9.265ZM11.547 6.905C11.976 7.561 12.417 8.443 12.596 8.991L13.406 8.621C13.216 8.085 12.739 7.227 12.298 6.595ZM15.790 6.524C15.540 7.322 15.051 8.454 14.646 9.146L15.361 9.444C15.778 8.788 16.290 7.728 16.719 6.846ZM12.262 9.277V12.149C12.262 13.603 12.131 15.641 10.141 16.868C10.343 17.011 10.618 17.309 10.737 17.500C12.858 16.070 13.132 13.853 13.132 12.137V9.253Z" />
+</vector>

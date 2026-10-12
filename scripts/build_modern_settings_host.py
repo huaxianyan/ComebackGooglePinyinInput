@@ -26,6 +26,13 @@ def executable(path: Path, arguments: list[str]) -> list[str]:
 
 
 def main() -> int:
+    # GitHub's Windows runners hand this script a cp1252 console, which cannot
+    # encode the CJK labels the workflow accepts for --launcher-label and
+    # --ime-label. Echoing such a command would otherwise kill the build with
+    # UnicodeEncodeError, so switch stdout to UTF-8 before anything prints.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--original", type=Path, required=True)
     parser.add_argument("--work", type=Path, required=True)

@@ -18,8 +18,10 @@ def main() -> None:
     decoded = args.decoded.resolve()
 
     apktool = (decoded / "apktool.yml").read_text(encoding="utf-8")
-    if "targetSdkVersion: 36" not in apktool:
-        raise RuntimeError("Android 16 verifier requires targetSdkVersion 36")
+    if not any(
+        f"targetSdkVersion: {target}" in apktool for target in (36, 37)
+    ):
+        raise RuntimeError("Android 16 verifier requires targetSdkVersion 36+")
 
     manifest = (decoded / "AndroidManifest.xml").read_text(encoding="utf-8")
     application_start = manifest.find("<application ")
@@ -180,7 +182,7 @@ def main() -> None:
         )
 
     print(
-        "Android 16 baseline verified: targetSdkVersion 36, accepted edge-to-edge "
+        "Android 16 baseline verified: targetSdkVersion 36+, accepted edge-to-edge "
         "implementation retained, legacy IME/wrapper Back retained, and "
         "transitional navigation geometry rejected"
     )

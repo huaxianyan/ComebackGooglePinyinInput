@@ -35,7 +35,7 @@
 
 - Python 3.12 或兼容版本
 - JDK 17
-- Android SDK Platform 36
+- Android SDK Platform 36 与 37.2。36 供可复现的 smali 生成器与协议夹具使用，37.2 供 Compose 宿主通过 `compileSdk = 37` 加 `compileSdkMinor = 2` 解析；Android 17 的平台目录带次版本号，只有 `platforms/android-37.2`。
 - Android Build Tools 36.0.0
 - apktool 2.12.1
 - 与目标安装身份对应的 PKCS#12/JKS keystore。
@@ -162,9 +162,10 @@ gh workflow run build-release.yml `
 ```text
 VERSION_NAME=<x.y.z>
 VERSION_CODE=<monotonic integer>
-TARGET_SDK=36
-RELEASE_TITLE=<feature-first title without version prefix>
+TARGET_SDK=37
 ```
+
+版本号后缀可用于测试包，例如 `2.1.7-pre` 对应标签 `v2.1.7-pre`。Release 标题就是标签本身，不另设功能描述字段。
 
 同时更新：
 
@@ -228,7 +229,7 @@ Release 页面只保留开头概括、主要更新、版本身份和链接，不
    git push origin v<x.y.z>
    ```
 
-6. Tag workflow 使用 `v$VERSION_NAME - $RELEASE_TITLE` 创建功能优先标题，并上传 APK 与 `.sha256`。如同名 Release 已经存在，工作流必须失败，不得覆盖已发布资产
+6. Tag workflow 以标签本身作为 Release 标题，正文取 `docs/releases/v$VERSION_NAME.md` 并在末尾追加「构建信息」，同时上传 APK 与 `.sha256`。如同名 Release 已经存在，工作流必须失败，不得覆盖已发布资产
 7. 按 [中文文案与排版规范](chinese-copywriting-style.md) 核对 Release 标题和版本化正文，再检查资产名称
 8. 从 Release 页面重新下载资产，复核 SHA-256、签名和 alignment
 9. 只有全部一致时，记录发布完成
@@ -247,5 +248,7 @@ ComebackGooglePinyinInput-arm64-v8a-<version>.apk.sha256
 Release 标题：
 
 ```text
-v<version> - <主要功能>
+v<version>
 ```
+
+标题只写标签本身，不加产品名或功能描述。加前缀后 Release 列表会变成一列被截断的同一个名字，反而看不出是哪个版本。改动性质由正文的「新功能」与「问题修复」分节体现。

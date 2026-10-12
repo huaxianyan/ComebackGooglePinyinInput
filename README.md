@@ -10,11 +10,15 @@
 
 正式 APK 请从 [GitHub Releases](https://github.com/huaxianyan/ComebackGooglePinyinInput/releases) 下载。
 
+<a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://app/%7B%22id%22%3A%22com.google.android.inputmethod.pinyin.compat%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Fhuaxianyan%2FComebackGooglePinyinInput%22%2C%22author%22%3A%22huaxianyan%22%2C%22name%22%3A%22Comeback%20Google%20Pinyin%20Input%22%7D"><img src="images/obtainium-badge.png" alt="Get it on Obtainium" height="48"></a>
+
+装了 [Obtainium](https://github.com/ImranR98/Obtainium) 的话，点上面的按钮即可把本项目加入更新列表，之后新版本会自动检查。
+
 ```text
 Application ID: com.google.android.inputmethod.pinyin.compat
 Architecture:   arm64-v8a
 min SDK:        23（Android 6.0）
-target SDK:     36
+target SDK:     37
 ```
 
 兼容版使用独立包名和项目签名，可以与 Google 官方原版同时安装，但不能覆盖由 Google 官方证书签名的应用。升级本项目版本时，请始终使用 Releases 中采用同一正式证书签名的 APK。
@@ -23,7 +27,8 @@ target SDK:     36
 
 ### 现代 Android 兼容
 
-- 完成 target SDK 29–36 的逐版本适配与验收，支持 Android 16 的 covering-IME、系统导航区域和 edge-to-edge 行为。
+- 完成 target SDK 29–37 的逐版本适配与验收，支持 Android 16 的 covering-IME、系统导航区域和 edge-to-edge 行为，并按 Android 17 的要求适配 target SDK 37。
+- 输入法切换器里的拼音条目改用单色「拼」字形图标，Android 17 下不再显示成无法辨认的方块。
 - 修复 Android 16 手写首笔与首次扩大崩溃，布局就绪后播放首次扩大动画，保留原生识别和高度切换。
 - 原生库已适配 16 KiB 页大小，通过实际 16 KiB 模拟器及普通 4 KiB 实机验证，模拟器的 ARM 转译边界见专项记录。
 - 修复候选、标点、符号和表情滚动/翻页后的误触问题。
@@ -153,7 +158,7 @@ target SDK:     36
 - TalkBack touch exploration 下的 Inline Suggestions 尚未声明支持，系统会采用自身回退路径。
 - 当前范围的预测性返回与统一动效已验收，未执行的专项和旧 API 回归边界见 [统一动效记录](docs/settings-motion-unification.md)。Material 3 动效接口使用预发布依赖，不称为稳定版本。
 - 16 KiB 属于模拟器验证，不是原生 AArch64 16 KiB 真机验收，完整边界见 [原生兼容记录](docs/native-16kb-compatibility.md)。
-- Android 17/API 37 适配暂缓，后续以独立分支开展。
+- Android 17/API 37 已完成适配与真机验证，适配结论与未覆盖项见 [Android 17 / API 37 适配调查](docs/android-17-api-37-investigation.md)。
 
 ## 用户词典备份与恢复
 

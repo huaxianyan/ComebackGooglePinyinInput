@@ -9,7 +9,7 @@
 - 当前正式基线 `v2.1.6`，`targetSdkVersion=36`、`minSdkVersion=23`。
 - 本机 SDK 已安装 `android-37.2` 平台，其 `build.prop` 为 `ro.build.version.sdk=37`、`sdk_full=37.2`、`release=17`；设备侧报的是 `sdk_full=37.1`。两侧次版本号并不一致，写法结论见下。
 - 静态审计基于本次生成的原始 APK 干净解码树 `work/a17-audit/decoded/`（`apktool d -f`，3264 个 smali 文件，无任何补丁）。
-- **结论边界**：行为变更判定全部来自静态审计，没有在 API 37 设备上运行验证。真机基线与冒烟已于 2026-10-12 采集（见 3.2、3.3），其中按键音与首次引导两项因需要改动设备状态而待授权。标注「需实测」的项目必须真机确认后才能写进验收记录。
+- **结论边界**：行为变更判定全部来自静态审计，没有在 API 37 设备上运行验证。真机基线、冒烟与 target 37 提升实测已于 2026-10-12 采集（见 3.2、3.3、3.4），按键音与首次引导两项随后经用户实测确认正常。标注「需实测」的项目必须真机确认后才能写进验收记录。
 
 ### 次版本号声明（已定）
 
@@ -84,6 +84,8 @@ Android 17 的 SDK 首次出现 `major.minor` 形式的平台目录（本机 `an
 调用方共 10 处，覆盖拼音引擎、英文引擎、HMM 手写与手势、delight4 等模块。
 
 处置方向有两个：给解压产物补 `setReadOnly()`，或者删掉这条回退。倾向后者，但需要先确认没有设备真的会走到它。
+
+**实测确认（见 3.4）**：target 提升到 37 的隔离包在真机上，`nativeloader` 从解压目录直接加载并返回 `ok`，`library_path` 里的 APK 回退段一次都没有用到。也就是说回退链在本项目的打包方式下确实不可达，无需补丁。
 
 ### 2.2 按键音
 
@@ -160,7 +162,7 @@ Android 17 为中日韩越输入法新增了两个 API：输入法在设置合�
 | 键盘几何 | 正常。IME 窗口 frame 为 `[0,172][1080,2410]`，全宽贴底，跳过 172 px 的刘海区 |
 | 触摸区域 | 正常。`SkRegion((0,1481,1080,2284))` 的顶部与内容 insets 起点（172+1309=1481）精确对齐，底部留出的 126 px 正是 48 dp 三键导航栏，没有死区 |
 | 输入功能 | 正常。32 次敲键累积出完整拼音串，候选栏给出「宝贝龙女仆」「一杯氯霉素」「准备今年入学」等词，组合与候选链路完好 |
-| 按键音 | **未能验证**。设备处于免打扰（`ZEN_MODE_IMPORTANT_INTERRUPTIONS`），而 `ringer mode affected streams` 含 `STREAM_SYSTEM`，键盘音效正是走这个流。临时打开「按键声音」后敲键依旧没有任何音频输出，连音量键提示音也一样。这是设备状态导致，不是 Android 17 拦截 |
+| 按键音 | 首次采集**未能验证**，原因是设备处于免打扰（`ZEN_MODE_IMPORTANT_INTERRUPTIONS`），`ringer mode affected streams` 含 `STREAM_SYSTEM`，而键盘音效正走这个流。用户随后临时关闭免打扰复测，**按键音与音量预览音均正常** |
 | 内存 | 打开 Compose 设置页并弹出键盘后 PSS 约 203 MB，敲 32 键后 211 MB（+7.6 MB），回到桌面后 184 MB |
 | 退出记录 | 无新增。`ApplicationExitInfo` 最新一条仍是当日 00:41:24 的 `PACKAGE UPDATED` |
 | 系统音效 | 正常。`KeypressStandard.ogg`、`KeypressDelete.ogg`、`KeypressSpacebar.ogg`、`KeypressReturn.ogg` 全部加载成功，消息队列无积压 |
@@ -169,18 +171,77 @@ Android 17 为中日韩越输入法新增了两个 API：输入法在设置合�
 
 另外发现一处与 Android 17 无关但值得确认的现象：`HeaderPlatformHostView.java:133` 是无条件的 `Log.i`，一轮 36 次点击（32 次按键加 4 次候选）产生 32 条 `HeaderPlatformAudit` 记录，成对出现（`native=false idle=true` 与 `native=true idle=false`）。正式包保留这个粒度的日志值得确认是否有意。
 
-### 3.4 尚未覆盖
+### 3.4 target 37 纯提升实测（2026-10-12 采集）
 
-- 按键音与音量预览音：设备处于免打扰，被压制的正是键盘音效所在的 `STREAM_SYSTEM`。需要先关掉免打扰才能测，而免打扰由用户用 MacroDroid 设置，未改动。临时打开的「按键声音」已还原为关闭。
-- 首次引导在 Android 17 上的显示：需要新装隔离包并重置 `guide_complete`，尚未取得授权。
+分支 `feat/target-sdk-37`，只改 target 相关声明，不预置任何猜测性补丁。改动面：
+
+| 文件 | 改动 |
+| --- | --- |
+| `scripts/apply_patches.py` | `apktool.yml` 写 `targetSdkVersion: 37` |
+| `version.properties` | `TARGET_SDK=37` |
+| `modern-settings/reconstructed-host-prototype/build.gradle.kts` | `compileSdk = 37` 加 `compileSdkMinor = 2` |
+| `modern-settings/compose-runtime/build.gradle.kts` | 同上 |
+| `modern-settings/gradle.properties` | 新增 `android.suppressUnsupportedCompileSdk=37.2` |
+| `scripts/verify_target36.py` | 接受 36 或 37，作为过渡门禁 |
+| `scripts/verify_modern_settings_runtime.py` | 断言字符串 `targetSdk = 37` |
+| `.github/workflows/build-release.yml`、`docs/build-and-release.md` | 同步平台与版本号 |
+
+构建 `BUILD SUCCESSFUL in 17m 21s`，59 个 task，产物 v1/v2/v3 签名与 16 KiB zipalign 均通过。`compileSdk = 37` 加 `compileSdkMinor = 2` 确实解析到了 `platforms/android-37.2`。
+
+**AGP 警告**：AGP 9.3.1 打印「tested up to compile SDK version 37.1」。本机只有 `platforms/android-37.2`，没有 `android-37` 可退，而设备 `sdk_full` 恰好是 37.1，所以这条警告无法靠选平台规避。以 `android.suppressUnsupportedCompileSdk=37.2` 知情接受，理由写进了 `gradle.properties` 注释：警告语义是「未验证」而非「不支持」，替代方案是完全不按 37 编译；升级 AGP 属独立议题，会牵动可复现门禁。压制后重新配置确认警告消失。
+
+**DCL-C 实测**——本轮提升的核心目的：
+
+| 项目 | 观测 |
+| --- | --- |
+| 落地形式 | 安装目录下出现 `lib/`，`legacyNativeLibraryDir` 指向它，说明 `useLegacyPackaging = true` 生效，`.so` 由包管理器解压 |
+| 文件权限 | `lib/arm64/` 为 `drwxr-xr-x`，6 个 `.so` 全为 `-rwxr-xr-x`，**均无写位**，满足 DCL-C 的只读要求 |
+| 命名空间配置 | `target_sdk_version=37`，`library_path` 为两段式：`.../lib/arm64` 在前、`.../base.apk!/lib/arm64-v8a` 在后 |
+| 实际加载 | 3 条 `nativeloader: Load /data/app/.../lib/arm64/<lib>.so ... : ok`，全部命中第一段；回退段未被使用 |
+| 错误 | 无 `UnsatisfiedLinkError`，无 DCL 相关告警 |
+
+结论：在 `useLegacyPackaging = true` 的打包方式下，DCL-C 回退链**不可达**，2.1 节标为「潜在风险」的判断得到实测支持，无需为它写补丁。
+
+**首次引导**：隔离包 `com.google.android.inputmethod.pinyin.target37test`（`2.1.7-target37.1`，versionCode 4520500，targetSdk 37）为全新安装，冷启动 264 ms 后直接落到 `ModernFirstRunActivity`。引导页渲染正常：标题「设置 Google 拼音输入法」、两项步骤、步骤 1 按钮可用而步骤 2 因未启用而置灰、底部「完成」置灰，深色主题与三键导航均正确。启用、选择、完成三步留给用户自行走完，未代为操作；用户随后走完整个流程，**引导正常**。
+
+### 3.5 输入法切换器图标（已修）
+
+Android 17 的输入法切换器把每个输入法的子类型图标渲染成一个约 24 dp 的单色标记。拼音的子类型原本写着 `android:icon="@mipmap/app_icon"`，指向 144×144 的彩色键盘 PNG（键盘加青绿「拼」字徽章、透明底）。单色化并缩小后细节全丢，只剩「宽矩形叠窄矩形」的轮廓，看上去就是一个方块。
+
+对照：Gboard 给每种语言配一个单色字形，日语是「あ」、简体中文是「拼」，两者都只是单个字符；Google 语音输入没有子类型图标，切换器就只显示文字。与 target 无关，`compat`（target 36）与 `target37test`（target 37）表现一致。
+
+修法照 Gboard：新增 `patches/res/drawable/ic_ime_subtype_pinyin.xml`，把 Noto Sans CJK SC 的「拼」字轮廓做成 24 dp 单色矢量（黑色填充，由系统着色）。
+
+`method.xml` 有四个变体：`res/xml/`、`res/xml-v19/`、`res/xml-television-v13/`、`res/xml-television-v19/`。资源按 API 级别解析，手机上实际加载的是 `xml-v19`，只改基础版不会生效——第一版就是这么漏掉的。四个都要改，`verify_target37.py` 用 `res/xml*/method.xml` 通配断言，禁止任何变体再指回 `@mipmap/app_icon`。
+
+真机复验（Pixel 10 Pro，`2.1.7-target37.5`，versionCode 4520504，长按地球键唤出切换器）：
+
+![输入法切换器里的子类型图标](../images/ime-switcher-subtype-icon.png)
+
+同一张图里正好构成前后对比：`Target37 Audit`（新包）显示「拼」字，`谷歌拼音输入法`（未重建的 target 36 compat 包）仍是原来的方块剪影。Gboard 的日语项显示「あ」，Google 语音输入没有图标、只有文字，与 3.5 开头的判断一致。
+
+**尺寸与字重校准。**共三轮，每轮都先在设备上量，再改生成器的参数。
+
+第一版把字形填满整个 24 dp 视口（内边距 2），装机后明显偏大：实测「拼」的墨迹 52×52 px，Gboard 的「あ」只有 24×25 px，约 2.1 倍。420 dpi 下 24 dp 合 63 px，20/24 × 63 = 52.5 px 与实测吻合，说明系统按 drawable 的固有尺寸渲染，偏大的是字形占视口的比例，不是 drawable 本身被放大。
+
+第二版把内边距改为 7，字形收进 24 单位视口中的 10 单位方框。复测「あ」24×25 px、「拼」26×25 px，高度比 1.00，图标列中心同为 x = 324.5。尺寸对了，但笔画偏细：游程中位数只有 2 px。
+
+第三版按「笔画加粗、整体再大一点」调整：内边距 6.5（字形收进 11 单位方框），并给 path 加 0.5 单位的同色描边。Noto Sans CJK 没有 Bold 字面，Android 自己也是靠 Skia 加宽轮廓来合成 CJK 粗体，这里用矢量描边做同一件事。复测**「拼」29×29 px、笔画游程中位数 4 px**，比 Gboard 的 24×25 px 大 16%，是有意留的余量——拼是笔画密集的汉字，不是假名。
+
+三个参数都在 `scripts/generate_pinyin_subtype_icon.py` 顶部（`PADDING`、`STROKE_WIDTH`），注释记了推导过程，换字形时可重跑。
+
+### 3.6 尚未覆盖
+
 - 旋转后 IME 可见性：静态判定为不适用（见 2.6），未做旋转实测。
+- `谷歌拼音输入法`（compat 包）的图标未更新，它走的是另一条构建链，不属于 target 37 适配范围。
 
 ## 四、下一步
 
-1. 按键音与首次引导两项冒烟需要授权后才能补，见 3.4。
-2. 从 `master` 创建 `feat/target-sdk-37`，先做**纯 target 提升**——`apktool.yml` 写 `targetSdkVersion: 37`，Compose 宿主写 `compileSdk = 37` 加 `compileSdkMinor = 2`——不预置猜测性补丁，观察 DCL-C 回退链是否真的触发。
-3. 新增 `scripts/verify_target37.py`，固定 target 37、只读原生库加载、以及 1.1 中已判定「不涉及」的清单项。
-4. 按 target 29–36 的既有完成条件走构建、静态门禁、真机 ART 与功能回归。
+1. 按键音与首次引导已由用户实测确认正常，见 3.3 与 3.4。
+2. ~~从 `master` 创建 `feat/target-sdk-37`，先做纯 target 提升，观察 DCL-C 回退链是否真的触发。~~ **已完成，见 3.4。**回退链未触发，无需补丁。
+3. ~~新增 `scripts/verify_target37.py`~~ **已完成**。门禁固定 target 37，以 `useLegacyPackaging = true` 锚定 DCL-C 的只读原生加载，并锁定 1.1 中判定「不涉及」的项：不得声明 `ACCESS_LOCAL_NETWORK`、短信与蓝牙权限，清单里不得出现 `screenOrientation`，smali 全树不得引用 `Socket`、`ServerSocket`、`InetAddress`、`sun.misc.Unsafe`。反向验证已确认把 target 改回 36 会让它失败。`verify_target36.py` 接受 36 或 37，符合既有「自己及以后」的门禁约定（`verify_target35.py` 同样接受 35 与 36），不是过渡态。
+4. ~~输入法切换器的子类型图标改用单色「拼」字~~ **已完成并在真机复验通过，见 3.5。**
+5. 按 target 29–36 的既有完成条件走构建、静态门禁、真机 ART 与功能回归。
 
 ## 相关文档
 
