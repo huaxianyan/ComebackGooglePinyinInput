@@ -5,7 +5,11 @@ plugins {
 
 android {
     namespace = "com.google.android.inputmethod.pinyin.modernsettings.compose"
-    compileSdk = 36
+    compileSdk = 37
+    // Android 17 ships its platform as a minor-versioned SDK, so the installed
+    // directory is platforms/android-37.2 rather than android-37. Without the
+    // minor AGP looks for a platform that does not exist.
+    compileSdkMinor = 2
 
     defaultConfig {
         minSdk = 23

@@ -35,7 +35,7 @@
 
 - Python 3.12 或兼容版本
 - JDK 17
-- Android SDK Platform 36
+- Android SDK Platform 36 与 37.2。36 供可复现的 smali 生成器与协议夹具使用，37.2 供 Compose 宿主通过 `compileSdk = 37` 加 `compileSdkMinor = 2` 解析；Android 17 的平台目录带次版本号，只有 `platforms/android-37.2`。
 - Android Build Tools 36.0.0
 - apktool 2.12.1
 - 与目标安装身份对应的 PKCS#12/JKS keystore。
@@ -162,7 +162,7 @@ gh workflow run build-release.yml `
 ```text
 VERSION_NAME=<x.y.z>
 VERSION_CODE=<monotonic integer>
-TARGET_SDK=36
+TARGET_SDK=37
 RELEASE_TITLE=<feature-first title without version prefix>
 ```
 

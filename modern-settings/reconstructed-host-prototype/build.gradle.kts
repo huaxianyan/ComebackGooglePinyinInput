@@ -11,12 +11,16 @@ val hostVersionCode = providers.gradleProperty("hostVersionCode").map(String::to
 
 android {
     namespace = "com.google.android.inputmethod.pinyin.modernsettings.host"
-    compileSdk = 36
+    compileSdk = 37
+    // Android 17 ships its platform as a minor-versioned SDK, so the installed
+    // directory is platforms/android-37.2 rather than android-37. Without the
+    // minor AGP looks for a platform that does not exist.
+    compileSdkMinor = 2
 
     defaultConfig {
         applicationId = hostApplicationId.get()
         minSdk = 23
-        targetSdk = 36
+        targetSdk = 37
         versionCode = hostVersionCode.get()
         versionName = hostVersionName.get()
         multiDexEnabled = true

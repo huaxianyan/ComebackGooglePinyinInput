@@ -147,8 +147,13 @@ jobs:
         run: |
           $sdkManager = Join-Path $env:ANDROID_SDK_ROOT "cmdline-tools\latest\bin\sdkmanager.bat"
           if (-not (Test-Path $sdkManager)) { throw "sdkmanager not found: $sdkManager" }
-          & $sdkManager "platforms;android-36" "build-tools;36.0.0"
-          if ($LASTEXITCODE -ne 0) { throw "Unable to install Android SDK 36 build tools" }
+          # android-36 still backs the reproducible smali generators and the
+          # protocol fixtures, which compile against a fixed API surface.
+          # android-37.2 is what the Compose host resolves through compileSdk 37
+          # plus compileSdkMinor 2, because Android 17 ships a minor-versioned
+          # platform directory.
+          & $sdkManager "platforms;android-36" "platforms;android-37.2" "build-tools;36.0.0"
+          if ($LASTEXITCODE -ne 0) { throw "Unable to install Android SDK platforms and build tools" }
 
       - name: Download and verify apktool
         shell: pwsh

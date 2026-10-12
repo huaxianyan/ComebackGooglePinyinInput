@@ -102,7 +102,7 @@ def apply(
     replace_once(
         decoded / "apktool.yml",
         "sdkInfo:\n  minSdkVersion: 17\n  targetSdkVersion: 26",
-        "sdkInfo:\n  minSdkVersion: 23\n  targetSdkVersion: 36",
+        "sdkInfo:\n  minSdkVersion: 23\n  targetSdkVersion: 37",
     )
     if version_code <= 0:
         raise ValueError("versionCode must be positive")

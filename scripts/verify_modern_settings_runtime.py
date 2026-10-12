@@ -1369,7 +1369,7 @@ def main() -> int:
         host_build,
         (
             "minSdk = 23",
-            "targetSdk = 36",
+            "targetSdk = 37",
             'hostVersionName = providers.gradleProperty("hostVersionName")',
             'hostVersionCode = providers.gradleProperty("hostVersionCode")',
             "versionCode = hostVersionCode.get()",
@@ -1723,7 +1723,7 @@ def main() -> int:
         apktool_yml = (decoded / "apktool.yml").read_text(encoding="utf-8")
         require(
             apktool_yml,
-            ("targetSdkVersion: 36",),
+            ("targetSdkVersion: 37",),
             "combined host SDK contract",
         )
         # The floor and the three redirects have to agree, and this is the only
