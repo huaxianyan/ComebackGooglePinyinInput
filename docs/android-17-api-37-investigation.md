@@ -7,9 +7,9 @@
 ## 调查基线
 
 - 当前正式基线 `v2.1.6`，`targetSdkVersion=36`、`minSdkVersion=23`。
-- 本机 SDK 已安装 `android-37.2` 平台。该平台 `build.prop` 为 `ro.build.version.sdk=37`、`sdk_full=37.2`、`release=17`。**平台目录名带次版本号**，`compileSdk` 与 `targetSdk` 是否要写成 `37.2` 需单独确认，不能照抄目录名。
+- 本机 SDK 已安装 `android-37.2` 平台，其 `build.prop` 为 `ro.build.version.sdk=37`、`sdk_full=37.2`、`release=17`。设备侧报的是 `sdk_full=37.1`。**平台目录名带次版本号，且两侧次版本号并不一致**，`compileSdk` 与 `targetSdk` 的写法需单独确认，不能照抄目录名。
 - 静态审计基于本次生成的原始 APK 干净解码树 `work/a17-audit/decoded/`（`apktool d -f`，3264 个 smali 文件，无任何补丁）。
-- **结论边界**：以下判定全部来自静态审计，没有在 API 37 设备上运行过。标注「需实测」的项目必须真机确认后才能写进验收记录。
+- **结论边界**：行为变更判定全部来自静态审计，没有在 API 37 设备上运行验证。真机基线已于 2026-10-12 采集（见 3.2），但只做了只读检查，冒烟测试未完成。标注「需实测」的项目必须真机确认后才能写进验收记录。
 
 ## 一、官方行为变更归集
 
@@ -109,19 +109,44 @@ Android 17 为中日韩越输入法新增了两个 API：输入法在设置合�
 
 这对屏幕阅读器朗读候选选择有帮助，但属于**新增能力**而不是兼容性修复。按项目约定，这类改动要满足「默认关闭、关闭时逐入口交回原实现、不新增键盘布局、不改既有按键与候选语义、静态门禁锁定回退入口、真机验收确认原有行为不变」，并且用独立分支。本轮只登记，不实施。
 
-### 3.2 真机基线待采集
+### 3.2 API 37 真机基线（2026-10-12 采集）
 
-设备当前未连接，以下基线全部待补：
+设备：Pixel 10 Pro，正式包 `v2.1.6` 为默认输入法。
 
-- API 级别、build 号、页大小（`getconf PAGESIZE`）。
-- 导航模式与键盘几何。
-- 默认输入法与正式包版本。
-- 按键音、内存、`ApplicationExitInfo`。
+| 项目 | 值 |
+| --- | --- |
+| API 级别 / 版本 | `ro.build.version.sdk=37`、`release=17`、`sdk_full=37.1` |
+| 构建 | `ro.build.id=CP3A.260905.009`，安全补丁 2026-09-05，`user/release-keys` |
+| 内核与页大小 | `6.6.127-android15-8-…-4k`，`getconf PAGESIZE` 返回 4096 |
+| 显示 | 1080×2410，density 420 |
+| 导航模式 | 三键（`navigation_mode=0`，overlay `navbar.threebutton` 启用） |
+| 正式包 | `2.1.6`，versionCode 4520423，minSdk 23，targetSdk 36 |
+| 内存 | PSS 约 88 MB，RSS 约 241 MB（Native Heap 30 MB，`.so` mmap 11 MB，GL mtrack 12.6 MB，Other mmap 25.5 MB） |
+
+健康状态：
+
+- `ApplicationExitInfo` 最近一条是 2026-10-12 00:41:24 的 `PACKAGE UPDATED`，升级后没有新的异常退出。
+- 更早的三条 `APP CRASH` 发生在 2026-10-08 与 10-10，构建是 Android 16，包是 `2.1.5`，堆栈为已知的手写 `scaleY=NaN`（`axs.a` → `animateKeyboardViewSwitch`），已由 2.1.6 修复，不是 Android 17 回归。
+- DropBox 中本包条目同样属于 `2.1.5` 时代。当前 crash buffer 与运行日志没有 `VerifyError`、隐藏 API 拒绝或 `UnsatisfiedLinkError`。
+
+两点需要后续核对：
+
+- **次版本号错位**：设备报 `sdk_full=37.1`，本机 SDK 平台是 `android-37.2`。`compileSdk` 与 `targetSdk` 的写法要在这个背景下确认。
+- 正式包被授予了 `ACCESS_LOCAL_NETWORK: granted=true`，而清单里没有声明该权限。需要确认这是平台给存量应用的兼容预授权，还是别的原因。本项目不使用局域网，无论哪种都不需要申请。
+
+### 3.3 尚未覆盖
+
+设备为临时取用，冒烟检查在采集基线后被中断，以下仍未验证：
+
+- 键盘弹出后的 IME 窗口几何与触摸区域。
+- 按键音、音量预览音。
+- 长时间输入后的内存变化与 `ApplicationExitInfo`。
+- 首次引导、设置页与主题页在 Android 17 上的显示。
 
 ## 四、下一步
 
-1. 恢复设备连接，采集 API 37 基线。
-2. 确认 `compileSdk` 与 `targetSdk` 在 `android-37.2` 次版本号下的写法。
+1. 设备恢复连接后补完冒烟：键盘几何与触摸区域、按键音、内存变化、首次引导与设置页显示。
+2. 确认 `compileSdk` 与 `targetSdk` 在次版本号（设备 37.1 / SDK 平台 37.2）背景下的写法。
 3. 从 `master` 创建 `feat/target-sdk-37`，先做**纯 target 提升**，不预置猜测性补丁，观察 DCL-C 回退链是否真的触发。
 4. 新增 `scripts/verify_target37.py`，固定 target 37、只读原生库加载、以及 1.1 中已判定「不涉及」的清单项。
 5. 按 target 29–36 的既有完成条件走构建、静态门禁、真机 ART 与功能回归。
