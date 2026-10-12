@@ -2,6 +2,32 @@
 
 ## [Unreleased]
 
+## [2.1.7-pre] - 2026-10-12
+
+target SDK 提升到 37 并完成 Android 17 适配，同时修掉输入法切换器里拼音条目显示成方块的问题。本版是预发布测试包，供维护者在真机上使用数日确认后再发布正式版，输入、词典和同步语义不变。
+
+### Added
+
+- `scripts/verify_target37.py` 固定 target SDK 37、DCL-C 只读原生加载，以及适配前调查中判定「不涉及」的本地网络、短信、蓝牙、`screenOrientation` 与 `sun.misc.Unsafe` 项，并接入 CI
+
+### Changed
+
+- target SDK 由 36 提升到 37。Compose 宿主使用 `compileSdk = 37` 加 `compileSdkMinor = 2`，因为 Android 17 的平台目录带次版本号，本机只有 `platforms/android-37.2`；AGP 对 compile SDK 的警告以 `android.suppressUnsupportedCompileSdk=37.2` 知情接受
+- 输入法子类型图标由彩色应用图标换成单色「拼」字矢量，笔画粗细与整体尺寸按真机实测分三轮校准
+- `version.properties` 不再维护 `RELEASE_TITLE`。Release 标题改用标签本身，改动性质由正文的「新功能」与「问题修复」分节体现
+
+### Fixed
+
+- Android 17 输入法切换器把子类型图标渲染成约 24 dp 的单色标记，原来指向的彩色键盘 PNG 缩小后只剩方块剪影，现在显示可辨认的「拼」字
+
+### 验证与边界
+
+- DCL-C 实测确认回退链不可达：`nativeloader` 命名空间为 `target_sdk_version=37`，`library_path` 两段式，全部 `.so` 从只读的 `lib/arm64/` 段加载，回退段一次未用；干净重启进程后无 `UnsatisfiedLinkError`、无 `VerifyError`、无隐藏 API 拒绝、无 DCL 告警。因此未为它写补丁
+- 真机为 Pixel 10 Pro（Android 17，`sdk_full=37.1`，4 KiB 页，三键导航）。按键音、首次引导三步流程和切换器图标均由用户实测确认；图标墨迹 29 × 29 px，与 Gboard「あ」的 24 × 25 px 相比大 16%
+- 拼音、英文、手写、候选、符号/Emoji、剪贴板和主题的基础回归尚未执行；旋转后 IME 可见性静态判定为不适用，未做实测；`libhmm_gesture_hwr_zh.so` 的 4 KiB 对齐属独立风险项，未在本版处理
+
+实现与完整边界见 [Android 17 / API 37 适配调查](docs/android-17-api-37-investigation.md)。
+
 ## [2.1.6] - 2026-10-11
 
 现代设置支持预测性返回，并统一普通切页、手势及组件动效。本版同时包含已验收的原生 16 KiB 兼容、手写扩大及首次引导修复，不改变原有输入、词典和同步语义。
