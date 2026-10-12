@@ -69,6 +69,28 @@ def main() -> None:
             "must stay free of screenOrientation"
         )
 
+    # Android 17 renders each input method's subtype icon as a small
+    # monochrome mark in the switcher, so a colour app icon collapses into a
+    # block. Every method.xml variant must point at the single-glyph drawable;
+    # the resource is resolved per API level, so xml-v19 is the one a phone
+    # actually loads and the television copies cover Android TV.
+    method_files = sorted(decoded.glob("res/xml*/method.xml"))
+    if not method_files:
+        raise RuntimeError("missing input method definition under res/xml*")
+    for method_xml in method_files:
+        relative = method_xml.relative_to(decoded)
+        method = method_xml.read_text(encoding="utf-8")
+        if "@mipmap/app_icon" in method:
+            raise RuntimeError(
+                f"{relative} points the pinyin subtype at the colour app icon; "
+                "the Android 17 switcher downscales and tints it into an "
+                "unreadable block"
+            )
+        if "@drawable/ic_ime_subtype_pinyin" not in method:
+            raise RuntimeError(
+                f"{relative} must keep the single-glyph pinyin subtype icon"
+            )
+
     smali_root = decoded / "smali"
     if not smali_root.is_dir():
         raise RuntimeError(f"missing smali tree: {smali_root}")

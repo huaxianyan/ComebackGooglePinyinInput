@@ -9,7 +9,7 @@
 - 当前正式基线 `v2.1.6`，`targetSdkVersion=36`、`minSdkVersion=23`。
 - 本机 SDK 已安装 `android-37.2` 平台，其 `build.prop` 为 `ro.build.version.sdk=37`、`sdk_full=37.2`、`release=17`；设备侧报的是 `sdk_full=37.1`。两侧次版本号并不一致，写法结论见下。
 - 静态审计基于本次生成的原始 APK 干净解码树 `work/a17-audit/decoded/`（`apktool d -f`，3264 个 smali 文件，无任何补丁）。
-- **结论边界**：行为变更判定全部来自静态审计，没有在 API 37 设备上运行验证。真机基线与冒烟已于 2026-10-12 采集（见 3.2、3.3），其中按键音与首次引导两项因需要改动设备状态而待授权。标注「需实测」的项目必须真机确认后才能写进验收记录。
+- **结论边界**：行为变更判定全部来自静态审计，没有在 API 37 设备上运行验证。真机基线、冒烟与 target 37 提升实测已于 2026-10-12 采集（见 3.2、3.3、3.4），按键音与首次引导两项随后经用户实测确认正常。标注「需实测」的项目必须真机确认后才能写进验收记录。
 
 ### 次版本号声明（已定）
 
@@ -162,7 +162,7 @@ Android 17 为中日韩越输入法新增了两个 API：输入法在设置合�
 | 键盘几何 | 正常。IME 窗口 frame 为 `[0,172][1080,2410]`，全宽贴底，跳过 172 px 的刘海区 |
 | 触摸区域 | 正常。`SkRegion((0,1481,1080,2284))` 的顶部与内容 insets 起点（172+1309=1481）精确对齐，底部留出的 126 px 正是 48 dp 三键导航栏，没有死区 |
 | 输入功能 | 正常。32 次敲键累积出完整拼音串，候选栏给出「宝贝龙女仆」「一杯氯霉素」「准备今年入学」等词，组合与候选链路完好 |
-| 按键音 | **未能验证**。设备处于免打扰（`ZEN_MODE_IMPORTANT_INTERRUPTIONS`），而 `ringer mode affected streams` 含 `STREAM_SYSTEM`，键盘音效正是走这个流。临时打开「按键声音」后敲键依旧没有任何音频输出，连音量键提示音也一样。这是设备状态导致，不是 Android 17 拦截 |
+| 按键音 | 首次采集**未能验证**，原因是设备处于免打扰（`ZEN_MODE_IMPORTANT_INTERRUPTIONS`），`ringer mode affected streams` 含 `STREAM_SYSTEM`，而键盘音效正走这个流。用户随后临时关闭免打扰复测，**按键音与音量预览音均正常** |
 | 内存 | 打开 Compose 设置页并弹出键盘后 PSS 约 203 MB，敲 32 键后 211 MB（+7.6 MB），回到桌面后 184 MB |
 | 退出记录 | 无新增。`ApplicationExitInfo` 最新一条仍是当日 00:41:24 的 `PACKAGE UPDATED` |
 | 系统音效 | 正常。`KeypressStandard.ogg`、`KeypressDelete.ogg`、`KeypressSpacebar.ogg`、`KeypressReturn.ogg` 全部加载成功，消息队列无积压 |
@@ -202,20 +202,36 @@ Android 17 为中日韩越输入法新增了两个 API：输入法在设置合�
 
 结论：在 `useLegacyPackaging = true` 的打包方式下，DCL-C 回退链**不可达**，2.1 节标为「潜在风险」的判断得到实测支持，无需为它写补丁。
 
-**首次引导**：隔离包 `com.google.android.inputmethod.pinyin.target37test`（`2.1.7-target37.1`，versionCode 4520500，targetSdk 37）为全新安装，冷启动 264 ms 后直接落到 `ModernFirstRunActivity`。引导页渲染正常：标题「设置 Google 拼音输入法」、两项步骤、步骤 1 按钮可用而步骤 2 因未启用而置灰、底部「完成」置灰，深色主题与三键导航均正确。这一步留给用户自行走完，未代为操作。
+**首次引导**：隔离包 `com.google.android.inputmethod.pinyin.target37test`（`2.1.7-target37.1`，versionCode 4520500，targetSdk 37）为全新安装，冷启动 264 ms 后直接落到 `ModernFirstRunActivity`。引导页渲染正常：标题「设置 Google 拼音输入法」、两项步骤、步骤 1 按钮可用而步骤 2 因未启用而置灰、底部「完成」置灰，深色主题与三键导航均正确。启用、选择、完成三步留给用户自行走完，未代为操作；用户随后走完整个流程，**引导正常**。
 
-### 3.5 尚未覆盖
+### 3.5 输入法切换器图标（已修）
 
-- 按键音与音量预览音：设备处于免打扰，被压制的正是键盘音效所在的 `STREAM_SYSTEM`。需要先关掉免打扰才能测，而免打扰由用户用 MacroDroid 设置，未改动。临时打开的「按键声音」已还原为关闭。采集本次数据时 `zen_mode` 仍为 1。
-- 首次引导的**流程本身**：隔离包已装、页面已确认渲染正常（见 3.4），但启用输入法、选择输入法、完成这三步由用户自行走完，助手未代跑，因此流程结果待用户反馈。
+Android 17 的输入法切换器把每个输入法的子类型图标渲染成一个约 24 dp 的单色标记。拼音的子类型原本写着 `android:icon="@mipmap/app_icon"`，指向 144×144 的彩色键盘 PNG（键盘加青绿「拼」字徽章、透明底）。单色化并缩小后细节全丢，只剩「宽矩形叠窄矩形」的轮廓，看上去就是一个方块。
+
+对照：Gboard 给每种语言配一个单色字形，日语是「あ」、简体中文是「拼」，两者都只是单个字符；Google 语音输入没有子类型图标，切换器就只显示文字。与 target 无关，`compat`（target 36）与 `target37test`（target 37）表现一致。
+
+修法照 Gboard：新增 `patches/res/drawable/ic_ime_subtype_pinyin.xml`，把 Noto Sans CJK SC 的「拼」字轮廓做成 24 dp 单色矢量（黑色填充，由系统着色）。
+
+`method.xml` 有四个变体：`res/xml/`、`res/xml-v19/`、`res/xml-television-v13/`、`res/xml-television-v19/`。资源按 API 级别解析，手机上实际加载的是 `xml-v19`，只改基础版不会生效——第一版就是这么漏掉的。四个都要改，`verify_target37.py` 用 `res/xml*/method.xml` 通配断言，禁止任何变体再指回 `@mipmap/app_icon`。
+
+真机复验（Pixel 10 Pro，`2.1.7-target37.3`，versionCode 4520502，长按地球键唤出切换器）：
+
+![输入法切换器里的子类型图标](../images/ime-switcher-subtype-icon.png)
+
+同一张图里正好构成前后对比：`Target37 Audit`（新包）显示「拼」字，`谷歌拼音输入法`（未重建的 target 36 compat 包）仍是原来的方块剪影。Gboard 的日语项显示「あ」，Google 语音输入没有图标、只有文字，与 3.5 开头的判断一致。
+
+### 3.6 尚未覆盖
+
 - 旋转后 IME 可见性：静态判定为不适用（见 2.6），未做旋转实测。
+- `谷歌拼音输入法`（compat 包）的图标未更新，它走的是另一条构建链，不属于 target 37 适配范围。
 
 ## 四、下一步
 
-1. 按键音与音量预览音需要用户先关掉免打扰才能补测，见 3.5。
+1. 按键音与首次引导已由用户实测确认正常，见 3.3 与 3.4。
 2. ~~从 `master` 创建 `feat/target-sdk-37`，先做纯 target 提升，观察 DCL-C 回退链是否真的触发。~~ **已完成，见 3.4。**回退链未触发，无需补丁。
 3. ~~新增 `scripts/verify_target37.py`~~ **已完成**。门禁固定 target 37，以 `useLegacyPackaging = true` 锚定 DCL-C 的只读原生加载，并锁定 1.1 中判定「不涉及」的项：不得声明 `ACCESS_LOCAL_NETWORK`、短信与蓝牙权限，清单里不得出现 `screenOrientation`，smali 全树不得引用 `Socket`、`ServerSocket`、`InetAddress`、`sun.misc.Unsafe`。反向验证已确认把 target 改回 36 会让它失败。`verify_target36.py` 接受 36 或 37，符合既有「自己及以后」的门禁约定（`verify_target35.py` 同样接受 35 与 36），不是过渡态。
-4. 按 target 29–36 的既有完成条件走构建、静态门禁、真机 ART 与功能回归。
+4. ~~输入法切换器的子类型图标改用单色「拼」字~~ **已完成并在真机复验通过，见 3.5。**
+5. 按 target 29–36 的既有完成条件走构建、静态门禁、真机 ART 与功能回归。
 
 ## 相关文档
 
