@@ -656,17 +656,17 @@ Pixel 10 Pro / Android 16 最终几何：
 
 ### target 37 / Android 17
 
-状态：前瞻调查，等待 target 36 和 Android 17 真机环境。
+状态：**适配前调查已完成，尚未创建实现分支**。设备已于 2026-10-12 升级到 Android 17，target 36 前置条件已满足。
 
-重点：
+调查结论见 [Android 17 / API 37 适配前调查](../android-17-api-37-investigation.md)。要点：
 
-- CJKV IME 新 `TextAttribute`/AccessibilityEvent 辅助功能
-- static final 反射限制
-- `System.load()` 动态 native 文件必须只读
-- LAN 访问的新运行时权限（当前 SAF 云备份不需要）
-- 后台音频限制
-- ContactsProvider 行为
-- 16 KiB page-size native library。
+- 官方行为变更已按「仅影响 target 37 应用」与「影响所有应用」两类归集，逐条给出判定。
+- 唯一明确需要改动的是 `System.load()` 的 DCL-C 只读要求。原生库加载器的三级回退链最后一级会把 `.so` 解压到应用可写目录再加载，正常路径下不会走到。
+- static final 反射限制、`MessageQueue` 无锁实现、LAN 权限、ContactsProvider CP2 两项、后台音频与大屏方向限制，静态审计判定为不涉及或低风险，理由见调查文档。
+- CJKV IME 无障碍 API 属新增能力，按项目约定需要独立分支与「默认关闭」例外流程，本轮只登记。
+- 真机基线待设备连接后采集。
+
+后续实施仍按本文的共同完成条件执行，并新增 `scripts/verify_target37.py`。
 
 ## Native 16 KiB 独立风险
 
@@ -683,6 +683,8 @@ Pixel 10 Pro / Android 16 最终几何：
 只有 `libhmm_gesture_hwr_zh.so` 仍是 4 KiB 对齐。它承载手势和中文手写能力，不能通过删除规避。这个问题不等同于 target SDK，但必须在合适硬件上独立验证和解决。
 
 ## 当前里程碑
+
+> 本清单停在 target 33，只作为历史记录保留。target 34、35、36 的完成情况以各自小节为准，target 36 已随 `v2.1.6` 发布。target 37 的进度见 [适配前调查](../android-17-api-37-investigation.md)。
 
 - [x] 正式版 `v1.0.3`：target 28 基线冻结
 - [x] 完成 API 29–37 初步静态调查
