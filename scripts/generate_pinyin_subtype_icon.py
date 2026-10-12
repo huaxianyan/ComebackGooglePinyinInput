@@ -11,7 +11,9 @@ font; the font is not vendored because it is large and platform-supplied:
 
     python scripts/generate_pinyin_subtype_icon.py path/to/NotoSansCJK-Regular.ttc
 
-The default font path is the one pulled from a device's /system/fonts.
+The default font path is the one pulled from a device's /system/fonts. The
+face is Regular on purpose — the weight comes from STROKE_WIDTH, not from a
+Bold file, see the note on that constant.
 """
 
 from __future__ import annotations
@@ -30,12 +32,16 @@ DEFAULT_FONT = ROOT / "work/NotoSansCJK-Regular.ttc"
 DEFAULT_OUTPUT = ROOT / "patches/res/drawable/ic_ime_subtype_pinyin.xml"
 CHARACTER = "拼"
 VIEWPORT = 24.0
-# The glyph is fitted into a 10-unit box inside the 24-unit viewport. At
-# 420 dpi that renders the ink about 26 px tall, which sits within a few
-# percent of Gboard's 「あ」 subtype mark (~24.5 px). Filling the viewport
-# instead makes the icon roughly twice the size of every other entry in the
-# switcher.
-PADDING = 7.0
+# The glyph is fitted into an 11-unit box inside the 24-unit viewport. At
+# 420 dpi that renders the ink about 29 px tall, a little larger than
+# Gboard's 「あ」 subtype mark (~24.5 px). Deliberate: 拼 is a dense
+# ideograph, not a kana, and it needs the extra room to stay legible.
+PADDING = 6.5
+# Noto Sans CJK ships no Bold face and neither does Android, which fakes CJK
+# bold by widening the outline in Skia. Do the same with a vector stroke: at
+# 0.5 units the measured stroke width on a Pixel 10 Pro goes from 2 px to
+# 4 px, which reads as bold without closing the counters inside 并.
+STROKE_WIDTH = 0.5
 
 
 def pick_simplified_chinese(collection: TTCollection):
@@ -97,6 +103,10 @@ def main() -> int:
         "    -->\n"
         "    <path\n"
         '        android:fillColor="#FF000000"\n'
+        '        android:strokeColor="#FF000000"\n'
+        f'        android:strokeWidth="{STROKE_WIDTH:g}"\n'
+        '        android:strokeLineJoin="round"\n'
+        '        android:strokeLineCap="round"\n'
         f'        android:pathData="{pen.getCommands()}" />\n'
         "</vector>\n"
     )
