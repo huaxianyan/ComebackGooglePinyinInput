@@ -14,6 +14,8 @@ import sys
 from pathlib import Path
 
 CLASS = "com/google/android/inputmethod/pinyin/pairauto/PairedPunctuationProcessor"
+# The stock implementation the English 9-key override falls back to.
+STOCK_IME = "com/google/android/apps/inputmethod/libs/english/ime/English9KeyIme"
 PROCESSOR_ID = "@id/ime_paired_punctuation_processor"
 PREFERENCE_KEY = "enable_paired_punctuation_completion"
 PROCESSOR_XML = (
@@ -35,6 +37,20 @@ def smali_literal(value: str) -> str:
     Smali form differs from the character itself.
     """
     return value.replace("\\", "\\\\").replace('"', '\\"')
+
+
+def unescape_smali_unicode(text: str) -> str:
+    """Undo the \\uXXXX escaping a disassembler applies to non-ASCII literals.
+
+    The source tree writes 「（」 directly; apktool hands it back as 「\\uff08」.
+    Normalising the decoded text keeps this contract checkable against the final
+    APK without weakening what it asserts.
+    """
+    return re.sub(
+        r"(?<!\\)\\u([0-9a-fA-F]{4})",
+        lambda match: chr(int(match.group(1), 16)),
+        text,
+    )
 
 
 def main() -> int:
@@ -79,6 +95,7 @@ def main() -> int:
     # quotation marks 「」 and 『』 were missing from the first cut and had to be
     # added after a device test; the decorative forms of the brace and favourite
     # pages followed the same route.
+    decoded_text = unescape_smali_unicode(text)
     for opening, closing in (
         ("(", ")"),
         ("[", "]"),
@@ -113,7 +130,15 @@ def main() -> int:
         ("﹁", "﹂"),
     ):
         for symbol in (opening, closing):
-            if f'const-string v0, "{smali_literal(symbol)}"' not in text:
+            # Let the register vary: the disassembler allocates its own, so
+            # pinning v0 would fail on a rebuild that changes nothing.
+            if (
+                re.search(
+                    r'const-string v\d+, "' + re.escape(smali_literal(symbol)) + r'"',
+                    decoded_text,
+                )
+                is None
+            ):
                 fail(f"processor does not complete the {opening}{closing} pair")
 
     # Both the preference gate and the read of the preference must be present.
@@ -287,10 +312,20 @@ def main() -> int:
     branch = re.search(rf"(if-\w+) {result_reg.group(1)}, (:[\w_]+)", after_hook)
     if not branch:
         fail(f"the candidate path never tests {result_reg.group(1)} from the shared hook")
-    if branch.group(1) != "if-eqz" or "stock" not in branch.group(2):
+    opcode, label = branch.group(1), branch.group(2)
+    # The disassembler renames hand-written labels, so identify the fallback by
+    # what it does rather than by the name the source tree gave it: the target
+    # must be a bare super call, with none of the completion work attached.
+    fallback = candidate_entry.split(f"\n    {label}\n", 1)[-1].split("\n    :", 1)[0]
+    if (
+        opcode != "if-eqz"
+        or f"invoke-super {{p0, p1, p2}}, L{STOCK_IME};->selectTextCandidate" not in fallback
+        or "commitText" in fallback
+        or "offsetSelection" in fallback
+    ):
         fail(
             f"the candidate path branches on a non-null closing half "
-            f"({branch.group(1)} {result_reg.group(1)}, {branch.group(2)}); it must "
+            f"({opcode} {result_reg.group(1)}, {label}); it must "
             "fall back to the stock implementation only when the hook returns null"
         )
 

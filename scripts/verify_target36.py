@@ -8,6 +8,7 @@ Compose host manifest gate. Legacy IME and wrapper dispatch remains unchanged.
 from __future__ import annotations
 
 import argparse
+import re
 from pathlib import Path
 
 
@@ -18,9 +19,10 @@ def main() -> None:
     decoded = args.decoded.resolve()
 
     apktool = (decoded / "apktool.yml").read_text(encoding="utf-8")
-    if not any(
-        f"targetSdkVersion: {target}" in apktool for target in (36, 37)
-    ):
+    # Read the value instead of matching an enumeration of known targets, so a
+    # later baseline bump cannot quietly retire this gate.
+    target = re.search(r"(?m)^\s*targetSdkVersion:\s*(\d+)\s*$", apktool)
+    if target is None or int(target.group(1)) < 36:
         raise RuntimeError("Android 16 verifier requires targetSdkVersion 36+")
 
     manifest = (decoded / "AndroidManifest.xml").read_text(encoding="utf-8")
