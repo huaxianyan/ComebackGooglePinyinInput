@@ -86,6 +86,16 @@ scripts/verify_rime_legacy_settings.py
 scripts/verify_stable_resource_ids.py
 ```
 
+这些门禁跑在**最终签名 APK 的解码树**上，不是打补丁后的源码树。apktool 反汇编会改写手写 Smali 的表现形式，写断言要按语义匹配，不要绑死源码树的写法：
+
+- 自定义分支标签会被重命名：源码里的 `:stock`、`:launched` 解码后是 `:cond_2`、`:cond_1`。要按位置或行为判定，别按标签名。
+- 非 ASCII 字符串字面量会被转义：`"（"` 解码后是 `"\uff08"`。匹配前先归一化转义。
+- 寄存器号由反汇编器重新分配，不要写死 `v0`。
+- 被 `minSdkVersion` 覆盖的资源版本限定符会被折叠：`res/layout-v21/` 解码后是 `res/layout/`。按 glob 找实际存在的变体。
+- `targetSdkVersion` 这类数值要解析后比较，不要枚举已知取值——枚举会在下次提升 target 时静默失效。
+
+`Decode and verify final APK` 一步把门禁放进一个数组逐条执行并逐条守卫。`pwsh` 只按脚本**最后一条**命令的退出码判定步骤成败，写成裸列表会让中间任何失败被静默吞掉，因此新增门禁必须加进这个数组。
+
 另有一类不走 Python 的门禁：Compose 的单元测试。CI 里它是独立一步
 （`Run Compose state and contract tests`），本地用同一条命令跑：
 
