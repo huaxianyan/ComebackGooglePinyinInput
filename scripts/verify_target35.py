@@ -9,6 +9,7 @@ legacy keyboard body and keeps the complete IME inset visible to applications.
 from __future__ import annotations
 
 import argparse
+import re
 from pathlib import Path
 
 FORBIDDEN_BASELINE_REFERENCES = {
@@ -24,9 +25,11 @@ def main() -> None:
     decoded = args.decoded.resolve()
 
     apktool = (decoded / "apktool.yml").read_text(encoding="utf-8")
-    if not any(
-        f"targetSdkVersion: {target}" in apktool for target in (35, 36)
-    ):
+    # Read the value instead of matching an enumeration of known targets: a
+    # hardcoded list silently stops applying the moment the target moves on,
+    # which is exactly how this gate went dark when the baseline reached 37.
+    target = re.search(r"(?m)^\s*targetSdkVersion:\s*(\d+)\s*$", apktool)
+    if target is None or int(target.group(1)) < 35:
         raise RuntimeError("Android 15 verifier requires targetSdkVersion 35+")
 
     findings: list[str] = []
@@ -360,8 +363,20 @@ def main() -> None:
             "Covering IME Window must fit LEFT|TOP|RIGHT and leave BOTTOM to its frame"
         )
 
-    for relative in ("res/layout/ims_input_view.xml", "res/layout-v21/ims_input_view.xml"):
-        text = (decoded / relative).read_text(encoding="utf-8")
+    # apktool collapses version qualifiers the manifest's minSdk already covers,
+    # so the decoded tree carries fewer layout variants than the built APK and
+    # than the patched source tree. Check whichever phone variants survive
+    # rather than pinning exact directory names that the decoder may rewrite.
+    phone_variants = [
+        path
+        for path in sorted(decoded.glob("res/layout*/ims_input_view.xml"))
+        if "television" not in path.parent.name
+    ]
+    if not phone_variants:
+        raise RuntimeError("Decoded tree has no phone ims_input_view layout")
+    for path in phone_variants:
+        relative = path.relative_to(decoded).as_posix()
+        text = path.read_text(encoding="utf-8")
         if text.count('android:background="?BgKeyboardArea"') != 1:
             raise RuntimeError(
                 f"IME XML must retain only the native keyboard surface: {relative}"

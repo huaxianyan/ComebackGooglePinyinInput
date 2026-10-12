@@ -15,7 +15,6 @@ JAVA_PLATFORM = ROOT / "patches/java/com/google/android/inputmethod/pinyin/heade
 SMALI_HELPER = ROOT / "patches/smali/InlineAutofillCompat.smali"
 SMALI_FEEDBACK = ROOT / "patches/smali/InlineAutofillFeedbackCompat.smali"
 SMALI_PLATFORM = ROOT / "patches/smali/headerplatform"
-ANDROIDX_JAR = ROOT / "work/inline-autofill-synthetic-provider/libs/classes.jar"
 ANDROID_NS = "http://schemas.android.com/apk/res/android"
 LEGACY_THEME_STUBS = {
     "com/google/android/apps/inputmethod/libs/framework/keyboard/IKeyboardTheme.java": """
@@ -37,6 +36,63 @@ public class PinyinIME extends android.inputmethodservice.InputMethodService {
 package com.google.android.inputmethod.pinyin;
 public final class InlineAutofillFeedbackCompat {
     public static void perform(android.view.View view) {}
+}
+""",
+    # HeaderMotionCoordinator calls this class, which the build ships as Smali
+    # only. Stub it so the platform sources stay compilable.
+    "com/google/android/inputmethod/pinyin/ViewFrameRateCompat.java": """
+package com.google.android.inputmethod.pinyin;
+public final class ViewFrameRateCompat {
+    public static void requestHigh(android.view.View view, boolean high) {}
+}
+""",
+    # The androidx.autofill.inline API is not vendored: the app carries the
+    # classes in its own dex, so no jar exists in a clean checkout and no build
+    # step produces one. Stub the surface InlineAutofillCompat actually calls,
+    # which keeps this gate offline instead of downloading the AAR from Maven.
+    "androidx/autofill/inline/common/ViewStyle.java": """
+package androidx.autofill.inline.common;
+public final class ViewStyle {
+    public static final class Builder {
+        public Builder setBackgroundColor(int color) { return this; }
+        public Builder setPadding(int left, int top, int right, int bottom) { return this; }
+        public Builder setLayoutMargin(int left, int top, int right, int bottom) { return this; }
+        public ViewStyle build() { return new ViewStyle(); }
+    }
+}
+""",
+    "androidx/autofill/inline/common/TextViewStyle.java": """
+package androidx.autofill.inline.common;
+public final class TextViewStyle {
+    public static final class Builder {
+        public Builder setTextColor(int color) { return this; }
+        public TextViewStyle build() { return new TextViewStyle(); }
+    }
+}
+""",
+    "androidx/autofill/inline/UiVersions.java": """
+package androidx.autofill.inline;
+public final class UiVersions {
+    public static StylesBuilder newStylesBuilder() { return new StylesBuilder(); }
+    public static final class StylesBuilder {
+        public StylesBuilder addStyle(android.os.Bundle style) { return this; }
+        public android.os.Bundle build() { return new android.os.Bundle(); }
+    }
+}
+""",
+    "androidx/autofill/inline/v1/InlineSuggestionUi.java": """
+package androidx.autofill.inline.v1;
+public final class InlineSuggestionUi {
+    public static Style.Builder newStyleBuilder() { return new Style.Builder(); }
+    public static final class Style {
+        public static final class Builder {
+            public Builder setChipStyle(androidx.autofill.inline.common.ViewStyle style) { return this; }
+            public Builder setSingleIconChipStyle(androidx.autofill.inline.common.ViewStyle style) { return this; }
+            public Builder setTitleStyle(androidx.autofill.inline.common.TextViewStyle style) { return this; }
+            public Builder setSubtitleStyle(androidx.autofill.inline.common.TextViewStyle style) { return this; }
+            public android.os.Bundle build() { return new android.os.Bundle(); }
+        }
+    }
 }
 """,
 }
@@ -259,7 +315,7 @@ def verify_sources(android_jar: Path, jdk: Path) -> None:
             )
 
     javac = (jdk / "bin/javac.exe").resolve()
-    for path in (android_jar, ANDROIDX_JAR, javac, JAVA_HELPER, *platform_sources):
+    for path in (android_jar, javac, JAVA_HELPER, *platform_sources):
         if not path.exists():
             raise FileNotFoundError(path)
     with tempfile.TemporaryDirectory(prefix="inline-autofill-compile-") as temporary:
@@ -272,7 +328,7 @@ def verify_sources(android_jar: Path, jdk: Path) -> None:
             stub_sources.append(stub)
         subprocess.run(
             [str(javac), "-encoding", "UTF-8", "-source", "8", "-target", "8",
-             "-bootclasspath", str(android_jar), "-classpath", str(ANDROIDX_JAR),
+             "-bootclasspath", str(android_jar),
              "-d", temporary,
              str(JAVA_HELPER), *[str(path) for path in platform_sources],
              *[str(path) for path in stub_sources]],

@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
+import re
 import xml.etree.ElementTree as ET
 
 
@@ -113,11 +114,27 @@ def main() -> None:
     launch = gate.index("Lapy;->a(Landroid/content/Context;Ljava/lang/Class;)Z")
     if claim >= launch:
         raise RuntimeError("guide launch claim is checked after the Activity has already started")
-    require(gate[claim:launch], ("if-eqz v0, :blocked",), "active guide launch gate")
-    require(gate[launch:], (
-        "if-nez v0, :launched",
-        "FirstRunStateCompat;->releaseGuideLaunch(Landroid/content/Context;)V",
-    ), "skipped native launch releases the claim")
+    # Match the branch, not its label: apktool renames hand-written labels while
+    # disassembling, so the source tree's `:blocked` comes back as `:cond_0`.
+    if re.search(r"if-eqz v\d+, :\S+", gate[claim:launch]) is None:
+        raise RuntimeError(
+            "active guide launch gate must branch on the claim result before launching"
+        )
+    after_launch = gate[launch:]
+    # apktool renames hand-written labels, so match the branch and the contract
+    # it guards rather than the source tree's `:launched`.
+    branch = re.search(r"if-nez (v\d+), (:[\w_]+)", after_launch)
+    if branch is None:
+        raise RuntimeError("skipped native launch does not test the launch result")
+    release_call = "FirstRunStateCompat;->releaseGuideLaunch(Landroid/content/Context;)V"
+    if release_call not in after_launch:
+        raise RuntimeError("skipped native launch does not release the guide claim")
+    # The release has to sit on the fall-through path: the branch jumps past it
+    # when the native activity did start. Locate the target by position rather
+    # than by name so a renamed label cannot hide a flipped guard.
+    target = after_launch.find(f"\n    {branch.group(2)}\n")
+    if target < 0 or target < after_launch.index(release_call):
+        raise RuntimeError("skipped native launch does not release the guide claim")
 
     routing = (
         decoded
