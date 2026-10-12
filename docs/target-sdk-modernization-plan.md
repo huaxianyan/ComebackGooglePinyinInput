@@ -656,7 +656,7 @@ Pixel 10 Pro / Android 16 最终几何：
 
 ### target 37 / Android 17
 
-状态：**适配前调查已完成，尚未创建实现分支**。设备已于 2026-10-12 升级到 Android 17，target 36 前置条件已满足。
+状态：**实现分支已完成纯 target 提升并通过真机验证，待功能回归与维护者确认**。设备已于 2026-10-12 升级到 Android 17，target 36 前置条件已满足。
 
 调查结论见 [Android 17 / API 37 适配前调查](../android-17-api-37-investigation.md)。要点：
 
@@ -664,10 +664,17 @@ Pixel 10 Pro / Android 16 最终几何：
 - 唯一明确需要改动的是 `System.load()` 的 DCL-C 只读要求。原生库加载器的三级回退链最后一级会把 `.so` 解压到应用可写目录再加载，正常路径下不会走到。
 - static final 反射限制、`MessageQueue` 无锁实现、LAN 权限、ContactsProvider CP2 两项、后台音频与大屏方向限制，静态审计判定为不涉及或低风险，理由见调查文档。
 - CJKV IME 无障碍 API 属新增能力，按项目约定需要独立分支与「默认关闭」例外流程，本轮只登记。
-- 真机基线已于 2026-10-12 采集：API 37、`sdk_full=37.1`、4 KiB 页、三键导航，升级后无新的异常退出。冒烟测试待设备恢复后补完。
+- 真机基线已于 2026-10-12 采集：API 37、`sdk_full=37.1`、4 KiB 页、三键导航，升级后无新的异常退出。
 - 版本声明已定：`apktool.yml` 的 `targetSdkVersion` 写 `37`，Compose 宿主写 `compileSdk = 37` 加 `compileSdkMinor = 2`。次版本号只在编译侧存在。
 
-后续实施仍按本文的共同完成条件执行，并新增 `scripts/verify_target37.py`。
+实施进度（分支 `feat/target-sdk-37`）：
+
+- 纯 target 提升已完成，`gradle.properties` 以 `android.suppressUnsupportedCompileSdk=37.2` 知情接受 AGP 的 compile SDK 警告。
+- **DCL-C 实测确认回退链不可达。**隔离包 `2.1.7-target37.3` 的 `nativeloader` 配置为 `target_sdk_version=37`，`library_path` 为两段式，全部 `.so` 从只读的 `lib/arm64/` 段加载，回退段一次未用；干净重启进程后无 `UnsatisfiedLinkError`、无 `VerifyError`、无隐藏 API 拒绝、无 DCL 告警。无需为它写补丁。
+- `scripts/verify_target37.py` 已就位并接入 CI，固定 target 37 与 DCL-C 只读原生加载，并锁定调查中判定「不涉及」的项。
+- 顺带修掉一处与 target 无关的适配问题：Android 17 的输入法切换器会把子类型图标单色化，原来的彩色 PNG 退化成方块，已换成单色「拼」字矢量。
+
+后续按本文的共同完成条件执行，剩余项是拼音、英文、手写、候选、符号/Emoji、剪贴板和主题的基础回归。
 
 ## Native 16 KiB 独立风险
 
