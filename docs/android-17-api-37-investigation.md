@@ -214,7 +214,7 @@ Android 17 为中日韩越输入法新增了两个 API：输入法在设置合�
 
 1. 按键音与音量预览音需要用户先关掉免打扰才能补测，见 3.5。
 2. ~~从 `master` 创建 `feat/target-sdk-37`，先做纯 target 提升，观察 DCL-C 回退链是否真的触发。~~ **已完成，见 3.4。**回退链未触发，无需补丁。
-3. 新增 `scripts/verify_target37.py`，固定 target 37、只读原生库加载、以及 1.1 中已判定「不涉及」的清单项。现有 `verify_target36.py` 是过渡态，接受 36 或 37，应在新门禁就位后收回。
+3. ~~新增 `scripts/verify_target37.py`~~ **已完成**。门禁固定 target 37，以 `useLegacyPackaging = true` 锚定 DCL-C 的只读原生加载，并锁定 1.1 中判定「不涉及」的项：不得声明 `ACCESS_LOCAL_NETWORK`、短信与蓝牙权限，清单里不得出现 `screenOrientation`，smali 全树不得引用 `Socket`、`ServerSocket`、`InetAddress`、`sun.misc.Unsafe`。反向验证已确认把 target 改回 36 会让它失败。`verify_target36.py` 接受 36 或 37，符合既有「自己及以后」的门禁约定（`verify_target35.py` 同样接受 35 与 36），不是过渡态。
 4. 按 target 29–36 的既有完成条件走构建、静态门禁、真机 ART 与功能回归。
 
 ## 相关文档

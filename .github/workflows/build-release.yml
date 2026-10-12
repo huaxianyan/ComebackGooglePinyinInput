@@ -283,6 +283,7 @@ jobs:
           python scripts/verify_target34.py work/final-decoded
           python scripts/verify_target35.py work/final-decoded
           python scripts/verify_target36.py work/final-decoded
+          python scripts/verify_target37.py work/final-decoded
           python scripts/verify_universal_keyboard_header.py work/final-decoded
           python scripts/verify_simplified_traditional_header_toggle.py work/final-decoded
           python scripts/verify_english_t9_multitap.py work/final-decoded
