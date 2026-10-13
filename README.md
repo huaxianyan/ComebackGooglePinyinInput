@@ -1,6 +1,10 @@
-# Google 拼音输入法 创造性 AI 版
+<div align="center">
+  <img src="images/icon.png" width="120" alt="Google 拼音输入法图标">
 
-**Comeback Google Pinyin Input**
+  # Google 拼音输入法 创造性 AI 版
+
+  **Comeback Google Pinyin Input**
+</div>
 
 这是基于 Google 拼音输入法 4.5.2 的非商业兼容维护项目。项目尽量保持原生输入、候选、学习、词典、手写、主题、分页和触摸体验，同时修复旧应用在现代 Android 上的兼容问题，并以可复现、可审计的方式构建。
 
@@ -100,52 +104,13 @@ target SDK:     37
 
 完整版本变化见 [CHANGELOG.md](CHANGELOG.md)。设计、研究和验收记录见 [docs/](docs/)。
 
-## 效果预览
+## 截图
 
-### Inline Autofill
-
-<table>
-  <tr>
-    <td width="50%" align="center">
-      <img src="images/inline-autofill-login.png" alt="登录页面中的 Inline Autofill 建议" width="270"><br>
-      登录字段中直接显示由 Android Framework 和 Autofill Provider 提供的建议
-    </td>
-    <td width="50%" align="center">
-      <img src="images/inline-autofill-switch.png" alt="多个 Inline Autofill 建议的切换控制" width="270"><br>
-      使用原生上一项、下一项控制切换多个建议，并保持 Provider 原始顺序
-    </td>
-  </tr>
-</table>
-
-### Clipboard 与敏感内容
-
-<table>
-  <tr>
-    <td width="50%" align="center">
-      <img src="images/clipboard-verification-code.png" alt="短信验证码剪贴板候选" width="270"><br>
-      验证码复制后通过真实原生 Candidate 快速粘贴
-    </td>
-    <td width="50%" align="center">
-      <img src="images/sensitive-clipboard-password.png" alt="密码输入框中的敏感剪贴板脱敏候选" width="270"><br>
-      密码目标中的敏感剪贴板只脱敏显示，点击仍提交完整原文
-    </td>
-  </tr>
-</table>
-
-### Material 3 设置与词典备份
-
-<table>
-  <tr>
-    <td width="50%" align="center">
-      <img src="images/material3-settings.png" alt="Compose Material 3 设置首页" width="270"><br>
-      Android 6.0 及以上使用官方 Compose Material 3 设置界面
-    </td>
-    <td width="50%" align="center">
-      <img src="images/dictionary-and-backup.png" alt="词典健康状态、Rime 同步与自动备份设置" width="270"><br>
-      集中查看词典健康状态和 Rime 同步情况，并配置自动备份、版本保留和导入位置
-    </td>
-  </tr>
-</table>
+| | |
+| --- | --- |
+| ![登录页面中的 Inline Autofill 建议](images/inline-autofill-login.png) | ![多个 Inline Autofill 建议的切换控制](images/inline-autofill-switch.png) |
+| ![短信验证码剪贴板候选](images/clipboard-verification-code.png) | ![密码目标中的敏感剪贴板脱敏候选](images/sensitive-clipboard-password.png) |
+| ![Compose Material 3 设置首页](images/material3-settings.png) | ![词典健康状态、Rime 同步与自动备份设置](images/dictionary-and-backup.png) |
 
 > 为公开展示保护站点信息，Chrome 截图中的地址栏文字已遮挡，其余号码、验证码和功能内容保持原样。
 
