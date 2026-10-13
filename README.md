@@ -106,11 +106,12 @@ target SDK:     37
 
 ## 截图
 
-| | |
-| --- | --- |
-| ![登录页面中的 Inline Autofill 建议](images/inline-autofill-login.png) | ![多个 Inline Autofill 建议的切换控制](images/inline-autofill-switch.png) |
-| ![短信验证码剪贴板候选](images/clipboard-verification-code.png) | ![密码目标中的敏感剪贴板脱敏候选](images/sensitive-clipboard-password.png) |
-| ![Compose Material 3 设置首页](images/material3-settings.png) | ![词典健康状态、Rime 同步与自动备份设置](images/dictionary-and-backup.png) |
+<img src="images/inline-autofill-login.png" width="270" alt="登录页面中的 Inline Autofill 建议">
+<img src="images/inline-autofill-switch.png" width="270" alt="多个 Inline Autofill 建议的切换控制">
+<img src="images/clipboard-verification-code.png" width="270" alt="短信验证码剪贴板候选">
+<img src="images/sensitive-clipboard-password.png" width="270" alt="密码目标中的敏感剪贴板脱敏候选">
+<img src="images/material3-settings.png" width="270" alt="Compose Material 3 设置首页">
+<img src="images/dictionary-and-backup.png" width="270" alt="词典健康状态、Rime 同步与自动备份设置">
 
 > 为公开展示保护站点信息，Chrome 截图中的地址栏文字已遮挡，其余号码、验证码和功能内容保持原样。
 
