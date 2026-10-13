@@ -8,7 +8,7 @@
 
 - 仓库：`https://github.com/huaxianyan/ComebackGooglePinyinInput`。
 - 正式包名：`com.google.android.inputmethod.pinyin.compat`。
-- 当前正式基线：`v2.1.5`，`targetSdkVersion=36`，`minSdkVersion=23`。后续开发从最新 `master` 创建分支，不能把旧实验基线当作当前基线。
+- 版本与 SDK 参数以 `version.properties` 为准，正式发布与预发布状态分开看标签和最新日期记录。后续开发从最新 `master` 创建分支，不能把旧实验基线当作当前基线。
 - 正式签名身份必须保持不变。私钥、口令和其他签名材料只保存在仓库外或 GitHub Actions Secrets 中。
 - 默认不修改原生输入、候选、学习权重、词典格式、手写、主题、分页和触摸语义，以修复已定位缺陷为默认立场。
 
@@ -41,7 +41,7 @@
 - **不需要移植 Material Color Utilities**：系统已算好完整语义色（`system_primary_light`、`system_surface_container_dark` 等），实测应用进程内 `getIdentifier` + `getColor` 全部可读（18/18 语义色、色阶色全命中）。
 - 主题包可在运行期用代码构造（`baj` 写入器），经 `files:` 前缀通路（原版既有）加载，写入与读取的 zip 条目名完全一致。
 - 架构上新增 `SLOT_DYNAMIC` 作为第四槽，接进现有 `SystemAutoThemeCompat` 机制。
-- 项目约束 AndroidX-free，`ContextCompat.getColor` 不可用，只能用平台 `getResources().getColor(int, Theme)`（API 23+）。
+- 原生键盘 Java 补丁沿用平台取色 API，使用 `getResources().getColor(int, Theme)`。这一边界不适用于独立构建的 Compose 设置宿主，后者使用官方 AndroidX 运行时。
 - 三项真机实测**全部通过**：实测①（运行期读系统色，40/40 命中）、实测②（自造主题包可渲染，键盘区 96.6% 探针色）、实测③（系统色→主题包→渲染全链路，`color_base` 精确等于 `system_surface_light`）。详见 [实测①](../dynamic-color-device-test-1.md)、[实测②③](../dynamic-color-device-test-2.md)。
 - **主题生效键是 `additional_keyboard_theme`，不是 `keyboard_theme`**（实测②结论）。`baq.a(Context)` 中 `additional_keyboard_theme` 非空即短路，`keyboard_theme` 被完全忽略；且只写 `keyboard_theme` 时 `gc.b()` 校验必然失败（值无 `assets:`/`files:`/`system:` 前缀）而退回内置主题。**自定义主题只能通过 `additional_keyboard_theme` 注入，值必须以三种前缀之一开头。**
 - **`ThemePackageMetadata` 字段映射已纠正**：`field1`=int 版本（可省略）、`field2`=**repeated string 主 style_sheet 文件名列表**、`field3`=嵌套消息含 border 文件列表。此前把 `field2` 当主题名、`field3` 当单文件列表是错的，会导致 `bbl.a(File)Z` 校验失败。**最稳做法：照抄某个内置主题 metadata 的原始字节。**
@@ -56,7 +56,7 @@
 ## 开发与测试包名
 
 - **开发与真机测试一律使用非正式包名**，验收后卸载测试包。绝不把调试产物装成正式 ID `com.google.android.inputmethod.pinyin.compat`。
-- 当前测试包：`com.google.android.inputmethod.pinyin.dev`（versionName 2.1.3 / versionCode 4520404，release-like，用 `work/audit-signing/audit-signing.p12` 签名）。
+- 测试包按当轮任务选择隔离 ID，版本和签名从当轮产物核对，不沿用历史测试包快照。审计签名位置见本地 `AGENTS.md`。
 - 构建入口是 `scripts/build.ps1`，传 `-ApplicationId <隔离包名>`；需 `run-as` / JDWP 时加 `-Debuggable`，`apply_patches.py` 会拒绝让正式 ID 变 debuggable。
 - **本地构建版本号会漂**：`build.ps1` 不读 `version.properties`，`apply_patches.py` 默认版本与之一致性靠人传参。正式发布的版本一致性由 GitHub Actions（`build-release.yml` 校验 tag 与 `version.properties` 相符）保证，本地构建只适合做测试包。
 
@@ -65,5 +65,5 @@
 - 英文 IME 定义里的 `extra_value_latin_enable_suspend_prediction_on_backspace` 不能改成 `false`。`adw.a(JLchw;)Z` 里 `cgp.h == false` 会**无条件**进入挂起分支，改 `false` 会让候选缺失的退格全部被吞，问题加重。详见 [英文符号引发后续建议与首次退格被吞的调研](../symbol-backspace-swallow-research.md)。
 - 符号后第一次退格被吞由各语言的 `symbols_word_separators` 决定，与符号自身无关。会结束词的符号，其后退格被解码器挂起。同上。
 - 「只让符号不引发预测、保留字母的下一词预测」在补全钩子里做不到：清空联想容器的 `azh.b()V` 是私有方法，框架侧可达的 `textCandidatesUpdated` 与 `finishComposingText` 都只是向外通知。同上。
-- 2026-10-10 用户恢复 16 KiB 工作并更新验收标准，替代此前「等待原生 16 KiB 实机而搁置」的决定。真实 16 KiB 页大小模拟器验证通过，加普通 4 KiB 实机正常使用通过，即可验收合并。ARM 转译与未测试边界如实说明，未来真实 16 KiB 设备发现问题再开独立分支修复。当前实施与历史边界以 [16 KiB 专项记录](../native-16kb-compatibility.md) 为准，旧分支保留为历史来源。
+- 2026-10-10 用户恢复 16 KiB 工作并更新验收标准，替代此前「等待原生 16 KiB 实机而搁置」的决定。真实 16 KiB 页大小模拟器验证通过，加普通 4 KiB 实机正常使用通过，即可验收合并。ARM 转译与未测试边界如实说明，未来真实 16 KiB 设备发现问题再开独立分支修复。当前实施与历史边界以 [16 KiB 专项记录](../native-16kb-compatibility.md) 为准，已归档实验仅作历史来源，不恢复失败代码。
 - Gboard 的「点击主题立即出预览」与动态配色是**两条独立链路**：预览机制负责渲染，配色由主题提供器产出。我们做动态配色时落地形态是一个新的主题提供器，**列表项与预览链路可原样复用，预览不需要重写**。机制为「内存 Bitmap 缓存 + 占位图 + 异步回填」三件套，可用平台原生类实现，不引入新依赖。详见 [Gboard 预览机制](../gboard-preview-mechanism.md)。

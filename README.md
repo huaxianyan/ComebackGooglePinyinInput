@@ -10,6 +10,8 @@
 
 正式 APK 请从 [GitHub Releases](https://github.com/huaxianyan/ComebackGooglePinyinInput/releases) 下载。
 
+本 README 描述当前开发主线。2026-10-13 核对时，主线是 `2.1.7-pre`（target SDK 37），最近正式发布记录是 `v2.1.6`（target SDK 36）。预发布测试包由 Actions 产出，尚未创建 `v2.1.7` Release。验收边界与待办见 [最新交接记录](docs/handoff/2026-10-13.md)。
+
 <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://app/%7B%22id%22%3A%22com.google.android.inputmethod.pinyin.compat%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Fhuaxianyan%2FComebackGooglePinyinInput%22%2C%22author%22%3A%22huaxianyan%22%2C%22name%22%3A%22Comeback%20Google%20Pinyin%20Input%22%7D"><img src="images/obtainium-badge.png" alt="Get it on Obtainium" height="48"></a>
 
 装了 [Obtainium](https://github.com/ImranR98/Obtainium) 的话，点上面的按钮即可把本项目加入更新列表，之后新版本会自动检查。
@@ -204,6 +206,7 @@ scripts/         补丁、构建和静态验证脚本
 docs/            设计、研究、验收和兼容边界
 ```
 
+- [长期决策](docs/handoff/DECISIONS.md) 与 [日期交接记录](docs/handoff/)：当前主线、历史验证和下一步
 - [原始 APK 来源与完整性](docs/original-apk-provenance.md)
 - [本地构建、GitHub Actions 与发布流程](docs/build-and-release.md)
 - [中文文案与排版规范](docs/chinese-copywriting-style.md)
