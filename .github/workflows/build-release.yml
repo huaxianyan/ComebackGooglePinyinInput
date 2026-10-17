@@ -8,6 +8,14 @@ on:
       - "v*"
   workflow_dispatch:
     inputs:
+      operation:
+        description: Build APK or generate signing lineage only
+        required: true
+        default: build
+        type: choice
+        options:
+          - build
+          - create_lineage
       application_id:
         description: Application ID override for isolated audit builds
         required: false
@@ -43,6 +51,7 @@ env:
 
 jobs:
   build:
+    if: github.event_name != 'workflow_dispatch' || inputs.operation != 'create_lineage'
     name: Build, sign and verify modern host
     runs-on: windows-latest
     env:
@@ -468,3 +477,108 @@ jobs:
         if: always()
         shell: pwsh
         run: Remove-Item work/signing/release.p12 -Force -ErrorAction SilentlyContinue
+
+  create-lineage:
+    if: github.event_name == 'workflow_dispatch' && inputs.operation == 'create_lineage'
+    name: Generate public signing lineage only
+    runs-on: windows-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Resolve signing configuration
+        id: signing
+        shell: pwsh
+        run: |
+          $config = Get-Content signing/signing-materials.json -Raw | ConvertFrom-Json
+          $version = python -c "import sys; sys.path.insert(0, 'scripts'); from build_modern_settings_host import BUILD_TOOLS_VERSION; print(BUILD_TOOLS_VERSION)"
+          if ($LASTEXITCODE -ne 0) { throw "Unable to resolve pinned Build-Tools version" }
+          $outputs = @{
+            base_name = $config.fileBaseName
+            keystore_secret = $config.newSecrets.keystore
+            store_password_secret = $config.newSecrets.storePassword
+            key_password_secret = $config.newSecrets.keyPassword
+            build_tools_version = $version.Trim()
+          }
+          foreach ($name in $outputs.Keys) {
+            "$name=$($outputs[$name])" | Out-File $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          }
+
+      - name: Prepare pinned signing tool
+        shell: pwsh
+        run: |
+          $version = "${{ steps.signing.outputs.build_tools_version }}"
+          $jar = Join-Path $env:ANDROID_SDK_ROOT "build-tools/$version/lib/apksigner.jar"
+          if (-not (Test-Path $jar)) {
+            $sdkManager = Join-Path $env:ANDROID_SDK_ROOT "cmdline-tools/latest/bin/sdkmanager.bat"
+            & $sdkManager "build-tools;$version"
+            if ($LASTEXITCODE -ne 0) { throw "Unable to install pinned signing tool" }
+          }
+
+      - name: Generate and validate lineage using existing and new Secrets
+        shell: pwsh
+        env:
+          CI_OLD_KEYSTORE: ${{ secrets.ANDROID_SIGNING_KEYSTORE_BASE64 }}
+          CI_OLD_STORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
+          CI_OLD_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
+          CI_OLD_ALIAS: ${{ vars.ANDROID_SIGNING_KEY_ALIAS }}
+          CI_NEW_KEYSTORE: ${{ secrets[steps.signing.outputs.keystore_secret] }}
+          CI_NEW_STORE_PASSWORD: ${{ secrets[steps.signing.outputs.store_password_secret] }}
+          CI_NEW_KEY_PASSWORD: ${{ secrets[steps.signing.outputs.key_password_secret] }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          $config = Get-Content signing/signing-materials.json -Raw | ConvertFrom-Json
+          $required = @{
+            ANDROID_SIGNING_KEYSTORE_BASE64 = $env:CI_OLD_KEYSTORE
+            ANDROID_SIGNING_STORE_PASSWORD = $env:CI_OLD_STORE_PASSWORD
+            ANDROID_SIGNING_KEY_PASSWORD = $env:CI_OLD_KEY_PASSWORD
+            ($config.newSecrets.keystore) = $env:CI_NEW_KEYSTORE
+            ($config.newSecrets.storePassword) = $env:CI_NEW_STORE_PASSWORD
+            ($config.newSecrets.keyPassword) = $env:CI_NEW_KEY_PASSWORD
+          }
+          $missing = @($required.Keys | Where-Object { [string]::IsNullOrWhiteSpace($required[$_]) })
+          if ($missing.Count) { throw "Missing signing Secrets: $($missing -join ', ')" }
+          $directory = Join-Path $env:GITHUB_WORKSPACE "work/lineage-signing"
+          $backup = Join-Path $directory "Backup"
+          $artifacts = Join-Path $env:GITHUB_WORKSPACE "work/lineage-artifacts"
+          $baseName = $config.fileBaseName
+          try {
+            New-Item -ItemType Directory -Force $backup, $artifacts | Out-Null
+            [IO.File]::WriteAllBytes((Join-Path $backup "$baseName.p12"), [Convert]::FromBase64String($env:CI_OLD_KEYSTORE))
+            [IO.File]::WriteAllBytes((Join-Path $directory "$baseName.p12"), [Convert]::FromBase64String($env:CI_NEW_KEYSTORE))
+            Copy-Item (Join-Path "signing" $config.certificates.previous) (Join-Path $backup "$baseName-certificate.pem")
+            Copy-Item (Join-Path "signing" $config.certificates.current) (Join-Path $directory "$baseName-certificate.pem")
+            $jar = Join-Path $env:ANDROID_SDK_ROOT "build-tools/${{ steps.signing.outputs.build_tools_version }}/lib/apksigner.jar"
+            ./scripts/create-signing-lineage.ps1 -SigningDirectory $directory `
+              -OldKeyAlias $env:CI_OLD_ALIAS -JdkDirectory $env:JAVA_HOME -ApksignerJar $jar `
+              -OldStorePasswordEnv CI_OLD_STORE_PASSWORD -OldKeyPasswordEnv CI_OLD_KEY_PASSWORD `
+              -NewStorePasswordEnv CI_NEW_STORE_PASSWORD -NewKeyPasswordEnv CI_NEW_KEY_PASSWORD
+            Copy-Item (Join-Path $directory "$baseName-lineage.bin") $artifacts
+            Copy-Item (Join-Path $directory "SIGNING-LINEAGE-INFO.txt") $artifacts
+          } finally {
+            if (Test-Path $directory) { Remove-Item -LiteralPath $directory -Recurse -Force }
+          }
+
+      - name: Upload public lineage and verification report
+        uses: actions/upload-artifact@v4
+        with:
+          name: signing-lineage-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            work/lineage-artifacts/${{ steps.signing.outputs.base_name }}-lineage.bin
+            work/lineage-artifacts/SIGNING-LINEAGE-INFO.txt
+          if-no-files-found: error
+          retention-days: 7

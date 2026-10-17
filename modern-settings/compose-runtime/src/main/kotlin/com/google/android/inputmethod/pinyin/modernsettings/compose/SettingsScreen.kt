@@ -57,6 +57,7 @@ import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
 
 data class SettingsActions(
+    val transfer: SettingsTransferActions,
     val onDynamicColorEnabledChange: (Boolean) -> Unit,
     val onSystemAutoThemeEnabledChange: (Boolean) -> Unit,
     val onApplyTheme: (String) -> Unit,
@@ -115,6 +116,8 @@ fun SettingsScreen(
     dictionaryClear: DictionaryClearState,
     rimeSync: RimeSyncUiState,
     actions: SettingsActions,
+    transferState: SettingsTransferState = SettingsTransferState(),
+    restoreContactsRequested: Boolean = false,
     /**
      * Where the page opens, for callers that are not the settings launcher.
      *
@@ -125,6 +128,14 @@ fun SettingsScreen(
     onExit: () -> Unit,
 ) {
     var routePath by rememberSaveable { mutableStateOf(initialRoutePath) }
+    androidx.compose.runtime.LaunchedEffect(transferState.recoveryRequested) {
+        if (transferState.recoveryRequested) {
+            if (SettingsRouteStack.current(routePath) != SettingsRoute.RestoreSetup) {
+                routePath = SettingsRouteStack.push(routePath, SettingsRoute.RestoreSetup)
+            }
+            actions.transfer.onRecoveryShown()
+        }
+    }
     val route = SettingsRouteStack.current(routePath)
     val navigateTo: (SettingsRoute) -> Unit = { destination ->
         routePath = SettingsRouteStack.push(routePath, destination)
@@ -151,11 +162,14 @@ fun SettingsScreen(
             dictionaryHealth = dictionaryHealth,
             rimeSync = rimeSync,
             actions = actions,
+            transferState = transferState,
+            restoreContactsRequested = restoreContactsRequested,
             navigateTo = navigateTo,
             navigateBack = navigateBack,
         )
     }
-    if (route == SettingsRoute.Dictionary) {
+    SettingsTransferDialog(transferState, actions.transfer)
+    if (route == SettingsRoute.Dictionary || route == SettingsRoute.RestoreSetup) {
         DictionaryImportDialog(dictionaryImport, actions)
         DictionaryClearDialog(dictionaryClear, actions)
         RimeSyncDialogs(rimeSync, actions.rimeSync)
@@ -172,6 +186,8 @@ private fun SettingsRoutePage(
     dictionaryHealth: DictionaryHealthState,
     rimeSync: RimeSyncUiState,
     actions: SettingsActions,
+    transferState: SettingsTransferState,
+    restoreContactsRequested: Boolean,
     navigateTo: (SettingsRoute) -> Unit,
     navigateBack: () -> Unit,
 ) {
@@ -261,6 +277,9 @@ private fun SettingsRoutePage(
                     )
                     dictionaryShortcutSettingsItems(dictionarySnapshot, actions)
                 }
+                SettingsRoute.Transfer -> settingsTransferItems(transferState, actions.transfer, navigateTo)
+                SettingsRoute.RestoreSetup -> restoreSetupItems(restoreContactsRequested,
+                    dictionarySnapshot, rimeSync, actions)
                 SettingsRoute.Other -> otherSettingsItems(snapshot, actions, navigateTo)
                 SettingsRoute.About -> aboutSettingsItems(actions, navigateTo)
                 SettingsRoute.Licenses -> error("Licenses uses its dedicated screen")
@@ -272,6 +291,8 @@ private fun SettingsRoutePage(
 
 @Composable
 private fun routeTitle(route: SettingsRoute): String = when (route) {
+    SettingsRoute.Transfer -> stringResource(R.string.modern_settings_transfer_title)
+    SettingsRoute.RestoreSetup -> stringResource(R.string.modern_settings_transfer_recovery)
     SettingsRoute.Home -> stringResource(R.string.modern_settings_title)
     SettingsRoute.Input -> stringResource(R.string.modern_settings_home_input_title)
     SettingsRoute.ChineseInput -> legacyString(

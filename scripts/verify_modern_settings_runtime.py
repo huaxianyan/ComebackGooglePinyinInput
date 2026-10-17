@@ -1240,7 +1240,9 @@ def main() -> int:
     )
 
     repository = next((project / "compose-runtime/src/main/kotlin").rglob("LegacySettingsRepository.kt"))
-    repository_text = repository.read_text(encoding="utf-8")
+    repository_text = repository.read_text(encoding="utf-8") + repository.with_name(
+        "SettingsPreferenceKeys.kt"
+    ).read_text(encoding="utf-8")
     require(
         repository_text,
         (
@@ -1262,7 +1264,7 @@ def main() -> int:
             "capabilities: SettingsCapabilities",
             "launcherIcon: BooleanSettingState",
             "fun setLauncherIconVisible(visible: Boolean)",
-            'LAUNCHER_ICON_KEY = "show_launcher_icon"',
+            'LAUNCHER_ICON = "show_launcher_icon"',
             "ApplicationInfo.FLAG_SYSTEM or ApplicationInfo.FLAG_UPDATED_SYSTEM_APP",
             "LauncherIconSettingRules.defaultVisible(",
             "popupOnKeypress: BooleanSettingState",

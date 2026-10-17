@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="modern_settings_transfer_title">设置备份与恢复</string>
+    <string name="modern_settings_transfer_entry_summary">导出设置和自定义主题，或在重新安装后恢复</string>
+    <string name="modern_settings_transfer_summary">在这里备份设置和自定义主题。词库请在「词库与备份」中单独备份。卸载前，请先保存这两份备份。设置备份包含自定义主题图片，请妥善保管。</string>
+    <string name="modern_settings_transfer_export">导出设置</string>
+    <string name="modern_settings_transfer_import">导入设置</string>
+    <string name="modern_settings_transfer_recovery">完成恢复</string>
+    <string name="modern_settings_transfer_recovery_summary">选择目录、授权联系人访问，并开启自动功能</string>
+    <string name="modern_settings_transfer_confirm">使用这份备份替换输入、键盘和主题设置？现有词库保持原样。自动备份和 Rime 自动同步将关闭。导入后，可以继续选择目录、恢复词库，并开启这些功能。</string>
+    <string name="modern_settings_transfer_busy">正在处理设置</string>
+    <string name="modern_settings_transfer_wait">请等待处理结果，再关闭此页面。</string>
+    <string name="modern_settings_transfer_export_success">设置已导出。卸载前，请一并备份词库。</string>
+    <string name="modern_settings_transfer_import_success">设置已导入，请继续完成恢复。</string>
+    <string name="modern_settings_transfer_export_error">设置导出失败。请检查所选存储位置，重新导出成功后再卸载。</string>
+    <string name="modern_settings_transfer_read_error">无法读取这份设置备份。请选择受支持版本导出的完整备份文件。</string>
+    <string name="modern_settings_transfer_import_error">设置恢复未完成，部分设置可能已经改变。请检查可用存储空间后重新导入。</string>
+    <string name="modern_settings_transfer_rime_error">Rime 配置恢复失败。请检查同步目录和配置后重新导入，并确认自动同步的开关状态。</string>
+    <string name="modern_settings_transfer_operation_busy">词库操作正在进行，请等待完成后再导入设置。</string>
+</resources>

@@ -347,7 +347,7 @@ class LegacySettingsRepository(context: Context) {
     }
 
     fun setLauncherIconVisible(visible: Boolean): SettingsSnapshot {
-        preferences.edit().putBoolean(LAUNCHER_ICON_KEY, visible).apply()
+        preferences.edit().putBoolean(SettingsPreferenceKeys.LAUNCHER_ICON, visible).apply()
         return readSnapshot()
     }
 
@@ -511,9 +511,9 @@ class LegacySettingsRepository(context: Context) {
     )
 
     private fun readLauncherIcon(): BooleanSettingState {
-        val isExplicit = preferences.contains(LAUNCHER_ICON_KEY)
+        val isExplicit = preferences.contains(SettingsPreferenceKeys.LAUNCHER_ICON)
         val value = if (isExplicit) {
-            preferences.getBoolean(LAUNCHER_ICON_KEY, false)
+            preferences.getBoolean(SettingsPreferenceKeys.LAUNCHER_ICON, false)
         } else {
             val flags = applicationContext.applicationInfo.flags
             val isSystemOrUpdatedSystemApp = flags and (
@@ -582,7 +582,7 @@ class LegacySettingsRepository(context: Context) {
             user = user,
             generated = generated,
             slots = ThemeCatalogRules.resolveSlots(additionalBySlot, entries),
-            activeValue = preferences.getString(ACTIVE_THEME_KEY, "").orEmpty(),
+            activeValue = preferences.getString(SettingsPreferenceKeys.ACTIVE_THEME, "").orEmpty(),
         )
     }
 
@@ -616,7 +616,6 @@ class LegacySettingsRepository(context: Context) {
     }
 
     companion object {
-        private const val LAUNCHER_ICON_KEY = "show_launcher_icon"
         private const val SYSTEM_AUTO_THEME_BRIDGE =
             "com.google.android.inputmethod.pinyin.SystemAutoThemeCompat"
 
@@ -627,15 +626,6 @@ class LegacySettingsRepository(context: Context) {
         /** The legacy flat array of built-in theme value/name pairs. */
         private const val BUILTIN_THEME_NAME_MAP =
             "builtin_theme_package_name_to_theme_name_map"
-
-        /**
-         * The preference that actually selects a theme.
-         *
-         * The legacy resolver short-circuits on this one and ignores
-         * `keyboard_theme` whenever it is non-empty, so this value is what the
-         * keyboard is using.
-         */
-        private const val ACTIVE_THEME_KEY = "additional_keyboard_theme"
 
         internal fun selectDeviceOverride(
             entries: Array<String>,

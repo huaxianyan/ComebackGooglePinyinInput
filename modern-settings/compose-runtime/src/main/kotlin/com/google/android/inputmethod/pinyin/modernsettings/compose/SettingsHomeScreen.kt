@@ -95,6 +95,13 @@ internal fun androidx.compose.foundation.lazy.LazyListScope.otherSettingsItems(
     navigateTo: (SettingsRoute) -> Unit,
 ) {
     item {
+        SettingsNavigationRow(
+            title = stringResource(R.string.modern_settings_transfer_title),
+            supporting = stringResource(R.string.modern_settings_transfer_entry_summary),
+            onClick = { navigateTo(SettingsRoute.Transfer) },
+        )
+    }
+    item {
         SettingsSwitchRow(
             title = legacyString(
                 "setting_show_launcher_icon_title",

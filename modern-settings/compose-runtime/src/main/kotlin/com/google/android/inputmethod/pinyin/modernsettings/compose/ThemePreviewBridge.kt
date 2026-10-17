@@ -113,9 +113,6 @@ internal object ThemePreviewBridge {
     /** `gc.c(Context)`: the key-border flag as the renderer sees it. */
     private const val BORDER_STATE_METHOD = "c"
 
-    /** The preference behind that flag. It carries no forced value. */
-    private const val KEY_BORDER_KEY = "enable_key_border"
-
     /**
      * The compatibility bridge that builds the generated palette package.
      *
@@ -398,7 +395,7 @@ internal object ThemePreviewBridge {
                 Void.TYPE,
                 String::class.java,
                 BOOLEAN_TYPE,
-            ).invoke(facade, KEY_BORDER_KEY, enabled)
+            ).invoke(facade, SettingsPreferenceKeys.KEY_BORDER, enabled)
         }
     }
 

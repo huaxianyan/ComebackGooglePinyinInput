@@ -12,6 +12,7 @@ import sys
 from zipfile import ZipFile
 
 ROOT = Path(__file__).resolve().parents[1]
+BUILD_TOOLS_VERSION = "36.0.0"
 
 
 def run(command: list[str], *, env: dict[str, str] | None = None) -> None:
@@ -23,6 +24,42 @@ def executable(path: Path, arguments: list[str]) -> list[str]:
     if os.name == "nt" and path.suffix.lower() in (".bat", ".cmd"):
         return ["cmd.exe", "/d", "/c", str(path), *arguments]
     return [str(path), *arguments]
+
+
+def sign_aligned_apk(
+    args: argparse.Namespace, aligned: Path, *, env: dict[str, str]
+) -> None:
+    """Sign an assembled APK through the same path used by a complete host build."""
+    build_tools = args.sdk.resolve() / "build-tools" / BUILD_TOOLS_VERSION
+    zipalign = build_tools / ("zipalign.exe" if os.name == "nt" else "zipalign")
+    apksigner = build_tools / ("apksigner.bat" if os.name == "nt" else "apksigner")
+    args.output.resolve().parent.mkdir(parents=True, exist_ok=True)
+    sign_args = [
+        "sign",
+        "--ks",
+        str(args.keystore.resolve()),
+        "--ks-key-alias",
+        args.key_alias,
+        "--ks-pass",
+        f"env:{args.ks_pass_env}",
+        "--key-pass",
+        f"env:{args.key_pass_env}",
+    ]
+    if args.rotation_lineage:
+        # SDK-targeted rotation, not ordinary multi-signer APK signing.
+        sign_args.extend([
+            "--next-signer", "--ks", str(args.rotation_keystore.resolve()),
+            "--ks-key-alias", args.rotation_key_alias,
+            "--ks-pass", f"env:{args.rotation_ks_pass_env}",
+            "--key-pass", f"env:{args.rotation_key_pass_env}",
+            "--lineage", str(args.rotation_lineage.resolve()),
+            "--rotation-min-sdk-version", str(args.rotation_min_sdk_version),
+        ])
+    sign_args.extend(["--out", str(args.output.resolve()), str(aligned)])
+    run(executable(apksigner, sign_args), env=env)
+    run(executable(apksigner, ["verify", "--verbose", "--print-certs",
+                              str(args.output.resolve())]), env=env)
+    run([str(zipalign), "-c", "-P", "16", "4", str(args.output.resolve())])
 
 
 def main() -> int:
@@ -49,6 +86,13 @@ def main() -> int:
     parser.add_argument("--key-alias", required=True)
     parser.add_argument("--ks-pass-env", default="MODERN_SETTINGS_KS_PASS")
     parser.add_argument("--key-pass-env", default="MODERN_SETTINGS_KEY_PASS")
+    parser.add_argument("--rotation-lineage", type=Path,
+                        help="old-to-new signing lineage created by apksigner rotate")
+    parser.add_argument("--rotation-keystore", type=Path)
+    parser.add_argument("--rotation-key-alias")
+    parser.add_argument("--rotation-ks-pass-env", default="MODERN_SETTINGS_ROTATED_KS_PASS")
+    parser.add_argument("--rotation-key-pass-env", default="MODERN_SETTINGS_ROTATED_KEY_PASS")
+    parser.add_argument("--rotation-min-sdk-version", type=int, choices=(28, 33), default=33)
     parser.add_argument(
         "--audit-launcher",
         action="store_true",
@@ -82,6 +126,17 @@ def main() -> int:
             raise FileNotFoundError(path)
     if args.ks_pass_env not in os.environ or args.key_pass_env not in os.environ:
         raise RuntimeError("signing password environment variables are not set")
+
+    rotation = (args.rotation_lineage, args.rotation_keystore, args.rotation_key_alias)
+    if any(rotation) and not all(rotation):
+        parser.error("rotation requires lineage, new keystore and new key alias together")
+    if args.rotation_lineage:
+        for path in (args.rotation_lineage, args.rotation_keystore):
+            if not path.resolve().is_file():
+                raise FileNotFoundError(path)
+        if (args.rotation_ks_pass_env not in os.environ or
+                args.rotation_key_pass_env not in os.environ):
+            raise RuntimeError("rotated signing password environment variables are not set")
 
     work = args.work.resolve()
     decoded = work / "decoded"
@@ -209,29 +264,10 @@ def main() -> int:
         ]
     )
 
-    build_tools = args.sdk.resolve() / "build-tools/36.0.0"
+    build_tools = args.sdk.resolve() / "build-tools" / BUILD_TOOLS_VERSION
     zipalign = build_tools / ("zipalign.exe" if os.name == "nt" else "zipalign")
-    apksigner = build_tools / ("apksigner.bat" if os.name == "nt" else "apksigner")
     run([str(zipalign), "-P", "16", "-f", "4", str(unaligned), str(aligned)])
-
-    args.output.resolve().parent.mkdir(parents=True, exist_ok=True)
-    sign_args = [
-        "sign",
-        "--ks",
-        str(args.keystore.resolve()),
-        "--ks-key-alias",
-        args.key_alias,
-        "--ks-pass",
-        f"env:{args.ks_pass_env}",
-        "--key-pass",
-        f"env:{args.key_pass_env}",
-        "--out",
-        str(args.output.resolve()),
-        str(aligned),
-    ]
-    run(executable(apksigner, sign_args), env=env)
-    run(executable(apksigner, ["verify", "--verbose", str(args.output.resolve())]), env=env)
-    run([str(zipalign), "-c", "-P", "16", "4", str(args.output.resolve())])
+    sign_aligned_apk(args, aligned, env=env)
     print(f"built {args.output.resolve()}")
     return 0
 
