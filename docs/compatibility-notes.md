@@ -6,12 +6,11 @@
 - Compatibility v10+ package：`com.google.android.inputmethod.pinyin.compat`
 - 原版 versionName：`4.5.2.193126728-arm64-v8a`
 - 原版 versionCode：`4520313`
-- 本轮发布版本：`v2.1.6`（versionCode `4520423`，targetSdk 36）
-- 上一正式版：`v2.1.5`（versionCode `4520407`，targetSdk 36）
+- 当前构建身份与签名策略：以 [version.properties](../version.properties) 为准，正式发行以 [Releases](https://github.com/huaxianyan/ComebackGooglePinyinInput/releases) 为准
 - 当前源码 minSdk：23（Android 6.0），与 Compose/AndroidX 依赖下限一致
 - 原版 targetSdk：26
-- 已验收并合并的现代化阶段：targetSdk 29、30、31、32、33、34、35、36
-- Android 17 / targetSdk 37：独立后续调查
+- 已验收并合并的现代化阶段：targetSdk 29、30、31、32、33、34、35、36、37
+- Android 17 / targetSdk 37：已完成独立适配与 API 37 实机验证，范围见 [专项记录](android-17-api-37-investigation.md)
 - 架构：arm64-v8a
 - 当前安装下限：API 23。`v2.1.4` 及此前版本的 Manifest 下限为 17，但由于只包含 ARM64，其真实 ABI 安装下限为 API 21，API 17 仅属历史静态门禁范围
 
@@ -72,7 +71,7 @@ Compatibility v20 为可变词库文件增加恢复层。原版持久化按 `主
 
 ## target SDK 策略
 
-正式 Release `v1.0.3` 冻结在 target 28。`feat/target-sdk-29` 至 `feat/target-sdk-36` 采用独立长期分支逐级完成验收，最终 target 36 V19 已合并到 `master` 并发布为正式 `v2.0.0`。后续功能分支都从该 target 36 基线创建。Android 17 仍不与 Material You/MD3、16 KiB 或预测返回混合。完整历史、风险和完成条件见 [`target-sdk-modernization-plan.md`](target-sdk-modernization-plan.md)。
+正式 Release `v1.0.3` 冻结在 target 28。`feat/target-sdk-29` 至 `feat/target-sdk-36` 采用独立长期分支逐级完成验收，最终 target 36 V19 已合并到 `master` 并发布为正式 `v2.0.0`。后续功能分支都从该 target 36 基线创建。Android 17 在这些工作完成后独立适配，target 37 已合并。完整历史、风险和完成条件见 [`target-sdk-modernization-plan.md`](target-sdk-modernization-plan.md)。
 
 已知边界：
 
@@ -138,4 +137,4 @@ java.lang.IllegalArgumentException: Invalid Region.Op - only INTERSECT and DIFFE
 - **TalkBack 与 Inline Suggestions**：touch exploration 下尚未完成独立验收，因此继续不声明 `supportsInlineSuggestionsWithTouchExploration`。
 - **16 KiB native page-size**：原生库布局已适配并经实际 16 KiB 模拟器验证，普通 4 KiB 实机回归通过。ZIP alignment 与 ELF 校验分别执行，原生 AArch64 16 KiB 真机未测，完整路径和转译边界见专项记录。
 - **预测性返回与动效**：现代设置的当前范围已验收，不要求主题编辑、首次引导或原生键盘使用同一返回方式。Material 3 使用公开 Expressive 接口的预发布版本，最新依赖的完整旧 API 专项未测。
-- **Android 17 / API 37**：设备尚未升级，适配暂缓，后续独立实施。
+- **Android 17 / API 37**：已完成适配与实机验证，基础回归和其他平台的未覆盖项见 [专项记录](android-17-api-37-investigation.md)。正式签名迁移的静态 SDK 范围与实机证据见 [迁移记录](settings-transfer-signing-migration.md)。

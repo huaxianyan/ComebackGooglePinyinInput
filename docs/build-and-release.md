@@ -22,12 +22,11 @@
 - 全部 6,633 个旧公开资源 ID 保持
 - patched legacy IME 保持在 `classes.dex`
 - Compose/AndroidX 只位于 `classes2.dex` 及以后
-- API 17–34 启动不解析现代设置类
-- API 35+ 才路由 Compose Material 3 设置
+- API 23+ 使用 Compose Material 3 设置，按实际平台隔离高 API 接口
 - 默认构建为 release-like、非 debuggable
 - 正式 application ID 禁止 Debug
 - 原始 native、assets 和英文模型载荷保持
-- APK 通过 v1/v2/v3 签名和 16 KiB ZIP alignment。
+- 迁移版 APK 通过 v1/v2/v3/v3.1 签名和 16 KiB ZIP alignment，按系统版本核对有效证书。
 
 ## 本地工具
 
@@ -42,10 +41,9 @@
 
 ### 完整 Compose Host 构建
 
-```powershell
-$env:MODERN_SETTINGS_KS_PASS = "<store password>"
-$env:MODERN_SETTINGS_KEY_PASS = "<key password>"
+口令通过既有凭据通道注入进程环境：旧材料使用 `MODERN_SETTINGS_KS_PASS`、`MODERN_SETTINGS_KEY_PASS`，新材料使用 `MODERN_SETTINGS_ROTATED_KS_PASS`、`MODERN_SETTINGS_ROTATED_KEY_PASS`。不在命令中填写口令。正式迁移构建示例：
 
+```powershell
 python scripts/build_modern_settings_host.py `
   --original original/google-pinyin-input-4.5.2.193126728-arm64-v8a.apk `
   --work work/local-release-build `
@@ -58,8 +56,11 @@ python scripts/build_modern_settings_host.py `
   --gradle modern-settings/gradlew.bat `
   --sdk <android-sdk> `
   --jdk <jdk-17> `
-  --keystore <keystore> `
-  --key-alias <alias>
+  --keystore <previous-keystore> `
+  --key-alias <previous-alias> `
+  --rotation-lineage signing/release.lineage `
+  --rotation-keystore <current-keystore> `
+  --rotation-key-alias <current-alias>
 ```
 
 不要把密码写入项目文件或命令脚本。正式密钥必须保存在仓库外或 GitHub Actions Secrets 中。
@@ -75,6 +76,8 @@ scripts/verify_target33.py
 scripts/verify_target34.py
 scripts/verify_target35.py
 scripts/verify_target36.py
+scripts/verify_target37.py
+scripts/verify_apk_signing_identity.py
 scripts/verify_universal_keyboard_header.py
 scripts/verify_keyboard_switch_animation.py
 scripts/verify_inline_autofill.py
@@ -148,7 +151,13 @@ zipalign -c -P 16 4
 | `ANDROID_SIGNING_CERT_SHA256` | 预期正式证书 SHA-256 |
 | `ANDROID_APPLICATION_ID` | 正式 application ID |
 
-工作流会在构建前读取 keystore 证书并核对 SHA-256。配置缺失、密码错误、alias 错误、证书不一致、包名错误、Debug 正式包或版本不匹配都会停止发布。
+上表三项 Secrets 和签名 Variables 保持旧签名身份。独立新签名 Secrets 由 `signing/signing-materials.json` 的 `newSecrets` 定义，上传流程见 [签名迁移说明](settings-transfer-signing-migration.md#通过-ci-生成-lineage)。旧凭据不得被新材料覆盖。
+
+当前正式版本在 `version.properties` 声明 `SIGNING_MODE=migration`。正式包的普通分支构建和 Tag 构建都使用两套材料及公开 lineage，SDK 23～32 验证旧证书，33 起验证新证书。隔离审计 ID 保留原有旧签名流程，`build_migration` 仅额外限定正式包和非 Debug，并排除发布。
+
+工作流在构建前读取 keystore 的公开证书并核对 SHA-256。配置缺失、密码错误、alias 错误、证书不一致、包名错误、Debug 正式包或版本不匹配都会停止发布。两套私钥只在 CI 临时文件中使用，job 收尾清理。
+
+一次完整宿主构建后，使用 `--resign-only` 对同一已对齐载荷重签名，并比较签名 APK 字节。这验证签名确定性，不重新编译，也不将其表述为独立完整重建可复现。
 
 ## 分支验证
 
@@ -173,6 +182,7 @@ gh workflow run build-release.yml `
 VERSION_NAME=<x.y.z>
 VERSION_CODE=<monotonic integer>
 TARGET_SDK=37
+SIGNING_MODE=migration
 ```
 
 版本号后缀可用于测试包，例如 `2.1.7-pre` 对应标签 `v2.1.7-pre`。Release 标题就是标签本身，不另设功能描述字段。
@@ -191,18 +201,19 @@ v$VERSION_NAME
 
 ## 版本化 Release Notes 约定
 
-Release 页面只保留开头概括、主要更新、版本身份和链接，不重复放使用说明、真机验收、构建与兼容范围。详细内容统一进入 `CHANGELOG.md`，仓库不再新增每版一个的详情文件。
+Release 页面只保留开头概括、分类更新、升级注意事项、版本身份和链接，不重复放使用说明、真机验收、构建与兼容范围。详细内容统一进入 `CHANGELOG.md`，仓库不再新增每版一个的详情文件。
 
 `docs/releases/v$VERSION_NAME.md` 的结构：
 
 1. 不写 `# Google 拼音输入法 X.X.X` 标题，直接以一段概括开头
-2. `## 主要更新`，用少量要点说明用户能感受到的变化
+2. 按实际内容使用 `## 新功能`、`## 问题修复` 和可选的 `## 改进`，新增能力与旧缺陷修复分开
 3. 指向 `CHANGELOG.md` 对应条目及相关文档的链接，链接指向该版本标签
 4. 非商业兼容维护声明的固定段末
 
 版本身份只保留一份，不重复：
 
-- 新版本不再手写「版本信息」，版本身份由发布工作流构建后追加的「构建信息」小节提供，此时 SHA-256 和源提交才是最终值
+- 新版本不再手写「版本信息」，版本身份由发布工作流构建后追加的「构建信息」小节提供，此时 SHA-256 和源提交才是最终值。迁移版分别列出旧、新系统区间的证书，不使用单一证书行代替
+- 分支构建也生成并校验完整正文，作为 `release-notes.md` 放入 Actions 资产供发布前审阅。只有 Tag 发布步骤会创建 Release
 - `v1.0.0–v2.0.2` 的历史文件保留已有的「版本信息」，不回填工作流后来才追加的构建信息
 - 静态门禁 `scripts/verify_release_notes.py` 会拒绝同一文件里同时出现两份身份小节
 
@@ -227,9 +238,9 @@ Release 页面只保留开头概括、主要更新、版本身份和链接，不
 4. 下载 Artifact，复核：
    - package/versionCode/versionName/target SDK
    - non-debuggable
-   - 正式证书
+   - 按 SDK 区间核对旧、新证书
    - APK SHA-256
-   - v1/v2/v3
+   - v1/v2/v3/v3.1
    - `zipalign -P 16`
    - 最终静态门禁
 5. 创建 annotated Tag：

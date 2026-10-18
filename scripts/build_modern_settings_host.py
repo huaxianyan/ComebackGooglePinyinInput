@@ -87,6 +87,8 @@ def main() -> int:
     parser.add_argument("--key-alias", required=True)
     parser.add_argument("--ks-pass-env", default="MODERN_SETTINGS_KS_PASS")
     parser.add_argument("--key-pass-env", default="MODERN_SETTINGS_KEY_PASS")
+    parser.add_argument("--resign-only", action="store_true",
+                        help="re-sign the existing aligned payload without rebuilding or changing the work tree")
     parser.add_argument("--rotation-lineage", type=Path,
                         help="old-to-new signing lineage created by apksigner rotate")
     parser.add_argument("--rotation-keystore", type=Path)
@@ -141,7 +143,21 @@ def main() -> int:
                 args.rotation_key_pass_env not in os.environ):
             raise RuntimeError("rotated signing password environment variables are not set")
 
+    gradle_home = ROOT / "work/modern-settings-gradle-home"
+    gradle_home.mkdir(parents=True, exist_ok=True)
+    env = os.environ.copy()
+    env["JAVA_HOME"] = str(args.jdk.resolve())
+    env["ANDROID_HOME"] = str(args.sdk.resolve())
+    env["ANDROID_SDK_ROOT"] = str(args.sdk.resolve())
+    env["GRADLE_USER_HOME"] = str(gradle_home.resolve())
+
     work = args.work.resolve()
+    if args.resign_only:
+        aligned = work / "compose-host-aligned.apk"
+        if not aligned.is_file():
+            raise FileNotFoundError(aligned)
+        sign_aligned_apk(args, aligned, env=env)
+        return 0
     decoded = work / "decoded"
     legacy_apk = work / "patched-legacy.apk"
     legacy_dex = work / "classes.dex"
@@ -221,13 +237,6 @@ def main() -> int:
         manifest_command.extend(("--ime-label", args.ime_label))
     run(manifest_command)
 
-    gradle_home = ROOT / "work/modern-settings-gradle-home"
-    gradle_home.mkdir(parents=True, exist_ok=True)
-    env = os.environ.copy()
-    env["JAVA_HOME"] = str(args.jdk.resolve())
-    env["ANDROID_HOME"] = str(args.sdk.resolve())
-    env["ANDROID_SDK_ROOT"] = str(args.sdk.resolve())
-    env["GRADLE_USER_HOME"] = str(gradle_home.resolve())
     variant = "debug" if args.debuggable else "release"
     gradle_task = "assembleDebug" if args.debuggable else "assembleRelease"
     gradle_args = [
