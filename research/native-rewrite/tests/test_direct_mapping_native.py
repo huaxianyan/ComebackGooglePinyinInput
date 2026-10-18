@@ -84,6 +84,15 @@ class DirectMappingNativeTest(unittest.TestCase):
             0x18CB58: ("mov", "w0, #1"),
             0x18CB80: ("str", "x0, [x19, #0x20]"),
             0x130170: ("mov", "w0, #2"),
+            0x18C578: ("fmadd", "s0, s0, s1, s2"),
+            0x18C60C: ("fmadd", "s1, s3, s0, s1"),
+            0x18C628: ("ldr", "x2, [x1, #0x18]"),
+            0x18C638: ("b.ne", "#0x18c650"),
+            0x18D170: ("fadd", "s1, s1, s8"),
+            0x18D1A4: ("add", "x4, x4, #0x28"),
+            0x18D210: ("eor", "w6, w0, #1"),
+            0x18D4C0: ("fsub", "s0, s0, s8"),
+            0x18D4CC: ("b.mi", "#0x18d57c"),
         }
         for address, instruction in expected.items():
             with self.subTest(address=hex(address)):
@@ -112,6 +121,13 @@ class DirectMappingNativeTest(unittest.TestCase):
                     for row in evidence["relocation_regions"]["manager_typeinfo"]}
         self.assertEqual(typeinfo[0x68AF48], 0x34A9E0)
         self.assertEqual(evidence["decoder_category_table"]["u32_values"], [1, 2])
+        math = evidence["score_math"]
+        self.assertEqual(math["table_address"], 0x3A2FC0)
+        self.assertEqual(math["constants"]["Ln2"]["bits"], 0x3F317218)
+        self.assertEqual(math["constants"]["ExpBias"]["bits"], 0x43BF8000)
+        self.assertEqual(math["normalization_cutoff"]["bits"], 0xC0133333)
+        self.assertEqual(math["tables"]["LogMantissa"]["words"][0], 0)
+        self.assertEqual(math["tables"]["ExpResidual"]["words"][0], 0x3F800000)
         decoder_type = {row["address"]: row["target"]
                         for row in evidence["relocation_regions"]["token_decoder_typeinfo"]}
         self.assertEqual(decoder_type[0x68AA98], 0x349CE0)

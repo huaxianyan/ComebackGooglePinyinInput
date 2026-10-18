@@ -2,7 +2,7 @@
 
 ## 范围
 
-本记录使用固定原始 APK 和已核对的 `v2.1.7` 发布资产。全程静态读取，没有执行目标 native 库、访问设备数据或安装新分析工具。
+本记录使用固定原始 APK 和已核对的 `v2.1.7` 发布资产。取证只做静态读取，没有执行目标 native 库或访问设备数据。首轮仅复用既有工具，后续依赖恢复与源码组件状态见 [键生成与分数源码](key-generator-score-math.md)。
 
 本轮新增 DEX 声明与调用点导出、JNI 方法表匹配、C++ RTTI、虚表候选和 DWARF 函数范围工具。它们产出研究证据，不产出完整输入法源码，也不进入最终产品构建。
 
@@ -133,7 +133,7 @@ AbstractHmmChineseDecodeProcessor
 
 `HmmEngineCandidateIterator.next()` 按 native 索引读取文字、token 和来源，再经 delegate 生成说明、简繁显示与 reading text，构造 Candidate。composing 渲染则消费 segment、token、input unit 和它们各自的 Range。源码重建不能只返回候选字符串，丢掉这些身份与状态。
 
-仍未连接完整的是：扩展结果怎样经过 native 搜索、评分和剪枝，最终成为这些 segment、候选和用户学习更新。不能用 Java 消费层已清楚代替这部分算法已经恢复。
+词典键生成路径的扩展消费、分数归一化与数学叶源码已有后续进展，见 [键生成与分数源码](key-generator-score-math.md)。仍未连接完整的是：扩展结果怎样经过实际输入搜索、评分和剪枝，最终成为 segment、候选和用户学习更新。不能用 Java 消费层或局部数学源码代替完整算法。
 
 ## 复现与证据
 

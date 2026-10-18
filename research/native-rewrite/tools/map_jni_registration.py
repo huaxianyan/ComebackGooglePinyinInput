@@ -14,6 +14,8 @@ import struct
 import sys
 import zipfile
 
+import lief
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "scripts"))
 from rewrite_elf_16kb import decode_adrp_target, read_program_headers, read_section_headers, sign_extend
 from disassemble_direct_mapping import decode_direct_branch
@@ -26,34 +28,26 @@ class ElfImage:
         self.data = data
         self.segments = read_program_headers(data)
         self.sections = read_section_headers(data)
-        self.symbols = []
         self.pointers = {}
         self.symbolic_pointers = {}
-        for section in self.sections:
-            _, kind, _, _, offset, size, link, _, _, entry_size = section
-            if kind != 11:  # SHT_DYNSYM
-                continue
-            strings = self.sections[link]
-            for index in range(size // entry_size):
-                name, info, _, _, value, length = struct.unpack_from("<IBBHQQ", data, offset + index * entry_size)
-                self.symbols.append({
-                    "name": self.file_string(strings[4] + name), "type": info & 15,
-                    "value": value, "size": length,
-                })
-        for section in self.sections:
-            _, kind, _, _, offset, size, _, _, _, entry_size = section
-            if kind != 4:  # SHT_RELA
-                continue
-            for index in range(size // entry_size):
-                address, info, addend = struct.unpack_from("<QQq", data, offset + index * entry_size)
-                relocation_type = info & 0xFFFFFFFF
-                if relocation_type == 1027:  # R_AARCH64_RELATIVE
-                    self.pointers[address] = addend
-                elif relocation_type in (257, 1025):  # R_AARCH64_ABS64 / GLOB_DAT
-                    symbol = self.symbols[info >> 32]
-                    self.symbolic_pointers[address] = {"symbol": symbol["name"], "addend": addend}
-                    if relocation_type == 257 and symbol["value"]:
-                        self.pointers[address] = symbol["value"] + addend
+        binary = lief.ELF.parse(list(data))
+        if binary is None:
+            raise ValueError("LIEF could not parse the native analysis input")
+        self.symbols = [{"name": symbol.name, "type": symbol.type.value,
+                         "value": symbol.value, "size": symbol.size}
+                        for symbol in binary.dynamic_symbols]
+        relocation_types = lief.ELF.Relocation.TYPE
+        for relocation in binary.relocations:
+            address, addend = relocation.address, relocation.addend
+            if relocation.type == relocation_types.AARCH64_RELATIVE:
+                self.pointers[address] = addend
+            elif relocation.type in (relocation_types.AARCH64_ABS64, relocation_types.AARCH64_GLOB_DAT):
+                symbol = relocation.symbol
+                if symbol is None:
+                    continue
+                self.symbolic_pointers[address] = {"symbol": symbol.name, "addend": addend}
+                if relocation.type == relocation_types.AARCH64_ABS64 and symbol.value:
+                    self.pointers[address] = symbol.value + addend
 
     def file_string(self, offset: int) -> str:
         end = self.data.find(b"\0", offset)
@@ -289,8 +283,9 @@ def map_library(entry: str, content: bytes, declarations: list[dict]) -> dict:
     return {"entry": entry, "sha256": hashlib.sha256(content).hexdigest(),
             "method_triples": triples, "static_exports": static, "initializer_arguments": registrations,
             "initializer_literal_calls": literal_calls, "class_registration_descriptors": descriptors,
-            "unsupported_relocation_section_types": sorted({section[1] for section in image.sections
-                if section[1] in (9, 19, 0x60000001, 0x60000002, 0x6FFFFF00)})}
+            "relocation_reader": "LIEF",
+            "observed_relocation_section_types": sorted({section[1] for section in image.sections
+                if section[1] in (4, 9, 19, 0x60000001, 0x60000002, 0x6FFFFF00)})}
 
 
 def build_map(apk: Path, dex_inventory: Path) -> dict:

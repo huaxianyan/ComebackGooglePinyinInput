@@ -6,7 +6,7 @@
 
 本轮从 master `242f9ea` 创建 `research/native-rewrite-v217`，按路径取回旧研究分支 `5f9876449a9b18c3e70ac3bceacfe37bcf7162d9` 的 19 份研究文档、脚本、测试和依赖声明。没有 merge 或 rebase 旧分支，也没有带回旧产品实现。旧分支保持原样。
 
-本轮先完成基线和功能清单对齐，随后新增可在既有工具条件下执行的 ABI 研究入口。结果见 [JNI 与 C++ 边界](native-abi-map.md)。尚未建立独立构建的输入法源码工程，旧数据解析与完整反汇编依赖也尚未恢复。
+本轮先完成基线和功能清单对齐，随后新增可在既有工具条件下执行的 ABI 研究入口。结果见 [JNI 与 C++ 边界](native-abi-map.md)。尚未建立独立构建的输入法源码工程。后续已获准恢复研究依赖并还原第一个数学叶组件，见 [键生成与分数源码](key-generator-score-math.md)。
 
 目标与分支归档条件统一见 [研究计划](../native-rewrite-plan.md)。功能身份与状态统一见 [功能清单](feature-inventory.md)，本记录不另设一份能力总表。完整调查未结束，构建缺口和下一步环境需求见 [调查状态](source-reconstruction-readiness.md)。
 
@@ -61,7 +61,7 @@ REA 是分析编排与证据工具，不是从 APK 自动得到完整、语义�
 - Android 分析封装 JADX，可辅助类、方法和静态引用调查。需要匹配的 REA 发布包、完整 JDK 17+ 和固定版本引擎 JAR，实际主机可用性仍需验证。
 - 官方 Windows Ghidra 接口当前列出的 native 准入范围不包含本项目的 ARM64 ELF。不能把 Windows ARM64 PE 支持理解成 Android ELF 支持，也不能据此断言 Ghidra 本体不能分析 ELF。
 - 后续若需要 REA/Ghidra 处理核心库，先选择支持该输入的分析主机与 provider，再核对已有共用工具。暂不自动安装工具、注册 MCP 或运行会改写多处用户配置的 `rea setup`。
-- 本机当前命令所用 Python 未找到 `capstone`、`lief`、`marisa_trie`。旧工具的依赖版本保留在 `research/native-rewrite/requirements.txt`。没有执行需要这些依赖的旧测试，也没有新建项目私有工具安装副本。
+- 旧工具的依赖版本只维护在 `research/native-rewrite/requirements.txt`。初始依赖缺口现已按维护者授权恢复，实际验证和当前环境状态统一见 [调查状态](source-reconstruction-readiness.md)，不按初始快照重复安装。
 
 上游依据：
 

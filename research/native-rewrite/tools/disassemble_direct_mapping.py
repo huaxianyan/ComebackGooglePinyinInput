@@ -40,6 +40,27 @@ REGIONS = {
     "token_decoder_constructor": (0x1751AC, 0x17522C),
     "decoder_configure_categories": (0x17522C, 0x1752F8),
     "fuzzy_client_prefix": (0x130044, 0x130190),
+    "key_context_refresh": (0x18BE20, 0x18BF2C),
+    "key_token_equal": (0x18C620, 0x18C658),
+    "key_input_validate": (0x18CCB0, 0x18CE40),
+    "key_collect_expansions": (0x18D07C, 0x18D258),
+    "key_normalize_prune": (0x18D424, 0x18D5D4),
+    "key_english_generation": (0x18E264, 0x18E380),
+    "key_digit_expansion": (0x18E0E8, 0x18E264),
+    "fast_exp": (0x18C56C, 0x18C5AC),
+    "fast_log": (0x18C5D8, 0x18C61C),
+    "log_score_add": (0x18C69C, 0x18C72C),
+}
+SCORE_TABLE_POINTER = 0x699358
+SCORE_TABLE_SPANS = {
+    "LogMantissa": (0x000, 128),
+    "LogSlope": (0x200, 128),
+    "ExpMantissa": (0x400, 128),
+    "ExpResidual": (0x600, 256),
+}
+SCORE_CONSTANTS = {
+    "Log2E": 0x18C5AC, "ExpBias": 0x18C5B0,
+    "Ln2": 0x18C61C, "LogAddLimit": 0x18C730,
 }
 DECODER_CATEGORY_TABLE = (0x349D10, 0x349D18)
 RELOCATION_REGIONS = {
@@ -61,6 +82,10 @@ STRING_ANCHORS = {
     0x34A9B0: "N10i18n_input6engine3hmm20TokenExpanderManagerE",
     0x34A9E0: "N10i18n_input6engine3hmm20TokenExpanderManager15ManagerIteratorE",
     0x349CE0: "N10i18n_input6engine3hmm16TokenDecoderBaseE",
+    0x32B90D: "i18n/input/engine/hmm/internal/storage/key_generator.cc",
+    0x32B945: "The size of language_ids and source tokens are not equal.(",
+    0x32B985: "Token dictionary manager contains multi dictionaries ",
+    0x32B9BB: "but the source token language id is: UNKNOWN_LANGUAGE.",
 }
 
 
@@ -88,6 +113,39 @@ def find_direct_branches(binary, targets):
     return result
 
 
+def capture_score_math(binary, pointer_address=SCORE_TABLE_POINTER):
+    relocations = {item.address: item for item in binary.relocations}
+    address = relocations[pointer_address].addend
+    tables = {}
+    for name, (offset, count) in SCORE_TABLE_SPANS.items():
+        content = bytes(binary.get_content_from_virtual_address(address + offset, count * 4))
+        tables[name] = {"address": address + offset,
+                        "words": [word for (word,) in struct.iter_unpack("<I", content)],
+                        "sha256": hashlib.sha256(content).hexdigest()}
+    constants = {name: {"address": location, "bits": struct.unpack("<I", bytes(
+        binary.get_content_from_virtual_address(location, 4)))[0]}
+        for name, location in SCORE_CONSTANTS.items()}
+    cutoff = bytes(binary.get_content_from_virtual_address(0x18D5D4, 4))
+    return {"pointer_address": pointer_address, "table_address": address,
+            "tables": tables, "constants": constants,
+            "normalization_cutoff": {"address": 0x18D5D4, "bits": struct.unpack("<I", cutoff)[0]}}
+
+
+def write_score_table_header(path, captured):
+    lines = ["// Fixed Google Pinyin 4.5.2 ARM64 math data; regenerate with the research exporter.",
+             "// Google-derived material remains subject to NOTICE, not a new MPL grant."]
+    for name, item in captured["constants"].items():
+        lines.append(f"constexpr std::uint32_t k{name}Bits = 0x{item['bits']:08x}u;")
+    for name, item in captured["tables"].items():
+        words = item["words"]
+        lines.append(f"constexpr std::uint32_t k{name}Bits[] = {{")
+        for offset in range(0, len(words), 8):
+            lines.append("    " + ", ".join(f"0x{word:08x}u" for word in words[offset:offset+8]) + ",")
+        lines.append("};")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
 def main():
     import lief
     from capstone import Cs, CS_ARCH_ARM64, CS_MODE_ARM
@@ -95,6 +153,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--apk", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--score-table-header", type=Path,
+                        help="write checked-in C++ math constants; not part of the product build")
     args = parser.parse_args()
     entry = "lib/arm64-v8a/libhmm_gesture_hwr_zh.so"
     with zipfile.ZipFile(args.apk) as archive:
@@ -131,6 +191,7 @@ def main():
         "labels": "research annotations, not recovered C++ symbol names",
         "string_anchors": {hex(address): text for address, text in STRING_ANCHORS.items()},
         "regions": regions,
+        "score_math": capture_score_math(binary),
         "decoder_category_table": {
             "address": start,
             "u32_values": list(struct.unpack("<II", category_bytes)),
@@ -151,6 +212,8 @@ def main():
             for label, (start, end) in RELOCATION_REGIONS.items()
         },
     }
+    if args.score_table_header:
+        write_score_table_header(args.score_table_header, result["score_math"])
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(f"exported {len(regions)} ARM64 regions to {args.output}")
