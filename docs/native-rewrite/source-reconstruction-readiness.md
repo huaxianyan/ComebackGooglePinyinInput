@@ -4,7 +4,7 @@
 
 当前尚未达到完整调查结束或独立源码输入法就绪的条件。本轮已恢复旧研究、补齐 `v2.1.7` 功能基线，并推进 JNI、C++ 类型和 composing 消费边界。没有把反编译产物整理进一个目录就称为源码工程。
 
-目前仍缺 native 搜索、排序、学习、滑行和手写的完整实现规格与源码。已有可独立编译的标量分数数学组件和纯 Java 选区状态组件，分别见 [键生成与分数源码](key-generator-score-math.md)、[输入会话与选区源码](input-session-selection.md)。完整输入生命周期和各模式状态机仍未闭合，不能用这些局部成果代替整个引擎。
+目前仍缺 native 搜索、排序、学习、滑行和手写的完整实现规格与源码。已有可独立编译的标量分数数学组件和纯 Java 选区状态组件，分别见 [键生成与分数源码](key-generator-score-math.md)、[输入会话与选区源码](input-session-selection.md)。候选预览、确认、提交与学习入口见 [候选确认与学习边界](candidate-commit-learning.md)。完整输入生命周期和各模式状态机仍未闭合，不能用这些局部成果代替整个引擎。
 
 目标与最终验收只维护在 [研究计划](../native-rewrite-plan.md)。功能状态只维护在 [功能清单](feature-inventory.md)，ABI 证据见 [JNI 与 C++ 边界](native-abi-map.md)。
 
@@ -62,10 +62,10 @@ a()Ljava/lang/String;
 
 - 旧研究声明的三个分析依赖已恢复，固定版本仍只维护在 `research/native-rewrite/requirements.txt`，不重复安装。动态符号与重定位读取已统一到 LIEF，不再维护另一套独立解码。
 - 既有 Ubuntu 默认 Python 为 3.6.8。已有 objdump 的目标列表不包含 AArch64，Node、Java 和 Ghidra 不在本轮检查到的 PATH 中，不能把该环境写成 REA 已就绪。
-- REA 官方 Windows Ghidra 接口不接纳本项目的 ARM64 ELF。它的 Android/JADX 能力可以另行评估，但不能把这一接口当作 native 核心已经有完整后端。
+- REA Android/JADX 已通过本机真实方法取证，CLI 与对应引擎使用共享安装，批量采集复用其 MCP SDK。部署与输出限制见 [REA 实际接入](candidate-commit-learning.md#rea-实际接入)。官方 Windows Ghidra 接口仍不接纳本项目的 ARM64 ELF，不能把 Java provider 可用写成 native 后端就绪。
 - 本轮的局部 ARM64 常量识别器只服务取证，不扩展成自制完整反编译器。未识别指令会终止该块的常量追踪，空结果不证明不存在调用。
 
-目前依赖授权与安装阻塞已解除，继续沿现有反汇编和数据读取入口推进。后续是否部署完整 native 反编译后端，再按实际缺口选择。既有安装授权限于这三个 Python 依赖，不扩大为升级 WSL、安装整套新后端或操作设备。
+目前依赖授权与安装阻塞已解除，继续沿现有反汇编和数据读取入口推进。后续是否部署完整 native 反编译后端，再按实际缺口选择。三个 Python 依赖使用单独批准的安装授权。REA 使用维护者原有的可选接入要求，限于本轮共享 CLI 和 Android 静态分析引擎。这些权限不扩大为升级 WSL、安装整套 native 后端或操作设备。
 
 ## 仍未关闭的研究问题
 
