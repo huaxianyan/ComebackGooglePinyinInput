@@ -58,6 +58,12 @@ REGIONS = {
     "learning_shared_store": (0x189910, 0x189924),
     "learning_generate_keys": (0x18E380, 0x18EAE8),
     "learning_store_add": (0x1A1D9C, 0x1A1E54),
+    "learning_store_lookup": (0x1A14B8, 0x1A153C),
+    "learning_store_update_existing": (0x1A1894, 0x1A1A40),
+    "learning_store_ensure_count": (0x1A1BB4, 0x1A1D9C),
+    "learning_store_remove": (0x1A1A74, 0x1A1BB4),
+    "learning_store_aggregate": (0x1A0CBC, 0x1A0CE0),
+    "learning_store_day": (0x1A0CE0, 0x1A0D08),
 }
 SCORE_TABLE_POINTER = 0x699358
 SCORE_TABLE_SPANS = {
