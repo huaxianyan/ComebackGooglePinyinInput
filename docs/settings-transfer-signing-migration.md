@@ -114,7 +114,17 @@ gh workflow run build-release.yml --ref feat/settings-transfer-signing-migration
 
 `scripts/verify_apk_signing_identity.py` 调用固定版本 apksigner，分段验证 SDK 23～27、28～32 和 33～target SDK 的有效身份。前两段必须为旧证书，后一段必须为新证书。apksigner 在新系统区间同时列出旧 SDK 签名记录，门禁按 SDK 交集选择有效身份，不把旧记录误当作普通多签名。
 
-三个区间属于静态签名验证，不等于对应系统均已运行验收。新门禁已用真实审计 B/C 迁移 APK 验证，正式迁移版的完整 CI 构建及下载产物核对待执行。
+三个区间属于静态签名验证，不等于对应系统均已运行验收。新门禁先用真实审计 B/C 迁移 APK 验证，再用于正式迁移版。
+
+正式构建 [39092410343](https://github.com/huaxianyan/ComebackGooglePinyinInput/actions/runs/39092410343) 成功，源提交为 `9c0a669`，构建 job 用时 6 分 14 秒。完整宿主构建、Compose 测试、成品与资源门禁、SDK 定向身份和原生 ELF 检查通过。复现构建及 Release 发布步骤均跳过，两份临时私钥清理成功。
+
+产物为 `ComebackGooglePinyinInput-arm64-v8a-2.1.7-pre.apk`，正式包名、非 Debug，versionCode 为 `4520424`、target SDK 为 `37`。SDK 23～32 验证旧证书，33～37 验证新证书。下载至 `work/signing-migration-apk/39092410343/` 后，实际文件 SHA-256 与 CI 校验文件一致：
+
+```text
+d47ee67a51b802c2f1955e6ab0f100a385e95381abd202c2afe95befb125a0c3
+```
+
+此文件是验收用 Actions 资产，尚未安装到正式包，也不是长期分发的迁移版 Release。正式包覆盖升级、其他系统运行范围和公开发布仍待单独验收或授权。
 
 ## 签名迁移
 
@@ -132,7 +142,7 @@ gh workflow run build-release.yml --ref feat/settings-transfer-signing-migration
 
 在 API 37 实机上，两次仅使用覆盖安装，均保留应用 UID、首次安装时间、四条合成词及权重、非默认单手模式、备份和 Rime 目录授权、Rime 首次成功同步资格、已启用输入法及当前输入法选择。升级后通过真实设置入口读写词库、进入编辑框初始化键盘，未要求重新引导。未卸载、清数据或重新授权。这里只覆盖当前实机，不扩展为 Android 13～16 或旧系统已实测。
 
-正式 lineage 生成及下载产物身份核验已完成。迁移版 APK 构建接入及 SDK 定向身份门禁已实现，正式产物验收待执行。线上发布流水线尚未切换。
+正式 lineage 生成及下载产物身份核验已完成。迁移版 APK 构建接入、SDK 定向身份门禁及下载资产校验已通过。正式包覆盖升级尚未执行，线上发布流水线尚未切换。
 
 后续版本若只用新密钥签名且不带旧到新的轮换证明，旧版用户需要先安装迁移版。只有在迁移版实际采用了新密钥的系统上，后续覆盖升级才能成立。默认策略下，Android 12L 及以下用户需要备份后重装。迁移版 Release 和安装包需长期保留。
 
@@ -151,4 +161,5 @@ gh workflow run build-release.yml --ref feat/settings-transfer-signing-migration
 - Rime 恢复旧设备目录名后，在原共享目录完成首次同步，包括旧快照身份的处理（本轮无已知非空词条的独立测试目录已通过，非空旧目录仍待验收）
 - 已完成：在 API 37 实机使用隔离密钥验证「B 签名版 → B/C 迁移版 → 纯 C 签名版」保留数据覆盖升级
 - 已完成：CI 使用既有旧 Secrets 和独立新 Secrets 生成正式 lineage，下载产物的证书与能力核对通过
-- 待完成：迁移版 APK 的正式 CI 签名与身份门禁、其他系统覆盖范围、不支持轮换系统的非空数据重装恢复
+- 已完成：正式迁移 APK 的一次完整 CI 构建、SDK 定向证书门禁及下载文件校验
+- 待完成：正式包覆盖升级、其他系统运行范围、不支持轮换系统的非空数据重装恢复
