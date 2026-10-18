@@ -65,7 +65,9 @@ a()Ljava/lang/String;
 - REA Android/JADX 已通过本机真实方法取证，CLI 与对应引擎使用共享安装，批量采集复用其 MCP SDK。部署与输出限制见 [REA 实际接入](candidate-commit-learning.md#rea-实际接入)。官方 Windows Ghidra 接口仍不接纳本项目的 ARM64 ELF，不能把 Java provider 可用写成 native 后端就绪。
 - 本轮的局部 ARM64 常量识别器只服务取证，不扩展成自制完整反编译器。未识别指令会终止该块的常量追踪，空结果不证明不存在调用。
 
-目前依赖授权与安装阻塞已解除，继续沿现有反汇编和数据读取入口推进。后续是否部署完整 native 反编译后端，再按实际缺口选择。三个 Python 依赖使用单独批准的安装授权。REA 使用维护者原有的可选接入要求，限于本轮共享 CLI 和 Android 静态分析引擎。这些权限不扩大为升级 WSL、安装整套 native 后端或操作设备。
+Python 依赖和 Android/JADX 入口已就绪。后续 codec 和 trie 需要继续恢复可读控制流，拟部署官方 Ghidra headless 与所需 JDK 21，直接分析 ARM64 ELF，不修改 REA 的格式准入。本机共享工具目录和 Scoop 应用目录未找到 Ghidra，只找到 JDK 17。新增两项安装尚未获明确许可，暂未执行。
+
+三个 Python 依赖使用单独批准的安装授权。REA 使用维护者原有的可选接入要求，限于本轮共享 CLI 和 Android 静态分析引擎。这些权限不扩大为升级 WSL、安装整套 native 后端或操作设备。
 
 ## 仍未关闭的研究问题
 
