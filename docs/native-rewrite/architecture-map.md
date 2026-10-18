@@ -65,7 +65,7 @@ Android Framework
   → InputConnection composing / commit
 ```
 
-该图中的 Java 层顺序已有静态代码和 XML 证据。native 内部如何从输入图生成候选，目前仍是黑盒。
+该图中的 Java 层顺序已有静态代码和 XML 证据。native 核心搜索与候选生成仍未恢复。后续 ABI、词典键生成和数学叶源码见 [JNI 与 C++ 边界](native-abi-map.md)、[键生成与分数源码](key-generator-score-math.md)。当前版本的会话对照和纯状态源码见 [输入会话与选区](input-session-selection.md)。
 
 ## 1. 应用初始化
 
@@ -496,7 +496,7 @@ QWERTY 与九键分别有拼音 gesture handler。英文另有独立 handler，�
 
 1. 将统一库动态注册表中的 method name、JNI signature 和函数地址建立精确映射
 2. 独立分析笔画 ForwardTokenDictionary，DirectMapping 后续工作见 [native 查找研究](direct-mapping-native.md#验证与限制)
-3. 从 27,080 条 call graph 边中提取 Service、InputBundle、DecodeProcessor、HMM、词典、滑行和手写子图
+3. 沿新的 DEX invoke 与 native 直接分支证据连接 Service、InputBundle、processor 和模型子图，接口与虚调用单独解析，不混用历史调用图的计数
 4. 建立 XML include、class、layout、keymapping 和 processor 的机器可查询引用图
 5. 运行时验证 `libhwrword.so` 是否被装载
 6. 把 Comeback 补丁入口映射到本架构图和功能清单 ID

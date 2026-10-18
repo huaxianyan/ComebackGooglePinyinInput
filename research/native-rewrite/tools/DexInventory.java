@@ -1,7 +1,9 @@
 import com.android.tools.smali.dexlib2.AccessFlags;
 import com.android.tools.smali.dexlib2.DexFileFactory;
-import com.android.tools.smali.baksmali.Baksmali;
 import com.android.tools.smali.baksmali.BaksmaliOptions;
+import com.android.tools.smali.baksmali.Adaptors.ClassDefinition;
+import com.android.tools.smali.baksmali.formatter.BaksmaliWriter;
+import com.android.tools.smali.util.ClassFileNameHandler;
 import com.android.tools.smali.dexlib2.iface.ClassDef;
 import com.android.tools.smali.dexlib2.iface.Method;
 import com.android.tools.smali.dexlib2.iface.instruction.Instruction;
@@ -14,7 +16,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /** Static DEX declarations and invoke sites; uses the existing apktool's dexlib2. */
 class DexInventory {
@@ -38,24 +42,41 @@ class DexInventory {
     }
 
     public static void main(String[] args) throws Exception {
-        if (args.length != 2 && args.length != 3) {
-            throw new IllegalArgumentException("Usage: DexInventory.java APK OUTPUT.tsv | APK OUTPUT_DIRECTORY smali");
+        if (args.length < 2) {
+            throw new IllegalArgumentException("Usage: DexInventory.java APK OUTPUT.tsv | APK OUTPUT_DIRECTORY smali [CLASS_DESCRIPTOR...]");
         }
         // A null opcode selection lets dexlib2 select from each DEX version.
         var container = DexFileFactory.loadDexContainer(new File(args[0]), null);
         List<String> entries = new ArrayList<>(container.getDexEntryNames());
         entries.sort(Comparator.naturalOrder());
-        if (args.length == 3) {
+        if (args.length >= 3) {
             if (!args[2].equals("smali")) throw new IllegalArgumentException("Unknown operation: " + args[2]);
             BaksmaliOptions options = new BaksmaliOptions();
             options.localsDirective = true;
             options.debugInfo = true;
+            Set<String> requested = new HashSet<>();
+            for (int index = 3; index < args.length; index++) requested.add(args[index]);
+            Set<String> found = new HashSet<>();
+            int exported = 0;
             for (String entryName : entries) {
                 File destination = Path.of(args[1], entryName.replace(".dex", "")).toFile();
-                Files.createDirectories(destination.toPath());
-                Baksmali.disassembleDexFile(container.getEntry(entryName).getDexFile(), destination, 4, options);
+                ClassFileNameHandler names = new ClassFileNameHandler(destination);
+                var dex = container.getEntry(entryName).getDexFile();
+                for (Object rawDefinition : (List<?>) dex.classSection) {
+                    ClassDef definition = (ClassDef) rawDefinition;
+                    if (!requested.isEmpty() && !requested.contains(definition.getType())) continue;
+                    Path output = names.getUniqueFilenameForClass(definition.getType()).toPath();
+                    Files.createDirectories(output.getParent());
+                    try (BufferedWriter writer = Files.newBufferedWriter(output, StandardCharsets.UTF_8)) {
+                        new ClassDefinition(options, definition).writeTo(new BaksmaliWriter(writer));
+                    }
+                    found.add(definition.getType());
+                    exported++;
+                }
             }
-            System.out.printf("Disassembled %d DEX entries%n", entries.size());
+            requested.removeAll(found);
+            if (!requested.isEmpty()) throw new IllegalArgumentException("DEX classes not found: " + requested);
+            System.out.printf("Disassembled %d selected classes across %d DEX entries%n", exported, entries.size());
             return;
         }
         int nativeFlag = AccessFlags.valueOf("NATIVE").value;
