@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[3]
 
 
 class DirectMappingNativeTest(unittest.TestCase):
-    def test_export_original_apk_recovers_manager_identity_and_category_requests(self):
+    def test_export_original_apk_exposes_inspected_decoder_and_learning_paths(self):
         work = ROOT / "work/native-rewrite"
         work.mkdir(parents=True, exist_ok=True)
         with tempfile.TemporaryDirectory(prefix="direct-native-test-", dir=work) as tmp:
@@ -93,6 +93,15 @@ class DirectMappingNativeTest(unittest.TestCase):
             0x18D210: ("eor", "w6, w0, #1"),
             0x18D4C0: ("fsub", "s0, s0, s8"),
             0x18D4CC: ("b.mi", "#0x18d57c"),
+            0x111FE0: ("ldr", "x7, [x0, #0x70]"),
+            0x18A738: ("bl", "#0x18e380"),
+            0x18A8A8: ("scvtf", "s0, w26"),
+            0x18A8C0: ("fmul", "s0, s0, s1"),
+            0x18A8D0: ("fcvtzs", "w5, s0"),
+            0x18A8D8: ("csinc", "w5, w5, wzr, gt"),
+            0x18A8DC: ("bl", "#0x1a1d9c"),
+            0x1A1DF8: ("bl", "#0x1a1894"),
+            0x1A1E2C: ("bl", "#0x1a1bb4"),
         }
         for address, instruction in expected.items():
             with self.subTest(address=hex(address)):

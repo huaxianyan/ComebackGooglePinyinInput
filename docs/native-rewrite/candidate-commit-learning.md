@@ -62,7 +62,7 @@ libhmm_gesture_hwr_zh.so: 0x111f08
 
 Java 实现直接传递 native accessor、tokens、languageIds、文本、增量和匹配标志。另有缺少 languageIds 与匹配标志的旧重载，地址为 `0x111e14`，不能仅按方法名混在一起。
 
-地址取自原版的既有 `jni-map.json`，是静态方法表绑定证据。当前库坐标与实际注册成功、执行效果仍按 [ABI 取证边界](native-abi-map.md) 区分。
+地址取自原版的既有 `jni-map.json`，是静态方法表绑定证据。当前库坐标与实际注册成功、执行效果仍按 [ABI 取证边界](native-abi-map.md) 区分。后续已连接键生成、计数缩放和下一级分派，见 [native 学习增量](native-learning-update.md)。
 
 ## 提交、重置与回删
 

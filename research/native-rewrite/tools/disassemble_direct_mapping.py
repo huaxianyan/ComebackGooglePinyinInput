@@ -50,6 +50,14 @@ REGIONS = {
     "fast_exp": (0x18C56C, 0x18C5AC),
     "fast_log": (0x18C5D8, 0x18C61C),
     "log_score_add": (0x18C69C, 0x18C72C),
+    "learning_jni_legacy": (0x111E14, 0x111F08),
+    "learning_jni_add_count": (0x111F08, 0x112048),
+    "learning_accessor_legacy": (0x189D94, 0x189E28),
+    "learning_accessor_add_count": (0x18A68C, 0x18A91C),
+    "learning_text_size_gate": (0x1896D4, 0x189704),
+    "learning_shared_store": (0x189910, 0x189924),
+    "learning_generate_keys": (0x18E380, 0x18EAE8),
+    "learning_store_add": (0x1A1D9C, 0x1A1E54),
 }
 SCORE_TABLE_POINTER = 0x699358
 SCORE_TABLE_SPANS = {
