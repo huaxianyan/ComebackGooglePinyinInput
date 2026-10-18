@@ -1,0 +1,16 @@
+{
+  "fileBaseName": "ComebackGooglePinyinInput-release-signing",
+  "keyAlias": "comeback-google-pinyin-release",
+  "repository": "huaxianyan/ComebackGooglePinyinInput",
+  "lineage": "release.lineage",
+  "rotationMinSdk": 33,
+  "certificates": {
+    "previous": "certificates/previous.pem",
+    "current": "certificates/current.pem"
+  },
+  "newSecrets": {
+    "keystore": "ANDROID_ROTATED_SIGNING_KEYSTORE_BASE64",
+    "storePassword": "ANDROID_ROTATED_SIGNING_STORE_PASSWORD",
+    "keyPassword": "ANDROID_ROTATED_SIGNING_KEY_PASSWORD"
+  }
+}

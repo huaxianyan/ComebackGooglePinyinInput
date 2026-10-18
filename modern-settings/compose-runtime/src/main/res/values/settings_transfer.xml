@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="modern_settings_transfer_title">Settings backup and restore</string>
+    <string name="modern_settings_transfer_entry_summary">Export settings and custom themes, or restore them after reinstalling</string>
+    <string name="modern_settings_transfer_summary">Back up settings and custom themes here. Back up your dictionary separately in Dictionary and backup. Save both backups before uninstalling. Settings backups include custom theme images; keep them in a trusted location.</string>
+    <string name="modern_settings_transfer_export">Export settings</string>
+    <string name="modern_settings_transfer_import">Import settings</string>
+    <string name="modern_settings_transfer_recovery">Complete restore</string>
+    <string name="modern_settings_transfer_recovery_summary">Choose folders, allow contact access, and enable automatic features</string>
+    <string name="modern_settings_transfer_confirm">Replace input, keyboard, and theme settings with this backup? Your dictionary stays as it is. Automatic backup and Rime automatic sync will be off. After importing, you can choose folders, restore your dictionary, and enable these features.</string>
+    <string name="modern_settings_transfer_busy">Transferring settings</string>
+    <string name="modern_settings_transfer_wait">Please wait for the result before closing this page.</string>
+    <string name="modern_settings_transfer_export_success">Settings exported. Back up your dictionary too before uninstalling.</string>
+    <string name="modern_settings_transfer_import_success">Settings imported. Complete the remaining restore steps below.</string>
+    <string name="modern_settings_transfer_export_error">Settings export failed. Check the selected storage location and export again before uninstalling.</string>
+    <string name="modern_settings_transfer_read_error">This settings backup could not be read. Choose a complete backup exported by a supported version.</string>
+    <string name="modern_settings_transfer_import_error">Settings restore did not finish. Some settings may have changed. Check available storage and import again.</string>
+    <string name="modern_settings_transfer_rime_error">Rime configuration could not be restored. Check the sync folder and configuration, then import again. Check automatic sync before continuing.</string>
+    <string name="modern_settings_transfer_operation_busy">Wait for the current dictionary operation to finish, then import settings again.</string>
+</resources>

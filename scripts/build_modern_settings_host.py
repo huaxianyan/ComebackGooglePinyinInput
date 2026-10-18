@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 from pathlib import Path
 import shutil
@@ -12,6 +13,7 @@ import sys
 from zipfile import ZipFile
 
 ROOT = Path(__file__).resolve().parents[1]
+BUILD_TOOLS_VERSION = "36.0.0"
 
 
 def run(command: list[str], *, env: dict[str, str] | None = None) -> None:
@@ -23,6 +25,42 @@ def executable(path: Path, arguments: list[str]) -> list[str]:
     if os.name == "nt" and path.suffix.lower() in (".bat", ".cmd"):
         return ["cmd.exe", "/d", "/c", str(path), *arguments]
     return [str(path), *arguments]
+
+
+def sign_aligned_apk(
+    args: argparse.Namespace, aligned: Path, *, env: dict[str, str]
+) -> None:
+    """Sign an assembled APK through the same path used by a complete host build."""
+    build_tools = args.sdk.resolve() / "build-tools" / BUILD_TOOLS_VERSION
+    zipalign = build_tools / ("zipalign.exe" if os.name == "nt" else "zipalign")
+    apksigner = build_tools / ("apksigner.bat" if os.name == "nt" else "apksigner")
+    args.output.resolve().parent.mkdir(parents=True, exist_ok=True)
+    sign_args = [
+        "sign",
+        "--ks",
+        str(args.keystore.resolve()),
+        "--ks-key-alias",
+        args.key_alias,
+        "--ks-pass",
+        f"env:{args.ks_pass_env}",
+        "--key-pass",
+        f"env:{args.key_pass_env}",
+    ]
+    if args.rotation_lineage:
+        # SDK-targeted rotation, not ordinary multi-signer APK signing.
+        sign_args.extend([
+            "--next-signer", "--ks", str(args.rotation_keystore.resolve()),
+            "--ks-key-alias", args.rotation_key_alias,
+            "--ks-pass", f"env:{args.rotation_ks_pass_env}",
+            "--key-pass", f"env:{args.rotation_key_pass_env}",
+            "--lineage", str(args.rotation_lineage.resolve()),
+            "--rotation-min-sdk-version", str(args.rotation_min_sdk_version),
+        ])
+    sign_args.extend(["--out", str(args.output.resolve()), str(aligned)])
+    run(executable(apksigner, sign_args), env=env)
+    run(executable(apksigner, ["verify", "--verbose", "--print-certs",
+                              str(args.output.resolve())]), env=env)
+    run([str(zipalign), "-c", "-P", "16", "4", str(args.output.resolve())])
 
 
 def main() -> int:
@@ -49,6 +87,17 @@ def main() -> int:
     parser.add_argument("--key-alias", required=True)
     parser.add_argument("--ks-pass-env", default="MODERN_SETTINGS_KS_PASS")
     parser.add_argument("--key-pass-env", default="MODERN_SETTINGS_KEY_PASS")
+    parser.add_argument("--resign-only", action="store_true",
+                        help="re-sign the existing aligned payload without rebuilding or changing the work tree")
+    parser.add_argument("--rotation-lineage", type=Path,
+                        help="old-to-new signing lineage created by apksigner rotate")
+    parser.add_argument("--rotation-keystore", type=Path)
+    parser.add_argument("--rotation-key-alias")
+    parser.add_argument("--rotation-ks-pass-env", default="MODERN_SETTINGS_ROTATED_KS_PASS")
+    parser.add_argument("--rotation-key-pass-env", default="MODERN_SETTINGS_ROTATED_KEY_PASS")
+    signing_config = json.loads((ROOT / "signing/signing-materials.json").read_text(encoding="utf-8"))
+    parser.add_argument("--rotation-min-sdk-version", type=int, choices=(28, 33),
+                        default=signing_config["rotationMinSdk"])
     parser.add_argument(
         "--audit-launcher",
         action="store_true",
@@ -83,7 +132,32 @@ def main() -> int:
     if args.ks_pass_env not in os.environ or args.key_pass_env not in os.environ:
         raise RuntimeError("signing password environment variables are not set")
 
+    rotation = (args.rotation_lineage, args.rotation_keystore, args.rotation_key_alias)
+    if any(rotation) and not all(rotation):
+        parser.error("rotation requires lineage, new keystore and new key alias together")
+    if args.rotation_lineage:
+        for path in (args.rotation_lineage, args.rotation_keystore):
+            if not path.resolve().is_file():
+                raise FileNotFoundError(path)
+        if (args.rotation_ks_pass_env not in os.environ or
+                args.rotation_key_pass_env not in os.environ):
+            raise RuntimeError("rotated signing password environment variables are not set")
+
+    gradle_home = ROOT / "work/modern-settings-gradle-home"
+    gradle_home.mkdir(parents=True, exist_ok=True)
+    env = os.environ.copy()
+    env["JAVA_HOME"] = str(args.jdk.resolve())
+    env["ANDROID_HOME"] = str(args.sdk.resolve())
+    env["ANDROID_SDK_ROOT"] = str(args.sdk.resolve())
+    env["GRADLE_USER_HOME"] = str(gradle_home.resolve())
+
     work = args.work.resolve()
+    if args.resign_only:
+        aligned = work / "compose-host-aligned.apk"
+        if not aligned.is_file():
+            raise FileNotFoundError(aligned)
+        sign_aligned_apk(args, aligned, env=env)
+        return 0
     decoded = work / "decoded"
     legacy_apk = work / "patched-legacy.apk"
     legacy_dex = work / "classes.dex"
@@ -163,13 +237,6 @@ def main() -> int:
         manifest_command.extend(("--ime-label", args.ime_label))
     run(manifest_command)
 
-    gradle_home = ROOT / "work/modern-settings-gradle-home"
-    gradle_home.mkdir(parents=True, exist_ok=True)
-    env = os.environ.copy()
-    env["JAVA_HOME"] = str(args.jdk.resolve())
-    env["ANDROID_HOME"] = str(args.sdk.resolve())
-    env["ANDROID_SDK_ROOT"] = str(args.sdk.resolve())
-    env["GRADLE_USER_HOME"] = str(gradle_home.resolve())
     variant = "debug" if args.debuggable else "release"
     gradle_task = "assembleDebug" if args.debuggable else "assembleRelease"
     gradle_args = [
@@ -209,29 +276,10 @@ def main() -> int:
         ]
     )
 
-    build_tools = args.sdk.resolve() / "build-tools/36.0.0"
+    build_tools = args.sdk.resolve() / "build-tools" / BUILD_TOOLS_VERSION
     zipalign = build_tools / ("zipalign.exe" if os.name == "nt" else "zipalign")
-    apksigner = build_tools / ("apksigner.bat" if os.name == "nt" else "apksigner")
     run([str(zipalign), "-P", "16", "-f", "4", str(unaligned), str(aligned)])
-
-    args.output.resolve().parent.mkdir(parents=True, exist_ok=True)
-    sign_args = [
-        "sign",
-        "--ks",
-        str(args.keystore.resolve()),
-        "--ks-key-alias",
-        args.key_alias,
-        "--ks-pass",
-        f"env:{args.ks_pass_env}",
-        "--key-pass",
-        f"env:{args.key_pass_env}",
-        "--out",
-        str(args.output.resolve()),
-        str(aligned),
-    ]
-    run(executable(apksigner, sign_args), env=env)
-    run(executable(apksigner, ["verify", "--verbose", str(args.output.resolve())]), env=env)
-    run([str(zipalign), "-c", "-P", "16", "4", str(args.output.resolve())])
+    sign_aligned_apk(args, aligned, env=env)
     print(f"built {args.output.resolve()}")
     return 0
 

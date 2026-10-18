@@ -45,6 +45,26 @@ class ModernSettingsActivity : ComponentActivity() {
     private lateinit var controller: SettingsController
     private lateinit var dictionaryRepository: LegacyDictionarySettingsRepository
     private lateinit var rimeRepository: LegacyRimeSyncRepository
+    private val transfer by lazy {
+        androidx.lifecycle.ViewModelProvider(this)[SettingsTransferViewModel::class.java]
+    }
+    private val exportSettings = registerForActivityResult(
+        ActivityResultContracts.CreateDocument("application/zip"),
+    ) { uri ->
+        val dictionary = dictionarySnapshot
+        if (uri != null && dictionary != null) transfer.export(uri, dictionary, rimeSync.settings)
+    }
+    private val importSettings = registerForActivityResult(
+        ActivityResultContracts.OpenDocument(),
+    ) { uri -> if (uri != null) transfer.readImport(uri) }
+    private val contactsSettings = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult(),
+    ) {
+        if (dictionaryRepository.read().contactsPermissionGranted) {
+            dictionaryRepository.setContactSuggestionsEnabled(true)
+        }
+        dictionarySnapshot = dictionaryRepository.read()
+    }
     private var snapshot by mutableStateOf<SettingsSnapshot?>(null)
     private var dictionarySnapshot by mutableStateOf<DictionarySettingsSnapshot?>(null)
     private var dictionaryHealth by mutableStateOf(DictionaryHealthState())
@@ -179,6 +199,9 @@ class ModernSettingsActivity : ComponentActivity() {
         )
         dictionaryRepository = LegacyDictionarySettingsRepository(this)
         rimeRepository = LegacyRimeSyncRepository(this)
+        treePurpose = TreePurpose.entries.firstOrNull {
+            it.name == savedInstanceState?.getString("settings_tree_purpose")
+        } ?: TreePurpose.Location
         dictionaryClear = when {
             savedInstanceState?.getBoolean(CLEAR_IN_PROGRESS_KEY, false) == true ->
                 DictionaryClearStateReducer.observeInProgress(true)
@@ -213,6 +236,16 @@ class ModernSettingsActivity : ComponentActivity() {
             },
         )
         setContent {
+            androidx.compose.runtime.LaunchedEffect(transfer.state.busy, transfer.state.message) {
+                if (!transfer.state.busy && !transfer.state.confirmImport) {
+                    snapshot = controller.read()
+                    refreshDictionaryUntilIdle()
+                    refreshRimeSettings()
+                    transfer.state.message?.let {
+                        Toast.makeText(this@ModernSettingsActivity, it, Toast.LENGTH_LONG).show()
+                    }
+                }
+            }
             ModernSettingsTheme {
                 snapshot?.let { settings ->
                     dictionarySnapshot?.let { dictionary ->
@@ -223,6 +256,8 @@ class ModernSettingsActivity : ComponentActivity() {
                         dictionaryImport = dictionaryImport,
                         dictionaryClear = dictionaryClear,
                         rimeSync = rimeSync,
+                        transferState = transfer.state,
+                        restoreContactsRequested = transfer.contactsRequested,
                         // The keyboard's shortcut is the one caller that opens
                         // this hierarchy anywhere but at its top, so it says
                         // where to start. Every other entry leaves the extra
@@ -232,6 +267,13 @@ class ModernSettingsActivity : ComponentActivity() {
                             ?.getStringExtra(LegacySettingsNavigation.routePathExtra)
                             ?: SettingsRouteStack.initialPath,
                         actions = SettingsActions(
+                            transfer = SettingsTransferActions(
+                                onExport = { exportSettings.launch("GooglePinyin-settings.zip") },
+                                onImport = { importSettings.launch(arrayOf("application/zip", "application/octet-stream")) },
+                                onConfirmImport = ::restoreSettings,
+                                onDismissImport = transfer::dismissImport,
+                                onRecoveryShown = transfer::acknowledgeRecovery,
+                            ),
                             onDynamicColorEnabledChange = { enabled ->
                                 snapshot = controller.setDynamicColorEnabled(enabled)
                             },
@@ -337,17 +379,8 @@ class ModernSettingsActivity : ComponentActivity() {
                                 dictionarySnapshot = dictionaryRepository.read()
                             },
                             onOpenShortcutEditor = dictionaryRepository::openShortcutEditor,
-                            onContactSuggestionsEnabledChange = { enabled ->
-                                if (!enabled) {
-                                    dictionaryRepository.setContactSuggestionsEnabled(false)
-                                    dictionarySnapshot = dictionaryRepository.read()
-                                } else if (dictionaryRepository.read().contactsPermissionGranted) {
-                                    dictionaryRepository.setContactSuggestionsEnabled(true)
-                                    dictionarySnapshot = dictionaryRepository.read()
-                                } else {
-                                    contactsPermission.launch(Manifest.permission.READ_CONTACTS)
-                                }
-                            },
+                            onContactSuggestionsEnabledChange = ::setContactSuggestions,
+
                             onOpenClearDictionaryConfirmation = {
                                 val challenge = String.format(
                                     Locale.ROOT,
@@ -554,6 +587,7 @@ class ModernSettingsActivity : ComponentActivity() {
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
+        outState.putString("settings_tree_purpose", treePurpose.name)
         outState.putBoolean(CLEAR_DIALOG_VISIBLE_KEY, dictionaryClear.confirmationVisible)
         outState.putBoolean(CLEAR_IN_PROGRESS_KEY, dictionaryClear.inProgress)
         if (dictionaryClear.confirmationVisible) {
@@ -567,6 +601,63 @@ class ModernSettingsActivity : ComponentActivity() {
         dictionaryRepository.detachClearCallback(dictionaryClearCallback)
         dictionaryClearCallback = null
         super.onDestroy()
+    }
+
+    private fun setContactSuggestions(enabled: Boolean) {
+        transfer.rememberContactsChoice(enabled)
+        if (!enabled || dictionaryRepository.read().contactsPermissionGranted) {
+            dictionaryRepository.setContactSuggestionsEnabled(enabled)
+            dictionarySnapshot = dictionaryRepository.read()
+            return
+        }
+        val permissions = getSharedPreferences("modern_permission_requests", MODE_PRIVATE)
+        if (permissions.getBoolean("contacts", false) &&
+            !shouldShowRequestPermissionRationale(Manifest.permission.READ_CONTACTS)) {
+            contactsSettings.launch(android.content.Intent(
+                android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                Uri.parse("package:$packageName"),
+            ))
+        } else {
+            permissions.edit().putBoolean("contacts", true).apply()
+            contactsPermission.launch(Manifest.permission.READ_CONTACTS)
+        }
+    }
+
+    private fun restoreSettings() {
+        val data = transfer.pendingImport ?: return
+        val dictionary = dictionaryRepository.read()
+        if (dictionary.backupInProgress || dictionary.clearInProgress ||
+            rimeSync.settings.operationInProgress) {
+            Toast.makeText(this, R.string.modern_settings_transfer_operation_busy, Toast.LENGTH_LONG).show()
+            return
+        }
+        val model = transfer
+        model.beginImport()
+        val hours = data.rimeIntervalHours
+        // Use the production API: cancel scheduling and validate the saved interval before import.
+        rimeRepository.configureAutomatic(false, hours) { automatic ->
+            if (!automatic.success) {
+                model.failImport()
+            } else {
+                val applySettings = {
+                    try {
+                        dictionaryRepository.disableAutomaticBackup()
+                        dictionaryRepository.setContactSuggestionsEnabled(false)
+                        dictionaryRepository.restoreShortcuts(data.shortcuts)
+                        model.importSettings()
+                    } catch (_: Exception) {
+                        model.failImport(R.string.modern_settings_transfer_import_error)
+                    }
+                }
+                if (data.rimeDevice.isEmpty()) {
+                    applySettings()
+                } else {
+                    rimeRepository.saveConfiguration(data.rimeDevice, data.rimeFile) { configuration ->
+                        if (!configuration.success) model.failImport() else applySettings()
+                    }
+                }
+            }
+        }
     }
 
     private fun refreshDictionaryHealth() {

@@ -8,6 +8,15 @@ on:
       - "v*"
   workflow_dispatch:
     inputs:
+      operation:
+        description: Build APK, build migration APK, or generate lineage
+        required: true
+        default: build
+        type: choice
+        options:
+          - build
+          - build_migration
+          - create_lineage
       application_id:
         description: Application ID override for isolated audit builds
         required: false
@@ -43,9 +52,12 @@ env:
 
 jobs:
   build:
+    if: github.event_name != 'workflow_dispatch' || inputs.operation != 'create_lineage'
     name: Build, sign and verify modern host
     runs-on: windows-latest
+    timeout-minutes: 45
     env:
+      OPERATION: ${{ inputs.operation || 'build' }}
       KEYSTORE_BASE64: ${{ secrets.ANDROID_SIGNING_KEYSTORE_BASE64 }}
       STORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
       KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
@@ -74,6 +86,7 @@ jobs:
           python-version: "3.12"
 
       - name: Resolve and validate release identity
+        id: identity
         shell: pwsh
         run: |
           $properties = @{}
@@ -84,7 +97,7 @@ jobs:
               $properties[$name.Trim()] = $value.Trim()
             }
           }
-          foreach ($name in @("VERSION_NAME", "VERSION_CODE", "TARGET_SDK")) {
+          foreach ($name in @("VERSION_NAME", "VERSION_CODE", "TARGET_SDK", "SIGNING_MODE")) {
             if ([string]::IsNullOrWhiteSpace($properties[$name])) {
               throw "Missing $name in version.properties"
             }
@@ -107,6 +120,28 @@ jobs:
             if ($env:DEBUGGABLE -eq "true") {
               throw "Version tags may not build a debuggable APK"
             }
+          }
+          if ($env:OPERATION -eq "build_migration" -and
+              ($env:APPLICATION_ID -ne $env:FORMAL_APPLICATION_ID -or $env:DEBUGGABLE -eq "true")) {
+            throw "Migration acceptance requires the formal application ID and a non-debug build"
+          }
+          if ($properties.SIGNING_MODE -ne "migration") {
+            throw "This release requires the migration signing policy in version.properties"
+          }
+          # Isolated audit builds retain their existing legacy signer. Formal builds follow the version policy.
+          $signingMode = if ($env:APPLICATION_ID -eq $env:FORMAL_APPLICATION_ID) { $properties.SIGNING_MODE } else { "legacy" }
+          "SIGNING_MODE=$signingMode" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+          "signing_mode=$signingMode" | Out-File $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          $config = Get-Content signing/signing-materials.json -Raw | ConvertFrom-Json
+          $toolsVersion = python -c "import sys; sys.path.insert(0, 'scripts'); from build_modern_settings_host import BUILD_TOOLS_VERSION; print(BUILD_TOOLS_VERSION)"
+          if ($LASTEXITCODE -ne 0) { throw "Unable to resolve pinned Build-Tools version" }
+          "BUILD_TOOLS_VERSION=$($toolsVersion.Trim())" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+          foreach ($item in @(
+            @("keystore_secret", $config.newSecrets.keystore),
+            @("store_password_secret", $config.newSecrets.storePassword),
+            @("key_password_secret", $config.newSecrets.keyPassword)
+          )) {
+            "$($item[0])=$($item[1])" | Out-File $env:GITHUB_OUTPUT -Encoding utf8 -Append
           }
           "EXPECTED_VERSION_NAME=$($properties.VERSION_NAME)" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
           "EXPECTED_VERSION_CODE=$($properties.VERSION_CODE)" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
@@ -151,7 +186,7 @@ jobs:
           # android-37.2 is what the Compose host resolves through compileSdk 37
           # plus compileSdkMinor 2, because Android 17 ships a minor-versioned
           # platform directory.
-          & $sdkManager "platforms;android-36" "platforms;android-37.2" "build-tools;36.0.0"
+          & $sdkManager "platforms;android-36" "platforms;android-37.2" "build-tools;$env:BUILD_TOOLS_VERSION"
           if ($LASTEXITCODE -ne 0) { throw "Unable to install Android SDK platforms and build tools" }
 
       - name: Download and verify apktool
@@ -207,13 +242,16 @@ jobs:
 
       - name: Restore keystore and verify signing identity
         shell: pwsh
+        env:
+          ROTATED_KEYSTORE_BASE64: ${{ steps.identity.outputs.signing_mode == 'migration' && secrets[steps.identity.outputs.keystore_secret] || '' }}
+          MODERN_SETTINGS_ROTATED_KS_PASS: ${{ steps.identity.outputs.signing_mode == 'migration' && secrets[steps.identity.outputs.store_password_secret] || '' }}
         run: |
           New-Item -ItemType Directory -Force work/signing | Out-Null
           try { $bytes = [Convert]::FromBase64String($env:KEYSTORE_BASE64) }
           catch { throw "ANDROID_SIGNING_KEYSTORE_BASE64 is not valid base64" }
           [IO.File]::WriteAllBytes("work/signing/release.p12", $bytes)
           $keytoolOutput = & keytool -list -v -storetype PKCS12 `
-            -keystore work/signing/release.p12 -storepass $env:STORE_PASSWORD `
+            -keystore work/signing/release.p12 -storepass:env STORE_PASSWORD `
             -alias $env:KEY_ALIAS 2>&1 | Out-String
           if ($LASTEXITCODE -ne 0) { throw "Unable to open signing keystore or alias" }
           $match = [regex]::Match($keytoolOutput, "SHA256:\s*([0-9A-Fa-f:]+)")
@@ -223,9 +261,30 @@ jobs:
           if ($actual -ne $expected) {
             throw "Signing certificate mismatch. Expected $expected, got $actual"
           }
+          if ($env:SIGNING_MODE -eq "migration") {
+            Import-Module ./scripts/signing-material-tools.psm1 -Force
+            $config = Get-Content signing/signing-materials.json -Raw | ConvertFrom-Json
+            $previous = Get-PemCertificateSha256 (Get-Content (Join-Path signing $config.certificates.previous) -Raw)
+            if ($actual -ne $previous) { throw "Legacy signer does not match the pinned previous certificate" }
+            if (-not $env:ROTATED_KEYSTORE_BASE64 -or -not $env:MODERN_SETTINGS_ROTATED_KS_PASS) {
+              throw "Missing independent rotated signing Secrets"
+            }
+            [IO.File]::WriteAllBytes("work/signing/rotated.p12", [Convert]::FromBase64String($env:ROTATED_KEYSTORE_BASE64))
+            $public = & keytool -exportcert -rfc -storetype PKCS12 -keystore work/signing/rotated.p12 `
+              -storepass:env MODERN_SETTINGS_ROTATED_KS_PASS -alias $config.keyAlias | Out-String
+            if ($LASTEXITCODE -ne 0) { throw "Unable to open rotated keystore" }
+            $rotated = Get-PemCertificateSha256 $public
+            $pinned = Get-PemCertificateSha256 (Get-Content (Join-Path signing $config.certificates.current) -Raw)
+            if ($rotated -ne $pinned) { throw "Rotated signer does not match the pinned current certificate" }
+            "EXPECTED_ROTATED_CERT_SHA256=$rotated" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+            "ROTATION_MIN_SDK=$($config.rotationMinSdk)" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+          }
 
       - name: Build signed official Compose Material 3 host
         shell: pwsh
+        env:
+          MODERN_SETTINGS_ROTATED_KS_PASS: ${{ steps.identity.outputs.signing_mode == 'migration' && secrets[steps.identity.outputs.store_password_secret] || '' }}
+          MODERN_SETTINGS_ROTATED_KEY_PASS: ${{ steps.identity.outputs.signing_mode == 'migration' && secrets[steps.identity.outputs.key_password_secret] || '' }}
         run: |
           $arguments = @(
             "scripts/build_modern_settings_host.py",
@@ -247,6 +306,13 @@ jobs:
             $arguments += @("--audit-launcher", "--launcher-label", $env:AUDIT_LABEL, "--ime-label", $env:AUDIT_LABEL)
           }
           if ($env:DEBUGGABLE -eq "true") { $arguments += "--debuggable" }
+          if ($env:SIGNING_MODE -eq "migration") {
+            $config = Get-Content signing/signing-materials.json -Raw | ConvertFrom-Json
+            $arguments += @("--rotation-lineage", (Join-Path signing $config.lineage),
+              "--rotation-keystore", "work/signing/rotated.p12", "--rotation-key-alias", $config.keyAlias)
+          }
+          # Public arguments only: passwords stay in the signing tool's environment.
+          ConvertTo-Json -InputObject $arguments | Set-Content work/release-build-arguments.json -Encoding utf8
           python @arguments
           if ($LASTEXITCODE -ne 0) { throw "Modern host build failed" }
 
@@ -321,7 +387,7 @@ jobs:
             if ($LASTEXITCODE -ne 0) { throw "Final APK gate failed: $($gate -join ' ')" }
           }
 
-          $aapt2 = Join-Path $env:ANDROID_SDK_ROOT "build-tools\36.0.0\aapt2.exe"
+          $aapt2 = Join-Path $env:ANDROID_SDK_ROOT "build-tools/$env:BUILD_TOOLS_VERSION/aapt2.exe"
           & $aapt2 dump resources $apk | Out-File work/final-resources.txt -Encoding utf8
           if ($LASTEXITCODE -ne 0) { throw "aapt2 resource dump failed" }
           python scripts/verify_stable_resource_ids.py `
@@ -329,7 +395,7 @@ jobs:
             work/final-resources.txt
           if ($LASTEXITCODE -ne 0) { throw "Stable resource ID verification failed" }
 
-      - name: Verify package, version, signing and alignment
+      - name: Verify package, version and SDK-specific signing identity
         shell: pwsh
         run: |
           $metadata = Get-Content work/final-decoded/apktool.yml -Raw
@@ -348,37 +414,27 @@ jobs:
           }
           $hasDebuggable = $manifest -match 'android:debuggable="true"'
           if ($hasDebuggable -ne ($env:DEBUGGABLE -eq "true")) { throw "Debuggable mismatch" }
-          $apksigner = Join-Path $env:ANDROID_SDK_ROOT "build-tools\36.0.0\apksigner.bat"
-          $zipalign = Join-Path $env:ANDROID_SDK_ROOT "build-tools\36.0.0\zipalign.exe"
-          & $apksigner verify --verbose --print-certs "dist/$env:RELEASE_APK_NAME"
-          if ($LASTEXITCODE -ne 0) { throw "APK signature verification failed" }
-          & $zipalign -c -P 16 4 "dist/$env:RELEASE_APK_NAME"
-          if ($LASTEXITCODE -ne 0) { throw "16 KiB ZIP alignment verification failed" }
-
-      - name: Verify reproducible signed build
-        shell: pwsh
-        run: |
-          $arguments = @(
-            "scripts/build_modern_settings_host.py",
-            "--original", $env:ORIGINAL_APK,
-            "--work", "work/repro-build",
-            "--output", "work/repro.apk",
-            "--application-id", $env:APPLICATION_ID,
-            "--version-name", $env:EXPECTED_VERSION_NAME,
-            "--version-code", $env:EXPECTED_VERSION_CODE,
-            "--apktool", "work/tools/apktool.jar",
-            "--apktool-framework", "work/repro-framework",
-            "--gradle", "modern-settings/gradlew.bat",
-            "--sdk", $env:ANDROID_SDK_ROOT,
-            "--jdk", $env:JAVA_HOME,
-            "--keystore", "work/signing/release.p12",
-            "--key-alias", $env:KEY_ALIAS
-          )
-          if ($env:APPLICATION_ID -ne $env:FORMAL_APPLICATION_ID) {
-            $arguments += @("--audit-launcher", "--launcher-label", $env:AUDIT_LABEL, "--ime-label", $env:AUDIT_LABEL)
+          $identity = @("scripts/verify_apk_signing_identity.py", "dist/$env:RELEASE_APK_NAME",
+            "--sdk", $env:ANDROID_SDK_ROOT, "--jdk", $env:JAVA_HOME,
+            "--target-sdk", $env:EXPECTED_TARGET_SDK, "--expected-legacy-sha256", $env:EXPECTED_CERT_SHA256)
+          if ($env:SIGNING_MODE -eq "migration") {
+            $identity += @("--expected-rotated-sha256", $env:EXPECTED_ROTATED_CERT_SHA256)
           }
-          if ($env:DEBUGGABLE -eq "true") { $arguments += "--debuggable" }
+          python @identity
+          if ($LASTEXITCODE -ne 0) { throw "SDK-specific signing identity verification failed" }
+
+      - name: Verify deterministic APK signing
+        shell: pwsh
+        env:
+          MODERN_SETTINGS_ROTATED_KS_PASS: ${{ steps.identity.outputs.signing_mode == 'migration' && secrets[steps.identity.outputs.store_password_secret] || '' }}
+          MODERN_SETTINGS_ROTATED_KEY_PASS: ${{ steps.identity.outputs.signing_mode == 'migration' && secrets[steps.identity.outputs.key_password_secret] || '' }}
+        run: |
+          $arguments = @(Get-Content work/release-build-arguments.json -Raw | ConvertFrom-Json)
+          $index = [Array]::IndexOf($arguments, "--output")
+          $arguments[$index + 1] = "work/repro.apk"
+          $arguments += "--resign-only"
           python @arguments
+          if ($LASTEXITCODE -ne 0) { throw "Deterministic signing check failed" }
           if ((Get-FileHash "dist/$env:RELEASE_APK_NAME" -Algorithm SHA256).Hash -ne `
               (Get-FileHash work/repro.apk -Algorithm SHA256).Hash) {
             throw "Signed builds are not byte-identical"
@@ -408,8 +464,45 @@ jobs:
           - Application ID: ``$env:APPLICATION_ID``
           - target SDK: ``$env:EXPECTED_TARGET_SDK``
           - Debuggable: ``$env:DEBUGGABLE``
-          - Signing certificate: ``$env:EXPECTED_CERT_SHA256``
+          - Signing operation: ``$env:OPERATION``
+          - Legacy signing certificate: ``$env:EXPECTED_CERT_SHA256``
           "@
+          if ($env:SIGNING_MODE -eq "migration") {
+            Add-Content $env:GITHUB_STEP_SUMMARY "- Rotated signing certificate: $env:EXPECTED_ROTATED_CERT_SHA256"
+            Add-Content $env:GITHUB_STEP_SUMMARY "- Rotation begins at SDK: $env:ROTATION_MIN_SDK"
+          }
+
+      - name: Prepare versioned release body
+        shell: pwsh
+        env:
+          APK_SHA256: ${{ steps.artifact.outputs.sha256 }}
+        run: |
+          $signingRows = "| 签名证书 SHA-256 | ``$env:EXPECTED_CERT_SHA256`` |"
+          if ($env:SIGNING_MODE -eq "migration") {
+            $lastLegacySdk = [int]$env:ROTATION_MIN_SDK - 1
+            $signingRows = "| 签名证书（SDK 23～$lastLegacySdk） | ``$env:EXPECTED_CERT_SHA256`` |`n" +
+              "| 签名证书（SDK $env:ROTATION_MIN_SDK 起） | ``$env:EXPECTED_ROTATED_CERT_SHA256`` |"
+          }
+          $notes = @"
+          ## 构建信息
+
+          | 项目 | 值 |
+          | --- | --- |
+          | 版本 | ``v$env:EXPECTED_VERSION_NAME`` |
+          | versionCode | ``$env:EXPECTED_VERSION_CODE`` |
+          | 架构 | ``arm64-v8a`` |
+          | min / target SDK | ``23 / $env:EXPECTED_TARGET_SDK`` |
+          | 包名 | ``$env:APPLICATION_ID`` |
+          | APK SHA-256 | ``$env:APK_SHA256`` |
+          $signingRows
+          | 源码提交 | ``$env:GITHUB_SHA`` |
+          "@
+          $releaseNotesSource = "docs/releases/v$env:EXPECTED_VERSION_NAME.md"
+          if (-not (Test-Path $releaseNotesSource)) { throw "Missing versioned release notes: $releaseNotesSource" }
+          Get-Content $releaseNotesSource -Raw | Out-File dist/release-notes.md -Encoding utf8
+          Add-Content dist/release-notes.md "`n$notes"
+          python scripts/verify_release_notes.py dist/release-notes.md
+          if ($LASTEXITCODE -ne 0) { throw "Assembled release body format failed" }
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
@@ -418,11 +511,12 @@ jobs:
           path: |
             dist/*.apk
             dist/*.apk.sha256
+            dist/release-notes.md
           if-no-files-found: error
           retention-days: 30
 
       - name: Publish GitHub Release for matching version tag
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: startsWith(github.ref, 'refs/tags/v') && inputs.operation != 'build_migration'
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
@@ -430,41 +524,127 @@ jobs:
           APK_PATH: ${{ steps.artifact.outputs.path }}
           APK_SHA256: ${{ steps.artifact.outputs.sha256 }}
         run: |
-          $notes = @"
-          ## 构建信息
-
-          | 项目 | 值 |
-          | --- | --- |
-          | 版本 | ``$env:TAG_NAME`` |
-          | versionCode | ``$env:EXPECTED_VERSION_CODE`` |
-          | 架构 | ``arm64-v8a`` |
-          | min / target SDK | ``23 / $env:EXPECTED_TARGET_SDK`` |
-          | 包名 | ``$env:APPLICATION_ID`` |
-          | APK SHA-256 | ``$env:APK_SHA256`` |
-          | 签名证书 SHA-256 | ``$env:EXPECTED_CERT_SHA256`` |
-          | 源码提交 | ``${{ github.sha }}``
-          "@
-          $releaseNotesSource = "docs/releases/v$env:EXPECTED_VERSION_NAME.md"
-          if (-not (Test-Path $releaseNotesSource)) {
-            throw "Missing versioned release notes: $releaseNotesSource"
-          }
-          Get-Content $releaseNotesSource -Raw | Out-File release-notes.md -Encoding utf8
-          Add-Content release-notes.md "`n$notes"
-          python scripts/verify_release_notes.py release-notes.md
-          if ($LASTEXITCODE -ne 0) { throw "Assembled release body format failed" }
           gh release view $env:TAG_NAME --repo $env:GITHUB_REPOSITORY *> $null
           if ($LASTEXITCODE -eq 0) {
             throw "Release $env:TAG_NAME already exists; published releases and assets are immutable"
           } else {
             gh release create $env:TAG_NAME `
-              "$env:APK_PATH#$env:RELEASE_APK_NAME" `
-              "$env:APK_PATH.sha256#$env:RELEASE_APK_NAME.sha256" `
+              "$env:APK_PATH" `
+              "$env:APK_PATH.sha256" `
               --repo $env:GITHUB_REPOSITORY --verify-tag `
               --title "$env:TAG_NAME" `
-              --notes-file release-notes.md
+              --notes-file dist/release-notes.md
           }
 
-      - name: Remove restored keystore
+      - name: Remove restored keystores
         if: always()
         shell: pwsh
-        run: Remove-Item work/signing/release.p12 -Force -ErrorAction SilentlyContinue
+        run: |
+          foreach ($path in @("work/signing/release.p12", "work/signing/rotated.p12")) {
+            if (Test-Path $path) { Remove-Item -LiteralPath $path -Force -ErrorAction Stop }
+          }
+
+  create-lineage:
+    if: github.event_name == 'workflow_dispatch' && inputs.operation == 'create_lineage'
+    name: Generate public signing lineage only
+    runs-on: windows-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Resolve signing configuration
+        id: signing
+        shell: pwsh
+        run: |
+          $config = Get-Content signing/signing-materials.json -Raw | ConvertFrom-Json
+          $version = python -c "import sys; sys.path.insert(0, 'scripts'); from build_modern_settings_host import BUILD_TOOLS_VERSION; print(BUILD_TOOLS_VERSION)"
+          if ($LASTEXITCODE -ne 0) { throw "Unable to resolve pinned Build-Tools version" }
+          $outputs = @{
+            base_name = $config.fileBaseName
+            keystore_secret = $config.newSecrets.keystore
+            store_password_secret = $config.newSecrets.storePassword
+            key_password_secret = $config.newSecrets.keyPassword
+            build_tools_version = $version.Trim()
+          }
+          foreach ($name in $outputs.Keys) {
+            "$name=$($outputs[$name])" | Out-File $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          }
+
+      - name: Prepare pinned signing tool
+        shell: pwsh
+        run: |
+          $version = "${{ steps.signing.outputs.build_tools_version }}"
+          $jar = Join-Path $env:ANDROID_SDK_ROOT "build-tools/$version/lib/apksigner.jar"
+          if (-not (Test-Path $jar)) {
+            $sdkManager = Join-Path $env:ANDROID_SDK_ROOT "cmdline-tools/latest/bin/sdkmanager.bat"
+            & $sdkManager "build-tools;$version"
+            if ($LASTEXITCODE -ne 0) { throw "Unable to install pinned signing tool" }
+          }
+
+      - name: Generate and validate lineage using existing and new Secrets
+        shell: pwsh
+        env:
+          CI_OLD_KEYSTORE: ${{ secrets.ANDROID_SIGNING_KEYSTORE_BASE64 }}
+          CI_OLD_STORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
+          CI_OLD_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
+          CI_OLD_ALIAS: ${{ vars.ANDROID_SIGNING_KEY_ALIAS }}
+          CI_NEW_KEYSTORE: ${{ secrets[steps.signing.outputs.keystore_secret] }}
+          CI_NEW_STORE_PASSWORD: ${{ secrets[steps.signing.outputs.store_password_secret] }}
+          CI_NEW_KEY_PASSWORD: ${{ secrets[steps.signing.outputs.key_password_secret] }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          $config = Get-Content signing/signing-materials.json -Raw | ConvertFrom-Json
+          $required = @{
+            ANDROID_SIGNING_KEYSTORE_BASE64 = $env:CI_OLD_KEYSTORE
+            ANDROID_SIGNING_STORE_PASSWORD = $env:CI_OLD_STORE_PASSWORD
+            ANDROID_SIGNING_KEY_PASSWORD = $env:CI_OLD_KEY_PASSWORD
+            ($config.newSecrets.keystore) = $env:CI_NEW_KEYSTORE
+            ($config.newSecrets.storePassword) = $env:CI_NEW_STORE_PASSWORD
+            ($config.newSecrets.keyPassword) = $env:CI_NEW_KEY_PASSWORD
+          }
+          $missing = @($required.Keys | Where-Object { [string]::IsNullOrWhiteSpace($required[$_]) })
+          if ($missing.Count) { throw "Missing signing Secrets: $($missing -join ', ')" }
+          $directory = Join-Path $env:GITHUB_WORKSPACE "work/lineage-signing"
+          $backup = Join-Path $directory "Backup"
+          $artifacts = Join-Path $env:GITHUB_WORKSPACE "work/lineage-artifacts"
+          $baseName = $config.fileBaseName
+          try {
+            New-Item -ItemType Directory -Force $backup, $artifacts | Out-Null
+            [IO.File]::WriteAllBytes((Join-Path $backup "$baseName.p12"), [Convert]::FromBase64String($env:CI_OLD_KEYSTORE))
+            [IO.File]::WriteAllBytes((Join-Path $directory "$baseName.p12"), [Convert]::FromBase64String($env:CI_NEW_KEYSTORE))
+            Copy-Item (Join-Path "signing" $config.certificates.previous) (Join-Path $backup "$baseName-certificate.pem")
+            Copy-Item (Join-Path "signing" $config.certificates.current) (Join-Path $directory "$baseName-certificate.pem")
+            $jar = Join-Path $env:ANDROID_SDK_ROOT "build-tools/${{ steps.signing.outputs.build_tools_version }}/lib/apksigner.jar"
+            ./scripts/create-signing-lineage.ps1 -SigningDirectory $directory `
+              -OldKeyAlias $env:CI_OLD_ALIAS -JdkDirectory $env:JAVA_HOME -ApksignerJar $jar `
+              -OldStorePasswordEnv CI_OLD_STORE_PASSWORD -OldKeyPasswordEnv CI_OLD_KEY_PASSWORD `
+              -NewStorePasswordEnv CI_NEW_STORE_PASSWORD -NewKeyPasswordEnv CI_NEW_KEY_PASSWORD
+            Copy-Item (Join-Path $directory "$baseName-lineage.bin") $artifacts
+            Copy-Item (Join-Path $directory "SIGNING-LINEAGE-INFO.txt") $artifacts
+          } finally {
+            if (Test-Path $directory) { Remove-Item -LiteralPath $directory -Recurse -Force }
+          }
+
+      - name: Upload public lineage and verification report
+        uses: actions/upload-artifact@v4
+        with:
+          name: signing-lineage-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            work/lineage-artifacts/${{ steps.signing.outputs.base_name }}-lineage.bin
+            work/lineage-artifacts/SIGNING-LINEAGE-INFO.txt
+          if-no-files-found: error
+          retention-days: 7

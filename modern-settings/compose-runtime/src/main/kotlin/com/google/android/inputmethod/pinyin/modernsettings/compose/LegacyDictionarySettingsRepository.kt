@@ -77,6 +77,12 @@ internal class LegacyDictionarySettingsRepository(private val activity: Activity
         legacyPreferences.edit().putBoolean(shortcutsKey, enabled).apply()
     }
 
+    fun restoreShortcuts(enabled: Boolean?) {
+        val editor = legacyPreferences.edit()
+        if (enabled == null) editor.remove(shortcutsKey) else editor.putBoolean(shortcutsKey, enabled)
+        check(editor.commit())
+    }
+
     fun setContactSuggestionsEnabled(enabled: Boolean): Boolean = runCatching {
         operationsType.getMethod(
             "setContactSuggestionsEnabled",

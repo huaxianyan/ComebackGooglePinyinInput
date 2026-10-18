@@ -79,11 +79,13 @@ internal fun LazyListScope.rimeSyncSettingsItems(
     state: RimeSyncUiState,
     dictionaryOperationInProgress: Boolean,
     actions: RimeSyncActions,
+    recoveryOrder: Boolean = false,
 ) {
     val settings = state.settings
     item(key = "rime_sync_section", contentType = "section") {
         SectionTitle(stringResource(R.string.modern_settings_rime_sync_section))
     }
+    fun automaticItems() {
     settings.automatic?.let { auto ->
         val ready = settings.canEnableAutomatic
         item(key = "rime_sync_automatic", contentType = "switch") {
@@ -123,6 +125,8 @@ internal fun LazyListScope.rimeSyncSettingsItems(
             )
         }
     }
+    }
+    if (!recoveryOrder) automaticItems()
     item(key = "rime_sync_root", contentType = "action") {
         SettingsActionRow(
             title = stringResource(R.string.modern_settings_rime_sync_root_title),
@@ -167,6 +171,7 @@ internal fun LazyListScope.rimeSyncSettingsItems(
             onClick = actions.onSynchronize,
         )
     }
+    if (recoveryOrder) automaticItems()
     item(key = "rime_sync_reset", contentType = "action") {
         SettingsActionRow(
             title = stringResource(R.string.modern_settings_rime_sync_reset_title),

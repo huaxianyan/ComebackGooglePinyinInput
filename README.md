@@ -14,7 +14,7 @@
 
 正式 APK 请从 [GitHub Releases](https://github.com/huaxianyan/ComebackGooglePinyinInput/releases) 下载。
 
-本 README 描述当前开发主线。2026-10-13 核对时，主线是 `2.1.7-pre`（target SDK 37），最近正式发布记录是 `v2.1.6`（target SDK 36）。预发布测试包由 Actions 产出，尚未创建 `v2.1.7` Release。验收边界与待办见 [最新交接记录](docs/handoff/2026-10-13.md)。
+本 README 描述开发中的能力。正式发行以 Releases 为准，当前验证范围与待办见 [交接记录](docs/handoff/)。
 
 <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://app/%7B%22id%22%3A%22com.google.android.inputmethod.pinyin.compat%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Fhuaxianyan%2FComebackGooglePinyinInput%22%2C%22author%22%3A%22huaxianyan%22%2C%22name%22%3A%22Comeback%20Google%20Pinyin%20Input%22%7D"><img src="images/obtainium-badge.png" alt="Get it on Obtainium" height="48"></a>
 
@@ -27,7 +27,7 @@ min SDK:        23（Android 6.0）
 target SDK:     37
 ```
 
-兼容版使用独立包名和项目签名，可以与 Google 官方原版同时安装，但不能覆盖由 Google 官方证书签名的应用。升级本项目版本时，请始终使用 Releases 中采用同一正式证书签名的 APK。
+兼容版使用独立包名和项目签名，可以与 Google 官方原版同时安装，但不能覆盖由 Google 官方证书签名的应用。升级本项目时请使用 Releases 中的 APK，并遵循对应版本的签名迁移说明。
 
 ## 相比原版的主要更新
 
@@ -56,6 +56,7 @@ target SDK:     37
 - 首次引导和许可证页使用同一套现代界面，旧 Preference 设置页保留为历史代码，不再作为正常设置入口。
 - 现代设置保留原 Preference key、类型、默认值、依赖和业务回调，并支持动态配色、RTL、大字体、横屏、分屏和 TalkBack 语义。
 - 现代设置支持预测性返回，普通切页、顶部返回与手势返回共用分层转场，控件和底部面板使用官方 Expressive 动效。主题编辑、首次引导及键盘保留各自业务返回语义。
+- 设置备份支持导出设置和自定义主题，导入后按功能分组完成目录授权、词库恢复与自动功能开启。词库正文使用独立备份入口。
 - 「关于」页面提供当前项目的 [GitHub 仓库](https://github.com/huaxianyan/ComebackGooglePinyinInput) 入口。
 - 首次引导整理为同页完成「启用输入法」和「选择输入法」，避免旧权限页、失效统计和重复引导状态。
 
@@ -129,6 +130,16 @@ target SDK:     37
 - 当前范围的预测性返回与统一动效已验收，未执行的专项和旧 API 回归边界见 [统一动效记录](docs/settings-motion-unification.md)。Material 3 动效接口使用预发布依赖，不称为稳定版本。
 - 16 KiB 属于模拟器验证，不是原生 AArch64 16 KiB 真机验收，完整边界见 [原生兼容记录](docs/native-16kb-compatibility.md)。
 - Android 17/API 37 已完成适配与真机验证，适配结论与未覆盖项见 [Android 17 / API 37 适配调查](docs/android-17-api-37-investigation.md)。
+
+## 设置备份与签名迁移
+
+Android 13 及以上的旧版用户，请先安装签名迁移版 `v2.1.7`，再升级后续纯新签名版本。迁移版在这些系统上转为新签名，旧签名 APK 不能直接覆盖回来。
+
+Android 6.0～12L 可以保留数据覆盖安装迁移版，本版在这些系统上仍使用旧签名。升级后续纯新签名版本前，请导出设置与主题，再单独备份词库，然后卸载重装。
+
+在「其他 → 设置备份与恢复」导出设置及自定义主题，词库请使用下方的独立备份入口。重装后导入设置，在恢复页重新选择目录并开启需要的自动功能。Rime 自动同步需要先完成一次手动同步。
+
+操作范围与验证边界见 [设置备份与签名迁移](docs/settings-transfer-signing-migration.md)。
 
 ## 用户词典备份与恢复
 
