@@ -98,7 +98,23 @@ gh workflow run build-release.yml --ref feat/settings-transfer-signing-migration
 c574c2546a6eeed8b158e87751240475eef74e5ea4b35a33d13169cf27bcb624
 ```
 
-本次未签署 APK、安装或发布。迁移版构建仍未接入正式 lineage 和新 Secrets。旧签名 Secrets 仍需保留，生成 lineage 不等于可以删除旧凭据。
+本次未签署 APK、安装或发布。旧签名 Secrets 仍需保留，生成 lineage 不等于可以删除旧凭据。
+
+## 迁移版 APK 构建
+
+手动选择 `operation=build_migration` 使用正式 lineage 和两套 Secrets。该模式限定正式包名和非 Debug 构建，只产生 Actions 资产，发布步骤明确排除此模式。普通 `build` 及当前自动发布仍使用原签名，默认行为保持不变。
+
+```powershell
+gh workflow run build-release.yml --ref feat/settings-transfer-signing-migration -f operation=build_migration -f artifact_name=signing-migration-acceptance
+```
+
+构建前分别核对旧 keystore 与既有指纹、新 keystore 与仓库中固定的新证书。旧材料沿用原 Secrets，新材料只在迁移模式读取。库口令通过 keytool 的环境变量通道使用，不放进进程参数。两份私钥临时文件在 job 收尾清理。
+
+`signing/signing-materials.json` 定义 lineage 路径和默认轮换起始 SDK。宿主构建器、CI 参数和签名身份门禁共用该配置。构建参数只拼装一次，普通模式的复现检查读取同一份公开参数，仅替换工作目录及输出路径。迁移验收模式只执行一次完整构建。
+
+`scripts/verify_apk_signing_identity.py` 调用固定版本 apksigner，分段验证 SDK 23～27、28～32 和 33～target SDK 的有效身份。前两段必须为旧证书，后一段必须为新证书。apksigner 在新系统区间同时列出旧 SDK 签名记录，门禁按 SDK 交集选择有效身份，不把旧记录误当作普通多签名。
+
+三个区间属于静态签名验证，不等于对应系统均已运行验收。新门禁已用真实审计 B/C 迁移 APK 验证，正式迁移版的完整 CI 构建及下载产物核对待执行。
 
 ## 签名迁移
 
@@ -116,7 +132,7 @@ c574c2546a6eeed8b158e87751240475eef74e5ea4b35a33d13169cf27bcb624
 
 在 API 37 实机上，两次仅使用覆盖安装，均保留应用 UID、首次安装时间、四条合成词及权重、非默认单手模式、备份和 Rime 目录授权、Rime 首次成功同步资格、已启用输入法及当前输入法选择。升级后通过真实设置入口读写词库、进入编辑框初始化键盘，未要求重新引导。未卸载、清数据或重新授权。这里只覆盖当前实机，不扩展为 Android 13～16 或旧系统已实测。
 
-正式 lineage 生成及下载产物身份核验已完成。迁移版 APK 构建接入、SDK 定向签名身份门禁及正式产物验收仍未完成，线上发布流水线尚未切换。
+正式 lineage 生成及下载产物身份核验已完成。迁移版 APK 构建接入及 SDK 定向身份门禁已实现，正式产物验收待执行。线上发布流水线尚未切换。
 
 后续版本若只用新密钥签名且不带旧到新的轮换证明，旧版用户需要先安装迁移版。只有在迁移版实际采用了新密钥的系统上，后续覆盖升级才能成立。默认策略下，Android 12L 及以下用户需要备份后重装。迁移版 Release 和安装包需长期保留。
 

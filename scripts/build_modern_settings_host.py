@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 from pathlib import Path
 import shutil
@@ -92,7 +93,9 @@ def main() -> int:
     parser.add_argument("--rotation-key-alias")
     parser.add_argument("--rotation-ks-pass-env", default="MODERN_SETTINGS_ROTATED_KS_PASS")
     parser.add_argument("--rotation-key-pass-env", default="MODERN_SETTINGS_ROTATED_KEY_PASS")
-    parser.add_argument("--rotation-min-sdk-version", type=int, choices=(28, 33), default=33)
+    signing_config = json.loads((ROOT / "signing/signing-materials.json").read_text(encoding="utf-8"))
+    parser.add_argument("--rotation-min-sdk-version", type=int, choices=(28, 33),
+                        default=signing_config["rotationMinSdk"])
     parser.add_argument(
         "--audit-launcher",
         action="store_true",
