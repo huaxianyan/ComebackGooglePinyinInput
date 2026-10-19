@@ -2,6 +2,7 @@
 #ifndef COMEBACK_RECOVERED_DATRIE_VIEW_H
 #define COMEBACK_RECOVERED_DATRIE_VIEW_H
 
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <string_view>
@@ -9,6 +10,7 @@
 namespace comeback::recovered {
 
 class OwnedByteRegion;
+using DATrieLabels = std::array<std::uint32_t, 256>;
 
 // Borrowed view of an already-ready trie: separate metadata and writable nodes.
 // This does not initialize or load a trie, own readiness, or validate a full image.
@@ -27,8 +29,14 @@ public:
     // Remove a real free cell from its doubly linked chain. Its own words are
     // retained; the native caller must subsequently assign its occupied fields.
     bool UnlinkFreeNode(std::uint32_t node);
+    // Return a cell not currently in the ordered chain. Cursor is a preceding
+    // chain member or the sentinel; this does not detect duplicate returns.
+    bool ReturnFreeNode(std::uint32_t node, std::uint32_t cursor = 0);
+    // Emit labels in metadata order, including zero; preserve the unused tail.
+    std::size_t EnumerateChildren(std::uint32_t node, DATrieLabels& labels) const;
 
 private:
+    friend bool InitializeDATrie(OwnedByteRegion&, OwnedByteRegion&, std::string_view, std::uint8_t);
     friend bool GrowDATrieNodes(OwnedByteRegion&, OwnedByteRegion&);
     friend bool FindDATrieBase(OwnedByteRegion&, OwnedByteRegion&, const std::uint32_t*,
                                std::size_t, std::uint32_t, std::uint32_t&);
@@ -45,6 +53,11 @@ private:
     std::uint8_t* nodes_;
     std::size_t nodes_size_;
 };
+
+// Prepare metadata/alphabet and the initial node chain, then publish both regions.
+// The caller owns the enclosing ready state; success makes a view usable.
+bool InitializeDATrie(OwnedByteRegion& metadata, OwnedByteRegion& nodes,
+                      std::string_view alphabet, std::uint8_t excluded_byte);
 
 // Existing initialized storage only. Growth appends 256 active cells and may
 // replace backing storage. Reacquire borrowed views after either operation.

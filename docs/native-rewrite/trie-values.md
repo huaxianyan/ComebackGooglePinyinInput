@@ -75,4 +75,4 @@ work/native-rewrite/recovered-trie-values/trie_values_test
 - `work/native-rewrite/original-apk/native-trie-values.txt`
 - `work/native-rewrite/restart-v217/native-trie-values-comparison.json`
 
-Google 派生逻辑继续按 `NOTICE` 保留权利边界。DATrie 节点扩容与空闲 base 选择已有源码。下一步恢复节点归还、子节点枚举与冲突搬迁，再接通节点插入、删除及双向关联写回。
+Google 派生逻辑继续按 `NOTICE` 保留权利边界。DATrie 初始化、节点扩容、归还、子节点枚举与空闲 base 选择已有源码。下一步定位迁移通知接收者，恢复冲突搬迁，再接通节点插入、删除及双向关联写回。

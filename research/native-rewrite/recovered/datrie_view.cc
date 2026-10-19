@@ -10,8 +10,11 @@
 namespace comeback::recovered {
 namespace {
 constexpr std::size_t kAlphabetOffset = 0x114;
-constexpr std::uint32_t kByteValueCount = 256;
+constexpr std::uint32_t kByteValueCount = std::tuple_size<DATrieLabels>::value;
 constexpr std::size_t kMetadataExtent = kAlphabetOffset + kByteValueCount;
+constexpr std::size_t kMetadataSize = 0x218;
+constexpr std::size_t kLabelCountOffset = 0x10;
+constexpr std::size_t kLabelsOffset = 0x14;
 constexpr std::size_t kNodeCountOffset = 0x0c;
 constexpr std::size_t kNodeSize = 8;
 constexpr std::uint32_t kRoot = 1;
@@ -90,7 +93,7 @@ void DATrieView::WriteCheck(std::uint32_t node, std::uint32_t value) {
 
 bool DATrieView::UnlinkFreeNode(std::uint32_t node) {
     const auto count = NodeCount();
-    if (node < 2 || node >= count || !NonPositive(Base(node)) || !NonPositive(Check(node))) {
+    if (node == 0 || node >= count || !NonPositive(Base(node)) || !NonPositive(Check(node))) {
         return false;
     }
     const auto previous = 0U - Base(node);
@@ -98,6 +101,84 @@ bool DATrieView::UnlinkFreeNode(std::uint32_t node) {
     if (previous >= count || next >= count) return false;
     WriteCheck(previous, Check(node));
     WriteBase(next, Base(node));
+    return true;
+}
+
+bool DATrieView::ReturnFreeNode(std::uint32_t node, std::uint32_t cursor) {
+    const auto count = NodeCount();
+    if (node < 2 || node >= count || cursor >= count) return false;
+    auto next = cursor;
+    do {
+        if (node <= next) break;
+        const auto link = Check(next);
+        next = 0U - link;
+        if (next >= count) return false;
+        if (link == 0) break;
+    } while (true);
+    const auto previous_word = Base(next);
+    const auto previous = 0U - previous_word;
+    if (previous >= count) return false;
+    WriteBase(node, previous_word);
+    WriteCheck(node, 0U - next);
+    WriteCheck(previous, 0U - node);
+    WriteBase(next, 0U - node);
+    return true;
+}
+
+std::size_t DATrieView::EnumerateChildren(std::uint32_t node, DATrieLabels& labels) const {
+    const auto count = NodeCount();
+    if (node >= count || (NonPositive(Base(node)) && NonPositive(Check(node)))) return 0;
+    const auto label_count = detail::ReadLittleEndian<std::uint32_t>(metadata_ + kLabelCountOffset);
+    if (label_count > labels.size()) return 0;
+    std::size_t found = 0;
+    for (std::uint32_t index = 0; index < label_count; ++index) {
+        const auto label = metadata_[kLabelsOffset + index];
+        const std::uint32_t child = Base(node) + label;
+        if (child >= count) return found;
+        if (Check(child) == node) labels[found++] = label;
+    }
+    return found;
+}
+
+bool InitializeDATrie(OwnedByteRegion& metadata, OwnedByteRegion& nodes,
+                      std::string_view alphabet, std::uint8_t excluded_byte) {
+    OwnedByteRegion prepared_metadata, prepared_nodes;
+    if (!prepared_metadata.Resize(kMetadataSize)) return false;
+    auto* header = prepared_metadata.MutableData();
+    if (header == nullptr) return false;
+    std::memset(header, 0, kMetadataSize);
+    detail::WriteLittleEndian(static_cast<std::uint32_t>(excluded_byte), header + 4);
+    detail::WriteLittleEndian(kByteValueCount, header + kNodeCountOffset);
+    for (const auto character : alphabet) {
+        header[kAlphabetOffset + static_cast<std::uint8_t>(character)] = 1;
+    }
+    header[kAlphabetOffset + excluded_byte] = 0;
+    header[kAlphabetOffset] = 1;
+    std::uint32_t label_count = 0;
+    for (std::uint32_t byte = 0; byte < kByteValueCount; ++byte) {
+        if (header[kAlphabetOffset + byte] != 0) {
+            header[kAlphabetOffset + byte] = static_cast<std::uint8_t>(label_count);
+            header[kLabelsOffset + label_count++] = static_cast<std::uint8_t>(byte);
+        }
+    }
+    detail::WriteLittleEndian(label_count, header + kLabelCountOffset);
+    if (!prepared_nodes.Resize(kByteValueCount * kNodeSize)) return false;
+    auto* bytes = prepared_nodes.MutableData();
+    if (bytes == nullptr) return false;
+    DATrieView view(header, prepared_metadata.Size(), bytes, prepared_nodes.Size());
+    for (std::uint32_t node = 0; node + 1 < kByteValueCount; ++node) {
+        view.WriteCheck(node, 0U - (node + 1));
+    }
+    for (std::uint32_t node = 1; node < kByteValueCount; ++node) {
+        view.WriteBase(node, 1U - node);
+    }
+    view.WriteCheck(kByteValueCount - 1, 0);
+    view.WriteBase(0, 1U - kByteValueCount);
+    if (!view.UnlinkFreeNode(kRoot)) return false;
+    view.WriteBase(kRoot, kRoot);
+    view.WriteCheck(kRoot, kRoot);
+    metadata = std::move(prepared_metadata);
+    nodes = std::move(prepared_nodes);
     return true;
 }
 
