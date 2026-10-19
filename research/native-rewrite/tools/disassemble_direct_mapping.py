@@ -147,6 +147,8 @@ REGIONS = {
     "region_data": (0x1FA870, 0x1FA878),
     "region_size": (0x1FA878, 0x1FA880),
     "region_ref_count": (0x1FA868, 0x1FA870),
+    "datrie_remove_key": (0x1D6E78, 0x1D7038),
+    "datrie_count_children": (0x1D54F0, 0x1D559C),
     "datrie_insert_value": (0x1D688C, 0x1D6A64),
     "datrie_relocate_children": (0x1D6410, 0x1D66CC),
     "datrie_resolve_collision": (0x1D66CC, 0x1D688C),

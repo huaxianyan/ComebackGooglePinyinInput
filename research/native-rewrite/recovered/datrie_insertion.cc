@@ -4,9 +4,6 @@
 #include "owned_byte_region.h"
 
 namespace comeback::recovered {
-namespace {
-constexpr std::size_t kKeyCountOffset = 8;
-}  // namespace
 
 bool DATrieView::InsertValue(OwnedByteRegion& metadata, OwnedByteRegion& nodes,
                              std::string_view key, std::uint32_t value,

@@ -10,7 +10,7 @@
 - `research/native-rewrite/tests/trie_values_test.cc`
 - `research/native-rewrite/tests/trie_value_editor_test.cc`
 
-源码复用既有 `FixedPhraseTable`、`OwnedByteRegion` 与小端读写。固定表编辑器复用已有 DATrie 键插入，没有新增存储后端或第二份所有权实现。完整双向关联协调、键删除和文件编辑事务仍未完成。
+源码复用既有 `FixedPhraseTable`、`OwnedByteRegion` 与小端读写。固定表编辑器复用已有 DATrie 键插入，没有新增存储后端或第二份所有权实现。完整双向关联协调和文件编辑事务仍未完成。键删除见 [DATrie 键编辑](datrie-relocation.md#键删除)。
 
 ## 后端与引用格式
 
@@ -46,9 +46,9 @@ Builder `0x1bfbfc` 在配置宽度非负的分支调用 `0x1f2f70` 构造定长�
 | 4 | `0x1de734` | 对象析构，释放区域、遍历器和底层编辑器 |
 | 5 | `0x1de768` | 删除式析构 |
 
-slot 4 不是键删除，不能仅凭函数在虚表中的位置推断操作。slot 2 的尾调用保留键参数，当前入口没有同步回收值表记录。完整 DATrie 删除尚未恢复，这份静态连接不作为键删除执行验收。
+slot 4 不是键删除，不能仅凭函数在虚表中的位置推断操作。slot 2 的尾调用保留键参数，当前入口没有同步回收值表记录。底层 DATrie 键删除已有源码和宿主整合，这份静态槽位连接仍不代表完整双向删除验收。
 
-`0x1c5e64` 检查可选 payload 长度后，分别调用两侧读取对象 `+0x68`。VariableValueLengthTrie 的对应入口 `0x1de3a8` 在就绪后继续委托底层读取对象。当前证据支持将此路径称为长度与键准入检查，不再把它命名为「参数规范化」。严格字节准入、已有路径查找与终端更新已有源码，见 [DATrie 借用视图](datrie-view.md)。完整字节键插入已恢复，键删除仍待恢复。
+`0x1c5e64` 检查可选 payload 长度后，分别调用两侧读取对象 `+0x68`。VariableValueLengthTrie 的对应入口 `0x1de3a8` 在就绪后继续委托底层读取对象。当前证据支持将此路径称为长度与键准入检查，不再把它命名为「参数规范化」。严格字节准入、已有路径查找与终端更新已有源码，见 [DATrie 借用视图](datrie-view.md)。完整字节键插入和键删除已有源码，双向编辑器尚待整合。
 
 ## 固定值表编辑协调
 
@@ -63,7 +63,7 @@ slot 4 不是键删除，不能仅凭函数在虚表中的位置推断操作。s
 ### 协调整合验证
 
 ```bash
-mkdir -p work/native-rewrite/recovered-trie-value-editor
+mkdir -p work/native-rewrite/recovered-datrie-deletion
 g++ -std=c++17 -O2 -Wall -Wextra -Werror \
   research/native-rewrite/recovered/owned_byte_region.cc \
   research/native-rewrite/recovered/fixed_phrase_table.cc \
@@ -73,21 +73,24 @@ g++ -std=c++17 -O2 -Wall -Wextra -Werror \
   research/native-rewrite/recovered/datrie_view.cc \
   research/native-rewrite/recovered/datrie_relocation.cc \
   research/native-rewrite/recovered/datrie_insertion.cc \
+  research/native-rewrite/recovered/datrie_deletion.cc \
   research/native-rewrite/recovered/trie_values.cc \
   research/native-rewrite/recovered/trie_value_lookup.cc \
   research/native-rewrite/recovered/trie_value_editor.cc \
   research/native-rewrite/tests/trie_value_editor_test.cc \
-  -o work/native-rewrite/recovered-trie-value-editor/trie_value_editor_test
-work/native-rewrite/recovered-trie-value-editor/trie_value_editor_test
+  -o work/native-rewrite/recovered-datrie-deletion/datrie_deletion_test
+work/native-rewrite/recovered-datrie-deletion/datrie_deletion_test
 ```
 
 严格构建和真实组件流程通过：初始化后为 `a` 建立终端 `2`，再通过真实追加入口建立两条关联。编辑器原位发布范围，按终端读回字面引用 `02 04 00 00`，经真实索引池取得偏移 `0`、`10` 的记录和完整负载。值表仍是一条，DATrie 键数仍为一。
 
 已有项更新保留 ID 输出哨兵。直接传入未准入的 `z` 时，追加的第二条值记录保留，键数和 ID 输出不变。未使用故障注入或备用后端，期望引用及记录都是独立字面值。
 
-APK 出口增加更新成功短路、ID 参数传递、底层插入和原位更新尾调用锚点后通过，沿用现有 184 个区域。两个编辑器区域与发布库字节一致，指令与对照见 `work/native-rewrite/original-apk/native-trie-value-editor.txt` 及对应 comparison JSON。现有 Ghidra 批次 `trie-key-value-edit/` 继续复用。
+APK 出口增加更新成功短路、ID 参数传递、底层插入和原位更新尾调用锚点后通过。值编辑阶段沿用 184 个区域，加入键删除后总数为 186。两个编辑器区域与发布库字节一致，指令与对照见 `work/native-rewrite/original-apk/native-trie-value-editor.txt` 及对应 comparison JSON。现有 Ghidra 批次 `trie-key-value-edit/` 继续复用。
 
-该流程接通单侧关联建立与引用发布，没有恢复 `MutableDictionaryEditor` 的双向事务、标志、CRC 与删除回退。原生遍历器对象和复用临时区域已改为类型化查找与局部区域，分配故障不承诺逐步等价。
+该流程接通单侧关联建立与引用发布，并扩展为真实键删除验证。删除前缀词后子词值和旧共享图像保留，删除最后的子词会回收路径而保留值表记录，再插入可复用空闲终端。细节见 [键删除](datrie-relocation.md#键删除)。
+
+`MutableDictionaryEditor` 的双向事务、标志、CRC 与删除回退仍待接通。原生遍历器对象和复用临时区域已改为类型化查找与局部区域，分配故障不承诺逐步等价。
 
 ## 值记录组件验证
 
@@ -116,4 +119,4 @@ work/native-rewrite/recovered-trie-values/trie_values_test
 - `work/native-rewrite/original-apk/native-trie-values.txt`
 - `work/native-rewrite/restart-v217/native-trie-values-comparison.json`
 
-Google 派生逻辑继续按 `NOTICE` 保留权利边界。DATrie 初始化、节点扩容、归还、子节点枚举与空闲 base 选择已有源码。按终端 ID 读取与真实迁移通知接收者见 [节点迁移通知](node-id-updater.md)。冲突搬迁已接通真实通知。固定值表的追加与更新已接到完整字节键插入，并通过单侧关联发布流程。下一步恢复完整双向关联协调及其键删除回退。
+Google 派生逻辑继续按 `NOTICE` 保留权利边界。DATrie 初始化、节点扩容、归还、子节点枚举与空闲 base 选择已有源码。按终端 ID 读取与真实迁移通知接收者见 [节点迁移通知](node-id-updater.md)。冲突搬迁已接通真实通知。固定值表的追加与更新已接到完整字节键插入，并通过单侧关联发布流程。底层键删除已有源码，下一步接入完整双向关联协调及其删除回退。

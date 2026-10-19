@@ -71,5 +71,31 @@ int main() {
             values.ReadRecord(4, record, size) && size == 4 &&
             std::equal(expected.begin(), expected.end(), record),
             "an excluded key retains the value appended before native admission failed");
-    std::puts("PASS: fixed-store trie editing, actual association publication and retained failed append");
+    Require(InsertTrieValue(trie, metadata, nodes, values, "ab", value, &terminal) && terminal == 3 &&
+            values.RecordCount() == 3 && metadata.Data()[8] == 2,
+            "adding a longer word retains the existing prefix word");
+    const auto saved_metadata = metadata;
+    const auto saved_nodes = nodes;
+    const auto saved_trie = trie;
+    std::uint32_t offset = 0;
+    Require(trie.RemoveKey(metadata, nodes, "a") && metadata.Data()[8] == 1 &&
+            trie.FindTerminal("a") == 0 && trie.FindTerminal("ab") == 3 &&
+            trie.ReadTerminalValue(3, offset) && offset == 8 &&
+            ReadTrieValueByNodeId(trie, values, 3, published) &&
+            std::equal(expected.begin(), expected.end(), published.Data()) &&
+            saved_metadata.Data()[8] == 2 && saved_nodes.Data() != nodes.Data() &&
+            saved_trie.ReadTerminalValue(2, offset) && offset == 0,
+            "removing the prefix word preserves its child value and the old shared image");
+    Require(!trie.RemoveKey(metadata, nodes, "a") && metadata.Data()[8] == 1 &&
+            trie.FindTerminal("ab") == 3,
+            "removing an absent prefix word leaves its existing child available");
+    Require(trie.RemoveKey(metadata, nodes, "ab") && metadata.Data()[8] == 0 &&
+            trie.FindNode("a") == 0 && values.RecordCount() == 3 &&
+            values.ReadRecord(8, record, size) && size == 4 &&
+            std::equal(expected.begin(), expected.end(), record),
+            "removing the last word prunes its empty path and retains the value-table record");
+    Require(InsertTrieValue(trie, metadata, nodes, values, "b", value, &terminal) && terminal == 2 &&
+            trie.ReadTerminalValue(2, offset) && offset == 12 && metadata.Data()[8] == 1,
+            "inserting after full pruning reuses the freed terminal through the retained root");
+    std::puts("PASS: trie value editing, association publication, prefix deletion, pruning and terminal reuse");
 }

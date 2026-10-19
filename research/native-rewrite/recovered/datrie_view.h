@@ -61,7 +61,14 @@ public:
                       std::string_view key, std::uint32_t value,
                       std::uint32_t* terminal = nullptr, const DATrieNodeMove* notify = nullptr);
 
+    // View must refer to these ready regions on entry. Traverse the complete
+    // key and zero edge before requesting writable access. Remove the terminal,
+    // decrement the key count and prune childless ancestors, retaining the root.
+    // This does not erase value-table/association records or notify node moves.
+    bool RemoveKey(OwnedByteRegion& metadata, OwnedByteRegion& nodes, std::string_view key);
+
 private:
+    static constexpr std::size_t kKeyCountOffset = 8;
     static constexpr std::uint32_t kRoot = 1;
     static bool NonPositive(std::uint32_t word);
     friend bool InitializeDATrie(OwnedByteRegion&, OwnedByteRegion&, std::string_view, std::uint8_t);
