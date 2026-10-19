@@ -32,6 +32,7 @@ public:
     // Decode at a known node header. These do not establish free-list membership.
     bool ReadFreeRange(std::uint32_t index, IndexRange& range) const;
     bool ReadNextFreeRange(std::uint32_t index, IndexRange& range) const;
+    bool ReadPreviousFreeRange(std::uint32_t index, IndexRange& range) const;
     bool LinkFreeRanges(IndexRange previous, IndexRange next);
 
     // A successful search with {0, 0} means that storage growth is needed.
@@ -44,7 +45,6 @@ public:
 
 private:
     bool IsFreeCell(std::uint32_t index) const;
-    bool ReadPreviousFreeRange(std::uint32_t index, IndexRange& range) const;
     bool ReadListNeighbors(IndexRange range, IndexRange& previous, IndexRange& next) const;
     bool ReadAdjacentFreeRanges(IndexRange range, std::optional<IndexRange>& previous,
                                 std::optional<IndexRange>& next) const;
@@ -58,6 +58,15 @@ private:
     std::uint8_t* bytes_;
     std::size_t size_;
 };
+
+class OwnedByteRegion;
+
+// Operate on the separate owning regions; reuse IndexPoolView for node changes.
+// Existing borrowed views must be reacquired after these operations.
+// Allocation/initialization failure does not roll back prior buffer changes.
+bool InitializeIndexPool(OwnedByteRegion& metadata, OwnedByteRegion& cells);
+bool AllocateIndexRange(OwnedByteRegion& metadata, OwnedByteRegion& cells,
+                        std::int32_t count, IndexRange& range);
 
 }  // namespace comeback::recovered
 #endif

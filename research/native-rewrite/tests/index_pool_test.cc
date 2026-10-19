@@ -1,6 +1,8 @@
-// Independent literal pool images. Exercises fixed-storage reuse, not growth.
+// Independent literal pool images, plus owning-region allocation through real APIs.
 #include "../recovered/association_records.h"
+#include "../recovered/owned_byte_region.h"
 
+#include <algorithm>
 #include <cstdio>
 #include <cstdlib>
 
@@ -97,6 +99,68 @@ void ExerciseRangeReuse() {
     };
     Require(bytes == expected_released, "release clears merged cells and restores the free-list tail");
 }
+void ExerciseAllocationGrowth() {
+    OwnedByteRegion metadata, cells;
+    Require(InitializeIndexPool(metadata, cells), "initializing an empty owning pool");
+    const std::array<std::uint8_t, 8> initial_metadata{0, 0, 0, 0, 2, 0, 0, 0};
+    const std::array<std::uint8_t, 8> initial_cells{2, 0, 0, 0, 0, 0, 0, 0};
+    Require(metadata.Size() == 8 && cells.Size() == 8 &&
+            std::equal(initial_metadata.begin(), initial_metadata.end(), metadata.Data()) &&
+            std::equal(initial_cells.begin(), initial_cells.end(), cells.Data()),
+            "initialization writes separate metadata and the free-list sentinel");
+    // Feed parent-backed regions, as the native table loader does. Detaching
+    // these slices can destroy the old backing state before later view access.
+    metadata = metadata.Slice(0, 8);
+    cells = cells.Slice(0, 8);
+
+    IndexRange range{};
+    Require(AllocateIndexRange(metadata, cells, 3, range) &&
+            range.first_index == 2 && range.count == 3 && cells.Size() == 48,
+            "allocating three cells grows capacity to twelve and returns the first range");
+    {
+        IndexPoolView view(metadata.Data(), metadata.Size(), cells.MutableData(), cells.Size());
+        Require(view.WriteRecordId(2, 0x112233), "storing a record before later pool growth");
+    }
+    Require(AllocateIndexRange(metadata, cells, 2, range) &&
+            range.first_index == 5 && range.count == 2 && cells.Size() == 48,
+            "extending a short free tail uses spare capacity instead of resizing bytes");
+    {
+        IndexPoolView view(metadata.Data(), metadata.Size(), cells.MutableData(), cells.Size());
+        Require(view.ReleaseRange(range) && range.first_index == 5 && range.count == 3,
+                "returning the second allocation joins its free tail");
+    }
+    Require(AllocateIndexRange(metadata, cells, 1, range) &&
+            range.first_index == 5 && range.count == 1 && cells.Size() == 48,
+            "a fitting free range is reused before extending the active extent");
+    Require(AllocateIndexRange(metadata, cells, 6, range) &&
+            range.first_index == 6 && range.count == 6 && cells.Size() == 48,
+            "tail reuse fills the existing twelve-cell backing region");
+    Require(AllocateIndexRange(metadata, cells, 1, range) &&
+            range.first_index == 12 && range.count == 1 && cells.Size() == 64,
+            "growth rounds an odd target to sixteen cells");
+    Require(AllocateIndexRange(metadata, cells, 3, range) &&
+            range.first_index == 13 && range.count == 3 && cells.Size() == 64,
+            "the tail plus spare capacity supplies the next three-cell range");
+    Require(AllocateIndexRange(metadata, cells, 1, range) &&
+            range.first_index == 16 && range.count == 1 && cells.Size() == 80,
+            "the 1.25 growth term selects twenty cells when it exceeds the request term");
+    const std::array<std::uint8_t, 8> expected_metadata{0, 0, 0, 0, 0x12, 0, 0, 0};
+    const std::array<std::uint8_t, 80> expected_cells{
+        0x46, 0, 0, 0,       0x11, 0, 0, 0,
+        0x33, 0x22, 0x11, 0x80,  0, 0, 0, 0x80,
+        0, 0, 0, 0x80,       0, 0, 0, 0x80,
+        0, 0, 0, 0x80,       0, 0, 0, 0x80,
+        0, 0, 0, 0x80,       0, 0, 0, 0x80,
+        0, 0, 0, 0x80,       0, 0, 0, 0x80,
+        0, 0, 0, 0x80,       0, 0, 0, 0x80,
+        0, 0, 0, 0x80,       0, 0, 0, 0x80,
+        0, 0, 0, 0x80,       1, 0, 0, 0,
+        0, 0, 0, 0,          0, 0, 0, 0,
+    };
+    Require(std::equal(expected_metadata.begin(), expected_metadata.end(), metadata.Data()) &&
+            std::equal(expected_cells.begin(), expected_cells.end(), cells.Data()),
+            "growth preserves the record, eighteen active cells, the free tail and spare zeros");
+}
 }  // namespace
 
 int main() {
@@ -155,5 +219,6 @@ int main() {
     Require(!pool.ReadRecordId(12, value) && value == 0x55,
             "an inactive position preserves output despite spare capacity");
     ExerciseRangeReuse();
-    std::puts("PASS: pool layouts, association resolution, first-fit reuse, split and coalescing");
+    ExerciseAllocationGrowth();
+    std::puts("PASS: pool layouts, reuse, coalescing and owning-region allocation/growth");
 }

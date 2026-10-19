@@ -4,7 +4,7 @@
 
 已恢复普通堆缓冲区与父区域切片的共享复制、保活、写时分离和精确调整大小。源码入口为 [OwnedByteRegion](../../research/native-rewrite/recovered/owned_byte_region.h)，实现见 [owned_byte_region.cc](../../research/native-rewrite/recovered/owned_byte_region.cc)。
 
-组件采用正常 C++17 编译，只读取源码。它使用标准共享所有权管理描述符，字节区使用 `malloc`、`realloc` 和 `free`，不复刻旧对象 ABI。池的动态增长尚未接入，外部存储 Provider 和容量取整模式不在本组件范围内。
+组件采用正常 C++17 编译，只读取源码。它使用标准共享所有权管理描述符，字节区使用 `malloc`、`realloc` 和 `free`，不复刻旧对象 ABI。组件现已用于 [索引池初始化与增长](index-pool.md#双缓冲区分配与增长)，外部存储 Provider 和容量取整模式仍不在本组件范围内。
 
 ## 原生入口
 
@@ -83,4 +83,4 @@ work/native-rewrite/recovered-region/owned_byte_region_test
 
 ## 下一步
 
-将组件接入池的元数据与单元缓冲区，恢复增长、活动数量更新、尾部空闲块处理及增长后的指针重取。逐步连接 [索引池回收与复用核心](index-pool.md)，保留跨缓冲区修改的真实失败顺序，再推进记录存储与文件容器。
+池初始化与增长已接入组件，节点修改共用 [索引池回收与复用核心](index-pool.md)。下一步连接记录存储与完整表容器，继续核对跨缓冲区修改的失败顺序。外部 Provider 与容量取整模式仍需分别取证。
