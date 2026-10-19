@@ -53,8 +53,8 @@ class DATrieView;
 // Concrete directional storage view, matching the reader/pool/record dependencies
 // of native NodeIdUpdator. This owns no storage or synthetic readiness state.
 struct AssociationSide {
-    const DATrieView& trie;
-    const FixedPhraseTable& values;
+    DATrieView& trie;
+    FixedPhraseTable& values;
     OwnedByteRegion& metadata;
     OwnedByteRegion& cells;
     FixedPhraseTable& records;

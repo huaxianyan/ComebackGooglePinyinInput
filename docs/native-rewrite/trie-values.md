@@ -60,6 +60,8 @@ slot 4 不是键删除，不能仅凭函数在虚表中的位置推断操作。s
 
 终端定位由 `FindTerminal` 共用，原终端更新和此协调入口不维护第二份查找逻辑。四字节引用发布由 `WriteTrieValueReference` 共用，保留可写访问与共享区域复制语义。
 
+`UpdateTrieValueByKey` 单独恢复 slot 1，执行已有键定位、引用读取与原位更新。插入入口和双向删除共用它，删除写回不使用「更新失败后追加」的 slot 0。双向列表删除、引用发布与空键删除的整合见 [双向关联删除](association-records.md#双向关联删除)。
+
 ### 协调整合验证
 
 ```bash
@@ -90,7 +92,7 @@ APK 出口增加更新成功短路、ID 参数传递、底层插入和原位更�
 
 该流程接通单侧关联建立与引用发布，并扩展为真实键删除验证。删除前缀词后子词值和旧共享图像保留，删除最后的子词会回收路径而保留值表记录，再插入可复用空闲终端。细节见 [键删除](datrie-relocation.md#键删除)。
 
-`MutableDictionaryEditor` 的双向事务、标志、CRC 与删除回退仍待接通。原生遍历器对象和复用临时区域已改为类型化查找与局部区域，分配故障不承诺逐步等价。
+双向关联删除及其数量、标志写回已接通。`MutableDictionaryEditor` 的新增协调、CRC 生成和新键失败清理仍待恢复。原生遍历器对象和复用临时区域已改为类型化查找与局部区域，分配故障不承诺逐步等价。
 
 ## 值记录组件验证
 
@@ -119,4 +121,4 @@ work/native-rewrite/recovered-trie-values/trie_values_test
 - `work/native-rewrite/original-apk/native-trie-values.txt`
 - `work/native-rewrite/restart-v217/native-trie-values-comparison.json`
 
-Google 派生逻辑继续按 `NOTICE` 保留权利边界。DATrie 初始化、节点扩容、归还、子节点枚举与空闲 base 选择已有源码。按终端 ID 读取与真实迁移通知接收者见 [节点迁移通知](node-id-updater.md)。冲突搬迁已接通真实通知。固定值表的追加与更新已接到完整字节键插入，并通过单侧关联发布流程。底层键删除已有源码，下一步接入完整双向关联协调及其删除回退。
+Google 派生逻辑继续按 `NOTICE` 保留权利边界。DATrie 初始化、节点扩容、归还、子节点枚举与空闲 base 选择已有源码。按终端 ID 读取与真实迁移通知接收者见 [节点迁移通知](node-id-updater.md)。冲突搬迁已接通真实通知。固定值表的追加与更新已接到完整字节键插入，并通过单侧关联发布流程。底层键删除和双向关联删除已有源码，下一步恢复双向新增、更新及新键失败清理。

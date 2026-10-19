@@ -4,7 +4,7 @@
 
 引用与字段写入源码位于 `research/native-rewrite/recovered/association_records.h`、`association_records.cc`。列表追加协调位于 `association_list.cc`，池范围操作共用 `index_pool.cc`。原字节操作仍可独立构建，不因协调入口引入存储后端链接依赖。
 
-组件包含四字节关联表引用的编解码，以及单键、双键关联记录的原位字段写入。它继续共用 `little_endian.h`，没有建立另一套字节序实现。索引池的分配、扩容与回收已有源码，定长记录后端见 [记录存储源码](fixed-phrase-table.md)。完整 trie 值、双向引用写回及磁盘存储仍待恢复。
+组件包含四字节关联表引用的编解码，以及单键、双键关联记录的原位字段写入。它继续共用 `little_endian.h`，没有建立另一套字节序实现。索引池的分配、扩容与回收已有源码，定长记录后端见 [记录存储源码](fixed-phrase-table.md)。trie 值与双向删除写回已有源码，双向新增协调和磁盘存储仍待恢复。
 
 ## 引用头与索引池
 
@@ -111,14 +111,56 @@ work/native-rewrite/recovered-associations/association_records_test
 
 真实 APK 入口补入搬移方向、引用提交和回收锚点后通过，当前导出 151 个区域。两个新增区域与发布库字节一致，证据为 `work/native-rewrite/original-apk/native-association-removal.txt` 及对应 comparison JSON。
 
-## 上层双向删除的失败边界
+## 双向关联删除
+
+`association_editor.h` 和 `dictionary_association_removal.cc` 恢复 `0x1c52ac` 的执行协调。`AssociationEditor` 在既有方向依赖外补充 trie 的拥有区域，继续使用同一对象。方向依赖的 trie 与值表引用可写，通知读取与编辑不各自维护一套状态。
+
+`RemoveDictionaryAssociation` 先查找并复制两侧键值，再解码和删除第一侧列表项。第二侧引用的解码在这之后，删除第二侧列表项后，才开始发布任一 trie 的变化。每一侧列表为空就调用真实键删除，否则仅覆盖值首四字节的关联引用，再通过 `UpdateTrieValueByKey` 原位写回。
+
+更新使用原 slot 1，没有借用 slot 0 的「更新失败后追加」策略。两个入口的已有值更新共用同一实现，更新失败不创建替代记录。可选十六位字段和尾随数据保持原字节，该删除路径不重新计算校验值或覆盖附加内容。
+
+`DictionaryEditState` 显式保存原运行时关系数量和状态位，对应对象 `+0x34` 和 `+0x20`。它不是文件头布局，也不是设置页的词库统计。第一侧发布成功后，第二侧发布无论成功还是返回失败，仍减少关系数量并置位 `0x10`。更早失败则保留此前修改并直接返回，不补偿池或重建键值。
+
+### 双侧整合验证
+
+```bash
+mkdir -p work/native-rewrite/recovered-dictionary-association-removal
+g++ -std=c++17 -O2 -Wall -Wextra -Werror \
+  research/native-rewrite/recovered/owned_byte_region.cc \
+  research/native-rewrite/recovered/fixed_phrase_table.cc \
+  research/native-rewrite/recovered/index_pool.cc \
+  research/native-rewrite/recovered/association_records.cc \
+  research/native-rewrite/recovered/association_list.cc \
+  research/native-rewrite/recovered/datrie_view.cc \
+  research/native-rewrite/recovered/datrie_relocation.cc \
+  research/native-rewrite/recovered/datrie_insertion.cc \
+  research/native-rewrite/recovered/datrie_deletion.cc \
+  research/native-rewrite/recovered/trie_values.cc \
+  research/native-rewrite/recovered/trie_value_lookup.cc \
+  research/native-rewrite/recovered/trie_value_editor.cc \
+  research/native-rewrite/recovered/node_id_updater.cc \
+  research/native-rewrite/recovered/dictionary_association_removal.cc \
+  research/native-rewrite/tests/dictionary_association_removal_test.cc \
+  -o work/native-rewrite/recovered-dictionary-association-removal/dictionary_association_removal_test
+work/native-rewrite/recovered-dictionary-association-removal/dictionary_association_removal_test
+```
+
+严格 C++17 构建通过。真实插入键、追加值和关联列表建立 `a-x`、`a-y`、`b-y` 三条关系。删除分别覆盖第一侧保留、第二侧保留和双方空列表分支，最终双方键数为零，值表各两条、记录表各三条留存。关系数量从三降到零，状态位从 `0x80` 到 `0x90`。
+
+独立字面引用验证第一侧剩余列表，第二侧通过发布的引用实际取得偏移 `4` 的目标记录。六字节与八字节值的尾随字段保留原字节，没有使用生产算法计算期望。
+
+随后用实际追加建立只有正向记录、反向键为空列表的输入。删除返回失败时，第一侧池项已经释放，但两侧键、旧发布引用、关系数量与状态位保留。断言经冻结的池读取协议观察空闲单元，而非绑定无关的分配容量，也未注入失败回调。
+
+APK 入口补入第二列表失败早退、更新与删除分派、第二侧编码失败及计数状态写回锚点后通过，总数仍为 186。复用既有 `native-association-removal.txt` 等指令证据，没有新建重复取证批次。
+
+## 双向删除的失败边界
 
 已静态连接 `0x1c52ac`：查找双方键，依次修改双方池列表，再按各列表是否为空删除 trie 键或重写引用。列表删除与 trie 写回不是同一次提交。
 
 原指令还确认一个重要顺序：第二侧引用编码失败，或第二侧 trie 写入、删除返回失败时，尾部仍执行关系数量 `+0x34` 减一，并将状态字段 `+0x20` 置位 `0x10`，随后返回该失败结果。第一侧失败的早退位置不同，不能将这一函数改写成统一的「全部成功后再减数量」。
 
-本轮只恢复单侧列表执行器，没有为两侧 trie 添加占位回调，也没有把这些部分提交解释为词典整体回滚。外层调用是否恢复更早状态仍待追踪，原 ARM64 执行、损坏格式及完整内存故障等价未验收。
+双侧删除已有宿主证据，缺少反向记录的早退也已执行。第二侧发布失败后仍减数量的分支，目前只有静态与恢复源码证据，未注入内存故障验收。局部值副本代替原复用区域，分配步骤不承诺等价。外层恢复、原 ARM64、损坏格式及完整内存故障仍未验收，不把部分提交解释为词典整体回滚。
 
 ## 下一步
 
-索引池节点布局、独立元数据与内存操作见 [索引池源码](index-pool.md)。下一步推进键序列与 trie 编辑器，连接双向引用写回及外层失败恢复，再继续完整文件容器。
+索引池节点布局、独立元数据与内存操作见 [索引池源码](index-pool.md)。下一步恢复双向新增与更新协调、创建新键后的失败清理，再继续完整文件容器与外层恢复。
