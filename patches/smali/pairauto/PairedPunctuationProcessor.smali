@@ -524,6 +524,23 @@
 
     if-ne v2, v3, :cond_intent
 
+    # ProcessorBasedIme injects its ard dispatcher. Read the same live decoder
+    # used by ProcessorBasedIme.isComposing(); pending pinyin owns DEL before
+    # the editor's surrounding pair may be removed.
+    iget-object v2, p0, Lcom/google/android/inputmethod/pinyin/pairauto/PairedPunctuationProcessor;->a:Lcom/google/android/apps/inputmethod/libs/framework/ime/IImeProcessorDelegate;
+
+    check-cast v2, Lard;
+
+    iget-object v2, v2, Lard;->a:Lcom/google/android/apps/inputmethod/libs/framework/ime/IImeDecodeProcessor;
+
+    if-eqz v2, :cond_intent
+
+    invoke-interface {v2}, Lcom/google/android/apps/inputmethod/libs/framework/ime/IImeDecodeProcessor;->isComposing()Z
+
+    move-result v2
+
+    if-nez v2, :cond_intent
+
     iget-object v2, p0, Lcom/google/android/inputmethod/pinyin/pairauto/PairedPunctuationProcessor;->a:Lcom/google/android/apps/inputmethod/libs/framework/core/IImeContextDelegate;
 
     if-eqz v2, :cond_intent
