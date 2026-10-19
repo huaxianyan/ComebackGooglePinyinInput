@@ -64,6 +64,15 @@ REGIONS = {
     "learning_store_remove": (0x1A1A74, 0x1A1BB4),
     "learning_store_aggregate": (0x1A0CBC, 0x1A0CE0),
     "learning_store_day": (0x1A0CE0, 0x1A0D08),
+    "payload_v21_encode": (0x1A0888, 0x1A09A4),
+    "payload_v21_decode": (0x1A05C0, 0x1A06D8),
+    "payload_v10_encode": (0x1A09A4, 0x1A0A98),
+    "payload_v10_decode": (0x1A06D8, 0x1A07F4),
+    "payload_read_bytes": (0x1F5BE8, 0x1F5C40),
+    "payload_write_bytes": (0x1F5CA4, 0x1F5D00),
+    "dictionary_initialize": (0x1A259C, 0x1A281C),
+    "dictionary_load_payload": (0x1A2B38, 0x1A3130),
+    "dictionary_accept_loaded": (0x1A3C9C, 0x1A3E04),
 }
 SCORE_TABLE_POINTER = 0x699358
 SCORE_TABLE_SPANS = {

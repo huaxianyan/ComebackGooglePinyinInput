@@ -104,13 +104,13 @@ FCVTZS：转换为有符号整数
 
 这是计数累计与状态标记的直接证据，还未把该字段的 getter 连接到公开统计 API，不以它推断记录条数。
 
-`0x1a0ce0` 经 PLT 调用已匹配的 `time` import，传入 NULL，再做有符号除法，除数为 `86400`。已有项更新路径明确取结果低 16 位后传给 codec。日期编码的其他位宽、回绕与衰减含义仍需解出 codec 后确认。
+`0x1a0ce0` 经 PLT 调用已匹配的 `time` import，传入 NULL，再做有符号除法，除数为 `86400`。已有项更新路径明确取结果低 16 位后传给 codec。日期值回绕后的学习与衰减含义仍未确认。
 
 两条主路径和四个辅助区间与当前发布库的指令字节完全一致。证据在 `work/native-rewrite/restart-v217/native-learning-storage-comparison.json`，时钟 import 匹配在原版目录的 `native-learning-clock-import.json`。
 
 ## 复现与验证
 
-本项研究累计新增十四个固定区间，地址定义只维护在 `disassemble_direct_mapping.py` 的 REGIONS。它继续使用 Capstone，不扩展自制指令解码器。
+学习与 payload 区间的地址定义只维护在 `disassemble_direct_mapping.py` 的 REGIONS。它继续使用 Capstone，不扩展自制指令解码器。
 
 ```text
 python research/native-rewrite/tools/disassemble_direct_mapping.py --apk original/google-pinyin-input-4.5.2.193126728-arm64-v8a.apk --output work/native-rewrite/original-apk/native-evidence.json
@@ -126,4 +126,4 @@ work/native-rewrite/original-apk/native-learning-storage.txt
 work/native-rewrite/original-apk/native-learning-storage-helpers.txt
 ```
 
-这些局部路径还不足以实现完整持久词典。下一步沿 codec、键序列编码和实际 trie 修改、写盘与合并，继续补齐学习和持久化规格。
+两种 payload 的独立编码与解码源码已经恢复，字段与验证见 [payload 编码源码](payload-codec.md)。这些局部组件还不足以实现完整持久词典。下一步沿键序列编码和实际 trie 修改、写盘与合并，继续补齐学习和持久化规格。
