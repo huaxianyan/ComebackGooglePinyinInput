@@ -8,15 +8,19 @@ namespace {
 constexpr auto kReferenceSize = sizeof(std::uint32_t);
 }  // namespace
 
+bool WriteTrieValueReference(std::uint32_t record_id, OwnedByteRegion& reference) {
+    if (reference.Size() != kReferenceSize && !reference.Resize(kReferenceSize)) return false;
+    auto* bytes = reference.MutableData();
+    if (bytes == nullptr) return false;
+    detail::WriteLittleEndian(record_id, bytes);
+    return true;
+}
+
 bool AppendTrieValue(FixedPhraseTable& records, const OwnedByteRegion& value,
                      OwnedByteRegion& reference) {
     std::uint64_t record_id = 0;
     if (!records.AppendRecord(value.Data(), value.Size(), record_id)) return false;
-    if (reference.Size() != kReferenceSize && !reference.Resize(kReferenceSize)) return false;
-    auto* bytes = reference.MutableData();
-    if (bytes == nullptr) return false;
-    detail::WriteLittleEndian(static_cast<std::uint32_t>(record_id), bytes);
-    return true;
+    return WriteTrieValueReference(static_cast<std::uint32_t>(record_id), reference);
 }
 
 bool UpdateTrieValue(FixedPhraseTable& records, const OwnedByteRegion& reference,

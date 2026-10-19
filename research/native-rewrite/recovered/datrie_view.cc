@@ -80,11 +80,16 @@ bool DATrieView::IsTerminal(std::uint32_t node) const {
     return parent < count && Base(parent) == node;
 }
 
-bool DATrieView::UpdateValue(std::string_view key, std::uint32_t value) {
+std::uint32_t DATrieView::FindTerminal(std::string_view key) const {
     const auto node = FindNode(key);
-    if (node == 0) return false;
+    if (node == 0) return 0;
     const auto terminal = Base(node);
-    if (!IsTerminal(terminal)) return false;
+    return IsTerminal(terminal) ? terminal : 0;
+}
+
+bool DATrieView::UpdateValue(std::string_view key, std::uint32_t value) {
+    const auto terminal = FindTerminal(key);
+    if (terminal == 0) return false;
     WriteBase(terminal, value);
     return true;
 }
