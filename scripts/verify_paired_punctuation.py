@@ -178,6 +178,20 @@ def main() -> int:
     if "IImeActionDelegate;->replaceText(IILjava/lang/CharSequence;Z)V" not in text:
         fail("processor does not delete both halves on DEL")
 
+    # Regression: backspace inside a completed pair used to delete the pair
+    # before pending pinyin. Query the live decoder before reading editor text,
+    # and decline DEL through the ordinary intent gate while it is composing.
+    process = text.split(".method public doProcess(", 1)[1].split(".end method", 1)[0]
+    composing = re.search(
+        r"IImeDecodeProcessor;->isComposing\(\)Z\s+move-result (v\d+)\s+"
+        r"if-nez \1, (:\w+)", process,
+    )
+    if composing is None or composing.start() > process.index("IImeContextDelegate;->getTextBeforeCursor"):
+        fail("paired deletion must yield to pending decoder composition")
+    target = re.search(r"^\s*" + re.escape(composing.group(2)) + r"\s*\n(.*)", process, re.M | re.S)
+    if target is None or "KeyData$a;" not in target.group(1)[:300]:
+        fail("composing DEL must continue through the native intent fallback")
+
     # Registration must be present and must precede the existing processors.
     for relative in PROCESSOR_XML:
         path = decoded / relative
