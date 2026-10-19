@@ -26,7 +26,8 @@ bool DecodeAssociationReference(const std::uint8_t* bytes, std::size_t size,
 }
 
 bool PatchAssociationValue(std::uint8_t* bytes, std::size_t size, bool has_checksum,
-                            const IndexRange* reference, const std::string_view* data) {
+                            const IndexRange* reference, const std::string_view* data,
+                            const std::uint16_t* checksum) {
     const auto write = [&](std::size_t offset, const void* input, std::size_t count) {
         if (offset > size || count > size - offset) return false;
         if (count != 0) std::memcpy(bytes + offset, input, count);
@@ -35,6 +36,11 @@ bool PatchAssociationValue(std::uint8_t* bytes, std::size_t size, bool has_check
     if (reference != nullptr) {
         const auto encoded = EncodeAssociationReference(*reference);
         if (!write(0, encoded.data(), encoded.size())) return false;
+    }
+    if (has_checksum && checksum != nullptr) {
+        std::uint8_t encoded[sizeof(std::uint16_t)];
+        detail::WriteLittleEndian(*checksum, encoded);
+        if (!write(sizeof(std::uint32_t), encoded, sizeof(encoded))) return false;
     }
     const std::size_t offset = sizeof(std::uint32_t) + (has_checksum ? sizeof(std::uint16_t) : 0);
     return data == nullptr || write(offset, data->data(), data->size());

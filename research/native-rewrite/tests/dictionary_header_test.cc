@@ -1,6 +1,7 @@
 // Header CRC fixtures use independent GF(2) polynomial long division, not the
 // recovered checksum implementation. They are static anchors, not ARM execution.
 #include "../recovered/dictionary_header.h"
+#include "../recovered/dictionary_checksum.h"
 
 #include <cstdio>
 #include <cstdlib>
@@ -58,5 +59,20 @@ int main() {
             "a damaged header is reported instead of selecting its format");
     Require(header.major == 1 && header.minor == 7,
             "a failed header check preserves the previous output");
-    std::puts("PASS: supported headers, native CRC, payload selection and current header bytes");
+    // Independent GF(2) long division with normal polynomial 0x118f9,
+    // reflected input/output, and initial reflected state 0x9f18.
+    const struct { std::string_view key; std::uint16_t checksum; } keys[]{
+        {"", 0x9f18}, {"a", 0xd8c4}, {"nihao", 0x66b0},
+        {"\xe4\xbd\xa0\xe5\xa5\xbd", 0xe313},
+        {std::string_view("\x00\xff\x01\x80", 4), 0xb5f1},
+        {std::string_view("\x00\x01\x02\x03\x04\x05\x06\x07"
+                          "\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f"
+                          "\x10\x11\x12\x13\x14\x15\x16\x17"
+                          "\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f", 32), 0x268b},
+    };
+    for (const auto& key : keys) {
+        Require(CalculateDictionaryChecksum(key.key, DictionaryChecksumWidth::Bits16) == key.checksum,
+                "dictionary keys retain the native sixteen-bit checksum bytes");
+    }
+    std::puts("PASS: supported headers, key CRC16, shared CRC32 and current header bytes");
 }

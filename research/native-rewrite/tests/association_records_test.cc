@@ -72,5 +72,12 @@ int main() {
                                     short_record.data(), short_record.size(),
                                     &first_key, nullptr, &payload) && short_record == expected_partial,
             "a payload capacity failure retains the completed key write");
-    std::puts("PASS: association references, both record layouts and in-place field updates");
+    std::array<std::uint8_t, 8> value{0x01, 0x00, 0x00, 0x00, 0xee, 0xee, 0xaa, 0xbb};
+    const std::uint16_t checksum = 0x66b0;
+    const std::string_view data("\x12", 1);
+    const std::array<std::uint8_t, 8> expected_value{0x01, 0x00, 0x00, 0x00, 0xb0, 0x66, 0x12, 0xbb};
+    Require(PatchAssociationValue(value.data(), value.size(), true, nullptr, &data, &checksum) &&
+                value == expected_value,
+            "writing a key checksum and short data preserves the reference and suffix");
+    std::puts("PASS: association references, record layouts and optional checksum/value fields");
 }

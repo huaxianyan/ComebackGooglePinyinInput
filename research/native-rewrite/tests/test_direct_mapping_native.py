@@ -291,6 +291,9 @@ class DirectMappingNativeTest(unittest.TestCase):
         self.assertEqual(evidence["dictionary_header_crc"], {
             "address": 0x34EC50, "low": 0xB9E50C1D, "high": 0, "degree": 32,
         })
+        self.assertEqual(evidence["association_key_crc"], {
+            "address": 0x34EAD0, "low": 0x9F18, "high": 0, "degree": 16,
+        })
         math = evidence["score_math"]
         self.assertEqual(math["table_address"], 0x3A2FC0)
         self.assertEqual(math["constants"]["Ln2"]["bits"], 0x3F317218)

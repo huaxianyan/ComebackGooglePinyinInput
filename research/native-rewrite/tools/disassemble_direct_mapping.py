@@ -208,7 +208,10 @@ SCORE_CONSTANTS = {
     "Ln2": 0x18C61C, "LogAddLimit": 0x18C730,
 }
 DECODER_CATEGORY_TABLE = (0x349D10, 0x349D18)
-DICTIONARY_HEADER_CRC_CONFIG = 0x34EC50
+DICTIONARY_CRC_CONFIGS = {
+    "dictionary_header_crc": 0x34EC50,
+    "association_key_crc": 0x34EAD0,
+}
 RELOCATION_REGIONS = {
     "direct_iterator": (0x67A7B0, 0x67A7E8),
     "manager_iterator": (0x67A488, 0x67A4C8),
@@ -330,8 +333,11 @@ def main():
     relocations = sorted(binary.relocations, key=lambda item: item.address)
     start, end = DECODER_CATEGORY_TABLE
     category_bytes = bytes(binary.get_content_from_virtual_address(start, end - start))
-    crc_config = bytes(binary.get_content_from_virtual_address(DICTIONARY_HEADER_CRC_CONFIG, 24))
-    crc_low, crc_high, crc_degree = struct.unpack("<QQI", crc_config[:20])
+    crc_configurations = {}
+    for label, address in DICTIONARY_CRC_CONFIGS.items():
+        config = bytes(binary.get_content_from_virtual_address(address, 24))
+        low, high, degree = struct.unpack("<QQI", config[:20])
+        crc_configurations[label] = {"address": address, "low": low, "high": high, "degree": degree}
     result = {
         "library_entry": entry,
         "library_sha256": hashlib.sha256(content).hexdigest(),
@@ -340,10 +346,7 @@ def main():
         "string_anchors": {hex(address): text for address, text in STRING_ANCHORS.items()},
         "regions": regions,
         "score_math": capture_score_math(binary),
-        "dictionary_header_crc": {
-            "address": DICTIONARY_HEADER_CRC_CONFIG,
-            "low": crc_low, "high": crc_high, "degree": crc_degree,
-        },
+        **crc_configurations,
         "decoder_category_table": {
             "address": start,
             "u32_values": list(struct.unpack("<II", category_bytes)),

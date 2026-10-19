@@ -18,12 +18,13 @@ EncodedAssociationReference EncodeAssociationReference(IndexRange reference);
 bool DecodeAssociationReference(const std::uint8_t* bytes, std::size_t size,
                                 IndexRange& reference);
 
-// Native value patch with a null checksum argument: optional reference at 0,
-// optional trailing data at 4 or 6. Preserve checksum bytes and unused suffix.
+// Native value patch: optional reference at 0, optional checksum at 4 when
+// enabled, and optional trailing data at 4 or 6. Preserve omitted fields/suffix.
 // Caller supplies valid, nonoverlapping bytes. Sequential writes retain earlier
 // changes on a later capacity failure.
 bool PatchAssociationValue(std::uint8_t* bytes, std::size_t size, bool has_checksum,
-                            const IndexRange* reference, const std::string_view* data);
+                            const IndexRange* reference, const std::string_view* data,
+                            const std::uint16_t* checksum = nullptr);
 
 enum class AssociationRecordLayout { TargetKey, KeyPair };
 

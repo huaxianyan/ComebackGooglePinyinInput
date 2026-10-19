@@ -6,6 +6,7 @@
 
 - `research/native-rewrite/recovered/dictionary_header.h`
 - `research/native-rewrite/recovered/dictionary_header.cc`
+- `research/native-rewrite/recovered/dictionary_checksum.h` 和 `dictionary_checksum.cc`
 - `research/native-rewrite/tests/dictionary_header_test.cc`
 
 文件头和已有 payload 共用 `little_endian.h` 的整数读写实现。该组件不依赖原 APK、旧执行库或反编译工具，不包含 protobuf 元数据、trie 数据、文件替换或完整编辑器实现。关联引用、记录字段更新与索引池的后续连接见 [关联表引用与记录源码](association-records.md)。底层 trie 的四字节值引用和定长记录更新已有独立源码，见 [trie 值记录](trie-values.md)。
@@ -61,9 +62,11 @@ slot 0 在这里是编辑操作，不能套用其他接口中首两个槽为析�
 
 构造器把多项式保存在对象 `+0x28`、`+0x30`，Empty 方法从这两个字段取得初始状态。CRC32 的第一组表以该反射多项式生成，短输入按字节扩展，末尾没有额外 XOR。不能替换成标准库默认 CRC32 的多项式和初值。
 
-恢复组件只实现文件头所需的八字节计算，用逐位多项式运算代替原表查找。它没有宣称恢复通用 CRC、长块加速、滚动窗口或所有位宽的 CRC 类。
+文件头与关联键现在共用 `CalculateDictionaryChecksum`，用逐位多项式运算代替原表查找。它仅覆盖词典实际使用的 16、32 位配置，不恢复通用 CRC、长块加速、滚动窗口或旧对象 ABI。
 
-四组合法头部 fixture 在恢复源码写入前，使用独立 GF(2) 多项式长除法推导并保存。模块测试直接使用字面字节，不调用被测校验函数计算期望值。
+原键创建入口 `0x1c4494` 在 `0x1c4564` 选择 `Default(16, 0)`。配置地址由 `0x34e950 + 16 × 24` 得到 `0x34ead0`，低多项式为 `0x9f18`，高半部为零。它与文件头共用 Empty、32 位表实现及无末尾 XOR 的规则。`0x1c45b4` 读取扩展后的状态，`0x1c45c0` 将低十六位写入值补丁参数，初始局部变量的零不代表固定零校验。
+
+四组合法头部 fixture 使用独立 GF(2) 多项式长除法推导。新增键 fixture 使用 normal 多项式 `0x118f9`，输入与输出按位反转，先完成长除法再保存字面期望。空键校验为 `0x9f18`，`nihao` 为 `0x66b0`。二进制、UTF-8 和 32 字节输入也有独立期望，测试不调用被测算法计算答案。
 
 ## 后续字节流
 
@@ -83,6 +86,7 @@ mkdir -p work/native-rewrite/recovered-header
 g++ -std=c++17 -O2 -Wall -Wextra -Werror \
   research/native-rewrite/recovered/payload_codec.cc \
   research/native-rewrite/recovered/dictionary_header.cc \
+  research/native-rewrite/recovered/dictionary_checksum.cc \
   research/native-rewrite/tests/dictionary_header_test.cc \
   -o work/native-rewrite/recovered-header/dictionary_header_test
 work/native-rewrite/recovered-header/dictionary_header_test
@@ -91,6 +95,8 @@ work/native-rewrite/recovered-header/dictionary_header_test
 实际构建、四种受支持 major 的头部读取、payload 布局选择和当前头部写出均通过。校验失败保留先前输出的协议断言通过。因字节读写提取为共用实现，已有 payload 模块也完成源码重建回归。
 
 既有真实 APK 取证测试新增编辑模式、当前版本和 CRC 配置锚点后通过，该轮导出器共 81 个区域。十七个新区域中十六个与发布库的指令字节一致。CRC 缓存工厂只有两处 ADRP 页地址随既有 `.bss` 移动，其余指令及配置字节一致。
+
+2026-10-20 的严格 WSL 构建通过。既有四组头部、CRC32 写出和六组 CRC16 字面输入均通过。真实 APK 出口新增 degree 16 配置断言后通过，仍导出 186 个区域。配置的 24 字节也与保留的 `v2.1.7` 发布库一致，既有函数指令对照继续沿用。这些结果不代表原 ARM64 CRC 已执行。
 
 主要证据：
 
