@@ -2,6 +2,8 @@
 #ifndef COMEBACK_RECOVERED_ASSOCIATION_RECORDS_H
 #define COMEBACK_RECOVERED_ASSOCIATION_RECORDS_H
 
+#include "index_pool.h"
+
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -9,17 +11,12 @@
 
 namespace comeback::recovered {
 
-struct AssociationReference {
-    std::uint32_t first_index;
-    std::uint32_t count;
-};
-
 using EncodedAssociationReference = std::array<std::uint8_t, sizeof(std::uint32_t)>;
 
 // Native packing keeps 23 index bits and nine count bits, without saturation.
-EncodedAssociationReference EncodeAssociationReference(AssociationReference reference);
+EncodedAssociationReference EncodeAssociationReference(IndexRange reference);
 bool DecodeAssociationReference(const std::uint8_t* bytes, std::size_t size,
-                                AssociationReference& reference);
+                                IndexRange& reference);
 
 enum class AssociationRecordLayout { TargetKey, KeyPair };
 

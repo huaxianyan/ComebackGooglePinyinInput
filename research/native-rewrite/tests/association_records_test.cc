@@ -20,7 +20,7 @@ int main() {
     const std::array<std::uint8_t, 4> reference_bytes{0x55, 0xad, 0x68, 0x24};
     Require(EncodeAssociationReference({0x123456, 0x155}) == reference_bytes,
             "packing the association list index and count");
-    AssociationReference reference{};
+    IndexRange reference{};
     Require(DecodeAssociationReference(reference_bytes.data(), reference_bytes.size(), reference),
             "reading the association list reference");
     Require(reference.first_index == 0x123456 && reference.count == 0x155,

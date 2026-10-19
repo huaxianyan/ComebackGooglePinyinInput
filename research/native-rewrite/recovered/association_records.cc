@@ -10,7 +10,7 @@ constexpr unsigned kCountBits = 9;
 constexpr std::uint32_t kCountMask = (std::uint32_t{1} << kCountBits) - 1;
 }  // namespace
 
-EncodedAssociationReference EncodeAssociationReference(AssociationReference reference) {
+EncodedAssociationReference EncodeAssociationReference(IndexRange reference) {
     const auto word = (reference.first_index << kCountBits) | (reference.count & kCountMask);
     EncodedAssociationReference bytes{};
     detail::WriteLittleEndian(word, bytes.data());
@@ -18,7 +18,7 @@ EncodedAssociationReference EncodeAssociationReference(AssociationReference refe
 }
 
 bool DecodeAssociationReference(const std::uint8_t* bytes, std::size_t size,
-                                AssociationReference& reference) {
+                                IndexRange& reference) {
     if (size < sizeof(std::uint32_t)) return false;
     const auto word = detail::ReadLittleEndian<std::uint32_t>(bytes);
     reference = {word >> kCountBits, word & kCountMask};
