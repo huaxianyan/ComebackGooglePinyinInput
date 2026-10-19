@@ -8,7 +8,7 @@
 - `research/native-rewrite/recovered/dictionary_header.cc`
 - `research/native-rewrite/tests/dictionary_header_test.cc`
 
-文件头和已有 payload 共用 `little_endian.h` 的整数读写实现。该组件不依赖原 APK、旧执行库或反编译工具，不包含 protobuf 元数据、trie 数据、文件替换或完整编辑器实现。关联引用、记录字段更新与索引池的后续连接见 [关联表引用与记录源码](association-records.md)。
+文件头和已有 payload 共用 `little_endian.h` 的整数读写实现。该组件不依赖原 APK、旧执行库或反编译工具，不包含 protobuf 元数据、trie 数据、文件替换或完整编辑器实现。关联引用、记录字段更新与索引池的后续连接见 [关联表引用与记录源码](association-records.md)。底层 trie 的四字节值引用和定长记录更新已有独立源码，见 [trie 值记录](trie-values.md)。
 
 ## 编辑器的具体归属
 
@@ -23,7 +23,7 @@
 
 | EditorImpl 槽 | 入口 | 已确认的行为 |
 | --- | --- | --- |
-| slot 0 | `0x1c5f08` | 规范化参数后，以模式 `1` 进入共用修改函数 |
+| slot 0 | `0x1c5f08` | 通过长度与键准入检查后，以模式 `1` 进入共用修改函数 |
 | slot 2 | `0x1c5fe8` | 以模式 `2` 进入同一修改函数 |
 | slot 5 | `0x1c52ac` | 查找两侧关联，修改关联列表并处理空端点 |
 
@@ -35,7 +35,7 @@ slot 0 在这里是编辑操作，不能套用其他接口中首两个槽为析�
 
 新增关联成功后，mutable dictionary 的 `+0x34` 字段加一，并设置状态位。这个字段与 `UserDictionary +0x38` 的计数累计字段属于不同对象，不混为词条条数或同一个 API 的统计结果。
 
-失败路径包含针对空端点的清理。完整失败恢复、关联池回收与原子性尚未恢复，不把这些视图直接作为可执行编辑器源码。SingleTrie 分支也有模式 `1`、`2`，但同键和异键处理不同，不能用两侧 trie 的结构代替它。
+失败路径包含针对空端点的清理。关联池回收与单侧列表编辑已有源码，完整双向写回、失败恢复与原子性仍未验收，不把这些视图直接作为可执行编辑器源码。SingleTrie 分支也有模式 `1`、`2`，但同键和异键处理不同，不能用两侧 trie 的结构代替它。
 
 ## 文件头格式
 
