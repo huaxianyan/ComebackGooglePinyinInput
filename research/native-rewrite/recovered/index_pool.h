@@ -14,6 +14,8 @@ struct IndexRange {
     std::uint32_t count;
 };
 
+class OwnedByteRegion;
+
 // Non-owning view over separate metadata and cell regions. The metadata's
 // second word is the active count; cells 0/1 are the free-list sentinel/head/tail.
 // Free-range reuse/coalescing require a valid ordered, acyclic free list.
@@ -44,6 +46,8 @@ public:
     bool ReleaseRange(IndexRange& range);
 
 private:
+    friend bool InsertIndexRange(OwnedByteRegion&, OwnedByteRegion&, std::uint32_t,
+                                 std::uint32_t, IndexRange&);
     bool IsFreeCell(std::uint32_t index) const;
     bool ReadListNeighbors(IndexRange range, IndexRange& previous, IndexRange& next) const;
     bool ReadAdjacentFreeRanges(IndexRange range, std::optional<IndexRange>& previous,
@@ -59,14 +63,18 @@ private:
     std::size_t size_;
 };
 
-class OwnedByteRegion;
-
 // Operate on the separate owning regions; reuse IndexPoolView for node changes.
 // Existing borrowed views must be reacquired after these operations.
 // Allocation/initialization failure does not roll back prior buffer changes.
 bool InitializeIndexPool(OwnedByteRegion& metadata, OwnedByteRegion& cells);
 bool AllocateIndexRange(OwnedByteRegion& metadata, OwnedByteRegion& cells,
                         std::int32_t count, IndexRange& range);
+// A list contains record IDs. Insertion saves old IDs before releasing its range;
+// failures after release retain prior changes, not an atomic old list.
+bool CreateIndexRange(OwnedByteRegion& metadata, OwnedByteRegion& cells,
+                      std::uint32_t value, IndexRange& range);
+bool InsertIndexRange(OwnedByteRegion& metadata, OwnedByteRegion& cells,
+                      std::uint32_t value, std::uint32_t position, IndexRange& range);
 
 }  // namespace comeback::recovered
 #endif

@@ -65,6 +65,7 @@ g++ -std=c++17 -O2 -Wall -Wextra -Werror \
   research/native-rewrite/recovered/owned_byte_region.cc \
   research/native-rewrite/recovered/index_pool.cc \
   research/native-rewrite/recovered/association_records.cc \
+  research/native-rewrite/recovered/association_list.cc \
   research/native-rewrite/recovered/payload_codec.cc \
   research/native-rewrite/recovered/fixed_phrase_table.cc \
   research/native-rewrite/tests/fixed_phrase_table_test.cc \
@@ -72,9 +73,9 @@ g++ -std=c++17 -O2 -Wall -Wextra -Werror \
 work/native-rewrite/recovered-fixed-phrase/fixed_phrase_table_test
 ```
 
-严格构建与一条源码流程通过：真实 payload 编码、关联记录构造、六次定长追加、真实池分配、记录 ID 写入、关联引用编解码、存储读取及原位编辑。独立字面字节确认 ID `50` 取得第六条记录，修改保留短 payload 后缀和第一条记录。清空后可继续从 ID `0` 追加。
+严格构建与一条源码流程通过：真实 payload 编码、关联记录构造、多次定长追加、真实池分配、记录 ID 写入、关联引用编解码、存储读取及原位编辑。独立字面字节确认 ID `50` 取得第六条记录，修改保留短 payload 后缀和第一条记录。清空后可继续从 ID `0` 追加。
 
-这条流程通过真实组件接线，不代表已恢复 `0x1c5120` 的整条关联列表追加、重排及失败恢复，也不是整本词典的端到端验收。
+流程现已改走恢复的 `0x1c5120` 协调入口，覆盖首条建立、原位插入和搬迁，并验证链接失败后保留已存记录。列表删除与上层整体失败恢复仍未完成，具体边界见 [关联列表](association-records.md#列表追加与插入顺序)。它仍不是整本词典的端到端验收。
 
 真实 APK 出口补入记录宽度、数量提交、偏移返回、无符号转换与清零参数锚点后通过，当前导出 149 个区域。十一个新增区域与已发布 `v2.1.7` 库的指令字节一致。
 
@@ -90,4 +91,4 @@ work/native-rewrite/recovered-fixed-phrase/fixed_phrase_table_test
 
 ## 下一步
 
-连接关联列表的首条建立、插入重排及跨存储失败恢复，再推进底层 trie、键序列和完整文件容器。表容器编解码、CRC、文件同步与实际持久化仍未完成。
+继续恢复列表删除、收缩及上层编辑失败恢复，再推进底层 trie、键序列和完整文件容器。表容器编解码、CRC、文件同步与实际持久化仍未完成。

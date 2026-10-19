@@ -28,5 +28,13 @@ bool PatchAssociationRecord(AssociationRecordLayout layout, std::uint8_t* bytes,
                             std::size_t size, const std::uint32_t* first_key,
                             const std::uint32_t* second_key, const std::string_view* payload);
 
+class FixedPhraseTable;
+
+// Native association append stores the record before linking its ID into the
+// list. A link failure leaves that record appended; there is no rollback.
+bool AppendAssociationRecord(FixedPhraseTable& records, OwnedByteRegion& metadata,
+                              OwnedByteRegion& cells, const std::uint8_t* data,
+                              std::size_t size, IndexRange& reference);
+
 }  // namespace comeback::recovered
 #endif

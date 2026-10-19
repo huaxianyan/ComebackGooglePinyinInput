@@ -282,4 +282,53 @@ bool AllocateIndexRange(OwnedByteRegion& metadata, OwnedByteRegion& cells,
     return view.ClaimFreeRange(range, values.data(), values.size());
 }
 
+bool CreateIndexRange(OwnedByteRegion& metadata, OwnedByteRegion& cells,
+                      std::uint32_t value, IndexRange& range) {
+    IndexRange allocated{};
+    if (!AllocateIndexRange(metadata, cells, 1, allocated)) return false;
+    auto* bytes = cells.MutableData();
+    if (bytes == nullptr) return false;
+    IndexPoolView view(metadata.Data(), metadata.Size(), bytes, cells.Size());
+    // Native returns the allocation status, not the individual write status.
+    view.WriteRecordId(allocated.first_index, value);
+    range = allocated;
+    return true;
+}
+
+bool InsertIndexRange(OwnedByteRegion& metadata, OwnedByteRegion& cells,
+                      std::uint32_t value, std::uint32_t position, IndexRange& range) {
+    auto* bytes = cells.MutableData();
+    if (bytes == nullptr) return false;
+    IndexPoolView view(metadata.Data(), metadata.Size(), bytes, cells.Size());
+    if (!view.ValidRange(range) || range.first_index < kSentinelCellCount ||
+        position > range.count) return false;
+    const auto old_count = range.count;
+    std::vector<std::uint32_t> values(static_cast<std::size_t>(old_count) + 1, 0);
+    for (std::uint32_t index = 0; index < old_count; ++index) {
+        // Native uses the unchecked reader, retaining its missing-record value.
+        auto existing = kInvalidRecord;
+        view.ReadRecordId(range.first_index + index, existing);
+        values[index < position ? index : index + 1] = existing;
+    }
+    values[position] = value;
+    auto released = range;
+    if (!view.ReleaseRange(released)) return false;
+    if (old_count < released.count) {
+        range = released;
+        return view.ClaimFreeRange(range, values.data(), values.size());
+    }
+    if (!AllocateIndexRange(metadata, cells, static_cast<std::int32_t>(old_count + 1), released)) {
+        return false;
+    }
+    range = released;
+    // Allocation may move either backing region. The pre-release view is stale.
+    bytes = cells.MutableData();
+    if (bytes == nullptr) return false;
+    view = IndexPoolView(metadata.Data(), metadata.Size(), bytes, cells.Size());
+    for (std::size_t index = 0; index < values.size(); ++index) {
+        view.WriteRecordId(range.first_index + static_cast<std::uint32_t>(index), values[index]);
+    }
+    return true;
+}
+
 }  // namespace comeback::recovered
