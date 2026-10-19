@@ -8,7 +8,7 @@
 - `research/native-rewrite/recovered/payload_codec.cc`
 - `research/native-rewrite/tests/payload_codec_test.cc`
 
-它只负责六字节值的编码与解码。构建不读取 APK 或原执行库，也不依赖 Ghidra。词典头、键、trie 对象、编辑器、文件合并与写盘仍未恢复，不能据此称为完整词典实现。
+它只负责六字节值的编码与解码。构建不读取 APK 或原执行库，也不依赖 Ghidra。文件头前缀另见 [词典编辑器与文件头源码](dictionary-storage.md)。protobuf 元数据、键、trie 对象、完整编辑器、文件合并与写盘仍未恢复，不能据此称为完整词典实现。
 
 ## 类型与调用归属
 
@@ -78,4 +78,4 @@ work/native-rewrite/recovered-payload/payload_codec_test
 
 本次没有执行原 ARM64 编码器，也没有导入用户词典或验证整库迁移。模块输出来自静态指令推导的固定样本，不能扩展为全部输入的原生执行等价证明。
 
-下一步沿读取对象和编辑器的具体类型恢复 trie 修改、持久化与合并，再连接类别、日期与衰减。Google 派生逻辑仍按 NOTICE 保留权利边界。
+下一步沿已定位的编辑器恢复关联池、底层 trie、持久化与合并，再连接类别、日期与衰减。Google 派生逻辑仍按 NOTICE 保留权利边界。

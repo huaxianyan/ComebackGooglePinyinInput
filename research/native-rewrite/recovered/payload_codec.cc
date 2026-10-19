@@ -1,5 +1,6 @@
 // Google-derived reconstruction; see NOTICE and payload-codec.md for boundaries.
 #include "payload_codec.h"
+#include "little_endian.h"
 
 #include <algorithm>
 
@@ -29,21 +30,15 @@ EncodedPayload EncodePayload(PayloadVersion version, const PayloadMetadata& meta
         word |= (metadata.category & kCategoryMask) << kCategoryShift;
     }
     EncodedPayload bytes{};
-    for (std::size_t index = 0; index < kHeaderSize; ++index) {
-        bytes[index] = static_cast<std::uint8_t>(word >> (index * 8));
-    }
-    bytes[kHeaderSize] = static_cast<std::uint8_t>(day);
-    bytes[kHeaderSize + 1] = static_cast<std::uint8_t>(day >> 8);
+    detail::WriteLittleEndian(word, bytes.data());
+    detail::WriteLittleEndian(day, bytes.data() + kHeaderSize);
     return bytes;
 }
 
 bool DecodePayload(PayloadVersion version, const std::uint8_t* bytes,
                    std::size_t size, PayloadMetadata& metadata, std::uint16_t* day) {
     if (size < (day == nullptr ? kHeaderSize : kPayloadSize)) return false;
-    std::uint32_t word = 0;
-    for (std::size_t index = 0; index < kHeaderSize; ++index) {
-        word |= std::uint32_t{bytes[index]} << (index * 8);
-    }
+    const auto word = detail::ReadLittleEndian<std::uint32_t>(bytes);
     const bool v21 = version == PayloadVersion::V21;
     const PayloadMetadata decoded{
         word & CountMask(version),
@@ -54,9 +49,7 @@ bool DecodePayload(PayloadVersion version, const std::uint8_t* bytes,
             : ((word & kFlag30) != 0 ? 0u : 2u),
     };
     if (day != nullptr) {
-        *day = static_cast<std::uint16_t>(
-            std::uint16_t{bytes[kHeaderSize]} |
-            (std::uint16_t{bytes[kHeaderSize + 1]} << 8));
+        *day = detail::ReadLittleEndian<std::uint16_t>(bytes + kHeaderSize);
     }
     metadata = decoded;
     return true;

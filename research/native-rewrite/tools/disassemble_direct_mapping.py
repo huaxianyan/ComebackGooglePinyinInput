@@ -73,6 +73,23 @@ REGIONS = {
     "dictionary_initialize": (0x1A259C, 0x1A281C),
     "dictionary_load_payload": (0x1A2B38, 0x1A3130),
     "dictionary_accept_loaded": (0x1A3C9C, 0x1A3E04),
+    "mutable_dictionary_build": (0x1A6A2C, 0x1A6DD4),
+    "mutable_dictionary_constructor": (0x1C5DE8, 0x1C5E64),
+    "mutable_editor_get": (0x1C5C84, 0x1C5DA0),
+    "mutable_editor_constructor": (0x1C5A00, 0x1C5C84),
+    "mutable_editor_ensure": (0x1C5F08, 0x1C5F78),
+    "mutable_editor_update": (0x1C5FE8, 0x1C6074),
+    "mutable_editor_modify": (0x1C5660, 0x1C59A0),
+    "mutable_editor_remove": (0x1C52AC, 0x1C54AC),
+    "mutable_editor_key": (0x1C4494, 0x1C4618),
+    "dictionary_serialize": (0x1A2228, 0x1A23B4),
+    "header_crc_empty": (0x1F636C, 0x1F6380),
+    "header_crc_extend": (0x1F6594, 0x1F6C44),
+    "header_crc_table": (0x1F8B88, 0x1F8CBC),
+    "header_crc_new": (0x1F9158, 0x1F939C),
+    "header_crc_factory": (0x1F939C, 0x1F947C),
+    "header_crc_default": (0x1F9AA4, 0x1F9B34),
+    "header_crc_window": (0x1F8CBC, 0x1F8DC4),
 }
 SCORE_TABLE_POINTER = 0x699358
 SCORE_TABLE_SPANS = {
@@ -86,6 +103,7 @@ SCORE_CONSTANTS = {
     "Ln2": 0x18C61C, "LogAddLimit": 0x18C730,
 }
 DECODER_CATEGORY_TABLE = (0x349D10, 0x349D18)
+DICTIONARY_HEADER_CRC_CONFIG = 0x34EC50
 RELOCATION_REGIONS = {
     "direct_iterator": (0x67A7B0, 0x67A7E8),
     "manager_iterator": (0x67A488, 0x67A4C8),
@@ -207,6 +225,8 @@ def main():
     relocations = sorted(binary.relocations, key=lambda item: item.address)
     start, end = DECODER_CATEGORY_TABLE
     category_bytes = bytes(binary.get_content_from_virtual_address(start, end - start))
+    crc_config = bytes(binary.get_content_from_virtual_address(DICTIONARY_HEADER_CRC_CONFIG, 24))
+    crc_low, crc_high, crc_degree = struct.unpack("<QQI", crc_config[:20])
     result = {
         "library_entry": entry,
         "library_sha256": hashlib.sha256(content).hexdigest(),
@@ -215,6 +235,10 @@ def main():
         "string_anchors": {hex(address): text for address, text in STRING_ANCHORS.items()},
         "regions": regions,
         "score_math": capture_score_math(binary),
+        "dictionary_header_crc": {
+            "address": DICTIONARY_HEADER_CRC_CONFIG,
+            "low": crc_low, "high": crc_high, "degree": crc_degree,
+        },
         "decoder_category_table": {
             "address": start,
             "u32_values": list(struct.unpack("<II", category_bytes)),

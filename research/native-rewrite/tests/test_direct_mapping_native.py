@@ -115,6 +115,11 @@ class DirectMappingNativeTest(unittest.TestCase):
             0x1A0664: ("and", "w0, w0, #0x7ffffff"),
             0x1A077C: ("and", "w0, w0, #0x3fffffff"),
             0x1A07B8: ("csel", "w0, wzr, w0, ne"),
+            0x1C5F5C: ("mov", "w7, #1"),
+            0x1C6048: ("mov", "w7, #2"),
+            0x1A2270: ("mov", "w0, #3"),
+            0x1A227C: ("mov", "w0, #1"),
+            0x1A22C8: ("mov", "x1, #0x10"),
         }
         for address, instruction in expected.items():
             with self.subTest(address=hex(address)):
@@ -143,6 +148,9 @@ class DirectMappingNativeTest(unittest.TestCase):
                     for row in evidence["relocation_regions"]["manager_typeinfo"]}
         self.assertEqual(typeinfo[0x68AF48], 0x34A9E0)
         self.assertEqual(evidence["decoder_category_table"]["u32_values"], [1, 2])
+        self.assertEqual(evidence["dictionary_header_crc"], {
+            "address": 0x34EC50, "low": 0xB9E50C1D, "high": 0, "degree": 32,
+        })
         math = evidence["score_math"]
         self.assertEqual(math["table_address"], 0x3A2FC0)
         self.assertEqual(math["constants"]["Ln2"]["bits"], 0x3F317218)

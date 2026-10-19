@@ -126,4 +126,4 @@ work/native-rewrite/original-apk/native-learning-storage.txt
 work/native-rewrite/original-apk/native-learning-storage-helpers.txt
 ```
 
-两种 payload 的独立编码与解码源码已经恢复，字段与验证见 [payload 编码源码](payload-codec.md)。这些局部组件还不足以实现完整持久词典。下一步沿键序列编码和实际 trie 修改、写盘与合并，继续补齐学习和持久化规格。
+两种 payload 的独立编码与解码源码已经恢复，字段与验证见 [payload 编码源码](payload-codec.md)。这些局部组件还不足以实现完整持久词典。编辑器的具体归属和头部源码见 [词典编辑器与文件头源码](dictionary-storage.md)。下一步沿键序列编码、底层 trie 修改、写盘与合并，继续补齐学习和持久化规格。

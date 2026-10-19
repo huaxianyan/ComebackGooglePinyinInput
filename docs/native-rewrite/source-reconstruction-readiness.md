@@ -4,7 +4,7 @@
 
 当前尚未达到完整调查结束或独立源码输入法就绪的条件。本轮已恢复旧研究、补齐 `v2.1.7` 功能基线，并推进 JNI、C++ 类型和 composing 消费边界。没有把反编译产物整理进一个目录就称为源码工程。
 
-目前仍缺 native 搜索、排序、学习、滑行和手写的完整实现规格与源码。已有可独立编译的标量数学、纯 Java 选区和词典 payload 组件。入口分别见 [键生成与分数源码](key-generator-score-math.md)、[输入会话与选区源码](input-session-selection.md) 和 [payload 编码源码](payload-codec.md)。候选预览、确认、提交与学习入口见 [候选确认与学习边界](candidate-commit-learning.md)。完整输入生命周期和各模式状态机仍未闭合，不能用这些局部成果代替整个引擎。
+目前仍缺 native 搜索、排序、学习、滑行和手写的完整实现规格与源码。已有可独立编译的标量数学、纯 Java 选区、词典头和 payload 组件。入口分别见 [键生成与分数源码](key-generator-score-math.md)、[输入会话与选区源码](input-session-selection.md)、[词典编辑器与文件头源码](dictionary-storage.md) 和 [payload 编码源码](payload-codec.md)。候选预览、确认、提交与学习入口见 [候选确认与学习边界](candidate-commit-learning.md)。完整输入生命周期和各模式状态机仍未闭合，不能用这些局部成果代替整个引擎。
 
 目标与最终验收只维护在 [研究计划](../native-rewrite-plan.md)。功能状态只维护在 [功能清单](feature-inventory.md)，ABI 证据见 [JNI 与 C++ 边界](native-abi-map.md)。
 
@@ -56,7 +56,7 @@ a()Ljava/lang/String;
 
 前一轮复用已有 Windows JDK 17、apktool 2.12.1，以及既有 WSL 的 GNU demangler。本轮维护者明确批准 pip 用户级安装，已在现有共用 Python 中恢复三个固定分析依赖，没有新建虚拟环境或项目私有缓存，没有改系统配置或 MCP 注册。
 
-数据导出与完整 ARM64 反汇编的既有入口已通过本机测试。C++ 数学与 payload 组件使用既有 WSL 编译器，选区组件使用现有 JDK。这些组件构建只读取已经入库的源码和常数，不读取 APK 或旧执行库。
+数据导出与完整 ARM64 反汇编的既有入口已通过本机测试。C++ 数学、词典头与 payload 组件使用既有 WSL 编译器，选区组件使用现有 JDK。这些组件构建只读取已经入库的源码和常数，不读取 APK 或旧执行库。
 
 现有条件与剩余缺口：
 
