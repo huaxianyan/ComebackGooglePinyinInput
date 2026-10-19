@@ -17,12 +17,11 @@ constexpr std::size_t kLabelCountOffset = 0x10;
 constexpr std::size_t kLabelsOffset = 0x14;
 constexpr std::size_t kNodeCountOffset = 0x0c;
 constexpr std::size_t kNodeSize = 8;
-constexpr std::uint32_t kRoot = 1;
+}  // namespace
 
-bool NonPositive(std::uint32_t word) {
+bool DATrieView::NonPositive(std::uint32_t word) {
     return word == 0 || (word & 0x80000000U) != 0;
 }
-}  // namespace
 
 bool DATrieView::AcceptsByte(std::uint8_t byte) const {
     return byte != 0 && metadata_[kAlphabetOffset + byte] != 0;
@@ -180,9 +179,9 @@ bool InitializeDATrie(OwnedByteRegion& metadata, OwnedByteRegion& nodes,
     }
     view.WriteCheck(kByteValueCount - 1, 0);
     view.WriteBase(0, 1U - kByteValueCount);
-    if (!view.UnlinkFreeNode(kRoot)) return false;
-    view.WriteBase(kRoot, kRoot);
-    view.WriteCheck(kRoot, kRoot);
+    if (!view.UnlinkFreeNode(DATrieView::kRoot)) return false;
+    view.WriteBase(DATrieView::kRoot, DATrieView::kRoot);
+    view.WriteCheck(DATrieView::kRoot, DATrieView::kRoot);
     metadata = std::move(prepared_metadata);
     nodes = std::move(prepared_nodes);
     return true;

@@ -5,12 +5,15 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <string_view>
 
 namespace comeback::recovered {
 
 class OwnedByteRegion;
 using DATrieLabels = std::array<std::uint32_t, 256>;
+// Native optional notification: old terminal ID, new terminal ID; no status.
+using DATrieNodeMove = std::function<void(std::uint32_t, std::uint32_t)>;
 
 // Borrowed view of an already-ready trie: separate metadata and writable nodes.
 // This does not initialize or load a trie, own readiness, or validate a full image.
@@ -36,8 +39,23 @@ public:
     bool ReturnFreeNode(std::uint32_t node, std::uint32_t cursor = 0);
     // Emit labels in metadata order, including zero; preserve the unused tail.
     std::size_t EnumerateChildren(std::uint32_t node, DATrieLabels& labels) const;
+    // Move an existing child cohort to a prepared free base. Labels are its
+    // ordered complete alphabet. Return the relocated current node, or zero on
+    // detected failure; earlier writes are retained. Storage does not grow here.
+    std::uint32_t RelocateChildren(std::uint32_t current, std::uint32_t parent,
+                                   std::uint32_t base, const std::uint32_t* labels,
+                                   std::size_t count, const DATrieNodeMove* notify = nullptr);
+    // Native missing-edge/collision entry, not full key insertion. Rebinds this
+    // view after COW/growth, so notifications referring to this object see it.
+    // Other borrowed views still require reacquisition. Caller fills the claimed
+    // edge's base/value afterwards, as in the original insertion loop.
+    std::uint32_t ResolveCollision(OwnedByteRegion& metadata, OwnedByteRegion& nodes,
+                                   std::uint32_t current, std::uint8_t byte,
+                                   const DATrieNodeMove* notify = nullptr);
 
 private:
+    static constexpr std::uint32_t kRoot = 1;
+    static bool NonPositive(std::uint32_t word);
     friend bool InitializeDATrie(OwnedByteRegion&, OwnedByteRegion&, std::string_view, std::uint8_t);
     friend bool GrowDATrieNodes(OwnedByteRegion&, OwnedByteRegion&);
     friend bool FindDATrieBase(OwnedByteRegion&, OwnedByteRegion&, const std::uint32_t*,
