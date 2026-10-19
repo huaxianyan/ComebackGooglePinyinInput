@@ -2,6 +2,7 @@
 #include "index_pool.h"
 #include "little_endian.h"
 #include "owned_byte_region.h"
+#include "storage_growth.h"
 
 #include <algorithm>
 #include <cstring>
@@ -250,7 +251,7 @@ bool AllocateIndexRange(OwnedByteRegion& metadata, OwnedByteRegion& cells,
         if (static_cast<std::int32_t>(old_capacity) < static_cast<std::int32_t>(required)) {
             // FCVTZS saturates positive binary64 results at signed INT32_MAX.
             const auto scaled = static_cast<std::uint32_t>(std::min(
-                static_cast<double>(active) * 1.25, static_cast<double>(kMaxRangeField)));
+                static_cast<double>(active) * detail::kStorageGrowthFactor, static_cast<double>(kMaxRangeField)));
             const auto triple_request = active + requested * 3u;
             auto capacity = static_cast<std::int32_t>(scaled) >=
                                     static_cast<std::int32_t>(triple_request)

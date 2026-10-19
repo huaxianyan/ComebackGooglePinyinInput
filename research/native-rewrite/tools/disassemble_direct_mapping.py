@@ -147,6 +147,17 @@ REGIONS = {
     "region_data": (0x1FA870, 0x1FA878),
     "region_size": (0x1FA878, 0x1FA880),
     "region_ref_count": (0x1FA868, 0x1FA870),
+    "phrase_construct": (0x1F2F70, 0x1F2FBC),
+    "phrase_initialize": (0x1F2C8C, 0x1F2CB4),
+    "phrase_read": (0x1F2D90, 0x1F2E20),
+    "phrase_mutable_record": (0x1F2E20, 0x1F2EB0),
+    "phrase_append": (0x1F3178, 0x1F3254),
+    "phrase_grow": (0x1F30EC, 0x1F3178),
+    "phrase_clear": (0x1F2EB0, 0x1F2EE0),
+    "phrase_count": (0x1F2CB4, 0x1F2CCC),
+    "phrase_ready": (0x1F2CCC, 0x1F2CD4),
+    "bounded_bytes_write": (0x1F5CA4, 0x1F5D00),
+    "buffer_zero": (0x1FA65C, 0x1FA6AC),
 }
 SCORE_TABLE_POINTER = 0x699358
 SCORE_TABLE_SPANS = {
