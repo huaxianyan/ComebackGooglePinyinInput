@@ -3,6 +3,7 @@
 #define COMEBACK_RECOVERED_ASSOCIATION_EDITOR_H
 
 #include "association_records.h"
+#include "owned_byte_region.h"
 
 namespace comeback::recovered {
 
@@ -13,6 +14,11 @@ struct AssociationEditor {
     OwnedByteRegion& trie_metadata;
     OwnedByteRegion& trie_nodes;
     bool has_checksum;
+    // Native coordinator-owned directional scratch, normalized here without
+    // cloning its layout. Retain across calls: omitted payload fields preserve
+    // previous scratch bytes, whereas a newly created key clears its value.
+    OwnedByteRegion record_buffer{};
+    OwnedByteRegion value_buffer{};
 };
 
 // Typed runtime state corresponding to native object +0x34 and +0x20; not a
@@ -30,13 +36,17 @@ bool RemoveDictionaryAssociation(AssociationEditor& forward, AssociationEditor& 
                                   DictionaryEditState& state, std::string_view forward_key,
                                   std::string_view reverse_key);
 
-// Native 0x1c5660, existing-only mode 2. Update the first forward match, then
-// require the reverse match and patch optional reverse value data. Failures keep
-// earlier updates. No new keys/records, count changes or dirty-bit writes.
-bool UpdateDictionaryAssociation(AssociationEditor& forward, AssociationEditor& reverse,
+enum class AssociationEditMode { CreateOrUpdate = 1, ExistingOnly = 2 };
+
+// Native 0x1c5660: both modes first update an existing pair. Mode 1 also creates
+// missing keys and appends both sides, with the native 511-entry bound. Cleanup
+// removes empty endpoints only after the append path fails; earlier failures
+// and completed record/list mutations are not rolled back. Scratch persists.
+bool ModifyDictionaryAssociation(AssociationEditor& forward, AssociationEditor& reverse,
+                                  DictionaryEditState& state,
                                   std::string_view forward_key, std::string_view reverse_key,
                                   const std::string_view* payload,
-                                  const std::string_view* reverse_data);
+                                  const std::string_view* reverse_data, AssociationEditMode mode);
 
 }  // namespace comeback::recovered
 #endif

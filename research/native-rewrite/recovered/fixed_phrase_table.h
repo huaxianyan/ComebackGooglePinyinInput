@@ -20,6 +20,7 @@ public:
     bool ReadRecord(std::uint64_t record_id, const std::uint8_t*& data, std::size_t& size) const;
     bool MutableRecord(std::uint64_t record_id, std::uint8_t*& data, std::size_t& size);
     std::uint32_t RecordCount() const;
+    std::uint32_t RecordSize() const { return record_size_; }
     // Clear retains storage; count/usage reset even if obtaining the native
     // zeroing pointer fails. It clears the table, rather than deleting one ID.
     void Clear();

@@ -4,7 +4,7 @@
 
 引用与字段写入源码位于 `research/native-rewrite/recovered/association_records.h`、`association_records.cc`。列表追加协调位于 `association_list.cc`，池范围操作共用 `index_pool.cc`。原字节操作仍可独立构建，不因协调入口引入存储后端链接依赖。
 
-组件包含四字节关联表引用的编解码，以及单键、双键关联记录的原位字段写入。它继续共用 `little_endian.h`，没有建立另一套字节序实现。索引池的分配、扩容与回收已有源码，定长记录后端见 [记录存储源码](fixed-phrase-table.md)。trie 值、双向删除和已有关系更新已有源码，双向新增协调和磁盘存储仍待恢复。
+组件包含四字节关联表引用的编解码，以及单键、双键关联记录的原位字段写入。它继续共用 `little_endian.h`，没有建立另一套字节序实现。索引池的分配、扩容与回收已有源码，定长记录后端见 [记录存储源码](fixed-phrase-table.md)。trie 值、双向删除、已有关系更新和双向新增已有源码，完整表容器及磁盘存储仍待恢复。
 
 ## 引用头与索引池
 
@@ -55,7 +55,7 @@ count = word & 0x1ff
 
 恢复接口使用调用方提供的有效缓冲区及显式容量，不复制旧字符串对象 ABI。容量检查避免无效 cursor 导致越界写入，旧实现的无效指针或越界 cursor 访问不属于兼容契约。正常字段写入和容量不足的逐段失败行为按原路径保留。
 
-trie 值中的引用头可能另接可选的十六位校验字段与附加数据，它们不等于这里的关联记录 payload。可选值字段的原位补丁已恢复，完整新键创建与双向新增协调仍待连接。
+trie 值中的引用头可能另接可选的十六位校验字段与附加数据，它们不等于这里的关联记录 payload。可选值字段的原位补丁已接入新键创建与双向新增，见下方的新增协调说明。
 
 ## 反编译视图的参数缺口
 
@@ -113,7 +113,7 @@ work/native-rewrite/recovered-associations/association_records_test
 
 ## 已有关系更新
 
-`dictionary_association_update.cc` 的 `UpdateDictionaryAssociation` 恢复 `0x1c5660` 的模式 `2`，只更新已有关系。先复制双方键值并解码引用，再更新第一侧匹配记录的可选 payload，随后确认第二侧存在对应记录。最后只修改反向键的可选附加数据，再通过 slot 1 原位写回值。
+`dictionary_association_update.cc` 的 `ModifyDictionaryAssociation` 统一恢复 `0x1c5660` 的模式 `1` 和 `2`。模式 `2` 只更新已有关系：先复制双方键值并解码引用，再更新第一侧匹配记录的可选 payload，随后确认第二侧存在对应记录。最后只修改反向键的可选附加数据，再通过 slot 1 原位写回值。原仅更新入口已移除，调用方显式选择模式，不保留转发壳。
 
 第二侧确认传入两个空更新参数，因此只查找，不请求可写记录。`UpdateAssociationRecord` 统一这个原入口与节点迁移的匹配写入，保留首个匹配规则和顺序失败行为。按键复制值也集中到 `ReadTrieValueByKey`，删除与更新不各自实现一份。
 
@@ -128,6 +128,20 @@ work/native-rewrite/recovered-associations/association_records_test
 下方同一真实双侧流程先更新 `a-x`：偏移 `0` 的记录保留目标 ID 并写入六个新字节，八字节反向值保留引用和十六位字段，只更新最后两字节。独立字面期望检查结果，双方记录数量保留。单侧缺失场景还确认正向记录偏移 `30` 的 payload 已更新，反向值与记录数量保持原样。
 
 节点迁移调用了同一匹配写入实现，因此另外回归已有输入输出明确的节点迁移测试。两条反向 ID 修复与后续缺失端点的部分完成语义通过。两项测试共用一次严格 C++17 源码编译，没有增加第二套接收者或测试后端。
+
+## 双向新增与新键清理
+
+模式 `1` 先执行相同的已有关系更新，已有双向匹配时不增加关系数量。缺少任一匹配后，双方当前列表数量均低于 `511` 才允许追加。先写正向记录、链接池项和发布值，再处理反向，全部成功后关系数量加一并设置 `0x10`。
+
+`0x1c4494` 的查键与新键建立也已连接。新值先清零，按键的真实字节计算 CRC16，再经已有 `InsertTrieValue` 追加值和插入终端。原 `0x1c45cc` 未检查校验补丁返回值，恢复路径保留该顺序。键插入绑定同一 `UpdateMovedNodeId`，真实搬迁可修复对侧记录。
+
+`AssociationEditor` 按方向拥有记录和值暂存区，更新、删除与新增共用这些区域。记录暂存区跨调用保留省略 payload 的旧字节，新键的值暂存区才清零。区域大小读取实际定长表的记录宽度，没有第二套宽度配置或记录分配器。拥有位置按源码结构归一化，未复制原对象 ABI。
+
+追加路径失败后，按当时列表数量清理空端点。已经追加成功的列表数量大于零，因此不会因为这次操作失败就被整体删除。查键或引用解码阶段失败直接返回，不补做这段清理。键删除不回收已追加的值或关联记录，整体恢复不在此层。
+
+一条真实组件流程创建 `a-x`、`a-y`、`b-y`，验证独立 CRC 字节、附加数据、暂存 payload 保留与已有关系更新。继续通过真实编辑新增 `510` 个键，将 `x` 的反向列表填到 `511`，并在增长后核对原关联和最后一个新关联。再新增 `overflow-x` 时，创建的空正向键被清理，关系数量仍为 `513`。定长值表保留新值记录，正反向关联记录数量仍各为 `513`，没有故障注入或伪造计数。
+
+严格 WSL C++17 共享编译通过，新增流程与既有更新、删除和单侧缺失流程均通过。真实 APK 出口新增 CRC 写入、列表上限、计数与清理锚点后通过，仍为 `186` 个区域。原 ARM64、外层准入与内存故障等价仍未验收。
 
 ## 双向关联删除
 
@@ -158,6 +172,7 @@ g++ -std=c++17 -O2 -Wall -Wextra -Werror -nostdlib -r \
   research/native-rewrite/recovered/trie_value_lookup.cc \
   research/native-rewrite/recovered/trie_value_editor.cc \
   research/native-rewrite/recovered/node_id_updater.cc \
+  research/native-rewrite/recovered/dictionary_checksum.cc \
   research/native-rewrite/recovered/dictionary_association_removal.cc \
   research/native-rewrite/recovered/dictionary_association_update.cc \
   -o "$out/recovered.o"
@@ -165,6 +180,10 @@ g++ -std=c++17 -O2 -Wall -Wextra -Werror \
   research/native-rewrite/tests/dictionary_association_removal_test.cc \
   "$out/recovered.o" -o "$out/dictionary_association_update_test"
 "$out/dictionary_association_update_test"
+g++ -std=c++17 -O2 -Wall -Wextra -Werror \
+  research/native-rewrite/tests/dictionary_association_creation_test.cc \
+  "$out/recovered.o" -o "$out/dictionary_association_creation_test"
+"$out/dictionary_association_creation_test"
 g++ -std=c++17 -O2 -Wall -Wextra -Werror \
   research/native-rewrite/tests/node_id_updater_test.cc \
   "$out/recovered.o" -o "$out/node_id_updater_test"
@@ -185,8 +204,8 @@ APK 入口补入第二列表失败早退、更新与删除分派、第二侧编�
 
 原指令还确认一个重要顺序：第二侧引用编码失败，或第二侧 trie 写入、删除返回失败时，尾部仍执行关系数量 `+0x34` 减一，并将状态字段 `+0x20` 置位 `0x10`，随后返回该失败结果。第一侧失败的早退位置不同，不能将这一函数改写成统一的「全部成功后再减数量」。
 
-双侧删除已有宿主证据，缺少反向记录的早退也已执行。第二侧发布失败后仍减数量的分支，目前只有静态与恢复源码证据，未注入内存故障验收。局部值副本代替原复用区域，分配步骤不承诺等价。外层恢复、原 ARM64、损坏格式及完整内存故障仍未验收，不把部分提交解释为词典整体回滚。
+双侧删除已有宿主证据，缺少反向记录的早退也已执行。第二侧发布失败后仍减数量的分支，目前只有静态与恢复源码证据，未注入内存故障验收。值与记录暂存区现已按方向跨调用复用，但按需分配与原构造阶段分配不同，分配失败步骤仍不承诺等价。外层恢复、原 ARM64、损坏格式及完整内存故障仍未验收，不把部分提交解释为词典整体回滚。
 
 ## 下一步
 
-索引池节点布局、独立元数据与内存操作见 [索引池源码](index-pool.md)。下一步恢复双向新增协调、CRC16 和创建新键后的失败清理，再继续完整文件容器与外层恢复。
+索引池节点布局、独立元数据与内存操作见 [索引池源码](index-pool.md)。CRC16、双向新增与空端点清理已经连接。下一步恢复完整表容器与外层恢复，再连接文件读写；不以宿主编辑流程代替持久化或完整输入引擎验收。

@@ -18,7 +18,8 @@ bool Publish(AssociationEditor& editor, std::string_view key, IndexRange range,
 bool RemoveDictionaryAssociation(AssociationEditor& forward, AssociationEditor& reverse,
                                   DictionaryEditState& state, std::string_view forward_key,
                                   std::string_view reverse_key) {
-    OwnedByteRegion forward_value, reverse_value;
+    auto& forward_value = forward.value_buffer;
+    auto& reverse_value = reverse.value_buffer;
     std::uint32_t forward_id = 0, reverse_id = 0;
     if (!ReadTrieValueByKey(forward.side.trie, forward.side.values, forward_key, forward_id, forward_value) ||
         !ReadTrieValueByKey(reverse.side.trie, reverse.side.values, reverse_key, reverse_id, reverse_value)) {

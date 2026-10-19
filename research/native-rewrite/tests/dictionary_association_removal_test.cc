@@ -60,7 +60,8 @@ int main() {
     const std::string_view extra("\xde\xf0", 2);
     const std::array<std::uint8_t, 10> updated{2, 0, 0, 0, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66};
     const std::array<std::uint8_t, 8> updated_x{1, 4, 0, 0, 0x78, 0x56, 0xde, 0xf0};
-    Require(UpdateDictionaryAssociation(forward, reverse, "a", "x", &payload, &extra) &&
+    Require(ModifyDictionaryAssociation(forward, reverse, state, "a", "x", &payload, &extra,
+                                         AssociationEditMode::ExistingOnly) &&
             fr.ReadRecord(0, record, size) && size == 10 &&
             std::equal(updated.begin(), updated.end(), record) &&
             ReadTrieValueByNodeId(rt, rv, 2, value) && value.Size() == 8 &&
@@ -104,7 +105,8 @@ int main() {
     state = {1, 0x80};
     const std::string_view partial_payload("\xaa\xbb\xcc\xdd\xee\xff", 6);
     const std::array<std::uint8_t, 10> partial{2, 0, 0, 0, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
-    Require(!UpdateDictionaryAssociation(forward, reverse, "a", "x", &partial_payload, &extra) &&
+    Require(!ModifyDictionaryAssociation(forward, reverse, state, "a", "x", &partial_payload, &extra,
+                                          AssociationEditMode::ExistingOnly) &&
             fr.ReadRecord(30, record, size) && size == 10 &&
             std::equal(partial.begin(), partial.end(), record) &&
             ReadTrieValueByNodeId(rt, rv, 2, value) && value.Size() == 8 &&
