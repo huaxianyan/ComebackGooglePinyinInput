@@ -62,12 +62,12 @@ a()Ljava/lang/String;
 
 - 旧研究声明的三个分析依赖已恢复，固定版本仍只维护在 `research/native-rewrite/requirements.txt`，不重复安装。动态符号与重定位读取已统一到 LIEF，不再维护另一套独立解码。
 - 既有 Ubuntu 默认 Python 为 3.6.8。已有 objdump 的目标列表不包含 AArch64，Node、Java 和 Ghidra 不在本轮检查到的 PATH 中，不能把该环境写成 REA 已就绪。
-- REA Android/JADX 已通过本机真实方法取证，CLI 与对应引擎使用共享安装，批量采集复用其 MCP SDK。部署与输出限制见 [REA 实际接入](candidate-commit-learning.md#rea-实际接入)。官方 Windows Ghidra 接口仍不接纳本项目的 ARM64 ELF，不能把 Java provider 可用写成 native 后端就绪。
+- REA Android/JADX 已通过本机真实方法取证，CLI 与对应引擎使用共享安装，批量采集复用其 MCP SDK。部署与输出限制见 [REA 实际接入](candidate-commit-learning.md#rea-实际接入)。REA 的 Windows Ghidra 接口仍不接纳本项目的 ARM64 ELF，独立官方 headless 的实际验证见 [Ghidra 静态分析入口](ghidra-headless.md)。
 - 本轮的局部 ARM64 常量识别器只服务取证，不扩展成自制完整反编译器。未识别指令会终止该块的常量追踪，空结果不证明不存在调用。
 
-Python 依赖和 Android/JADX 入口已就绪。后续 codec 和 trie 需要继续恢复可读控制流，拟部署官方 Ghidra headless 与所需 JDK 21，直接分析 ARM64 ELF，不修改 REA 的格式准入。本机共享工具目录和 Scoop 应用目录未找到 Ghidra，只找到 JDK 17。新增两项安装尚未获明确许可，暂未执行。
+维护者另行明确批准 Ghidra 与 JDK 21 安装。共享官方 headless 已导入真实 ARM64 ELF，复用数据库成功导出三个函数视图。导出器按 image base 换算偏移，manifest 保留程序身份、架构和诊断。自动分析仍有异常表错误，调用参数推断也有缺口，不能把导出视图直接作为源码。
 
-三个 Python 依赖使用单独批准的安装授权。REA 使用维护者原有的可选接入要求，限于本轮共享 CLI 和 Android 静态分析引擎。这些权限不扩大为升级 WSL、安装整套 native 后端或操作设备。
+三个 Python 依赖使用单独批准的安装授权。REA 沿用原有的可选接入要求，Ghidra 与 JDK 使用本轮新增许可。默认环境、WSL 和设备保持原样，其他后端或系统改动仍需另行授权。
 
 ## 仍未关闭的研究问题
 
