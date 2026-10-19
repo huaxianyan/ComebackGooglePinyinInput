@@ -4,7 +4,7 @@
 
 当前尚未达到完整调查结束或独立源码输入法就绪的条件。本轮已恢复旧研究、补齐 `v2.1.7` 功能基线，并推进 JNI、C++ 类型和 composing 消费边界。没有把反编译产物整理进一个目录就称为源码工程。
 
-目前仍缺 native 搜索、排序、学习、滑行和手写的完整实现规格与源码。已有可独立编译的标量数学、纯 Java 选区、词典头、payload 和关联记录组件，以及索引池分配、增长和回收核心。堆缓冲区所有权已接入池的双缓冲区增长，覆盖共享复制、父切片和写时分离，见 [所有权源码](owned-byte-region.md)。定长记录后端已通过真实追加协调入口接到池，首条建立、插入重排、按键删除和确定的部分失败状态已有源码验证，见 [关联列表](association-records.md#列表追加与插入顺序) 与 [记录存储源码](fixed-phrase-table.md)。trie 值记录的追加、四字节引用发布与原位更新已有独立源码，见 [trie 值记录](trie-values.md)。已就绪 DATrie 的严格字节准入、已有路径查找及终端更新已有借用视图源码，见 [DATrie 视图](datrie-view.md)。入口分别见 [键生成与分数源码](key-generator-score-math.md)、[输入会话与选区源码](input-session-selection.md)、[词典编辑器与文件头源码](dictionary-storage.md)、[payload 编码源码](payload-codec.md)、[关联表引用与记录源码](association-records.md) 和 [索引池源码](index-pool.md)。候选预览、确认、提交与学习入口见 [候选确认与学习边界](candidate-commit-learning.md)。完整输入生命周期和各模式状态机仍未闭合，不能用这些局部成果代替整个引擎。
+目前仍缺 native 搜索、排序、学习、滑行和手写的完整实现规格与源码。已有可独立编译的标量数学、纯 Java 选区、词典头、payload 和关联记录组件，以及索引池分配、增长和回收核心。堆缓冲区所有权已接入池的双缓冲区增长，覆盖共享复制、父切片和写时分离，见 [所有权源码](owned-byte-region.md)。定长记录后端已通过真实追加协调入口接到池，首条建立、插入重排、按键删除和确定的部分失败状态已有源码验证，见 [关联列表](association-records.md#列表追加与插入顺序) 与 [记录存储源码](fixed-phrase-table.md)。trie 值记录的追加、四字节引用发布与原位更新已有独立源码，见 [trie 值记录](trie-values.md)。已就绪 DATrie 的严格字节准入、路径查找和终端更新，以及节点扩容与空闲 base 选择已有源码，见 [DATrie 视图](datrie-view.md)。入口分别见 [键生成与分数源码](key-generator-score-math.md)、[输入会话与选区源码](input-session-selection.md)、[词典编辑器与文件头源码](dictionary-storage.md)、[payload 编码源码](payload-codec.md)、[关联表引用与记录源码](association-records.md) 和 [索引池源码](index-pool.md)。候选预览、确认、提交与学习入口见 [候选确认与学习边界](candidate-commit-learning.md)。完整输入生命周期和各模式状态机仍未闭合，不能用这些局部成果代替整个引擎。
 
 目标与最终验收只维护在 [研究计划](../native-rewrite-plan.md)。功能状态只维护在 [功能清单](feature-inventory.md)，ABI 证据见 [JNI 与 C++ 边界](native-abi-map.md)。
 

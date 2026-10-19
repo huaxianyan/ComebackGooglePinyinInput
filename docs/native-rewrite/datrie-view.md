@@ -1,10 +1,10 @@
-# DATrie 键准入与已有值更新
+# DATrie 节点与已有值操作
 
 ## 已恢复的范围
 
 源码为 `research/native-rewrite/recovered/datrie_view.h`、`datrie_view.cc`，验证入口为 `research/native-rewrite/tests/datrie_view_test.cc`。
 
-`DATrieView` 借用已经就绪的 trie 元数据和可写节点缓冲区，恢复严格字节准入、从根查找已有路径，以及已有终端值更新。调用方负责原对象的就绪状态、写访问所有权与视图生命周期。此组件没有初始化器、完整文件加载器、扩容、冲突搬迁或节点增删，也不是原类 ready 状态的替代实现。
+`DATrieView` 借用已经就绪的 trie 元数据和可写节点缓冲区，恢复严格字节准入、从根查找已有路径，以及已有终端值更新。调用方负责原对象的就绪状态、写访问所有权与视图生命周期。该视图不负责初始化、文件加载或就绪状态。独立拥有型入口已恢复节点扩容与 base 选择，见下文。冲突搬迁和完整节点增删仍未实现。
 
 ## 字节与节点
 
@@ -35,7 +35,37 @@
 
 视图将访问限制在给定缓冲区范围内。原终端判定对候选索引等于范围大小的情况未提前拒绝，且父索引用于有符号地址计算。恢复入口不执行损坏索引对应的内存访问。损坏格式、越界访问及内存故障不属于已验收等价范围。
 
-## 验证
+## 空闲链、扩容与 base 选择
+
+`GrowDATrieNodes` 对应 `0x1d4e5c`，复用 `OwnedByteRegion`。节点零是空闲链哨兵，base 保存负的尾索引，check 保存负的首索引。空闲节点分别保存负的前驱与后继，零表示链端。这与关联索引池的四字节单元不是同一种格式。
+
+每次扩容将节点范围增加 256。已有容量小于或等于新范围时重新分配，容量选「原容量乘 1.25 后截断」与「原容量加 512」的较大值。系数复用 `storage_growth.h`，没有第三份增长常量。新缓冲区先填 `ff`，再复制旧容量的全部完整单元，不只复制旧活动范围。
+
+写入顺序保留为：连接原尾端、建立新后继、建立新前驱、更新哨兵尾端，最后提交元数据范围。原生输入大小转换包含带符号容量读取和无符号浮点转换，极端整数范围尚未验收。
+
+`FindDATrieBase` 对应 `0x1d4fe8`。输入为合法的字节标签、最小字节及有序空闲链。它先跳过不大于最小字节的候选，以「候选减最小字节」作为 base，逐项检查子位置。要求节点范围减一严格大于 base 加 256，边界相等仍扩容。子位置的 check 必须为负，不能改用允许零后继的通用空闲判定。
+
+搜索失败候选后沿空闲链继续，必要时增长，并重新取得元数据和节点视图。选择本身不预留节点。`UnlinkFreeNode` 对应 `0x1d5128`，只将真实空闲单元从链中摘除，保留本单元两字内容。原调用方随后设置占用字段，不能把摘链单独当作完成节点插入。
+
+恢复入口在识别到分配失败时返回 false，保留此前已完成的增长或所有权变化。原 base 搜索忽略增长返回值，可能继续循环或访问无效内存。这项差异已声明，完整内存耗尽等价没有验收。
+
+### 分配组件验证
+
+```bash
+mkdir -p work/native-rewrite/recovered-datrie-allocation
+g++ -std=c++17 -O2 -Wall -Wextra -Werror \
+  research/native-rewrite/recovered/owned_byte_region.cc \
+  research/native-rewrite/recovered/datrie_view.cc \
+  research/native-rewrite/tests/datrie_allocation_test.cc \
+  -o work/native-rewrite/recovered-datrie-allocation/datrie_allocation_test
+work/native-rewrite/recovered-datrie-allocation/datrie_allocation_test
+```
+
+严格构建与独立夹具流程通过：节点范围从 `4` 到 `260`，容量为 `516`。base 搜索淘汰会覆盖已占用节点的候选，因余量边界再次增长到范围 `516`、容量 `1028`，验证容量相等时仍分配。字面字节确认链首、链尾、未用容量 `ff` 填充、共享旧缓冲区保留，以及摘链只改邻居的行为。
+
+真实 APK 出口补入容量边界、范围提交、候选符号位和摘链锚点后通过。三个新增区域与发布库指令字节一致，证据位于 `work/native-rewrite/ghidra/datrie-node-allocation/`、`datrie-free-chain/`，以及 `work/native-rewrite/original-apk/native-datrie-allocation.txt` 和对应 comparison JSON。
+
+## 键与已有值验证
 
 ```bash
 mkdir -p work/native-rewrite/recovered-datrie-view
@@ -57,4 +87,4 @@ work/native-rewrite/recovered-datrie-view/datrie_view_test
 
 辅助查询曾把 `0x1d4be4` 当作函数入口，脚本失败且未生成 manifest。该批次保留日志，但不列为完整导出证据。空闲节点的行为以原指令取证为准，不把 Headless 进程退出当作导出成功。
 
-Google 派生逻辑继续按 `NOTICE` 保留边界。下一步恢复节点分配、扩容与冲突搬迁，再接通真实节点插入和删除，最后回到双向关联写回与外层失败恢复。
+Google 派生逻辑继续按 `NOTICE` 保留边界。下一步恢复空闲节点归还、子节点枚举与冲突搬迁，再接通真实节点插入和删除，最后回到双向关联写回与外层失败恢复。
