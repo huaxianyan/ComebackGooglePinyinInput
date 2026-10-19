@@ -46,7 +46,7 @@ Builder `0x1bfbfc` 在配置宽度非负的分支调用 `0x1f2f70` 构造定长�
 
 slot 4 不是键删除，不能仅凭函数在虚表中的位置推断操作。slot 2 的尾调用保留键参数，当前入口没有同步回收值表记录。完整 DATrie 删除尚未恢复，这份静态连接不作为键删除执行验收。
 
-`0x1c5e64` 检查可选 payload 长度后，分别调用两侧读取对象 `+0x68`。VariableValueLengthTrie 的对应入口 `0x1de3a8` 在就绪后继续委托底层读取对象。当前证据支持将此路径称为长度与键准入检查，不再把它命名为「参数规范化」。键字节的解释及 DATrie 准入实现仍待恢复。
+`0x1c5e64` 检查可选 payload 长度后，分别调用两侧读取对象 `+0x68`。VariableValueLengthTrie 的对应入口 `0x1de3a8` 在就绪后继续委托底层读取对象。当前证据支持将此路径称为长度与键准入检查，不再把它命名为「参数规范化」。严格字节准入、已有路径查找与终端更新已有源码，见 [DATrie 借用视图](datrie-view.md)。节点增删仍待恢复。
 
 ## 验证
 
@@ -75,4 +75,4 @@ work/native-rewrite/recovered-trie-values/trie_values_test
 - `work/native-rewrite/original-apk/native-trie-values.txt`
 - `work/native-rewrite/restart-v217/native-trie-values-comparison.json`
 
-Google 派生逻辑继续按 `NOTICE` 保留权利边界。下一步恢复底层 DATrie 的键准入与节点编辑，再接回完整值引用和双向关联写回。
+Google 派生逻辑继续按 `NOTICE` 保留权利边界。下一步恢复底层 DATrie 节点分配、扩容与冲突搬迁，再接通节点插入、删除及双向关联写回。
