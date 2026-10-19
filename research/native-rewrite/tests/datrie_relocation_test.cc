@@ -40,6 +40,7 @@ int main() {
     row(bytes, 200, {42, 0, 0, 0, 21, 0, 0, 0});
     row(bytes, 320, {4, 0, 0, 0, 23, 0, 0, 0});
     row(bytes, 336, {8, 0, 0, 0, 25, 0, 0, 0});
+    trie_metadata.MutableData()[8] = 3;  // Three existing terminal words in this image.
     const auto saved_nodes = trie_nodes;
     const auto saved_metadata = trie_metadata;
 
@@ -78,6 +79,9 @@ int main() {
     Require(forward_values.AppendRecord(forward_reference.data(), 4, id) && id == 0 &&
             forward_values.AppendRecord(empty.data(), 4, id) && id == 4 &&
             forward_values.AppendRecord(empty.data(), 4, id) && id == 8 &&
+            forward_values.AppendRecord(empty.data(), 4, id) && id == 12 &&
+            forward_values.AppendRecord(empty.data(), 4, id) && id == 16 &&
+            forward_values.AppendRecord(empty.data(), 4, id) && id == 20 &&
             reverse_values.AppendRecord(reverse_first.data(), 4, id) && id == 0 &&
             reverse_values.AppendRecord(reverse_second.data(), 4, id) && id == 4,
             "publishing literal value references independent of the implementation");
@@ -86,15 +90,19 @@ int main() {
     const DATrieNodeMove notify = [&](std::uint32_t old_id, std::uint32_t new_id) {
         UpdateMovedNodeId(moved, opposite, old_id, new_id);
     };
-    Require(trie.ResolveCollision(trie_metadata, trie_nodes, 21, 0, &notify) == 3 &&
+    std::uint32_t terminal = 0;
+    Require(trie.InsertValue(trie_metadata, trie_nodes, std::string_view("\x02\x01", 2),
+                              12, &terminal, &notify) && terminal == 20 &&
+            trie_metadata.Data()[8] == 4 && saved_metadata.Data()[8] == 3 &&
             trie_nodes.Size() == 6144 && trie_metadata.Data()[13] == 2 && saved_metadata.Data()[13] == 1 &&
             trie.FindNode(std::string_view("\x02", 1)) == 4 &&
             trie.FindNode(std::string_view("\x02\x01", 2)) == 3 &&
             trie.FindNode(std::string_view("\x02\x01\x03", 3)) == 23 &&
             trie.FindNode(std::string_view("\x02\x01\x05", 3)) == 25,
-            "collision growth refreshes the shared view and retargets the current node and descendant edges");
+            "inserting a prefix word completes relocation, publishes its terminal and increments the word count");
     std::uint32_t value = 0;
     Require(trie.ReadTerminalValue(2, value) && value == 0 &&
+            trie.ReadTerminalValue(20, value) && value == 12 &&
             trie.ReadTerminalValue(40, value) && value == 4 &&
             trie.ReadTerminalValue(42, value) && value == 8,
             "the moved terminal and both deeper values retain their literal offsets");
@@ -109,6 +117,14 @@ int main() {
                 std::equal(repaired.begin(), repaired.end(), record),
                 "the real notification repairs both reverse IDs and retains their payloads");
     }
-    // The newly claimed zero edge still awaits the insertion caller's value.
-    std::puts("PASS: collision relocation, COW/growth, current retargeting and real reverse-ID repair");
+    Require(trie.InsertValue(trie_metadata, trie_nodes, std::string_view("\x05\x03", 2),
+                              16, &terminal, &notify) && terminal == 6 &&
+            trie.FindNode(std::string_view("\x05\x03", 2)) == 5 &&
+            trie.ReadTerminalValue(6, value) && value == 16 && trie_metadata.Data()[8] == 5,
+            "inserting a new path allocates its internal bases and zero terminal");
+    Require(trie.InsertValue(trie_metadata, trie_nodes, std::string_view("\x05\x03", 2),
+                              20, &terminal, &notify) && terminal == 6 &&
+            trie.ReadTerminalValue(6, value) && value == 20 && trie_metadata.Data()[8] == 5,
+            "overwriting the existing key retains its terminal and word count");
+    std::puts("PASS: complete DATrie insertion, prefix relocation, new path and existing-key overwrite");
 }

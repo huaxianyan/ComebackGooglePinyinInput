@@ -54,13 +54,7 @@ std::uint32_t DATrieView::RelocateChildren(std::uint32_t current, std::uint32_t 
 std::uint32_t DATrieView::ResolveCollision(OwnedByteRegion& metadata, OwnedByteRegion& nodes,
                                           std::uint32_t current, std::uint8_t byte,
                                           const DATrieNodeMove* notify) {
-    const auto refresh = [&]() {
-        auto* header = metadata.MutableData();
-        auto* bytes = nodes.MutableData();
-        *this = DATrieView(header, metadata.Size(), bytes, nodes.Size());
-        return NodeCount() > kRoot;
-    };
-    if (!refresh() || current == 0 || current >= NodeCount()) return 0;
+    if (!Rebind(metadata, nodes) || current == 0 || current >= NodeCount()) return 0;
     std::uint32_t destination = Base(current) + byte;
     if (destination >= NodeCount()) return 0;
     const auto owner = Check(destination);
@@ -72,14 +66,14 @@ std::uint32_t DATrieView::ResolveCollision(OwnedByteRegion& metadata, OwnedByteR
         std::uint32_t base = 0;
         if (owner == kRoot || (current != kRoot && own_count + 1 < other_count)) {
             if (!FindDATrieBase(metadata, nodes, own_labels.data(), own_count, byte, base) ||
-                !refresh()) return 0;
+                !Rebind(metadata, nodes)) return 0;
             current = RelocateChildren(current, current, base, own_labels.data(), own_count, notify);
             if (current == 0) return 0;
             destination = base + byte;
         } else {
             if (other_count == 0 ||
                 !FindDATrieBase(metadata, nodes, other_labels.data(), other_count - 1,
-                                 other_labels[other_count - 1], base) || !refresh()) return 0;
+                                 other_labels[other_count - 1], base) || !Rebind(metadata, nodes)) return 0;
             current = RelocateChildren(current, owner, base, other_labels.data(), other_count, notify);
             if (current == 0) return 0;
             destination = Base(current) + byte;

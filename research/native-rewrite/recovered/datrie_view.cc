@@ -23,6 +23,13 @@ bool DATrieView::NonPositive(std::uint32_t word) {
     return word == 0 || (word & 0x80000000U) != 0;
 }
 
+bool DATrieView::Rebind(OwnedByteRegion& metadata, OwnedByteRegion& nodes) {
+    auto* header = metadata.MutableData();
+    auto* bytes = nodes.MutableData();
+    *this = DATrieView(header, metadata.Size(), bytes, nodes.Size());
+    return NodeCount() > kRoot;
+}
+
 bool DATrieView::AcceptsByte(std::uint8_t byte) const {
     return byte != 0 && metadata_[kAlphabetOffset + byte] != 0;
 }
@@ -235,12 +242,7 @@ bool FindDATrieBase(OwnedByteRegion& metadata, OwnedByteRegion& nodes,
     DATrieView view(header, metadata.Size(), bytes, nodes.Size());
     if (view.NodeCount() < 2) return false;
     const auto grow = [&]() {
-        if (!GrowDATrieNodes(metadata, nodes)) return false;
-        header = metadata.MutableData();
-        bytes = nodes.MutableData();
-        if (header == nullptr || bytes == nullptr) return false;
-        view = DATrieView(header, metadata.Size(), bytes, nodes.Size());
-        return true;
+        return GrowDATrieNodes(metadata, nodes) && view.Rebind(metadata, nodes);
     };
     auto candidate = 0U - view.Check(0);
     while (candidate <= minimum) {

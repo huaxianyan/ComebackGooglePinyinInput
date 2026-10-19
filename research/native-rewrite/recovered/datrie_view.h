@@ -52,6 +52,13 @@ public:
     std::uint32_t ResolveCollision(OwnedByteRegion& metadata, OwnedByteRegion& nodes,
                                    std::uint32_t current, std::uint8_t byte,
                                    const DATrieNodeMove* notify = nullptr);
+    // Native nonempty, strictly admitted byte-key insertion, including its zero
+    // terminal edge. Existing keys update in place; new keys increment metadata.
+    // On success publish the terminal ID before count/value writes. Failure can
+    // retain earlier node changes; no insertion transaction is introduced.
+    bool InsertValue(OwnedByteRegion& metadata, OwnedByteRegion& nodes,
+                      std::string_view key, std::uint32_t value,
+                      std::uint32_t* terminal = nullptr, const DATrieNodeMove* notify = nullptr);
 
 private:
     static constexpr std::uint32_t kRoot = 1;
@@ -60,6 +67,7 @@ private:
     friend bool GrowDATrieNodes(OwnedByteRegion&, OwnedByteRegion&);
     friend bool FindDATrieBase(OwnedByteRegion&, OwnedByteRegion&, const std::uint32_t*,
                                std::size_t, std::uint32_t, std::uint32_t&);
+    bool Rebind(OwnedByteRegion& metadata, OwnedByteRegion& nodes);
     bool AcceptsByte(std::uint8_t byte) const;
     std::uint32_t NodeCount() const;
     std::uint32_t Base(std::uint32_t node) const;
