@@ -17,5 +17,11 @@ bool AppendTrieValue(FixedPhraseTable& records, const OwnedByteRegion& value,
 bool UpdateTrieValue(FixedPhraseTable& records, const OwnedByteRegion& reference,
                      const OwnedByteRegion& value);
 
+class DATrieView;
+// Resolve a terminal ID through its four-byte offset and copy the real value
+// into the output region, following the native copied-value lifetime contract.
+bool ReadTrieValueByNodeId(const DATrieView& trie, const FixedPhraseTable& records,
+                           std::uint32_t node, OwnedByteRegion& value);
+
 }  // namespace comeback::recovered
 #endif

@@ -83,6 +83,12 @@ bool DATrieView::UpdateValue(std::string_view key, std::uint32_t value) {
     return true;
 }
 
+bool DATrieView::ReadTerminalValue(std::uint32_t node, std::uint32_t& value) const {
+    if (!IsTerminal(node)) return false;
+    value = Base(node);
+    return true;
+}
+
 void DATrieView::WriteBase(std::uint32_t node, std::uint32_t value) {
     detail::WriteLittleEndian(value, nodes_ + node * kNodeSize);
 }

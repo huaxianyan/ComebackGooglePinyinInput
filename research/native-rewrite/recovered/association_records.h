@@ -30,6 +30,15 @@ bool PatchAssociationRecord(AssociationRecordLayout layout, std::uint8_t* bytes,
 
 class FixedPhraseTable;
 
+struct AssociationRecordLocation {
+    std::uint32_t position;
+    std::uint32_t record_id;
+};
+// Shared first-match lookup used by deletion and node-ID repair.
+bool FindAssociationRecord(const FixedPhraseTable& records, const IndexPoolView& pool,
+                            IndexRange reference, std::uint32_t key,
+                            AssociationRecordLocation& location);
+
 // Native association append stores the record before linking its ID into the
 // list. A link failure leaves that record appended; there is no rollback.
 bool AppendAssociationRecord(FixedPhraseTable& records, OwnedByteRegion& metadata,
@@ -39,6 +48,21 @@ bool AppendAssociationRecord(FixedPhraseTable& records, OwnedByteRegion& metadat
 // fixed-table record intact. This does not edit either enclosing trie.
 bool RemoveAssociationRecord(const FixedPhraseTable& records, OwnedByteRegion& metadata,
                               OwnedByteRegion& cells, std::uint32_t key, IndexRange& reference);
+
+class DATrieView;
+// Concrete directional storage view, matching the reader/pool/record dependencies
+// of native NodeIdUpdator. This owns no storage or synthetic readiness state.
+struct AssociationSide {
+    const DATrieView& trie;
+    const FixedPhraseTable& values;
+    OwnedByteRegion& metadata;
+    OwnedByteRegion& cells;
+    FixedPhraseTable& records;
+};
+// Native void notification: stop at the first failed lookup/update, retaining
+// earlier repaired reverse records. Does not move DATrie nodes itself.
+void UpdateMovedNodeId(const AssociationSide& moved, const AssociationSide& opposite,
+                       std::uint32_t old_id, std::uint32_t new_id);
 
 }  // namespace comeback::recovered
 #endif

@@ -26,6 +26,8 @@ public:
     // this alone does not establish that a terminal value exists.
     std::uint32_t FindNode(std::string_view key) const;
     bool UpdateValue(std::string_view key, std::uint32_t value);
+    // Node IDs refer to validated terminal cells, not key-path cells.
+    bool ReadTerminalValue(std::uint32_t node, std::uint32_t& value) const;
     // Remove a real free cell from its doubly linked chain. Its own words are
     // retained; the native caller must subsequently assign its occupied fields.
     bool UnlinkFreeNode(std::uint32_t node);

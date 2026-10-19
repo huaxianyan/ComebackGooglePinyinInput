@@ -107,4 +107,4 @@ work/native-rewrite/recovered-datrie-view/datrie_view_test
 
 辅助查询曾把 `0x1d4be4` 当作函数入口，脚本失败且未生成 manifest。该批次保留日志，但不列为完整导出证据。空闲节点的行为以原指令取证为准，不把 Headless 进程退出当作导出成功。
 
-Google 派生逻辑继续按 `NOTICE` 保留边界。下一步定位终端迁移通知的实际接收者，恢复冲突搬迁及节点增删，再回到双向关联写回与外层失败恢复。
+Google 派生逻辑继续按 `NOTICE` 保留边界。实际通知接收者已恢复，见 [终端节点迁移通知](node-id-updater.md)。下一步将其接入冲突搬迁，再恢复节点增删、双向关联写回与外层失败恢复。
