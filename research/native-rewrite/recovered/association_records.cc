@@ -25,6 +25,21 @@ bool DecodeAssociationReference(const std::uint8_t* bytes, std::size_t size,
     return true;
 }
 
+bool PatchAssociationValue(std::uint8_t* bytes, std::size_t size, bool has_checksum,
+                            const IndexRange* reference, const std::string_view* data) {
+    const auto write = [&](std::size_t offset, const void* input, std::size_t count) {
+        if (offset > size || count > size - offset) return false;
+        if (count != 0) std::memcpy(bytes + offset, input, count);
+        return true;
+    };
+    if (reference != nullptr) {
+        const auto encoded = EncodeAssociationReference(*reference);
+        if (!write(0, encoded.data(), encoded.size())) return false;
+    }
+    const std::size_t offset = sizeof(std::uint32_t) + (has_checksum ? sizeof(std::uint16_t) : 0);
+    return data == nullptr || write(offset, data->data(), data->size());
+}
+
 bool PatchAssociationRecord(AssociationRecordLayout layout, std::uint8_t* bytes,
                             std::size_t size, const std::uint32_t* first_key,
                             const std::uint32_t* second_key, const std::string_view* payload) {

@@ -21,4 +21,12 @@ bool ReadTrieValueByNodeId(const DATrieView& trie, const FixedPhraseTable& recor
     return true;
 }
 
+bool ReadTrieValueByKey(const DATrieView& trie, const FixedPhraseTable& records,
+                         std::string_view key, std::uint32_t& terminal, OwnedByteRegion& value) {
+    const auto found = trie.FindTerminal(key);
+    if (found == 0) return false;
+    terminal = found;
+    return ReadTrieValueByNodeId(trie, records, found, value);
+}
+
 }  // namespace comeback::recovered

@@ -26,15 +26,7 @@ void UpdateMovedNodeId(const AssociationSide& moved, const AssociationSide& oppo
         IndexRange reverse{};
         if (!ReadTrieValueByNodeId(opposite.trie, opposite.values, other_id, value) ||
             !DecodeAssociationReference(value.Data(), value.Size(), reverse)) return;
-        const IndexPoolView reverse_pool(opposite.metadata.Data(), opposite.metadata.Size(),
-                                         const_cast<std::uint8_t*>(opposite.cells.Data()),
-                                         opposite.cells.Size());
-        AssociationRecordLocation location{};
-        if (!FindAssociationRecord(opposite.records, reverse_pool, reverse, old_id, location)) return;
-        std::uint8_t* writable = nullptr;
-        if (!opposite.records.MutableRecord(location.record_id, writable, size) ||
-            !PatchAssociationRecord(AssociationRecordLayout::TargetKey, writable, size,
-                                    &new_id, nullptr, nullptr)) return;
+        if (!UpdateAssociationRecord(opposite, reverse, old_id, &new_id, nullptr)) return;
     }
 }
 

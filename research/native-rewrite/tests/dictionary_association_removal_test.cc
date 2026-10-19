@@ -30,7 +30,7 @@ int main() {
     DATrieView ft(fm.Data(), fm.Size(), fn.MutableData(), fn.Size());
     DATrieView rt(rm.Data(), rm.Size(), rn.MutableData(), rn.Size());
     AssociationSide fs{ft, fv, fp, fc, fr}, rs{rt, rv, rp, rc, rr};
-    AssociationEditor forward{fs, fm, fn}, reverse{rs, rm, rn};
+    AssociationEditor forward{fs, fm, fn, true}, reverse{rs, rm, rn, true};
     const auto fa = Region({2, 4, 0, 0, 0x34, 0x12});
     const auto fb = Region({1, 8, 0, 0, 0x34, 0x12});
     const auto rx = Region({1, 4, 0, 0, 0x78, 0x56, 0x9a, 0xbc});
@@ -54,6 +54,20 @@ int main() {
             "building both directions through actual record and list appends");
     DictionaryEditState state{3, 0x80};
     OwnedByteRegion value;
+    const std::uint8_t* record = nullptr;
+    std::size_t size = 0;
+    const std::string_view payload("\x11\x22\x33\x44\x55\x66", 6);
+    const std::string_view extra("\xde\xf0", 2);
+    const std::array<std::uint8_t, 10> updated{2, 0, 0, 0, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66};
+    const std::array<std::uint8_t, 8> updated_x{1, 4, 0, 0, 0x78, 0x56, 0xde, 0xf0};
+    Require(UpdateDictionaryAssociation(forward, reverse, "a", "x", &payload, &extra) &&
+            fr.ReadRecord(0, record, size) && size == 10 &&
+            std::equal(updated.begin(), updated.end(), record) &&
+            ReadTrieValueByNodeId(rt, rv, 2, value) && value.Size() == 8 &&
+            std::equal(updated_x.begin(), updated_x.end(), value.Data()) &&
+            fv.RecordCount() == 2 && rv.RecordCount() == 2 && fr.RecordCount() == 3 &&
+            rr.RecordCount() == 3 && state.association_count == 3 && state.flags == 0x80,
+            "updating a-x changes its payload and reverse data while preserving checksums and counts");
     const std::array<std::uint8_t, 6> remaining_a{1, 4, 0, 0, 0x34, 0x12};
     Require(RemoveDictionaryAssociation(forward, reverse, state, "a", "x") &&
             state.association_count == 2 && state.flags == 0x90 && rt.FindTerminal("x") == 0 &&
@@ -68,8 +82,6 @@ int main() {
     IndexRange remaining{};
     const IndexPoolView pool(rp.Data(), rp.Size(), rc.MutableData(), rc.Size());
     std::uint32_t id = 0;
-    const std::uint8_t* record = nullptr;
-    std::size_t size = 0;
     Require(std::equal(suffix.begin(), suffix.end(), value.Data() + 4) &&
             DecodeAssociationReference(value.Data(), value.Size(), remaining) && remaining.count == 1 &&
             pool.ReadRecordId(remaining.first_index, id) && id == 4 && rr.ReadRecord(id, record, size) &&
@@ -90,6 +102,16 @@ int main() {
             AppendAssociationRecord(fr, fp, fc, to_x.data(), to_x.size(), one),
             "preparing a real forward record with an existing but empty reverse key");
     state = {1, 0x80};
+    const std::string_view partial_payload("\xaa\xbb\xcc\xdd\xee\xff", 6);
+    const std::array<std::uint8_t, 10> partial{2, 0, 0, 0, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
+    Require(!UpdateDictionaryAssociation(forward, reverse, "a", "x", &partial_payload, &extra) &&
+            fr.ReadRecord(30, record, size) && size == 10 &&
+            std::equal(partial.begin(), partial.end(), record) &&
+            ReadTrieValueByNodeId(rt, rv, 2, value) && value.Size() == 8 &&
+            std::equal(empty.Data(), empty.Data() + empty.Size(), value.Data()) &&
+            fv.RecordCount() == 3 && rv.RecordCount() == 3 && fr.RecordCount() == 4 &&
+            rr.RecordCount() == 3 && state.association_count == 1 && state.flags == 0x80,
+            "a missing reverse record retains the forward payload update without creating a counterpart");
     const bool removed = RemoveDictionaryAssociation(forward, reverse, state, "a", "x");
     const IndexPoolView changed(fp.Data(), fp.Size(), fc.MutableData(), fc.Size());
     id = 0;
@@ -100,5 +122,5 @@ int main() {
             std::equal(remaining_a.begin(), remaining_a.end(), value.Data()) &&
             !changed.ReadRecordId(2, id) && id == 0xffffffffU,
             "a missing reverse record retains the first pool deletion without publishing keys or state");
-    std::puts("PASS: dual-trie association removal, reference publication, key deletion and partial failure");
+    std::puts("PASS: dual-trie existing updates, removal, reference publication, key deletion and partial failures");
 }

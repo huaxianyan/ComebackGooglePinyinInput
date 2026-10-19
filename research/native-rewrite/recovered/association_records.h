@@ -18,6 +18,13 @@ EncodedAssociationReference EncodeAssociationReference(IndexRange reference);
 bool DecodeAssociationReference(const std::uint8_t* bytes, std::size_t size,
                                 IndexRange& reference);
 
+// Native value patch with a null checksum argument: optional reference at 0,
+// optional trailing data at 4 or 6. Preserve checksum bytes and unused suffix.
+// Caller supplies valid, nonoverlapping bytes. Sequential writes retain earlier
+// changes on a later capacity failure.
+bool PatchAssociationValue(std::uint8_t* bytes, std::size_t size, bool has_checksum,
+                            const IndexRange* reference, const std::string_view* data);
+
 enum class AssociationRecordLayout { TargetKey, KeyPair };
 
 // TargetKey uses first_key only; KeyPair uses both key fields. Null field
@@ -59,6 +66,13 @@ struct AssociationSide {
     OwnedByteRegion& cells;
     FixedPhraseTable& records;
 };
+// Native first-match record update. With both optional pointers null, establish
+// existence without requesting writable record access. Shared by editing and
+// node-ID repair; missing matches and partial writes follow the existing lookup.
+bool UpdateAssociationRecord(const AssociationSide& side, IndexRange reference,
+                               std::uint32_t target, const std::uint32_t* new_target,
+                               const std::string_view* payload);
+
 // Native void notification: stop at the first failed lookup/update, retaining
 // earlier repaired reverse records. Does not move DATrie nodes itself.
 void UpdateMovedNodeId(const AssociationSide& moved, const AssociationSide& opposite,

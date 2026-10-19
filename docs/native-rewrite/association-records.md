@@ -4,7 +4,7 @@
 
 引用与字段写入源码位于 `research/native-rewrite/recovered/association_records.h`、`association_records.cc`。列表追加协调位于 `association_list.cc`，池范围操作共用 `index_pool.cc`。原字节操作仍可独立构建，不因协调入口引入存储后端链接依赖。
 
-组件包含四字节关联表引用的编解码，以及单键、双键关联记录的原位字段写入。它继续共用 `little_endian.h`，没有建立另一套字节序实现。索引池的分配、扩容与回收已有源码，定长记录后端见 [记录存储源码](fixed-phrase-table.md)。trie 值与双向删除写回已有源码，双向新增协调和磁盘存储仍待恢复。
+组件包含四字节关联表引用的编解码，以及单键、双键关联记录的原位字段写入。它继续共用 `little_endian.h`，没有建立另一套字节序实现。索引池的分配、扩容与回收已有源码，定长记录后端见 [记录存储源码](fixed-phrase-table.md)。trie 值、双向删除和已有关系更新已有源码，双向新增协调和磁盘存储仍待恢复。
 
 ## 引用头与索引池
 
@@ -111,6 +111,22 @@ work/native-rewrite/recovered-associations/association_records_test
 
 真实 APK 入口补入搬移方向、引用提交和回收锚点后通过，当前导出 151 个区域。两个新增区域与发布库字节一致，证据为 `work/native-rewrite/original-apk/native-association-removal.txt` 及对应 comparison JSON。
 
+## 已有关系更新
+
+`dictionary_association_update.cc` 的 `UpdateDictionaryAssociation` 恢复 `0x1c5660` 的模式 `2`，只更新已有关系。先复制双方键值并解码引用，再更新第一侧匹配记录的可选 payload，随后确认第二侧存在对应记录。最后只修改反向键的可选附加数据，再通过 slot 1 原位写回值。
+
+第二侧确认传入两个空更新参数，因此只查找，不请求可写记录。`UpdateAssociationRecord` 统一这个原入口与节点迁移的匹配写入，保留首个匹配规则和顺序失败行为。按键复制值也集中到 `ReadTrieValueByKey`，删除与更新不各自实现一份。
+
+`PatchAssociationValue` 恢复原值补丁中校验参数为空的分支，首四字节可写关联引用，尾随数据按配置从偏移 `4` 或 `6` 开始。校验字节和未覆盖后缀保留。它只操作调用方的有效字节区域，与其他字节操作一样可独立链接，未增加另一套区域所有权。
+
+本轮宿主流程覆盖附加数据偏移 `6`，不带十六位字段的偏移 `4` 分支目前只有原指令和恢复源码证据。
+
+已有关系更新不增加键、值或关联记录，不修改关系数量或状态位。缺少反向匹配时，正向 payload 可能已经写入，反向值尚未提交。模式 `2` 不进入模式 `1` 的追加和新键清理分支，缺失项直接返回失败，不使用模拟创建路径。
+
+下方同一真实双侧流程先更新 `a-x`：偏移 `0` 的记录保留目标 ID 并写入六个新字节，八字节反向值保留引用和十六位字段，只更新最后两字节。独立字面期望检查结果，双方记录数量保留。单侧缺失场景还确认正向记录偏移 `30` 的 payload 已更新，反向值与记录数量保持原样。
+
+节点迁移调用了同一匹配写入实现，因此另外回归已有输入输出明确的节点迁移测试。两条反向 ID 修复与后续缺失端点的部分完成语义通过。两项测试共用一次严格 C++17 源码编译，没有增加第二套接收者或测试后端。
+
 ## 双向关联删除
 
 `association_editor.h` 和 `dictionary_association_removal.cc` 恢复 `0x1c52ac` 的执行协调。`AssociationEditor` 在既有方向依赖外补充 trie 的拥有区域，继续使用同一对象。方向依赖的 trie 与值表引用可写，通知读取与编辑不各自维护一套状态。
@@ -124,8 +140,9 @@ work/native-rewrite/recovered-associations/association_records_test
 ### 双侧整合验证
 
 ```bash
-mkdir -p work/native-rewrite/recovered-dictionary-association-removal
-g++ -std=c++17 -O2 -Wall -Wextra -Werror \
+out=work/native-rewrite/recovered-dictionary-association-update
+mkdir -p "$out"
+g++ -std=c++17 -O2 -Wall -Wextra -Werror -nostdlib -r \
   research/native-rewrite/recovered/owned_byte_region.cc \
   research/native-rewrite/recovered/fixed_phrase_table.cc \
   research/native-rewrite/recovered/index_pool.cc \
@@ -140,9 +157,16 @@ g++ -std=c++17 -O2 -Wall -Wextra -Werror \
   research/native-rewrite/recovered/trie_value_editor.cc \
   research/native-rewrite/recovered/node_id_updater.cc \
   research/native-rewrite/recovered/dictionary_association_removal.cc \
+  research/native-rewrite/recovered/dictionary_association_update.cc \
+  -o "$out/recovered.o"
+g++ -std=c++17 -O2 -Wall -Wextra -Werror \
   research/native-rewrite/tests/dictionary_association_removal_test.cc \
-  -o work/native-rewrite/recovered-dictionary-association-removal/dictionary_association_removal_test
-work/native-rewrite/recovered-dictionary-association-removal/dictionary_association_removal_test
+  "$out/recovered.o" -o "$out/dictionary_association_update_test"
+"$out/dictionary_association_update_test"
+g++ -std=c++17 -O2 -Wall -Wextra -Werror \
+  research/native-rewrite/tests/node_id_updater_test.cc \
+  "$out/recovered.o" -o "$out/node_id_updater_test"
+"$out/node_id_updater_test"
 ```
 
 严格 C++17 构建通过。真实插入键、追加值和关联列表建立 `a-x`、`a-y`、`b-y` 三条关系。删除分别覆盖第一侧保留、第二侧保留和双方空列表分支，最终双方键数为零，值表各两条、记录表各三条留存。关系数量从三降到零，状态位从 `0x80` 到 `0x90`。
@@ -151,7 +175,7 @@ work/native-rewrite/recovered-dictionary-association-removal/dictionary_associat
 
 随后用实际追加建立只有正向记录、反向键为空列表的输入。删除返回失败时，第一侧池项已经释放，但两侧键、旧发布引用、关系数量与状态位保留。断言经冻结的池读取协议观察空闲单元，而非绑定无关的分配容量，也未注入失败回调。
 
-APK 入口补入第二列表失败早退、更新与删除分派、第二侧编码失败及计数状态写回锚点后通过，总数仍为 186。复用既有 `native-association-removal.txt` 等指令证据，没有新建重复取证批次。
+APK 入口补入第二列表失败早退、更新与删除分派、第二侧编码失败及计数状态写回锚点后通过，总数仍为 186。已有关系更新还补入两侧匹配、附加数据补丁和模式分派锚点。复用既有 `native-association-removal.txt`、`native-editor-header.txt` 等证据，没有新建重复取证批次。
 
 ## 双向删除的失败边界
 
@@ -163,4 +187,4 @@ APK 入口补入第二列表失败早退、更新与删除分派、第二侧编�
 
 ## 下一步
 
-索引池节点布局、独立元数据与内存操作见 [索引池源码](index-pool.md)。下一步恢复双向新增与更新协调、创建新键后的失败清理，再继续完整文件容器与外层恢复。
+索引池节点布局、独立元数据与内存操作见 [索引池源码](index-pool.md)。下一步恢复双向新增协调、CRC16 和创建新键后的失败清理，再继续完整文件容器与外层恢复。

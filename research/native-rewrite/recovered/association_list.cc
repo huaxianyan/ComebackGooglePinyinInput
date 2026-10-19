@@ -33,6 +33,22 @@ bool FindAssociationRecord(const FixedPhraseTable& records, const IndexPoolView&
     return false;
 }
 
+bool UpdateAssociationRecord(const AssociationSide& side, IndexRange reference,
+                               std::uint32_t target, const std::uint32_t* new_target,
+                               const std::string_view* payload) {
+    // Lookup must not detach the pool just to read it.
+    const IndexPoolView pool(side.metadata.Data(), side.metadata.Size(),
+                             const_cast<std::uint8_t*>(side.cells.Data()), side.cells.Size());
+    AssociationRecordLocation location{};
+    if (!FindAssociationRecord(side.records, pool, reference, target, location)) return false;
+    if (new_target == nullptr && payload == nullptr) return true;
+    std::uint8_t* bytes = nullptr;
+    std::size_t size = 0;
+    return side.records.MutableRecord(location.record_id, bytes, size) &&
+           PatchAssociationRecord(AssociationRecordLayout::TargetKey, bytes, size,
+                                   new_target, nullptr, payload);
+}
+
 bool RemoveAssociationRecord(const FixedPhraseTable& records, OwnedByteRegion& metadata,
                               OwnedByteRegion& cells, std::uint32_t key, IndexRange& reference) {
     auto* bytes = cells.MutableData();

@@ -26,6 +26,11 @@ bool UpdateTrieValue(FixedPhraseTable& records, const OwnedByteRegion& reference
 bool ReadTrieValueByNodeId(const DATrieView& trie, const FixedPhraseTable& records,
                            std::uint32_t node, OwnedByteRegion& value);
 
+// Existing-key reader used by native directional editing. Publish the ID before
+// copying the value; failure can leave that ID assigned, without creating a key.
+bool ReadTrieValueByKey(const DATrieView& trie, const FixedPhraseTable& records,
+                         std::string_view key, std::uint32_t& terminal, OwnedByteRegion& value);
+
 // EditorImpl slot 1: find an existing terminal, copy its reference and update
 // only that value record. Failure does not append or create a key.
 bool UpdateTrieValueByKey(const DATrieView& trie, FixedPhraseTable& records,

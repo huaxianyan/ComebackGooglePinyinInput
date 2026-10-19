@@ -12,6 +12,7 @@ struct AssociationEditor {
     AssociationSide& side;
     OwnedByteRegion& trie_metadata;
     OwnedByteRegion& trie_nodes;
+    bool has_checksum;
 };
 
 // Typed runtime state corresponding to native object +0x34 and +0x20; not a
@@ -28,6 +29,14 @@ struct DictionaryEditState {
 bool RemoveDictionaryAssociation(AssociationEditor& forward, AssociationEditor& reverse,
                                   DictionaryEditState& state, std::string_view forward_key,
                                   std::string_view reverse_key);
+
+// Native 0x1c5660, existing-only mode 2. Update the first forward match, then
+// require the reverse match and patch optional reverse value data. Failures keep
+// earlier updates. No new keys/records, count changes or dirty-bit writes.
+bool UpdateDictionaryAssociation(AssociationEditor& forward, AssociationEditor& reverse,
+                                  std::string_view forward_key, std::string_view reverse_key,
+                                  const std::string_view* payload,
+                                  const std::string_view* reverse_data);
 
 }  // namespace comeback::recovered
 #endif
