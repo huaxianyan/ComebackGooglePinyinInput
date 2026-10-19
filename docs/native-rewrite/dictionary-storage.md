@@ -8,7 +8,7 @@
 - `research/native-rewrite/recovered/dictionary_header.cc`
 - `research/native-rewrite/tests/dictionary_header_test.cc`
 
-文件头和已有 payload 共用 `little_endian.h` 的整数读写实现。该组件不依赖原 APK、旧执行库或反编译工具，不包含 protobuf 元数据、trie 数据、文件替换或完整编辑器实现。
+文件头和已有 payload 共用 `little_endian.h` 的整数读写实现。该组件不依赖原 APK、旧执行库或反编译工具，不包含 protobuf 元数据、trie 数据、文件替换或完整编辑器实现。关联引用、记录字段更新与索引池的后续连接见 [关联表引用与记录源码](association-records.md)。
 
 ## 编辑器的具体归属
 
@@ -90,7 +90,7 @@ work/native-rewrite/recovered-header/dictionary_header_test
 
 实际构建、四种受支持 major 的头部读取、payload 布局选择和当前头部写出均通过。校验失败保留先前输出的协议断言通过。因字节读写提取为共用实现，已有 payload 模块也完成源码重建回归。
 
-既有真实 APK 取证测试新增编辑模式、当前版本和 CRC 配置锚点后通过，导出器现有 81 个区域。十七个新区域中十六个与发布库的指令字节一致。CRC 缓存工厂只有两处 ADRP 页地址随既有 `.bss` 移动，其余指令及配置字节一致。
+既有真实 APK 取证测试新增编辑模式、当前版本和 CRC 配置锚点后通过，该轮导出器共 81 个区域。十七个新区域中十六个与发布库的指令字节一致。CRC 缓存工厂只有两处 ADRP 页地址随既有 `.bss` 移动，其余指令及配置字节一致。
 
 主要证据：
 

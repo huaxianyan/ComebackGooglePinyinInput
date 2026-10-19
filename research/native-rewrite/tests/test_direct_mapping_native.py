@@ -120,6 +120,13 @@ class DirectMappingNativeTest(unittest.TestCase):
             0x1A2270: ("mov", "w0, #3"),
             0x1A227C: ("mov", "w0, #1"),
             0x1A22C8: ("mov", "x1, #0x10"),
+            0x1C3A04: ("and", "w0, w1, #0x1ff"),
+            0x1C3A14: ("lsr", "w1, w1, #9"),
+            0x1C438C: ("orr", "w3, w3, w4, lsl #9"),
+            0x1C3A70: ("mov", "x0, #4"),
+            0x1C8138: ("mov", "x0, #8"),
+            0x1C3BF8: ("cmp", "w1, w24"),
+            0x1C808C: ("cmp", "w25, w0"),
         }
         for address, instruction in expected.items():
             with self.subTest(address=hex(address)):

@@ -90,6 +90,19 @@ REGIONS = {
     "header_crc_factory": (0x1F939C, 0x1F947C),
     "header_crc_default": (0x1F9AA4, 0x1F9B34),
     "header_crc_window": (0x1F8CBC, 0x1F8DC4),
+    "association_reference_decode": (0x1C39CC, 0x1C3A30),
+    "association_trie_value_patch": (0x1C4348, 0x1C4494),
+    "association_record_patch": (0x1C3A30, 0x1C3AC8),
+    "association_pair_record_patch": (0x1C80CC, 0x1C8190),
+    "association_record_read": (0x1C3AC8, 0x1C3B40),
+    "association_record_key": (0x1C3B40, 0x1C3B68),
+    "association_find_key": (0x1C3B68, 0x1C3C30),
+    "association_find_pair": (0x1C7FF4, 0x1C80CC),
+    "association_pair_record_read": (0x1C7F7C, 0x1C7FF4),
+    "association_record_update": (0x1C51C4, 0x1C524C),
+    "association_list_append": (0x1C5120, 0x1C51C4),
+    "association_pool_first": (0x1E4DD4, 0x1E4E3C),
+    "association_pool_insert": (0x1E4E3C, 0x1E5028),
 }
 SCORE_TABLE_POINTER = 0x699358
 SCORE_TABLE_SPANS = {
