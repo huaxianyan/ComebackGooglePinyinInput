@@ -4,7 +4,7 @@
 
 当前尚未达到完整调查结束或独立源码输入法就绪的条件。本轮已恢复旧研究、补齐 `v2.1.7` 功能基线，并推进 JNI、C++ 类型和 composing 消费边界。没有把反编译产物整理进一个目录就称为源码工程。
 
-目前仍缺 native 搜索、排序、学习、滑行和手写的完整实现规格与源码。已有可独立编译的标量数学、纯 Java 选区、词典头、payload、关联记录和索引池内存操作组件。入口分别见 [键生成与分数源码](key-generator-score-math.md)、[输入会话与选区源码](input-session-selection.md)、[词典编辑器与文件头源码](dictionary-storage.md)、[payload 编码源码](payload-codec.md)、[关联表引用与记录源码](association-records.md) 和 [索引池源码](index-pool.md)。候选预览、确认、提交与学习入口见 [候选确认与学习边界](candidate-commit-learning.md)。完整输入生命周期和各模式状态机仍未闭合，不能用这些局部成果代替整个引擎。
+目前仍缺 native 搜索、排序、学习、滑行和手写的完整实现规格与源码。已有可独立编译的标量数学、纯 Java 选区、词典头、payload 和关联记录组件，以及索引池回收与复用核心。入口分别见 [键生成与分数源码](key-generator-score-math.md)、[输入会话与选区源码](input-session-selection.md)、[词典编辑器与文件头源码](dictionary-storage.md)、[payload 编码源码](payload-codec.md)、[关联表引用与记录源码](association-records.md) 和 [索引池源码](index-pool.md)。候选预览、确认、提交与学习入口见 [候选确认与学习边界](candidate-commit-learning.md)。完整输入生命周期和各模式状态机仍未闭合，不能用这些局部成果代替整个引擎。
 
 目标与最终验收只维护在 [研究计划](../native-rewrite-plan.md)。功能状态只维护在 [功能清单](feature-inventory.md)，ABI 证据见 [JNI 与 C++ 边界](native-abi-map.md)。
 

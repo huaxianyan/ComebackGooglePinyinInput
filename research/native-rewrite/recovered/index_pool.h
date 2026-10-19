@@ -4,6 +4,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 
 namespace comeback::recovered {
 
@@ -15,7 +16,8 @@ struct IndexRange {
 
 // Non-owning view over separate metadata and cell regions. The metadata's
 // second word is the active count; cells 0/1 are the free-list sentinel/head/tail.
-// Allocation, relocation, coalescing and whole-image validation are not implemented.
+// Free-range reuse/coalescing require a valid ordered, acyclic free list.
+// Storage growth, relocation, ownership and whole-image validation are external.
 class IndexPoolView {
 public:
     IndexPoolView(const std::uint8_t* metadata, std::size_t metadata_size,
@@ -32,7 +34,20 @@ public:
     bool ReadNextFreeRange(std::uint32_t index, IndexRange& range) const;
     bool LinkFreeRanges(IndexRange previous, IndexRange next);
 
+    // A successful search with {0, 0} means that storage growth is needed.
+    bool FindFreeRange(std::int32_t count, IndexRange& range) const;
+    // Claim a real free-list range; preserve the native sequential write order.
+    bool ClaimFreeRange(IndexRange& range, const std::uint32_t* values, std::size_t count);
+    // The caller owns the occupied range. On success it becomes the merged free
+    // range, which may start earlier and contain more cells than the input.
+    bool ReleaseRange(IndexRange& range);
+
 private:
+    bool IsFreeCell(std::uint32_t index) const;
+    bool ReadPreviousFreeRange(std::uint32_t index, IndexRange& range) const;
+    bool ReadListNeighbors(IndexRange range, IndexRange& previous, IndexRange& next) const;
+    bool ReadAdjacentFreeRanges(IndexRange range, std::optional<IndexRange>& previous,
+                                std::optional<IndexRange>& next) const;
     std::uint32_t CellCount() const;
     bool ValidRange(IndexRange range) const;
     std::uint32_t ReadWord(std::uint32_t index) const;
