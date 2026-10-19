@@ -147,6 +147,8 @@ REGIONS = {
     "region_data": (0x1FA870, 0x1FA878),
     "region_size": (0x1FA878, 0x1FA880),
     "region_ref_count": (0x1FA868, 0x1FA870),
+    "pool_erase_record": (0x1E4870, 0x1E4A20),
+    "association_remove_key": (0x1C524C, 0x1C52AC),
     "phrase_construct": (0x1F2F70, 0x1F2FBC),
     "phrase_initialize": (0x1F2C8C, 0x1F2CB4),
     "phrase_read": (0x1F2D90, 0x1F2E20),

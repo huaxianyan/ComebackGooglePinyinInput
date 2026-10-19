@@ -98,6 +98,29 @@ int main() {
     Require(pool.ReadRecordId(blocker.first_index, stored_id) && stored_id == 20 &&
             EncodeAssociationReference(range) == std::array<std::uint8_t, 4>{3, 0x0a, 0, 0},
             "relocation preserves the other list and publishes the new association reference");
+    Require(RemoveAssociationRecord(table, metadata, cells, 0x11223344, range) &&
+            range.first_index == 5 && range.count == 2,
+            "removing a middle key shifts the suffix left and returns the last slot");
+    pool = IndexPoolView(metadata.Data(), metadata.Size(), cells.MutableData(), cells.Size());
+    Require(pool.ReadRecordId(5, stored_id) && stored_id == 50 &&
+            pool.ReadRecordId(6, stored_id) && stored_id == 60 && pool.ReleaseRange(blocker),
+            "the remaining IDs stay ordered while the separate list is explicitly released");
+    Require(RemoveAssociationRecord(table, metadata, cells, 0x55667788, range) &&
+            range.first_index == 6 && range.count == 1,
+            "a larger left free neighbor selects prefix shifting and advances the reference");
+    pool = IndexPoolView(metadata.Data(), metadata.Size(), cells.MutableData(), cells.Size());
+    Require(pool.ReadRecordId(6, stored_id) && stored_id == 50,
+            "prefix shifting retains the first record at the new list start");
+    Require(RemoveAssociationRecord(table, metadata, cells, 0xdeadbeef, range) &&
+            range.first_index == 6 && range.count == 0 && table.RecordCount() == 7 &&
+            table.ReadRecord(50, read, size) && size == 10 &&
+            std::equal(expected_edit.begin(), expected_edit.end(), read),
+            "removing the last association preserves its old start and stored record bytes");
+    pool = IndexPoolView(metadata.Data(), metadata.Size(), cells.MutableData(), cells.Size());
+    IndexRange reclaimed{};
+    Require(pool.ReadFreeRange(2, reclaimed) && reclaimed.first_index == 2 && reclaimed.count == 6,
+            "deleting all associations coalesces their pool slots into the full free extent");
+
     // Frozen native order: record append precedes the pool's reserved-index
     // validation. This uses an actual failing destination, not fault injection.
     IndexRange invalid{1, 1};
@@ -113,5 +136,5 @@ int main() {
     Require(table.RecordCount() == 0 && table.AppendRecord(record.data(), record.size(), record_id) &&
             record_id == 0 && table.RecordCount() == 1,
             "clearing the table restarts appends at byte offset zero while remaining initialized");
-    std::puts("PASS: record append, first list, in-place insertion, relocation and partial failure");
+    std::puts("PASS: association append, relocation, directional removal, singleton and partial failure");
 }

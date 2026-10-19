@@ -44,6 +44,10 @@ public:
     // The caller owns the occupied range. On success it becomes the merged free
     // range, which may start earlier and contain more cells than the input.
     bool ReleaseRange(IndexRange& range);
+    // Remove an occupied list entry, shifting raw cells toward the selected
+    // free neighbor. A singleton keeps its old first_index with count zero.
+    // The reference is changed before releasing the vacated cell.
+    bool EraseRecordId(std::uint32_t position, IndexRange& range);
 
 private:
     friend bool InsertIndexRange(OwnedByteRegion&, OwnedByteRegion&, std::uint32_t,

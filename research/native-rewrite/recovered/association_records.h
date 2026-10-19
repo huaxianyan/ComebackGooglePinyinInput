@@ -35,6 +35,10 @@ class FixedPhraseTable;
 bool AppendAssociationRecord(FixedPhraseTable& records, OwnedByteRegion& metadata,
                               OwnedByteRegion& cells, const std::uint8_t* data,
                               std::size_t size, IndexRange& reference);
+// TargetKey layout only: remove the first matching association, leaving its
+// fixed-table record intact. This does not edit either enclosing trie.
+bool RemoveAssociationRecord(const FixedPhraseTable& records, OwnedByteRegion& metadata,
+                              OwnedByteRegion& cells, std::uint32_t key, IndexRange& reference);
 
 }  // namespace comeback::recovered
 #endif

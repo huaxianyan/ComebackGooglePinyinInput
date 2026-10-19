@@ -213,6 +213,39 @@ bool IndexPoolView::ReleaseRange(IndexRange& range) {
     return LinkFreeRanges(range, next);
 }
 
+bool IndexPoolView::EraseRecordId(std::uint32_t position, IndexRange& range) {
+    if (!ValidRange(range) || range.first_index < kSentinelCellCount || position >= range.count) {
+        return false;
+    }
+    if (range.count == 1) {
+        auto released = range;
+        range.count = 0;
+        return ReleaseRange(released);
+    }
+    bool release_tail = true;
+    if (range.first_index > kSentinelCellCount && IsFreeCell(range.first_index - 1)) {
+        std::optional<IndexRange> left, right;
+        if (!ReadAdjacentFreeRanges(range, left, right)) return false;
+        // Native represents an absent right neighbor with signed length -1.
+        if (left && (!right || left->count > right->count)) release_tail = false;
+    }
+    IndexRange released{};
+    if (release_tail) {
+        for (auto index = position; index + 1 < range.count; ++index) {
+            WriteWord(range.first_index + index, ReadWord(range.first_index + index + 1));
+        }
+        released = {range.first_index + range.count - 1, 1};
+    } else {
+        for (auto index = position; index > 0; --index) {
+            WriteWord(range.first_index + index, ReadWord(range.first_index + index - 1));
+        }
+        released = {range.first_index, 1};
+        ++range.first_index;
+    }
+    --range.count;
+    return ReleaseRange(released);
+}
+
 bool InitializeIndexPool(OwnedByteRegion& metadata, OwnedByteRegion& cells) {
     // Native initialization resizes cells before metadata, but does not check
     // allocation failures. Report failure here instead of dereferencing null.
