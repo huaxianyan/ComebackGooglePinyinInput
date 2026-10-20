@@ -1,5 +1,6 @@
 // One real create/save/load/edit flow for the current six-submodel container.
 #include "mutable_dictionary_image.h"
+#include "dictionary_association_iteration.h"
 #include "user_dictionary_image.h"
 #include "user_dictionary_file.h"
 #include "payload_codec.h"
@@ -191,6 +192,23 @@ int main(int argc, char** argv) {
             user_final.metadata.extension_data() == std::string("\0\xff", 2) &&
             user_final.dictionary.metadata.association_count() == 2,
             "save and load a second complete image with outer metadata and both relations");
+
+    auto snapshot_source = user_final.dictionary;
+    {
+        Editors edit(snapshot_source);
+        Require(ModifyDictionaryAssociation(edit.forward, edit.reverse, snapshot_source.metadata,
+                    "a", "a", &weight1, nullptr, AssociationEditMode::CreateOrUpdate),
+                "append a second association to the first key in the real loaded model");
+    }
+    std::vector<DictionaryAssociationEntry> entries;
+    Require(SnapshotDictionaryAssociations(snapshot_source, entries) && entries.size() == 3 &&
+            entries[0].forward_key == "a" && entries[0].reverse_key == "b" &&
+            entries[1].forward_key == "a" && entries[1].reverse_key == "a" &&
+            entries[2].forward_key == "b" && entries[2].reverse_key == "a" &&
+            entries[0].payload == EncodedPayload({150, 0, 0, 0, 1, 0}) &&
+            entries[1].payload == EncodedPayload({1, 0, 0, 0, 2, 0}) &&
+            entries[2].payload == EncodedPayload({1, 0, 0, 0, 2, 0}),
+            "snapshot traverses real key/pool order rather than sorting opposite keys or payloads");
 
     // Native 0x1a2b38 compares bytes consumed with 0x1c6994's canonical size.
     // Four redundant known count fields add eight bytes to the inner protobuf

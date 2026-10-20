@@ -85,4 +85,4 @@ ReadAssociationRecordAt 恢复已有 `0x1c3ac8`：先从 IndexPool 解析 byte-o
 
 原 FindAssociationRecord 改为调用这个共用入口，后续迭代器也使用同一入口，不复制池和固定表读取协议。既有真实固定表与池流程改走此入口，字面 ID `50` 和完整记录字节通过。只增量编译 association_list.cc 和对应流程，原 native 字节证据直接沿用。
 
-下一步接可变词典关联组遍历，再连接真实 compact。未执行 ARM64 或设备测试。
+[真实关联组快照](dictionary-association-iteration.md) 已将前缀游标、池、记录读取和终端键重建接为同一实际流程。下一步连接原删除与外层累计，再接完整 compact。未执行 ARM64 或设备测试。
