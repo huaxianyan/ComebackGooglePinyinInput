@@ -5,8 +5,6 @@
 
 namespace comeback::recovered {
 namespace {
-constexpr std::uint32_t kCurrentMajor = 3;
-constexpr std::uint32_t kCurrentMinor = 1;
 constexpr std::uint32_t kV21Major = 2;
 constexpr std::size_t kMajorOffset = sizeof(std::uint64_t);
 constexpr std::size_t kMinorOffset = kMajorOffset + sizeof(std::uint32_t);
@@ -19,8 +17,8 @@ PayloadVersion DictionaryHeader::payload_version() const {
 
 EncodedDictionaryHeader EncodeDictionaryHeader() {
     EncodedDictionaryHeader bytes{};
-    detail::WriteLittleEndian(kCurrentMajor, bytes.data() + kMajorOffset);
-    detail::WriteLittleEndian(kCurrentMinor, bytes.data() + kMinorOffset);
+    detail::WriteLittleEndian(kCurrentDictionaryMajor, bytes.data() + kMajorOffset);
+    detail::WriteLittleEndian(kCurrentDictionaryMinor, bytes.data() + kMinorOffset);
     detail::WriteLittleEndian<std::uint64_t>(
         CalculateDictionaryChecksum(DictionaryChecksumWidth::Bits32,
             {{reinterpret_cast<const char*>(bytes.data() + kMajorOffset), kVersionSize}}), bytes.data());
@@ -31,7 +29,7 @@ bool DecodeDictionaryHeader(const std::uint8_t* bytes, std::size_t size,
                             DictionaryHeader& header) {
     if (size < kDictionaryHeaderSize) return false;
     const auto major = detail::ReadLittleEndian<std::uint32_t>(bytes + kMajorOffset);
-    if (major > kCurrentMajor ||
+    if (major > kCurrentDictionaryMajor ||
         detail::ReadLittleEndian<std::uint64_t>(bytes) != CalculateDictionaryChecksum(DictionaryChecksumWidth::Bits32,
             {{reinterpret_cast<const char*>(bytes + kMajorOffset), kVersionSize}})) {
         return false;

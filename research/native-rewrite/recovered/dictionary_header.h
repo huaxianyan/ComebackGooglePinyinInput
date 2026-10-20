@@ -13,6 +13,8 @@ struct DictionaryHeader {
     PayloadVersion payload_version() const;
 };
 
+inline constexpr std::uint32_t kCurrentDictionaryMajor = 3;
+inline constexpr std::uint32_t kCurrentDictionaryMinor = 1;
 inline constexpr std::size_t kDictionaryHeaderSize = 16;
 using EncodedDictionaryHeader = std::array<std::uint8_t, kDictionaryHeaderSize>;
 

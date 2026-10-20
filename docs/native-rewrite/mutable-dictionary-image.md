@@ -52,8 +52,9 @@ trie 与表的已有区域继续使用 `OwnedByteRegion`，容器不引入另一
 out=work/native-rewrite/mutable-container-build
 mkdir -p "$out"
 protoc -I research/native-rewrite/recovered --cpp_out="$out" \
-  research/native-rewrite/recovered/mutable_dictionary_metadata.proto
-for source in research/native-rewrite/recovered/*.cc "$out/mutable_dictionary_metadata.pb.cc"; do
+  research/native-rewrite/recovered/mutable_dictionary_metadata.proto \
+  research/native-rewrite/recovered/user_dictionary_metadata.proto
+for source in research/native-rewrite/recovered/*.cc "$out"/*.pb.cc; do
   name=$(basename "$source" .cc)
   g++ -std=c++17 -O2 -Wall -Wextra -Werror \
     -I "$out" -I research/native-rewrite/recovered \
@@ -69,7 +70,7 @@ for name in mutable_dictionary_image dictionary_association_creation dictionary_
 done
 ```
 
-三条流程均通过。新增的一条完整容器流程覆盖：
+六子模型接入时三条流程均通过。随后外层镜像沿用同一测试入口，增加的验证见 [完整用户词典镜像](user-dictionary-image.md)。容器流程覆盖：
 
 - 初始化真实六子模型，匹配空容器的 `5504` 字节长度、字面标签与固定偏移。期望位置与字节不调用被测包络或尺寸算法计算。
 - 经真实入口新增双向关系，再保存和重载，取得双方列表的实际记录与字面 payload。
@@ -88,4 +89,4 @@ done
 
 本轮未执行原 ARM64，未操作设备或用户词典。官方宿主 protobuf 与真实文件 stream 的部分 I/O、分配故障及全部损坏输入仍不承诺等价。
 
-下一步将本容器接到十六字节文件头与外层 UserDictionary 元数据，再连接真实文件替换、同步及中断恢复。本轮没有生成可替换用户词典的完整文件，也没有把宿主内存流程当作完整输入引擎验收。
+本容器已接到十六字节文件头与外层 UserDictionary 元数据，见 [完整用户词典内存镜像](user-dictionary-image.md)。下一步连接真实文件替换、同步及中断恢复。内存镜像不是经过设备验收的词典文件，宿主流程也不代表完整输入引擎验收。

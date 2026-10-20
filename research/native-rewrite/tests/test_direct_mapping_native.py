@@ -279,6 +279,8 @@ class DirectMappingNativeTest(unittest.TestCase):
             0x1F3228: ("sub", "x0, x0, x1"),
             0x1F313C: ("ucvtf", "d0, x0"),
             0x1F314C: ("fcvtzu", "x1, d0"),
+            0x1A2F7C: ("cmp", "w0, #6"),
+            0x1C37C0: ("ldr", "w0, [x0, #0x28]"),
             0x10E5DC: ("ldr", "x2, [x2, #0x50]"),
             0x189BDC: ("bl", "#0x1a142c"),
             0x1A1438: ("str", "x1, [x0, #0x40]"),
@@ -386,8 +388,9 @@ class DirectMappingNativeTest(unittest.TestCase):
         mutable_image = {row["address"]: row["target"]
                          for row in evidence["relocation_regions"]["mutable_dictionary"]}
         self.assertEqual({address: mutable_image[address]
-                          for address in (0x67C320, 0x67C328, 0x67C3B0)}, {
-            0x67C320: 0x1C6660, 0x67C328: 0x1C6908, 0x67C3B0: 0x1C79B4,
+                          for address in (0x67C320, 0x67C328, 0x67C330, 0x67C3B0, 0x67C3B8)}, {
+            0x67C320: 0x1C6660, 0x67C328: 0x1C6908, 0x67C330: 0x1C6994,
+            0x67C3B0: 0x1C79B4, 0x67C3B8: 0x1C37C0,
         })
         variable_trie = {row["address"]: row["target"]
                          for row in evidence["relocation_regions"]["variable_value_trie"]}

@@ -36,6 +36,8 @@ REGIONS = {
     "last_sync_time_setter": (0x1A142C, 0x1A1448),
     "mutable_image_write": (0x1C6660, 0x1C6798),
     "mutable_image_size": (0x1C6908, 0x1C6994),
+    "mutable_header_aware_size": (0x1C6994, 0x1C6A38),
+    "mutable_forward_payload_size": (0x1C37C0, 0x1C37C8),
     "mutable_image_parse": (0x1C71A4, 0x1C7620),
     "mutable_image_publish": (0x1C7814, 0x1C797C),
     "named_trie_image_read": (0x1C6A38, 0x1C6BD4),

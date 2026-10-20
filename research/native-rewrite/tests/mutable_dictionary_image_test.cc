@@ -1,5 +1,7 @@
 // One real create/save/load/edit flow for the current six-submodel container.
 #include "mutable_dictionary_image.h"
+#include "user_dictionary_image.h"
+#include "payload_codec.h"
 #include "association_editor.h"
 #include "trie_values.h"
 
@@ -8,6 +10,7 @@
 #include <cstring>
 #include <string>
 #include <string_view>
+#include <utility>
 
 using namespace comeback::recovered;
 using namespace std::literals;
@@ -124,9 +127,84 @@ int main() {
     Require(LoadMutableDictionary(second.Slice(0, second.Size() - 1), reloaded) == 0 &&
             reloaded.metadata.association_count() == 2,
             "an incomplete last submodel keeps the previously loaded dictionary, matching native publication");
-    Editors final(reloaded);
-    Require(Payload(final.fs, final.rs, "a", "b") == replacement &&
-            Payload(final.fs, final.rs, "b", "a") == payload,
-            "the second generation and the retained dictionary expose both expected payloads");
-    std::puts("PASS: six-model mutable dictionary layout, real edit/save/load/edit and failed-load retention");
+    {
+        Editors final(reloaded);
+        Require(Payload(final.fs, final.rs, "a", "b") == replacement &&
+                Payload(final.fs, final.rs, "b", "a") == payload,
+                "the second generation and the retained dictionary expose both expected payloads");
+    }
+
+    UserDictionaryStorage user;
+    user.dictionary = std::move(reloaded);
+    const auto outer = "\x08\x96\x01\x10\x2a\x1a\x02\0\xff\x48\x07"sv;
+    Require(user.metadata.ParseFromArray(outer.data(), outer.size()), "load literal outer metadata");
+    const auto weight150 = "\x96\0\0\0\x01\0"sv;
+    const auto weight1 = "\x01\0\0\0\x02\0"sv;
+    {
+        Editors edit(user.dictionary);
+        Require(RemoveDictionaryAssociation(edit.forward, edit.reverse, user.dictionary.metadata, "b", "a") &&
+                ModifyDictionaryAssociation(edit.forward, edit.reverse, user.dictionary.metadata,
+                    "a", "b", &weight150, nullptr, AssociationEditMode::ExistingOnly),
+                "prepare one relation with a real six-byte current payload for the user-file flow");
+    }
+    OwnedByteRegion user_first;
+    Require(SerializeUserDictionaryImage(user, user_first) &&
+            At(user_first, 0, "\x96\xa4\xcb\xa7\0\0\0\0\x03\0\0\0\x01\0\0\0"sv) &&
+            At(user_first, 16, "\x0b\0\0\0\x08\x96\x01\x10\x2a\x1a\x02\0\xff\x48\x07\0"sv) &&
+            At(user_first, 32, "\x0e\0\0\0"sv),
+            "complete file bytes have the literal current header and outer/inner protobuf boundaries");
+    UserDictionaryStorage user_loaded;
+    Require(LoadUserDictionaryImage(user_first, user_loaded) == user_first.Size() &&
+            user_loaded.metadata.SerializeAsString() == outer &&
+            user_loaded.dictionary.metadata.association_count() == 1,
+            "load the complete user image with independent frequency and relation counts");
+    {
+        Editors edit(user_loaded.dictionary);
+        const auto stored = Payload(edit.fs, edit.rs, "a", "b");
+        PayloadMetadata decoded{};
+        std::uint16_t day = 0;
+        Require(DecodePayload(PayloadVersion::V21,
+                    reinterpret_cast<const std::uint8_t*>(stored.data()), stored.size(), decoded, &day) &&
+                decoded.count == 150 && day == 1 &&
+                ModifyDictionaryAssociation(edit.forward, edit.reverse, user_loaded.dictionary.metadata,
+                    "b", "a", &weight1, &extra, AssociationEditMode::CreateOrUpdate),
+                "read the real current payload and add another relation after loading the full image");
+    }
+    // Outer learning accumulation remains the caller's explicit metadata edit;
+    // the low-level association coordinator does not invent that higher layer.
+    user_loaded.metadata.set_total_count(151);
+    user_loaded.metadata.set_last_sync_time(4294967296LL);
+    OwnedByteRegion user_second;
+    UserDictionaryStorage user_final;
+    Require(SerializeUserDictionaryImage(user_loaded, user_second) &&
+            LoadUserDictionaryImage(user_second, user_final) == user_second.Size() &&
+            user_final.metadata.total_count() == 151 && user_final.metadata.last_sync_time() == 4294967296LL &&
+            user_final.metadata.extension_data() == std::string("\0\xff", 2) &&
+            user_final.dictionary.metadata.association_count() == 2,
+            "save and load a second complete image with outer metadata and both relations");
+
+    // Native 0x1a2b38 compares bytes consumed with 0x1c6994's canonical size.
+    // Four redundant known count fields add eight bytes to the inner protobuf
+    // frame; all table bytes and CRCs remain intact, but its canonical size shrinks.
+    std::string expanded(reinterpret_cast<const char*>(user_first.Data()), 32);
+    expanded.append("\x16\0\0\0", 4);
+    expanded.append(reinterpret_cast<const char*>(user_first.Data() + 36), 14);
+    expanded.append("\x28\x01\x28\x01\x28\x01\x28\x01", 8);
+    expanded.append(reinterpret_cast<const char*>(user_first.Data() + 50), user_first.Size() - 50);
+    OwnedByteRegion noncanonical;
+    Require(noncanonical.Resize(expanded.size()), "allocate the frozen size-mismatch fixture");
+    std::memcpy(noncanonical.MutableData(), expanded.data(), expanded.size());
+    Require(LoadUserDictionaryImage(noncanonical, user_final) == 0 &&
+            user_final.metadata.total_count() == 151 && user_final.dictionary.metadata.association_count() == 2,
+            "native canonical-size mismatch keeps the previously loaded complete user dictionary");
+    user_loaded.dictionary.metadata.set_forward_payload_size(5);
+    OwnedByteRegion wrong_payload;
+    Require(SerializeUserDictionaryImage(user_loaded, wrong_payload) &&
+            LoadUserDictionaryImage(wrong_payload, user_final) == 0 && user_final.metadata.total_count() == 151,
+            "the native user-file payload-width check rejects a non-six-byte declaration before publication");
+    Editors checked(user_final.dictionary);
+    Require(Payload(checked.fs, checked.rs, "a", "b") == weight150 &&
+            Payload(checked.fs, checked.rs, "b", "a") == weight1,
+            "both expected payloads remain readable after failed user-file loads");
+    std::puts("PASS: six-model and full user image edit/save/load, native size/payload checks and retained state");
 }
