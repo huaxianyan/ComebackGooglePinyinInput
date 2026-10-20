@@ -1,8 +1,10 @@
 // Native JNI 0x112768 / accessor 0x189924 / FileStoragePersister, see NOTICE.
 #include "user_dictionary_file.h"
+#include "file_mmap.h"
 
 #include <cstdio>
 #include <memory>
+#include <utility>
 
 namespace comeback::recovered {
 namespace {
@@ -14,6 +16,18 @@ struct CloseFile {
     }
 };
 }  // namespace
+
+DictionaryFileLoadResult LoadUserDictionaryFile(const std::string& path, UserDictionaryStorage& output) {
+    OwnedByteRegion mapped;
+    const auto mapping = MapReadOnlyFile(path, mapped);
+    if (mapping == FileMappingResult::EmptyFile) return DictionaryFileLoadResult::InvalidImage;
+    if (mapping != FileMappingResult::Mapped) return DictionaryFileLoadResult::MappingFailed;
+    UserDictionaryStorage loaded;
+    const auto consumed = LoadUserDictionaryImage(mapped, loaded);
+    if (consumed == 0 || consumed != mapped.Size()) return DictionaryFileLoadResult::InvalidImage;
+    output = std::move(loaded);
+    return DictionaryFileLoadResult::Loaded;
+}
 
 bool PersistUserDictionaryFile(const UserDictionaryStorage& dictionary, const std::string& path) {
     const std::unique_ptr<std::FILE, CloseFile> file(std::fopen(path.c_str(), "wb"));

@@ -41,7 +41,7 @@ FileStoragePersister 另有虚表 flush `0x1fa31c` 和 close `0x1fa34c`。后者
 
 目前按已恢复子模型镜像输出，不复现原 stream 的每一次 fwrite 分块。写入失败后的具体字节前缀、分配故障和异常步骤尚未验收，不宣称部分 I/O 等价。
 
-普通文件读取只在测试中取得真实字节，再交给完整镜像 parser。原 FileMMap 的映射、文件描述符与生命周期没有被一个临时 read 后端替代。
+[完整文件加载](mapped-dictionary-load.md) 已通过实际只读映射接入同一镜像 parser，区域切片持有映射生命周期。测试与跨运行时驱动共用该入口。
 
 ## 验证
 
@@ -66,6 +66,6 @@ FileStoragePersister 另有虚表 flush `0x1fa31c` 和 close `0x1fa34c`。后者
 
 ## 下一步
 
-从 Java 的 persist 调用方继续定位路径选择、文件替换和失败恢复。原持久编辑器、完整学习协调器、旧文件格式、映射读取及跨进程同步仍未恢复。本轮未执行原 ARM64，也没有把 WSL1 普通文件成功写入当作 Android 持久性验收。
+从 Java 的 persist 调用方继续定位路径选择、文件替换和失败恢复。映射读取已接入完整文件流程。原持久编辑器、完整学习协调器、旧文件格式及跨进程同步仍未恢复。本轮未执行原 ARM64，也没有把 WSL1 普通文件成功写入当作 Android 持久性验收。
 
 协调层已恢复，见 [Java 文件替换协议](java-file-replacement.md)：`_tmp` 写入、`_bak` 移动、主替换和 `finally` 清理已按 DEX 重建，并用保留构建交叉核对；跨运行时集成流通过 Windows JDK 与实际 C++ 驱动运行。下一步恢复学习与同步流程中的显式入口。

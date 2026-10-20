@@ -24,22 +24,24 @@ struct ReadOnlyMapping {
     std::size_t size = 0;
 };
 }
-bool MapReadOnlyFile(const std::string& filename, OwnedByteRegion& output) {
-    if (filename.empty() || ::access(filename.c_str(), F_OK) != 0) return false;
+FileMappingResult MapReadOnlyFile(const std::string& filename, OwnedByteRegion& output) {
+    if (filename.empty() || ::access(filename.c_str(), F_OK) != 0) return FileMappingResult::Failed;
     auto mapping = std::make_shared<ReadOnlyMapping>();
     mapping->fd = ::open(filename.c_str(), O_RDONLY);
-    if (mapping->fd == -1) return false;
+    if (mapping->fd == -1) return FileMappingResult::Failed;
     struct stat status{};
-    if (::fstat(mapping->fd, &status) != 0 || status.st_size <= 0 ||
-        status.st_size > std::numeric_limits<std::int32_t>::max()) return false;
+    if (::fstat(mapping->fd, &status) != 0) return FileMappingResult::Failed;
+    if (status.st_size == 0) return FileMappingResult::EmptyFile;
+    if (status.st_size < 0 || status.st_size > std::numeric_limits<std::int32_t>::max())
+        return FileMappingResult::Failed;
     // Native narrows through signed int32. Larger files are explicitly outside
     // this implementation, rather than mapping one length and exposing another.
     mapping->size = static_cast<std::size_t>(status.st_size);
     mapping->data = ::mmap(nullptr, mapping->size, PROT_READ, MAP_SHARED, mapping->fd, 0);
-    if (mapping->data == MAP_FAILED) return false;
+    if (mapping->data == MAP_FAILED) return FileMappingResult::Failed;
     auto region = OwnedByteRegion::FromReadOnlyOwner(mapping,
         static_cast<const std::uint8_t*>(mapping->data), mapping->size);
     output = std::move(region);
-    return true;
+    return FileMappingResult::Mapped;
 }
 }  // namespace comeback::recovered

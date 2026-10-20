@@ -20,7 +20,7 @@ int main(int argc, char** argv) {
         Require(static_cast<bool>(file), "create the three-byte synthetic file");
     }
     OwnedByteRegion mapped;
-    Require(MapReadOnlyFile(argv[1], mapped) && mapped.Size() == 3 &&
+    Require(MapReadOnlyFile(argv[1], mapped) == FileMappingResult::Mapped && mapped.Size() == 3 &&
             std::memcmp(mapped.Data(), "ABC", 3) == 0,
             "map the actual file and keep its data readable after the factory returns");
     {
@@ -40,7 +40,8 @@ int main(int argc, char** argv) {
     OwnedByteRegion slice;
     {
         OwnedByteRegion parent;
-        Require(MapReadOnlyFile(argv[1], parent), "map the real fixture for a surviving parent-backed slice");
+        Require(MapReadOnlyFile(argv[1], parent) == FileMappingResult::Mapped,
+                "map the real fixture for a surviving parent-backed slice");
         slice = parent.Slice(1, 2);
     }
     Require(slice.Size() == 2 && std::memcmp(slice.Data(), "DC", 2) == 0,

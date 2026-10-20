@@ -1,6 +1,6 @@
 # 原文件映射读取契约
 
-本页记录原始取证契约。后续 [只读映射源码](file-mmap-source.md) 已恢复受限的 mode `0` 宿主路径，并扩展同一 State/COW。其他模式和完整文件加载仍待接入。
+本页记录原始取证契约。后续 [只读映射源码](file-mmap-source.md) 已恢复受限的 mode `0` 宿主路径，并扩展同一 State/COW。[完整文件加载](mapped-dictionary-load.md) 已接此路径，其他映射模式仍待恢复。
 
 ## 真实只读入口
 

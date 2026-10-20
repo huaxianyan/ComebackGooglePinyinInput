@@ -291,20 +291,28 @@ int main(int argc, char** argv) {
     Require(first_file.size() == user_second.Size() &&
             std::memcmp(first_file.data(), user_second.Data(), first_file.size()) == 0,
             "file and memory sinks emit identical complete bytes through the shared writer");
-    OwnedByteRegion disk_image;
-    Require(disk_image.Resize(first_file.size()), "allocate the file-read image");
-    std::memcpy(disk_image.MutableData(), first_file.data(), first_file.size());
     UserDictionaryStorage disk_loaded;
-    Require(LoadUserDictionaryImage(disk_image, disk_loaded) == disk_image.Size(),
-            "load the actual on-disk dictionary through the complete image reader");
+    Require(LoadUserDictionaryFile(file_path, disk_loaded) == DictionaryFileLoadResult::Loaded &&
+            disk_loaded.metadata.total_count() == 151 &&
+            disk_loaded.dictionary.metadata.association_count() == 2,
+            "load the complete real file through its mapping and retain the literal model counts");
     {
         Editors disk_edit(disk_loaded.dictionary);
+        Require(Payload(disk_edit.fs, disk_edit.rs, "a", "b") == weight150 &&
+                Payload(disk_edit.fs, disk_edit.rs, "b", "a") == weight1,
+                "read both original literal payloads after the mapping factory has returned");
         Require(RemoveDictionaryAssociation(disk_edit.forward, disk_edit.reverse,
                     disk_loaded.dictionary.metadata, "b", "a"),
                 "edit the dictionary read from the real file");
     }
     disk_loaded.metadata.set_total_count(150);
     disk_loaded.metadata.set_last_sync_time(7);
+    // Direct wb persistence must not truncate its own live mapped source.
+    // Use the actual native serialize/load duplication, then release that map.
+    UserDictionaryStorage staged;
+    Require(DuplicateUserDictionary(disk_loaded, staged),
+            "duplicate the edited mapped dictionary into the actual independent save snapshot");
+    disk_loaded = std::move(staged);
     OwnedByteRegion expected_file;
     Require(SerializeUserDictionaryImage(disk_loaded, expected_file) &&
             expected_file.Size() < first_file.size() && PersistUserDictionaryFile(disk_loaded, file_path),
@@ -313,6 +321,17 @@ int main(int argc, char** argv) {
     Require(overwritten.size() == expected_file.Size() &&
             std::memcmp(overwritten.data(), expected_file.Data(), overwritten.size()) == 0,
             "wb replacement leaves exactly the shorter image without the old tail");
+    {
+        UserDictionaryStorage reopened;
+        Require(LoadUserDictionaryFile(file_path, reopened) == DictionaryFileLoadResult::Loaded &&
+                reopened.metadata.total_count() == 150 &&
+                reopened.metadata.last_sync_time() == 7 &&
+                reopened.dictionary.metadata.association_count() == 1,
+                "map the shorter saved generation with the literal edited counts and sync metadata");
+        Editors final(reopened.dictionary);
+        Require(Payload(final.fs, final.rs, "a", "b") == weight150,
+                "the surviving payload remains readable through the newly mapped shorter file");
+    }
     Require(!PersistUserDictionaryFile(disk_loaded, argv[1]) && read_file() == overwritten,
             "an actual directory-open failure returns false and leaves the saved file readable");
     // Actual images for the Java/C++ persistence integration consumer. The

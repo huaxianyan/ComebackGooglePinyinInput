@@ -5,10 +5,11 @@
 #include <string>
 namespace comeback::recovered {
 class OwnedByteRegion;
+enum class FileMappingResult { Mapped, EmptyFile, Failed };
 // Existing nonempty file, representable as the native positive int32 length.
 // O_RDONLY + PROT_READ + MAP_SHARED. Failure preserves output. Mapping and fd
 // remain owned by the common region descriptor; writable access detaches.
 // Larger lengths and allocator replacement hooks are not restored here.
-bool MapReadOnlyFile(const std::string& filename, OwnedByteRegion& output);
+FileMappingResult MapReadOnlyFile(const std::string& filename, OwnedByteRegion& output);
 }  // namespace comeback::recovered
 #endif
