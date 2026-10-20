@@ -60,4 +60,4 @@ V21 解码器与 `0x1a112c` 共同确认了原记录的 count、flag31、flag30�
 - `work/native-rewrite/restart-v217/native-duplicate-compact-comparison.json`
 - `work/native-rewrite/restart-v217/native-compact-order-comparison.json`
 
-下一步恢复原记录遍历并连接真实删除和外层计数更新。已完成的复制和保存模型流程继续沿用，不用接口外观代替执行证据。未执行原 ARM64、用户词典或设备操作。
+[记录遍历契约](compact-iterator-contract.md) 已核实原 slot、关联内推进与跨键切换，尚未实现底层游标。下一步恢复原记录遍历并连接真实删除和外层计数更新。已完成的复制和保存模型流程继续沿用，不用接口外观代替执行证据。未执行原 ARM64、用户词典或设备操作。
