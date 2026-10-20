@@ -34,7 +34,17 @@ UserDictionary 0x1a1448
 
 因此恢复不能用「把词条全部按键排序」代替原遍历。池内顺序与 trie 访问顺序共同决定堆中相等项的置换，也决定后续删除顺序。
 
-底层 DATrie 初始化 `0x1d6d94` 使用键长和节点构成的帧栈，并按动态类型继续定位。当前只确认该行为，尚未展开实际 advance、帧回退和终端访问顺序。不把普通 DFS 或父指针遍历写成已经等价的实现。
+底层 DATrie 初始化 `0x1d6d94` 使用键长和节点构成的帧栈，并按动态类型继续定位。当前已经定位实际前缀游标，尚未完成替代实现。
+
+## 实际前缀游标与键刷新
+
+kind 1 经 VariableValueLengthTrie 的 `0x1de6b8` 委托 DATrie。`0x1d4b00` 构造的实际类型是 PrefixMatchIterator，不能用 ExactMatchIterator 的 next 代替：后者 `0x1d4308` 只将当前结果清零，前者使用 `0x1d61b4`。
+
+前缀推进调用链为 `0x1d61b4` → `0x1d60e4` → `0x1d5ee0`。末层先定位前缀路径，验证当前终端，再沿父链确定访问边界。后续兄弟选择使用元数据中的 alphabet 顺序及其反向索引，不按码点或节点编号排序。找到兄弟后委托 `0x1d5bc8` 向下取得终端，越过前缀边界时结束。
+
+`0x1c60e0` 是关联组刷新入口。它跳过无法读取或解码关联描述的 trie 键，再发布池范围和第一记录。payload 读取 `0x1c4e88` 复用原记录读取，正文从记录偏移 4 开始，不新建第二套记录编码。
+
+尚未恢复下降帮助函数与键文本重建，因此没有写普通 DFS 作为替身。已确认的排序来源和帧边界留给实际游标实现复用。
 
 ## 模型报告数量
 
@@ -53,4 +63,6 @@ UserDictionary 0x1a1448
 
 本阶段 19 段新函数与保留发布库一致，另一个已验证区域直接复用。中央导出清单只登记四个关键迭代入口，累计 264 个区域；其余研究函数保存在上述专项证据，没有重跑已有全量静态检查。
 
-下一步从 `0x1c60e0`、payload 读取和底层 DATrie advance 恢复实际枚举。原记录读取继续复用 association 模块，不另写第二个池或记录协议。未新增临时 backend，未执行 ARM64 或设备测试。
+前缀游标与键刷新新增 13 段函数也与发布库一致，证据在 `native-prefix-cursor-comparison.json`。Source 导出目录为 `compact-dfs-navigation/`、`compact-variable-iterator/`、`compact-prefix-iterator/`、`compact-prefix-step/` 和 `compact-next-terminal/`。
+
+下一步从下降帮助函数 `0x1d5bc8` 和键文本重建补齐实际枚举。原记录读取继续复用 association 模块，不另写第二个池或记录协议。未新增临时 backend，未执行 ARM64 或设备测试。
