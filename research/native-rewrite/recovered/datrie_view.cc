@@ -101,6 +101,19 @@ bool DATrieView::ReadTerminalValue(std::uint32_t node, std::uint32_t& value) con
     return true;
 }
 
+bool DATrieView::ReadTerminalKey(std::uint32_t node, std::string& output) const {
+    if (!IsTerminal(node)) return false;
+    output.clear();
+    node = Check(node);
+    while (node != kRoot) {
+        const auto parent = Check(node);
+        output.push_back(static_cast<char>(node - Base(parent)));
+        node = parent;
+    }
+    std::reverse(output.begin(), output.end());
+    return true;
+}
+
 void DATrieView::WriteBase(std::uint32_t node, std::uint32_t value) {
     detail::WriteLittleEndian(value, nodes_ + node * kNodeSize);
 }

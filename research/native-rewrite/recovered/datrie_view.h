@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <string>
 #include <string_view>
 
 namespace comeback::recovered {
@@ -32,6 +33,9 @@ public:
     std::uint32_t FindTerminal(std::string_view key) const;
     // Node IDs refer to validated terminal cells, not key-path cells.
     bool ReadTerminalValue(std::uint32_t node, std::uint32_t& value) const;
+    // Recover the original byte key from a terminal's parent chain. Failure
+    // preserves output; success clears it before appending and reversing bytes.
+    bool ReadTerminalKey(std::uint32_t node, std::string& output) const;
     // Remove a real free cell from its doubly linked chain. Its own words are
     // retained; the native caller must subsequently assign its occupied fields.
     bool UnlinkFreeNode(std::uint32_t node);

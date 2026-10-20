@@ -48,8 +48,10 @@ int main() {
                          verified_nodes.MutableData(), verified_nodes.Size());
     const auto terminal = verified.FindTerminal("ab");
     std::uint32_t value = 0;
-    Require(verified.ReadTerminalValue(terminal, value) && value == 0x123456,
-            "the loaded key retains its published terminal value");
+    std::string restored_key = "prior output";
+    Require(verified.ReadTerminalValue(terminal, value) && value == 0x123456 &&
+            verified.ReadTerminalKey(terminal, restored_key) && restored_key == "ab",
+            "the loaded terminal recovers its original multibyte key and published value");
 
     // 0x1d78ac rejects a repeated parent in a path. Encode a correct CRC over
     // an invalid parent cycle so rejection must come from graph validation.
