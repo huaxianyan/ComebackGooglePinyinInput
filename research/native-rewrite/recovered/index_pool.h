@@ -71,6 +71,16 @@ private:
 // Existing borrowed views must be reacquired after these operations.
 // Allocation/initialization failure does not roll back prior buffer changes.
 bool InitializeIndexPool(OwnedByteRegion& metadata, OwnedByteRegion& cells);
+// Native P-TABLE frame: magic, CRC64, eight-byte metadata and active cells.
+// Encoding emits active bytes, not capacity. Its output object must differ
+// from both inputs. This memory codec does not model stream-write failures.
+bool SerializeIndexPool(const OwnedByteRegion& metadata, const OwnedByteRegion& cells,
+                         OwnedByteRegion& output);
+// Return the consumed frame length, or zero before installing invalid input.
+// Trailing bytes are allowed. Metadata shares its parent; cells detach through
+// writable access as in the native loader. Caller reacquires borrowed views.
+std::uint32_t LoadIndexPool(const OwnedByteRegion& input, OwnedByteRegion& metadata,
+                            OwnedByteRegion& cells);
 bool AllocateIndexRange(OwnedByteRegion& metadata, OwnedByteRegion& cells,
                         std::int32_t count, IndexRange& range);
 // A list contains record IDs. Insertion saves old IDs before releasing its range;

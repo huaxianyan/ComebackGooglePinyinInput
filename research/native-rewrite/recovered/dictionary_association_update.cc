@@ -20,7 +20,7 @@ bool ResolveKey(AssociationEditor& editor, std::string_view key, AssociationEdit
     std::memset(bytes, 0, value.Size());
     if (editor.has_checksum) {
         const auto checksum = static_cast<std::uint16_t>(
-            CalculateDictionaryChecksum(key, DictionaryChecksumWidth::Bits16));
+            CalculateDictionaryChecksum(DictionaryChecksumWidth::Bits16, {key}));
         // 0x1c45cc does not branch on this patch's result before insertion.
         PatchAssociationValue(bytes, value.Size(), true, nullptr, nullptr, &checksum);
     }

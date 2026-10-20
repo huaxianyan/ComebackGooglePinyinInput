@@ -1,5 +1,6 @@
 // Google-derived reconstruction; see NOTICE and index-pool.md.
 #include "index_pool.h"
+#include "index_pool_layout.h"
 #include "little_endian.h"
 #include "owned_byte_region.h"
 #include "storage_growth.h"
@@ -11,8 +12,8 @@
 
 namespace comeback::recovered {
 namespace {
-constexpr std::size_t kCellSize = sizeof(std::uint32_t);
-constexpr std::size_t kMetadataSize = 2 * kCellSize;
+using detail::index_pool::kCellSize;
+using detail::index_pool::kMetadataSize;
 constexpr std::uint32_t kSentinelCellCount = 2;
 constexpr std::uint32_t kOccupied = 0x80000000;
 constexpr std::uint32_t kRecordMask = ~kOccupied;

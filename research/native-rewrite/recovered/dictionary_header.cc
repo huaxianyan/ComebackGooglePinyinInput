@@ -22,9 +22,8 @@ EncodedDictionaryHeader EncodeDictionaryHeader() {
     detail::WriteLittleEndian(kCurrentMajor, bytes.data() + kMajorOffset);
     detail::WriteLittleEndian(kCurrentMinor, bytes.data() + kMinorOffset);
     detail::WriteLittleEndian<std::uint64_t>(
-        CalculateDictionaryChecksum(
-            {reinterpret_cast<const char*>(bytes.data() + kMajorOffset), kVersionSize},
-            DictionaryChecksumWidth::Bits32), bytes.data());
+        CalculateDictionaryChecksum(DictionaryChecksumWidth::Bits32,
+            {{reinterpret_cast<const char*>(bytes.data() + kMajorOffset), kVersionSize}}), bytes.data());
     return bytes;
 }
 
@@ -33,9 +32,8 @@ bool DecodeDictionaryHeader(const std::uint8_t* bytes, std::size_t size,
     if (size < kDictionaryHeaderSize) return false;
     const auto major = detail::ReadLittleEndian<std::uint32_t>(bytes + kMajorOffset);
     if (major > kCurrentMajor ||
-        detail::ReadLittleEndian<std::uint64_t>(bytes) != CalculateDictionaryChecksum(
-            {reinterpret_cast<const char*>(bytes + kMajorOffset), kVersionSize},
-            DictionaryChecksumWidth::Bits32)) {
+        detail::ReadLittleEndian<std::uint64_t>(bytes) != CalculateDictionaryChecksum(DictionaryChecksumWidth::Bits32,
+            {{reinterpret_cast<const char*>(bytes + kMajorOffset), kVersionSize}})) {
         return false;
     }
     header = {major, detail::ReadLittleEndian<std::uint32_t>(bytes + kMinorOffset)};

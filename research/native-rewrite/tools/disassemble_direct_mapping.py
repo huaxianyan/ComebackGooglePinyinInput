@@ -85,6 +85,8 @@ REGIONS = {
     "dictionary_serialize": (0x1A2228, 0x1A23B4),
     "header_crc_empty": (0x1F636C, 0x1F6380),
     "header_crc_extend": (0x1F6594, 0x1F6C44),
+    "table_crc64_extend": (0x1F6C44, 0x1F7464),
+    "table_crc64_initialize": (0x1F96CC, 0x1F98B8),
     "header_crc_table": (0x1F8B88, 0x1F8CBC),
     "header_crc_new": (0x1F9158, 0x1F939C),
     "header_crc_factory": (0x1F939C, 0x1F947C),
@@ -211,6 +213,7 @@ DECODER_CATEGORY_TABLE = (0x349D10, 0x349D18)
 DICTIONARY_CRC_CONFIGS = {
     "dictionary_header_crc": 0x34EC50,
     "association_key_crc": 0x34EAD0,
+    "table_crc64": 0x34EF50,
 }
 RELOCATION_REGIONS = {
     "direct_iterator": (0x67A7B0, 0x67A7E8),
@@ -218,6 +221,7 @@ RELOCATION_REGIONS = {
     "manager": (0x67A4D8, 0x67A500),
     "manager_typeinfo": (0x68AF28, 0x68AF58),
     "metadata": (0x68B278, 0x68B300),
+    "crc64": (0x67E250, 0x67E298),
     "token_decoder_typeinfo": (0x68AA90, 0x68AAA8),
     "token_decoder_vtable": (0x68AAB8, 0x68AAF8),
 }

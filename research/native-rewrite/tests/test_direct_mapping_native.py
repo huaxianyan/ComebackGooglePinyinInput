@@ -135,6 +135,13 @@ class DirectMappingNativeTest(unittest.TestCase):
             0x1E3C28: ("str", "w1, [x0, #4]"),
             0x1E3C30: ("str", "w1, [x0]"),
             0x1E3C38: ("str", "wzr, [x0, #4]"),
+            0x1E3C68: ("mov", "w0, #0x40"),
+            0x1E3CA4: ("mov", "x4, #8"),
+            0x1E3CBC: ("ldr", "w4, [x22, #4]"),
+            0x1F6C90: ("eor", "x2, x5, x2, lsr #8"),
+            0x1F7458: ("str", "x2, [x1]"),
+            0x1F974C: ("bl", "#0x1f8b88"),
+            0x1F976C: ("str", "x2, [x1, #0x38]"),
             0x1E4AD8: ("ldr", "x0, [x19]"),
             0x1E4AE0: ("str", "w4, [x19, #4]"),
             0x1E4AE8: ("asr", "x0, x0, #0x20"),
@@ -306,6 +313,14 @@ class DirectMappingNativeTest(unittest.TestCase):
         })
         self.assertEqual(evidence["association_key_crc"], {
             "address": 0x34EAD0, "low": 0x9F18, "high": 0, "degree": 16,
+        })
+        self.assertEqual(evidence["table_crc64"], {
+            "address": 0x34EF50, "low": 0xAB0547580DAAC74E, "high": 0, "degree": 64,
+        })
+        crc64 = {row["address"]: row["target"]
+                 for row in evidence["relocation_regions"]["crc64"]}
+        self.assertEqual({address: crc64[address] for address in (0x67E260, 0x67E268, 0x67E290)}, {
+            0x67E260: 0x1F636C, 0x67E268: 0x1F6C44, 0x67E290: 0x1F96CC,
         })
         math = evidence["score_math"]
         self.assertEqual(math["table_address"], 0x3A2FC0)

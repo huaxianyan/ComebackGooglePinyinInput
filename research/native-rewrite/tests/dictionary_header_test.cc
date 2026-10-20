@@ -71,7 +71,7 @@ int main() {
                           "\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f", 32), 0x268b},
     };
     for (const auto& key : keys) {
-        Require(CalculateDictionaryChecksum(key.key, DictionaryChecksumWidth::Bits16) == key.checksum,
+        Require(CalculateDictionaryChecksum(DictionaryChecksumWidth::Bits16, {key.key}) == key.checksum,
                 "dictionary keys retain the native sixteen-bit checksum bytes");
     }
     std::puts("PASS: supported headers, key CRC16, shared CRC32 and current header bytes");

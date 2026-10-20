@@ -99,9 +99,40 @@ Ghidra 的 `0x1e4a20` C 视图把寄存器快照误写成后续内存读取。�
 
 `0x1e3e4c` 输出的表容器依次是：八字节 `P-TABLE\0` 标识、八字节 CRC64、八字节元数据，以及已使用单元的字节。总长度为 `24 + 4 × 已使用单元数`。
 
-`0x1e3c50` 的 CRC64 覆盖元数据和已使用数据区。`0x1e3cf0` 校验载入的表，再安装两份区域和数据指针。此处 CRC64 不等于外层词典头的 CRC32。本轮没有恢复表容器编解码、CRC64 或实际磁盘写入。
+`0x1e3c50` 的 CRC64 覆盖元数据和已使用数据区。它已接入同一 [词典 CRC](dictionary-storage.md#crc-来源与实现)，64 位反射多项式与初值均为 `0xab0547580daac74e`，没有末尾 XOR。此 CRC 不等于外层词典头的 CRC32。
 
-## 验证与证据
+[内存容器编解码](../../research/native-rewrite/recovered/index_pool_codec.cc) 已恢复正常格式路径。`SerializeIndexPool` 输出活动字节，不输出分配容量。`LoadIndexPool` 对照 `0x1e3cf0`，校验成功才安装两份区域，并返回本帧消耗的字节数，输入可带后续内容。元数据保留父切片，数据区按原入口请求可写区域并分离。原视图应在加载后重新取得。
+
+单元宽度和元数据宽度移入 `index_pool_layout.h`，原池操作与容器共用同一组定义。载入只校验签名、长度与 CRC，不证明空闲链表有序、无环或记录关联完整。
+
+正常边界之外仍有明确差异：恢复入口先检查最小长度，按原有符号 32 位长度的正常正数范围处理切片，不模拟短输入读越界或整数截断后的无效访问。加载沿用先安装区域、再请求写指针且不检查空结果的顺序，但恢复类型没有原缓存指针，完整分配故障不承诺等价。
+
+此入口操作堆内存镜像，未连接磁盘或 Provider。原 writer 分四次写流，失败时可能留下部分输出；当前内存编码不模拟该 I/O 故障顺序，不能据此宣称磁盘持久化已经完成。
+
+## 容器验证
+
+```bash
+mkdir -p work/native-rewrite/recovered-pool-codec
+g++ -std=c++17 -O2 -Wall -Wextra -Werror \
+  research/native-rewrite/recovered/owned_byte_region.cc \
+  research/native-rewrite/recovered/index_pool.cc \
+  research/native-rewrite/recovered/index_pool_codec.cc \
+  research/native-rewrite/recovered/dictionary_checksum.cc \
+  research/native-rewrite/tests/index_pool_codec_test.cc \
+  -o work/native-rewrite/recovered-pool-codec/index_pool_codec_test
+work/native-rewrite/recovered-pool-codec/index_pool_codec_test
+```
+
+严格 WSL C++17 构建及一条真实流程通过：初始化并分配记录 ID `0x123456`，保存四十字节容器，带后续字节加载，修改为 `0x07654321`，再保存。两份完整容器的独立字面期望分别含 CRC64 `0x2233d4180b92d695`、`0xa49ba9d347950f33`，均由 GF(2) 多项式长除法推导，未调用生产算法算答案。已加载的编辑保持可读，改坏输入记录的 CRC 校验失败，两个区域保持原值。
+
+共享计算扩为 64 位后，既有词典头、CRC32 与 CRC16 fixture 的严格构建通过，关联修改调用方的接口编译通过。真实 APK 入口补入 64 位扩展、初始化、配置和虚表锚点后通过，现导出 `188` 个区域。两段新函数与配置均和保留的 `v2.1.7` 发布库字节一致：
+
+- `work/native-rewrite/original-apk/native-pool-crc64.txt`
+- `work/native-rewrite/restart-v217/native-pool-codec-comparison.json`
+
+未执行原 ARM64，未读写设备或用户词典。
+
+## 池操作的既有验证与证据
 
 使用既有 WSL 编译器，以 `-std=c++17 -O2 -Wall -Wextra -Werror` 编译：
 
