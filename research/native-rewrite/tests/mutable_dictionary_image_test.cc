@@ -4,6 +4,7 @@
 #include "user_dictionary_image.h"
 #include "user_dictionary_file.h"
 #include "user_dictionary_edit.h"
+#include "user_dictionary_compaction.h"
 #include "payload_codec.h"
 #include "association_editor.h"
 #include "trie_values.h"
@@ -221,6 +222,25 @@ int main(int argc, char** argv) {
     AdjustUserDictionaryTotalCount(clamped, 150, 0);
     Require(clamped.has_total_count() && clamped.total_count() == 0,
             "the original subtraction clamps a negative result to zero and publishes presence");
+
+    auto compact_source = user_final;
+    {
+        Editors edit(compact_source.dictionary);
+        Require(CompactUserDictionaryAtCutoff(compact_source, edit.forward, edit.reverse, 2, 1),
+                "compact the real loaded user dictionary through native selection and physical deletion");
+    }
+    OwnedByteRegion compact_image;
+    UserDictionaryStorage compact_loaded;
+    std::vector<DictionaryAssociationEntry> compact_entries;
+    Require(SerializeUserDictionaryImage(compact_source, compact_image) &&
+            LoadUserDictionaryImage(compact_image, compact_loaded) == compact_image.Size() &&
+            compact_loaded.metadata.total_count() == 1 &&
+            compact_loaded.dictionary.metadata.association_count() == 1 &&
+            SnapshotDictionaryAssociations(compact_loaded.dictionary, compact_entries) &&
+            compact_entries.size() == 1 && compact_entries[0].forward_key == "b" &&
+            compact_entries[0].reverse_key == "a" &&
+            compact_entries[0].payload == EncodedPayload({1, 0, 0, 0, 2, 0}),
+            "native date-first compaction retains the recent light entry and reloads with both counts equal to one");
 
     // Native 0x1a2b38 compares bytes consumed with 0x1c6994's canonical size.
     // Four redundant known count fields add eight bytes to the inner protobuf

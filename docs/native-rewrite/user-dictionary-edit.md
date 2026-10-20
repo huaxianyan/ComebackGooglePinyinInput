@@ -39,4 +39,4 @@ AdjustUserDictionaryTotalCount 直接更新官方 UserDictionaryMetaData：先�
 
 两个学习区间已有中央定义，沿用原登记。本阶段新增 payload lookup 的字节证据，和既有取证入口共同索引于 `native-user-entry-remove-comparison.json`。中央清单累计 `268` 个区域。
 
-未验收全部损坏记录、OOM、原 ARM64 执行或设备持久性，下一步将实体删除接入真实 compact。
+[真实模型 compact](user-dictionary-compaction.md) 已将实体删除接入实际快照、原选择和完整镜像往返。尚未验收全部损坏记录、OOM、原 ARM64 执行或设备持久性。
