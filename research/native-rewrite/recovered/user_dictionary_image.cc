@@ -4,28 +4,24 @@
 #include "dictionary_header.h"
 #include "dictionary_string_image.h"
 
-#include <cstring>
 #include <string>
 #include <utility>
 
 namespace comeback::recovered {
-bool SerializeUserDictionaryImage(const UserDictionaryStorage& dictionary, OwnedByteRegion& output) {
+bool WriteUserDictionaryImage(const UserDictionaryStorage& dictionary, const DictionaryImageSink& sink) {
     const auto header = EncodeDictionaryHeader();
     std::string metadata;
-    OwnedByteRegion section, body;
-    if (!dictionary.metadata.SerializeToString(&metadata) ||
-        !SerializeDictionaryStringImage(metadata, section) ||
-        !SerializeMutableDictionary(dictionary.dictionary, body)) return false;
-    const auto body_offset = header.size() + section.Size();
-    const auto aligned_body = detail::AlignDictionaryBytes(body.Size());
+    OwnedByteRegion section;
+    return dictionary.metadata.SerializeToString(&metadata) &&
+           SerializeDictionaryStringImage(metadata, section) && sink(header.data(), header.size()) &&
+           sink(section.Data(), section.Size()) && WriteMutableDictionaryImage(dictionary.dictionary, sink);
+}
+
+bool SerializeUserDictionaryImage(const UserDictionaryStorage& dictionary, OwnedByteRegion& output) {
     OwnedByteRegion image;
-    if (!image.Resize(body_offset + aligned_body)) return false;
-    auto* bytes = image.MutableData();
-    if (bytes == nullptr) return false;
-    std::memcpy(bytes, header.data(), header.size());
-    std::memcpy(bytes + header.size(), section.Data(), section.Size());
-    std::memcpy(bytes + body_offset, body.Data(), body.Size());
-    std::memset(bytes + body_offset + body.Size(), 0, aligned_body - body.Size());
+    if (!WriteUserDictionaryImage(dictionary, [&](const std::uint8_t* data, std::size_t size) {
+            return AppendDictionaryImageBytes(image, data, size);
+        })) return false;
     output = std::move(image);
     return true;
 }
@@ -44,11 +40,14 @@ std::uint64_t LoadUserDictionaryImage(const OwnedByteRegion& input, UserDictiona
     const auto body_size = LoadMutableDictionary(input.Slice(body_offset, input.Size() - body_offset),
                                                   loaded.dictionary);
     if (body_size == 0 || detail::AlignDictionaryBytes(body_size) > input.Size() - body_offset) return 0;
-    // Native 0x1c6994 computes the header-aware serialized size. Reuse the one
-    // encoding definition to check it; this currently allocates a canonical
-    // body rather than using the native allocation-free size calculation.
-    OwnedByteRegion canonical;
-    if (!SerializeMutableDictionary(loaded.dictionary, canonical) || canonical.Size() != body_size ||
+    // Count the same writer rather than allocating a full canonical container.
+    // Subtable codecs still allocate images and calculate CRCs: this is not the
+    // native allocation-free 0x1c6994 size calculation.
+    std::uint64_t canonical_size = 0;
+    if (!WriteMutableDictionaryImage(loaded.dictionary, [&](const std::uint8_t*, std::size_t size) {
+            canonical_size += size;
+            return true;
+        }) || canonical_size != body_size ||
         loaded.dictionary.metadata.forward_payload_size() != static_cast<std::int32_t>(kPayloadSize)) return 0;
     output = std::move(loaded);
     return body_offset + detail::AlignDictionaryBytes(body_size);

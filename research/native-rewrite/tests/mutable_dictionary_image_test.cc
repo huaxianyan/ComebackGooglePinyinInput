@@ -1,6 +1,7 @@
 // One real create/save/load/edit flow for the current six-submodel container.
 #include "mutable_dictionary_image.h"
 #include "user_dictionary_image.h"
+#include "user_dictionary_file.h"
 #include "payload_codec.h"
 #include "association_editor.h"
 #include "trie_values.h"
@@ -8,6 +9,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <fstream>
+#include <iterator>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -57,7 +60,8 @@ std::string Payload(const AssociationSide& source, const AssociationSide& opposi
 }
 }  // namespace
 
-int main() {
+int main(int argc, char** argv) {
+    Require(argc == 2, "provide a newly created project-local directory for real file tests");
     MutableDictionaryStorage dictionary;
     // Frozen tags 1,2,3,4,6 and unknown tag 9; count is initially absent.
     const auto metadata = "\x08\x06\x10\x02\x18\0\x20\x01\x30\x01\x48\x07"sv;
@@ -206,5 +210,43 @@ int main() {
     Require(Payload(checked.fs, checked.rs, "a", "b") == weight150 &&
             Payload(checked.fs, checked.rs, "b", "a") == weight1,
             "both expected payloads remain readable after failed user-file loads");
-    std::puts("PASS: six-model and full user image edit/save/load, native size/payload checks and retained state");
+    const std::string file_path = std::string(argv[1]) + "/dictionary.bin";
+    const auto read_file = [&]() {
+        std::ifstream stream(file_path, std::ios::binary);
+        Require(stream.is_open(), "open the actual persisted file for reading");
+        const std::string bytes((std::istreambuf_iterator<char>(stream)), std::istreambuf_iterator<char>());
+        Require(!stream.bad(), "read the actual persisted file without an I/O error");
+        return bytes;
+    };
+    Require(PersistUserDictionaryFile(user_final, file_path), "persist a real current dictionary file");
+    const auto first_file = read_file();
+    Require(first_file.size() == user_second.Size() &&
+            std::memcmp(first_file.data(), user_second.Data(), first_file.size()) == 0,
+            "file and memory sinks emit identical complete bytes through the shared writer");
+    OwnedByteRegion disk_image;
+    Require(disk_image.Resize(first_file.size()), "allocate the file-read image");
+    std::memcpy(disk_image.MutableData(), first_file.data(), first_file.size());
+    UserDictionaryStorage disk_loaded;
+    Require(LoadUserDictionaryImage(disk_image, disk_loaded) == disk_image.Size(),
+            "load the actual on-disk dictionary through the complete image reader");
+    {
+        Editors disk_edit(disk_loaded.dictionary);
+        Require(RemoveDictionaryAssociation(disk_edit.forward, disk_edit.reverse,
+                    disk_loaded.dictionary.metadata, "b", "a"),
+                "edit the dictionary read from the real file");
+    }
+    disk_loaded.metadata.set_total_count(150);
+    disk_loaded.metadata.set_last_sync_time(7);
+    OwnedByteRegion expected_file;
+    Require(SerializeUserDictionaryImage(disk_loaded, expected_file) &&
+            expected_file.Size() < first_file.size() && PersistUserDictionaryFile(disk_loaded, file_path),
+            "overwrite the original file with a shorter edited generation");
+    const auto overwritten = read_file();
+    Require(overwritten.size() == expected_file.Size() &&
+            std::memcmp(overwritten.data(), expected_file.Data(), overwritten.size()) == 0,
+            "wb replacement leaves exactly the shorter image without the old tail");
+    Require(!PersistUserDictionaryFile(disk_loaded, argv[1]) && read_file() == overwritten,
+            "an actual directory-open failure returns false and leaves the saved file readable");
+    Require(std::remove(file_path.c_str()) == 0, "remove only this test's temporary dictionary file");
+    std::puts("PASS: complete image editing, native validation and real file persist/read/edit/overwrite");
 }

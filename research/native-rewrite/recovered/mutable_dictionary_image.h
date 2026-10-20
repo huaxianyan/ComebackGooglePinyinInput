@@ -3,6 +3,7 @@
 #define COMEBACK_RECOVERED_MUTABLE_DICTIONARY_IMAGE_H
 
 #include "fixed_phrase_table.h"
+#include "dictionary_image_writer.h"
 #include "owned_byte_region.h"
 #include "mutable_dictionary_metadata.pb.h"
 
@@ -29,6 +30,7 @@ struct MutableDictionaryStorage {
     FixedPhraseTable reverse_records{0};
 };
 
+bool WriteMutableDictionaryImage(const MutableDictionaryStorage& dictionary, const DictionaryImageSink& sink);
 bool SerializeMutableDictionary(const MutableDictionaryStorage& dictionary, OwnedByteRegion& output);
 // Current (major >=3) protobuf format, not the legacy 24-byte metadata format.
 // Returns complete bytes consumed, or zero. Publish only after all six models

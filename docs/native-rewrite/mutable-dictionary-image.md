@@ -46,7 +46,7 @@ trie 与表的已有区域继续使用 `OwnedByteRegion`，容器不引入另一
 
 ## 验证
 
-在共用 WSL1 环境使用已安装的官方 protobuf 3.0.0 工具与匹配运行库。实际将全部 recovered C++ 源码严格编译一次，再链接受影响的三个流程：
+在共用 WSL1 环境使用已安装的官方 protobuf 3.0.0 工具与匹配运行库。六子模型接入时严格编译全部 recovered C++ 源码，并执行三个受影响流程。之后完整镜像与文件保存扩展同一测试入口。可复现完整构建如下：
 
 ```bash
 out=work/native-rewrite/mutable-container-build
@@ -61,13 +61,15 @@ for source in research/native-rewrite/recovered/*.cc "$out"/*.pb.cc; do
     -c "$source" -o "$out/$name.o"
 done
 ar rcs "$out/recovered.a" "$out"/*.o
+scratch=$(mktemp -d "$out/disk-test.XXXXXX")
 for name in mutable_dictionary_image dictionary_association_creation dictionary_association_removal; do
   g++ -std=c++17 -O2 -Wall -Wextra -Werror \
     -I "$out" -I research/native-rewrite/recovered \
     "research/native-rewrite/tests/${name}_test.cc" "$out/recovered.a" \
     -lprotobuf-lite -pthread -o "$out/${name}_test"
-  "$out/${name}_test"
+  "$out/${name}_test" "$scratch"
 done
+rmdir "$scratch"
 ```
 
 六子模型接入时三条流程均通过。随后外层镜像沿用同一测试入口，增加的验证见 [完整用户词典镜像](user-dictionary-image.md)。容器流程覆盖：
@@ -89,4 +91,4 @@ done
 
 本轮未执行原 ARM64，未操作设备或用户词典。官方宿主 protobuf 与真实文件 stream 的部分 I/O、分配故障及全部损坏输入仍不承诺等价。
 
-本容器已接到十六字节文件头与外层 UserDictionary 元数据，见 [完整用户词典内存镜像](user-dictionary-image.md)。下一步连接真实文件替换、同步及中断恢复。内存镜像不是经过设备验收的词典文件，宿主流程也不代表完整输入引擎验收。
+本容器已接到十六字节文件头与外层 UserDictionary 元数据，见 [完整用户词典内存镜像](user-dictionary-image.md)。写入统一使用共用 sink，实际文件验证见 [原生文件保存](file-persistence.md)。下一步沿调用方恢复文件替换、同步及中断恢复。宿主流程不代表设备上的完整输入引擎验收。

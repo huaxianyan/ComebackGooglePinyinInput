@@ -4,7 +4,6 @@
 #include "dictionary_string_image.h"
 #include "dictionary_table_image.h"
 
-#include <cstring>
 #include <string>
 #include <utility>
 
@@ -13,25 +12,6 @@ namespace {
 constexpr std::string_view kVariableTrie = "VariableValueLengthTrie";
 constexpr std::string_view kDATrie = "DATrie";
 constexpr std::string_view kFixedTable = "FixedPhraseTable";
-
-class ImageWriter {
-public:
-    bool Append(const OwnedByteRegion& image) {
-        const auto start = bytes.Size();
-        const auto size = detail::AlignDictionaryBytes(image.Size());
-        if (!bytes.Resize(start + size)) return false;
-        auto* data = bytes.MutableData();
-        if (data == nullptr) return false;
-        if (image.Size() != 0) std::memcpy(data + start, image.Data(), image.Size());
-        std::memset(data + start + image.Size(), 0, size - image.Size());
-        return true;
-    }
-    bool Named(std::string_view name, const OwnedByteRegion& image) {
-        OwnedByteRegion tag;
-        return SerializeDictionaryStringImage(name, tag) && Append(tag) && Append(image);
-    }
-    OwnedByteRegion bytes;
-};
 
 class ImageReader {
 public:
@@ -52,23 +32,25 @@ private:
     const OwnedByteRegion& input;
 };
 
-bool WriteFixed(ImageWriter& writer, const FixedPhraseTable& table) {
+bool WriteFixed(const DictionaryImageSink& sink, const FixedPhraseTable& table) {
     OwnedByteRegion image;
-    return table.Serialize(image) && writer.Named(kFixedTable, image);
+    return table.Serialize(image) && WriteNamedDictionaryImage(sink, kFixedTable, image);
 }
 
-bool WriteTrie(ImageWriter& writer, const DictionaryTrieStorage& trie) {
-    ImageWriter body;
-    OwnedByteRegion image;
+bool WriteTrie(const DictionaryImageSink& sink, const DictionaryTrieStorage& trie) {
+    OwnedByteRegion body, image;
+    const DictionaryImageSink collect = [&](const std::uint8_t* data, std::size_t size) {
+        return AppendDictionaryImageBytes(body, data, size);
+    };
     return SerializeDictionaryTableImage(DictionaryTableKind::DATrie, trie.metadata, trie.nodes, image) &&
-           body.Named(kDATrie, image) && WriteFixed(body, trie.values) &&
-           writer.Named(kVariableTrie, body.bytes);
+           WriteNamedDictionaryImage(collect, kDATrie, image) && WriteFixed(collect, trie.values) &&
+           WriteNamedDictionaryImage(sink, kVariableTrie, body);
 }
 
-bool WritePool(ImageWriter& writer, const OwnedByteRegion& metadata, const OwnedByteRegion& cells) {
+bool WritePool(const DictionaryImageSink& sink, const OwnedByteRegion& metadata, const OwnedByteRegion& cells) {
     OwnedByteRegion image;
     return SerializeDictionaryTableImage(DictionaryTableKind::IndexPool, metadata, cells, image) &&
-           writer.Append(image);
+           WriteAlignedDictionaryImage(sink, image);
 }
 
 bool ReadFixed(ImageReader& reader, FixedPhraseTable& table) {
@@ -90,19 +72,23 @@ bool ReadPool(ImageReader& reader, OwnedByteRegion& metadata, OwnedByteRegion& c
 }
 }  // namespace
 
-bool SerializeMutableDictionary(const MutableDictionaryStorage& dictionary, OwnedByteRegion& output) {
-    ImageWriter writer;
+bool WriteMutableDictionaryImage(const MutableDictionaryStorage& dictionary, const DictionaryImageSink& sink) {
     std::string metadata;
     OwnedByteRegion image;
-    if (!dictionary.metadata.SerializeToString(&metadata) ||
-        !SerializeDictionaryStringImage(metadata, image) || !writer.Append(image) ||
-        !WriteTrie(writer, dictionary.forward) || !WriteTrie(writer, dictionary.reverse) ||
-        !WritePool(writer, dictionary.forward_pool_metadata, dictionary.forward_pool_cells) ||
-        !WritePool(writer, dictionary.reverse_pool_metadata, dictionary.reverse_pool_cells) ||
-        !WriteFixed(writer, dictionary.forward_records) || !WriteFixed(writer, dictionary.reverse_records)) {
-        return false;
-    }
-    output = std::move(writer.bytes);
+    return dictionary.metadata.SerializeToString(&metadata) &&
+           SerializeDictionaryStringImage(metadata, image) && sink(image.Data(), image.Size()) &&
+           WriteTrie(sink, dictionary.forward) && WriteTrie(sink, dictionary.reverse) &&
+           WritePool(sink, dictionary.forward_pool_metadata, dictionary.forward_pool_cells) &&
+           WritePool(sink, dictionary.reverse_pool_metadata, dictionary.reverse_pool_cells) &&
+           WriteFixed(sink, dictionary.forward_records) && WriteFixed(sink, dictionary.reverse_records);
+}
+
+bool SerializeMutableDictionary(const MutableDictionaryStorage& dictionary, OwnedByteRegion& output) {
+    OwnedByteRegion image;
+    if (!WriteMutableDictionaryImage(dictionary, [&](const std::uint8_t* data, std::size_t size) {
+            return AppendDictionaryImageBytes(image, data, size);
+        })) return false;
+    output = std::move(image);
     return true;
 }
 

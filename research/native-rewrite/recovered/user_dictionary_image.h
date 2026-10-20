@@ -13,6 +13,7 @@ struct UserDictionaryStorage {
 
 // Native current header, outer protobuf section, then aligned mutable dictionary.
 // Low-level graph edits do not update the separate outer frequency accumulator.
+bool WriteUserDictionaryImage(const UserDictionaryStorage& dictionary, const DictionaryImageSink& sink);
 bool SerializeUserDictionaryImage(const UserDictionaryStorage& dictionary, OwnedByteRegion& output);
 // Current major only; preserves old output on failure. Returns consumed bytes,
 // not necessarily the full input size, as in the native chunk-loading entry.

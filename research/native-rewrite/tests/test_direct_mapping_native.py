@@ -279,6 +279,9 @@ class DirectMappingNativeTest(unittest.TestCase):
             0x1F3228: ("sub", "x0, x0, x1"),
             0x1F313C: ("ucvtf", "d0, x0"),
             0x1F314C: ("fcvtzu", "x1, d0"),
+            0x1127D4: ("bl", "#0x1fa44c"),
+            0x1FA420: ("bl", "#0x73b20"),
+            0x1FA480: ("add", "x1, x1, #0xf8b"),
             0x1A2F7C: ("cmp", "w0, #6"),
             0x1C37C0: ("ldr", "w0, [x0, #0x28]"),
             0x10E5DC: ("ldr", "x2, [x2, #0x50]"),
@@ -384,6 +387,12 @@ class DirectMappingNativeTest(unittest.TestCase):
         self.assertEqual({address: user_metadata[address]
                           for address in (0x68B7A0, 0x68B7E8, 0x68B7F8)}, {
             0x68B7A0: 0x1A42D0, 0x68B7E8: 0x1A446C, 0x68B7F8: 0x1A3F68,
+        })
+        file_persister = {row["address"]: row["target"]
+                          for row in evidence["relocation_regions"]["file_storage_persister"]}
+        self.assertEqual({address: file_persister[address]
+                          for address in (0x67E320, 0x67E328, 0x67E330)}, {
+            0x67E320: 0x1FA400, 0x67E328: 0x1FA31C, 0x67E330: 0x1FA34C,
         })
         mutable_image = {row["address"]: row["target"]
                          for row in evidence["relocation_regions"]["mutable_dictionary"]}
