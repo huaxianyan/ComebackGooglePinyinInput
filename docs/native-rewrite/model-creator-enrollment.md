@@ -17,7 +17,7 @@
 
 1. 文件存在时，通过 openFileInput 取得 FD，offset 为零，length 为 File.length() 转 int，再传入 token category。
 2. 注册成功后关闭 Java 输入流。
-3. 文件不存在、发生 IOException 或 FD 注册返回 false 时，调用 enrollEmptyMutableDictionary。这是 Java 的显式回退，不是「任意模型解析失败就创建空词典」。
+3. 文件不存在、发生 IOException 或 FD 注册返回 false 时，调用 enrollEmptyMutableDictionary。这是 Java 的显式回退。具体词典模型另有加载失败后的初始化分支，见 [默认 legacy 类型与初始化](legacy-single-trie-initialization.md)。
 
 FD JNI 为 `0x112464`，空注册 JNI 为 `0x1125ec`。两者构造 DataInfo，并将 token category 编码进初始化选项，再调用 DataManager slot 2。
 
@@ -44,11 +44,11 @@ GenericDataModelCreator `0x19a3c0` 的源选择为：
 - 路径非空、模式 `0`：先尝试内存映射加载；未得到模型且 legacy 工厂名称可用时，再走模型文件接口。
 - 路径非空、模式 `1`：进入文件通道。该能力不等于上述 Android 注册允许该模式。
 
-模型数据类型 `4`、`5`、`34` 走特殊加载器，`35` 按显式模型名查找。原 Java 的 `23`、`24` 走 legacy 类型表，再经 `0x131d84` 的模型名或别名注册器创建对象。类型表的具体注册字符串尚未恢复，不能先代入 DoubleTrie 或 SingleTrie。
+模型数据类型 `4`、`5`、`34` 走特殊加载器，`35` 按显式模型名查找。原 Java 的 `23`、`24` 走 legacy 类型表，再经 `0x131d84` 的模型名或别名注册器创建对象。后续已确认两者均登记为 SingleTrieUserDictionary，具体绑定见 [类型表取证](legacy-single-trie-initialization.md)。
 
 `0x19b984` 调用模型内存接口，根据返回成功标记决定是否保留对象，失败时销毁本次对象。本层没有将返回载荷与输入总长比较，其载荷含义仍待确认。[宿主文件入口](mapped-dictionary-load.md) 的整文件 EOF 条件仍只属于宿主契约。
 
-`0x19b748` 调用模型文件接口，按状态保留或销毁对象，包含平台不支持的处理。它不是空词典初始化。空 MemoryChunk 如何进入具体模型初始化，须继续追 legacy 适配层。
+`0x19b748` 调用模型文件接口，按状态保留或销毁对象，包含平台不支持的处理。该通用函数本身不创建空词典，具体词典的初始化回退已另行取证，不能只按通用层推断最终失败行为。
 
 ## 缓存失效是显式协议
 
