@@ -247,6 +247,16 @@ int main(int argc, char** argv) {
             "wb replacement leaves exactly the shorter image without the old tail");
     Require(!PersistUserDictionaryFile(disk_loaded, argv[1]) && read_file() == overwritten,
             "an actual directory-open failure returns false and leaves the saved file readable");
+    // Actual images for the Java/C++ persistence integration consumer. The
+    // caller removes these two named artifacts after that consumer finishes.
+    const auto export_image = [&](const char* name, const std::string& bytes) {
+        std::ofstream stream(std::string(argv[1]) + "/" + name, std::ios::binary);
+        stream.write(bytes.data(), bytes.size());
+        stream.close();
+        Require(!stream.fail(), "export an already verified image for the cross-runtime consumer");
+    };
+    export_image("generation1.bin", first_file);
+    export_image("generation2.bin", overwritten);
     Require(std::remove(file_path.c_str()) == 0, "remove only this test's temporary dictionary file");
     std::puts("PASS: complete image editing, native validation and real file persist/read/edit/overwrite");
 }

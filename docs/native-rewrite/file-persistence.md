@@ -67,3 +67,5 @@ FileStoragePersister 另有虚表 flush `0x1fa31c` 和 close `0x1fa34c`。后者
 ## 下一步
 
 从 Java 的 persist 调用方继续定位路径选择、文件替换和失败恢复。原持久编辑器、完整学习协调器、旧文件格式、映射读取及跨进程同步仍未恢复。本轮未执行原 ARM64，也没有把 WSL1 普通文件成功写入当作 Android 持久性验收。
+
+协调层已恢复，见 [Java 文件替换协议](java-file-replacement.md)：`_tmp` 写入、`_bak` 移动、主替换和 `finally` 清理已按 DEX 重建，并用保留构建交叉核对；跨运行时集成流通过 Windows JDK 与实际 C++ 驱动运行。下一步恢复学习与同步流程中的显式入口。

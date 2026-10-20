@@ -91,4 +91,4 @@ rmdir "$scratch"
 
 本轮未执行原 ARM64，未操作设备或用户词典。官方宿主 protobuf 与真实文件 stream 的部分 I/O、分配故障及全部损坏输入仍不承诺等价。
 
-本容器已接到十六字节文件头与外层 UserDictionary 元数据，见 [完整用户词典内存镜像](user-dictionary-image.md)。写入统一使用共用 sink，实际文件验证见 [原生文件保存](file-persistence.md)。下一步沿调用方恢复文件替换、同步及中断恢复。宿主流程不代表设备上的完整输入引擎验收。
+本容器已接到十六字节文件头与外层 UserDictionary 元数据，见 [完整用户词典内存镜像](user-dictionary-image.md)。写入统一使用共用 sink，实际文件验证见 [原生文件保存](file-persistence.md)，其上的 Java 协调层见 [Java 文件替换协议](java-file-replacement.md)。下一步从协调层调用方恢复学习和同步的显式入口。宿主流程不代表设备上的完整输入引擎验收。
