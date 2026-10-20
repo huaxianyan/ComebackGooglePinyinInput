@@ -26,6 +26,11 @@ bool SerializeUserDictionaryImage(const UserDictionaryStorage& dictionary, Owned
     return true;
 }
 
+bool DuplicateUserDictionary(const UserDictionaryStorage& source, UserDictionaryStorage& output) {
+    OwnedByteRegion chunk;
+    return SerializeUserDictionaryImage(source, chunk) && LoadUserDictionaryImage(chunk, output) != 0;
+}
+
 std::uint64_t LoadUserDictionaryImage(const OwnedByteRegion& input, UserDictionaryStorage& output) {
     DictionaryHeader header{};
     if (!DecodeDictionaryHeader(input.Data(), input.Size(), header) ||

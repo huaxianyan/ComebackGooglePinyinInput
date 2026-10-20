@@ -158,10 +158,10 @@ int main(int argc, char** argv) {
             At(user_first, 32, "\x0e\0\0\0"sv),
             "complete file bytes have the literal current header and outer/inner protobuf boundaries");
     UserDictionaryStorage user_loaded;
-    Require(LoadUserDictionaryImage(user_first, user_loaded) == user_first.Size() &&
+    Require(DuplicateUserDictionary(user, user_loaded) &&
             user_loaded.metadata.SerializeAsString() == outer &&
             user_loaded.dictionary.metadata.association_count() == 1,
-            "load the complete user image with independent frequency and relation counts");
+            "duplicate through the real memory-image factory path, preserving both independent counts");
     {
         Editors edit(user_loaded.dictionary);
         const auto stored = Payload(edit.fs, edit.rs, "a", "b");
@@ -178,6 +178,11 @@ int main(int argc, char** argv) {
     // the low-level association coordinator does not invent that higher layer.
     user_loaded.metadata.set_total_count(151);
     user_loaded.metadata.set_last_sync_time(4294967296LL);
+    OwnedByteRegion unchanged_source;
+    Require(SerializeUserDictionaryImage(user, unchanged_source) &&
+            unchanged_source.Size() == user_first.Size() &&
+            std::memcmp(unchanged_source.Data(), user_first.Data(), user_first.Size()) == 0,
+            "editing the duplicate leaves the original complete dictionary byte-for-byte unchanged");
     OwnedByteRegion user_second;
     UserDictionaryStorage user_final;
     Require(SerializeUserDictionaryImage(user_loaded, user_second) &&

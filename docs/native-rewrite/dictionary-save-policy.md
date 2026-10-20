@@ -31,4 +31,6 @@ SaveDictionaryTask 的任务顺序是新词词典、用户词典，不是每个 
 
 ## 后续实现边界
 
-下一步沿 `nativeDuplicateDictionary(J)Z` 和 `nativeCompact(JI)Z` 恢复实际模型处理。完整 AsyncTask、通知、偏好适配与共享锁接入仍待实现，不把纯策略测试当作定时保存已经可运行。失效账户同步和在线词典更新继续保持关闭。
+[复制与原生整理入口](dictionary-duplicate-compact.md) 已恢复模型级复制，确认 compact 还会使用第二次 float32 系数与日期选择。Java 的整理目标只是传入参数，不是最终保留条数。
+
+完整 compact、AsyncTask、通知、偏好适配与共享锁接入仍待实现，不把纯策略测试当作定时保存已经可运行。失效账户同步和在线词典更新继续保持关闭。
