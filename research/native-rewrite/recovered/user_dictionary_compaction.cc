@@ -2,8 +2,24 @@
 #include "user_dictionary_compaction.h"
 #include "dictionary_association_iteration.h"
 #include "dictionary_compaction.h"
+#include "dictionary_day.h"
+#include <cstring>
 
 namespace comeback::recovered {
+std::int32_t DictionaryCompactionCutoff(std::int64_t day) {
+    const auto bits = static_cast<std::uint32_t>(day) - std::uint32_t{62};
+    std::int32_t cutoff;
+    std::memcpy(&cutoff, &bits, sizeof(cutoff));
+    return cutoff;
+}
+
+bool CompactUserDictionary(UserDictionaryStorage& dictionary,
+                            AssociationEditor& forward, AssociationEditor& reverse,
+                            std::uint64_t limit) {
+    return CompactUserDictionaryAtCutoff(dictionary, forward, reverse, limit,
+                                         DictionaryCompactionCutoff(CurrentDictionaryDay()));
+}
+
 bool CompactUserDictionaryAtCutoff(UserDictionaryStorage& dictionary,
                                     AssociationEditor& forward, AssociationEditor& reverse,
                                     std::uint64_t limit, std::int32_t cutoff_day) {

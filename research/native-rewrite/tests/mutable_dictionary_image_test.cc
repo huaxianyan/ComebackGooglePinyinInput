@@ -242,6 +242,19 @@ int main(int argc, char** argv) {
             compact_entries[0].payload == EncodedPayload({1, 0, 0, 0, 2, 0}),
             "native date-first compaction retains the recent light entry and reloads with both counts equal to one");
 
+    {
+        Editors edit(compact_loaded.dictionary);
+        Require(CompactUserDictionary(compact_loaded, edit.forward, edit.reverse, 2),
+                "run the original real-clock compaction entry on the remaining Unix-day-two fixture");
+    }
+    OwnedByteRegion current_image;
+    UserDictionaryStorage current_loaded;
+    Require(SerializeUserDictionaryImage(compact_loaded, current_image) &&
+            LoadUserDictionaryImage(current_image, current_loaded) == current_image.Size() &&
+            current_loaded.metadata.total_count() == 0 &&
+            current_loaded.dictionary.metadata.association_count() == 0,
+            "the real current-day wrapper expires the historical fixture and reloads an empty valid model");
+
     // Native 0x1a2b38 compares bytes consumed with 0x1c6994's canonical size.
     // Four redundant known count fields add eight bytes to the inner protobuf
     // frame; all table bytes and CRCs remain intact, but its canonical size shrinks.
