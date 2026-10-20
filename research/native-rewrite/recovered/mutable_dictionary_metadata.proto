@@ -1,0 +1,16 @@
+// Google-derived wire reconstruction; see NOTICE and dictionary-metadata.md.
+syntax = "proto2";
+package i18n_input.engine.hmm.proto;
+option optimize_for = LITE_RUNTIME;
+
+// Field numbers, scalar types, presence and defaults are recovered. Field names
+// are research names: the original lite binary does not expose descriptors.
+message MutableDictionaryMetaData {
+  optional int32 forward_payload_size = 1;
+  optional int32 reverse_data_size = 2;
+  optional bool forward_trie_omitted = 3;
+  optional bool key_checksum_enabled = 4;
+  optional int32 association_count = 5;
+  // Builder +0xb4 is copied here; its higher-level meaning is not yet proven.
+  optional int32 format_parameter = 6;
+}
