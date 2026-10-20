@@ -57,9 +57,11 @@ int main() {
     std::size_t size = 0;
     const std::array<std::uint8_t, 10> expected_record{
         0x88, 0x77, 0x66, 0x55, 0x67, 0x45, 0x23, 0xa9, 0x2b, 0x4a};
-    Require(table.ReadRecord(stored_id, read, size) && size == 10 &&
+    stored_id = 0;
+    Require(ReadAssociationRecordAt(table, pool, range.first_index, read, size, &stored_id) &&
+            stored_id == 50 && size == 10 &&
             std::equal(expected_record.begin(), expected_record.end(), read),
-            "reading the resolved byte offset returns its exact key and payload");
+            "the real association reader publishes its pool-resolved ID and exact record bytes");
 
     std::uint8_t* writable = nullptr;
     key = 0xdeadbeef;

@@ -79,4 +79,10 @@ NextTerminal 恢复 `0x1d5ee0` 的前向分支，先确认前缀路径与当前�
 
 三段终端函数与发布库一致，证据在 `native-terminal-key-comparison.json`，successor 沿用既有前缀证据。中央清单登记键重建、下降与 successor，累计 267 个区域，没有重证已有字节比较。
 
-下一步接可变词典关联组遍历，原记录读取继续复用 association 模块，再连接真实 compact。未执行 ARM64 或设备测试。
+## 共用实际记录读取
+
+ReadAssociationRecordAt 恢复已有 `0x1c3ac8`：先从 IndexPool 解析 byte-offset ID，再发布可选 ID，最后取得 FixedPhraseTable 的借用记录视图。后一步失败不撤回已经发布的 ID，没有自行清空输出或请求可写数据。
+
+原 FindAssociationRecord 改为调用这个共用入口，后续迭代器也使用同一入口，不复制池和固定表读取协议。既有真实固定表与池流程改走此入口，字面 ID `50` 和完整记录字节通过。只增量编译 association_list.cc 和对应流程，原 native 字节证据直接沿用。
+
+下一步接可变词典关联组遍历，再连接真实 compact。未执行 ARM64 或设备测试。

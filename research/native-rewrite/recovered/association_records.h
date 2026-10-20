@@ -42,6 +42,11 @@ struct AssociationRecordLocation {
     std::uint32_t position;
     std::uint32_t record_id;
 };
+// Native 0x1c3ac8: resolve a pool index, publish the optional record ID, then
+// read its borrowed fixed-table view. A later table failure retains that ID.
+bool ReadAssociationRecordAt(const FixedPhraseTable& records, const IndexPoolView& pool,
+                              std::uint32_t index, const std::uint8_t*& data,
+                              std::size_t& size, std::uint32_t* record_id = nullptr);
 // Shared first-match lookup used by deletion and node-ID repair.
 bool FindAssociationRecord(const FixedPhraseTable& records, const IndexPoolView& pool,
                             IndexRange reference, std::uint32_t key,
