@@ -2,6 +2,8 @@
 #include "association_records.h"
 #include "fixed_phrase_table.h"
 #include "little_endian.h"
+#include "trie_values.h"
+#include <cstring>
 
 namespace comeback::recovered {
 
@@ -40,6 +42,33 @@ bool FindAssociationRecord(const FixedPhraseTable& records, const IndexPoolView&
         }
     }
     return false;
+}
+
+bool ReadDictionaryAssociationPayload(const AssociationSide& forward, const AssociationSide& reverse,
+                                       std::string_view forward_key, std::string_view reverse_key,
+                                       OwnedByteRegion& output) {
+    const auto first = forward.trie.FindTerminal(forward_key);
+    const auto second = reverse.trie.FindTerminal(reverse_key);
+    if (first == 0 || second == 0) return false;
+    OwnedByteRegion value;
+    IndexRange reference{};
+    if (!ReadTrieValueByNodeId(forward.trie, forward.values, first, value) ||
+        !DecodeAssociationReference(value.Data(), value.Size(), reference)) return false;
+    const IndexPoolView pool(forward.metadata.Data(), forward.metadata.Size(),
+        const_cast<std::uint8_t*>(forward.cells.Data()), forward.cells.Size());
+    AssociationRecordLocation location{};
+    const std::uint8_t* bytes = nullptr;
+    std::size_t size = 0;
+    constexpr auto key_size = sizeof(std::uint32_t);
+    if (!FindAssociationRecord(forward.records, pool, reference, second, location) ||
+        !forward.records.ReadRecord(location.record_id, bytes, size) || size < key_size ||
+        !output.Resize(size - key_size)) return false;
+    if (size != key_size) {
+        auto* writable = output.MutableData();
+        if (writable == nullptr) return false;
+        std::memcpy(writable, bytes + key_size, size - key_size);
+    }
+    return true;
 }
 
 bool UpdateAssociationRecord(const AssociationSide& side, IndexRange reference,

@@ -3,6 +3,7 @@
 #include "dictionary_association_iteration.h"
 #include "user_dictionary_image.h"
 #include "user_dictionary_file.h"
+#include "user_dictionary_edit.h"
 #include "payload_codec.h"
 #include "association_editor.h"
 #include "trie_values.h"
@@ -45,19 +46,10 @@ struct Editors {
 std::string Payload(const AssociationSide& source, const AssociationSide& opposite,
                     std::string_view key, std::string_view target) {
     OwnedByteRegion value;
-    std::uint32_t terminal = 0;
-    IndexRange range{};
-    AssociationRecordLocation location{};
-    const IndexPoolView pool(source.metadata.Data(), source.metadata.Size(),
-                             source.cells.MutableData(), source.cells.Size());
-    const std::uint8_t* record = nullptr;
-    std::size_t size = 0;
-    Require(ReadTrieValueByKey(source.trie, source.values, key, terminal, value) &&
-            DecodeAssociationReference(value.Data(), value.Size(), range) &&
-            FindAssociationRecord(source.records, pool, range, opposite.trie.FindTerminal(target), location) &&
-            source.records.ReadRecord(location.record_id, record, size) && size >= 4,
-            "reading a relation through loaded trie, value table, pool and phrase records");
-    return std::string(reinterpret_cast<const char*>(record + 4), size - 4);
+    Require(ReadDictionaryAssociationPayload(source, opposite, key, target, value),
+            "read the native keyed payload through the actual trie, pool and phrase records");
+    return value.Size() == 0 ? std::string{} :
+        std::string(reinterpret_cast<const char*>(value.Data()), value.Size());
 }
 }  // namespace
 
@@ -209,6 +201,26 @@ int main(int argc, char** argv) {
             entries[1].payload == EncodedPayload({1, 0, 0, 0, 2, 0}) &&
             entries[2].payload == EncodedPayload({1, 0, 0, 0, 2, 0}),
             "snapshot traverses real key/pool order rather than sorting opposite keys or payloads");
+
+    auto deletion_source = user_final;
+    {
+        Editors edit(deletion_source.dictionary);
+        Require(RemoveUserDictionaryAssociation(deletion_source, edit.forward, edit.reverse, "b", "a") &&
+                deletion_source.metadata.total_count() == 150 &&
+                deletion_source.dictionary.metadata.association_count() == 1,
+                "physical deletion removes the real pair and subtracts its original weight from the outer total");
+        const auto category2 = "\x96\0\0\x20\x01\0"sv;
+        Require(ModifyDictionaryAssociation(edit.forward, edit.reverse, deletion_source.dictionary.metadata,
+                    "a", "b", &category2, nullptr, AssociationEditMode::ExistingOnly) &&
+                RemoveUserDictionaryAssociation(deletion_source, edit.forward, edit.reverse, "a", "b") &&
+                deletion_source.metadata.total_count() == 150 &&
+                deletion_source.dictionary.metadata.association_count() == 0,
+                "category two follows the original physical-delete branch without adjusting the outer accumulator");
+    }
+    i18n_input::engine::hmm::proto::UserDictionaryMetaData clamped;
+    AdjustUserDictionaryTotalCount(clamped, 150, 0);
+    Require(clamped.has_total_count() && clamped.total_count() == 0,
+            "the original subtraction clamps a negative result to zero and publishes presence");
 
     // Native 0x1a2b38 compares bytes consumed with 0x1c6994's canonical size.
     // Four redundant known count fields add eight bytes to the inner protobuf

@@ -57,6 +57,7 @@ REGIONS = {
     "mutable_key_iterator_done": (0x1C386C, 0x1C3890),
     "mutable_key_iterator_next": (0x1C6190, 0x1C620C),
     "dictionary_compact_remove": (0x1A1A74, 0x1A1BB4),
+    "dictionary_association_payload_lookup": (0x1C4D08, 0x1C4E70),
     "dictionary_persist_accessor": (0x189924, 0x1899B4),
     "file_persister_construct": (0x1FA438, 0x1FA44C),
     "file_persister_open": (0x1FA44C, 0x1FA4A4),

@@ -52,6 +52,13 @@ bool FindAssociationRecord(const FixedPhraseTable& records, const IndexPoolView&
                             IndexRange reference, std::uint32_t key,
                             AssociationRecordLocation& location);
 
+struct AssociationSide;
+// Native 0x1c4d08: resolve both keys and copy the first matching record's
+// payload through the actual forward trie/pool/table, without writable access.
+bool ReadDictionaryAssociationPayload(const AssociationSide& forward, const AssociationSide& reverse,
+                                       std::string_view forward_key, std::string_view reverse_key,
+                                       OwnedByteRegion& output);
+
 // Native association append stores the record before linking its ID into the
 // list. A link failure leaves that record appended; there is no rollback.
 bool AppendAssociationRecord(FixedPhraseTable& records, OwnedByteRegion& metadata,
