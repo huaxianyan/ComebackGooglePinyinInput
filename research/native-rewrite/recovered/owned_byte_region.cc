@@ -16,7 +16,8 @@ struct OwnedByteRegion::State {
 
     void Reset() {
         if (parent) parent.reset();
-        else std::free(data);
+        else if (!read_only_owner) std::free(data);
+        read_only_owner.reset();
         data = nullptr;
         size = 0;
     }
@@ -39,7 +40,7 @@ struct OwnedByteRegion::State {
             Reset();
             return true;
         }
-        if (parent) return Detach(new_size);
+        if (parent || read_only_owner) return Detach(new_size);
         auto* replacement = static_cast<std::uint8_t*>(std::realloc(data, new_size));
         if (replacement == nullptr) return false;
         if (clear_growth && new_size > size) {
@@ -51,9 +52,20 @@ struct OwnedByteRegion::State {
     }
 
     std::shared_ptr<State> parent;
+    std::shared_ptr<const void> read_only_owner;
     std::uint8_t* data = nullptr;
     std::size_t size = 0;
 };
+
+OwnedByteRegion OwnedByteRegion::FromReadOnlyOwner(std::shared_ptr<const void> owner,
+                                                   const std::uint8_t* data, std::size_t size) {
+    OwnedByteRegion result;
+    result.state_ = std::make_shared<State>();
+    result.state_->read_only_owner = std::move(owner);
+    result.state_->data = const_cast<std::uint8_t*>(data);
+    result.state_->size = size;
+    return result;
+}
 
 std::shared_ptr<OwnedByteRegion::State> OwnedByteRegion::Clone(
     const std::shared_ptr<State>& source) {
@@ -78,7 +90,7 @@ std::uint8_t* OwnedByteRegion::MutableData() {
         if (!replacement) return nullptr;
         state_ = std::move(replacement);
     }
-    if (state_->parent && !state_->Detach(state_->size)) return nullptr;
+    if ((state_->parent || state_->read_only_owner) && !state_->Detach(state_->size)) return nullptr;
     return state_->data;
 }
 

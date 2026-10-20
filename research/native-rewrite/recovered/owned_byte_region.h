@@ -5,12 +5,14 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <string>
 
 namespace comeback::recovered {
 
-// Heap-backed regions and parent-backed slices, without the old object ABI.
-// Copies share descriptors. Mutating access separates shared or sliced bytes.
-// External providers and rounded-capacity resizing are outside this component.
+// Heap regions, real read-only file mappings and parent-backed slices, without
+// the old object ABI. Copies share one descriptor. Writes separate shared,
+// sliced or read-only mapped bytes using the same heap/COW implementation.
+// Other providers and rounded-capacity resizing are outside this component.
 class OwnedByteRegion {
 public:
     std::size_t Size() const;
@@ -22,6 +24,10 @@ public:
     OwnedByteRegion Slice(std::size_t offset, std::size_t size) const;
 
 private:
+    friend bool MapReadOnlyFile(const std::string&, OwnedByteRegion&);
+    // Only the actual file-map factory supplies this resource lifetime token.
+    static OwnedByteRegion FromReadOnlyOwner(std::shared_ptr<const void> owner,
+                                             const std::uint8_t* data, std::size_t size);
     struct State;
     static std::shared_ptr<State> Clone(const std::shared_ptr<State>& source);
     std::shared_ptr<State> state_;

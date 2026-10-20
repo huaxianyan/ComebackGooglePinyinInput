@@ -1,6 +1,6 @@
 # 原文件映射读取契约
 
-本阶段只取证，尚未添加 mapped backend 或修改共用字节所有权。已有 heap 与 parent-slice 的 COW 继续沿用。
+本页记录原始取证契约。后续 [只读映射源码](file-mmap-source.md) 已恢复受限的 mode `0` 宿主路径，并扩展同一 State/COW。其他模式和完整文件加载仍待接入。
 
 ## 真实只读入口
 
@@ -32,7 +32,7 @@ FileMMap 保存模式、数据地址、完整文件长度、文件名和 fd。`0
 
 ## 与共用所有权的衔接
 
-OwnedByteRegion 目前只支持 heap 和 parent-slice。后续须恢复映射对象与区域之间的真实持有关系，再扩展同一 State/COW；不另写第二个字节容器或分配器。
+映射描述符的实际持有关系已在后续取证确认，并接入同一 OwnedByteRegion State/COW。原 heap 和 parent-slice 共用现有分配与释放，没有第二个字节容器或分配器。
 
 只读映射的可写请求必须有实据支持，不能把映射地址当作 heap 指针交给 realloc/free，或返回可写地址。未确定部分保持未实现，没有 opaque 或假成功 backend。
 
