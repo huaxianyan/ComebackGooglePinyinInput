@@ -383,6 +383,18 @@ class DirectMappingNativeTest(unittest.TestCase):
                           for address in (0x68B7A0, 0x68B7E8, 0x68B7F8)}, {
             0x68B7A0: 0x1A42D0, 0x68B7E8: 0x1A446C, 0x68B7F8: 0x1A3F68,
         })
+        mutable_image = {row["address"]: row["target"]
+                         for row in evidence["relocation_regions"]["mutable_dictionary"]}
+        self.assertEqual({address: mutable_image[address]
+                          for address in (0x67C320, 0x67C328, 0x67C3B0)}, {
+            0x67C320: 0x1C6660, 0x67C328: 0x1C6908, 0x67C3B0: 0x1C79B4,
+        })
+        variable_trie = {row["address"]: row["target"]
+                         for row in evidence["relocation_regions"]["variable_value_trie"]}
+        self.assertEqual({address: variable_trie[address]
+                          for address in (0x67DD40, 0x67DD48, 0x67DD50)}, {
+            0x67DD40: 0x1DE430, 0x67DD48: 0x1DF43C, 0x67DD50: 0x1DEFA8,
+        })
         math = evidence["score_math"]
         self.assertEqual(math["table_address"], 0x3A2FC0)
         self.assertEqual(math["constants"]["Ln2"]["bits"], 0x3F317218)

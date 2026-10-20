@@ -44,7 +44,8 @@ int main() {
     DATrieView rt(rm.Data(), rm.Size(), rn.MutableData(), rn.Size());
     AssociationSide fs{ft, fv, fp, fc, fr}, rs{rt, rv, rp, rc, rr};
     AssociationEditor forward{fs, fm, fn, true}, reverse{rs, rm, rn, true};
-    DictionaryEditState state{0, 0x80};
+    i18n_input::engine::hmm::proto::MutableDictionaryMetaData state;
+    state.set_key_checksum_enabled(true);
     const std::string_view payload("\x11\x22\x33\x44\x55\x66", 6);
     const std::string_view extra("\xde\xf0", 2);
     Require(ModifyDictionaryAssociation(forward, reverse, state, "a", "x", &payload, &extra,
@@ -53,7 +54,8 @@ int main() {
                                          AssociationEditMode::CreateOrUpdate) &&
             ModifyDictionaryAssociation(forward, reverse, state, "b", "y", &payload, &extra,
                                          AssociationEditMode::CreateOrUpdate) &&
-            state.association_count == 3 && state.flags == 0x90 &&
+            state.association_count() == 3 && state.has_association_count() &&
+            state.key_checksum_enabled() &&
             fv.RecordCount() == 2 && rv.RecordCount() == 2 &&
             fr.RecordCount() == 3 && rr.RecordCount() == 3,
             "adding a-x, a-y and b-y creates both keys and both published association lists");
@@ -73,7 +75,7 @@ int main() {
     const std::string_view replacement("\xaa\xbb\xcc\xdd\xee\xff", 6);
     Require(ModifyDictionaryAssociation(forward, reverse, state, "a", "x", &replacement, nullptr,
                                          AssociationEditMode::CreateOrUpdate) &&
-            state.association_count == 3 && fr.RecordCount() == 3 && rr.RecordCount() == 3,
+            state.association_count() == 3 && fr.RecordCount() == 3 && rr.RecordCount() == 3,
             "adding an existing pair updates it without counting another association");
     CheckEdge(fs, rs, "a", "x", replacement);
 
@@ -91,15 +93,14 @@ int main() {
     IndexRange full{};
     Require(ReadTrieValueByKey(rt, rv, "x", terminal, value) &&
             DecodeAssociationReference(value.Data(), value.Size(), full) && full.count == 511 &&
-            state.association_count == 513,
+            state.association_count() == 513,
             "the published reverse list contains 511 real entries after trie growth and relocation");
-    state.flags = 0x80;  // Start a new metadata checkpoint, not a persistence mock.
     const std::array<std::uint8_t, 4> expected_key_count{0x00, 0x02, 0x00, 0x00};
     Require(!ModifyDictionaryAssociation(forward, reverse, state, "overflow", "x", &payload, nullptr,
                                           AssociationEditMode::CreateOrUpdate) &&
             ft.FindTerminal("overflow") == 0 && rt.FindTerminal("x") != 0 &&
             std::equal(expected_key_count.begin(), expected_key_count.end(), fm.Data() + 8) &&
-            state.association_count == 513 && state.flags == 0x80 &&
+            state.association_count() == 513 && state.key_checksum_enabled() &&
             fv.RecordCount() == 513 && rv.RecordCount() == 2 &&
             fr.RecordCount() == 513 && rr.RecordCount() == 513,
             "a full reverse list cleans the new empty endpoint while retaining native value records");

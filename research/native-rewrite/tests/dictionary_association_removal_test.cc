@@ -52,7 +52,9 @@ int main() {
             AppendAssociationRecord(rr, rp, rc, to_a.data(), to_a.size(), ly) &&
             AppendAssociationRecord(rr, rp, rc, to_b.data(), to_b.size(), ly),
             "building both directions through actual record and list appends");
-    DictionaryEditState state{3, 0x80};
+    i18n_input::engine::hmm::proto::MutableDictionaryMetaData state;
+    state.set_association_count(3);
+    state.set_key_checksum_enabled(true);
     OwnedByteRegion value;
     const std::uint8_t* record = nullptr;
     std::size_t size = 0;
@@ -67,16 +69,16 @@ int main() {
             ReadTrieValueByNodeId(rt, rv, 2, value) && value.Size() == 8 &&
             std::equal(updated_x.begin(), updated_x.end(), value.Data()) &&
             fv.RecordCount() == 2 && rv.RecordCount() == 2 && fr.RecordCount() == 3 &&
-            rr.RecordCount() == 3 && state.association_count == 3 && state.flags == 0x80,
+            rr.RecordCount() == 3 && state.association_count() == 3 && state.key_checksum_enabled(),
             "updating a-x changes its payload and reverse data while preserving checksums and counts");
     const std::array<std::uint8_t, 6> remaining_a{1, 4, 0, 0, 0x34, 0x12};
     Require(RemoveDictionaryAssociation(forward, reverse, state, "a", "x") &&
-            state.association_count == 2 && state.flags == 0x90 && rt.FindTerminal("x") == 0 &&
+            state.association_count() == 2 && state.has_association_count() && rt.FindTerminal("x") == 0 &&
             ft.FindTerminal("a") == 2 && ReadTrieValueByNodeId(ft, fv, 2, value) && value.Size() == 6 &&
             std::equal(remaining_a.begin(), remaining_a.end(), value.Data()),
             "removing a-x republishes a's remaining range, retains its suffix and deletes empty x");
     Require(RemoveDictionaryAssociation(forward, reverse, state, "b", "y") &&
-            state.association_count == 1 && state.flags == 0x90 && ft.FindTerminal("b") == 0 &&
+            state.association_count() == 1 && state.has_association_count() && ft.FindTerminal("b") == 0 &&
             rt.FindTerminal("y") == 3 && ReadTrieValueByNodeId(rt, rv, 3, value) && value.Size() == 8,
             "removing b-y deletes empty b and republishes y's remaining reverse list");
     const std::array<std::uint8_t, 4> suffix{0x78, 0x56, 0x9a, 0xbc};
@@ -89,7 +91,7 @@ int main() {
             size == 4 && std::equal(to_a.begin(), to_a.end(), record),
             "the republished reverse list reaches the actual a record and retains all trailing bytes");
     Require(RemoveDictionaryAssociation(forward, reverse, state, "a", "y") &&
-            state.association_count == 0 && state.flags == 0x90 && fm.Data()[8] == 0 && rm.Data()[8] == 0 &&
+            state.association_count() == 0 && state.has_association_count() && fm.Data()[8] == 0 && rm.Data()[8] == 0 &&
             fv.RecordCount() == 2 && rv.RecordCount() == 2 && fr.RecordCount() == 3 && rr.RecordCount() == 3,
             "removing the last pair deletes both keys while retaining appended records");
 
@@ -102,7 +104,7 @@ int main() {
             InsertTrieValue(rt, rm, rn, rv, "x", empty, &x) && x == 2 &&
             AppendAssociationRecord(fr, fp, fc, to_x.data(), to_x.size(), one),
             "preparing a real forward record with an existing but empty reverse key");
-    state = {1, 0x80};
+    state.set_association_count(1);
     const std::string_view partial_payload("\xaa\xbb\xcc\xdd\xee\xff", 6);
     const std::array<std::uint8_t, 10> partial{2, 0, 0, 0, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
     Require(!ModifyDictionaryAssociation(forward, reverse, state, "a", "x", &partial_payload, &extra,
@@ -112,13 +114,13 @@ int main() {
             ReadTrieValueByNodeId(rt, rv, 2, value) && value.Size() == 8 &&
             std::equal(empty.Data(), empty.Data() + empty.Size(), value.Data()) &&
             fv.RecordCount() == 3 && rv.RecordCount() == 3 && fr.RecordCount() == 4 &&
-            rr.RecordCount() == 3 && state.association_count == 1 && state.flags == 0x80,
+            rr.RecordCount() == 3 && state.association_count() == 1 && state.key_checksum_enabled(),
             "a missing reverse record retains the forward payload update without creating a counterpart");
     const bool removed = RemoveDictionaryAssociation(forward, reverse, state, "a", "x");
     const IndexPoolView changed(fp.Data(), fp.Size(), fc.MutableData(), fc.Size());
     id = 0;
     Require(!removed &&
-            state.association_count == 1 && state.flags == 0x80 &&
+            state.association_count() == 1 && state.key_checksum_enabled() &&
             ft.FindTerminal("a") == 2 && rt.FindTerminal("x") == 2 &&
             ReadTrieValueByNodeId(ft, fv, 2, value) && value.Size() == 6 &&
             std::equal(remaining_a.begin(), remaining_a.end(), value.Data()) &&

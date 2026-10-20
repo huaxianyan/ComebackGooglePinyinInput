@@ -48,7 +48,7 @@ bool AppendSide(AssociationEditor& editor, std::string_view key, std::uint32_t t
 }  // namespace
 
 bool ModifyDictionaryAssociation(AssociationEditor& forward, AssociationEditor& reverse,
-                                  DictionaryEditState& state,
+                                  i18n_input::engine::hmm::proto::MutableDictionaryMetaData& metadata,
                                   std::string_view forward_key, std::string_view reverse_key,
                                   const std::string_view* payload,
                                   const std::string_view* reverse_data, AssociationEditMode mode) {
@@ -79,8 +79,8 @@ bool ModifyDictionaryAssociation(AssociationEditor& forward, AssociationEditor& 
     if (forward_range.count < 0x1ffU && reverse_range.count < 0x1ffU &&
         AppendSide(forward, forward_key, reverse_id, payload, nullptr, forward_range) &&
         AppendSide(reverse, reverse_key, forward_id, nullptr, reverse_data, reverse_range)) {
-        ++state.association_count;
-        state.flags |= 0x10U;
+        metadata.set_association_count(static_cast<std::int32_t>(
+            static_cast<std::uint32_t>(metadata.association_count()) + 1U));
         return true;
     }
     // The native cleanup tests the current ranges, including successful appends,

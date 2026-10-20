@@ -151,46 +151,13 @@ work/native-rewrite/recovered-associations/association_records_test
 
 更新使用原 slot 1，没有借用 slot 0 的「更新失败后追加」策略。两个入口的已有值更新共用同一实现，更新失败不创建替代记录。可选十六位字段和尾随数据保持原字节，该删除路径不重新计算校验值或覆盖附加内容。
 
-`DictionaryEditState` 显式保存原运行时关系数量和状态位，对应对象 `+0x34` 和 `+0x20`。它不是文件头布局，也不是设置页的词库统计。新取证确认 `0x10` 对应 [元数据](dictionary-metadata.md) 第 5 个 optional 字段的存在位，而非另一套独立脏位。第一侧发布成功后，第二侧发布无论成功还是返回失败，仍减少关系数量并置位 `0x10`。更早失败则保留此前修改并直接返回，不补偿池或重建键值。
+关联编辑直接使用官方 `MutableDictionaryMetaData`。早期 `DictionaryEditState` 已删除，数量和存在性只有一个定义点。原对象 `+0x34` 对应关系数量，`+0x20` 的 `0x10` 对应 [元数据](dictionary-metadata.md) 第 5 个 optional 字段的存在位。第一侧发布成功后，第二侧发布无论成功还是返回失败，仍减少关系数量并设置字段存在性。更早失败则保留此前修改并直接返回，不补偿池或重建键值。
 
 ### 双侧整合验证
 
-```bash
-out=work/native-rewrite/recovered-dictionary-association-update
-mkdir -p "$out"
-g++ -std=c++17 -O2 -Wall -Wextra -Werror -nostdlib -r \
-  research/native-rewrite/recovered/owned_byte_region.cc \
-  research/native-rewrite/recovered/fixed_phrase_table.cc \
-  research/native-rewrite/recovered/index_pool.cc \
-  research/native-rewrite/recovered/association_records.cc \
-  research/native-rewrite/recovered/association_list.cc \
-  research/native-rewrite/recovered/datrie_view.cc \
-  research/native-rewrite/recovered/datrie_relocation.cc \
-  research/native-rewrite/recovered/datrie_insertion.cc \
-  research/native-rewrite/recovered/datrie_deletion.cc \
-  research/native-rewrite/recovered/trie_values.cc \
-  research/native-rewrite/recovered/trie_value_lookup.cc \
-  research/native-rewrite/recovered/trie_value_editor.cc \
-  research/native-rewrite/recovered/node_id_updater.cc \
-  research/native-rewrite/recovered/dictionary_checksum.cc \
-  research/native-rewrite/recovered/dictionary_association_removal.cc \
-  research/native-rewrite/recovered/dictionary_association_update.cc \
-  -o "$out/recovered.o"
-g++ -std=c++17 -O2 -Wall -Wextra -Werror \
-  research/native-rewrite/tests/dictionary_association_removal_test.cc \
-  "$out/recovered.o" -o "$out/dictionary_association_update_test"
-"$out/dictionary_association_update_test"
-g++ -std=c++17 -O2 -Wall -Wextra -Werror \
-  research/native-rewrite/tests/dictionary_association_creation_test.cc \
-  "$out/recovered.o" -o "$out/dictionary_association_creation_test"
-"$out/dictionary_association_creation_test"
-g++ -std=c++17 -O2 -Wall -Wextra -Werror \
-  research/native-rewrite/tests/node_id_updater_test.cc \
-  "$out/recovered.o" -o "$out/node_id_updater_test"
-"$out/node_id_updater_test"
-```
+协调器现依赖官方生成的可变词典元数据。生成、共用编译和两个双向编辑测试的完整入口统一放在 [完整内存镜像](mutable-dictionary-image.md)，不再保留缺少 protobuf 生成步骤的旧命令。
 
-严格 C++17 构建通过。真实插入键、追加值和关联列表建立 `a-x`、`a-y`、`b-y` 三条关系。删除分别覆盖第一侧保留、第二侧保留和双方空列表分支，最终双方键数为零，值表各两条、记录表各三条留存。关系数量从三降到零，状态位从 `0x80` 到 `0x90`。
+严格 C++17 构建通过。真实插入键、追加值和关联列表建立 `a-x`、`a-y`、`b-y` 三条关系。删除分别覆盖第一侧保留、第二侧保留和双方空列表分支，最终双方键数为零，值表各两条、记录表各三条留存。关系数量从三降到零，计数字段存在性与其他元数据配置保留。
 
 独立字面引用验证第一侧剩余列表，第二侧通过发布的引用实际取得偏移 `4` 的目标记录。六字节与八字节值的尾随字段保留原字节，没有使用生产算法计算期望。
 
@@ -208,4 +175,4 @@ APK 入口补入第二列表失败早退、更新与删除分派、第二侧编�
 
 ## 下一步
 
-索引池节点布局、独立元数据与内存操作见 [索引池源码](index-pool.md)。CRC16、双向新增与空端点清理已经连接。定长表、池与 DATrie 内存镜像也已恢复。下一步连接外层元数据、文件读写及恢复，不以宿主编辑流程代替持久化或完整输入引擎验收。
+索引池节点布局、独立元数据与内存操作见 [索引池源码](index-pool.md)。CRC16、双向新增、空端点清理及 [完整可变词典镜像](mutable-dictionary-image.md) 已连接。下一步接外层文件、读写及恢复，不以宿主编辑流程代替持久化或完整输入引擎验收。

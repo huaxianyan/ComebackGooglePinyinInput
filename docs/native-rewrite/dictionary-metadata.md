@@ -99,4 +99,4 @@ g++ -std=c++17 -O2 -Wall -Wextra -Werror \
 - `work/native-rewrite/ghidra/outer-metadata-byte-reader/`
 - `work/native-rewrite/restart-v217/native-user-metadata-comparison.json`
 
-未执行原 ARM64 protobuf，未访问设备或用户词典。完整容器拼接、文件替换与失败恢复仍未完成。内存镜像未模拟原 stream 的部分 I/O 失败。最终运行时、全部损坏输入、分配故障及跨版本 protobuf 等价尚未验收，权利边界继续遵循 `NOTICE`。
+当前格式的 [六子模型内存容器](mutable-dictionary-image.md) 已接通，关联编辑直接修改官方元数据。未执行原 ARM64 protobuf，未访问设备或用户词典。外层完整文件拼接、文件替换与失败恢复仍未完成。内存镜像未模拟原 stream 的部分 I/O 失败。最终运行时、全部损坏输入、分配故障及跨版本 protobuf 等价尚未验收，权利边界继续遵循 `NOTICE`。

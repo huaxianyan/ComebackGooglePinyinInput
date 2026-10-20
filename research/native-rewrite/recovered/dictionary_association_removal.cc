@@ -16,7 +16,8 @@ bool Publish(AssociationEditor& editor, std::string_view key, IndexRange range,
 }  // namespace
 
 bool RemoveDictionaryAssociation(AssociationEditor& forward, AssociationEditor& reverse,
-                                  DictionaryEditState& state, std::string_view forward_key,
+                                  i18n_input::engine::hmm::proto::MutableDictionaryMetaData& metadata,
+                                  std::string_view forward_key,
                                   std::string_view reverse_key) {
     auto& forward_value = forward.value_buffer;
     auto& reverse_value = reverse.value_buffer;
@@ -34,8 +35,8 @@ bool RemoveDictionaryAssociation(AssociationEditor& forward, AssociationEditor& 
                                   forward_id, reverse_range)) return false;
     if (!Publish(forward, forward_key, forward_range, forward_value)) return false;
     const bool result = Publish(reverse, reverse_key, reverse_range, reverse_value);
-    --state.association_count;
-    state.flags |= 0x10U;
+    metadata.set_association_count(static_cast<std::int32_t>(
+        static_cast<std::uint32_t>(metadata.association_count()) - 1U));
     return result;
 }
 
