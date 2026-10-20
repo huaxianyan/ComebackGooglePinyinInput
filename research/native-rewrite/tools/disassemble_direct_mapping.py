@@ -231,6 +231,8 @@ REGIONS = {
     "datrie_accept_byte": (0x1D4BF0, 0x1D4C34),
     "datrie_accept_key": (0x1D4C34, 0x1D4C9C),
     "datrie_read_terminal_key": (0x1D6AF0, 0x1D6CA4),
+    "datrie_first_terminal": (0x1D5BC8, 0x1D5CCC),
+    "datrie_next_terminal": (0x1D5EE0, 0x1D60E4),
     "datrie_find_node": (0x1D4D2C, 0x1D4DEC),
     "datrie_find_root": (0x1D4E24, 0x1D4E2C),
     "datrie_load_image": (0x1D7970, 0x1D7B94),

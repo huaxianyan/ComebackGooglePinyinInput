@@ -36,6 +36,10 @@ public:
     // Recover the original byte key from a terminal's parent chain. Failure
     // preserves output; success clears it before appending and reversing bytes.
     bool ReadTerminalKey(std::uint32_t node, std::string& output) const;
+    // Prefix-cursor primitives on occupied paths in a ready validated trie.
+    // Visit in metadata alphabet order; zero denotes end/not found.
+    std::uint32_t FirstTerminal(std::uint32_t path_node) const;
+    std::uint32_t NextTerminal(std::string_view prefix, std::uint32_t terminal) const;
     // Remove a real free cell from its doubly linked chain. Its own words are
     // retained; the native caller must subsequently assign its occupied fields.
     bool UnlinkFreeNode(std::uint32_t node);

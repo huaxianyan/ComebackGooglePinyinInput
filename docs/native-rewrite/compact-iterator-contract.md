@@ -44,7 +44,7 @@ kind 1 经 VariableValueLengthTrie 的 `0x1de6b8` 委托 DATrie。`0x1d4b00` 构
 
 `0x1c60e0` 是关联组刷新入口。它跳过无法读取或解码关联描述的 trie 键，再发布池范围和第一记录。payload 读取 `0x1c4e88` 复用原记录读取，正文从记录偏移 4 开始，不新建第二套记录编码。
 
-键文本重建已恢复为 DATrieView::ReadTerminalKey，下降帮助函数仍待接入游标。已确认的排序来源和帧边界留给实际实现复用。
+键文本重建、下降与前向 successor 已在 DATrieView 恢复，原可变词典的关联组包装仍待接入。接口复用同一元数据、节点读取和终端判断，不复制原对象 ABI。
 
 ## 模型报告数量
 
@@ -71,6 +71,12 @@ kind 1 经 VariableValueLengthTrie 的 `0x1de6b8` 委托 DATrie。`0x1d4b00` 构
 
 既有 DATrie 镜像流程添加此真实入口检查：初始化、加载、插入两字节键、保存并重新加载后，从终端恢复字面 `ab` 和原值，通过。只增量编译 datrie_view.cc 并运行受影响流程。
 
-下降函数 `0x1d5bc8` 的源码已取得：跳过已有终端和空闲节点，按 alphabet 递归下降，零边直接返回终端，根的空键不作为结果。尚未将它和 successor 接入模型，未以普通 DFS 冒充完成。
+下降函数 `0x1d5bc8` 已恢复为 FirstTerminal：跳过已有终端和空闲节点，按 alphabet 递归下降，零边直接返回终端，根的空键不作为结果。
 
-三段新函数与发布库一致，证据在 `native-terminal-key-comparison.json`。中央导出只登记重建键入口，累计 265 个区域。下一步补齐下降、successor 及关联组遍历，原记录读取继续复用 association 模块。未执行 ARM64 或设备测试。
+NextTerminal 恢复 `0x1d5ee0` 的前向分支，先确认前缀路径与当前终端的祖先边界，再按反向 alphabet 索引寻找后续兄弟。找到可用子树后调用同一 FirstTerminal，走完则沿父链回退，抵达前缀边界就结束。没有另建字序表或用文本排序代替。
+
+同一真实镜像流程再插入 `a` 与 `b`，实际游标依次得到字面 `a`、`ab`、`b`；以 `a` 为前缀时只得到 `a`、`ab`。增量编译和该受影响流程通过。接口只面向已就绪、已验证 trie 的占用路径，反向游标、非活动 ID 和全部损坏输入尚未验收。
+
+三段终端函数与发布库一致，证据在 `native-terminal-key-comparison.json`，successor 沿用既有前缀证据。中央清单登记键重建、下降与 successor，累计 267 个区域，没有重证已有字节比较。
+
+下一步接可变词典关联组遍历，原记录读取继续复用 association 模块，再连接真实 compact。未执行 ARM64 或设备测试。

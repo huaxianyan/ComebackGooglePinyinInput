@@ -114,6 +114,47 @@ bool DATrieView::ReadTerminalKey(std::uint32_t node, std::string& output) const 
     return true;
 }
 
+std::uint32_t DATrieView::FirstTerminal(std::uint32_t node) const {
+    const auto count = NodeCount();
+    if (node == 0 || node >= count || IsTerminal(node) ||
+        (NonPositive(Base(node)) && NonPositive(Check(node)))) return 0;
+    const auto label_count = detail::ReadLittleEndian<std::uint32_t>(metadata_ + kLabelCountOffset);
+    for (std::uint32_t index = 0; index < label_count; ++index) {
+        const auto child = Base(node) + metadata_[kLabelsOffset + index];
+        if (child >= count || Check(child) != node) continue;
+        if (index == 0) {
+            if (node != kRoot) return child;
+        } else {
+            const auto terminal = FirstTerminal(child);
+            if (terminal != 0) return terminal;
+        }
+    }
+    return 0;
+}
+
+std::uint32_t DATrieView::NextTerminal(std::string_view prefix, std::uint32_t terminal) const {
+    const auto boundary = FindNode(prefix);
+    if (boundary == 0 || !IsTerminal(terminal)) return 0;
+    auto parent = Check(terminal);
+    auto ancestor = parent;
+    while (ancestor != kRoot && ancestor != boundary) ancestor = Check(ancestor);
+    if (ancestor != boundary) return 0;
+    const auto count = NodeCount();
+    const auto label_count = detail::ReadLittleEndian<std::uint32_t>(metadata_ + kLabelCountOffset);
+    for (;;) {
+        auto index = static_cast<std::uint32_t>(metadata_[kAlphabetOffset + terminal - Base(parent)]);
+        while (++index < label_count) {
+            const auto child = Base(parent) + metadata_[kLabelsOffset + index];
+            if (child >= count || Check(child) != parent) continue;
+            const auto next = FirstTerminal(child);
+            if (next != 0) return next;
+        }
+        if (terminal == kRoot || parent == boundary) return 0;
+        terminal = parent;
+        parent = Check(parent);
+    }
+}
+
 void DATrieView::WriteBase(std::uint32_t node, std::uint32_t value) {
     detail::WriteLittleEndian(value, nodes_ + node * kNodeSize);
 }

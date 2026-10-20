@@ -1,6 +1,7 @@
 // One real DATrie save/load/edit flow with the native graph-validation gate.
 #include "../recovered/datrie_view.h"
 #include "../recovered/dictionary_table_image.h"
+#include <vector>
 #include "../recovered/little_endian.h"
 #include "../recovered/owned_byte_region.h"
 
@@ -67,5 +68,21 @@ int main() {
     Require(verified.ReadTerminalValue(verified.FindTerminal("ab"), value) && value == 0x123456 &&
             std::equal(empty_header.begin(), empty_header.end(), empty_image.Data()),
             "the prior key and original image remain available after the invalid load");
-    std::puts("PASS: DA-TRIE save/load, graph checks, real insertion, active extent and cycle rejection");
+    Require(verified.InsertValue(verified_metadata, verified_nodes, "a", 7) &&
+            verified.InsertValue(verified_metadata, verified_nodes, "b", 9),
+            "extend the real loaded trie with a prefix word and its sibling");
+    const auto collect = [&](std::string_view prefix) {
+        std::vector<std::string> keys;
+        for (auto node = verified.FirstTerminal(verified.FindNode(prefix)); node != 0;
+             node = verified.NextTerminal(prefix, node)) {
+            std::string key;
+            Require(verified.ReadTerminalKey(node, key), "recover the actual key of each cursor result");
+            keys.push_back(key);
+        }
+        return keys;
+    };
+    Require(collect("") == std::vector<std::string>({"a", "ab", "b"}) &&
+            collect("a") == std::vector<std::string>({"a", "ab"}),
+            "the native prefix cursor visits alphabet-order keys and stops at its prefix boundary");
+    std::puts("PASS: DA-TRIE images, real editing and exact prefix-cursor traversal");
 }
