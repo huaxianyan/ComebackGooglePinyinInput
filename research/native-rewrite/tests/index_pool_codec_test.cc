@@ -1,5 +1,6 @@
 // One real save/reload/edit flow for the frozen P-TABLE container protocol.
 #include "../recovered/index_pool.h"
+#include "../recovered/dictionary_table_image.h"
 #include "../recovered/owned_byte_region.h"
 
 #include <algorithm>
@@ -33,14 +34,14 @@ int main() {
     IndexRange range{};
     Require(InitializeIndexPool(metadata, cells) &&
             CreateIndexRange(metadata, cells, 0x123456, range) && cells.Size() > 16 &&
-            SerializeIndexPool(metadata, cells, encoded) && encoded.Size() == original.size() &&
+            SerializeDictionaryTableImage(DictionaryTableKind::IndexPool, metadata, cells, encoded) && encoded.Size() == original.size() &&
             std::equal(original.begin(), original.end(), encoded.Data()),
             "saving an allocated pool emits CRC64, metadata and active cells rather than spare capacity");
     Require(encoded.Resize(43), "adding a following frame prefix to the input stream");
     encoded.MutableData()[40] = 0xaa;
     OwnedByteRegion loaded_metadata, loaded_cells;
     std::uint32_t record_id = 0;
-    Require(LoadIndexPool(encoded, loaded_metadata, loaded_cells) == 40 &&
+    Require(LoadDictionaryTableImage(DictionaryTableKind::IndexPool, encoded, loaded_metadata, loaded_cells) == 40 &&
             loaded_metadata.Size() == 8 && loaded_cells.Size() == 16,
             "loading consumes only the first complete pool frame");
     IndexPoolView loaded(loaded_metadata.Data(), loaded_metadata.Size(),
@@ -49,7 +50,7 @@ int main() {
             loaded.WriteRecordId(2, 0x07654321),
             "reading and editing a record after loading the real pool");
     OwnedByteRegion saved;
-    Require(SerializeIndexPool(loaded_metadata, loaded_cells, saved) && saved.Size() == edited.size() &&
+    Require(SerializeDictionaryTableImage(DictionaryTableKind::IndexPool, loaded_metadata, loaded_cells, saved) && saved.Size() == edited.size() &&
             std::equal(edited.begin(), edited.end(), saved.Data()) &&
             std::equal(original.begin(), original.end(), encoded.Data()),
             "saving the edit updates the CRC64 and keeps the source image unchanged");
@@ -57,7 +58,7 @@ int main() {
     // Native CRC validation precedes installing either decoded region.
     OwnedByteRegion damaged = encoded;
     damaged.MutableData()[32] ^= 1;
-    Require(LoadIndexPool(damaged, loaded_metadata, loaded_cells) == 0,
+    Require(LoadDictionaryTableImage(DictionaryTableKind::IndexPool, damaged, loaded_metadata, loaded_cells) == 0,
             "a damaged record fails the stored CRC64 before replacing the loaded pool");
     loaded = IndexPoolView(loaded_metadata.Data(), loaded_metadata.Size(),
                             loaded_cells.MutableData(), loaded_cells.Size());

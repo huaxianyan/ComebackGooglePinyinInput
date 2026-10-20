@@ -1,4 +1,5 @@
 #include "datrie_view.h"
+#include "datrie_layout.h"
 #include "little_endian.h"
 #include "owned_byte_region.h"
 #include "storage_growth.h"
@@ -10,13 +11,13 @@
 namespace comeback::recovered {
 namespace {
 constexpr std::size_t kAlphabetOffset = 0x114;
-constexpr std::uint32_t kByteValueCount = std::tuple_size<DATrieLabels>::value;
+using detail::datrie::kByteValueCount;
 constexpr std::size_t kMetadataExtent = kAlphabetOffset + kByteValueCount;
-constexpr std::size_t kMetadataSize = 0x218;
-constexpr std::size_t kLabelCountOffset = 0x10;
+using detail::datrie::kMetadataSize;
+using detail::datrie::kLabelCountOffset;
 constexpr std::size_t kLabelsOffset = 0x14;
-constexpr std::size_t kNodeCountOffset = 0x0c;
-constexpr std::size_t kNodeSize = 8;
+using detail::datrie::kNodeCountOffset;
+using detail::datrie::kNodeSize;
 }  // namespace
 
 bool DATrieView::NonPositive(std::uint32_t word) {

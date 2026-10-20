@@ -101,7 +101,7 @@ Ghidra 的 `0x1e4a20` C 视图把寄存器快照误写成后续内存读取。�
 
 `0x1e3c50` 的 CRC64 覆盖元数据和已使用数据区。它已接入同一 [词典 CRC](dictionary-storage.md#crc-来源与实现)，64 位反射多项式与初值均为 `0xab0547580daac74e`，没有末尾 XOR。此 CRC 不等于外层词典头的 CRC32。
 
-[内存容器编解码](../../research/native-rewrite/recovered/index_pool_codec.cc) 已恢复正常格式路径。`SerializeIndexPool` 输出活动字节，不输出分配容量。`LoadIndexPool` 对照 `0x1e3cf0`，校验成功才安装两份区域，并返回本帧消耗的字节数，输入可带后续内容。元数据保留父切片，数据区按原入口请求可写区域并分离。原视图应在加载后重新取得。
+[共享表镜像编解码](../../research/native-rewrite/recovered/dictionary_table_image.cc) 已恢复正常格式路径。`SerializeDictionaryTableImage` 选择 `IndexPool` 后输出活动字节，不输出分配容量。`LoadDictionaryTableImage` 对照 `0x1e3cf0`，校验成功才安装两份区域，并返回本帧消耗的字节数，输入可带后续内容。元数据保留父切片，数据区按原入口请求可写区域并分离。原视图应在加载后重新取得。
 
 单元宽度和元数据宽度移入 `index_pool_layout.h`，原池操作与容器共用同一组定义。载入只校验签名、长度与 CRC，不证明空闲链表有序、无环或记录关联完整。
 
@@ -116,7 +116,8 @@ mkdir -p work/native-rewrite/recovered-pool-codec
 g++ -std=c++17 -O2 -Wall -Wextra -Werror \
   research/native-rewrite/recovered/owned_byte_region.cc \
   research/native-rewrite/recovered/index_pool.cc \
-  research/native-rewrite/recovered/index_pool_codec.cc \
+  research/native-rewrite/recovered/dictionary_table_image.cc \
+  research/native-rewrite/recovered/datrie_validation.cc \
   research/native-rewrite/recovered/dictionary_checksum.cc \
   research/native-rewrite/tests/index_pool_codec_test.cc \
   -o work/native-rewrite/recovered-pool-codec/index_pool_codec_test
@@ -131,6 +132,8 @@ work/native-rewrite/recovered-pool-codec/index_pool_codec_test
 - `work/native-rewrite/restart-v217/native-pool-codec-comparison.json`
 
 未执行原 ARM64，未读写设备或用户词典。
+
+随后 DATrie 表确认使用相同签名、CRC64、元数据和活动正文形状，公共包络已合并为 `dictionary_table_image.h/.cc` 的单一入口，通过 `DictionaryTableKind` 选择真实格式。旧仅池入口已删除，没有逐方法转发或第二套编解码。迁移后的既有池流程通过，DATrie 的额外图校验及证据见 [DATrie 镜像](datrie-view.md#表镜像与原加载校验)。
 
 ## 池操作的既有验证与证据
 

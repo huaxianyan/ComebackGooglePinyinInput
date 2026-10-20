@@ -73,6 +73,7 @@ private:
     static bool NonPositive(std::uint32_t word);
     friend bool InitializeDATrie(OwnedByteRegion&, OwnedByteRegion&, std::string_view, std::uint8_t);
     friend bool GrowDATrieNodes(OwnedByteRegion&, OwnedByteRegion&);
+    friend bool ValidateDATrie(const OwnedByteRegion&, const OwnedByteRegion&);
     friend bool FindDATrieBase(OwnedByteRegion&, OwnedByteRegion&, const std::uint32_t*,
                                std::size_t, std::uint32_t, std::uint32_t&);
     bool Rebind(OwnedByteRegion& metadata, OwnedByteRegion& nodes);
@@ -94,6 +95,10 @@ private:
 // The caller owns the enclosing ready state; success makes a view usable.
 bool InitializeDATrie(OwnedByteRegion& metadata, OwnedByteRegion& nodes,
                       std::string_view alphabet, std::uint8_t excluded_byte);
+
+// Native image checks: metadata bounds, occupied parent chains reaching the root,
+// and consistent free-list backlinks. Does not mutate or acquire writable data.
+bool ValidateDATrie(const OwnedByteRegion& metadata, const OwnedByteRegion& nodes);
 
 // Existing initialized storage only. Growth appends 256 active cells and may
 // replace backing storage. Reacquire borrowed views after either operation.

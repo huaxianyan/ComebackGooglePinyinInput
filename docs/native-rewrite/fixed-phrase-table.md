@@ -126,4 +126,4 @@ work/native-rewrite/recovered-fixed-phrase/fixed_phrase_table_test
 
 ## 下一步
 
-定长记录表和索引池的内存容器已恢复。下一步核对 DATrie 完整容器、protobuf 元数据和文件同步，再连接外层恢复。当前没有磁盘持久化或整本词典的运行验收。
+定长记录表、索引池和 DATrie 的内存容器已恢复。下一步连接 protobuf 元数据、外层文件布局与同步，再推进失败恢复。当前没有磁盘持久化或整本词典的运行验收。

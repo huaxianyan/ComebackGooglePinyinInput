@@ -4,7 +4,7 @@
 
 源码为 `research/native-rewrite/recovered/datrie_view.h`、`datrie_view.cc`，验证入口为 `research/native-rewrite/tests/datrie_view_test.cc`。
 
-`DATrieView` 借用已经就绪的 trie 元数据和可写节点缓冲区，恢复严格字节准入、从根查找已有路径，以及已有终端值更新。调用方负责原对象的就绪状态、写访问所有权与视图生命周期。该视图不拥有就绪状态。独立拥有型入口已恢复真实初始化、节点扩容与 base 选择，调用方负责上层对象的 ready 标志。冲突选择与搬迁已接通真实通知，见 [冲突搬迁](datrie-relocation.md)。完整字节键插入也已恢复，见同一文档。键删除也已有源码与宿主整合，见同一文档。文件加载和上层词典编辑仍未完成。
+`DATrieView` 借用已经就绪的 trie 元数据和可写节点缓冲区，恢复严格字节准入、从根查找已有路径，以及已有终端值更新。调用方负责原对象的就绪状态、写访问所有权与视图生命周期。该视图不拥有就绪状态。独立拥有型入口已恢复真实初始化、节点扩容与 base 选择，调用方负责上层对象的 ready 标志。冲突选择与搬迁已接通真实通知，见 [冲突搬迁](datrie-relocation.md)。完整字节键插入也已恢复，见同一文档。键删除也已有源码与宿主整合，见同一文档。表镜像加载和双向词典编辑已有源码，外层文件加载与恢复仍未完成。
 
 ## 字节与节点
 
@@ -85,6 +85,45 @@ work/native-rewrite/recovered-datrie-allocation/datrie_allocation_test
 
 真实 APK 出口补入容量边界、范围提交、候选符号位和摘链锚点后通过。三个新增区域与发布库指令字节一致，证据位于 `work/native-rewrite/ghidra/datrie-node-allocation/`、`datrie-free-chain/`，以及 `work/native-rewrite/original-apk/native-datrie-allocation.txt` 和对应 comparison JSON。
 
+## 表镜像与原加载校验
+
+`0x1d7970`、`0x1d5a98`、`0x1d45f0` 分别对应加载、写出和镜像大小。格式依次为八字节 `DA-TRIE\0`、八字节 CRC64、`536` 字节元数据与活动节点。每节点八字节，数量范围为 `256`～`0x1fffffff`，载入另要求标签数量为 `1`～`256`。
+
+此形状与 P-TABLE 共用 [dictionary_table_image.h/.cc](../../research/native-rewrite/recovered/dictionary_table_image.h) 的单一包络。通过 `DictionaryTableKind` 选择具体布局，元数据与节点尺寸在 `datrie_layout.h`，旧仅池入口已删除。CRC64 继续共用 [词典校验](dictionary-storage.md#crc-来源与实现)，不拼接临时正文或建立另一套循环。
+
+加载不是只检查 CRC。`0x1d75cc` 要求哨兵两字段非正、根两字段为正，再用位向量和路径集合检查占用节点的父链，路径必须到根或已证明路径。`0x1d5434` 随后核对空闲链的前驱、后继与哨兵首尾。两区在全部检查成功后才发布，DATrie 节点保持父切片，不像池单元立即请求写指针。
+
+[datrie_validation.cc](../../research/native-rewrite/recovered/datrie_validation.cc) 恢复这些图检查，读取过程不请求可写区域。它沿用原检查范围，不将通过结果扩大成完整词典校验。原空闲链首指针缺少解引用前的范围检查，恢复入口返回失败而不执行越界读取。宿主容器分配、日志和损坏内存访问不承诺原 ARM64 故障等价。
+
+### 镜像验证
+
+```bash
+mkdir -p work/native-rewrite/recovered-table-images
+g++ -std=c++17 -O2 -Wall -Wextra -Werror \
+  research/native-rewrite/recovered/owned_byte_region.cc \
+  research/native-rewrite/recovered/datrie_view.cc \
+  research/native-rewrite/recovered/datrie_relocation.cc \
+  research/native-rewrite/recovered/datrie_insertion.cc \
+  research/native-rewrite/recovered/datrie_validation.cc \
+  research/native-rewrite/recovered/dictionary_checksum.cc \
+  research/native-rewrite/recovered/dictionary_table_image.cc \
+  research/native-rewrite/tests/datrie_image_test.cc \
+  -o work/native-rewrite/recovered-table-images/datrie_image_test
+work/native-rewrite/recovered-table-images/datrie_image_test
+```
+
+严格 WSL C++17 共用编译后，两条真实流程通过。原池镜像流程保持相同四十字节字面期望。新增 DATrie 流程保存真实空树，独立十六字节头含 CRC64 `0x04d80f0f34ad7844`，完整镜像为 `2600` 字节。该期望由冻结初始化字节布局和 GF(2) 长除法得到，未调用生产校验器算答案。
+
+加载空树后通过真实插入建立 `ab`，发生增长，再保存的活动镜像为 `4648` 字节，重载仍读得值 `0x123456`。另将节点父指针改为自身，并正常编码有效 CRC，加载在父链检查时失败，原树和原镜像保持可读。
+
+真实 APK 入口补入镜像、父链、空闲链及虚表锚点后通过，现导出 `203` 个区域。六段新函数和签名字节均与保留 `v2.1.7` 发布库一致：
+
+- `work/native-rewrite/original-apk/native-datrie-image.txt`
+- `work/native-rewrite/original-apk/datrie-image-fixture-derivation.json`
+- `work/native-rewrite/restart-v217/native-datrie-image-comparison.json`
+
+这些仍是内存镜像与宿主证据，未连接 protobuf、磁盘替换或文件恢复，也未执行原 ARM64。
+
 ## 键与已有值验证
 
 ```bash
@@ -107,4 +146,4 @@ work/native-rewrite/recovered-datrie-view/datrie_view_test
 
 辅助查询曾把 `0x1d4be4` 当作函数入口，脚本失败且未生成 manifest。该批次保留日志，但不列为完整导出证据。空闲节点的行为以原指令取证为准，不把 Headless 进程退出当作导出成功。
 
-Google 派生逻辑继续按 `NOTICE` 保留边界。实际通知接收者已恢复，见 [终端节点迁移通知](node-id-updater.md)。冲突搬迁与完整字节键插入已接通该接收者。值编辑与单侧关联发布已接通，键删除也已恢复。下一步接入完整双向协调及外层失败恢复。
+Google 派生逻辑继续按 `NOTICE` 保留边界。实际通知接收者已恢复，见 [终端节点迁移通知](node-id-updater.md)。冲突搬迁与完整字节键插入已接通该接收者。值编辑与单侧关联发布已接通，键删除也已恢复。双向协调及表镜像已有源码，下一步连接外层文件布局、protobuf 元数据和失败恢复。
