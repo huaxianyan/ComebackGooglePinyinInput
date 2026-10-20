@@ -279,6 +279,17 @@ class DirectMappingNativeTest(unittest.TestCase):
             0x1F3228: ("sub", "x0, x0, x1"),
             0x1F313C: ("ucvtf", "d0, x0"),
             0x1F314C: ("fcvtzu", "x1, d0"),
+            0x1F3034: ("mul", "w1, w2, w1"),
+            0x1F30AC: ("stur", "x0, [x19, #0xc]"),
+            0x1F30C4: ("str", "x1, [x19, #0x20]"),
+            0x1F30CC: ("strb", "w0, [x19, #8]"),
+            0x1F2D20: ("mov", "x1, #8"),
+            0x1F2D60: ("mov", "x2, x20"),
+            0x1F2EF4: ("ands", "x1, x0, #7"),
+            0x1F2F04: ("add", "x0, x0, #8"),
+            0x1F5E6C: ("cmp", "x19, x0"),
+            0x1F5F0C: ("str", "x19, [x20]"),
+            0x1F5F9C: ("add", "x1, x1, #0x7b0"),
             0x1FA690: ("mov", "w1, #0"),
         }
         for address, instruction in expected.items():
@@ -321,6 +332,11 @@ class DirectMappingNativeTest(unittest.TestCase):
                  for row in evidence["relocation_regions"]["crc64"]}
         self.assertEqual({address: crc64[address] for address in (0x67E260, 0x67E268, 0x67E290)}, {
             0x67E260: 0x1F636C, 0x67E268: 0x1F6C44, 0x67E290: 0x1F96CC,
+        })
+        phrase = {row["address"]: row["target"]
+                  for row in evidence["relocation_regions"]["fixed_phrase_table"]}
+        self.assertEqual({address: phrase[address] for address in (0x67E100, 0x67E108, 0x67E110)}, {
+            0x67E100: 0x1F3060, 0x67E108: 0x1F2D04, 0x67E110: 0x1F2EE0,
         })
         math = evidence["score_math"]
         self.assertEqual(math["table_address"], 0x3A2FC0)

@@ -2,13 +2,16 @@
 
 ## 范围与归属
 
-已恢复 `FixedPhraseTable` 的堆内存后端，覆盖初始化、定长追加、只读记录、可写记录、数量读取和整表清空。源码为 [fixed_phrase_table.h](../../research/native-rewrite/recovered/fixed_phrase_table.h) 与 [fixed_phrase_table.cc](../../research/native-rewrite/recovered/fixed_phrase_table.cc)。
+已恢复 `FixedPhraseTable` 的堆内存后端，覆盖初始化、定长追加、只读记录、可写记录、数量读取、整表清空和内存镜像编解码。源码为 [fixed_phrase_table.h](../../research/native-rewrite/recovered/fixed_phrase_table.h)、[fixed_phrase_table.cc](../../research/native-rewrite/recovered/fixed_phrase_table.cc) 和 [fixed_phrase_table_codec.cc](../../research/native-rewrite/recovered/fixed_phrase_table_codec.cc)。
 
 `MutableDictionaryBuilder` 的 `0x1a6a2c` 调用 `0x1f2f70` 创建后端。构造函数安装的虚表地址为 `0x67e0e0`，RTTI 名称为 `i18n_input::engine::FixedPhraseTable`。已确认的槽位如下：
 
 | 虚表字节偏移 | 原函数 | 能力 |
 | --- | --- | --- |
 | `+0x18` | `0x1f2c8c` | 初始化 |
+| `+0x20` | `0x1f3060` | 加载内存镜像 |
+| `+0x28` | `0x1f2d04` | 写出内存镜像 |
+| `+0x30` | `0x1f2ee0` | 对齐后的镜像长度 |
 | `+0x38` | `0x1f2cb4` | 已追加记录数量 |
 | `+0x40` | `0x1f2ccc` | 就绪状态 |
 | `+0x48` | `0x1f2d90` | 只读记录视图 |
@@ -55,7 +58,39 @@
 
 另外，恢复的可写和追加入口对已识别的空分配结果返回 false。原对应路径没有完整检查，可能发布无效指针或继续写入。该差异已声明，完整内存耗尽及 Android 故障等价尚未验收。
 
-## 验证
+## 内存镜像
+
+此格式与索引池的 P-TABLE 不同，不含签名或 CRC。前八字节依次为小端 32 位记录数量与记录宽度，后接已使用字节，并补零至八字节边界。`0x1f5d00` 与 `0x1f5f20` 从 `0x34e7b0` 的零区域写出填充，未把分配容量作为正文。
+
+`Load` 经 `0x1f2fbc` 的字段与正文读取规则恢复表。成功时同时替换数量、宽度、字节区域与就绪状态，镜像宽度覆盖构造参数。为接入这条真实路径，恢复类的宽度不再是 `const`，同一已加载表内仍保持固定记录宽度。
+
+原 `MUL W1` 的 32 位数量乘宽度操作已保留，活动字节与元数据数量是独立字段。正文保留父切片，在后续修改或追加时走同一所有权分离。加载后应重新取得借用视图。
+
+`0x1f5e3c` 只要求正文完整，`0x1f5ec4` 随后推进对齐游标，不要求最终填充字节存在。因此只有二十个物理字节的「八字节头加十二字节正文」可加载成功，并返回 `24` 的逻辑推进量。恢复入口沿用该行为，没有另加完整填充校验。
+
+有效记录宽度限定为正数。原解析器可接收零宽元数据，恢复入口返回 `0`，避免后续 C++ 偏移运算除零。该差异不隐去，所有损坏格式及内存故障不承诺等价。此内存编码也不模拟原流分段写入后的部分 I/O 失败。
+
+### 容器验证
+
+```bash
+mkdir -p work/native-rewrite/recovered-fixed-codec
+g++ -std=c++17 -O2 -Wall -Wextra -Werror \
+  research/native-rewrite/recovered/owned_byte_region.cc \
+  research/native-rewrite/recovered/fixed_phrase_table.cc \
+  research/native-rewrite/recovered/fixed_phrase_table_codec.cc \
+  research/native-rewrite/tests/fixed_phrase_table_codec_test.cc \
+  -o work/native-rewrite/recovered-fixed-codec/fixed_phrase_table_codec_test
+work/native-rewrite/recovered-fixed-codec/fixed_phrase_table_codec_test
+```
+
+严格 WSL C++17 构建与一条真实流程通过：保存两条六字节记录，省略最终填充后加载到构造宽度为 `99` 的表，恢复宽度为 `6`。随后修改第二条、追加第三条，独立的二十四字节与三十二字节镜像均匹配。原父镜像保留，截断正文的加载失败后，已编辑表仍可读取。
+
+真实 APK 入口新增加载、写出、对齐和虚表绑定锚点后通过，现导出 `197` 个区域。九段新函数及零填充区域均与保留 `v2.1.7` 发布库字节一致，证据为：
+
+- `work/native-rewrite/original-apk/native-fixed-phrase-codec.txt`
+- `work/native-rewrite/restart-v217/native-fixed-codec-comparison.json`
+
+## 堆后端的既有验证
 
 使用既有 WSL C++17 工具链构建真实组件入口：
 
@@ -75,7 +110,7 @@ work/native-rewrite/recovered-fixed-phrase/fixed_phrase_table_test
 
 严格构建与一条源码流程通过：真实 payload 编码、关联记录构造、多次定长追加、真实池分配、记录 ID 写入、关联引用编解码、存储读取及原位编辑。独立字面字节确认 ID `50` 取得第六条记录，修改保留短 payload 后缀和第一条记录。清空后可继续从 ID `0` 追加。
 
-流程现已改走恢复的 `0x1c5120` 协调入口，覆盖首条建立、原位插入和搬迁，并验证链接失败后保留已存记录。单侧列表删除已有源码验证，双向 trie 写回与上层整体失败恢复仍未完成，具体边界见 [关联列表](association-records.md#列表追加与插入顺序)。它仍不是整本词典的端到端验收。
+流程现已改走恢复的 `0x1c5120` 协调入口，覆盖首条建立、原位插入和搬迁，并验证链接失败后保留已存记录。单侧列表删除已有源码验证，双向 trie 写回已有 [更新、新增和删除源码](association-records.md#已有关系更新)，上层整体失败恢复仍未完成，具体边界见 [关联列表](association-records.md#列表追加与插入顺序)。它仍不是整本词典的端到端验收。
 
 真实 APK 出口补入记录宽度、数量提交、偏移返回、无符号转换与清零参数锚点后通过，当前导出 151 个区域。该记录后端的十一个区域与已发布 `v2.1.7` 库的指令字节一致。
 
@@ -91,4 +126,4 @@ work/native-rewrite/recovered-fixed-phrase/fixed_phrase_table_test
 
 ## 下一步
 
-推进键序列与 trie 编辑器，连接双向引用写回和外层失败恢复，再继续完整文件容器。表容器编解码、CRC、文件同步与实际持久化仍未完成。
+定长记录表和索引池的内存容器已恢复。下一步核对 DATrie 完整容器、protobuf 元数据和文件同步，再连接外层恢复。当前没有磁盘持久化或整本词典的运行验收。

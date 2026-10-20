@@ -195,6 +195,15 @@ REGIONS = {
     "phrase_clear": (0x1F2EB0, 0x1F2EE0),
     "phrase_count": (0x1F2CB4, 0x1F2CCC),
     "phrase_ready": (0x1F2CCC, 0x1F2CD4),
+    "phrase_load": (0x1F3060, 0x1F30EC),
+    "phrase_parse_image": (0x1F2FBC, 0x1F3060),
+    "phrase_serialize": (0x1F2D04, 0x1F2D90),
+    "phrase_serialized_size": (0x1F2EE0, 0x1F2F0C),
+    "storage_read_aligned": (0x1F5C40, 0x1F5CA4),
+    "storage_slice": (0x1F5E3C, 0x1F5EC4),
+    "storage_slice_aligned": (0x1F5EC4, 0x1F5F20),
+    "storage_write_aligned": (0x1F5D00, 0x1F5D80),
+    "storage_write_region_aligned": (0x1F5F20, 0x1F5FCC),
     "bounded_bytes_write": (0x1F5CA4, 0x1F5D00),
     "buffer_zero": (0x1FA65C, 0x1FA6AC),
 }
@@ -222,6 +231,7 @@ RELOCATION_REGIONS = {
     "manager_typeinfo": (0x68AF28, 0x68AF58),
     "metadata": (0x68B278, 0x68B300),
     "crc64": (0x67E250, 0x67E298),
+    "fixed_phrase_table": (0x67E0E0, 0x67E148),
     "token_decoder_typeinfo": (0x68AA90, 0x68AAA8),
     "token_decoder_vtable": (0x68AAB8, 0x68AAF8),
 }
