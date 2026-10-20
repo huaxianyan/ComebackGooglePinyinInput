@@ -279,6 +279,14 @@ class DirectMappingNativeTest(unittest.TestCase):
             0x1F3228: ("sub", "x0, x0, x1"),
             0x1F313C: ("ucvtf", "d0, x0"),
             0x1F314C: ("fcvtzu", "x1, d0"),
+            0x10E5DC: ("ldr", "x2, [x2, #0x50]"),
+            0x189BDC: ("bl", "#0x1a142c"),
+            0x1A1438: ("str", "x1, [x0, #0x40]"),
+            0x1F5D90: ("add", "x19, x19, #4"),
+            0x1F5D94: ("str", "w1, [sp, #0x3c]"),
+            0x1F6118: ("b.hi", "#0x1f613c"),
+            0x1F6190: ("sub", "x1, x1, x4"),
+            0x1F61A8: ("add", "x1, x1, x4"),
             0x1D395C: ("mov", "w0, #1"),
             0x1D3974: ("mov", "w0, #2"),
             0x1D398C: ("mov", "w0, #3"),
@@ -368,6 +376,12 @@ class DirectMappingNativeTest(unittest.TestCase):
                     for row in evidence["relocation_regions"]["mutable_dictionary_metadata"]}
         self.assertEqual({address: metadata[address] for address in (0x68C9A0, 0x68C9E8, 0x68C9F8)}, {
             0x68C9A0: 0x1D3A2C, 0x68C9E8: 0x1D3F04, 0x68C9F8: 0x1D393C,
+        })
+        user_metadata = {row["address"]: row["target"]
+                         for row in evidence["relocation_regions"]["user_dictionary_metadata"]}
+        self.assertEqual({address: user_metadata[address]
+                          for address in (0x68B7A0, 0x68B7E8, 0x68B7F8)}, {
+            0x68B7A0: 0x1A42D0, 0x68B7E8: 0x1A446C, 0x68B7F8: 0x1A3F68,
         })
         math = evidence["score_math"]
         self.assertEqual(math["table_address"], 0x3A2FC0)

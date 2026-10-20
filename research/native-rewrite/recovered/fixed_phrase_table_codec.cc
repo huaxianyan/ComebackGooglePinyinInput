@@ -1,5 +1,6 @@
 // Native fixed-record memory image; Google-derived, see NOTICE.
 #include "fixed_phrase_table.h"
+#include "dictionary_alignment.h"
 #include "little_endian.h"
 
 #include <cstring>
@@ -7,17 +8,11 @@
 namespace comeback::recovered {
 namespace {
 constexpr std::size_t kHeaderSize = 2 * sizeof(std::uint32_t);
-constexpr std::size_t kAlignment = 8;
-
-std::size_t AlignedBodySize(std::size_t size) {
-    const auto remainder = size % kAlignment;
-    return remainder == 0 ? size : size + kAlignment - remainder;
-}
 }  // namespace
 
 bool FixedPhraseTable::Serialize(OwnedByteRegion& output) const {
     if (!ready_) return false;
-    const auto aligned_size = AlignedBodySize(used_size_);
+    const auto aligned_size = detail::AlignDictionaryBytes(used_size_);
     if (!output.Resize(kHeaderSize + aligned_size)) return false;
     auto* data = output.MutableData();
     if (data == nullptr) return false;
@@ -46,7 +41,7 @@ std::uint64_t FixedPhraseTable::Load(const OwnedByteRegion& input) {
     used_size_ = used;
     ready_ = true;
     // Native 0x1f5ec4 advances past padding without requiring it to be present.
-    return kHeaderSize + AlignedBodySize(used_size_);
+    return kHeaderSize + detail::AlignDictionaryBytes(used_size_);
 }
 
 }  // namespace comeback::recovered

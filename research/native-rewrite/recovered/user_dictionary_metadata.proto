@@ -1,0 +1,15 @@
+// Google-derived wire reconstruction; see NOTICE and dictionary-metadata.md.
+syntax = "proto2";
+package i18n_input.engine.hmm.proto;
+option optimize_for = LITE_RUNTIME;
+
+message UserDictionaryMetaData {
+  // Updated by signed new-count minus old-count, clamped to zero.
+  optional int64 total_count = 1;
+  // Connected to nativeSetLastSyncTime(JJ)V through accessor vtable +0x50.
+  optional int64 last_sync_time = 2;
+  // Research name. Original field name and string/bytes declaration are not
+  // recovered. The native contiguous-buffer path directly copies the bytes;
+  // bytes preserves that observed behavior, including NUL and non-UTF-8 data.
+  optional bytes extension_data = 3;
+}
