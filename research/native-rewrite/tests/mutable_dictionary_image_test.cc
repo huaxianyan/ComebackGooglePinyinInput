@@ -5,6 +5,7 @@
 #include "user_dictionary_file.h"
 #include "user_dictionary_edit.h"
 #include "user_dictionary_compaction.h"
+#include "dictionary_property.h"
 #include "payload_codec.h"
 #include "association_editor.h"
 #include "trie_values.h"
@@ -296,6 +297,11 @@ int main(int argc, char** argv) {
             disk_loaded.metadata.total_count() == 151 &&
             disk_loaded.dictionary.metadata.association_count() == 2,
             "load the complete real file through its mapping and retain the literal model counts");
+    i18n_input::engine::hmm::internal::proto::DictionaryPropertyProto engine_property;
+    engine_property.set_flag_1(false);
+    const auto selected_property = ResolveDictionaryProperty(disk_loaded.metadata, engine_property);
+    Require(selected_property.has_flag_1() && !selected_property.flag_1(),
+            "the mapped model's invalid stored property selects the explicitly supplied engine fallback");
     {
         Editors disk_edit(disk_loaded.dictionary);
         Require(Payload(disk_edit.fs, disk_edit.rs, "a", "b") == weight150 &&

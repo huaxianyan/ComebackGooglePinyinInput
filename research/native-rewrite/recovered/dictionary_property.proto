@@ -1,0 +1,10 @@
+// Google-derived wire reconstruction; see NOTICE and accessor-resource-property.md.
+syntax = "proto2";
+package i18n_input.engine.hmm.internal.proto;
+option optimize_for = LITE_RUNTIME;
+
+message DictionaryPropertyProto {
+  // Research field name: original name and business meaning are not recovered.
+  // Native constructor/Clear use true without presence; parser accepts tag 8.
+  optional bool flag_1 = 1 [default = true];
+}

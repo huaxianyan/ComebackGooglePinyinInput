@@ -53,7 +53,8 @@ out=work/native-rewrite/mutable-container-build
 mkdir -p "$out"
 protoc -I research/native-rewrite/recovered --cpp_out="$out" \
   research/native-rewrite/recovered/mutable_dictionary_metadata.proto \
-  research/native-rewrite/recovered/user_dictionary_metadata.proto
+  research/native-rewrite/recovered/user_dictionary_metadata.proto \
+  research/native-rewrite/recovered/dictionary_property.proto
 for source in research/native-rewrite/recovered/*.cc "$out"/*.pb.cc; do
   name=$(basename "$source" .cc)
   g++ -std=c++17 -O2 -Wall -Wextra -Werror \
@@ -62,7 +63,7 @@ for source in research/native-rewrite/recovered/*.cc "$out"/*.pb.cc; do
 done
 ar rcs "$out/recovered.a" "$out"/*.o
 scratch=$(mktemp -d "$out/disk-test.XXXXXX")
-for name in mutable_dictionary_image dictionary_association_creation dictionary_association_removal; do
+for name in mutable_dictionary_image dictionary_association_creation dictionary_association_removal dictionary_property; do
   g++ -std=c++17 -O2 -Wall -Wextra -Werror \
     -I "$out" -I research/native-rewrite/recovered \
     "research/native-rewrite/tests/${name}_test.cc" "$out/recovered.a" \
