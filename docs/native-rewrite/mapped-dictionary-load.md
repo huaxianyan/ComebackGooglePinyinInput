@@ -46,4 +46,6 @@ LoadUserDictionaryFile 将实际只读映射接入既有完整镜像解析器，
 
 映射的 int32 长度限制、唯一关闭和未恢复钩子沿用 [只读映射源码](file-mmap-source.md)。共享映射要求调用方保持源文件稳定，持有 fd 不等于能安全读取被外部截断的文件。
 
-未新增 accessor 锁、Android 初始化、旧文件格式、跨进程协调或磁盘提交保证。未执行原 ARM64、操作设备或访问用户词典。已有 native 证据直接沿用，中央清单仍为 `274` 区域。
+未新增 accessor 锁、Android 初始化、旧文件格式、跨进程协调或磁盘提交保证。后续 [Android accessor 取证](accessor-initialization.md) 确认了原重载先清除旧句柄，不能把本入口的失败保留语义直接套到 accessor。
+
+本页宿主验证未执行原 ARM64、操作设备或访问用户词典，沿用当时 `274` 区域证据。后续创建与发布取证另有记录。
