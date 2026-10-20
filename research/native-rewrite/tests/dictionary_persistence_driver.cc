@@ -13,7 +13,8 @@ int main(int argc, char** argv) {
         UserDictionaryStorage empty;
         return PersistUserDictionaryFile(empty, argv[2]) ? 0 : 1;
     }
-    if (argc != 4 || std::string(argv[1]) != "persist") return 2;
+    const bool validate = argc == 3 && std::string(argv[1]) == "validate";
+    if (!validate && (argc != 4 || std::string(argv[1]) != "persist")) return 2;
     std::ifstream input(argv[2], std::ios::binary);
     if (!input.is_open()) return 2;
     const std::string bytes((std::istreambuf_iterator<char>(input)), std::istreambuf_iterator<char>());
@@ -23,6 +24,7 @@ int main(int argc, char** argv) {
     if (!bytes.empty()) std::memcpy(image.MutableData(), bytes.data(), bytes.size());
     UserDictionaryStorage dictionary;
     const auto loaded = LoadUserDictionaryImage(image, dictionary);
-    if (loaded == 0 || loaded != image.Size()) return 2;
+    if (loaded == 0 || loaded != image.Size()) return validate ? 1 : 2;
+    if (validate) return 0;
     return PersistUserDictionaryFile(dictionary, argv[3]) ? 0 : 1;
 }

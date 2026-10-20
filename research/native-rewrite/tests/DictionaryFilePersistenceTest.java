@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 /** One Windows-JDK/WSL1 integration flow; all paths are caller-owned project fixtures. */
@@ -13,12 +14,11 @@ public final class DictionaryFilePersistenceTest {
         if (!condition) throw new AssertionError(action);
     }
 
-    private static boolean nativePersist(String executable, String source, String destination) {
-        ProcessBuilder command = source == null
-                ? new ProcessBuilder("wsl.exe", "-e", executable, "uninitialized", destination)
-                : new ProcessBuilder("wsl.exe", "-e", executable, "persist", source, destination);
+    private static boolean runNative(String executable, String... operation) {
+        ArrayList<String> command = new ArrayList<>(Arrays.asList("wsl.exe", "-e", executable));
+        command.addAll(Arrays.asList(operation));
         try {
-            int status = command.inheritIO().start().waitFor();
+            int status = new ProcessBuilder(command).inheritIO().start().waitFor();
             require(status == 0 || status == 1, "native transport/input error is not a persistence failure");
             return status == 0;
         } catch (IOException error) {
@@ -39,20 +39,21 @@ public final class DictionaryFilePersistenceTest {
         Path temporary = root.resolve("dictionary_tmp");
         byte[] first = Files.readAllBytes(root.resolve("generation1.bin"));
         byte[] second = Files.readAllBytes(root.resolve("generation2.bin"));
-        DictionaryFilePersistence.PersistOperation writeFirst = path -> nativePersist(executable,
+        DictionaryFilePersistence.PersistOperation writeFirst = path -> runNative(executable, "persist",
                 wslRoot + "/generation1.bin", wslRoot + "/" + new File(path).getName());
-        DictionaryFilePersistence.PersistOperation writeSecond = path -> nativePersist(executable,
+        DictionaryFilePersistence.PersistOperation writeSecond = path -> runNative(executable, "persist",
                 wslRoot + "/generation2.bin", wslRoot + "/" + new File(path).getName());
         require(DictionaryFilePersistence.persist(main.toFile(), writeFirst) &&
                 Arrays.equals(Files.readAllBytes(main), first),
                 "save the first real dictionary through Java and the actual C++ file entry");
         require(DictionaryFilePersistence.persist(main.toFile(), writeSecond) &&
                 Arrays.equals(Files.readAllBytes(main), second) &&
-                !Files.exists(backup) && !Files.exists(temporary),
-                "replace the main dictionary with the shorter second generation and clear staging files");
+                Arrays.equals(Files.readAllBytes(backup), first) && !Files.exists(temporary),
+                "replace the main dictionary while retaining the previous complete generation as backup");
 
         // Frozen DEX boundary: a stale nonempty temporary directory fails BEFORE
         // try/finally. Do not silently turn this branch into a new recovery rule.
+        Files.delete(backup);
         Files.move(main, backup);
         Files.createDirectory(temporary);
         Path blocker = temporary.resolve("blocker");
@@ -65,13 +66,41 @@ public final class DictionaryFilePersistenceTest {
 
         // An explicit uninitialized model invokes actual serialization failure.
         // The test constructs a file state, not a process-crash simulation.
-        DictionaryFilePersistence.PersistOperation invalidModel = path -> nativePersist(executable,
-                null, wslRoot + "/" + new File(path).getName());
+        DictionaryFilePersistence.PersistOperation invalidModel = path -> runNative(executable,
+                "uninitialized", wslRoot + "/" + new File(path).getName());
         require(!DictionaryFilePersistence.persist(main.toFile(), invalidModel) &&
                 Arrays.equals(Files.readAllBytes(main), second) &&
                 !Files.exists(backup) && !Files.exists(temporary),
                 "a real failed save cleans its partial temporary file and restores the retained backup");
+        // Reconstruct interrupted on-disk states; no process is killed here.
+        Files.move(main, backup);
+        Files.copy(root.resolve("generation1.bin"), temporary);
+        DictionaryFilePersistence.prepareForLoad(main.toFile());
+        require(Arrays.equals(Files.readAllBytes(main), second) && Files.exists(temporary) &&
+                runNative(executable, "validate", wslRoot + "/dictionary"),
+                "startup restores the retained backup before considering an unfinished temporary image");
+
+        // Create a genuinely unreadable main and backup via the actual encoder's
+        // invalid-model path, then allow the real parser to select the valid tmp.
+        require(!runNative(executable, "uninitialized", wslRoot + "/dictionary"),
+                "an uninitialized model produces an actual failed serialization");
+        byte[] failedMain = Files.readAllBytes(main);
+        Files.copy(main, backup);
+        require(!runNative(executable, "validate", wslRoot + "/dictionary") &&
+                DictionaryFilePersistence.recoverAfterLoadFailure(main.toFile()) &&
+                !runNative(executable, "validate", wslRoot + "/dictionary") &&
+                DictionaryFilePersistence.recoverAfterLoadFailure(main.toFile()) &&
+                runNative(executable, "validate", wslRoot + "/dictionary") &&
+                Arrays.equals(Files.readAllBytes(main), first),
+                "a rejected backup is consumed before the valid temporary dictionary is loaded");
+        Path unreadable = root.resolve("dictionary_unreadable");
+        require(Arrays.equals(Files.readAllBytes(unreadable), failedMain),
+                "recovery retains the first unreadable main as the diagnostic file");
+        DictionaryFilePersistence.purgeSidecars(main.toFile());
+        require(!Files.exists(unreadable) && !Files.exists(backup) && !Files.exists(temporary) &&
+                Arrays.equals(Files.readAllBytes(main), first),
+                "explicit sidecar cleanup removes recoverable old copies and preserves the current main");
         Files.delete(main);
-        System.out.println("PASS: Java replacement plus actual C++ persistence, pre-finally failure and backup restoration");
+        System.out.println("PASS: released rolling backup, real failed saves, startup recovery and explicit cleanup");
     }
 }

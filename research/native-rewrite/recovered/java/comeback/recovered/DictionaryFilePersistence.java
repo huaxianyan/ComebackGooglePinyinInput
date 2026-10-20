@@ -1,4 +1,4 @@
-// Recovered DictionaryAccessor.persist() file protocol; Google-derived, see NOTICE.
+// Released DictionaryAccessor.persist() and DictionaryRecoveryCompat, see NOTICE.
 package comeback.recovered;
 
 import java.io.File;
@@ -11,27 +11,75 @@ public final class DictionaryFilePersistence {
         boolean persist(String absolutePath);
     }
 
-    // The caller resolves the main file with Context.getFileStreamPath and
-    // supplies the actual native persistence operation and its synchronization.
-    // Original diagnostic logging is not reproduced by this research component.
+    private static final class Paths {
+        final File main;
+        final File backup;
+        final File temporary;
+        final File unreadable;
+
+        Paths(File main) {
+            this.main = main;
+            backup = new File(main.getPath() + "_bak");
+            temporary = new File(main.getPath() + "_tmp");
+            unreadable = new File(main.getPath() + "_unreadable");
+        }
+    }
+
+    // Caller owns Context path resolution and native synchronization. Original
+    // diagnostic logging is omitted. Keep the released rolling-backup policy,
+    // not the original APK's post-success backup deletion.
     public static boolean persist(File main, PersistOperation operation) {
         if (operation == null) return false;
-        File backup = new File(main.getPath() + "_bak");
-        File temporary = new File(main.getPath() + "_tmp");
-        // This early return is outside the native method's try/finally region.
-        if (temporary.exists() && !temporary.delete()) return false;
+        Paths paths = new Paths(main);
+        if (paths.temporary.exists() && !paths.temporary.delete()) return false;
         try {
-            if (!operation.persist(temporary.getAbsolutePath())) return false;
+            if (!operation.persist(paths.temporary.getAbsolutePath())) return false;
             if (main.exists()) {
-                if (backup.exists() && !backup.delete()) return false;
-                if (!main.renameTo(backup)) return false;
+                if (paths.backup.exists() && !paths.backup.delete()) return false;
+                if (!main.renameTo(paths.backup)) return false;
             }
-            if (!temporary.renameTo(main)) return false;
-            backup.delete(); // Native failure is diagnostic only, not a failed save.
+            if (!paths.temporary.renameTo(main)) return false;
             return true;
         } finally {
-            if (temporary.exists()) temporary.delete();
-            if (backup.exists() && !main.exists()) backup.renameTo(main);
+            if (paths.temporary.exists()) paths.temporary.delete();
+            if (paths.backup.exists() && !main.exists()) paths.backup.renameTo(main);
         }
+    }
+
+    // Released enrollment calls this before attempting native loading.
+    public static void prepareForLoad(File main) {
+        Paths paths = new Paths(main);
+        if (main.exists()) return;
+        if (paths.backup.exists() && paths.backup.renameTo(main)) return;
+        if (paths.temporary.exists()) paths.temporary.renameTo(main);
+    }
+
+    private static boolean replaceFailedMain(Paths paths, File candidate) {
+        if (paths.main.exists()) {
+            if (!paths.unreadable.exists()) {
+                if (!paths.main.renameTo(paths.unreadable)) return false;
+            } else if (!paths.main.delete()) {
+                return false;
+            }
+        }
+        return candidate.renameTo(paths.main);
+    }
+
+    // Native loading remains the validator; caller retries after a successful
+    // candidate move. Each call consumes at most one backup/temporary candidate.
+    public static boolean recoverAfterLoadFailure(File main) {
+        Paths paths = new Paths(main);
+        if (paths.backup.exists()) return replaceFailedMain(paths, paths.backup);
+        if (paths.temporary.exists()) return replaceFailedMain(paths, paths.temporary);
+        if (main.exists() && !paths.unreadable.exists()) main.renameTo(paths.unreadable);
+        return false;
+    }
+
+    // Explicit clear/disable uses this path; ordinary learning retains backup.
+    public static void purgeSidecars(File main) {
+        Paths paths = new Paths(main);
+        paths.backup.delete();
+        paths.temporary.delete();
+        paths.unreadable.delete();
     }
 }

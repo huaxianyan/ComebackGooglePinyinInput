@@ -69,6 +69,8 @@ for name in mutable_dictionary_image dictionary_association_creation dictionary_
     -lprotobuf-lite -pthread -o "$out/${name}_test"
   "$out/${name}_test" "$scratch"
 done
+# Two verified image fixtures are exported for the Java/C++ integration consumer.
+rm "$scratch/generation1.bin" "$scratch/generation2.bin"
 rmdir "$scratch"
 ```
 
