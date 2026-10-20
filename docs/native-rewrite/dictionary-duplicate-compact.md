@@ -32,14 +32,32 @@ nativeCompact 0x10e510
 
 Java 保存任务先以 double 乘 `0.9d` 产生 compact 参数。原生选择阶段又以 float32 乘一个系数，`0x1a39d4` 的真实字节为 `6666663f`，即 `0.9f`，两者不能合并成同一精度的乘法。
 
-原生阶段还计算日期相关的候选数量，再以数量上限确定选择区间。最终保留数量不能只用 Java 传入的容量参数推断。比较器、记录解码、排序与删除流程尚未完整恢复，因此没有添加近似 compact、空实现或未经证实的权重排序。
+原生阶段还计算日期相关的候选数量，再以数量上限确定选择区间。最终保留数量不能只用 Java 传入的容量参数推断。
+
+## 已恢复的选择计划
+
+`dictionary_compaction.h/.cc` 从当前 V21 payload 恢复实际比较器与堆选择，不读写词典：
+
+1. 候选计数使用 `(count > 0 || flag31) && day >= cutoff`，日期边界含等号。
+2. 比较器先区分 `count != 0 || flag31`；均为活动条目时按日期降序、flag30 优先、count 降序。原比较器不读键文本，也不以 flag27 或 category 补齐排序。
+3. 数量上限为模型报告数量与 `uint64(float(limit) * 0.9f)` 的较小值，不拿成功读出的 vector 长度代替模型数量。
+4. 仅在上限或候选数与模型数量不等时整理，保留数为上限与候选数的较小值。
+5. 复原 `0x1a3544` 的 heap build、选择及 sort，采用 `0x1a33e4` 的相等子节点选择方式。不改用宿主 STL 的 partial_sort，以免相等条目的置换不同。
+
+结果只有索引排列、保留前缀长度和是否需要整理。后缀保留原堆算法产生的删除顺序，不把全体候选重新排序。该结果是可验证的真实选择子模块，不宣称已经执行原 compact。
+
+V21 解码器与 `0x1a112c` 共同确认了原记录的 count、flag31、flag30、flag27、日期和 category 字段位置。字段的业务名称仍按已知位标记表述，不猜同步含义。
+
+模块字面测试覆盖比较优先级、含等号日期、实际选择与删除排列、相等条目的堆置换和无需整理的路径，通过严格编译。尚未接原迭代顺序、实际删除及外层计数更新，没有添加近似 compact 或空 backend。
 
 ## 冻结证据
 
-七段新函数及 float32 数据与保留 `v2.1.7` 发布库一致。导出入口现覆盖 `253` 个区域，JNI 参数、虚表 slot 和日期偏移锚点通过。
+复制与 compact 入口七段、后续选择与记录流程七段及 float32 数据均与保留 `v2.1.7` 发布库一致。导出清单现登记 `260` 个区域。静态入口门禁执行至 `258` 个区域，最后新增的堆下沉和 size getter 两段单独比较，不重复此前检查。
 
 - `work/native-rewrite/ghidra/duplicate-compact-{jni,accessor,model}/`
 - `work/native-rewrite/ghidra/compact-selection/`
+- `work/native-rewrite/ghidra/compact-entry-selection/`、`compact-comparator/`、`compact-heap/`
 - `work/native-rewrite/restart-v217/native-duplicate-compact-comparison.json`
+- `work/native-rewrite/restart-v217/native-compact-order-comparison.json`
 
-下一步沿选择函数的记录遍历、比较器和删除入口恢复真实 compact。已完成的复制和保存模型流程继续沿用，不用实现外观代替候选选择证据。未执行原 ARM64、用户词典或设备操作。
+下一步恢复原记录遍历并连接真实删除和外层计数更新。已完成的复制和保存模型流程继续沿用，不用接口外观代替执行证据。未执行原 ARM64、用户词典或设备操作。
