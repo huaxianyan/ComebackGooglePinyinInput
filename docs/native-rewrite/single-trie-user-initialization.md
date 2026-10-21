@@ -24,7 +24,7 @@
 | format parameter | 调用方传入的 token category |
 | association count | 初始未设置，不写成显式零 |
 
-八字节附加量按原 builder 保存，尚未给其中的业务字段命名，不因宽度相同就认定它是别的结构。元数据 presence 来自原 `0x2f` 掩码，继续复用同一 protobuf 消息与 payload 宽度定义。
+后续 [已有关系更新取证](single-trie-association-update.md) 确认，八字节附加量是两个有序的 trie terminal node ID，不是 IndexRange。初始化与已有 KeyPair 补丁现共用记录头尺寸定义。元数据 presence 来自原 `0x2f` 掩码，继续复用同一 protobuf 消息与 payload 宽度定义。
 
 builder 即使没有初始条目，也建立并结束编辑器。已追到 `0x1c9700`、`0x1c96e0` 和 `0x1c9658`，该空流程保留 MutableDictionaryMetaData 的关联计数未设置。本次不复制这些运行时对象，仅恢复空存储内容。
 

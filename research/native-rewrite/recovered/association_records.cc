@@ -55,7 +55,8 @@ bool PatchAssociationRecord(AssociationRecordLayout layout, std::uint8_t* bytes,
         return true;
     };
     const std::uint32_t* keys[]{first_key, second_key};
-    const std::size_t key_count = layout == AssociationRecordLayout::KeyPair ? 2 : 1;
+    const auto header_size = AssociationRecordHeaderSize(layout);
+    const auto key_count = header_size / sizeof(std::uint32_t);
     for (std::size_t index = 0; index < key_count; ++index) {
         if (keys[index] != nullptr) {
             std::uint8_t word[sizeof(std::uint32_t)];
@@ -64,7 +65,7 @@ bool PatchAssociationRecord(AssociationRecordLayout layout, std::uint8_t* bytes,
         }
     }
     return payload == nullptr ||
-           write(key_count * sizeof(std::uint32_t), payload->data(), payload->size());
+           write(header_size, payload->data(), payload->size());
 }
 
 }  // namespace comeback::recovered

@@ -27,6 +27,9 @@ bool PatchAssociationValue(std::uint8_t* bytes, std::size_t size, bool has_check
                             const std::uint16_t* checksum = nullptr);
 
 enum class AssociationRecordLayout { TargetKey, KeyPair };
+constexpr std::size_t AssociationRecordHeaderSize(AssociationRecordLayout layout) {
+    return (layout == AssociationRecordLayout::KeyPair ? 2U : 1U) * sizeof(std::uint32_t);
+}
 
 // TargetKey uses first_key only; KeyPair uses both key fields. Null field
 // pointers preserve existing bytes, including a null payload pointer. A supplied
@@ -47,10 +50,11 @@ struct AssociationRecordLocation {
 bool ReadAssociationRecordAt(const FixedPhraseTable& records, const IndexPoolView& pool,
                               std::uint32_t index, const std::uint8_t*& data,
                               std::size_t& size, std::uint32_t* record_id = nullptr);
-// Shared first-match lookup used by deletion and node-ID repair.
+// Shared first-match lookup used by deletion and node-ID repair. A supplied
+// second key selects the native ordered KeyPair match, not an unordered pair.
 bool FindAssociationRecord(const FixedPhraseTable& records, const IndexPoolView& pool,
                             IndexRange reference, std::uint32_t key,
-                            AssociationRecordLocation& location);
+                            AssociationRecordLocation& location, const std::uint32_t* second_key = nullptr);
 
 struct AssociationSide;
 // Native 0x1c4d08: resolve both keys and copy the first matching record's

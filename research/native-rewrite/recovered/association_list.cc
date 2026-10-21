@@ -29,14 +29,18 @@ bool ReadAssociationRecordAt(const FixedPhraseTable& records, const IndexPoolVie
 
 bool FindAssociationRecord(const FixedPhraseTable& records, const IndexPoolView& pool,
                             IndexRange reference, std::uint32_t key,
-                            AssociationRecordLocation& location) {
+                            AssociationRecordLocation& location, const std::uint32_t* second_key) {
+    const auto header_size = AssociationRecordHeaderSize(second_key == nullptr
+        ? AssociationRecordLayout::TargetKey : AssociationRecordLayout::KeyPair);
     for (std::uint32_t position = 0; position < reference.count; ++position) {
         std::uint32_t record_id = 0;
         const std::uint8_t* data = nullptr;
         std::size_t size = 0;
         if (!ReadAssociationRecordAt(records, pool, reference.first_index + position,
                                       data, size, &record_id)) return false;
-        if (size >= sizeof(std::uint32_t) && detail::ReadLittleEndian<std::uint32_t>(data) == key) {
+        if (size >= header_size && detail::ReadLittleEndian<std::uint32_t>(data) == key &&
+            (second_key == nullptr || detail::ReadLittleEndian<std::uint32_t>(data + sizeof(std::uint32_t)) ==
+                                       *second_key)) {
             location = {position, record_id};
             return true;
         }

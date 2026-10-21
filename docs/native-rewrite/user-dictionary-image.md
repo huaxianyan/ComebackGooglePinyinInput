@@ -4,7 +4,7 @@
 
 完整镜像已支持 MutableDictionary 六子模型和 SingleTrieMutableDictionary 三组件。原 Java 默认词典选择 SingleTrieUserDictionary，依据见 [默认类型取证](legacy-single-trie-initialization.md)。
 
-[具体后端选择](user-dictionary-backend-selection.md) 由调用方类型指定，两个后端共用外层镜像、复制及文件入口。SingleTrie 已覆盖真实空存储初始化和完整文件流程，词条编辑、原运行时工厂及生命周期仍未接通，默认 Android 词典尚未完整恢复。
+[具体后端选择](user-dictionary-backend-selection.md) 由调用方类型指定，两个后端共用外层镜像、复制及文件入口。SingleTrie 已覆盖真实空存储初始化、完整文件及 [已有关系更新](single-trie-association-update.md)。新增、删除、学习、原运行时工厂及生命周期仍未接通，默认 Android 词典尚未完整恢复。
 
 ## 格式与所有权
 
@@ -36,7 +36,7 @@
 
 `0x1a3c9c` 用局部元数据与局部后端接收结果，成功后统一替换原对象。源码也先在局部拥有对象中完成校验，解析或格式检查失败保留先前对象。
 
-本层发布镜像数据，不创建原持久编辑器。调用方按既有接口重建 borrowed view，六子模型测试继续走实际编辑路径，SingleTrie 仍只覆盖空初始化及镜像、文件流程。原编辑器创建失败和分配故障尚未覆盖，不宣称完整 UserDictionary 实例已恢复。
+本层发布镜像数据，不创建原持久编辑器。调用方按既有接口重建 borrowed view，六子模型测试继续走实际编辑路径，SingleTrie 已覆盖空初始化、文件流程及已有关系 payload 更新，尚未恢复完整词条编辑。原编辑器创建失败和分配故障尚未覆盖，不宣称完整 UserDictionary 实例已恢复。
 
 返回值是实际消耗长度，允许父流还有后续字节，与原 chunk 入口一致。它不是磁盘文件长度或文件系统提交成功的证明。
 
