@@ -31,7 +31,7 @@ prefix 的长度为 LE64，后接相应数量的字节及八字节对齐填充�
 | 字段 | 已确认作用 | 未设置时 |
 | --- | --- | --- |
 | 1 | selector | 0 |
-| 2 | 字符串，具体作用未闭合 | 空串 |
+| 2 | BFS 输入匹配后展开字段 3 的符号，原名称未恢复 | 空串 |
 | 3 | 输入符号字符串集合 | 空集合 |
 | 4 | language ID | 0 |
 | 5 | 使用 token score | false |
@@ -79,4 +79,4 @@ bash research/native-rewrite/tools/build_forward_token_research.sh
 
 增量证据在 `work/native-rewrite/restart-v217/native-forward-token-snapshot-comparison.json`。Ghidra 输出位于 `forward-token-owner/`、`forward-token-marisa-protocol/`、`forward-token-proto-codec/`、`forward-token-resource-load/`、`forward-token-cursor-init/`、`forward-token-image-slice/` 和 `forward-token-byte-header/`。一次手输的非函数入口导致导出中止，后续只补齐真实入口，失败日志没有被当作成功证据。
 
-下一步仍是恢复真实 Marisa 子 cursor 的 Push、Pop、Reset 与 Forward 待应用帧，再连接 Manager 懒缓存。BFS、多记录引用、custom 编码、评分与截断、损坏资源的部分发布、OOM、完整 ARM 执行和 Android 均未验收。保留原产品库与用户数据，不以当前静态和宿主证据替代完整输入法验收。
+后续 [流式帧取证](forward-token-stream-frames.md) 已展开两层不同的 Pop、Reset 及三态调用，中央增至 `472` 段，尚未新增流式实现。下一步先闭合 Marisa 内核，再连接 Forward 帧和 Manager 懒缓存。BFS、多记录引用、custom 编码、评分与截断、损坏资源的部分发布、OOM、完整 ARM 执行和 Android 均未验收。保留原产品库与用户数据，不以当前静态和宿主证据替代完整输入法验收。

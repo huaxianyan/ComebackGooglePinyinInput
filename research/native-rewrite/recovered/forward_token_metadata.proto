@@ -1,5 +1,5 @@
 // Google-derived field numbers/types/defaults from fixed ARM64 generated code.
-// Names describe confirmed operations; field_2/field_10 meanings remain unknown.
+// Names describe confirmed operations; field_2/field_10 original names are unknown.
 // This reconstruction remains under the rights boundary in NOTICE.
 syntax = "proto2";
 package i18n_input.engine.hmm.proto;
