@@ -7,6 +7,13 @@
 #include <cstring>
 
 namespace comeback::recovered {
+SingleTrieAssociationEditor::SingleTrieAssociationEditor(SingleTrieMutableDictionaryStorage& storage)
+    : dictionary(storage) {
+    record_buffer.Resize(static_cast<std::size_t>(dictionary.metadata.forward_payload_size()) +
+                          AssociationRecordHeaderSize(AssociationRecordLayout::KeyPair));
+    first_value.Resize(kSingleTrieValueSize);
+    second_value.Resize(kSingleTrieValueSize);
+}
 namespace {
 DATrieView Trie(const SingleTrieMutableDictionaryStorage& dictionary) {
     return {dictionary.trie.metadata.Data(), dictionary.trie.metadata.Size(),

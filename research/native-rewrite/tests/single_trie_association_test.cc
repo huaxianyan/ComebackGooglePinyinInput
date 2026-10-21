@@ -8,6 +8,8 @@
 #include "user_dictionary_learning.h"
 #include "user_dictionary_compaction.h"
 #include "dictionary_association_iteration.h"
+#include "single_trie_user_dictionary_model.h"
+#include "file_mmap.h"
 #include <cstdio>
 #include <cstdlib>
 #include <string>
@@ -63,6 +65,7 @@ int main(int argc, char** argv) {
     const auto policy_path = std::string(argv[1]) + "/single-policy.bin";
     const auto learned_path = std::string(argv[1]) + "/single-learned.bin";
     const auto compacted_path = std::string(argv[1]) + "/single-compacted.bin";
+    const auto owned_path = std::string(argv[1]) + "/single-owned.bin";
     UserDictionaryStorage<SingleTrieMutableDictionaryStorage> mapped, retained;
     Require(PersistUserDictionaryFile(user, original_path) &&
             LoadUserDictionaryFile(original_path, mapped) == DictionaryFileLoadResult::Loaded &&
@@ -264,6 +267,50 @@ int main(int argc, char** argv) {
             SnapshotDictionaryAssociations(empty_compacted.dictionary, empty_entries) && empty_entries.empty() &&
             empty_compacted.metadata.total_count() == 0 && empty_compacted.metadata.last_sync_time() == 42,
             "reload the empty live traversal despite retained fixed-table records");
+    OwnedByteRegion owner_chunk;
+    std::unique_ptr<SingleTrieUserDictionaryModel> active;
+    Require(MapReadOnlyFile(original_path, owner_chunk) == FileMappingResult::Mapped &&
+            LoadSingleTrieUserDictionaryModel(owner_chunk, active) == owner_chunk.Size() &&
+            active->edit_flags == 1 && active->editor.record_buffer.Size() == 14 &&
+            active->editor.first_value.Size() == 6 && active->editor.second_value.Size() == 6,
+            "publish mapped storage together with its native-sized persistent editor scratch");
+    const auto owner_weight = "\x05\0\0\0\x01\0"sv;
+    Require(ModifySingleTrieAssociation(active->editor, "a", "b", &owner_weight, AssociationEditMode::ExistingOnly),
+            "edit through the coordinator bound to owned storage");
+    active->storage.metadata.set_total_count(5);
+    Require(AddUserDictionaryCount(active->storage, "a", "b", 2, false, false, 0, active->edit_flags, active->editor) &&
+            Payload(active->storage.dictionary, "a", "b").substr(0, 4) == "\x07\0\0\x80"sv &&
+            active->storage.metadata.total_count() == 7, "reuse the same owned editor for the next count operation");
+    auto retained_owner = active->storage;
+    auto* previous_model = active.get();
+    auto header_only = owner_chunk.Slice(0, 16);
+    Require(LoadSingleTrieUserDictionaryModel(header_only, active) == 0 && active.get() == previous_model &&
+            active->storage.metadata.total_count() == 7 &&
+            Payload(active->storage.dictionary, "a", "b").substr(0, 4) == "\x07\0\0\x80"sv,
+            "failed candidate loading preserves the previously published model and usable editor");
+    header_only = {};
+    owner_chunk = {};
+    Require(MapReadOnlyFile(updated_path, owner_chunk) == FileMappingResult::Mapped &&
+            LoadSingleTrieUserDictionaryModel(owner_chunk, active) == owner_chunk.Size() &&
+            active->storage.dictionary.metadata.association_count() == 197 && active->storage.metadata.total_count() == 300,
+            "replace the live model with another validated image and a newly bound editor");
+    owner_chunk = {};
+    Require(AddUserDictionaryCount(active->storage, "owned", "a", 3, false, false, 0,
+                                   active->edit_flags, active->editor) &&
+            active->storage.metadata.total_count() == 303 &&
+            active->storage.dictionary.metadata.association_count() == 198 &&
+            PersistUserDictionaryFile(active->storage, owned_path),
+            "mutate the replacement model after releasing its input mapping handle and persist it");
+    active.reset();
+    Require(retained_owner.metadata.total_count() == 7 &&
+            Payload(retained_owner.dictionary, "a", "b").substr(0, 4) == "\x07\0\0\x80"sv &&
+            MapReadOnlyFile(owned_path, owner_chunk) == FileMappingResult::Mapped &&
+            LoadSingleTrieUserDictionaryModel(owner_chunk, active) == owner_chunk.Size() &&
+            Payload(active->storage.dictionary, "owned", "a").substr(0, 4) == "\x03\0\0\x80"sv &&
+            active->storage.metadata.total_count() == 303 && active->storage.metadata.last_sync_time() == 42,
+            "retained data survives model destruction, and the persisted replacement acquires its own editor on reload");
+    owner_chunk = {};
+    active.reset();
     mapped = {};
     reloaded = {};
     final = {};
@@ -273,7 +320,7 @@ int main(int argc, char** argv) {
     empty_compacted = {};
     Require(std::remove(original_path.c_str()) == 0 && std::remove(updated_path.c_str()) == 0 &&
             std::remove(deleted_path.c_str()) == 0 && std::remove(policy_path.c_str()) == 0 &&
-            std::remove(learned_path.c_str()) == 0 && std::remove(compacted_path.c_str()) == 0,
-            "remove only the six files created by this flow");
-    std::puts("PASS: SingleTrie real CRUD/relocate/removal/learning/compact/map/persist/reload flow");
+            std::remove(learned_path.c_str()) == 0 && std::remove(compacted_path.c_str()) == 0 &&
+            std::remove(owned_path.c_str()) == 0, "remove only the seven files created by this flow");
+    std::puts("PASS: SingleTrie real CRUD/learning/compact/model ownership/map/persist/reload flow");
 }

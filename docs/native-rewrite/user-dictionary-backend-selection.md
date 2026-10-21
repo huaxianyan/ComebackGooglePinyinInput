@@ -33,7 +33,7 @@ SingleTrie 已接入同一份完整用户词典镜像、复制及文件读写协
 
 [用户模型级删除](user-dictionary-removal-policy.md) 和 [compact](single-trie-compaction.md) 均共用两种后端的同一实现，具体存储和实际编辑器由调用方提供。旧宿主传输仍显式指定六子模型，未保留隐藏默认后端或类型别名。
 
-SingleTrie 现覆盖空存储初始化、完整镜像、复制和文件读写。后续已接 [新增、已有更新及节点修复](single-trie-association-create.md) 和 [物理关联删除](single-trie-association-delete.md)。上层删除及 [用户计数协调](user-dictionary-learning.md) 已接入，SingleTrie compact 也已接入，accessor 学习键管线、原持久编辑器及 Android 生命周期仍未接通。类型选择不会让未恢复的编辑器看起来可用。
+SingleTrie 现覆盖空存储初始化、完整镜像、复制和文件读写。后续已接 [新增、已有更新及节点修复](single-trie-association-create.md) 和 [物理关联删除](single-trie-association-delete.md)。上层删除及 [用户计数协调](user-dictionary-learning.md) 已接入，SingleTrie compact 也已接入，[SingleTrie 宿主模型持有](single-trie-model-lifetime.md) 已接入同一编辑协调器，accessor 学习键管线、原虚接口获取、锁及 Android 生命周期仍未接通。该拥有对象不代表原工厂或全部编辑器获取失败路径已恢复。
 
 宿主传输 dictionary_persistence_driver 已按显式类型链接通过，仍服务六子模型 fixture。本轮没有重跑 Java 替换集成，也没有把它当作 SingleTrie 运行入口。
 

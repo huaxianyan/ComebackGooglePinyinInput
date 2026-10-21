@@ -18,7 +18,7 @@ bool InitializeSingleTrieUserStorage(std::int32_t token_category,
     initialized.metadata.set_format_parameter(token_category);
     std::string alphabet;
     for (unsigned int byte = 1; byte < 256; ++byte) alphabet.push_back(static_cast<char>(byte));
-    initialized.trie.values = FixedPhraseTable(sizeof(std::uint32_t) + sizeof(std::uint16_t));
+    initialized.trie.values = FixedPhraseTable(kSingleTrieValueSize);
     initialized.phrases = FixedPhraseTable(
         kPayloadSize + AssociationRecordHeaderSize(AssociationRecordLayout::KeyPair));
     if (!InitializeDATrie(initialized.trie.metadata, initialized.trie.nodes, alphabet, 0) ||

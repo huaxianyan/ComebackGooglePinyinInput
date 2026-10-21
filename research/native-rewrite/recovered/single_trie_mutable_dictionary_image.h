@@ -4,8 +4,12 @@
 
 #include "dictionary_submodel_image.h"
 #include "mutable_dictionary_metadata.pb.h"
+#include <cstddef>
+#include <cstdint>
 
 namespace comeback::recovered {
+// Native SingleTrie values: four-byte association reference and CRC16 space.
+inline constexpr std::size_t kSingleTrieValueSize = sizeof(std::uint32_t) + sizeof(std::uint16_t);
 // Three native submodels, sharing the actual metadata message and primitives
 // with MutableDictionary. This codec does not implement native factory defaults
 // or SingleTrie word editing. Borrowed views must be reacquired after mutation.

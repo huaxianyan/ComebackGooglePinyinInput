@@ -15,6 +15,9 @@ bool ReadSingleTrieAssociationPayload(const SingleTrieMutableDictionaryStorage& 
 // Native coordinator scratch, retained across calls. Omitted payload preserves
 // the previous append buffer; this is not a runtime editor/readiness substitute.
 struct SingleTrieAssociationEditor {
+    // Native 0x1c9700 prepares record/pair-value scratch once; resize return
+    // values are not promoted into a new constructor failure protocol.
+    explicit SingleTrieAssociationEditor(SingleTrieMutableDictionaryStorage& storage);
     SingleTrieMutableDictionaryStorage& dictionary;
     OwnedByteRegion record_buffer{};
     OwnedByteRegion first_value{};
