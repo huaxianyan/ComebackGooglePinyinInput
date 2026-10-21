@@ -4,6 +4,7 @@
 
 #include "single_trie_mutable_dictionary_image.h"
 #include "association_records.h"
+#include "datrie_view.h"
 #include <string_view>
 
 namespace comeback::recovered {
@@ -19,6 +20,9 @@ struct SingleTrieAssociationEditor {
     // values are not promoted into a new constructor failure protocol.
     explicit SingleTrieAssociationEditor(SingleTrieMutableDictionaryStorage& storage);
     SingleTrieMutableDictionaryStorage& dictionary;
+    // Native 0x1c9700 installs this for the editor lifetime. Bind storage, not
+    // an individual operation's borrowed DATrie view; rebuild that view on use.
+    DATrieNodeMove node_moved;
     OwnedByteRegion record_buffer{};
     OwnedByteRegion first_value{};
     OwnedByteRegion second_value{};

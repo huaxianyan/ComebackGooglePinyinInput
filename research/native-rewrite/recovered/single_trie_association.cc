@@ -7,13 +7,6 @@
 #include <cstring>
 
 namespace comeback::recovered {
-SingleTrieAssociationEditor::SingleTrieAssociationEditor(SingleTrieMutableDictionaryStorage& storage)
-    : dictionary(storage) {
-    record_buffer.Resize(static_cast<std::size_t>(dictionary.metadata.forward_payload_size()) +
-                          AssociationRecordHeaderSize(AssociationRecordLayout::KeyPair));
-    first_value.Resize(kSingleTrieValueSize);
-    second_value.Resize(kSingleTrieValueSize);
-}
 namespace {
 DATrieView Trie(const SingleTrieMutableDictionaryStorage& dictionary) {
     return {dictionary.trie.metadata.Data(), dictionary.trie.metadata.Size(),
@@ -77,6 +70,17 @@ bool ResolveKey(SingleTrieMutableDictionaryStorage& dictionary, DATrieView& trie
 }
 }
 
+SingleTrieAssociationEditor::SingleTrieAssociationEditor(SingleTrieMutableDictionaryStorage& storage)
+    : dictionary(storage), node_moved([model = &storage](std::uint32_t old_id, std::uint32_t new_id) {
+        const auto live = Trie(*model);
+        RepairMoved(*model, live, old_id, new_id);
+    }) {
+    record_buffer.Resize(static_cast<std::size_t>(dictionary.metadata.forward_payload_size()) +
+                          AssociationRecordHeaderSize(AssociationRecordLayout::KeyPair));
+    first_value.Resize(kSingleTrieValueSize);
+    second_value.Resize(kSingleTrieValueSize);
+}
+
 bool ReadSingleTrieAssociationPayload(const SingleTrieMutableDictionaryStorage& dictionary,
                                        std::string_view first_key, std::string_view second_key,
                                        OwnedByteRegion& output) {
@@ -104,18 +108,15 @@ bool ModifySingleTrieAssociation(SingleTrieAssociationEditor& editor,
         !editor.record_buffer.Resize(dictionary.phrases.RecordSize()) ||
         !editor.first_value.Resize(dictionary.trie.values.RecordSize()) ||
         !editor.second_value.Resize(dictionary.trie.values.RecordSize())) return false;
-    const DATrieNodeMove notify = [&](std::uint32_t old_id, std::uint32_t new_id) {
-        RepairMoved(dictionary, trie, old_id, new_id);
-    };
     const bool self = first_key == second_key;
     const bool first_checksum = dictionary.metadata.forward_trie_omitted();
     const bool second_checksum = dictionary.metadata.key_checksum_enabled();
     std::uint32_t first_id = 0, second_id = 0;
     if (!ResolveKey(dictionary, trie, first_key, mode, first_checksum || (self && second_checksum),
-                      first_id, editor.first_value, notify)) return false;
+                      first_id, editor.first_value, editor.node_moved)) return false;
     second_id = first_id;
     if (!self && !ResolveKey(dictionary, trie, second_key, mode, second_checksum,
-                              second_id, editor.second_value, notify)) return false;
+                              second_id, editor.second_value, editor.node_moved)) return false;
     IndexRange first_range{}, second_range{};
     if (!DecodeAssociationReference(editor.first_value.Data(), editor.first_value.Size(), first_range) ||
         (!self && !DecodeAssociationReference(editor.second_value.Data(), editor.second_value.Size(), second_range))) {

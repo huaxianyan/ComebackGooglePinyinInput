@@ -88,6 +88,33 @@ int main(int argc, char** argv) {
                 "append real self and shared endpoint records while growing the trie");
         original_ids.push_back(Terminal(mapped.dictionary, key));
     }
+    const auto shared_before = Terminal(mapped.dictionary, "a");
+    const auto reverse_before = Terminal(mapped.dictionary, "b");
+    std::vector<std::uint32_t> before_direct;
+    for (int i = 0; i < 96; ++i) before_direct.push_back(Terminal(mapped.dictionary, "a" + std::to_string(i)));
+    OwnedByteRegion empty_value;
+    Require(empty_value.Resize(6), "prepare a literal empty association value for direct lower-editor insertion");
+    auto* empty_bytes = empty_value.MutableData();
+    Require(empty_bytes != nullptr, "obtain the fixture value bytes");
+    for (unsigned i = 0; i < 6; ++i) empty_bytes[i] = 0;
+    DATrieView direct(mapped.dictionary.trie.metadata.Data(), mapped.dictionary.trie.metadata.Size(),
+        const_cast<std::uint8_t*>(mapped.dictionary.trie.nodes.Data()), mapped.dictionary.trie.nodes.Size());
+    for (unsigned byte = 128; byte < 192; ++byte) {
+        std::string key = "a";
+        key.push_back(static_cast<char>(byte));
+        Require(InsertTrieValue(direct, mapped.dictionary.trie.metadata, mapped.dictionary.trie.nodes,
+                    mapped.dictionary.trie.values, key, empty_value, nullptr, &editor.node_moved),
+                "use the editor-owned callback during direct lower-trie insertion between association operations");
+    }
+    bool direct_moved = Terminal(mapped.dictionary, "a") != shared_before ||
+                        Terminal(mapped.dictionary, "b") != reverse_before;
+    for (int i = 0; i < 96; ++i) {
+        direct_moved = direct_moved || Terminal(mapped.dictionary, "a" + std::to_string(i)) != before_direct[i];
+    }
+    Require(direct_moved, "direct lower-trie insertion actually relocates an endpoint belonging to existing relations");
+    Require(Payload(mapped.dictionary, "a", "a") == self && Payload(mapped.dictionary, "a", "b") == replacement &&
+            Payload(mapped.dictionary, "b", "a") == reverse,
+            "the persistent callback repairs real moved shared endpoints through a freshly rebound live view");
     bool moved = false;
     for (int i = 0; i < 96; ++i) {
         const auto key = "a" + std::to_string(i);
