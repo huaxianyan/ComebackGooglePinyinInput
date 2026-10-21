@@ -79,12 +79,20 @@ bool LinkAssociationRecordId(OwnedByteRegion& metadata, OwnedByteRegion& cells,
 bool AppendAssociationRecord(FixedPhraseTable& records, OwnedByteRegion& metadata,
                               OwnedByteRegion& cells, const std::uint8_t* data,
                               std::size_t size, IndexRange& reference);
-// TargetKey layout only: remove the first matching association, leaving its
-// fixed-table record intact. This does not edit either enclosing trie.
+// Remove the first TargetKey or ordered KeyPair match, leaving its fixed-table
+// record intact. Lookup is read-only; only a hit requests writable pool access.
+// This does not edit either enclosing trie.
 bool RemoveAssociationRecord(const FixedPhraseTable& records, OwnedByteRegion& metadata,
-                              OwnedByteRegion& cells, std::uint32_t key, IndexRange& reference);
+                              OwnedByteRegion& cells, std::uint32_t key, IndexRange& reference,
+                              const std::uint32_t* second_key = nullptr);
 
 class DATrieView;
+// Publish a remaining range, or remove an empty endpoint. The reference-only
+// patch preserves checksum/suffix bytes. Rebinds the live trie on key removal.
+bool PublishAssociationRange(DATrieView& trie, OwnedByteRegion& metadata, OwnedByteRegion& nodes,
+                               FixedPhraseTable& values, std::string_view key, IndexRange reference,
+                               OwnedByteRegion& value);
+
 // Concrete directional storage view, matching the reader/pool/record dependencies
 // of native NodeIdUpdator. This owns no storage or synthetic readiness state.
 struct AssociationSide {

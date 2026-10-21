@@ -103,13 +103,27 @@ bool UpdateAssociationRecordById(FixedPhraseTable& records, std::uint32_t record
 }
 
 bool RemoveAssociationRecord(const FixedPhraseTable& records, OwnedByteRegion& metadata,
-                              OwnedByteRegion& cells, std::uint32_t key, IndexRange& reference) {
+                              OwnedByteRegion& cells, std::uint32_t key, IndexRange& reference,
+                              const std::uint32_t* second_key) {
+    AssociationRecordLocation location{};
+    {
+        const IndexPoolView view(metadata.Data(), metadata.Size(),
+                                 const_cast<std::uint8_t*>(cells.Data()), cells.Size());
+        if (!FindAssociationRecord(records, view, reference, key, location, second_key)) return false;
+    }
     auto* bytes = cells.MutableData();
     if (bytes == nullptr) return false;
     IndexPoolView view(metadata.Data(), metadata.Size(), bytes, cells.Size());
-    AssociationRecordLocation location{};
-    return FindAssociationRecord(records, view, reference, key, location) &&
-           view.EraseRecordId(location.position, reference);
+    return view.EraseRecordId(location.position, reference);
+}
+
+bool PublishAssociationRange(DATrieView& trie, OwnedByteRegion& metadata, OwnedByteRegion& nodes,
+                               FixedPhraseTable& values, std::string_view key, IndexRange reference,
+                               OwnedByteRegion& value) {
+    if (reference.count == 0) return trie.RemoveKey(metadata, nodes, key);
+    auto* bytes = value.MutableData();
+    return bytes != nullptr && PatchAssociationValue(bytes, value.Size(), false, &reference, nullptr) &&
+           UpdateTrieValueByKey(trie, values, key, value);
 }
 
 }  // namespace comeback::recovered

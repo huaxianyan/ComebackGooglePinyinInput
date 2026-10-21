@@ -1,4 +1,4 @@
-// One real SingleTrie create/update/relocate/map/persist/reload flow.
+// One real SingleTrie create/update/relocate/delete/map/persist/reload flow.
 #include "single_trie_association.h"
 #include "single_trie_mutable_dictionary_init.h"
 #include "datrie_view.h"
@@ -46,6 +46,7 @@ int main(int argc, char** argv) {
     user.metadata.set_last_sync_time(42);
     const auto original_path = std::string(argv[1]) + "/single-original.bin";
     const auto updated_path = std::string(argv[1]) + "/single-updated.bin";
+    const auto deleted_path = std::string(argv[1]) + "/single-deleted.bin";
     UserDictionaryStorage<SingleTrieMutableDictionaryStorage> mapped, retained;
     Require(PersistUserDictionaryFile(user, original_path) &&
             LoadUserDictionaryFile(original_path, mapped) == DictionaryFileLoadResult::Loaded &&
@@ -93,9 +94,37 @@ int main(int argc, char** argv) {
             Payload(reloaded.dictionary, "a95", "a") == reverse && reloaded.metadata.total_count() == 300 &&
             reloaded.dictionary.metadata.association_count() == 197 && retained.dictionary.metadata.association_count() == 4,
             "reload the created and repaired records with independent inner and outer counts");
+    SingleTrieAssociationEditor deletion{reloaded.dictionary};
+    OwnedByteRegion missing;
+    Require(RemoveSingleTrieAssociation(deletion, "a", "b") &&
+            !ReadSingleTrieAssociationPayload(reloaded.dictionary, "a", "b", missing) &&
+            Payload(reloaded.dictionary, "b", "a") == reverse && Payload(reloaded.dictionary, "a", "a") == self &&
+            reloaded.dictionary.metadata.association_count() == 196 &&
+            !RemoveSingleTrieAssociation(deletion, "a", "b") && reloaded.dictionary.metadata.association_count() == 196,
+            "remove only the ordered relation and retain the reverse/self pairs when deleting it again fails");
+    Require(RemoveSingleTrieAssociation(deletion, "b", "b") &&
+            Payload(reloaded.dictionary, "b", "a") == reverse &&
+            RemoveSingleTrieAssociation(deletion, "b", "a") && Terminal(reloaded.dictionary, "b") == 0 &&
+            Payload(reloaded.dictionary, "a", "a") == self,
+            "remove a self-pair once, then prune its endpoint after its last directed relation is removed");
+    Require(RemoveSingleTrieAssociation(deletion, "a95", "a") &&
+            Payload(reloaded.dictionary, "a95", "a95") == self &&
+            RemoveSingleTrieAssociation(deletion, "a95", "a95") && Terminal(reloaded.dictionary, "a95") == 0 &&
+            reloaded.dictionary.metadata.association_count() == 192 && reloaded.dictionary.phrases.RecordCount() == 197 &&
+            Payload(retained.dictionary, "a", "b") == forward,
+            "delete the final self-list and preserve allocated records and the retained model");
+    UserDictionaryStorage<SingleTrieMutableDictionaryStorage> final;
+    Require(PersistUserDictionaryFile(reloaded, deleted_path) &&
+            LoadUserDictionaryFile(deleted_path, final) == DictionaryFileLoadResult::Loaded &&
+            final.dictionary.metadata.association_count() == 192 && final.dictionary.phrases.RecordCount() == 197 &&
+            Terminal(final.dictionary, "b") == 0 && Terminal(final.dictionary, "a95") == 0 &&
+            Payload(final.dictionary, "a94", "a") == reverse && final.metadata.total_count() == 300 &&
+            final.metadata.last_sync_time() == 42,
+            "reload the physically deleted model with remaining relations and independent outer metadata");
     mapped = {};
     reloaded = {};
-    Require(std::remove(original_path.c_str()) == 0 && std::remove(updated_path.c_str()) == 0,
-            "remove only the two files created by this flow");
-    std::puts("PASS: SingleTrie real create/update/relocate/map/persist/reload flow");
+    final = {};
+    Require(std::remove(original_path.c_str()) == 0 && std::remove(updated_path.c_str()) == 0 &&
+            std::remove(deleted_path.c_str()) == 0, "remove only the three files created by this flow");
+    std::puts("PASS: SingleTrie real create/update/relocate/delete/map/persist/reload flow");
 }

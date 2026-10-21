@@ -1,6 +1,6 @@
 # SingleTrie 共享记录新增与节点修复
 
-已恢复原 `0x1c8e60` 的共享记录新增与已有更新协调，接入 `0x1c8928` 节点 ID 修复。删除、学习、compact 和运行时持久编辑器仍未恢复。
+已恢复原 `0x1c8e60` 的共享记录新增与已有更新协调，接入 `0x1c8928` 节点 ID 修复。后续已接 [物理关联删除](single-trie-association-delete.md)，上层删除策略、学习、compact 和运行时持久编辑器仍未恢复。
 
 ## 一个协调入口
 
@@ -58,4 +58,4 @@ OOM、部分 I/O、原编辑器建立失败、所有中间失败和性能仍未�
 - `work/native-rewrite/restart-v217/single-create-export.json`
 - `work/native-rewrite/single-create-build/build.log`
 
-复现沿用 [共用完整构建](mutable-dictionary-image.md#验证)，测试名仍为 `single_trie_association` 和 `mutable_dictionary_image`。未执行原 ARM64，未操作设备、正式包或用户词典。下一步恢复原删除分支，再接学习与生命周期。
+复现沿用 [共用完整构建](mutable-dictionary-image.md#验证)，测试名仍为 `single_trie_association` 和 `mutable_dictionary_image`。未执行原 ARM64，未操作设备、正式包或用户词典。原物理删除分支现已恢复，下一步接上层删除策略、学习与生命周期。

@@ -26,5 +26,11 @@ struct SingleTrieAssociationEditor {
 bool ModifySingleTrieAssociation(SingleTrieAssociationEditor& editor,
                                    std::string_view first_key, std::string_view second_key,
                                    const std::string_view* payload, AssociationEditMode mode);
+// Native physical removal: erase list entries before publishing either endpoint,
+// self-pairs once. Publish all endpoints before decrementing association count.
+// Fixed records stay allocated; failure can retain earlier changes. No learning
+// accumulator or tombstone policy is applied at this layer.
+bool RemoveSingleTrieAssociation(SingleTrieAssociationEditor& editor,
+                                   std::string_view first_key, std::string_view second_key);
 }  // namespace comeback::recovered
 #endif

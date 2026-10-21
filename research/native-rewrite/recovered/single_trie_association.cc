@@ -151,4 +151,28 @@ bool ModifySingleTrieAssociation(SingleTrieAssociationEditor& editor,
     if (self && first_range.count == 0) trie.RemoveKey(dictionary.trie.metadata, dictionary.trie.nodes, first_key);
     return false;
 }
+bool RemoveSingleTrieAssociation(SingleTrieAssociationEditor& editor,
+                                   std::string_view first_key, std::string_view second_key) {
+    auto& dictionary = editor.dictionary;
+    auto trie = Trie(dictionary);
+    const bool self = first_key == second_key;
+    std::uint32_t first_id = 0, second_id = 0;
+    if (!ReadTrieValueByKey(trie, dictionary.trie.values, first_key, first_id, editor.first_value)) return false;
+    second_id = first_id;
+    if (!self && !ReadTrieValueByKey(trie, dictionary.trie.values, second_key, second_id, editor.second_value)) return false;
+    IndexRange first_range{}, second_range{};
+    if (!DecodeAssociationReference(editor.first_value.Data(), editor.first_value.Size(), first_range) ||
+        (!self && !DecodeAssociationReference(editor.second_value.Data(), editor.second_value.Size(), second_range)) ||
+        !RemoveAssociationRecord(dictionary.phrases, dictionary.range_metadata, dictionary.range_cells,
+                                   first_id, first_range, &second_id) ||
+        (!self && !RemoveAssociationRecord(dictionary.phrases, dictionary.range_metadata, dictionary.range_cells,
+                                            first_id, second_range, &second_id))) return false;
+    if (!PublishAssociationRange(trie, dictionary.trie.metadata, dictionary.trie.nodes, dictionary.trie.values,
+                                  first_key, first_range, editor.first_value) ||
+        (!self && !PublishAssociationRange(trie, dictionary.trie.metadata, dictionary.trie.nodes, dictionary.trie.values,
+                                             second_key, second_range, editor.second_value))) return false;
+    dictionary.metadata.set_association_count(static_cast<std::int32_t>(
+        static_cast<std::uint32_t>(dictionary.metadata.association_count()) - 1U));
+    return true;
+}
 }  // namespace comeback::recovered

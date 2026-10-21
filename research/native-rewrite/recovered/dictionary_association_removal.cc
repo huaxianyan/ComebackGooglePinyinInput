@@ -3,18 +3,6 @@
 #include "trie_values.h"
 
 namespace comeback::recovered {
-namespace {
-bool Publish(AssociationEditor& editor, std::string_view key, IndexRange range,
-              OwnedByteRegion& value) {
-    auto& side = editor.side;
-    if (range.count == 0) return side.trie.RemoveKey(editor.trie_metadata, editor.trie_nodes, key);
-    auto* bytes = value.MutableData();
-    return bytes != nullptr &&
-           PatchAssociationValue(bytes, value.Size(), editor.has_checksum, &range, nullptr) &&
-           UpdateTrieValueByKey(side.trie, side.values, key, value);
-}
-}  // namespace
-
 bool RemoveDictionaryAssociation(AssociationEditor& forward, AssociationEditor& reverse,
                                   i18n_input::engine::hmm::proto::MutableDictionaryMetaData& metadata,
                                   std::string_view forward_key,
@@ -33,8 +21,10 @@ bool RemoveDictionaryAssociation(AssociationEditor& forward, AssociationEditor& 
         !DecodeAssociationReference(reverse_value.Data(), reverse_value.Size(), reverse_range) ||
         !RemoveAssociationRecord(reverse.side.records, reverse.side.metadata, reverse.side.cells,
                                   forward_id, reverse_range)) return false;
-    if (!Publish(forward, forward_key, forward_range, forward_value)) return false;
-    const bool result = Publish(reverse, reverse_key, reverse_range, reverse_value);
+    if (!PublishAssociationRange(forward.side.trie, forward.trie_metadata, forward.trie_nodes,
+                                  forward.side.values, forward_key, forward_range, forward_value)) return false;
+    const bool result = PublishAssociationRange(reverse.side.trie, reverse.trie_metadata, reverse.trie_nodes,
+                                                 reverse.side.values, reverse_key, reverse_range, reverse_value);
     metadata.set_association_count(static_cast<std::int32_t>(
         static_cast<std::uint32_t>(metadata.association_count()) - 1U));
     return result;

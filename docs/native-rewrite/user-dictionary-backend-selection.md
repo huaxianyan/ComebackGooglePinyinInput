@@ -31,9 +31,9 @@ SingleTrie 已接入同一份完整用户词典镜像、复制及文件读写协
 
 ## 编辑范围
 
-已恢复的删除和 compact 接口明确接受 `UserDictionaryStorage<MutableDictionaryStorage>`。旧测试和宿主传输也显式指定六子模型，未保留隐藏默认后端或类型别名。
+旧用户模型级删除和 compact 接口仍明确接受 `UserDictionaryStorage<MutableDictionaryStorage>`。旧测试和宿主传输也显式指定六子模型，未保留隐藏默认后端或类型别名。
 
-SingleTrie 现覆盖空存储初始化、完整镜像、复制和文件读写。后续已接 [新增、已有更新及节点修复](single-trie-association-create.md)，删除、学习、compact、原持久编辑器及 Android 生命周期仍未接通。类型选择不会让未恢复的编辑器看起来可用。
+SingleTrie 现覆盖空存储初始化、完整镜像、复制和文件读写。后续已接 [新增、已有更新及节点修复](single-trie-association-create.md) 和 [物理关联删除](single-trie-association-delete.md)。上层删除策略、学习、compact、原持久编辑器及 Android 生命周期仍未接通。类型选择不会让未恢复的编辑器看起来可用。
 
 宿主传输 dictionary_persistence_driver 已按显式类型链接通过，仍服务六子模型 fixture。本轮没有重跑 Java 替换集成，也没有把它当作 SingleTrie 运行入口。
 
