@@ -1,6 +1,6 @@
 # Token 查询分支与资源接口
 
-本轮展开源 token 转换的两套实际查询、管理器工厂和资源虚表，并恢复 BFS 输入的 UTF-8 单元拆分。完整资源查询仍未成为宿主可运行实现，没有新增管理器或 lookup 替身。
+本轮展开源 token 转换的两套实际查询、管理器工厂和资源虚表，并恢复 BFS 输入的 UTF-8 单元拆分。完整资源查询仍未成为宿主可运行实现，没有新增管理器或 lookup 替身。后续 [ManagerIterator 状态与准入](token-manager-selection.md) 已展开匹配帧和懒缓存，并将资格匹配、target 准入恢复为源码。
 
 ## 管理器实际接口
 
@@ -57,4 +57,4 @@ ARM64 把读到的宽度放入 w2，既用于推进指针，也作为字符串�
 
 首次手输工厂地址错误，纠正后四个工厂/调整函数成功，随后又因文本地址的基址换算错误中断。文本函数用正确地址另行导出，相关错误日志保留，不把 headless 进程退出零当脚本成功。结论仅使用上述成功函数与独立 FDE 比较。
 
-测试二进制精确清理，build.log 留存于 `work/native-rewrite/token-query-build/`。未执行原 ARM64，未操作设备、正式包或用户词典。下一步恢复 ManagerIterator 的查询状态及具体子字典委派，再连接实际 token 资源，不增加固定结果或通用转发接口。
+测试二进制精确清理，build.log 留存于 `work/native-rewrite/token-query-build/`。未执行原 ARM64，未操作设备、正式包或用户词典。ManagerIterator 的匹配帧、懒缓存和准入已有后续记录。下一步恢复实际子 TokenDictionaryIterator 的查询及资源读取，不增加固定结果或通用转发接口。

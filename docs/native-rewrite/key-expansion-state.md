@@ -6,7 +6,7 @@
 
 KeyToken 表达原 `0x20` 字节 token 中已观察的字符串、32 位 ID、16 位附加字段和一个身份 bit。ScoredKeyToken 再保存原 `+0x20` 分数及 `+0x24` 原始标记字节。两者是宿主语义类型，不克隆内存布局、padding 或未使用高位。
 
-原 `0x18c620` 比较 `+0x18` 起低 48 bit，再比较 `+0x1e` 的 bit 0，文本不参与身份。因此，显示拼写不同也可能是同一 token。SameKeyTokenIdentity 是唯一身份判断点。
+原 `0x18c620` 比较 `+0x18` 起低 48 bit，再比较 `+0x1e` 的 bit 0，文本不参与身份。因此，显示拼写不同也可能是同一 token。SameKeyTokenIdentity 是唯一身份判断点。后续 [ManagerIterator 准入](token-manager-selection.md) 恢复了另一个原生规则：target 按 ID 的三位分类和完整文本去重，保留先到项。它与本节的身份比较用途不同，继续复用 KeyToken，不用身份相等替代 target 准入。
 
 新增取证 `0x18c658` 表明原排序先比较有符号 short，再比较无符号 ID，最后比较身份 bit。附加字段用 int16_t 保留其符号，暂不根据编号猜业务名。当前没有实际排序调用方，不新增备用排序函数。
 
