@@ -12,7 +12,7 @@ void AdjustUserDictionaryTotalCount(i18n_input::engine::hmm::proto::UserDictiona
     metadata.set_total_count((value >> 63) != 0 ? 0 : static_cast<std::int64_t>(value));
 }
 
-bool RemoveUserDictionaryAssociation(UserDictionaryStorage& dictionary,
+bool RemoveUserDictionaryAssociation(UserDictionaryStorage<MutableDictionaryStorage>& dictionary,
                                       AssociationEditor& forward, AssociationEditor& reverse,
                                       std::string_view forward_key, std::string_view reverse_key) {
     OwnedByteRegion payload;

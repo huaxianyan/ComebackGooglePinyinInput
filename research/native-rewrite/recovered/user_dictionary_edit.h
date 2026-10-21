@@ -10,7 +10,7 @@ void AdjustUserDictionaryTotalCount(i18n_input::engine::hmm::proto::UserDictiona
                                      std::int32_t old_count, std::int32_t new_count);
 // Ready current model; both editors must refer to this dictionary. This is the
 // original physical-delete branch, not the separately unimplemented tombstone path.
-bool RemoveUserDictionaryAssociation(UserDictionaryStorage& dictionary,
+bool RemoveUserDictionaryAssociation(UserDictionaryStorage<MutableDictionaryStorage>& dictionary,
                                       AssociationEditor& forward, AssociationEditor& reverse,
                                       std::string_view forward_key, std::string_view reverse_key);
 }  // namespace comeback::recovered

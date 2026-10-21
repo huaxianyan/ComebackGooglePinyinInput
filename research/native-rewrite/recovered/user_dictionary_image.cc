@@ -8,16 +8,30 @@
 #include <utility>
 
 namespace comeback::recovered {
-bool WriteUserDictionaryImage(const UserDictionaryStorage& dictionary, const DictionaryImageSink& sink) {
+namespace {
+template <typename Backend> struct BackendCodec;
+template <> struct BackendCodec<MutableDictionaryStorage> {
+    static constexpr auto write = &WriteMutableDictionaryImage;
+    static constexpr auto load = &LoadMutableDictionary;
+};
+template <> struct BackendCodec<SingleTrieMutableDictionaryStorage> {
+    static constexpr auto write = &WriteSingleTrieMutableDictionaryImage;
+    static constexpr auto load = &LoadSingleTrieMutableDictionary;
+};
+}
+
+template <typename Backend>
+bool WriteUserDictionaryImage(const UserDictionaryStorage<Backend>& dictionary, const DictionaryImageSink& sink) {
     const auto header = EncodeDictionaryHeader();
     std::string metadata;
     OwnedByteRegion section;
     return dictionary.metadata.SerializeToString(&metadata) &&
            SerializeDictionaryStringImage(metadata, section) && sink(header.data(), header.size()) &&
-           sink(section.Data(), section.Size()) && WriteMutableDictionaryImage(dictionary.dictionary, sink);
+           sink(section.Data(), section.Size()) && BackendCodec<Backend>::write(dictionary.dictionary, sink);
 }
 
-bool SerializeUserDictionaryImage(const UserDictionaryStorage& dictionary, OwnedByteRegion& output) {
+template <typename Backend>
+bool SerializeUserDictionaryImage(const UserDictionaryStorage<Backend>& dictionary, OwnedByteRegion& output) {
     OwnedByteRegion image;
     if (!WriteUserDictionaryImage(dictionary, [&](const std::uint8_t* data, std::size_t size) {
             return AppendDictionaryImageBytes(image, data, size);
@@ -26,30 +40,32 @@ bool SerializeUserDictionaryImage(const UserDictionaryStorage& dictionary, Owned
     return true;
 }
 
-bool DuplicateUserDictionary(const UserDictionaryStorage& source, UserDictionaryStorage& output) {
+template <typename Backend>
+bool DuplicateUserDictionary(const UserDictionaryStorage<Backend>& source, UserDictionaryStorage<Backend>& output) {
     OwnedByteRegion chunk;
     return SerializeUserDictionaryImage(source, chunk) && LoadUserDictionaryImage(chunk, output) != 0;
 }
 
-std::uint64_t LoadUserDictionaryImage(const OwnedByteRegion& input, UserDictionaryStorage& output) {
+template <typename Backend>
+std::uint64_t LoadUserDictionaryImage(const OwnedByteRegion& input, UserDictionaryStorage<Backend>& output) {
     DictionaryHeader header{};
     if (!DecodeDictionaryHeader(input.Data(), input.Size(), header) ||
         header.major != kCurrentDictionaryMajor) return 0;
-    UserDictionaryStorage loaded;
+    UserDictionaryStorage<Backend> loaded;
     std::string metadata;
     const auto section_size = LoadDictionaryStringImage(
         input.Slice(kDictionaryHeaderSize, input.Size() - kDictionaryHeaderSize), metadata);
     if (section_size == 0 || section_size > input.Size() - kDictionaryHeaderSize ||
         !loaded.metadata.ParseFromString(metadata)) return 0;
     const auto body_offset = kDictionaryHeaderSize + section_size;
-    const auto body_size = LoadMutableDictionary(input.Slice(body_offset, input.Size() - body_offset),
-                                                  loaded.dictionary);
+    const auto body_size = BackendCodec<Backend>::load(input.Slice(body_offset, input.Size() - body_offset),
+                                                       loaded.dictionary);
     if (body_size == 0 || detail::AlignDictionaryBytes(body_size) > input.Size() - body_offset) return 0;
     // Count the same writer rather than allocating a full canonical container.
     // Subtable codecs still allocate images and calculate CRCs: this is not the
-    // native allocation-free 0x1c6994 size calculation.
+    // native direct serialized-size calculation.
     std::uint64_t canonical_size = 0;
-    if (!WriteMutableDictionaryImage(loaded.dictionary, [&](const std::uint8_t*, std::size_t size) {
+    if (!BackendCodec<Backend>::write(loaded.dictionary, [&](const std::uint8_t*, std::size_t size) {
             canonical_size += size;
             return true;
         }) || canonical_size != body_size ||
@@ -57,4 +73,20 @@ std::uint64_t LoadUserDictionaryImage(const OwnedByteRegion& input, UserDictiona
     output = std::move(loaded);
     return body_offset + detail::AlignDictionaryBytes(body_size);
 }
+
+template bool WriteUserDictionaryImage(const UserDictionaryStorage<MutableDictionaryStorage>&,
+                                       const DictionaryImageSink&);
+template bool WriteUserDictionaryImage(const UserDictionaryStorage<SingleTrieMutableDictionaryStorage>&,
+                                       const DictionaryImageSink&);
+template bool SerializeUserDictionaryImage(const UserDictionaryStorage<MutableDictionaryStorage>&, OwnedByteRegion&);
+template bool SerializeUserDictionaryImage(const UserDictionaryStorage<SingleTrieMutableDictionaryStorage>&,
+                                           OwnedByteRegion&);
+template bool DuplicateUserDictionary(const UserDictionaryStorage<MutableDictionaryStorage>&,
+                                      UserDictionaryStorage<MutableDictionaryStorage>&);
+template bool DuplicateUserDictionary(const UserDictionaryStorage<SingleTrieMutableDictionaryStorage>&,
+                                      UserDictionaryStorage<SingleTrieMutableDictionaryStorage>&);
+template std::uint64_t LoadUserDictionaryImage(const OwnedByteRegion&,
+                                              UserDictionaryStorage<MutableDictionaryStorage>&);
+template std::uint64_t LoadUserDictionaryImage(const OwnedByteRegion&,
+                                              UserDictionaryStorage<SingleTrieMutableDictionaryStorage>&);
 }  // namespace comeback::recovered

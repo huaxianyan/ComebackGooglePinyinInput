@@ -13,14 +13,14 @@ std::int32_t DictionaryCompactionCutoff(std::int64_t day) {
     return cutoff;
 }
 
-bool CompactUserDictionary(UserDictionaryStorage& dictionary,
+bool CompactUserDictionary(UserDictionaryStorage<MutableDictionaryStorage>& dictionary,
                             AssociationEditor& forward, AssociationEditor& reverse,
                             std::uint64_t limit) {
     return CompactUserDictionaryAtCutoff(dictionary, forward, reverse, limit,
                                          DictionaryCompactionCutoff(CurrentDictionaryDay()));
 }
 
-bool CompactUserDictionaryAtCutoff(UserDictionaryStorage& dictionary,
+bool CompactUserDictionaryAtCutoff(UserDictionaryStorage<MutableDictionaryStorage>& dictionary,
                                     AssociationEditor& forward, AssociationEditor& reverse,
                                     std::uint64_t limit, std::int32_t cutoff_day) {
     std::vector<DictionaryAssociationEntry> entries;

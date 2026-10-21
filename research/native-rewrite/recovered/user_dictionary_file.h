@@ -13,11 +13,13 @@ namespace comeback::recovered {
 // Same size/hook limits as MapReadOnlyFile; caller supplies stable file contents.
 // Distinguish file access from invalid image for the existing host transport.
 enum class DictionaryFileLoadResult { Loaded, MappingFailed, InvalidImage };
-DictionaryFileLoadResult LoadUserDictionaryFile(const std::string& path, UserDictionaryStorage& output);
+template <typename Backend>
+DictionaryFileLoadResult LoadUserDictionaryFile(const std::string& path, UserDictionaryStorage<Backend>& output);
 // Opens with "wb" BEFORE serialization, truncating an existing destination.
 // Return value reports image writes. Native destructor flush/close results do
 // not affect it. No fsync, rename, backup, crash recovery or caller lock is added.
 // The caller supplies a stable snapshot and chooses a disposable/staging path.
-bool PersistUserDictionaryFile(const UserDictionaryStorage& dictionary, const std::string& path);
+template <typename Backend>
+bool PersistUserDictionaryFile(const UserDictionaryStorage<Backend>& dictionary, const std::string& path);
 }  // namespace comeback::recovered
 #endif

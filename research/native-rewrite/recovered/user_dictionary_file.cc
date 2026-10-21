@@ -17,23 +17,32 @@ struct CloseFile {
 };
 }  // namespace
 
-DictionaryFileLoadResult LoadUserDictionaryFile(const std::string& path, UserDictionaryStorage& output) {
+template <typename Backend>
+DictionaryFileLoadResult LoadUserDictionaryFile(const std::string& path, UserDictionaryStorage<Backend>& output) {
     OwnedByteRegion mapped;
     const auto mapping = MapReadOnlyFile(path, mapped);
     if (mapping == FileMappingResult::EmptyFile) return DictionaryFileLoadResult::InvalidImage;
     if (mapping != FileMappingResult::Mapped) return DictionaryFileLoadResult::MappingFailed;
-    UserDictionaryStorage loaded;
+    UserDictionaryStorage<Backend> loaded;
     const auto consumed = LoadUserDictionaryImage(mapped, loaded);
     if (consumed == 0 || consumed != mapped.Size()) return DictionaryFileLoadResult::InvalidImage;
     output = std::move(loaded);
     return DictionaryFileLoadResult::Loaded;
 }
 
-bool PersistUserDictionaryFile(const UserDictionaryStorage& dictionary, const std::string& path) {
+template <typename Backend>
+bool PersistUserDictionaryFile(const UserDictionaryStorage<Backend>& dictionary, const std::string& path) {
     const std::unique_ptr<std::FILE, CloseFile> file(std::fopen(path.c_str(), "wb"));
     if (!file) return false;
     return WriteUserDictionaryImage(dictionary, [&](const std::uint8_t* data, std::size_t size) {
         return std::fwrite(data, 1, size, file.get()) == size;
     });
 }
+template DictionaryFileLoadResult LoadUserDictionaryFile(const std::string&,
+    UserDictionaryStorage<MutableDictionaryStorage>&);
+template DictionaryFileLoadResult LoadUserDictionaryFile(const std::string&,
+    UserDictionaryStorage<SingleTrieMutableDictionaryStorage>&);
+template bool PersistUserDictionaryFile(const UserDictionaryStorage<MutableDictionaryStorage>&, const std::string&);
+template bool PersistUserDictionaryFile(const UserDictionaryStorage<SingleTrieMutableDictionaryStorage>&,
+                                        const std::string&);
 }  // namespace comeback::recovered

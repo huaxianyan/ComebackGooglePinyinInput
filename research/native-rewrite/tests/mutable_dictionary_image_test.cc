@@ -133,7 +133,7 @@ int main(int argc, char** argv) {
                 "the second generation and the retained dictionary expose both expected payloads");
     }
 
-    UserDictionaryStorage user;
+    UserDictionaryStorage<MutableDictionaryStorage> user;
     user.dictionary = std::move(reloaded);
     const auto outer = "\x08\x96\x01\x10\x2a\x1a\x02\0\xff\x48\x07"sv;
     Require(user.metadata.ParseFromArray(outer.data(), outer.size()), "load literal outer metadata");
@@ -152,7 +152,7 @@ int main(int argc, char** argv) {
             At(user_first, 16, "\x0b\0\0\0\x08\x96\x01\x10\x2a\x1a\x02\0\xff\x48\x07\0"sv) &&
             At(user_first, 32, "\x0e\0\0\0"sv),
             "complete file bytes have the literal current header and outer/inner protobuf boundaries");
-    UserDictionaryStorage user_loaded;
+    UserDictionaryStorage<MutableDictionaryStorage> user_loaded;
     Require(DuplicateUserDictionary(user, user_loaded) &&
             user_loaded.metadata.SerializeAsString() == outer &&
             user_loaded.dictionary.metadata.association_count() == 1,
@@ -179,7 +179,7 @@ int main(int argc, char** argv) {
             std::memcmp(unchanged_source.Data(), user_first.Data(), user_first.Size()) == 0,
             "editing the duplicate leaves the original complete dictionary byte-for-byte unchanged");
     OwnedByteRegion user_second;
-    UserDictionaryStorage user_final;
+    UserDictionaryStorage<MutableDictionaryStorage> user_final;
     Require(SerializeUserDictionaryImage(user_loaded, user_second) &&
             LoadUserDictionaryImage(user_second, user_final) == user_second.Size() &&
             user_final.metadata.total_count() == 151 && user_final.metadata.last_sync_time() == 4294967296LL &&
@@ -231,7 +231,7 @@ int main(int argc, char** argv) {
                 "compact the real loaded user dictionary through native selection and physical deletion");
     }
     OwnedByteRegion compact_image;
-    UserDictionaryStorage compact_loaded;
+    UserDictionaryStorage<MutableDictionaryStorage> compact_loaded;
     std::vector<DictionaryAssociationEntry> compact_entries;
     Require(SerializeUserDictionaryImage(compact_source, compact_image) &&
             LoadUserDictionaryImage(compact_image, compact_loaded) == compact_image.Size() &&
@@ -249,7 +249,7 @@ int main(int argc, char** argv) {
                 "run the original real-clock compaction entry on the remaining Unix-day-two fixture");
     }
     OwnedByteRegion current_image;
-    UserDictionaryStorage current_loaded;
+    UserDictionaryStorage<MutableDictionaryStorage> current_loaded;
     Require(SerializeUserDictionaryImage(compact_loaded, current_image) &&
             LoadUserDictionaryImage(current_image, current_loaded) == current_image.Size() &&
             current_loaded.metadata.total_count() == 0 &&
@@ -292,7 +292,7 @@ int main(int argc, char** argv) {
     Require(first_file.size() == user_second.Size() &&
             std::memcmp(first_file.data(), user_second.Data(), first_file.size()) == 0,
             "file and memory sinks emit identical complete bytes through the shared writer");
-    UserDictionaryStorage disk_loaded;
+    UserDictionaryStorage<MutableDictionaryStorage> disk_loaded;
     Require(LoadUserDictionaryFile(file_path, disk_loaded) == DictionaryFileLoadResult::Loaded &&
             disk_loaded.metadata.total_count() == 151 &&
             disk_loaded.dictionary.metadata.association_count() == 2,
@@ -315,7 +315,7 @@ int main(int argc, char** argv) {
     disk_loaded.metadata.set_last_sync_time(7);
     // Direct wb persistence must not truncate its own live mapped source.
     // Use the actual native serialize/load duplication, then release that map.
-    UserDictionaryStorage staged;
+    UserDictionaryStorage<MutableDictionaryStorage> staged;
     Require(DuplicateUserDictionary(disk_loaded, staged),
             "duplicate the edited mapped dictionary into the actual independent save snapshot");
     disk_loaded = std::move(staged);
@@ -328,7 +328,7 @@ int main(int argc, char** argv) {
             std::memcmp(overwritten.data(), expected_file.Data(), overwritten.size()) == 0,
             "wb replacement leaves exactly the shorter image without the old tail");
     {
-        UserDictionaryStorage reopened;
+        UserDictionaryStorage<MutableDictionaryStorage> reopened;
         Require(LoadUserDictionaryFile(file_path, reopened) == DictionaryFileLoadResult::Loaded &&
                 reopened.metadata.total_count() == 150 &&
                 reopened.metadata.last_sync_time() == 7 &&
