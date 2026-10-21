@@ -4,7 +4,7 @@
 
 本页的完整镜像组合 MutableDictionary 六子模型。后续 [默认类型取证](legacy-single-trie-initialization.md) 确认，原 Java 默认词典选择 SingleTrieUserDictionary，底层为 SingleTrieMutableDictionary。
 
-现有字节与宿主流程仍验证六子模型后端，尚未验证默认 SingleTrie 后端的布局和编辑行为，不能据此宣称默认 Android 词典已完整恢复。公共文件头、外层元数据和已确认的 primitive 可继续复用。
+本页的外层文件与宿主流程仍验证六子模型后端。后续已恢复 [SingleTrie 三组件容器](single-trie-mutable-dictionary-image.md)，尚未接通默认工厂初始化、编辑行为及外层文件选择，不能据此宣称默认 Android 词典已完整恢复。公共文件头、外层元数据和已确认的 primitive 继续复用。
 
 ## 格式与所有权
 

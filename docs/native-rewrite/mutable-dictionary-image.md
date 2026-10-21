@@ -63,7 +63,7 @@ for source in research/native-rewrite/recovered/*.cc "$out"/*.pb.cc; do
 done
 ar rcs "$out/recovered.a" "$out"/*.o
 scratch=$(mktemp -d "$out/disk-test.XXXXXX")
-for name in mutable_dictionary_image dictionary_association_creation dictionary_association_removal dictionary_property; do
+for name in mutable_dictionary_image single_trie_mutable_dictionary_image dictionary_association_creation dictionary_association_removal dictionary_property; do
   g++ -std=c++17 -O2 -Wall -Wextra -Werror \
     -I "$out" -I research/native-rewrite/recovered \
     "research/native-rewrite/tests/${name}_test.cc" "$out/recovered.a" \
@@ -75,7 +75,7 @@ rm "$scratch/generation1.bin" "$scratch/generation2.bin"
 rmdir "$scratch"
 ```
 
-六子模型接入时三条流程均通过。随后外层镜像沿用同一测试入口，增加的验证见 [完整用户词典镜像](user-dictionary-image.md)。容器流程覆盖：
+六子模型接入时三条流程均通过。随后外层镜像沿用同一测试入口，增加的验证见 [完整用户词典镜像](user-dictionary-image.md)。[SingleTrie 容器](single-trie-mutable-dictionary-image.md) 接入时将子模型读写移到共用模块，严格编译全部源码并运行新旧两个镜像流程通过。容器流程覆盖：
 
 - 初始化真实六子模型，匹配空容器的 `5504` 字节长度、字面标签与固定偏移。期望位置与字节不调用被测包络或尺寸算法计算。
 - 经真实入口新增双向关系，再保存和重载，取得双方列表的实际记录与字面 payload。

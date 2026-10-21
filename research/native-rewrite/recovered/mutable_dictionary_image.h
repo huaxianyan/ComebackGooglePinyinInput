@@ -2,18 +2,10 @@
 #ifndef COMEBACK_RECOVERED_MUTABLE_DICTIONARY_IMAGE_H
 #define COMEBACK_RECOVERED_MUTABLE_DICTIONARY_IMAGE_H
 
-#include "fixed_phrase_table.h"
-#include "dictionary_image_writer.h"
-#include "owned_byte_region.h"
+#include "dictionary_submodel_image.h"
 #include "mutable_dictionary_metadata.pb.h"
 
 namespace comeback::recovered {
-struct DictionaryTrieStorage {
-    OwnedByteRegion metadata;
-    OwnedByteRegion nodes;
-    FixedPhraseTable values{0};
-};
-
 // Six actual submodels. Metadata is the sole owner of the association count and
 // its optional presence. Borrowed views/editors must be rebuilt after loading.
 // Supported native backend combination: VariableValueLengthTrie(DATrie,
