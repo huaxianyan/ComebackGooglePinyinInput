@@ -1,0 +1,11 @@
+{
+  "name": "marisa-trie",
+  "version": "0.2.6",
+  "git_url": "git@github.com:s-yata/marisa-trie.git",
+  "git_tag": "v0.2.6",
+  "git_commit": "e54f296bb52d16693931c8b963744931ef1e37f7",
+  "source_directory": "work/native-rewrite/dependencies/marisa-trie",
+  "license_choice": "BSD-2-Clause",
+  "license_notice": "research/native-rewrite/dependencies/marisa-0.2.6.COPYING",
+  "purpose": "Research-only read-only decoding of original serialized Marisa resources; not an IME engine or product dependency"
+}

@@ -16,6 +16,12 @@ struct KeyToken {
     std::int16_t auxiliary;
     bool identity_bit;
 };
+inline constexpr std::uint32_t kTokenLiteralBit = 0x01000000u;
+inline constexpr std::uint32_t kTokenCodepointMask = 0x001fffffu;
+constexpr std::int16_t TokenAuxiliaryFromWord(std::int32_t value) {
+    const auto low = static_cast<std::uint16_t>(value);
+    return static_cast<std::int16_t>(low < 0x8000u ? low : std::int32_t{low} - 0x10000);
+}
 struct ScoredKeyToken {
     KeyToken token;
     float score;

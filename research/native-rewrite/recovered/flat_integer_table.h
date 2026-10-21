@@ -3,6 +3,7 @@
 #define COMEBACK_RECOVERED_FLAT_INTEGER_TABLE_H
 #include "owned_byte_region.h"
 #include <cstdint>
+#include <optional>
 
 namespace comeback::recovered {
 // Immutable packed-payload snapshot using the existing shared region descriptor.
@@ -25,5 +26,10 @@ private:
     std::uint32_t width_;
     std::uint32_t mask_;
 };
+// Counted LE32 count/width, complete words and an eight-byte block advancement.
+// Ordinary non-overflow images. Failure leaves the position unchanged; native
+// corrupt-image partial publication and diagnostics are outside this loader.
+std::optional<FlatIntegerTableView> LoadFlatIntegerTableImage(
+    const OwnedByteRegion& input, std::size_t& position);
 }  // namespace comeback::recovered
 #endif

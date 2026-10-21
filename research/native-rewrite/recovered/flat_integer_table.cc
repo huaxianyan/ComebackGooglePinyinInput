@@ -1,7 +1,9 @@
 // Native flat integer word/straddling-word access; Google-derived, see NOTICE.
 #include "flat_integer_table.h"
 #include "little_endian.h"
+#include "dictionary_alignment.h"
 #include <cstdlib>
+#include <limits>
 
 namespace comeback::recovered {
 FlatIntegerTableView::FlatIntegerTableView(const OwnedByteRegion& payload,
@@ -20,5 +22,20 @@ std::uint32_t FlatIntegerTableView::At(std::uint64_t index) const {
         value |= detail::ReadLittleEndian<std::uint32_t>(word + 4) << (32 - shift);
     }
     return value & mask_;
+}
+std::optional<FlatIntegerTableView> LoadFlatIntegerTableImage(
+    const OwnedByteRegion& input, std::size_t& position) {
+    if (position > input.Size() || input.Size() - position < 8) return std::nullopt;
+    const auto* header = input.Data() + position;
+    const auto count = detail::ReadLittleEndian<std::uint32_t>(header);
+    const auto width = detail::ReadLittleEndian<std::uint32_t>(header + 4);
+    const auto bits = std::uint64_t{count} * width;
+    if (width > 32 || bits > std::numeric_limits<std::uint32_t>::max()) return std::nullopt;
+    const auto bytes = ((bits + 31) / 32) * 4;
+    const auto block = detail::AlignDictionaryBytes(8 + bytes);
+    if (block > input.Size() - position) return std::nullopt;
+    FlatIntegerTableView table(input.Slice(position + 8, bytes), count, width);
+    position += block;
+    return table;
 }
 }  // namespace comeback::recovered

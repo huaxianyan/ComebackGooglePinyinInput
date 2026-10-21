@@ -28,7 +28,8 @@ def main():
             dictionaries += 1
             for name, table in sorted(container["packed_tables"].items()):
                 field = name[:-1] if name.endswith("s") else name
-                expected = [row[field] for row in container["token_entries"]]
+                expected = ([row[field] for row in container["token_entries"]]
+                            if table["count"] else [])
                 result = subprocess.run(
                     [str(args.probe), str(args.data_dir / blob["output_file"]),
                      str(table["data_offset"]), str(table["count"]), str(table["bit_width"])],

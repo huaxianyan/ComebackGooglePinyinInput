@@ -59,4 +59,4 @@ SameKeyTokenIdentity 继续服务原 `0x18c620` 的身份比较。ManagerTokenAd
 
 Ghidra 成功输出位于 `token-manager-query-state/`、`token-manager-query-core/`、`token-manager-selection/`、`token-manager-key-order/` 和 `token-manager-cache-advance/`，均在 `work/native-rewrite/ghidra/`。测试二进制精确清理，build.log 留存于 `work/native-rewrite/token-manager-selection-build/`。
 
-后续 [DirectTokenDictionary](direct-token-dictionary.md) 已从三种不同原始资源恢复普通 DFS 查询，共用本段的资格谓词。Forward 的真实子遍历和缓存组合仍待恢复，不用提前准备的查询结果替代真实读取。
+后续 [DirectTokenDictionary](direct-token-dictionary.md) 已从三种不同原始资源恢复普通 DFS 查询，共用本段的资格谓词。后续 [普通 Forward 资源读取](forward-token-dictionary.md) 已接入真实 Marisa 图和五张表，恢复完整字符串的单项 source 与 literal target，但不是子 cursor。Forward 的 Push、Pop、Reset、待应用帧和 Manager 缓存组合仍待恢复，不用提前准备的查询结果替代真实读取。

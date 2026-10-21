@@ -57,4 +57,4 @@ ARM64 把读到的宽度放入 w2，既用于推进指针，也作为字符串�
 
 首次手输工厂地址错误，纠正后四个工厂/调整函数成功，随后又因文本地址的基址换算错误中断。文本函数用正确地址另行导出，相关错误日志保留，不把 headless 进程退出零当脚本成功。结论仅使用上述成功函数与独立 FDE 比较。
 
-测试二进制精确清理，build.log 留存于 `work/native-rewrite/token-query-build/`。未执行原 ARM64，未操作设备、正式包或用户词典。ManagerIterator 的匹配帧、懒缓存和准入已有后续记录。普通 Direct 子查询已有真实资源实现，下一步继续 Forward 子遍历和复合查询，不增加固定结果或通用转发接口。
+测试二进制精确清理，build.log 留存于 `work/native-rewrite/token-query-build/`。未执行原 ARM64，未操作设备、正式包或用户词典。ManagerIterator 的匹配帧、懒缓存和准入已有后续记录。普通 Direct 子查询已有真实资源实现，[普通 Forward 单项读取](forward-token-dictionary.md) 也已接入原始图和五张表。下一步继续 Forward 流式子遍历和复合查询，不增加固定结果或通用转发接口。

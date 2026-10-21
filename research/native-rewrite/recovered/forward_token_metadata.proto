@@ -1,0 +1,26 @@
+// Google-derived field numbers/types/defaults from fixed ARM64 generated code.
+// Names describe confirmed operations; field_2/field_10 meanings remain unknown.
+// This reconstruction remains under the rights boundary in NOTICE.
+syntax = "proto2";
+package i18n_input.engine.hmm.proto;
+option optimize_for = LITE_RUNTIME;
+
+message ForwardTokenDictionaryMetaData {
+  enum EncodingType {
+    BINARY_TOKEN_KEY = 0;
+    CODEPOINT_UTF8 = 1;
+    CUSTOM = 2;
+  }
+  optional int32 selector = 1 [default = 0];
+  optional string field_2 = 2;
+  repeated string symbols = 3;
+  optional int32 language_id = 4 [default = 0];
+  optional bool scores_enabled = 5 [default = false];
+  optional EncodingType encoding = 6 [default = BINARY_TOKEN_KEY];
+  // True uses the native C-string copy; false uses span copy then ASCII lower.
+  optional bool case_sensitive = 7 [default = true];
+  optional bool target_uses_source = 8 [default = false];
+  optional bool encoded_token_trie = 9 [default = false];
+  optional string field_10 = 10;
+  optional bool length_penalty = 11 [default = false];
+}

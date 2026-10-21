@@ -400,7 +400,7 @@ def analyze_length_prefixed_config(
 
 
 def unpack_lsb_bits(content: bytes, count: int, bit_width: int) -> list[int]:
-    if not 0 < bit_width <= 32:
+    if not 0 <= bit_width <= 32:
         raise ValueError(f"invalid packed bit width: {bit_width}")
     required_size = (count * bit_width + 7) // 8
     if len(content) < required_size:
@@ -408,7 +408,8 @@ def unpack_lsb_bits(content: bytes, count: int, bit_width: int) -> list[int]:
             f"packed array needs {required_size} bytes, only {len(content)} available"
         )
     packed = int.from_bytes(content[:required_size], "little")
-    mask = (1 << bit_width) - 1
+    # Native FlatVector's ARM 32-bit mask construction also makes width 32 zero.
+    mask = (1 << (bit_width & 31)) - 1
     return [(packed >> (index * bit_width)) & mask for index in range(count)]
 
 
@@ -420,7 +421,7 @@ def packed_table(
     header_size: int,
 ) -> tuple[dict[str, Any], list[int], int]:
     data_offset = offset + header_size
-    data_size = (count * bit_width + 7) // 8
+    data_size = ((count * bit_width + 31) // 32) * 4
     data_end = data_offset + data_size
     values = unpack_lsb_bits(content[data_offset:data_end], count, bit_width)
     aligned_end = align_up(data_end, 8)
@@ -433,6 +434,7 @@ def packed_table(
             "bit_width": bit_width,
             "data_offset": data_offset,
             "data_size": data_size,
+            "bit_payload_bytes": (count * bit_width + 7) // 8,
             "aligned_end": aligned_end,
             "sha256": sha256_bytes(content[data_offset:data_end]),
             "minimum": min(values) if values else None,
@@ -441,24 +443,6 @@ def packed_table(
         },
         values,
         aligned_end,
-    )
-
-
-def find_counted_packed_table(
-    content: bytes, start: int, count: int, expected_bit_width: int
-) -> tuple[dict[str, Any], list[int], int]:
-    for offset in range(start, min(start + 8, len(content) - 8) + 1, 8):
-        if any(content[start:offset]):
-            continue
-        if read_u32(content, offset) != count:
-            continue
-        bit_width = read_u32(content, offset + 4)
-        if bit_width != expected_bit_width:
-            continue
-        return packed_table(content, offset, count, bit_width, 8)
-    raise ValueError(
-        f"no {expected_bit_width}-bit packed table for {count} items "
-        f"after offset {start}"
     )
 
 
@@ -488,7 +472,7 @@ def analyze_forward_dictionary(content: bytes) -> dict[str, Any]:
     if second_header_u64 == 0:
         token_config = analyze_length_prefixed_config(content, auxiliary_offset)
         token_count = read_u32(content, token_config["data_offset"])
-        metadata_offset = token_config["data_offset"] + 4
+        metadata_offset = token_config["data_offset"]
         result["token_config"] = token_config
         result["token_count"] = token_count
         result["token_count_matches_marisa_keys"] = token_count == region["key_count"]
@@ -498,55 +482,39 @@ def analyze_forward_dictionary(content: bytes) -> dict[str, Any]:
         result["token_metadata_size"] = len(content) - metadata_offset
         result["token_metadata_sha256"] = sha256_bytes(content[metadata_offset:])
 
-        first_width = read_u32(content, metadata_offset)
-        expected_first_width = 28 if token_count == 10 else 26
-        if first_width != expected_first_width:
-            raise ValueError(f"unexpected token ID bit width: {first_width}")
-        first_table, token_ids, table_end = packed_table(
-            content, metadata_offset, token_count, first_width, 4
-        )
-        table_names = ["token_scores", "token_meta", "token_codes", "token_node_ids"]
-        expected_widths = (
-            [1, 6, 4]
-            if token_count == 10
-            else [8, 4, 16, 10 if token_count > 512 else 9]
-        )
-        table_records = {"token_ids": first_table}
-        table_values = {"token_ids": token_ids}
-        for table_name, expected_width in zip(table_names, expected_widths):
-            table, values, table_end = find_counted_packed_table(
-                content, table_end, token_count, expected_width
-            )
+        # Native 0x1b6cb0 always loads five counted FlatVectors, even when a
+        # scores table is empty. Do not search across zero headers or shift names.
+        table_names = ["token_ids", "token_scores", "token_meta", "token_codes", "token_node_ids"]
+        table_records = {}
+        table_values = {}
+        table_end = metadata_offset
+        for table_name in table_names:
+            count = read_u32(content, table_end)
+            width = read_u32(content, table_end + 4)
+            table, values, table_end = packed_table(content, table_end, count, width, 8)
             table_records[table_name] = table
             table_values[table_name] = values
 
-        prefix_scores = None
-        if token_count != 10:
-            prefix_count_offset = table_end
-            prefix_count = read_u32(content, prefix_count_offset)
-            if not token_count <= prefix_count <= token_count + 32:
-                raise ValueError(f"invalid prefix score count: {prefix_count}")
-            if read_u32(content, prefix_count_offset + 4) != 0:
-                raise ValueError("non-zero prefix score reserved word")
-            score_offset = prefix_count_offset + 8
-            score_end = score_offset + prefix_count
-            if score_end > len(content) or any(content[score_end:]):
-                raise ValueError("invalid prefix score payload or trailing padding")
-            values = list(content[score_offset:score_end])
-            prefix_scores = {
-                "offset": prefix_count_offset,
-                "count": prefix_count,
-                "bit_width": 8,
-                "data_offset": score_offset,
-                "data_size": prefix_count,
-                "sha256": sha256_bytes(content[score_offset:score_end]),
-                "minimum": min(values) if values else None,
-                "maximum": max(values) if values else None,
-                "unique_count": len(set(values)),
-                "trailing_zero_bytes": len(content) - score_end,
-            }
-        elif any(content[table_end:]):
-            raise ValueError("non-zero digits token dictionary trailer")
+        prefix_count_offset = table_end
+        prefix_count = read_u64(content, prefix_count_offset)
+        score_offset = prefix_count_offset + 8
+        score_end = score_offset + prefix_count
+        if score_end > len(content) or any(content[score_end:]):
+            raise ValueError("invalid prefix score payload or trailing padding")
+        values = list(content[score_offset:score_end])
+        prefix_scores = {
+            "offset": prefix_count_offset,
+            "count": prefix_count,
+            "count_bits": 64,
+            "bit_width": 8,
+            "data_offset": score_offset,
+            "data_size": prefix_count,
+            "sha256": sha256_bytes(content[score_offset:score_end]),
+            "minimum": min(values) if values else None,
+            "maximum": max(values) if values else None,
+            "unique_count": len(set(values)),
+            "trailing_zero_bytes": len(content) - score_end,
+        }
 
         trie = marisa_trie.Trie().frombytes(
             content[marisa_offset : marisa_offset + marisa_size]
@@ -556,10 +524,9 @@ def analyze_forward_dictionary(content: bytes) -> dict[str, Any]:
             entry = {
                 "marisa_key_id": key_id,
                 "key": trie.restore_key(key_id),
-                "token_id": table_values["token_ids"][key_id],
             }
             for table_name in table_names:
-                if table_name in table_values:
+                if table_values[table_name]:
                     entry[table_name.removesuffix("s")] = table_values[table_name][key_id]
             entries.append(entry)
         result["packed_tables"] = table_records
@@ -994,7 +961,7 @@ def main() -> None:
             )
 
     manifest = {
-        "schema_version": 2,
+        "schema_version": 3,
         "source_apk": {
             "path": args.apk.as_posix(),
             "size": len(apk_content),

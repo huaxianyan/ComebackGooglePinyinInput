@@ -275,9 +275,9 @@ Marisa 区间均可精确 round-trip：
 | 自然码 | 507 | 4,856 | 4,688 |
 | 笔画 | 90,701 | 150,112 | 550,144 |
 
-进一步分析确认，该首个 uint32 是 length-prefixed token config 的字节数，不是 token count。config 后还有一个独立 token count，八个拼音类容器均与各自 Marisa key 数量相等。
+进一步分析确认，该首个 uint32 是 length-prefixed token config 的字节数，不是 token count。config 后是第一张 ID 表的 count，八个拼音类容器均与各自 Marisa key 数量相等，不再把它拆成独立外层字段。
 
-全拼和六套双拼的 token ID、score、meta、code、node ID 与 prefix score 表已按 8-byte 对齐边界完整切分。数字词典包含 ID、score、meta 和 code 表，不含独立 node ID 或 prefix score。各表使用 little-endian、低位优先的连续位流。拼音加加、微软双拼和自然码还确认存在多 key 对一内部 token 的 alias，详见 `token-dictionary-auxiliary.md`。
+八个普通资源都依次包含 ID、score、meta、code、node ID 五张计数表及 prefix 字节区。数字的 score 表头为八个零字节，后面是 1-bit meta、6-bit code、4-bit node ID，prefix 的 LE64 长度为零。旧版跨零表头搜索曾导致数字列名错位，现已按真实 reader 更正为 schema 3。各表使用 little-endian、低位优先的连续位流，完整字和整块分别按四字节、八字节补齐。别名与具体边界见 `token-dictionary-auxiliary.md`，实际读取见 [Forward 资源](forward-token-dictionary.md)。
 
 笔画容器明显不同：第二个 header word 为 `4`，其他八个容器为 `0`，且 auxiliary data 远大于 trie。它虽然复用 `ForwardTokenDictionary` class，但不是拼音 token 表的简单变体。
 

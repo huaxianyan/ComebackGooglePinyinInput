@@ -4,7 +4,7 @@
 
 本文档继续研究 `ForwardTokenDictionary`、`InMemoryTokenExpander` 和 `DirectMappingTokenExpander` 的辅助数据，并将 data bundle 字节结构与 `libhmm_gesture_hwr_zh.so` 中保留的 reader 诊断字符串交叉验证。
 
-当前已经恢复八个拼音类 `ForwardTokenDictionary` 的位压缩辅助表边界，并将拼音、模糊音、首字母和数字 expansion 中的 token ID 对齐到 Marisa key。本文档不导出系统词典正文，也不开始新输入法实现。
+当前已经恢复八个拼音类 `ForwardTokenDictionary` 的位压缩辅助表边界，并将拼音、模糊音、首字母和数字 expansion 中的 token ID 对齐到 Marisa key。后续 [真实 Forward 读取](forward-token-dictionary.md) 已根据函数恢复修正数字空表和协议分层，提取工具使用 schema 3。本文档不导出系统词典正文，也不开始新输入法实现。
 
 ## 证据来源
 
@@ -62,9 +62,9 @@ prefix scores table
 meta data
 ```
 
-因此，`ForwardTokenDictionary` 的 auxiliary data 不是单一 token 数组，而是多个互相关联的表。八个拼音类容器已经确认包含 token ID、token score、token metadata 和 token code。除数字词典外，另外六套双拼与全拼还包含 token node ID 和 prefix score。
+因此，`ForwardTokenDictionary` 的 auxiliary data 不是单一 token 数组，而是多个互相关联的表。八个拼音类容器都依次包含五张表及 prefix 字节区。数字词典的 token score 表和 prefix 区为空，不能跳过空表头后给后面的表错命名。
 
-native reader 提到的 `custom token encoding` 和 `meta data` 尚未恢复为独立区间。它们可能由前置 config、容器 header 或特定变体承载，不能仅按诊断字符串顺序假定一定存在额外表。
+实际 reader `0x1b6cb0` 确认 meta data 是前置 protobuf config。只有编码字段为 2 时才读取 custom token encoding，八个普通容器的该字段均为 1。
 
 ## 拼音类 ForwardTokenDictionary 的进一步结构
 
@@ -74,40 +74,33 @@ native reader 提到的 `custom token encoding` 和 `meta data` 尚未恢复为�
 uint32_le config_size
 byte[config_size] protobuf config
 zero padding to 8-byte boundary
-uint32_le token_count
-byte[] token table payload
+five counted FlatVector images
+uint64_le prefix byte count
+byte[] prefix scores and alignment padding
 ```
 
 八个文件全部满足：
 
 ```text
-token_count == marisa_key_count
+token_ids.element_count == marisa_key_count
 ```
 
 | dictionary | config bytes | token count | token table payload |
 | --- | ---: | ---: | ---: |
-| 全拼 | 106 | 517 | 4,740 bytes |
-| 数字 | 22 | 10 | 108 bytes |
-| 智能 ABC | 109 | 480 | 4,316 bytes |
-| 小鹤双拼 | 109 | 480 | 4,316 bytes |
-| 拼音加加 | 109 | 504 | 4,532 bytes |
-| 微软双拼 | 109 | 486 | 4,380 bytes |
-| 紫光双拼 | 109 | 480 | 4,316 bytes |
-| 自然码 | 109 | 507 | 4,564 bytes |
+| 全拼 | 106 | 517 | 4,744 bytes |
+| 数字 | 22 | 10 | 112 bytes |
+| 智能 ABC | 109 | 480 | 4,320 bytes |
+| 小鹤双拼 | 109 | 480 | 4,320 bytes |
+| 拼音加加 | 109 | 504 | 4,536 bytes |
+| 微软双拼 | 109 | 486 | 4,384 bytes |
+| 紫光双拼 | 109 | 480 | 4,320 bytes |
+| 自然码 | 109 | 507 | 4,568 bytes |
 
 `token_count` 与 trie key 数量相等，证明每个 Marisa key ID 都有一个辅助表槽位，但不代表 Marisa key ID 与内部 token ID 数值相等。
 
 ### 位压缩辅助表
 
-除笔画外，八个容器都使用 little-endian、低位优先的连续位流。表尾以零填充到 8-byte 边界。第一张 token ID 表省略 count，因为外层已经给出 `token_count`：
-
-```text
-uint32_le token_id_bit_width
-packed_lsb token_ids[token_count]
-zero padding to 8-byte boundary
-```
-
-后续表使用统一头部：
+除笔画外，八个容器都使用 little-endian、低位优先的连续位流。负载补齐完整 32 位字，整块填充到 8-byte 边界。ID 表与其他四张表使用同一头部，此前所谓外层 token_count 就是 ID 表的 count：
 
 ```text
 uint32_le element_count
@@ -125,7 +118,7 @@ zero padding to 8-byte boundary
 5. token node IDs
 6. prefix scores
 
-前五张表的 count 均为 `token_count`。prefix score 使用独立 count，头部为 `uint32_le prefix_count` 和一个值为 `0`、语义未明的 32-bit 字段，随后是 `prefix_count` 个 8-bit 值和零结尾填充。
+全拼和六套双拼的前五张表 count 均为 `token_count`。prefix score 的长度是 `uint64_le`，后接对应数量的 8-bit 值及八字节对齐填充。旧解释中的 32 位零字段是长度的高半部。
 
 | dictionary | ID bits | score bits | meta bits | code bits | node bits | prefix count |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -137,13 +130,13 @@ zero padding to 8-byte boundary
 | 紫光双拼 | 26 | 8 | 4 | 16 | 9 | 482 |
 | 自然码 | 26 | 8 | 4 | 16 | 9 | 511 |
 
-数字词典使用 28-bit token ID、1-bit score、6-bit meta 和 4-bit code，不含独立 node ID 或 prefix score。其 token ID 表和 score 表之间还有 8 个零字节，作用未知。当前工具验证这段字节，但不将其命名为 custom encoding。
+数字词典使用 28-bit token ID、空 score 表、1-bit meta、6-bit code 和 4-bit node ID，prefix 长度为零。ID 表后的八个零字节就是 count、width 均为零的 score 表头，不是未命名间隙或 custom encoding。
 
 ### Token 身份对齐
 
 全拼的 517 个 Marisa key 分别对应 517 个唯一 token ID、token code 和 node ID：
 
-- token code 数值恰好连续覆盖 `0xE000`–`0xE204`，该范围落在 Unicode 私用区，但 native 是否按字符解释仍未知
+- token code 数值恰好连续覆盖 `0xE000`–`0xE204`，但 code 表不能替代 ID 低 21 位经编码 1 产生的实际 token 文本
 - node ID 恰好是 `0`–`516` 的一个排列
 - token ID 是另一组 26-bit 内部标识，不能由 Marisa key ID 或 token code 数值替代
 
@@ -170,7 +163,7 @@ expansion 记录引用的正是这组 token ID。当前已将以下 16 个 expan
 | 紫光双拼 | 480 | 480 | 0 |
 | 自然码 | 507 | 480 | 27 |
 
-重复关系同时出现在 token code 和 node ID 表中。例如，微软双拼的 `jt` 与 `jv`、`lt` 与 `lv` 分别收敛到同一内部 token。拼音加加和自然码也存在多输入 key 对一 token 的 alias。
+重复关系来自内部 token ID。例如，微软双拼的 `jt` 与 `jv` 收敛到同一内部 token，但各自 code 和 node ID 槽位不同，不能合并原表行。拼音加加和自然码也存在多输入 key 对一 token 的 alias。
 
 这直接否定了「Marisa key ID 就是 HMM token ID」的假设。未来数据模型必须显式保留 `input key → token identity` 的多对一关系。
 
@@ -202,7 +195,7 @@ abcdefghijklmnopqrstuvwxyz<>_;
 | 9 | 0 | 0 |
 | 11 | 0 | 0 |
 
-field 3 明确表达可接受的输入符号集合。field 4 的名称和单位未知，不能只凭 `16` 和 `300` 将其命名为容量或长度。
+field 3 表达输入符号集合。后续原 getter 与 parser 已确认 field 4 是 language ID，不是容量或长度。其余字段、默认值和 presence 见 [Forward metadata](forward-token-dictionary.md#metadata-的字段与默认值)。
 
 ### 六套双拼不是共享 trie
 
@@ -219,7 +212,7 @@ field 3 明确表达可接受的输入符号集合。field 4 的名称和单位�
 - auxiliary data 为 550,144 bytes
 - auxiliary 起始位置不符合拼音类 length-prefixed config
 
-native reader 诊断中存在 `custom token encoding`，笔画 header 差异与该能力相符，但当前没有函数级证据证明数值 `4` 就是 custom encoding enum。未来 parser 必须按 header 和 metadata 选择变体，不能强行套用拼音结构。
+后续 Marisa reader `0x1daa30` 已确认第二个 header word 控制附属固定宽值记录的读取，不是 metadata 的 custom encoding 枚举。笔画还需先处理该附属区，再定位后面的 metadata 和表，不能在 trie 后直接套用普通拼音布局。
 
 ## InMemoryTokenExpander 分数字段
 
@@ -317,7 +310,7 @@ TensorFlowLstmModel
 
 - 全拼和双拼 auxiliary 中五张 token 表的精确字节边界、元素数量和位宽已经恢复
 - 全拼和双拼 prefix score 的精确字节边界已经恢复
-- 数字词典包含四张 token 表，不含独立 node ID 和 prefix score
+- 数字词典同样包含五张 token 表，score 表与 prefix 字节区为空
 - 每个 token 表槽位由同一个 Marisa key ID 索引，但内部 token ID 是独立数值
 - 三套双拼存在多 key 对一 token 的 alias
 - 16 个拼音和数字 expansion 的全部 source 与 target token ID 都能映射回相应 key
@@ -332,7 +325,6 @@ TensorFlowLstmModel
 ## 推断
 
 - 默认 fuzzy 的约 `-0.1` 很可能是相对零分扩展的候选惩罚
-- 笔画 header 的非零变体值可能与 custom token encoding 有关
 
 这些推断仍需函数控制流或行为样本验证。
 
