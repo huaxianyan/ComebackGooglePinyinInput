@@ -42,7 +42,7 @@ NormalizeAndPruneExpansions 对应原 `0x18d424`：
 - 输出先调整为源数量。源 token 从后往前读取，目标位置为 `n-1-i`，即输出顺序反转。
 - 每项同时传入对应 language ID。某项失败就停止，仍经过对应结束钩子，不引入成功后统一提交的事务。
 
-具体接口类型、查询辅助函数和资源读取尚未闭合，不将它们包装成固定返回的宿主 lookup。既有词典 key、Marisa key ID、内部 token ID 和身份字段也不能互相替代。
+后续 [查询分支与资源接口](token-query-branches.md) 已确认管理器次级对象、两种合并迭代器及其不同查询/恢复顺序，并恢复 BFS 输入拆分。具体子字典查询、资源读取及可选文本准备仍未闭合，不将它们包装成固定返回的宿主 lookup。词典 key、Marisa key ID、内部 token ID 和身份字段也不能互相替代。
 
 另一个 `0x18d8b8` 只是拷贝结果，包含 `+0x18` 的 vector<bool>，不是产生 scale 的函数。当前消费投影不读取该向量，本轮不为完整生成器填空向量或默认系数。
 
@@ -63,4 +63,4 @@ NormalizeAndPruneExpansions 对应原 `0x18d424`：
 - `work/native-rewrite/restart-v217/native-token-expansion-state-comparison.json`
 - `work/native-rewrite/restart-v217/token-expansion-state-export.json`
 
-未执行原 ARM64，未操作设备、正式包或用户词典。完整非零插值逐 bit 对照、原容器 OOM/分配、资源查询、完整迭代收集及 Android 学习仍未验收。下一步展开 `0x195a68/0x195c74` 的实际查询和资源来源，随后接原迭代器，不增加替身接口。
+未执行原 ARM64，未操作设备、正式包或用户词典。完整非零插值逐 bit 对照、原容器 OOM/分配、资源查询、完整迭代收集及 Android 学习仍未验收。两套助手的控制流及工厂现已展开，下一步继续恢复 ManagerIterator 查询状态和子字典委派，再接实际资源，不增加替身接口。

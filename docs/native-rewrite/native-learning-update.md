@@ -128,4 +128,4 @@ work/native-rewrite/original-apk/native-learning-storage.txt
 work/native-rewrite/original-apk/native-learning-storage-helpers.txt
 ```
 
-两种 payload 的独立编码与解码源码已经恢复，字段与验证见 [payload 编码源码](payload-codec.md)。这些局部组件还不足以实现完整持久词典。编辑器的具体归属和头部源码见 [词典编辑器与文件头源码](dictionary-storage.md)。用户模型计数和 SingleTrie compact 已接完整文件流程，实际模型引用与逐键消费也已接入。token 转换的倒序写入与两类接口已取证，下一步展开其实际查询辅助函数和资源来源，不以消费投影或独立归一化代替完整键生成。
+两种 payload 的独立编码与解码源码已经恢复，字段与验证见 [payload 编码源码](payload-codec.md)。这些局部组件还不足以实现完整持久词典。编辑器的具体归属和头部源码见 [词典编辑器与文件头源码](dictionary-storage.md)。用户模型计数和 SingleTrie compact 已接完整文件流程，实际模型引用与逐键消费也已接入。token 转换的倒序写入与两类接口已取证，[查询分支及工厂](token-query-branches.md) 已展开，BFS 输入拆分已有源码。下一步接实际合并迭代器与子字典资源，不以消费投影或独立归一化代替完整键生成。

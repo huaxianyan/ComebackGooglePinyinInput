@@ -164,6 +164,14 @@ REGIONS = {
     "key_token_equal": (0x18C620, 0x18C658),
     "key_token_identity_less": (0x18C658, 0x18C69C),
     "key_convert_source_tokens": (0x19550C, 0x195700),
+    "token_query_dfs": (0x195A68, 0x195C74),
+    "token_query_bfs": (0x195C74, 0x195F50),
+    "token_manager_dfs_factory": (0x1941FC, 0x194430),
+    "token_manager_bfs_factory": (0x193C7C, 0x193F30),
+    "token_manager_dfs_thunk": (0x194430, 0x194438),
+    "token_manager_bfs_thunk": (0x193F30, 0x193F38),
+    "token_query_prepare_text": (0x1BF63C, 0x1BF74C),
+    "token_query_split_utf8": (0x1BF8DC, 0x1BF9CC),
     "key_input_validate": (0x18CCB0, 0x18CE40),
     "key_collect_expansions": (0x18D07C, 0x18D258),
     "key_normalize_prune": (0x18D424, 0x18D5D4),
@@ -391,6 +399,7 @@ SCORE_CONSTANTS = {
     "Ln2": 0x18C61C, "LogAddLimit": 0x18C730,
 }
 DECODER_CATEGORY_TABLE = (0x349D10, 0x349D18)
+TOKEN_QUERY_WIDTH_TABLE = (0x322050, 0x322060)
 DICTIONARY_CRC_CONFIGS = {
     "dictionary_header_crc": 0x34EC50,
     "association_key_crc": 0x34EAD0,
@@ -413,6 +422,10 @@ RELOCATION_REGIONS = {
     "variable_value_trie": (0x67DD30, 0x67DDD8),
     "token_decoder_typeinfo": (0x68AA90, 0x68AAA8),
     "token_decoder_vtable": (0x68AAB8, 0x68AAF8),
+    "token_dictionary_manager_primary": (0x67A250, 0x67A2C8),
+    "token_dictionary_manager_interface": (0x67A2D8, 0x67A368),
+    "token_dictionary_manager_dfs": (0x67A380, 0x67A3E8),
+    "token_dictionary_manager_bfs": (0x67A400, 0x67A478),
 }
 STRING_ANCHORS = {
     0x32C3CB: "[DirectMappingTokenExpander] Failed to load the key ids table.",
@@ -526,6 +539,8 @@ def main():
     relocations = sorted(binary.relocations, key=lambda item: item.address)
     start, end = DECODER_CATEGORY_TABLE
     category_bytes = bytes(binary.get_content_from_virtual_address(start, end - start))
+    width_start, width_end = TOKEN_QUERY_WIDTH_TABLE
+    width_bytes = bytes(binary.get_content_from_virtual_address(width_start, width_end - width_start))
     crc_configurations = {}
     for label, address in DICTIONARY_CRC_CONFIGS.items():
         config = bytes(binary.get_content_from_virtual_address(address, 24))
@@ -539,6 +554,11 @@ def main():
         "string_anchors": {hex(address): text for address, text in STRING_ANCHORS.items()},
         "regions": regions,
         "score_math": capture_score_math(binary),
+        "token_query_width_table": {
+            "address": width_start,
+            "bytes": list(width_bytes),
+            "sha256": hashlib.sha256(width_bytes).hexdigest(),
+        },
         **crc_configurations,
         "decoder_category_table": {
             "address": start,
