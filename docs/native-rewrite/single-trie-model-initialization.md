@@ -43,4 +43,4 @@ InitializeSingleTrieUserDictionaryModel 调用唯一的 InitializeSingleTrieUser
 
 原初始化在模型/编辑器替换后分配 codec，宿主则先完成候选再发布，不宣称该分配失败顺序等价。完整 OOM、原分配次数、并发与原 ARM64 运行仍未验收。未操作设备、正式包或用户词典。
 
-下一步接 accessor 对实际模型的持有、锁和释放次序。原虚工厂及失败等价继续单独保留，不将 ABI 转发层列作已恢复功能。
+后续已接入 [实际模型引用与两层同步](single-trie-model-reference.md)，两个独立引用共享同一模型数据锁。下一步恢复 accessor 学习键生成及 float32 增量缩放。原虚工厂及失败等价继续单独保留，不将 ABI 转发层列作已恢复功能。

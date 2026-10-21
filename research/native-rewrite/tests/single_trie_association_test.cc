@@ -8,12 +8,15 @@
 #include "user_dictionary_compaction.h"
 #include "dictionary_association_iteration.h"
 #include "single_trie_user_dictionary_model.h"
+#include "single_trie_model_reference.h"
 #include "file_mmap.h"
 #include <cstdio>
 #include <cstdlib>
 #include <string>
 #include <string_view>
 #include <vector>
+#include <future>
+#include <thread>
 
 using namespace comeback::recovered;
 using namespace std::literals;
@@ -358,7 +361,57 @@ int main(int argc, char** argv) {
             before_initialization.metadata.total_count() == 303 &&
             Payload(before_initialization.dictionary, "owned", "a").substr(0, 4) == "\x03\0\0\x80"sv,
             "learn through the newly initialized editor while the retained pre-initialization model remains readable");
-    active.reset();
+    std::shared_ptr<SingleTrieUserDictionaryModel> shared_model(std::move(active));
+    std::weak_ptr<SingleTrieUserDictionaryModel> released_model = shared_model;
+    SingleTrieModelReference first_reference(shared_model), second_reference(shared_model);
+    const auto learn = [&](SingleTrieModelReference& reference) {
+        for (int i = 0; i < 16; ++i) {
+            auto access = reference.Write();
+            Require(static_cast<bool>(access) &&
+                    AddUserDictionaryCount(access->storage, "fresh", "fresh", 1, false, false, 0,
+                                           access->edit_flags, access->editor),
+                    "two actual references serialize learning through the same model data lock");
+        }
+    };
+    std::thread first_writer([&] { learn(first_reference); });
+    std::thread second_writer([&] { learn(second_reference); });
+    first_writer.join();
+    second_writer.join();
+    std::promise<void> first_entered, second_entered;
+    auto first_ready = first_entered.get_future();
+    auto second_ready = second_entered.get_future();
+    const auto check_shared = [](const UserDictionaryStorage<SingleTrieMutableDictionaryStorage>& storage) {
+        Require(storage.metadata.total_count() == 36 &&
+                Payload(storage.dictionary, "fresh", "fresh").substr(0, 4) == "\x24\0\0\x80"sv,
+                "concurrent readers see the literal accumulated result of both real writers");
+    };
+    std::thread first_reader([&] {
+        auto access = first_reference.Read();
+        Require(static_cast<bool>(access), "the first real reference pins the model for reading");
+        first_entered.set_value();
+        second_ready.wait();
+        check_shared(access->storage);
+    });
+    std::thread second_reader([&] {
+        auto access = second_reference.Read();
+        Require(static_cast<bool>(access), "the second real reference pins the same model for reading");
+        second_entered.set_value();
+        first_ready.wait();
+        check_shared(access->storage);
+    });
+    first_reader.join();
+    second_reader.join();
+    first_reference.Bind({});
+    shared_model.reset();
+    {
+        auto missing = first_reference.Read();
+        auto retained_access = second_reference.Read();
+        Require(!missing && static_cast<bool>(retained_access) && !released_model.expired(),
+                "clearing one reference leaves the model alive and readable through the other actual owner");
+        check_shared(retained_access->storage);
+    }
+    second_reference.Bind({});
+    Require(released_model.expired(), "releasing the last actual model reference destroys its owned resources");
     mapped = {};
     reloaded = {};
     final = {};

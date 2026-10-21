@@ -6,7 +6,7 @@
 
 原 HmmEngineFactory 构造将 Impl 首地址的虚表设为 DataManager。主地址点为 `0x67a510`，slot 9 指向 `0x1976f8`，slot 10 指向 `0x198f28`。因此 [创建链路](accessor-initialization.md) 中的「工厂 slot 9」可进一步确定为 DataManager 入口。
 
-slot 9 在进入、退出同步包装之间调用 slot 10。本阶段保留该顺序，没有将这些包装改写成新锁。
+slot 9 在进入、退出同步包装之间调用 slot 10。后续已确认这是 DataManager 自己的 writer 锁，不与 accessor 引用锁或模型数据锁合并。实际原语取证与宿主持有边界见 [模型引用与两层同步](single-trie-model-reference.md)。
 
 slot 10 按 dataId 查询缓存：
 

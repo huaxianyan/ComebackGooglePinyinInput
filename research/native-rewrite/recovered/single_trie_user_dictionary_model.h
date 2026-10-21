@@ -5,12 +5,17 @@
 #include "single_trie_association.h"
 #include "user_dictionary_image.h"
 #include <memory>
+#include <shared_mutex>
 
 namespace comeback::recovered {
 // Ownership reconstruction, not the original factory/virtual-handle ABI. The
 // existing coordinator refers to storage at a stable address and dies before it.
-// Caller keeps this model exclusive; do not move/assign its storage separately.
+// Direct mutation is exclusive; shared callers use the model-reference locks.
+// Do not move/assign this model's storage separately.
 struct SingleTrieUserDictionaryModel {
+    // Native model-level data lock (+8), owned once per actual model. Host
+    // shared_mutex preserves read/write exclusion, not the original lock ABI.
+    std::shared_mutex data_mutex;
     UserDictionaryStorage<SingleTrieMutableDictionaryStorage> storage;
     SingleTrieAssociationEditor editor;
     // Native 0x1a3c9c sets +0x10 to one only after successful publication.
