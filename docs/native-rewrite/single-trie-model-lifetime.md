@@ -56,4 +56,4 @@ SingleTrieAssociationEditor 现在直接按原构造准备三块缓冲，后续�
 
 固定缓冲 resize 仍遵循原调用方式，但全部 OOM、C++ 分配异常与原获取失败的对照尚未完成。并发锁、观察者、Android 保存任务、进程生命周期和完整 accessor 学习管线仍未接入。未执行原 ARM64，未操作设备、正式包或用户词典。
 
-下一步按已确认的 kind 零 ExactMatchIterator 状态与实际读值契约接入现有查找，再恢复下层持有、模型锁和 accessor 生命周期。
+后续已恢复 [kind 零读取状态与实际读值](trie-exact-match-cursor.md)，同一编辑器长期持有 key_cursor。下一步恢复写编辑器自带的另一游标与引用 scratch，再连接实际获取释放、模型锁和 accessor 生命周期。

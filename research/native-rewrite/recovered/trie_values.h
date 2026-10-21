@@ -4,6 +4,7 @@
 
 #include "fixed_phrase_table.h"
 #include "datrie_view.h"
+#include "trie_exact_match_cursor.h"
 
 namespace comeback::recovered {
 
@@ -26,9 +27,10 @@ bool UpdateTrieValue(FixedPhraseTable& records, const OwnedByteRegion& reference
 bool ReadTrieValueByNodeId(const DATrieView& trie, const FixedPhraseTable& records,
                            std::uint32_t node, OwnedByteRegion& value);
 
-// Existing-key reader used by native directional editing. Publish the ID before
-// copying the value; failure can leave that ID assigned, without creating a key.
-bool ReadTrieValueByKey(const DATrieView& trie, const FixedPhraseTable& records,
+// Existing-key reader used by native directional editing. Reset the caller's
+// actual cursor, append the whole key, then publish its ID before copying value.
+// Failure can leave that ID assigned, without creating a key.
+bool ReadTrieValueByKey(TrieExactMatchCursor& cursor, const DATrieView& trie, const FixedPhraseTable& records,
                          std::string_view key, std::uint32_t& terminal, OwnedByteRegion& value);
 
 // EditorImpl slot 1: find an existing terminal, copy its reference and update

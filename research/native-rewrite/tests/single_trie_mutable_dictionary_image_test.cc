@@ -39,8 +39,9 @@ std::string Payload(const SingleTrieMutableDictionaryStorage& dictionary) {
     DATrieView trie(dictionary.trie.metadata.Data(), dictionary.trie.metadata.Size(),
                     const_cast<std::uint8_t*>(dictionary.trie.nodes.Data()), dictionary.trie.nodes.Size());
     OwnedByteRegion range;
+    TrieExactMatchCursor cursor;
     std::uint32_t terminal = 0;
-    Require(ReadTrieValueByKey(trie, dictionary.trie.values, "a", terminal, range) &&
+    Require(ReadTrieValueByKey(cursor, trie, dictionary.trie.values, "a", terminal, range) &&
             range.Size() == 8 && At(range, 0, "\x02\0\0\0\x01\0\0\0"sv),
             "read the stored fixture range through the actual trie");
     IndexPoolView pool(dictionary.range_metadata.Data(), dictionary.range_metadata.Size(),

@@ -16,6 +16,7 @@ void Require(bool condition, const char* action) {
 void CheckEdge(const AssociationSide& source, const AssociationSide& opposite,
                  std::string_view key, std::string_view target, std::string_view payload) {
     OwnedByteRegion value;
+    TrieExactMatchCursor cursor;
     std::uint32_t terminal = 0;
     IndexRange range{};
     AssociationRecordLocation location{};
@@ -23,7 +24,7 @@ void CheckEdge(const AssociationSide& source, const AssociationSide& opposite,
                               source.cells.MutableData(), source.cells.Size());
     const std::uint8_t* record = nullptr;
     std::size_t size = 0;
-    Require(ReadTrieValueByKey(source.trie, source.values, key, terminal, value) &&
+    Require(ReadTrieValueByKey(cursor, source.trie, source.values, key, terminal, value) &&
             DecodeAssociationReference(value.Data(), value.Size(), range) &&
             FindAssociationRecord(source.records, pool, range, opposite.trie.FindTerminal(target), location) &&
             source.records.ReadRecord(location.record_id, record, size) && size == 4 + payload.size() &&
@@ -66,9 +67,9 @@ int main() {
     std::uint32_t terminal = 0;
     const std::array<std::uint8_t, 2> a_crc{0xc4, 0xd8};
     const std::array<std::uint8_t, 4> x_tail{0xd5, 0x68, 0xde, 0xf0};
-    Require(ReadTrieValueByKey(ft, fv, "a", terminal, value) && value.Size() == 6 &&
+    Require(ReadTrieValueByKey(forward.key_cursor, ft, fv, "a", terminal, value) && value.Size() == 6 &&
             std::equal(a_crc.begin(), a_crc.end(), value.Data() + 4) &&
-            ReadTrieValueByKey(rt, rv, "x", terminal, value) && value.Size() == 8 &&
+            ReadTrieValueByKey(reverse.key_cursor, rt, rv, "x", terminal, value) && value.Size() == 8 &&
             std::equal(x_tail.begin(), x_tail.end(), value.Data() + 4),
             "new keys publish independent CRC16 fixtures and reverse trailing data");
 
@@ -91,7 +92,7 @@ int main() {
     CheckEdge(fs, rs, "a", "y", payload);
     CheckEdge(rs, fs, "x", "k509", {});
     IndexRange full{};
-    Require(ReadTrieValueByKey(rt, rv, "x", terminal, value) &&
+    Require(ReadTrieValueByKey(reverse.key_cursor, rt, rv, "x", terminal, value) &&
             DecodeAssociationReference(value.Data(), value.Size(), full) && full.count == 511 &&
             state.association_count() == 513,
             "the published reverse list contains 511 real entries after trie growth and relocation");

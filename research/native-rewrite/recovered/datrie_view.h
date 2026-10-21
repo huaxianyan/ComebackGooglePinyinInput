@@ -26,9 +26,11 @@ public:
         : metadata_(metadata), metadata_size_(metadata_size), nodes_(nodes), nodes_size_(nodes_size) {}
 
     bool AcceptsKey(std::string_view key) const;
-    // Root-based lookup returns zero on failure. An empty path returns the root;
-    // this alone does not establish that a terminal value exists.
-    std::uint32_t FindNode(std::string_view key) const;
+    // Lookup defaults to the root; explicit start supports native path chunks.
+    // Zero means failure. An empty path returns start, not necessarily a terminal.
+    std::uint32_t FindNode(std::string_view key, std::uint32_t start = kRoot) const;
+    // Exact zero-edge lookup from an already resolved path node (native 0x1d5754).
+    std::uint32_t TerminalAtPath(std::uint32_t node) const;
     bool UpdateValue(std::string_view key, std::uint32_t value);
     std::uint32_t FindTerminal(std::string_view key) const;
     // Node IDs refer to validated terminal cells, not key-path cells.

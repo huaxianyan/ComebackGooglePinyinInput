@@ -10,8 +10,8 @@ bool RemoveDictionaryAssociation(AssociationEditor& forward, AssociationEditor& 
     auto& forward_value = forward.value_buffer;
     auto& reverse_value = reverse.value_buffer;
     std::uint32_t forward_id = 0, reverse_id = 0;
-    if (!ReadTrieValueByKey(forward.side.trie, forward.side.values, forward_key, forward_id, forward_value) ||
-        !ReadTrieValueByKey(reverse.side.trie, reverse.side.values, reverse_key, reverse_id, reverse_value)) {
+    if (!ReadTrieValueByKey(forward.key_cursor, forward.side.trie, forward.side.values, forward_key, forward_id, forward_value) ||
+        !ReadTrieValueByKey(reverse.key_cursor, reverse.side.trie, reverse.side.values, reverse_key, reverse_id, reverse_value)) {
         return false;
     }
     IndexRange forward_range{}, reverse_range{};

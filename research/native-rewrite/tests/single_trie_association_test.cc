@@ -130,7 +130,7 @@ int main(int argc, char** argv) {
     std::uint32_t terminal = 0;
     DATrieView trie(mapped.dictionary.trie.metadata.Data(), mapped.dictionary.trie.metadata.Size(),
         const_cast<std::uint8_t*>(mapped.dictionary.trie.nodes.Data()), mapped.dictionary.trie.nodes.Size());
-    Require(ReadTrieValueByKey(trie, mapped.dictionary.trie.values, "z", terminal, value) &&
+    Require(ReadTrieValueByKey(editor.key_cursor, trie, mapped.dictionary.trie.values, "z", terminal, value) &&
             value.Size() == 6 && value.Data()[4] == 0 && value.Data()[5] == 0,
             "the native first-endpoint flag leaves the newly created checksum bytes zero");
     UserDictionaryStorage<SingleTrieMutableDictionaryStorage> reloaded;

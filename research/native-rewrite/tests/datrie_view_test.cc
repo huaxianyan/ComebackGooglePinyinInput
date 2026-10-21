@@ -108,5 +108,26 @@ int main() {
             "resolving the updated terminal bytes retrieves the newly stored value");
     Require(trie.FindNode("b") == 0 && !trie.UpdateValue("b", 0) && metadata[12] == 128,
             "existing-only update leaves an admitted but missing key absent");
-    std::puts("PASS: DATrie initialization, ordered return, child enumeration and existing value updates");
+    TrieExactMatchCursor cursor;
+    OwnedByteRegion cursor_value;
+    Require(cursor.Append(trie, "a") && cursor.Depth() == 1 && cursor.Terminal() == 5 &&
+            cursor.ReadValue(records, cursor_value) && std::equal(first.begin(), first.end(), cursor_value.Data()),
+            "append the first exact path segment and read its literal record");
+    Require(cursor.Append(trie, "b") && cursor.Depth() == 2 && cursor.Terminal() == 7 &&
+            cursor.ReadValue(records, cursor_value) && std::equal(replacement.begin(), replacement.end(), cursor_value.Data()),
+            "append the second segment and read the longer key through its cached reference");
+    cursor.Next();
+    Require(cursor.Done() && cursor.ReadValue(records, cursor_value) &&
+            std::equal(replacement.begin(), replacement.end(), cursor_value.Data()) &&
+            !cursor.Append(trie, "missing") && cursor.Depth() == 2 && cursor.Done() &&
+            cursor.ReadValue(records, cursor_value) && std::equal(replacement.begin(), replacement.end(), cursor_value.Data()),
+            "exhaustion and failed append preserve the previous cached record and path frames");
+    Require(cursor.Pop() && cursor.Depth() == 1 && cursor.Done() &&
+            cursor.ReadValue(records, cursor_value) && std::equal(first.begin(), first.end(), cursor_value.Data()) &&
+            cursor.Append(trie, "") && cursor.Depth() == 2 && cursor.Terminal() == 5,
+            "pop clears both result words, then an empty segment refreshes the restored shorter path");
+    cursor.Reset();
+    Require(cursor.Depth() == 0 && cursor.Done() && cursor.Append(trie, "") && cursor.Done() && cursor.Depth() == 1,
+            "reset starts a new root path whose successful traversal need not have an exact result");
+    std::puts("PASS: DATrie initialized storage, exact segmented cursor, cached values and existing value updates");
 }

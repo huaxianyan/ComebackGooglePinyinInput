@@ -57,10 +57,9 @@ std::uint32_t DATrieView::Check(std::uint32_t node) const {
     return detail::ReadLittleEndian<std::uint32_t>(nodes_ + node * kNodeSize + sizeof(std::uint32_t));
 }
 
-std::uint32_t DATrieView::FindNode(std::string_view key) const {
+std::uint32_t DATrieView::FindNode(std::string_view key, std::uint32_t node) const {
     const auto count = NodeCount();
-    if (kRoot >= count) return 0;
-    auto node = kRoot;
+    if (node >= count) return 0;
     for (const auto character : key) {
         const auto byte = static_cast<std::uint8_t>(character);
         // Native traversal permits byte zero as an edge, unlike key admission.
@@ -82,10 +81,13 @@ bool DATrieView::IsTerminal(std::uint32_t node) const {
 }
 
 std::uint32_t DATrieView::FindTerminal(std::string_view key) const {
-    const auto node = FindNode(key);
-    if (node == 0) return 0;
+    return TerminalAtPath(FindNode(key));
+}
+
+std::uint32_t DATrieView::TerminalAtPath(std::uint32_t node) const {
+    if (node == 0 || node >= NodeCount()) return 0;
     const auto terminal = Base(node);
-    return IsTerminal(terminal) ? terminal : 0;
+    return IsTerminal(terminal) && Check(terminal) == node ? terminal : 0;
 }
 
 bool DATrieView::UpdateValue(std::string_view key, std::uint32_t value) {

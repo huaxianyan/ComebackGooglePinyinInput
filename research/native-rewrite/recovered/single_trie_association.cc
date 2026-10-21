@@ -19,9 +19,10 @@ bool FindPair(const SingleTrieMutableDictionaryStorage& dictionary,
     if (!trie.AcceptsKey(first_key) || !trie.AcceptsKey(second_key)) return false;
     std::uint32_t first_id = 0, second_id = 0;
     OwnedByteRegion first_value, second_value;
-    if (!ReadTrieValueByKey(trie, dictionary.trie.values, first_key, first_id, first_value)) return false;
+    TrieExactMatchCursor cursor;
+    if (!ReadTrieValueByKey(cursor, trie, dictionary.trie.values, first_key, first_id, first_value)) return false;
     if (first_key == second_key) second_id = first_id;
-    else if (!ReadTrieValueByKey(trie, dictionary.trie.values, second_key, second_id, second_value)) return false;
+    else if (!ReadTrieValueByKey(cursor, trie, dictionary.trie.values, second_key, second_id, second_value)) return false;
     IndexRange reference{};
     if (!DecodeAssociationReference(first_value.Data(), first_value.Size(), reference)) return false;
     const IndexPoolView pool(dictionary.range_metadata.Data(), dictionary.range_metadata.Size(),
@@ -51,10 +52,10 @@ void RepairMoved(SingleTrieMutableDictionaryStorage& dictionary, const DATrieVie
                                           first, second, nullptr)) return;
     }
 }
-bool ResolveKey(SingleTrieMutableDictionaryStorage& dictionary, DATrieView& trie,
+bool ResolveKey(SingleTrieMutableDictionaryStorage& dictionary, TrieExactMatchCursor& cursor, DATrieView& trie,
                   std::string_view key, AssociationEditMode mode, bool checksum_enabled,
                   std::uint32_t& id, OwnedByteRegion& value, const DATrieNodeMove& notify) {
-    if (ReadTrieValueByKey(trie, dictionary.trie.values, key, id, value)) return true;
+    if (ReadTrieValueByKey(cursor, trie, dictionary.trie.values, key, id, value)) return true;
     if (mode != AssociationEditMode::CreateOrUpdate || !value.Resize(dictionary.trie.values.RecordSize())) return false;
     auto* bytes = value.MutableData();
     if (bytes == nullptr) return false;
@@ -112,10 +113,10 @@ bool ModifySingleTrieAssociation(SingleTrieAssociationEditor& editor,
     const bool first_checksum = dictionary.metadata.forward_trie_omitted();
     const bool second_checksum = dictionary.metadata.key_checksum_enabled();
     std::uint32_t first_id = 0, second_id = 0;
-    if (!ResolveKey(dictionary, trie, first_key, mode, first_checksum || (self && second_checksum),
+    if (!ResolveKey(dictionary, editor.key_cursor, trie, first_key, mode, first_checksum || (self && second_checksum),
                       first_id, editor.first_value, editor.node_moved)) return false;
     second_id = first_id;
-    if (!self && !ResolveKey(dictionary, trie, second_key, mode, second_checksum,
+    if (!self && !ResolveKey(dictionary, editor.key_cursor, trie, second_key, mode, second_checksum,
                               second_id, editor.second_value, editor.node_moved)) return false;
     IndexRange first_range{}, second_range{};
     if (!DecodeAssociationReference(editor.first_value.Data(), editor.first_value.Size(), first_range) ||
@@ -165,9 +166,9 @@ bool RemoveSingleTrieAssociation(SingleTrieAssociationEditor& editor,
     auto trie = Trie(dictionary);
     const bool self = first_key == second_key;
     std::uint32_t first_id = 0, second_id = 0;
-    if (!ReadTrieValueByKey(trie, dictionary.trie.values, first_key, first_id, editor.first_value)) return false;
+    if (!ReadTrieValueByKey(editor.key_cursor, trie, dictionary.trie.values, first_key, first_id, editor.first_value)) return false;
     second_id = first_id;
-    if (!self && !ReadTrieValueByKey(trie, dictionary.trie.values, second_key, second_id, editor.second_value)) return false;
+    if (!self && !ReadTrieValueByKey(editor.key_cursor, trie, dictionary.trie.values, second_key, second_id, editor.second_value)) return false;
     IndexRange first_range{}, second_range{};
     if (!DecodeAssociationReference(editor.first_value.Data(), editor.first_value.Size(), first_range) ||
         (!self && !DecodeAssociationReference(editor.second_value.Data(), editor.second_value.Size(), second_range)) ||

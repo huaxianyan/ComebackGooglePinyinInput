@@ -11,7 +11,7 @@ bool ResolveKey(AssociationEditor& editor, std::string_view key, AssociationEdit
                   std::uint32_t& terminal, const DATrieNodeMove& notify) {
     auto& side = editor.side;
     auto& value = editor.value_buffer;
-    if (ReadTrieValueByKey(side.trie, side.values, key, terminal, value)) return true;
+    if (ReadTrieValueByKey(editor.key_cursor, side.trie, side.values, key, terminal, value)) return true;
     if (mode != AssociationEditMode::CreateOrUpdate || !value.Resize(side.values.RecordSize())) {
         return false;
     }

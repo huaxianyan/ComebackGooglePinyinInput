@@ -4,6 +4,7 @@
 
 #include "association_records.h"
 #include "owned_byte_region.h"
+#include "trie_exact_match_cursor.h"
 #include "mutable_dictionary_metadata.pb.h"
 
 namespace comeback::recovered {
@@ -15,6 +16,7 @@ struct AssociationEditor {
     OwnedByteRegion& trie_metadata;
     OwnedByteRegion& trie_nodes;
     bool has_checksum;
+    TrieExactMatchCursor key_cursor{};
     // Native coordinator-owned directional scratch, normalized here without
     // cloning its layout. Retain across calls: omitted payload fields preserve
     // previous scratch bytes, whereas a newly created key clears its value.
