@@ -1,6 +1,6 @@
 # 用户模型删除与保留标记
 
-已将原 `0x1a1a74` 的物理删除、保留删除标记和外层累计处理接入同一用户级入口。支持现有六子模型和 SingleTrie，学习新增、衰减、compact 的 SingleTrie 接入及原运行时生命周期仍未完成。
+已将原 `0x1a1a74` 的物理删除、保留删除标记和外层累计处理接入同一用户级入口。支持现有六子模型和 SingleTrie，后续已接 [用户模型计数协调](user-dictionary-learning.md)，accessor 学习键管线、衰减、SingleTrie compact 及原运行时生命周期仍未完成。
 
 ## 共用入口
 
@@ -10,7 +10,7 @@
 - SingleTrie 传入一个 SingleTrieAssociationEditor。
 - keep_marker 为 false 时走原物理删除，为 true 时保留标记。
 
-两种调用在同一模板实现中完成读取、V21 解码、标记构造和累计判断。后端仅派发到已经恢复的真实读取、已有更新或物理删除接口，不新增逐方法转发壳。旧物理调用及 compact 显式传入 false，没有隐式兼容入口。
+两种调用共用读取、V21 解码、标记构造和累计判断，现与学习入口复用同一内部实现。后端仅派发到已经恢复的真实读取、已有更新或物理删除接口，不新增逐方法转发壳。旧物理调用及 compact 显式传入 false，没有隐式兼容入口。
 
 调用方保持模型就绪、独占，并把对应编辑器绑定到同一存储。accessor 锁和原持久编辑器仍在未恢复的上层。
 
@@ -55,4 +55,4 @@ C 反编译将 flag30 参数显示成零，但 ARM64 在 `0x1a1af8` 读取旧 fl
 
 固定数组 marker 复用现有 codec，不复现原可分配 payload 缓冲的全部 OOM 路径。底层部分失败、原运行时对象、全部分配异常及性能尚未等价验收。未执行原 ARM64，未操作设备、正式包或用户词典。
 
-复现沿用 [共用完整构建](mutable-dictionary-image.md#验证)，测试名仍为 `single_trie_association` 和 `mutable_dictionary_image`。下一步恢复用户模型学习协调，再接 SingleTrie compact 与生命周期。
+复现沿用 [共用完整构建](mutable-dictionary-image.md#验证)，测试名仍为 `single_trie_association` 和 `mutable_dictionary_image`。用户模型计数协调现已恢复，下一步接 SingleTrie compact 与生命周期，accessor 学习键管线仍待接入。

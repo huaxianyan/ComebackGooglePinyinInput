@@ -4,6 +4,7 @@
 #include "user_dictionary_image.h"
 #include "user_dictionary_file.h"
 #include "user_dictionary_edit.h"
+#include "user_dictionary_learning.h"
 #include "user_dictionary_compaction.h"
 #include "dictionary_property.h"
 #include "payload_codec.h"
@@ -229,6 +230,12 @@ int main(int argc, char** argv) {
                 !RemoveUserDictionaryAssociation(deletion_source, "a", "b", true, edit.forward, edit.reverse) &&
                 deletion_source.metadata.total_count() == 9,
                 "retain a real zero-count marker and subtract weight only on the first successful marking");
+        Require(AddUserDictionaryCount(deletion_source, "a", "b", 3, true, true, 0, 1, edit.forward, edit.reverse) &&
+                Payload(edit.fs, edit.rs, "a", "b").substr(0, 4) == "\x03\0\0\x88"sv &&
+                AddUserDictionaryCount(deletion_source, "b", "a", 2, true, false, 0, 1, edit.forward, edit.reverse) &&
+                Payload(edit.fs, edit.rs, "b", "a").substr(0, 4) == "\x02\0\0\xc0"sv &&
+                deletion_source.metadata.total_count() == 14 && deletion_source.dictionary.metadata.association_count() == 2,
+                "learn through the same existing and fallback policy on the six-model backend");
     }
     i18n_input::engine::hmm::proto::UserDictionaryMetaData clamped;
     AdjustUserDictionaryTotalCount(clamped, 150, 0);

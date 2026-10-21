@@ -5,6 +5,7 @@
 #include "trie_values.h"
 #include "user_dictionary_file.h"
 #include "user_dictionary_edit.h"
+#include "user_dictionary_learning.h"
 #include <cstdio>
 #include <cstdlib>
 #include <string>
@@ -49,6 +50,7 @@ int main(int argc, char** argv) {
     const auto updated_path = std::string(argv[1]) + "/single-updated.bin";
     const auto deleted_path = std::string(argv[1]) + "/single-deleted.bin";
     const auto policy_path = std::string(argv[1]) + "/single-policy.bin";
+    const auto learned_path = std::string(argv[1]) + "/single-learned.bin";
     UserDictionaryStorage<SingleTrieMutableDictionaryStorage> mapped, retained;
     Require(PersistUserDictionaryFile(user, original_path) &&
             LoadUserDictionaryFile(original_path, mapped) == DictionaryFileLoadResult::Loaded &&
@@ -160,12 +162,65 @@ int main(int argc, char** argv) {
             policy_loaded.metadata.total_count() == 282 && policy_loaded.metadata.last_sync_time() == 42 &&
             policy_loaded.dictionary.metadata.association_count() == 189,
             "reload the kept marker, physical deletions and separately accumulated user weight");
+    SingleTrieAssociationEditor learning{policy_loaded.dictionary};
+    Require(AddUserDictionaryCount(policy_loaded, "learn", "a", 5, true, true, 1, 1, learning) &&
+            Payload(policy_loaded.dictionary, "learn", "a").substr(0, 4) == "\x05\0\0\xd8"sv &&
+            policy_loaded.metadata.total_count() == 287 && policy_loaded.dictionary.metadata.association_count() == 190,
+            "learn a missing pair through the fallback insertion with literal flags and weight five");
+    Require(AddUserDictionaryCount(policy_loaded, "learn", "a", 3, false, false, 1, 1, learning) &&
+            Payload(policy_loaded.dictionary, "learn", "a").substr(0, 4) == "\x08\0\0\xd0"sv &&
+            policy_loaded.metadata.total_count() == 290,
+            "accumulate three on an existing pair, preserve old flag30 and replace flag27");
+    const auto unchanged = Payload(policy_loaded.dictionary, "learn", "a");
+    Require(UpdateExistingUserDictionaryCount(policy_loaded, "learn", "a", 8, false, true, 1, learning) &&
+            AddUserDictionaryCount(policy_loaded, "learn", "a", 4, false, true, 3, 1, learning) &&
+            Payload(policy_loaded.dictionary, "learn", "a") == unchanged && policy_loaded.metadata.total_count() == 290,
+            "same count/category and lower-priority requests succeed without refreshing flags or day");
+    Require(EnsureUserDictionaryCount(policy_loaded, "promote", "a", 4, false, false, false, 0, 2, learning) &&
+            !AddUserDictionaryCount(policy_loaded, "promote", "a", 2, false, false, 0, 2, learning) &&
+            policy_loaded.metadata.total_count() == 294 &&
+            Payload(policy_loaded.dictionary, "promote", "a").substr(0, 4) == "\x04\0\0\0"sv,
+            "raw state byte two permits Ensure but not Add's low-bit gate");
+    Require(AddUserDictionaryCount(policy_loaded, "promote", "a", 2, true, true, 1, 1, learning) &&
+            Payload(policy_loaded.dictionary, "promote", "a").substr(0, 4) == "\x06\0\0\x88"sv &&
+            policy_loaded.metadata.total_count() == 296,
+            "the category-zero/request-one exception accumulates while retaining effective category zero");
+    Require(AddUserDictionaryCount(policy_loaded, "a93", "a", 5, false, false, 2, 1, learning) &&
+            Payload(policy_loaded.dictionary, "a93", "a").substr(0, 4) == "\x01\0\0\xe0"sv &&
+            policy_loaded.metadata.total_count() == 296 &&
+            AddUserDictionaryCount(policy_loaded, "a93", "a", 4, false, true, 0, 1, learning) &&
+            Payload(policy_loaded.dictionary, "a93", "a").substr(0, 4) == "\x04\0\0\xc8"sv &&
+            policy_loaded.metadata.total_count() == 300,
+            "category two collapses to one without weight, then contributes only the replacement count on transition");
+    Require(UpdateExistingUserDictionaryCount(policy_loaded, "learn", "a", 2147483647, true, false, 1, learning) &&
+            Payload(policy_loaded.dictionary, "learn", "a").substr(0, 4) == "\0\0\0\xd0"sv &&
+            policy_loaded.metadata.total_count() == 292,
+            "native 32-bit addition wraps negative before clamping to zero and subtracting the old eight");
+    Require(EnsureUserDictionaryCount(policy_loaded, "learn", "a", 536870912, true, true, false, 1, 1, learning) &&
+            Payload(policy_loaded.dictionary, "learn", "a").substr(0, 4) == "\xff\xff\xff\xd7"sv &&
+            policy_loaded.metadata.total_count() == 536871204,
+            "codec saturation preserves native accounting of the pre-encoding count");
+    Require(EnsureUserDictionaryCount(policy_loaded, "promote", "a", 0, false, false, false, 0, 1, learning) &&
+            !ReadSingleTrieAssociationPayload(policy_loaded.dictionary, "promote", "a", missing) &&
+            policy_loaded.metadata.total_count() == 536871198 &&
+            policy_loaded.dictionary.metadata.association_count() == 190 && policy_loaded.dictionary.phrases.RecordCount() == 199 &&
+            Payload(final.dictionary, "a93", "a").substr(0, 4) == "\0\0\0\xe0"sv && final.metadata.total_count() == 282,
+            "Ensure zero physically removes the pair while retaining the mapped model's prior marker and weight");
+    UserDictionaryStorage<SingleTrieMutableDictionaryStorage> learned;
+    Require(PersistUserDictionaryFile(policy_loaded, learned_path) &&
+            LoadUserDictionaryFile(learned_path, learned) == DictionaryFileLoadResult::Loaded &&
+            Payload(learned.dictionary, "learn", "a") == Payload(policy_loaded.dictionary, "learn", "a") &&
+            Payload(learned.dictionary, "a93", "a").substr(0, 4) == "\x04\0\0\xc8"sv &&
+            learned.metadata.total_count() == 536871198 && learned.metadata.last_sync_time() == 42 &&
+            learned.dictionary.metadata.association_count() == 190,
+            "persist and reload learned bytes independently from the native outer accumulator");
     mapped = {};
     reloaded = {};
     final = {};
     policy_loaded = {};
+    learned = {};
     Require(std::remove(original_path.c_str()) == 0 && std::remove(updated_path.c_str()) == 0 &&
-            std::remove(deleted_path.c_str()) == 0 && std::remove(policy_path.c_str()) == 0,
-            "remove only the four files created by this flow");
-    std::puts("PASS: SingleTrie real CRUD/relocate/user removal policy/map/persist/reload flow");
+            std::remove(deleted_path.c_str()) == 0 && std::remove(policy_path.c_str()) == 0 &&
+            std::remove(learned_path.c_str()) == 0, "remove only the five files created by this flow");
+    std::puts("PASS: SingleTrie real CRUD/relocate/removal/learning/map/persist/reload flow");
 }
