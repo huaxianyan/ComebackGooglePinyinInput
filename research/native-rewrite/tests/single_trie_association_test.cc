@@ -1,6 +1,5 @@
 // One real SingleTrie create/update/relocate/delete/map/persist/reload flow.
 #include "single_trie_association.h"
-#include "single_trie_mutable_dictionary_init.h"
 #include "datrie_view.h"
 #include "trie_values.h"
 #include "user_dictionary_file.h"
@@ -36,12 +35,16 @@ std::uint32_t Terminal(const SingleTrieMutableDictionaryStorage& dictionary, std
 }
 int main(int argc, char** argv) {
     Require(argc == 2, "provide a new project-local directory for the actual files");
-    UserDictionaryStorage<SingleTrieMutableDictionaryStorage> user;
-    Require(InitializeSingleTrieUserStorage(31, user.dictionary), "initialize the native empty user storage");
+    std::unique_ptr<SingleTrieUserDictionaryModel> initialized;
+    Require(InitializeSingleTrieUserDictionaryModel(31, initialized) && initialized->edit_flags == 1 &&
+            initialized->storage.metadata.has_total_count() && initialized->storage.metadata.total_count() == 0 &&
+            initialized->storage.metadata.has_last_sync_time() && initialized->storage.metadata.last_sync_time() == 0,
+            "initialize actual model and editor resources with explicitly present zero outer count and sync fields");
+    auto& user = initialized->storage;
     const auto self = "\x31\x32\x33\x34\x35\x36"sv;
     const auto reverse = "\x21\x22\x23\x24\x25\x26"sv;
     const auto forward = "\x11\x12\x13\x14\x15\x16"sv;
-    SingleTrieAssociationEditor initial{user.dictionary};
+    auto& initial = initialized->editor;
     Require(ModifySingleTrieAssociation(initial, "a", "a", &self, AssociationEditMode::CreateOrUpdate) &&
             ModifySingleTrieAssociation(initial, "b", "b", &self, AssociationEditMode::CreateOrUpdate) &&
             ModifySingleTrieAssociation(initial, "b", "a", &reverse, AssociationEditMode::CreateOrUpdate) &&
@@ -337,6 +340,24 @@ int main(int argc, char** argv) {
             active->storage.metadata.total_count() == 303 && active->storage.metadata.last_sync_time() == 42,
             "retained data survives model destruction, and the persisted replacement acquires its own editor on reload");
     owner_chunk = {};
+    const auto reset_input = "\x08\xaf\x02\x10\x2a\x1a\x03\0\xffK\x98\x06\x07"sv;
+    const auto reset_expected = "\x08\0\x10\0\x1a\x03\0\xffK\x98\x06\x07"sv;
+    Require(active->storage.metadata.ParseFromString(std::string(reset_input)),
+            "load literal outer metadata with extension bytes and an unknown field before reinitialization");
+    const auto before_initialization = active->storage;
+    Require(InitializeSingleTrieUserDictionaryModel(17, active) && active->edit_flags == 1 &&
+            active->storage.metadata.SerializeAsString() == reset_expected &&
+            active->storage.dictionary.metadata.format_parameter() == 17 &&
+            !active->storage.dictionary.metadata.has_association_count() &&
+            active->storage.dictionary.phrases.RecordCount() == 0,
+            "reinitialize actual data and editor while preserving outer extension/unknown fields and explicit zero presence");
+    Require(AddUserDictionaryCount(active->storage, "fresh", "fresh", 4, false, false, 0,
+                                   active->edit_flags, active->editor) &&
+            active->storage.metadata.total_count() == 4 &&
+            Payload(active->storage.dictionary, "fresh", "fresh").substr(0, 4) == "\x04\0\0\x80"sv &&
+            before_initialization.metadata.total_count() == 303 &&
+            Payload(before_initialization.dictionary, "owned", "a").substr(0, 4) == "\x03\0\0\x80"sv,
+            "learn through the newly initialized editor while the retained pre-initialization model remains readable");
     active.reset();
     mapped = {};
     reloaded = {};

@@ -28,7 +28,7 @@ SingleTrie slot 19 的 `0x1c9860` 先检查模型就绪字节，再取 trie slot
 
 模型对象不可复制或移动，unique_ptr 本身可转移拥有关系。调用方保持独占，不单独移动或赋值其 storage；旧引用在成功替换或拥有对象销毁后失效。成员顺序使编辑器先于其引用的存储析构，不留悬空编辑引用。
 
-LoadSingleTrieUserDictionaryModel 复用现有镜像校验，先构造局部存储，再在稳定地址上构造编辑器，最后发布整个拥有对象。返回字节数沿用内存镜像 consumed-size 契约，不额外建立另一套文件协议、后端探测或格式回退。
+LoadSingleTrieUserDictionaryModel 复用现有镜像校验，先构造局部存储，再在稳定地址上构造编辑器，最后发布整个拥有对象。后续 [显式模型初始化](single-trie-model-initialization.md) 也已接入，两者共用唯一的私有 Publish。返回字节数沿用内存镜像 consumed-size 契约，不额外建立另一套文件协议、后端探测或格式回退。
 
 SingleTrieAssociationEditor 现在直接按原构造准备三块缓冲，后续调用继续使用这些缓冲。六字节端点值尺寸在 kSingleTrieValueSize 定义一次，初始化与编辑器共用；它与同为六字节的 V21 payload 是不同协议字段。
 
@@ -56,4 +56,4 @@ SingleTrieAssociationEditor 现在直接按原构造准备三块缓冲，后续�
 
 固定缓冲 resize 仍遵循原调用方式，但全部 OOM、C++ 分配异常与原获取失败的对照尚未完成。并发锁、观察者、Android 保存任务、进程生命周期和完整 accessor 学习管线仍未接入。未执行原 ARM64，未操作设备、正式包或用户词典。
 
-后续已恢复 [kind 零读取状态与实际读值](trie-exact-match-cursor.md)，同一编辑器长期持有 key_cursor。[写编辑器的独立游标与引用缓冲](trie-value-editor-state.md) 也已接入，下一步恢复实际获取释放、模型锁和 accessor 生命周期。
+后续已恢复 [kind 零读取状态与实际读值](trie-exact-match-cursor.md)，同一编辑器长期持有 key_cursor。[写编辑器的独立游标与引用缓冲](trie-value-editor-state.md) 也已接入，显式初始化与镜像加载共用同一拥有对象构造、发布。下一步接 accessor 对模型的持有、锁和释放次序，原虚工厂的未就绪及失败等价仍单独保留。

@@ -22,9 +22,19 @@ struct SingleTrieUserDictionaryModel {
     SingleTrieUserDictionaryModel& operator=(SingleTrieUserDictionaryModel&&) = delete;
 private:
     explicit SingleTrieUserDictionaryModel(UserDictionaryStorage<SingleTrieMutableDictionaryStorage>&& loaded);
+    static void Publish(UserDictionaryStorage<SingleTrieMutableDictionaryStorage>&& prepared,
+        std::unique_ptr<SingleTrieUserDictionaryModel>& output);
+    friend bool InitializeSingleTrieUserDictionaryModel(std::int32_t,
+        std::unique_ptr<SingleTrieUserDictionaryModel>&);
     friend std::uint64_t LoadSingleTrieUserDictionaryModel(const OwnedByteRegion&,
         std::unique_ptr<SingleTrieUserDictionaryModel>&);
 };
+
+// Native 0x1a259c current SingleTrie initialization. Replaces live dictionary
+// data after preparing actual editor resources; preserves outer metadata except
+// explicitly present zero total/sync fields. Not an automatic load-error fallback.
+bool InitializeSingleTrieUserDictionaryModel(std::int32_t token_category,
+    std::unique_ptr<SingleTrieUserDictionaryModel>& output);
 
 // Existing image validation -> owned model and prepared editor -> publication.
 // Zero leaves the old model/editor intact. Success expires references to the old
