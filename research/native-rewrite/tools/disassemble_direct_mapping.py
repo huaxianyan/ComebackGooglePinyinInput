@@ -162,6 +162,8 @@ REGIONS = {
     "fuzzy_client_prefix": (0x130044, 0x130190),
     "key_context_refresh": (0x18BE20, 0x18BF2C),
     "key_token_equal": (0x18C620, 0x18C658),
+    "key_token_identity_less": (0x18C658, 0x18C69C),
+    "key_convert_source_tokens": (0x19550C, 0x195700),
     "key_input_validate": (0x18CCB0, 0x18CE40),
     "key_collect_expansions": (0x18D07C, 0x18D258),
     "key_normalize_prune": (0x18D424, 0x18D5D4),

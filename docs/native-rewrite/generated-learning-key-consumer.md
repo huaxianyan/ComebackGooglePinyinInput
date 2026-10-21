@@ -59,6 +59,6 @@ ApplyGeneratedLearningKeys 对接 SingleTrie 实际拥有模型，复用既有�
 - `work/native-rewrite/restart-v217/native-learning-key-consumer-comparison.json`
 - `work/native-rewrite/restart-v217/learning-key-consumer-export.json`
 
-完整上游生成、分数到缩放系数的构造、原额外文本键及最终返回选择仍未实现。下一步从实际 token 管理器转换与扩展结果形成入手，复用本轮唯一的消费投影、拼接和缩放实现，不补默认键或默认系数。
+后续已补 [token 身份、收集结束判定与归一化裁剪](key-expansion-state.md)，尚未连接实际资源查询和迭代器。完整键组合、分数到缩放系数的构造、原额外文本键及最终返回选择仍未实现。下一步展开源 token 查询及资源来源，复用唯一消费投影、拼接和缩放实现，不将归一化分数直接当 scale，也不补默认键或系数。
 
 未执行原 ARM64，未操作设备、正式包或用户词典。容器分配次数、OOM、并发完整 accessor、JNI 和 Android 调度仍不在本轮验收范围。

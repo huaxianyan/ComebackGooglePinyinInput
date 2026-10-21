@@ -1,6 +1,6 @@
 # native 学习增量与存储入口
 
-本页保留 JNI 与 accessor 路径的静态取证。后续已恢复 [两种后端共用的用户模型计数协调](user-dictionary-learning.md)，以及 SingleTrie 的 [学习键编码与逐键缩放消费](generated-learning-key-consumer.md)。完整上游键生成、额外文本路径及整个 accessor 的返回选择仍未接通。
+本页保留 JNI 与 accessor 路径的静态取证。后续已恢复 [两种后端共用的用户模型计数协调](user-dictionary-learning.md)，以及 SingleTrie 的 [学习键编码与逐键缩放消费](generated-learning-key-consumer.md)。上游 [token 身份与扩展归一化](key-expansion-state.md) 也已恢复为独立组件。实际源 token 查询、完整迭代收集、键组合、额外文本路径及整个 accessor 的返回选择仍未接通。
 
 ## 范围与当前基线
 
@@ -128,4 +128,4 @@ work/native-rewrite/original-apk/native-learning-storage.txt
 work/native-rewrite/original-apk/native-learning-storage-helpers.txt
 ```
 
-两种 payload 的独立编码与解码源码已经恢复，字段与验证见 [payload 编码源码](payload-codec.md)。这些局部组件还不足以实现完整持久词典。编辑器的具体归属和头部源码见 [词典编辑器与文件头源码](dictionary-storage.md)。用户模型计数和 SingleTrie compact 已接完整文件流程，实际模型引用与逐键消费也已接入。下一步展开原 token 管理器转换与扩展结果形成，不以消费投影代替完整键生成。
+两种 payload 的独立编码与解码源码已经恢复，字段与验证见 [payload 编码源码](payload-codec.md)。这些局部组件还不足以实现完整持久词典。编辑器的具体归属和头部源码见 [词典编辑器与文件头源码](dictionary-storage.md)。用户模型计数和 SingleTrie compact 已接完整文件流程，实际模型引用与逐键消费也已接入。token 转换的倒序写入与两类接口已取证，下一步展开其实际查询辅助函数和资源来源，不以消费投影或独立归一化代替完整键生成。

@@ -1,0 +1,41 @@
+// Native key-generator token semantics and expansion scores; see NOTICE.
+#ifndef COMEBACK_RECOVERED_KEY_EXPANSION_H
+#define COMEBACK_RECOVERED_KEY_EXPANSION_H
+#include <cstdint>
+#include <string>
+#include <vector>
+
+namespace comeback::recovered {
+// Semantic fields read from the native 0x20-byte token. Not its ABI layout;
+// unused flag bits/padding are absent. The auxiliary word remains unnamed and
+// is signed in native ordering; neither token ID nor text substitutes for it.
+// Callers supply all fields; the native default/init sequence is not modeled.
+struct KeyToken {
+    std::string text;
+    std::uint32_t id;
+    std::int16_t auxiliary;
+    bool identity_bit;
+};
+struct ScoredKeyToken {
+    KeyToken token;
+    float score;
+    std::uint8_t marker;
+};
+
+// Native 0x18c620: compare low 48 identity bits and flag bit zero, not text.
+bool SameKeyTokenIdentity(const KeyToken& left, const KeyToken& right);
+
+// Post-iteration decision from 0x18d07c, not an iterator/provider substitute.
+// A real nonnull iterator has finished; results are the entire existing output,
+// including prior entries. The native null-iterator path is outside this helper.
+// False may leave a nonempty singleton result with the source identity.
+bool CollectedExpansionResult(const std::vector<ScoredKeyToken>& results,
+    const KeyToken& source, bool accept_single_identity);
+
+// Native 0x18d424: finite scores and an int32-sized sequence, original binary32 AddLogScores,
+// subtraction, then stable compaction at the native cutoff. Retained token
+// identities, strings and opaque marker bytes stay paired with their scores.
+// Normal rounding, no fast-math; allocation/OOM and ABI equality are not claimed.
+void NormalizeAndPruneExpansions(std::vector<ScoredKeyToken>& results);
+}  // namespace comeback::recovered
+#endif
