@@ -245,7 +245,7 @@ int main(int argc, char** argv) {
     auto compact_source = user_final;
     {
         Editors edit(compact_source.dictionary);
-        Require(CompactUserDictionaryAtCutoff(compact_source, edit.forward, edit.reverse, 2, 1),
+        Require(CompactUserDictionaryAtCutoff(compact_source, 2, 1, edit.forward, edit.reverse),
                 "compact the real loaded user dictionary through native selection and physical deletion");
     }
     OwnedByteRegion compact_image;
@@ -263,7 +263,7 @@ int main(int argc, char** argv) {
 
     {
         Editors edit(compact_loaded.dictionary);
-        Require(CompactUserDictionary(compact_loaded, edit.forward, edit.reverse, 2),
+        Require(CompactUserDictionary(compact_loaded, 2, edit.forward, edit.reverse),
                 "run the original real-clock compaction entry on the remaining Unix-day-two fixture");
     }
     OwnedByteRegion current_image;

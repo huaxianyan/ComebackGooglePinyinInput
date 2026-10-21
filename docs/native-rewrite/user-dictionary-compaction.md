@@ -1,6 +1,6 @@
 # 接通真实模型 compact
 
-CompactUserDictionaryAtCutoff 恢复 `0x1a3758` 的模型级流程：
+CompactUserDictionaryAtCutoff 恢复 `0x1a3758` 的模型级流程，现已由两种后端共用。下文保留原六子模型验证，[SingleTrie 遍历与 compact](single-trie-compaction.md) 记录后续接入与验证：
 
 ```text
 实际键与池顺序快照
@@ -10,7 +10,7 @@ CompactUserDictionaryAtCutoff 恢复 `0x1a3758` 的模型级流程：
   → 逐项实体删除及官方外层累计更新
 ```
 
-它组合已有实际组件，不增加第二个排序器、计数副本、临时 backend 或假 compact。两个编辑器须与同一就绪模型绑定，调用方在整个操作期间保持独占。
+它组合已有实际组件，不增加第二个排序器、计数副本、临时 backend 或假 compact。六子模型的两个编辑器或 SingleTrie 的一个编辑器须与同一就绪模型绑定，调用方在整个操作期间保持独占。
 
 ## 保留原完成语义
 

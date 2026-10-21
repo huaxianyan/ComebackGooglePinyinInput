@@ -6,6 +6,8 @@
 #include "user_dictionary_file.h"
 #include "user_dictionary_edit.h"
 #include "user_dictionary_learning.h"
+#include "user_dictionary_compaction.h"
+#include "dictionary_association_iteration.h"
 #include <cstdio>
 #include <cstdlib>
 #include <string>
@@ -44,6 +46,15 @@ int main(int argc, char** argv) {
             ModifySingleTrieAssociation(initial, "a", "b", &forward, AssociationEditMode::CreateOrUpdate) &&
             user.dictionary.phrases.RecordCount() == 4 && user.dictionary.metadata.association_count() == 4,
             "create self and directed pairs through the real coordinator, one shared record per relation");
+    std::vector<DictionaryAssociationEntry> initial_entries;
+    Require(SnapshotDictionaryAssociations(user.dictionary, initial_entries) && initial_entries.size() == 4 &&
+            initial_entries[0].forward_key == "a" && initial_entries[0].reverse_key == "a" &&
+            initial_entries[1].forward_key == "a" && initial_entries[1].reverse_key == "b" &&
+            initial_entries[2].forward_key == "b" && initial_entries[2].reverse_key == "b" &&
+            initial_entries[3].forward_key == "b" && initial_entries[3].reverse_key == "a" &&
+            initial_entries[0].payload == EncodedPayload({49, 50, 51, 52, 53, 54}) &&
+            initial_entries[1].payload == EncodedPayload({17, 18, 19, 20, 21, 22}),
+            "snapshot emits ordered/self pairs once in trie and pool order, skipping second-endpoint references");
     user.metadata.set_total_count(300);
     user.metadata.set_last_sync_time(42);
     const auto original_path = std::string(argv[1]) + "/single-original.bin";
@@ -51,6 +62,7 @@ int main(int argc, char** argv) {
     const auto deleted_path = std::string(argv[1]) + "/single-deleted.bin";
     const auto policy_path = std::string(argv[1]) + "/single-policy.bin";
     const auto learned_path = std::string(argv[1]) + "/single-learned.bin";
+    const auto compacted_path = std::string(argv[1]) + "/single-compacted.bin";
     UserDictionaryStorage<SingleTrieMutableDictionaryStorage> mapped, retained;
     Require(PersistUserDictionaryFile(user, original_path) &&
             LoadUserDictionaryFile(original_path, mapped) == DictionaryFileLoadResult::Loaded &&
@@ -214,13 +226,54 @@ int main(int argc, char** argv) {
             learned.metadata.total_count() == 536871198 && learned.metadata.last_sync_time() == 42 &&
             learned.dictionary.metadata.association_count() == 190,
             "persist and reload learned bytes independently from the native outer accumulator");
+    auto compact_source = retained;
+    compact_source.metadata.set_total_count(151);
+    SingleTrieAssociationEditor compact_editor{compact_source.dictionary};
+    const auto marker_payload = "\0\0\0\x80\x04\0"sv;
+    const auto heavy = "\x96\0\0\0\x01\0"sv;
+    const auto inactive = "\0\0\0\0\x05\0"sv;
+    const auto light = "\x01\0\0\0\x03\0"sv;
+    Require(ModifySingleTrieAssociation(compact_editor, "a", "a", &marker_payload, AssociationEditMode::ExistingOnly) &&
+            ModifySingleTrieAssociation(compact_editor, "a", "b", &heavy, AssociationEditMode::ExistingOnly) &&
+            ModifySingleTrieAssociation(compact_editor, "b", "b", &inactive, AssociationEditMode::ExistingOnly) &&
+            ModifySingleTrieAssociation(compact_editor, "b", "a", &light, AssociationEditMode::ExistingOnly) &&
+            CompactUserDictionaryAtCutoff(compact_source, 3, 2, compact_editor) &&
+            compact_source.dictionary.metadata.association_count() == 2 && compact_source.metadata.total_count() == 1 &&
+            compact_source.dictionary.phrases.RecordCount() == 4 &&
+            Payload(compact_source.dictionary, "a", "a") == marker_payload &&
+            Payload(compact_source.dictionary, "b", "a") == light &&
+            !ReadSingleTrieAssociationPayload(compact_source.dictionary, "a", "b", missing) &&
+            !ReadSingleTrieAssociationPayload(compact_source.dictionary, "b", "b", missing) &&
+            Payload(retained.dictionary, "a", "a") == self && Payload(retained.dictionary, "a", "b") == forward,
+            "compact shared records once, keeping the newer marker/light pair and removing old weight plus inactive self");
+    UserDictionaryStorage<SingleTrieMutableDictionaryStorage> compacted;
+    Require(PersistUserDictionaryFile(compact_source, compacted_path) &&
+            LoadUserDictionaryFile(compacted_path, compacted) == DictionaryFileLoadResult::Loaded &&
+            Payload(compacted.dictionary, "a", "a") == marker_payload && Payload(compacted.dictionary, "b", "a") == light &&
+            compacted.metadata.total_count() == 1 && compacted.dictionary.metadata.association_count() == 2,
+            "persist and reload the actual selected marker and directed relationship");
+    SingleTrieAssociationEditor clock_compact{compacted.dictionary};
+    Require(CompactUserDictionary(compacted, 3, clock_compact) && compacted.metadata.total_count() == 0 &&
+            compacted.dictionary.metadata.association_count() == 0 && compacted.dictionary.phrases.RecordCount() == 4 &&
+            Terminal(compacted.dictionary, "a") == 0 && Terminal(compacted.dictionary, "b") == 0 &&
+            PersistUserDictionaryFile(compacted, compacted_path),
+            "real-clock compact expires the 1970 entries, removes empty endpoints and persists the empty model");
+    UserDictionaryStorage<SingleTrieMutableDictionaryStorage> empty_compacted;
+    std::vector<DictionaryAssociationEntry> empty_entries;
+    Require(LoadUserDictionaryFile(compacted_path, empty_compacted) == DictionaryFileLoadResult::Loaded &&
+            SnapshotDictionaryAssociations(empty_compacted.dictionary, empty_entries) && empty_entries.empty() &&
+            empty_compacted.metadata.total_count() == 0 && empty_compacted.metadata.last_sync_time() == 42,
+            "reload the empty live traversal despite retained fixed-table records");
     mapped = {};
     reloaded = {};
     final = {};
     policy_loaded = {};
     learned = {};
+    compacted = {};
+    empty_compacted = {};
     Require(std::remove(original_path.c_str()) == 0 && std::remove(updated_path.c_str()) == 0 &&
             std::remove(deleted_path.c_str()) == 0 && std::remove(policy_path.c_str()) == 0 &&
-            std::remove(learned_path.c_str()) == 0, "remove only the five files created by this flow");
-    std::puts("PASS: SingleTrie real CRUD/relocate/removal/learning/map/persist/reload flow");
+            std::remove(learned_path.c_str()) == 0 && std::remove(compacted_path.c_str()) == 0,
+            "remove only the six files created by this flow");
+    std::puts("PASS: SingleTrie real CRUD/relocate/removal/learning/compact/map/persist/reload flow");
 }

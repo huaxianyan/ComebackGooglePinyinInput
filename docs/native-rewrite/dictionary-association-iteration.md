@@ -1,6 +1,6 @@
 # 真实关联组快照
 
-SnapshotDictionaryAssociations 用已恢复的当前六模型实现原 compact 的记录输入，不修改词典或元数据。
+SnapshotDictionaryAssociations 现由六子模型与 SingleTrie 共用，提供原 compact 的记录输入，不修改词典或元数据。下文保留六子模型阶段的证据，[SingleTrie 方向筛选](single-trie-compaction.md) 记录后续恢复。
 
 ## 同一组实际组件
 
@@ -14,7 +14,7 @@ SnapshotDictionaryAssociations 用已恢复的当前六模型实现原 compact �
 
 ## 原失败路径
 
-关联描述读取失败时跳过该 trie 键。原刷新先读第一记录，next 才检查范围；实现保留此顺序，不提前按 count 改写遍历。
+关联描述读取失败时跳过该 trie 键。六子模型原刷新先读第一记录，next 才检查范围，实现保留此顺序。SingleTrie 则按其原刷新跳过零 count 范围，不把两者合成同一空范围行为。
 
 原固定表读取失败不清除此前的借用记录输出，当前实现保留它。键重建或完整六字节 payload 读取不成功的条目不进入快照，不修复关联计数。
 
@@ -36,4 +36,4 @@ b → a : 01 00 00 00 02 00
 
 ## 下一步
 
-[实体删除与累计](user-dictionary-edit.md) 已接原 payload 查找、双向删除和官方外层计数。下一阶段串联选择计划与实体删除，再接完整 compact 和 Java 保存协调，不用返回成功的空方法补齐链路。
+[实体删除与累计](user-dictionary-edit.md) 已接原 payload 查找、双向删除和官方外层计数。两种后端均已接 [用户模型 compact](user-dictionary-compaction.md)。下一步恢复原持久编辑器、模型生命周期和 Android 保存协调。

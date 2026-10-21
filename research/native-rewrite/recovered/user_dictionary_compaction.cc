@@ -13,16 +13,16 @@ std::int32_t DictionaryCompactionCutoff(std::int64_t day) {
     return cutoff;
 }
 
-bool CompactUserDictionary(UserDictionaryStorage<MutableDictionaryStorage>& dictionary,
-                            AssociationEditor& forward, AssociationEditor& reverse,
-                            std::uint64_t limit) {
-    return CompactUserDictionaryAtCutoff(dictionary, forward, reverse, limit,
-                                         DictionaryCompactionCutoff(CurrentDictionaryDay()));
+template <typename Backend, typename... Editors>
+bool CompactUserDictionary(UserDictionaryStorage<Backend>& dictionary,
+                            std::uint64_t limit, Editors&... editors) {
+    return CompactUserDictionaryAtCutoff(dictionary, limit,
+                                         DictionaryCompactionCutoff(CurrentDictionaryDay()), editors...);
 }
 
-bool CompactUserDictionaryAtCutoff(UserDictionaryStorage<MutableDictionaryStorage>& dictionary,
-                                    AssociationEditor& forward, AssociationEditor& reverse,
-                                    std::uint64_t limit, std::int32_t cutoff_day) {
+template <typename Backend, typename... Editors>
+bool CompactUserDictionaryAtCutoff(UserDictionaryStorage<Backend>& dictionary,
+                                    std::uint64_t limit, std::int32_t cutoff_day, Editors&... editors) {
     std::vector<DictionaryAssociationEntry> entries;
     if (!SnapshotDictionaryAssociations(dictionary.dictionary, entries)) return false;
     std::vector<EncodedPayload> payloads;
@@ -37,9 +37,17 @@ bool CompactUserDictionaryAtCutoff(UserDictionaryStorage<MutableDictionaryStorag
             // Native ignores each return value and continues the deletion suffix;
             // this is not a transaction or a promise that every deletion succeeded.
             RemoveUserDictionaryAssociation(dictionary, entry.forward_key, entry.reverse_key,
-                                             false, forward, reverse);
+                                             false, editors...);
         }
     }
     return true;
 }
+template bool CompactUserDictionary(UserDictionaryStorage<MutableDictionaryStorage>&,
+    std::uint64_t, AssociationEditor&, AssociationEditor&);
+template bool CompactUserDictionary(UserDictionaryStorage<SingleTrieMutableDictionaryStorage>&,
+    std::uint64_t, SingleTrieAssociationEditor&);
+template bool CompactUserDictionaryAtCutoff(UserDictionaryStorage<MutableDictionaryStorage>&,
+    std::uint64_t, std::int32_t, AssociationEditor&, AssociationEditor&);
+template bool CompactUserDictionaryAtCutoff(UserDictionaryStorage<SingleTrieMutableDictionaryStorage>&,
+    std::uint64_t, std::int32_t, SingleTrieAssociationEditor&);
 }  // namespace comeback::recovered
