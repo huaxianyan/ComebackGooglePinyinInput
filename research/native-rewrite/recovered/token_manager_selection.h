@@ -6,6 +6,8 @@
 #include <utility>
 
 namespace comeback::recovered {
+inline constexpr std::int32_t kAnyTokenSelector = -1;
+inline constexpr std::int32_t kUnknownTokenLanguage = 26;
 // Native 0x194438. First attribute's business name remains unknown. Language
 // and selector match symmetrically against their distinct native wildcards.
 bool MatchesTokenDictionary(std::int32_t dictionary_selector,

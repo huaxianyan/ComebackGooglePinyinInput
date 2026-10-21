@@ -13,4 +13,9 @@ void AppendTokenQueryUnits(std::string_view input, std::vector<std::string>& out
         offset += width;
     }
 }
+void LowercaseTokenBytes(std::string& text) {
+    for (auto& byte : text) {
+        if (byte >= 'A' && byte <= 'Z') byte += 'a' - 'A';
+    }
+}
 }  // namespace comeback::recovered

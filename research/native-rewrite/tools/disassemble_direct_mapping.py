@@ -190,6 +190,46 @@ REGIONS = {
     "token_manager_advance_child": (0x191C08, 0x191C7C),
     "token_manager_target_key_order": (0x192E48, 0x192FEC),
     "token_manager_advance_cached": (0x193444, 0x193474),
+    "flat_integer_get": (0x13303C, 0x13311C),
+    "flat_integer_load": (0x133CE8, 0x133E44),
+    "flat_integer_load_aligned": (0x133E44, 0x133F18),
+    "forward_token_push_source_thunk": (0x1B54FC, 0x1B5504),
+    "forward_token_push_target_thunk": (0x1B5614, 0x1B561C),
+    "forward_token_next_thunk": (0x1B6538, 0x1B6540),
+    "forward_token_pop_thunk": (0x1B3520, 0x1B3528),
+    "forward_token_advance_thunk": (0x1B2648, 0x1B2650),
+    "forward_token_attribute_thunk": (0x1B4428, 0x1B4430),
+    "forward_token_done_thunk": (0x1B2780, 0x1B2788),
+    "forward_token_reset_thunk": (0x1B3598, 0x1B35A0),
+    "forward_token_current_thunk": (0x1B4908, 0x1B4910),
+    "forward_token_current": (0x1B47E0, 0x1B4908),
+    "forward_token_push_source": (0x1B53E4, 0x1B54FC),
+    "forward_token_push_target": (0x1B5504, 0x1B5614),
+    "forward_token_next": (0x1B62F8, 0x1B6538),
+    "forward_token_attribute": (0x1B43BC, 0x1B4420),
+    "forward_token_target_literal": (0x1B46A0, 0x1B47E0),
+    "forward_token_collect_matches": (0x1B6030, 0x1B62F0),
+    "direct_token_push_source": (0x1B1AC4, 0x1B1ACC),
+    "direct_token_push_target": (0x1B1ACC, 0x1B1AD4),
+    "direct_token_next": (0x1B08EC, 0x1B08F4),
+    "direct_token_pop": (0x1B08F4, 0x1B0910),
+    "direct_token_attribute": (0x1B0918, 0x1B0920),
+    "direct_token_done": (0x1B0920, 0x1B0938),
+    "direct_token_advance": (0x1B0938, 0x1B0944),
+    "direct_token_reset": (0x1B0944, 0x1B0954),
+    "direct_token_current": (0x1B1110, 0x1B1180),
+    "direct_token_push": (0x1B19C0, 0x1B1AC4),
+    "direct_token_load": (0x1B1D98, 0x1B1F8C),
+    "direct_token_publish": (0x1B1F8C, 0x1B2038),
+    "direct_token_dfs_factory": (0x1B0C64, 0x1B0CAC),
+    "direct_token_contains_scalar": (0x1B15DC, 0x1B16C4),
+    "direct_token_contains_text": (0x1B1768, 0x1B1810),
+    "direct_token_encode": (0x1B1810, 0x1B19C0),
+    "direct_token_default": (0x1B0F00, 0x1B0F38),
+    "direct_token_metadata_load": (0x1B0F60, 0x1B1038),
+    "direct_token_cursor_default": (0x1B0C2C, 0x1B0C64),
+    "direct_token_text_from_id": (0x1B16C4, 0x1B1768),
+    "token_ascii_lowercase": (0x2D16C8, 0x2D1710),
     "key_input_validate": (0x18CCB0, 0x18CE40),
     "key_collect_expansions": (0x18D07C, 0x18D258),
     "key_normalize_prune": (0x18D424, 0x18D5D4),
@@ -418,6 +458,11 @@ SCORE_CONSTANTS = {
 }
 DECODER_CATEGORY_TABLE = (0x349D10, 0x349D18)
 TOKEN_QUERY_WIDTH_TABLE = (0x322050, 0x322060)
+TOKEN_LOWERCASE_POINTER = 0x699740
+FORWARD_TOKEN_LITERAL_WORDS = {
+    "attribute_match": 0x1B4420, "attribute_mismatch": 0x1B4424,
+    "collect_match": 0x1B62F0, "collect_mismatch": 0x1B62F4,
+}
 DICTIONARY_CRC_CONFIGS = {
     "dictionary_header_crc": 0x34EC50,
     "association_key_crc": 0x34EAD0,
@@ -444,6 +489,11 @@ RELOCATION_REGIONS = {
     "token_dictionary_manager_interface": (0x67A2D8, 0x67A368),
     "token_dictionary_manager_dfs": (0x67A380, 0x67A3E8),
     "token_dictionary_manager_bfs": (0x67A400, 0x67A478),
+    "direct_token_iterator": (0x67B2E0, 0x67B348),
+    "direct_token_dictionary": (0x67B3F0, 0x67B480),
+    "forward_token_dfs_primary": (0x67B4B0, 0x67B518),
+    "forward_token_dfs_interface": (0x67B528, 0x67B590),
+    "forward_token_dictionary": (0x67B730, 0x67B7C0),
 }
 STRING_ANCHORS = {
     0x32C3CB: "[DirectMappingTokenExpander] Failed to load the key ids table.",
@@ -519,6 +569,41 @@ def write_score_table_header(path, captured):
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
+def capture_regions(binary, disassembler, labels):
+    """Capture named registry entries, also used for incremental evidence."""
+    regions = {}
+    for label in labels:
+        start, end = REGIONS[label]
+        data = bytes(binary.get_content_from_virtual_address(start, end - start))
+        instructions = [
+            {"address": ins.address, "mnemonic": ins.mnemonic, "operands": ins.op_str}
+            for ins in disassembler.disasm(data, start)
+        ]
+        if len(instructions) * 4 != end - start:
+            raise ValueError(f"incomplete ARM64 disassembly in {label}")
+        regions[label] = {
+            "start": start, "end": end,
+            "sha256": hashlib.sha256(data).hexdigest(),
+            "instructions": instructions,
+        }
+    return regions
+
+
+def capture_token_character_data(binary):
+    address = next(item.addend for item in binary.relocations
+                   if item.address == TOKEN_LOWERCASE_POINTER)
+    content = bytes(binary.get_content_from_virtual_address(address, 256))
+    return {
+        "lowercase": {"pointer_address": TOKEN_LOWERCASE_POINTER, "address": address,
+                      "bytes": list(content), "sha256": hashlib.sha256(content).hexdigest()},
+        "forward_literal_words": {
+            name: {"address": location, "bits": struct.unpack("<I", bytes(
+                binary.get_content_from_virtual_address(location, 4)))[0]}
+            for name, location in FORWARD_TOKEN_LITERAL_WORDS.items()
+        },
+    }
+
+
 def main():
     import lief
     from capstone import Cs, CS_ARCH_ARM64, CS_MODE_ARM
@@ -540,20 +625,7 @@ def main():
         if actual != text.encode() + b"\0":
             raise ValueError(f"fixed-APK string anchor mismatch at {address:#x}")
     disassembler = Cs(CS_ARCH_ARM64, CS_MODE_ARM)
-    regions = {}
-    for label, (start, end) in REGIONS.items():
-        data = bytes(binary.get_content_from_virtual_address(start, end - start))
-        instructions = [
-            {"address": ins.address, "mnemonic": ins.mnemonic, "operands": ins.op_str}
-            for ins in disassembler.disasm(data, start)
-        ]
-        if len(instructions) * 4 != end - start:
-            raise ValueError(f"incomplete ARM64 disassembly in {label}")
-        regions[label] = {
-            "start": start, "end": end,
-            "sha256": hashlib.sha256(data).hexdigest(),
-            "instructions": instructions,
-        }
+    regions = capture_regions(binary, disassembler, REGIONS)
     relocations = sorted(binary.relocations, key=lambda item: item.address)
     start, end = DECODER_CATEGORY_TABLE
     category_bytes = bytes(binary.get_content_from_virtual_address(start, end - start))
@@ -572,6 +644,7 @@ def main():
         "string_anchors": {hex(address): text for address, text in STRING_ANCHORS.items()},
         "regions": regions,
         "score_math": capture_score_math(binary),
+        "token_characters": capture_token_character_data(binary),
         "token_query_width_table": {
             "address": width_start,
             "bytes": list(width_bytes),

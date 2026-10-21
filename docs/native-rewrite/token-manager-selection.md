@@ -1,6 +1,6 @@
 # ManagerIterator 状态与结果准入
 
-本轮继续 [查询分支与资源接口](token-query-branches.md)，展开真实 ManagerIterator 的匹配帧、懒缓存及结果选择。已将字典资格匹配和单次结果准入恢复为源码，完整复合迭代器仍依赖未恢复的真实子字典。
+本轮继续 [查询分支与资源接口](token-query-branches.md)，展开真实 ManagerIterator 的匹配帧、懒缓存及结果选择。已将字典资格匹配和单次结果准入恢复为源码，完整复合迭代器仍依赖未恢复的其他子字典，普通 [Direct DFS 查询](direct-token-dictionary.md) 已有后续真实资源实现。
 
 ## 匹配帧与子字典
 
@@ -42,7 +42,7 @@ source 保留每个成功读出的 token。target 使用另一个原生键：
 
 SameKeyTokenIdentity 继续服务原 `0x18c620` 的身份比较。ManagerTokenAdmission 则恢复上述原 target 准入，两者各有调用语义，不合并成错误的统一比较键。后者复用唯一 KeyToken，每次实际收集使用一个独立对象，不实现查询或制造结果。
 
-原缓存虽也是 `0x28` 步长，本段只观察到 token 加 `+0x20` 的附带 32 位值。不能仅凭步长把它套成带 marker 的 ScoredKeyToken。本轮不创建这份缓存的替代布局，也不猜附带值的业务含义。
+原缓存虽也是 `0x28` 步长，并不能套成带 marker 的 ScoredKeyToken。后续 Direct 取证结合本段已存指令，确认 `0x19337c` 保存 s0，`0x1934bc` 从 `+0x20` 加载 s0，该值类型为 binary32，而非任意整数。当前仍未创建缓存的替代布局，也不添加 marker 或新的权重换算。
 
 ## 验证与边界
 
@@ -59,4 +59,4 @@ SameKeyTokenIdentity 继续服务原 `0x18c620` 的身份比较。ManagerTokenAd
 
 Ghidra 成功输出位于 `token-manager-query-state/`、`token-manager-query-core/`、`token-manager-selection/`、`token-manager-key-order/` 和 `token-manager-cache-advance/`，均在 `work/native-rewrite/ghidra/`。测试二进制精确清理，build.log 留存于 `work/native-rewrite/token-manager-selection-build/`。
 
-下一步沿实际子 TokenDictionaryIterator 的 Push、Current、Advance 和 Pop 继续恢复资源查询，不用提前准备的查询结果替代真实读取。
+后续 [DirectTokenDictionary](direct-token-dictionary.md) 已从三种不同原始资源恢复普通 DFS 查询，共用本段的资格谓词。Forward 的真实子遍历和缓存组合仍待恢复，不用提前准备的查询结果替代真实读取。

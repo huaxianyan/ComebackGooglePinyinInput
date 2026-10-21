@@ -1,6 +1,6 @@
 # Token 查询分支与资源接口
 
-本轮展开源 token 转换的两套实际查询、管理器工厂和资源虚表，并恢复 BFS 输入的 UTF-8 单元拆分。完整资源查询仍未成为宿主可运行实现，没有新增管理器或 lookup 替身。后续 [ManagerIterator 状态与准入](token-manager-selection.md) 已展开匹配帧和懒缓存，并将资格匹配、target 准入恢复为源码。
+本轮展开源 token 转换的两套实际查询、管理器工厂和资源虚表，并恢复 BFS 输入的 UTF-8 单元拆分。完整管理器资源查询仍未成为宿主可运行实现，没有新增管理器或 lookup 替身。后续 [ManagerIterator 状态与准入](token-manager-selection.md) 已展开匹配帧和懒缓存，并将资格匹配、target 准入恢复为源码，普通 [Direct DFS 子查询](direct-token-dictionary.md) 也已连接真实资源。
 
 ## 管理器实际接口
 
@@ -41,7 +41,7 @@ ARM64 把读到的宽度放入 w2，既用于推进指针，也作为字符串�
 
 范围限定为完整、合法、已准备的 UTF-8，且输入不借用输出存储。它不是校验器，不增加替换字符、静默截断或新的拒绝策略。内嵌 NUL 按长度保留，补充平面字符作为一个单元，组合附加符另成单元，不按 UTF-16 char 或 grapheme 拆分。
 
-两套查询还共享 `0x1bf63c` 的可选文本准备，它经 Unicode 中间对象重新编码。具体字符策略尚未闭合，不将其猜为 ASCII 小写、case-fold 或 NFC，本轮不实现替代规则。
+两套查询还共享 `0x1bf63c` 的可选文本准备，它经 Unicode 中间对象重新编码。具体字符策略尚未闭合，不将其猜为 ASCII 小写、case-fold 或 NFC，本轮不实现替代规则。后续恢复的 LowercaseTokenBytes 对应另一函数 `0x2d16c8`，只有原 256 字节表定义的 ASCII 转换，不填补这一缺口。
 
 ## 验证与证据
 
@@ -57,4 +57,4 @@ ARM64 把读到的宽度放入 w2，既用于推进指针，也作为字符串�
 
 首次手输工厂地址错误，纠正后四个工厂/调整函数成功，随后又因文本地址的基址换算错误中断。文本函数用正确地址另行导出，相关错误日志保留，不把 headless 进程退出零当脚本成功。结论仅使用上述成功函数与独立 FDE 比较。
 
-测试二进制精确清理，build.log 留存于 `work/native-rewrite/token-query-build/`。未执行原 ARM64，未操作设备、正式包或用户词典。ManagerIterator 的匹配帧、懒缓存和准入已有后续记录。下一步恢复实际子 TokenDictionaryIterator 的查询及资源读取，不增加固定结果或通用转发接口。
+测试二进制精确清理，build.log 留存于 `work/native-rewrite/token-query-build/`。未执行原 ARM64，未操作设备、正式包或用户词典。ManagerIterator 的匹配帧、懒缓存和准入已有后续记录。普通 Direct 子查询已有真实资源实现，下一步继续 Forward 子遍历和复合查询，不增加固定结果或通用转发接口。

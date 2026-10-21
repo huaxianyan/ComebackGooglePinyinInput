@@ -11,5 +11,8 @@ namespace comeback::recovered {
 // output storage. This is neither Unicode normalization nor a UTF-8 validator;
 // malformed/truncated bytes are outside the domain. No grapheme/UTF-16 split.
 void AppendTokenQueryUnits(std::string_view input, std::vector<std::string>& output);
+// Native 0x2d16c8 and its captured 256-byte map: only ASCII A..Z change.
+// This is distinct from the still-unrecovered Unicode preparation at 0x1bf63c.
+void LowercaseTokenBytes(std::string& text);
 }  // namespace comeback::recovered
 #endif
