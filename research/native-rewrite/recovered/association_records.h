@@ -87,9 +87,10 @@ bool RemoveAssociationRecord(const FixedPhraseTable& records, OwnedByteRegion& m
                               const std::uint32_t* second_key = nullptr);
 
 class DATrieView;
+struct TrieValueEditor;
 // Publish a remaining range, or remove an empty endpoint. The reference-only
 // patch preserves checksum/suffix bytes. Rebinds the live trie on key removal.
-bool PublishAssociationRange(DATrieView& trie, OwnedByteRegion& metadata, OwnedByteRegion& nodes,
+bool PublishAssociationRange(TrieValueEditor& editor, DATrieView& trie, OwnedByteRegion& metadata, OwnedByteRegion& nodes,
                                FixedPhraseTable& values, std::string_view key, IndexRange reference,
                                OwnedByteRegion& value);
 

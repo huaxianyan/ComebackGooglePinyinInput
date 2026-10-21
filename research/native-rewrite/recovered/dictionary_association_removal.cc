@@ -21,9 +21,9 @@ bool RemoveDictionaryAssociation(AssociationEditor& forward, AssociationEditor& 
         !DecodeAssociationReference(reverse_value.Data(), reverse_value.Size(), reverse_range) ||
         !RemoveAssociationRecord(reverse.side.records, reverse.side.metadata, reverse.side.cells,
                                   forward_id, reverse_range)) return false;
-    if (!PublishAssociationRange(forward.side.trie, forward.trie_metadata, forward.trie_nodes,
+    if (!PublishAssociationRange(forward.value_editor, forward.side.trie, forward.trie_metadata, forward.trie_nodes,
                                   forward.side.values, forward_key, forward_range, forward_value)) return false;
-    const bool result = PublishAssociationRange(reverse.side.trie, reverse.trie_metadata, reverse.trie_nodes,
+    const bool result = PublishAssociationRange(reverse.value_editor, reverse.side.trie, reverse.trie_metadata, reverse.trie_nodes,
                                                  reverse.side.values, reverse_key, reverse_range, reverse_value);
     metadata.set_association_count(static_cast<std::int32_t>(
         static_cast<std::uint32_t>(metadata.association_count()) - 1U));

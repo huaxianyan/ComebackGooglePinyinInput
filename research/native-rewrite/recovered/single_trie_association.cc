@@ -52,7 +52,8 @@ void RepairMoved(SingleTrieMutableDictionaryStorage& dictionary, const DATrieVie
                                           first, second, nullptr)) return;
     }
 }
-bool ResolveKey(SingleTrieMutableDictionaryStorage& dictionary, TrieExactMatchCursor& cursor, DATrieView& trie,
+bool ResolveKey(SingleTrieMutableDictionaryStorage& dictionary, TrieExactMatchCursor& cursor,
+                  TrieValueEditor& writer, DATrieView& trie,
                   std::string_view key, AssociationEditMode mode, bool checksum_enabled,
                   std::uint32_t& id, OwnedByteRegion& value, const DATrieNodeMove& notify) {
     if (ReadTrieValueByKey(cursor, trie, dictionary.trie.values, key, id, value)) return true;
@@ -66,7 +67,7 @@ bool ResolveKey(SingleTrieMutableDictionaryStorage& dictionary, TrieExactMatchCu
         // Original resolver ignores the checksum patch status before insertion.
         PatchAssociationValue(bytes, value.Size(), true, nullptr, nullptr, &checksum);
     }
-    return InsertTrieValue(trie, dictionary.trie.metadata, dictionary.trie.nodes, dictionary.trie.values,
+    return InsertTrieValue(writer, trie, dictionary.trie.metadata, dictionary.trie.nodes, dictionary.trie.values,
                              key, value, &id, &notify);
 }
 }
@@ -113,10 +114,10 @@ bool ModifySingleTrieAssociation(SingleTrieAssociationEditor& editor,
     const bool first_checksum = dictionary.metadata.forward_trie_omitted();
     const bool second_checksum = dictionary.metadata.key_checksum_enabled();
     std::uint32_t first_id = 0, second_id = 0;
-    if (!ResolveKey(dictionary, editor.key_cursor, trie, first_key, mode, first_checksum || (self && second_checksum),
+    if (!ResolveKey(dictionary, editor.key_cursor, editor.value_editor, trie, first_key, mode, first_checksum || (self && second_checksum),
                       first_id, editor.first_value, editor.node_moved)) return false;
     second_id = first_id;
-    if (!self && !ResolveKey(dictionary, editor.key_cursor, trie, second_key, mode, second_checksum,
+    if (!self && !ResolveKey(dictionary, editor.key_cursor, editor.value_editor, trie, second_key, mode, second_checksum,
                               second_id, editor.second_value, editor.node_moved)) return false;
     IndexRange first_range{}, second_range{};
     if (!DecodeAssociationReference(editor.first_value.Data(), editor.first_value.Size(), first_range) ||
@@ -149,8 +150,8 @@ bool ModifySingleTrieAssociation(SingleTrieAssociationEditor& editor,
         }
         // Keep the original locally resolved IDs across the second insertion;
         // node notification repairs stored records, not these local variables.
-        if (!UpdateTrieValueByKey(trie, dictionary.trie.values, first_key, editor.first_value) ||
-            (!self && !UpdateTrieValueByKey(trie, dictionary.trie.values, second_key, editor.second_value))) return false;
+        if (!UpdateTrieValueByKey(editor.value_editor, trie, dictionary.trie.values, first_key, editor.first_value) ||
+            (!self && !UpdateTrieValueByKey(editor.value_editor, trie, dictionary.trie.values, second_key, editor.second_value))) return false;
         dictionary.metadata.set_association_count(static_cast<std::int32_t>(
             static_cast<std::uint32_t>(dictionary.metadata.association_count()) + 1U));
         return true;
@@ -176,9 +177,9 @@ bool RemoveSingleTrieAssociation(SingleTrieAssociationEditor& editor,
                                    first_id, first_range, &second_id) ||
         (!self && !RemoveAssociationRecord(dictionary.phrases, dictionary.range_metadata, dictionary.range_cells,
                                             first_id, second_range, &second_id))) return false;
-    if (!PublishAssociationRange(trie, dictionary.trie.metadata, dictionary.trie.nodes, dictionary.trie.values,
+    if (!PublishAssociationRange(editor.value_editor, trie, dictionary.trie.metadata, dictionary.trie.nodes, dictionary.trie.values,
                                   first_key, first_range, editor.first_value) ||
-        (!self && !PublishAssociationRange(trie, dictionary.trie.metadata, dictionary.trie.nodes, dictionary.trie.values,
+        (!self && !PublishAssociationRange(editor.value_editor, trie, dictionary.trie.metadata, dictionary.trie.nodes, dictionary.trie.values,
                                              second_key, second_range, editor.second_value))) return false;
     dictionary.metadata.set_association_count(static_cast<std::int32_t>(
         static_cast<std::uint32_t>(dictionary.metadata.association_count()) - 1U));

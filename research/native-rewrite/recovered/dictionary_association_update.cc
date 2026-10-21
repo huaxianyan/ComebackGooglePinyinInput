@@ -24,7 +24,7 @@ bool ResolveKey(AssociationEditor& editor, std::string_view key, AssociationEdit
         // 0x1c45cc does not branch on this patch's result before insertion.
         PatchAssociationValue(bytes, value.Size(), true, nullptr, nullptr, &checksum);
     }
-    return InsertTrieValue(side.trie, editor.trie_metadata, editor.trie_nodes, side.values,
+    return InsertTrieValue(editor.value_editor, side.trie, editor.trie_metadata, editor.trie_nodes, side.values,
                              key, value, &terminal, &notify);
 }
 
@@ -43,7 +43,7 @@ bool AppendSide(AssociationEditor& editor, std::string_view key, std::uint32_t t
     bytes = value.MutableData();
     return bytes != nullptr &&
            PatchAssociationValue(bytes, value.Size(), editor.has_checksum, &range, data) &&
-           UpdateTrieValueByKey(side.trie, side.values, key, value);
+           UpdateTrieValueByKey(editor.value_editor, side.trie, side.values, key, value);
 }
 }  // namespace
 
@@ -73,7 +73,7 @@ bool ModifyDictionaryAssociation(AssociationEditor& forward, AssociationEditor& 
             if (bytes == nullptr || !PatchAssociationValue(bytes, reverse_value.Size(), reverse.has_checksum,
                                                            nullptr, reverse_data)) return false;
         }
-        return UpdateTrieValueByKey(reverse.side.trie, reverse.side.values, reverse_key, reverse_value);
+        return UpdateTrieValueByKey(reverse.value_editor, reverse.side.trie, reverse.side.values, reverse_key, reverse_value);
     }
     if (mode != AssociationEditMode::CreateOrUpdate) return false;
     if (forward_range.count < kMaxAssociationCount && reverse_range.count < kMaxAssociationCount &&

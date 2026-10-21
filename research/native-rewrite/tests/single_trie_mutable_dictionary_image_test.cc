@@ -91,7 +91,8 @@ int main(int argc, char** argv) {
     {
         DATrieView trie(dictionary.trie.metadata.Data(), dictionary.trie.metadata.Size(),
                         dictionary.trie.nodes.MutableData(), dictionary.trie.nodes.Size());
-        Require(InsertTrieValue(trie, dictionary.trie.metadata, dictionary.trie.nodes,
+        TrieValueEditor editor;
+        Require(InsertTrieValue(editor, trie, dictionary.trie.metadata, dictionary.trie.nodes,
                                 dictionary.trie.values, "a", range), "insert the fixture's actual trie key");
     }
     dictionary.metadata.set_association_count(1);

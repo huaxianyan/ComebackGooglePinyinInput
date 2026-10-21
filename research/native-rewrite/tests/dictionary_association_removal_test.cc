@@ -36,10 +36,10 @@ int main() {
     const auto rx = Region({1, 4, 0, 0, 0x78, 0x56, 0x9a, 0xbc});
     const auto ry = Region({2, 6, 0, 0, 0x78, 0x56, 0x9a, 0xbc});
     std::uint32_t a = 0, b = 0, x = 0, y = 0;
-    Require(InsertTrieValue(ft, fm, fn, fv, "a", fa, &a) && a == 2 &&
-            InsertTrieValue(ft, fm, fn, fv, "b", fb, &b) && b == 3 &&
-            InsertTrieValue(rt, rm, rn, rv, "x", rx, &x) && x == 2 &&
-            InsertTrieValue(rt, rm, rn, rv, "y", ry, &y) && y == 3,
+    Require(InsertTrieValue(forward.value_editor, ft, fm, fn, fv, "a", fa, &a) && a == 2 &&
+            InsertTrieValue(forward.value_editor, ft, fm, fn, fv, "b", fb, &b) && b == 3 &&
+            InsertTrieValue(reverse.value_editor, rt, rm, rn, rv, "x", rx, &x) && x == 2 &&
+            InsertTrieValue(reverse.value_editor, rt, rm, rn, rv, "y", ry, &y) && y == 3,
             "creating real keys for the independent a-x, a-y and b-y graph");
     const std::array<std::uint8_t, 10> to_x{2, 0, 0, 0, 0x67, 0x45, 0x23, 0xa9, 0x2b, 0x4a};
     const std::array<std::uint8_t, 10> to_y{3, 0, 0, 0, 0x67, 0x45, 0x23, 0xa9, 0x2b, 0x4a};
@@ -100,8 +100,8 @@ int main() {
     const auto one_way = Region({1, 4, 0, 0, 0x34, 0x12});
     const auto empty = Region({0, 0, 0, 0, 0x78, 0x56, 0x9a, 0xbc});
     IndexRange one{};
-    Require(InsertTrieValue(ft, fm, fn, fv, "a", one_way, &a) && a == 2 &&
-            InsertTrieValue(rt, rm, rn, rv, "x", empty, &x) && x == 2 &&
+    Require(InsertTrieValue(forward.value_editor, ft, fm, fn, fv, "a", one_way, &a) && a == 2 &&
+            InsertTrieValue(reverse.value_editor, rt, rm, rn, rv, "x", empty, &x) && x == 2 &&
             AppendAssociationRecord(fr, fp, fc, to_x.data(), to_x.size(), one),
             "preparing a real forward record with an existing but empty reverse key");
     state.set_association_count(1);

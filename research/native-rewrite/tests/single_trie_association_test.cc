@@ -102,7 +102,7 @@ int main(int argc, char** argv) {
     for (unsigned byte = 128; byte < 192; ++byte) {
         std::string key = "a";
         key.push_back(static_cast<char>(byte));
-        Require(InsertTrieValue(direct, mapped.dictionary.trie.metadata, mapped.dictionary.trie.nodes,
+        Require(InsertTrieValue(editor.value_editor, direct, mapped.dictionary.trie.metadata, mapped.dictionary.trie.nodes,
                     mapped.dictionary.trie.values, key, empty_value, nullptr, &editor.node_moved),
                 "use the editor-owned callback during direct lower-trie insertion between association operations");
     }

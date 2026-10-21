@@ -117,13 +117,13 @@ bool RemoveAssociationRecord(const FixedPhraseTable& records, OwnedByteRegion& m
     return view.EraseRecordId(location.position, reference);
 }
 
-bool PublishAssociationRange(DATrieView& trie, OwnedByteRegion& metadata, OwnedByteRegion& nodes,
+bool PublishAssociationRange(TrieValueEditor& editor, DATrieView& trie, OwnedByteRegion& metadata, OwnedByteRegion& nodes,
                                FixedPhraseTable& values, std::string_view key, IndexRange reference,
                                OwnedByteRegion& value) {
     if (reference.count == 0) return trie.RemoveKey(metadata, nodes, key);
     auto* bytes = value.MutableData();
     return bytes != nullptr && PatchAssociationValue(bytes, value.Size(), false, &reference, nullptr) &&
-           UpdateTrieValueByKey(trie, values, key, value);
+           UpdateTrieValueByKey(editor, trie, values, key, value);
 }
 
 }  // namespace comeback::recovered

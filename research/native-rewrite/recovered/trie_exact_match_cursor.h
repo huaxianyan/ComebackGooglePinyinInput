@@ -23,6 +23,8 @@ public:
     // Read the cached reference even after Next/failing Append. A failed checked
     // record read retains output, as in existing copied-value lookup.
     bool ReadValue(const FixedPhraseTable& records, OwnedByteRegion& output);
+    // Native 0x1d630c ignores the copy status rather than adding a failure gate.
+    void CopyReference(OwnedByteRegion& output) const;
 private:
     struct Frame { std::size_t previous_length; std::uint32_t path; };
     std::string key_;

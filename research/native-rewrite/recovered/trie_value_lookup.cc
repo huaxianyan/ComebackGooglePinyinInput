@@ -27,10 +27,14 @@ bool ReadTrieValueByNodeId(const DATrieView& trie, const FixedPhraseTable& recor
     return trie.ReadTerminalValue(node, record_id) && CopyRecord(records, record_id, value);
 }
 
+void TrieExactMatchCursor::CopyReference(OwnedByteRegion& output) const {
+    WriteTrieValueReference(value_, output);
+}
+
 bool TrieExactMatchCursor::ReadValue(const FixedPhraseTable& records, OwnedByteRegion& output) {
     // Native 0x1d630c reports success irrespective of the reference-copy status;
     // the following 0x1de920 resolution tests its resulting four-byte extent.
-    WriteTrieValueReference(value_, reference_);
+    CopyReference(reference_);
     return reference_.Size() == sizeof(std::uint32_t) &&
            CopyRecord(records, detail::ReadLittleEndian<std::uint32_t>(reference_.Data()), output);
 }

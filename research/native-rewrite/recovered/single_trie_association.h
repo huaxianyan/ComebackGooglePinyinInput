@@ -5,7 +5,7 @@
 #include "single_trie_mutable_dictionary_image.h"
 #include "association_records.h"
 #include "datrie_view.h"
-#include "trie_exact_match_cursor.h"
+#include "trie_value_editor.h"
 #include <string_view>
 
 namespace comeback::recovered {
@@ -22,6 +22,7 @@ struct SingleTrieAssociationEditor {
     explicit SingleTrieAssociationEditor(SingleTrieMutableDictionaryStorage& storage);
     SingleTrieMutableDictionaryStorage& dictionary;
     TrieExactMatchCursor key_cursor{};
+    TrieValueEditor value_editor{};
     // Native 0x1c9700 installs this for the editor lifetime. Bind storage, not
     // an individual operation's borrowed DATrie view; rebuild that view on use.
     DATrieNodeMove node_moved;
