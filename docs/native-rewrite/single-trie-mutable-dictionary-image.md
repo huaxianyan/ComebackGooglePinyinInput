@@ -1,6 +1,6 @@
 # SingleTrie 三组件内存镜像
 
-已恢复 SingleTrieMutableDictionary 当前格式的容器读写，复用现有元数据、trie、IndexPool 和定长表。原工厂的默认初始化、SingleTrie 词条编辑及外层文件选择尚未接通。
+已恢复 SingleTrieMutableDictionary 当前格式的容器读写，复用现有元数据、trie、IndexPool 和定长表。后续已恢复 [用户词典空存储初始化](single-trie-user-initialization.md)，原运行时工厂、SingleTrie 编辑及外层文件选择仍未接通。
 
 ## 原格式与共用定义
 
@@ -33,7 +33,7 @@ P-TABLE 范围池
 
 ## 初始化边界
 
-原 `0x1a4e54` 取得工厂，调用其 slot 2，再销毁工厂包装。它所选实现如何处理初始化参数仍待恢复。本轮未添加该工厂、默认参数或就绪状态的替身。
+原 `0x1a4e54` 取得工厂，调用其 slot 2，再销毁工厂包装。后续已定位 SingleTrieMutableDictionaryBuilder，并恢复用户词典空路径的参数及组件初始化。本轮 codec 没有工厂、默认参数或就绪状态的替身，具体边界见初始化记录。
 
 测试显式初始化已有原语，并手动组成一个可读取的 fixture：trie 的值为范围，池中的元素为短语记录 ID，最后读取六字节记录。这用于验证三组件持久格式，不代表已恢复原生词条新增或学习。
 
