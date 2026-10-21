@@ -54,6 +54,18 @@ bool AddUserDictionaryCount(UserDictionaryStorage<Backend>& dictionary,
                                      flag30, flag27, category, edit_flags, editors...);
 }
 
+bool ApplyGeneratedLearningKeys(UserDictionaryStorage<SingleTrieMutableDictionaryStorage>& dictionary,
+    const std::vector<GeneratedLearningKey>& keys, bool in_token_order,
+    std::string_view text, std::int32_t count, std::uint8_t edit_flags, SingleTrieAssociationEditor& editor) {
+    std::string key;
+    for (const auto& generated : keys) {
+        SerializeLearningKey(generated, in_token_order, key);
+        if (!AddUserDictionaryCount(dictionary, key, text, ScaleLearningCount(count, generated.scale),
+                                    generated.flag30, false, generated.category, edit_flags, editor)) return false;
+    }
+    return !keys.empty();
+}
+
 template bool UpdateExistingUserDictionaryCount(UserDictionaryStorage<MutableDictionaryStorage>&,
     std::string_view, std::string_view, std::int32_t, bool, bool, std::int32_t, AssociationEditor&, AssociationEditor&);
 template bool UpdateExistingUserDictionaryCount(UserDictionaryStorage<SingleTrieMutableDictionaryStorage>&,

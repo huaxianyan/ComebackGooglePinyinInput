@@ -410,6 +410,31 @@ int main(int argc, char** argv) {
                 "clearing one reference leaves the model alive and readable through the other actual owner");
         check_shared(retained_access->storage);
     }
+    {
+        auto access = second_reference.Write();
+        const std::vector<GeneratedLearningKey> keys{
+            {{"ab", "cd"}, 0.5f, false, 0},
+            {{"ef", "gh"}, 0.25f, true, 1},
+            {{"i", "j"}, 1.5f, false, 0}};
+        Require(ApplyGeneratedLearningKeys(access->storage, keys, false, "scaled", 5,
+                                           access->edit_flags, access->editor) &&
+                access->storage.metadata.total_count() == 46 &&
+                Payload(access->storage.dictionary, "cdab", "scaled").substr(0, 4) == "\x02\0\0\x80"sv &&
+                Payload(access->storage.dictionary, "ghef", "scaled").substr(0, 4) == "\x01\0\0\xd0"sv &&
+                Payload(access->storage.dictionary, "ji", "scaled").substr(0, 4) == "\x07\0\0\x80"sv,
+                "consume actual generated-key fields through both writer locks with native scaling, flags and category");
+        const std::vector<GeneratedLearningKey> partial{
+            {{"kept"}, 0.5f, false, 0},
+            {{std::string(1, '\0')}, 1.0f, false, 0},
+            {{"later"}, 1.0f, false, 0}};
+        OwnedByteRegion absent;
+        Require(!ApplyGeneratedLearningKeys(access->storage, partial, true, "scaled", 3,
+                                            access->edit_flags, access->editor) &&
+                access->storage.metadata.total_count() == 47 &&
+                Payload(access->storage.dictionary, "kept", "scaled").substr(0, 4) == "\x01\0\0\x80"sv &&
+                !ReadSingleTrieAssociationPayload(access->storage.dictionary, "later", "scaled", absent),
+                "a real alphabet-admission failure retains the earlier learned key and stops before the later key");
+    }
     second_reference.Bind({});
     Require(released_model.expired(), "releasing the last actual model reference destroys its owned resources");
     mapped = {};

@@ -3,6 +3,7 @@
 #define COMEBACK_RECOVERED_USER_DICTIONARY_LEARNING_H
 
 #include "user_dictionary_edit.h"
+#include "learning_key.h"
 
 namespace comeback::recovered {
 // Same ready/exclusive editor binding as user_dictionary_edit.h. Keys have already
@@ -24,5 +25,13 @@ template <typename Backend, typename... Editors>
 bool AddUserDictionaryCount(UserDictionaryStorage<Backend>& dictionary,
     std::string_view first_key, std::string_view second_key, std::int32_t count,
     bool flag30, bool flag27, std::int32_t category, std::uint8_t edit_flags, Editors&... editors);
+// Post-generation loop of native 0x18a68c, not the complete accessor return
+// policy. Caller passed the accessor gates (including a positive count), owns
+// both writer scopes, and supplies real generated results. First false stops
+// subsequent keys; earlier writes and lower-level partial changes remain.
+// Empty results return false. Extra-text learning and key generation are absent.
+bool ApplyGeneratedLearningKeys(UserDictionaryStorage<SingleTrieMutableDictionaryStorage>& dictionary,
+    const std::vector<GeneratedLearningKey>& keys, bool in_token_order,
+    std::string_view text, std::int32_t count, std::uint8_t edit_flags, SingleTrieAssociationEditor& editor);
 }  // namespace comeback::recovered
 #endif

@@ -177,6 +177,8 @@ REGIONS = {
     "learning_text_size_gate": (0x1896D4, 0x189704),
     "learning_shared_store": (0x189910, 0x189924),
     "learning_generate_keys": (0x18E380, 0x18EAE8),
+    "learning_key_forward_concat": (0x194E14, 0x194E9C),
+    "learning_key_ordered_concat": (0x194E9C, 0x194F48),
     "learning_store_add": (0x1A1D9C, 0x1A1E54),
     "learning_store_lookup": (0x1A14B8, 0x1A153C),
     "learning_store_update_existing": (0x1A1894, 0x1A1A40),
