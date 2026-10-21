@@ -36,8 +36,8 @@ bool CompactUserDictionaryAtCutoff(UserDictionaryStorage<MutableDictionaryStorag
             const auto& entry = entries[plan.order[position]];
             // Native ignores each return value and continues the deletion suffix;
             // this is not a transaction or a promise that every deletion succeeded.
-            RemoveUserDictionaryAssociation(dictionary, forward, reverse,
-                                             entry.forward_key, entry.reverse_key);
+            RemoveUserDictionaryAssociation(dictionary, entry.forward_key, entry.reverse_key,
+                                             false, forward, reverse);
         }
     }
     return true;

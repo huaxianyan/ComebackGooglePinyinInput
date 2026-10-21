@@ -1,5 +1,7 @@
 # 用户词典实体删除与累计
 
+本页记录最初的六子模型实体删除阶段。后续已接 [两种后端共用的删除与保留标记](user-dictionary-removal-policy.md)，累计函数保持同一定义。
+
 ## 原调用路径
 
 ```text
@@ -35,7 +37,7 @@ AdjustUserDictionaryTotalCount 直接更新官方 UserDictionaryMetaData：先�
 
 ## 边界与证据
 
-这里只实现原实体删除，不包含 keep-deleted/tombstone 分支，不提供假成功替身。调用方须提供同一就绪模型的两个实际编辑器，accessor 锁仍在上层。
+最初实现仅含实体删除，现已扩展同一入口支持 keep-deleted/tombstone。六子模型传入两个方向编辑器，SingleTrie 传入一个实际编辑器，调用方保持同一模型就绪和独占，accessor 锁仍在上层。
 
 两个学习区间已有中央定义，沿用原登记。本阶段新增 payload lookup 的字节证据，和既有取证入口共同索引于 `native-user-entry-remove-comparison.json`。中央清单累计 `268` 个区域。
 

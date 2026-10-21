@@ -4,6 +4,7 @@
 #include "datrie_view.h"
 #include "trie_values.h"
 #include "user_dictionary_file.h"
+#include "user_dictionary_edit.h"
 #include <cstdio>
 #include <cstdlib>
 #include <string>
@@ -47,6 +48,7 @@ int main(int argc, char** argv) {
     const auto original_path = std::string(argv[1]) + "/single-original.bin";
     const auto updated_path = std::string(argv[1]) + "/single-updated.bin";
     const auto deleted_path = std::string(argv[1]) + "/single-deleted.bin";
+    const auto policy_path = std::string(argv[1]) + "/single-policy.bin";
     UserDictionaryStorage<SingleTrieMutableDictionaryStorage> mapped, retained;
     Require(PersistUserDictionaryFile(user, original_path) &&
             LoadUserDictionaryFile(original_path, mapped) == DictionaryFileLoadResult::Loaded &&
@@ -121,10 +123,49 @@ int main(int argc, char** argv) {
             Payload(final.dictionary, "a94", "a") == reverse && final.metadata.total_count() == 300 &&
             final.metadata.last_sync_time() == 42,
             "reload the physically deleted model with remaining relations and independent outer metadata");
+    SingleTrieAssociationEditor policy{final.dictionary};
+    const auto prepare = [&](std::string_view key, std::string_view payload) {
+        Require(ModifySingleTrieAssociation(policy, key, "a", &payload, AssociationEditMode::ExistingOnly),
+                "set literal current payload flags and weight through the real existing editor");
+    };
+    prepare("a94", "\x07\0\0\x58\x01\0"sv);
+    Require(RemoveUserDictionaryAssociation(final, "a94", "a", true, policy), "retain the user-model deleted marker");
+    const auto marker = Payload(final.dictionary, "a94", "a");
+    Require(marker.size() == 6 && marker.substr(0, 4) == "\0\0\0\xd8"sv &&
+            final.metadata.total_count() == 293 && final.dictionary.metadata.association_count() == 192 &&
+            !RemoveUserDictionaryAssociation(final, "a94", "a", true, policy) &&
+            Payload(final.dictionary, "a94", "a") == marker && final.metadata.total_count() == 293,
+            "mark count zero, set flag31, preserve flag30/flag27/category and subtract seven only once");
+    Require(RemoveUserDictionaryAssociation(final, "a94", "a", false, policy) &&
+            final.metadata.total_count() == 293 && final.dictionary.metadata.association_count() == 191,
+            "physically remove an existing zero-count marker without a second weight deduction");
+    prepare("a93", "\x09\0\0\x60\x01\0"sv);
+    Require(RemoveUserDictionaryAssociation(final, "a93", "a", true, policy) &&
+            Payload(final.dictionary, "a93", "a").substr(0, 4) == "\0\0\0\xe0"sv &&
+            final.metadata.total_count() == 293 && final.dictionary.metadata.association_count() == 191,
+            "category two retains its marker and skips the outer weight adjustment");
+    prepare("a92", "\x0b\0\0\0\x01\0"sv);
+    Require(RemoveUserDictionaryAssociation(final, "a92", "a", false, policy) &&
+            final.metadata.total_count() == 282, "physical user-model deletion subtracts the original weight eleven");
+    prepare("a91", "\x09\0\0\x60\x01\0"sv);
+    Require(RemoveUserDictionaryAssociation(final, "a91", "a", false, policy) &&
+            final.metadata.total_count() == 282 && final.dictionary.metadata.association_count() == 189 &&
+            final.dictionary.phrases.RecordCount() == 197,
+            "category two also skips weight adjustment during physical deletion");
+    UserDictionaryStorage<SingleTrieMutableDictionaryStorage> policy_loaded;
+    Require(PersistUserDictionaryFile(final, policy_path) &&
+            LoadUserDictionaryFile(policy_path, policy_loaded) == DictionaryFileLoadResult::Loaded &&
+            Payload(policy_loaded.dictionary, "a93", "a") == Payload(final.dictionary, "a93", "a") &&
+            !ReadSingleTrieAssociationPayload(policy_loaded.dictionary, "a94", "a", missing) &&
+            policy_loaded.metadata.total_count() == 282 && policy_loaded.metadata.last_sync_time() == 42 &&
+            policy_loaded.dictionary.metadata.association_count() == 189,
+            "reload the kept marker, physical deletions and separately accumulated user weight");
     mapped = {};
     reloaded = {};
     final = {};
+    policy_loaded = {};
     Require(std::remove(original_path.c_str()) == 0 && std::remove(updated_path.c_str()) == 0 &&
-            std::remove(deleted_path.c_str()) == 0, "remove only the three files created by this flow");
-    std::puts("PASS: SingleTrie real create/update/relocate/delete/map/persist/reload flow");
+            std::remove(deleted_path.c_str()) == 0 && std::remove(policy_path.c_str()) == 0,
+            "remove only the four files created by this flow");
+    std::puts("PASS: SingleTrie real CRUD/relocate/user removal policy/map/persist/reload flow");
 }

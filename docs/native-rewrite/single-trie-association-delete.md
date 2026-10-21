@@ -1,6 +1,6 @@
 # SingleTrie 物理关联删除
 
-已恢复原编辑器 slot 5 的物理删除路径。它移除列表项及空端点，不调整用户词典外层累计，也不选择墓碑策略。完整学习与原持久编辑器仍未接通。
+已恢复原编辑器 slot 5 的物理删除路径。它移除列表项及空端点，不调整用户词典外层累计，也不选择墓碑策略。后续已接 [用户级累计与保留标记策略](user-dictionary-removal-policy.md)，完整学习与原持久编辑器仍未接通。
 
 ## 原调用顺序
 
@@ -51,4 +51,4 @@ PublishAssociationRange 共用空键移除和范围发布，取代六子模型�
 - `work/native-rewrite/restart-v217/single-delete-export.json`
 - `work/native-rewrite/single-delete-build/build.log`
 
-复现沿用 [共用完整构建](mutable-dictionary-image.md#验证)，测试名仍为 `single_trie_association` 和 `mutable_dictionary_image`。未执行原 ARM64，未操作设备、正式包或用户词典。下一步接上层删除的累计权重及保留标记策略，再接学习与生命周期。
+复现沿用 [共用完整构建](mutable-dictionary-image.md#验证)，测试名仍为 `single_trie_association` 和 `mutable_dictionary_image`。未执行原 ARM64，未操作设备、正式包或用户词典。上层删除策略现已接入，下一步恢复学习协调与生命周期。

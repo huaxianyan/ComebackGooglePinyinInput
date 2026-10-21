@@ -207,17 +207,28 @@ int main(int argc, char** argv) {
     auto deletion_source = user_final;
     {
         Editors edit(deletion_source.dictionary);
-        Require(RemoveUserDictionaryAssociation(deletion_source, edit.forward, edit.reverse, "b", "a") &&
+        Require(RemoveUserDictionaryAssociation(deletion_source, "b", "a", false, edit.forward, edit.reverse) &&
                 deletion_source.metadata.total_count() == 150 &&
                 deletion_source.dictionary.metadata.association_count() == 1,
                 "physical deletion removes the real pair and subtracts its original weight from the outer total");
         const auto category2 = "\x96\0\0\x20\x01\0"sv;
         Require(ModifyDictionaryAssociation(edit.forward, edit.reverse, deletion_source.dictionary.metadata,
                     "a", "b", &category2, nullptr, AssociationEditMode::ExistingOnly) &&
-                RemoveUserDictionaryAssociation(deletion_source, edit.forward, edit.reverse, "a", "b") &&
+                RemoveUserDictionaryAssociation(deletion_source, "a", "b", false, edit.forward, edit.reverse) &&
                 deletion_source.metadata.total_count() == 150 &&
                 deletion_source.dictionary.metadata.association_count() == 0,
                 "category two follows the original physical-delete branch without adjusting the outer accumulator");
+        Require(ModifyDictionaryAssociation(edit.forward, edit.reverse, deletion_source.dictionary.metadata,
+                    "a", "b", &weight1, nullptr, AssociationEditMode::CreateOrUpdate),
+                "create a real relation for the kept-marker policy");
+        deletion_source.metadata.set_total_count(10);
+        Require(RemoveUserDictionaryAssociation(deletion_source, "a", "b", true, edit.forward, edit.reverse) &&
+                Payload(edit.fs, edit.rs, "a", "b").substr(0, 4) == "\0\0\0\x80"sv &&
+                deletion_source.metadata.total_count() == 9 &&
+                deletion_source.dictionary.metadata.association_count() == 1 &&
+                !RemoveUserDictionaryAssociation(deletion_source, "a", "b", true, edit.forward, edit.reverse) &&
+                deletion_source.metadata.total_count() == 9,
+                "retain a real zero-count marker and subtract weight only on the first successful marking");
     }
     i18n_input::engine::hmm::proto::UserDictionaryMetaData clamped;
     AdjustUserDictionaryTotalCount(clamped, 150, 0);
