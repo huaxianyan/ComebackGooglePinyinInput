@@ -3,6 +3,7 @@
 #define COMEBACK_RECOVERED_SINGLE_TRIE_ASSOCIATION_H
 
 #include "single_trie_mutable_dictionary_image.h"
+#include "association_records.h"
 #include <string_view>
 
 namespace comeback::recovered {
@@ -11,11 +12,19 @@ namespace comeback::recovered {
 bool ReadSingleTrieAssociationPayload(const SingleTrieMutableDictionaryStorage& dictionary,
                                        std::string_view first_key, std::string_view second_key,
                                        OwnedByteRegion& output);
-// Native existing-pair branch: exact declared payload width, first matching
-// ordered record only. Does not create keys, append, alter count or learn weight.
-// Input payload must remain valid/nonoverlapping across writable table access.
-bool UpdateSingleTrieAssociationPayload(SingleTrieMutableDictionaryStorage& dictionary,
-                                         std::string_view first_key, std::string_view second_key,
-                                         std::string_view payload);
+// Native coordinator scratch, retained across calls. Omitted payload preserves
+// the previous append buffer; this is not a runtime editor/readiness substitute.
+struct SingleTrieAssociationEditor {
+    SingleTrieMutableDictionaryStorage& dictionary;
+    OwnedByteRegion record_buffer{};
+    OwnedByteRegion first_value{};
+    OwnedByteRegion second_value{};
+};
+// Existing update and shared-record append use one coordinator. Sequential
+// failures retain mutations; only the native self-key branch cleans an empty key.
+// Caller keeps storage stable/exclusive and payload valid across writable access.
+bool ModifySingleTrieAssociation(SingleTrieAssociationEditor& editor,
+                                   std::string_view first_key, std::string_view second_key,
+                                   const std::string_view* payload, AssociationEditMode mode);
 }  // namespace comeback::recovered
 #endif

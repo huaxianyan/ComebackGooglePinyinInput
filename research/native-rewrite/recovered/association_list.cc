@@ -14,8 +14,13 @@ bool AppendAssociationRecord(FixedPhraseTable& records, OwnedByteRegion& metadat
     if (!records.AppendRecord(data, size, record_id)) return false;
     // The native caller narrows the returned offset before writing a pool ID.
     const auto value = static_cast<std::uint32_t>(record_id);
-    return reference.count == 0 ? CreateIndexRange(metadata, cells, value, reference)
-                               : InsertIndexRange(metadata, cells, value, reference.count, reference);
+    return LinkAssociationRecordId(metadata, cells, value, reference);
+}
+
+bool LinkAssociationRecordId(OwnedByteRegion& metadata, OwnedByteRegion& cells,
+                              std::uint32_t record_id, IndexRange& reference) {
+    return reference.count == 0 ? CreateIndexRange(metadata, cells, record_id, reference)
+                               : InsertIndexRange(metadata, cells, record_id, reference.count, reference);
 }
 
 bool ReadAssociationRecordAt(const FixedPhraseTable& records, const IndexPoolView& pool,
@@ -83,12 +88,18 @@ bool UpdateAssociationRecord(const AssociationSide& side, IndexRange reference,
                              const_cast<std::uint8_t*>(side.cells.Data()), side.cells.Size());
     AssociationRecordLocation location{};
     if (!FindAssociationRecord(side.records, pool, reference, target, location)) return false;
-    if (new_target == nullptr && payload == nullptr) return true;
+    return UpdateAssociationRecordById(side.records, location.record_id,
+        AssociationRecordLayout::TargetKey, new_target, nullptr, payload);
+}
+
+bool UpdateAssociationRecordById(FixedPhraseTable& records, std::uint32_t record_id,
+                                  AssociationRecordLayout layout, const std::uint32_t* first_key,
+                                  const std::uint32_t* second_key, const std::string_view* payload) {
+    if (first_key == nullptr && second_key == nullptr && payload == nullptr) return true;
     std::uint8_t* bytes = nullptr;
     std::size_t size = 0;
-    return side.records.MutableRecord(location.record_id, bytes, size) &&
-           PatchAssociationRecord(AssociationRecordLayout::TargetKey, bytes, size,
-                                   new_target, nullptr, payload);
+    return records.MutableRecord(record_id, bytes, size) &&
+           PatchAssociationRecord(layout, bytes, size, first_key, second_key, payload);
 }
 
 bool RemoveAssociationRecord(const FixedPhraseTable& records, OwnedByteRegion& metadata,

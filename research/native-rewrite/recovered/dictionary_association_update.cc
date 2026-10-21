@@ -76,7 +76,7 @@ bool ModifyDictionaryAssociation(AssociationEditor& forward, AssociationEditor& 
         return UpdateTrieValueByKey(reverse.side.trie, reverse.side.values, reverse_key, reverse_value);
     }
     if (mode != AssociationEditMode::CreateOrUpdate) return false;
-    if (forward_range.count < 0x1ffU && reverse_range.count < 0x1ffU &&
+    if (forward_range.count < kMaxAssociationCount && reverse_range.count < kMaxAssociationCount &&
         AppendSide(forward, forward_key, reverse_id, payload, nullptr, forward_range) &&
         AppendSide(reverse, reverse_key, forward_id, nullptr, reverse_data, reverse_range)) {
         metadata.set_association_count(static_cast<std::int32_t>(

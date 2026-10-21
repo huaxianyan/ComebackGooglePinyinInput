@@ -214,6 +214,7 @@ REGIONS = {
     "association_find_key": (0x1C3B68, 0x1C3C30),
     "single_association_validate": (0x1C9C58, 0x1C9CF4),
     "single_association_modify": (0x1C8E60, 0x1C9384),
+    "single_association_node_repair": (0x1C8928, 0x1C8A54),
     "single_association_resolve_key": (0x1C82A4, 0x1C8420),
     "single_association_update_record": (0x1C8508, 0x1C85A4),
     "association_find_pair": (0x1C7FF4, 0x1C80CC),

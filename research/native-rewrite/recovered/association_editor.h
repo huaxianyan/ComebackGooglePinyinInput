@@ -31,8 +31,6 @@ bool RemoveDictionaryAssociation(AssociationEditor& forward, AssociationEditor& 
                                   std::string_view forward_key,
                                   std::string_view reverse_key);
 
-enum class AssociationEditMode { CreateOrUpdate = 1, ExistingOnly = 2 };
-
 // Native 0x1c5660: both modes first update an existing pair. Mode 1 also creates
 // missing keys and appends both sides, with the native 511-entry bound. Cleanup
 // removes empty endpoints only after the append path fails; earlier failures

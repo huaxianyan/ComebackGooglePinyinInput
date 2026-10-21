@@ -12,6 +12,9 @@
 namespace comeback::recovered {
 
 using EncodedAssociationReference = std::array<std::uint8_t, sizeof(std::uint32_t)>;
+inline constexpr unsigned kAssociationCountBits = 9;
+inline constexpr std::uint32_t kMaxAssociationCount = (std::uint32_t{1} << kAssociationCountBits) - 1;
+enum class AssociationEditMode { CreateOrUpdate = 1, ExistingOnly = 2 };
 
 // Native packing keeps 23 index bits and nine count bits, without saturation.
 EncodedAssociationReference EncodeAssociationReference(IndexRange reference);
@@ -40,6 +43,10 @@ bool PatchAssociationRecord(AssociationRecordLayout layout, std::uint8_t* bytes,
                             const std::uint32_t* second_key, const std::string_view* payload);
 
 class FixedPhraseTable;
+// Patch a known record after lookup; a null-only patch succeeds without COW.
+bool UpdateAssociationRecordById(FixedPhraseTable& records, std::uint32_t record_id,
+                                  AssociationRecordLayout layout, const std::uint32_t* first_key,
+                                  const std::uint32_t* second_key, const std::string_view* payload);
 
 struct AssociationRecordLocation {
     std::uint32_t position;
@@ -62,6 +69,10 @@ struct AssociationSide;
 bool ReadDictionaryAssociationPayload(const AssociationSide& forward, const AssociationSide& reverse,
                                        std::string_view forward_key, std::string_view reverse_key,
                                        OwnedByteRegion& output);
+
+// Link one existing record ID, sharing the empty/nonempty list decision.
+bool LinkAssociationRecordId(OwnedByteRegion& metadata, OwnedByteRegion& cells,
+                              std::uint32_t record_id, IndexRange& reference);
 
 // Native association append stores the record before linking its ID into the
 // list. A link failure leaves that record appended; there is no rollback.

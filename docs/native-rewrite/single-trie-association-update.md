@@ -1,6 +1,6 @@
 # SingleTrie 已有关联读取与更新
 
-已恢复底层有序键对查找及已有 payload 更新，接入完整文件保存和加载。新增、删除、学习与原持久编辑器仍未实现，不将现有原语组装成占位编辑后端。
+本页记录底层有序键对查找及已有 payload 更新阶段。后续已恢复 [共享记录新增与节点修复](single-trie-association-create.md)，旧更新函数并入同一协调器。删除、学习与原持久编辑器仍未实现。
 
 ## 记录含义
 
@@ -25,9 +25,9 @@ SingleTrie 的十四字节记录不是 IndexRange 加 payload：
 [single_trie_association.h](../../research/native-rewrite/recovered/single_trie_association.h) 提供两个明确入口：
 
 - ReadSingleTrieAssociationPayload 读取底层记录 payload，不代表完整候选或预测查询接口。
-- UpdateSingleTrieAssociationPayload 对应 `0x1c8e60` 的已有关系更新路径，输入宽度按 `0x1c9c58` 检查，再由 `0x1c8508` 和共用 KeyPair 补丁更新记录。
+- 最初的 UpdateSingleTrieAssociationPayload 对应 `0x1c8e60` 已有关系路径，现已移除并合入 ModifySingleTrieAssociation，没有转发壳。输入宽度按 `0x1c9c58` 检查，再由 `0x1c8508` 和共用 KeyPair 补丁更新记录。
 
-API 只接受明确提供的 payload，不暴露尚未恢复的创建模式，也不建立临时编辑器。查找重建借用视图，更新经真实 MutableRecord 获取可写区域，处理只读映射的 COW。更新只改目标记录，不新增关系、不设置关联计数或调整外层累计权重。
+本阶段原 API 只接受明确提供的 payload，不暴露创建模式，也不建立临时编辑器。后续完整协调器的模式及 scratch 语义见新增记录。查找重建借用视图，更新经真实 MutableRecord 获取可写区域，处理只读映射的 COW。更新只改目标记录，不新增关系、不设置关联计数或调整外层累计权重。
 
 ## 验证及边界
 
