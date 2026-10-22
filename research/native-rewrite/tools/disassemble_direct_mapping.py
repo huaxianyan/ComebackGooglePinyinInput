@@ -246,6 +246,7 @@ REGIONS = {
     "forward_metadata_defaults": (0x1BEC2C, 0x1BEC50),
     "forward_metadata_encoding_valid": (0x1BEC20, 0x1BEC2C),
     "token_append_binary_key": (0x2D1610, 0x2D16A4),
+    "forward_token_owner_constructor": (0x1B3388, 0x1B33EC),
     "forward_token_cursor_constructor": (0x1B2E84, 0x1B2F14),
     "forward_token_matches_dictionary": (0x1B2DFC, 0x1B2E84),
     "forward_token_special_id_init": (0x1B3614, 0x1B37A4),

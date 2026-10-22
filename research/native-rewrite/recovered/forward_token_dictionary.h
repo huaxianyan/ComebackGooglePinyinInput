@@ -20,6 +20,7 @@ enum class ForwardTokenColumn : std::size_t { Id, Score, Meta, Code, NodeId, Cou
 class ForwardTokenDictionaryView {
 public:
     class ExactCursor;
+    class SourceCursor;
     using MetadataProto = i18n_input::engine::hmm::proto::ForwardTokenDictionaryMetaData;
     static std::shared_ptr<ForwardTokenDictionaryView> Load(const OwnedByteRegion& payload);
     const MetadataProto& Metadata() const { return metadata_; }
@@ -38,6 +39,10 @@ public:
     bool ReadTarget(const std::string& input, std::int32_t selector,
                     std::int32_t language, KeyToken& output) const;
 private:
+    // Original owner constructor 0x1b3388; only its default ordinary profile.
+    static constexpr std::int32_t kDefaultResultLimit = 128;
+    std::string PrepareSource(const std::string& input) const;
+    void ReadSourceToken(std::size_t index, std::size_t length, KeyToken& output) const;
     ForwardTokenDictionaryView(const OwnedByteRegion& image, const MetadataProto& metadata,
         std::vector<FlatIntegerTableView>&& tables, const OwnedByteRegion& prefix_scores);
     // Keep the source alive until AFTER the mapped marisa object is destroyed.
@@ -56,6 +61,7 @@ public:
     bool Push(std::string_view bytes);
     bool Pop();
     void Reset();
+    void Advance() { has_current_ = false; }
     std::size_t Depth() const { return frames_.size(); }
     bool HasCurrent() const { return has_current_; }
     // Like the original getter, valid result use requires HasCurrent(). The key
@@ -68,6 +74,30 @@ private:
     std::vector<Frame> frames_;
     marisa::Agent agent_;
     bool has_current_ = false;
+};
+// Ordinary source-token projection, not the full scored/target Forward iterator.
+// Push records the original call order; NextFrame applies pending segments from
+// the stack top. A loaded dictionary and complete valid UTF-8 inputs are required.
+class ForwardTokenDictionaryView::SourceCursor {
+public:
+    explicit SourceCursor(std::shared_ptr<const ForwardTokenDictionaryView> dictionary);
+    bool Push(std::int32_t selector, std::int32_t language, const std::string& input);
+    bool NextFrame();
+    bool Done() const;
+    bool Current(KeyToken& output) const;
+    void Advance() { position_ = static_cast<std::int16_t>(position_ + 1); }
+    bool Pop();
+    void Reset();
+private:
+    std::shared_ptr<const ForwardTokenDictionaryView> dictionary_;
+    ExactCursor exact_;
+    std::vector<std::string> pending_;
+    std::vector<std::string> applied_;
+    std::int16_t position_ = kDefaultResultLimit;
+    std::uint16_t row_ = 0;
+    std::uint16_t length_ = 0;
+    bool has_record_ = false;
+    bool synchronized_ = false;
 };
 }  // namespace comeback::recovered
 #endif

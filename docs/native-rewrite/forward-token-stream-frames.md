@@ -1,6 +1,6 @@
 # Marisa 与 Forward 的流式帧
 
-本文继续 [普通 Forward 单项读取](forward-token-dictionary.md)，记录原函数的状态推进及已接通的宿主 ExactCursor。内层 Marisa 分段查询已走真实资源，外层 Forward 协调与 Manager 查询尚未实现。
+本文继续 [普通 Forward 单项读取](forward-token-dictionary.md)，记录原函数的状态推进及已接通的宿主 ExactCursor。内层 Marisa 分段查询及普通 Forward source 惰性协调已走真实资源。target、评分排序与 Manager 查询尚未接通。
 
 ## 两层接口的 slot 2 不同
 
@@ -65,7 +65,17 @@ Push 追加已准备字节，从最后保存帧恢复节点与查询位置，再
 
 `0x1b3528` 的 Reset 清待应用字符串、收集记录和两个模式标志。它没有直接调用底层 Reset，也没有清掉已应用字符串向量。底层调整留给下一次 Forward Next，不能用统一的立即回滚替代。
 
-`0x1b2628` 在 source 模式下递增短索引，在 target 模式下直接把索引设为 1。这里不能改成通用 size_t 游标或始终递增。原 owner 的 `+0xc` 是 32 位限制字段，复制到 cursor 的索引时收窄为短整数。其初始化来源与默认值仍未闭合，不填写猜测常量。
+`0x1b2628` 在 source 模式下递增短索引，在 target 模式下直接把索引设为 1。这里不能改成通用 size_t 游标或始终递增。原 owner 的 `+0xc` 是 32 位限制字段，复制到 cursor 的索引时收窄为短整数。现已定位构造函数 `0x1b3388`：直接写入默认值 `0x80`，即 128。宿主视图只恢复该默认普通资源投影，不提供尚未恢复的外部限额修改入口。
+
+## 宿主 source 惰性协调
+
+`ForwardTokenDictionaryView::SourceCursor` 已接 source 的 Push、NextFrame、Current、Advance、Done、Pop 和 Reset。Push 只准备并保存字符串，Next 才从待应用栈顶比较已有字符串、Pop 不同后缀并重新 Push。若整个待应用查询已相同，仍 Pop 并重做最后一段，以重新取得已被收集消费的子结果。
+
+同步标志在 Next 开始时设置，后续 Push 须经 Pop 或 Reset 才能继续。失败保留已成功应用的子帧，下一次同步继续按真实共同部分协调。外层 Pop、Reset 清待应用项及当前记录，不直接清内层已应用字符串和帧。
+
+普通资源没有多记录值区，每个 exact 结果只投影一个原表行。本实现保留原 16 位记录索引、查询长度和有符号短游标，Current 经共享的 token 填充函数读取 ID、language、identity 和码点文本。source 文本准备也与普通单项入口共用。没有提供评分、属性或 target 接口，不把此投影当作完整 Forward 迭代器。
+
+新增端到端用例沿用已有真实资源 fixture 入口，以 `source` case 选择运行：按原栈顺序输入 `hong`、`z` 得到 `zhong`，消费后重做相同帧，Pop 后改成 `chong`，并在 Reset、延迟匹配失败后恢复到 `a`。token ID 与 UTF-8 期望为原清单字面值，不由查询算法计算。
 
 ## BFS 的另一条证据
 
@@ -73,7 +83,7 @@ Push 追加已准备字节，从最后保存帧恢复节点与查询位置，再
 
 ## 证据与边界
 
-静态取证阶段的 `12` 段帧与后补的 `7` 段内核及匹配链证据保持原样，均与保留 v2.1.7 库逐字节相同。中央登记仍为 `479` 段，metadata 构造函数的既有 ADRP 差异继续保留。本次新增的是宿主实现与运行验证，没有新增或重复比较旧 FDE。
+静态取证阶段的 `12` 段帧与后补的 `7` 段内核及匹配链证据保持原样，均与保留 v2.1.7 库逐字节相同。本次仅补 owner 构造函数的一段 FDE，与保留 v2.1.7 库逐字节相同，中央登记增至 `480` 段。metadata 构造函数的既有 ADRP 差异及其他旧证据继续保留，没有重跑旧 FDE。
 
 - 指令与增量比较：`work/native-rewrite/restart-v217/native-forward-token-frames-comparison.json`
 - 成功伪码：`work/native-rewrite/ghidra/forward-token-stream-frames/`、`marisa-exact-lookup-kernel/` 和 `forward-token-bfs-edge/`
@@ -87,4 +97,6 @@ Push 追加已准备字节，从最后保存帧恢复节点与查询位置，再
 
 因本次更换图持有方式与查询核心，普通字典入口另做新后端回归，八份原资源的全部 3,464 个 key 通过。未改的 metadata 模块测试没有重跑。上述宿主结果不代表原 ARM、分配失败顺序或完整输入法运行等价。
 
-下一步接 Forward 的待应用字符串、惰性协调与 Manager 懒缓存。多记录值区、BFS、binary/custom 编码、评分截断、OOM、原 ARM 和 Android 尚未验收。本轮未构建产品、操作设备或用户数据。
+source 投影以 `build_forward_token_research.sh source` 完整宿主编译并运行一条受影响的真实入口，日志为 `work/native-rewrite/forward-token-build/forward-source-build.log`。旧普通读取、内层帧及 metadata 用例未重复执行。owner 构造证据在 `work/native-rewrite/restart-v217/native-forward-owner-constructor-comparison.json`，伪码在 `work/native-rewrite/ghidra/forward-token-owner-constructor/`。
+
+下一步补齐 Forward 的属性与评分、target 分支，再接 Manager 懒缓存。多记录值区、BFS、binary/custom 编码、评分截断、外部限额修改、OOM、原 ARM 和 Android 尚未验收。本轮未构建产品、操作设备或用户数据。

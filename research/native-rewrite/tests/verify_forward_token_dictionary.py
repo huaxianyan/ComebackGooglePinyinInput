@@ -11,6 +11,7 @@ def main():
     parser.add_argument("--manifest", type=Path, required=True)
     parser.add_argument("--executable", type=Path, required=True)
     parser.add_argument("--fixture", type=Path, required=True)
+    parser.add_argument("--case", choices=("source",))
     args = parser.parse_args()
     manifest = json.loads(args.manifest.read_text(encoding="utf-8"))
     if manifest["schema_version"] != 3:
@@ -37,7 +38,10 @@ def main():
         raise ValueError("expected the eight ordinary Forward resources in the fixed original APK")
     args.fixture.parent.mkdir(parents=True, exist_ok=True)
     args.fixture.write_text("\n".join(rows) + "\n", encoding="utf-8")
-    subprocess.run([str(args.executable.resolve()), str(args.fixture.resolve())], check=True)
+    command = [str(args.executable.resolve()), str(args.fixture.resolve())]
+    if args.case:
+        command.append(args.case)
+    subprocess.run(command, check=True)
 
 
 if __name__ == "__main__":

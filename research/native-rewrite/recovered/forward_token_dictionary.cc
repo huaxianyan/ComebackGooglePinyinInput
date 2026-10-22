@@ -57,21 +57,30 @@ std::shared_ptr<ForwardTokenDictionaryView> ForwardTokenDictionaryView::Load(con
     return result;
 }
 
+std::string ForwardTokenDictionaryView::PrepareSource(const std::string& input) const {
+    std::string query = metadata_.case_sensitive() ? std::string(input.c_str()) : input;
+    if (!metadata_.case_sensitive()) LowercaseTokenBytes(query);
+    return query;
+}
+
 bool ForwardTokenDictionaryView::ReadExactSource(const std::string& input, std::int32_t selector,
     std::int32_t language, KeyToken& output) const {
     if (!MatchesTokenDictionary(metadata_.selector(), metadata_.language_id(), selector, language)) return false;
-    std::string query = metadata_.case_sensitive() ? std::string(input.c_str()) : input;
-    if (!metadata_.case_sensitive()) LowercaseTokenBytes(query);
+    const auto query = PrepareSource(input);
     marisa::Agent agent;
     agent.set_query(query.data(), query.size());
     agent.init_state();
     if (trie_.lookup(agent, true) != marisa::grimoire::trie::LoudsTrie::LookupResult::Exact) return false;
-    const auto index = agent.key().id();
+    ReadSourceToken(agent.key().id(), query.size(), output);
+    return true;
+}
+
+void ForwardTokenDictionaryView::ReadSourceToken(std::size_t index, std::size_t length,
+    KeyToken& output) const {
     output.id = Table(ForwardTokenColumn::Id).At(index);
     output.auxiliary = TokenAuxiliaryFromWord(metadata_.language_id());
-    output.identity_bit = Table(ForwardTokenColumn::Meta).At(index) != query.size();
+    output.identity_bit = Table(ForwardTokenColumn::Meta).At(index) != length;
     output.text = EncodeTokenCodepoint(output.id & kTokenCodepointMask);
-    return true;
 }
 
 bool ForwardTokenDictionaryView::ReadTarget(const std::string& input, std::int32_t selector,

@@ -8,8 +8,37 @@ using namespace comeback::recovered;
 static void Check(bool value, const char* message) {
     if (!value) { std::cerr << message << '\n'; std::exit(1); }
 }
+static void SourceFrames(const std::shared_ptr<ForwardTokenDictionaryView>& dictionary) {
+    ForwardTokenDictionaryView::SourceCursor cursor(dictionary);
+    KeyToken token{"previous", 0, 0, true};
+    auto current = [&](std::uint32_t id, const char* text) {
+        Check(!cursor.Done() && cursor.Current(token) && token.id == id &&
+              token.text == text && token.auxiliary == 16 && !token.identity_bit,
+              "Forward source frame did not produce its original token");
+    };
+    // Literal original-manifest token IDs and UTF-8, not computed by lookup.
+    // Native Next applies Push segments from the stack top: hong, z -> zhong.
+    Check(cursor.Push(-1, 16, "hong") && cursor.Push(-1, 16, "z") && cursor.NextFrame(),
+          "cannot apply the pending source segments");
+    current(8446370, "\xee\x86\xa2");
+    cursor.Advance();
+    Check(cursor.Done() && cursor.NextFrame(), "cannot refresh a consumed source frame");
+    current(8446370, "\xee\x86\xa2");
+    Check(cursor.Pop() && cursor.Push(-1, 16, "c") && cursor.NextFrame(),
+          "cannot replace the top pending segment");
+    current(8445993, "\xee\x80\xa9");
+    cursor.Reset();
+    // Frozen source Push/Next protocol: a queued unknown edge fails only when
+    // applied. Pop clears the synchronization flag and permits replacement.
+    Check(cursor.Push(-1, 16, "!") && !cursor.NextFrame(), "unknown source edge was not deferred to Next");
+    Check(cursor.Pop() && cursor.Push(-1, 16, "a") && cursor.NextFrame(),
+          "cannot recover after a failed lazy query");
+    current(4251648, "\xee\x80\x80");
+    std::cout << "original Forward source pending frames, lazy reconciliation and token publication passed\n";
+}
 int main(int argc, char** argv) {
-    Check(argc == 2, "provide the original-resource TSV fixture");
+    Check(argc == 2 || (argc == 3 && std::string(argv[2]) == "source"),
+          "provide the original-resource TSV fixture and optional source case");
     std::ifstream fixture(argv[1]);
     std::string line, path;
     while (std::getline(fixture, line)) {
@@ -25,6 +54,7 @@ int main(int argc, char** argv) {
     Check(name == "ForwardTokenDictionary", "wrong original resource envelope");
     const auto dictionary = ForwardTokenDictionaryView::Load(image.Slice(offset, image.Size() - offset));
     Check(static_cast<bool>(dictionary), "cannot load ordinary pinyin dictionary");
+    if (argc == 3) { SourceFrames(dictionary); return 0; }
     ForwardTokenDictionaryView::ExactCursor cursor(dictionary);
     // Expected IDs are literal original-manifest rows, not computed by lookup.
     auto current = [&](const char* key, std::size_t id) {
