@@ -15,7 +15,7 @@ slot 10 按 dataId 查询缓存：
 3. 使用配置中的创建器名，空名称选择 `GenericDataModelCreator`。创建器接收 DataManager 的次级接口，再按 dataId 和配置创建模型。
 4. 创建得到非空模型才装入缓存。新句柄的引用计数先为一、原标记为零，再增加返回引用。失败结果未在此处写入缓存。
 
-所以，accessor 清除旧句柄后再次请求资源，仍可能拿回缓存中的同一模型。不能把这次请求等同于重新打开磁盘文件。[后续注册取证](model-creator-enrollment.md) 已定位 FD、空数据来源及失效标记，legacy 类型表与初始化已有后续记录，普通 Direct/Forward 的类名注册及内存加载桥见 [普通模型创建链](token-model-creation.md)。内置 data scheme 的内存注册仍待接入。
+所以，accessor 清除旧句柄后再次请求资源，仍可能拿回缓存中的同一模型。不能把这次请求等同于重新打开磁盘文件。[后续注册取证](model-creator-enrollment.md) 已定位 FD、空数据来源及失效标记，legacy 类型表与初始化已有后续记录，普通 Direct/Forward 的类名注册及内存加载桥见 [普通模型创建链](token-model-creation.md)。后续普通 bundle 的成功初始内存注册已接原 scheme 字节，见 [内置数据注册](builtin-data-enrollment.md)，不代表完整 Android accessor 生命周期。
 
 ## 发布后选择 DictionaryPropertyProto
 

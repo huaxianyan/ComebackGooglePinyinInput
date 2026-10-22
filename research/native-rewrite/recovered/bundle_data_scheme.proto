@@ -1,0 +1,18 @@
+// Successful built-in memory-registration projection, not the full DataInfo ABI.
+// Confirmed native/Java wire fields; other DataInfo fields remain unsupported.
+// See NOTICE and docs/native-rewrite/builtin-data-enrollment.md.
+syntax = "proto2";
+package comeback.recovered.proto;
+option optimize_for = LITE_RUNTIME;
+message BundleDataInfo {
+  optional int32 data_type = 1;
+  optional string data_id = 2;
+  optional int32 storage_type = 3;
+  optional string blob_name = 4;
+}
+message BundleDataScheme {
+  repeated BundleDataInfo data = 1;
+  optional string bundle_library = 2;
+  optional string field_3 = 3;
+  optional int32 format_version = 4;
+}

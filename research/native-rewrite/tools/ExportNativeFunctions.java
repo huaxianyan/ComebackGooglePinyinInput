@@ -1,5 +1,5 @@
 // Export selected functions from an analyzed Ghidra program for research.
-// Arguments: NEW_OUTPUT_DIRECTORY [--unwind-ranges CPP_TYPES_JSON] IMAGE_RELATIVE_HEX_OFFSET...
+// Arguments: NEW_OUTPUT_DIRECTORY [--unwind-ranges CPP_TYPES_JSON [--builtin-blob-signature]] IMAGE_RELATIVE_HEX_OFFSET...
 // @category Comeback.NativeResearch
 
 import java.io.IOException;
@@ -21,6 +21,11 @@ import ghidra.app.decompiler.DecompInterface;
 import ghidra.app.decompiler.DecompileResults;
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.ParameterImpl;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.PointerDataType;
+import ghidra.program.model.data.VoidDataType;
+import ghidra.program.model.data.UnsignedLongLongDataType;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.symbol.SourceType;
@@ -67,6 +72,21 @@ public class ExportNativeFunctions extends GhidraScript {
             null, address, body, SourceType.ANALYSIS);
     }
 
+    private void repairBuiltinBlobSignature(Map<Long, Long> ranges) throws Exception {
+        long offset = 0x1135A4;
+        if (!Long.valueOf(0x11376C).equals(ranges.get(offset))) {
+            throw new IOException("Blob ABI repair requires verified original unwind metadata");
+        }
+        Function function = getFunctionAt(currentProgram.getImageBase().add(offset));
+        if (function == null) throw new IOException("Missing exact built-in blob lookup entry");
+        DataType pointer = new PointerDataType(VoidDataType.dataType);
+        function.setReturnType(pointer, SourceType.USER_DEFINED);
+        function.replaceParameters(Function.FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true, SourceType.USER_DEFINED,
+            new ParameterImpl("library_name", pointer, currentProgram),
+            new ParameterImpl("blob_name", pointer, currentProgram),
+            new ParameterImpl("size_out", new PointerDataType(UnsignedLongLongDataType.dataType), currentProgram));
+    }
+
     @Override
     public void run() throws Exception {
         String[] arguments = getScriptArgs();
@@ -81,8 +101,16 @@ public class ExportNativeFunctions extends GhidraScript {
             unwindRanges = readUnwindRanges(Path.of(arguments[2]));
             firstOffset = 3;
         }
+        boolean repairedBuiltinBlob = firstOffset < arguments.length
+            && arguments[firstOffset].equals("--builtin-blob-signature");
+        if (repairedBuiltinBlob) {
+            repairBuiltinBlobSignature(unwindRanges);
+            firstOffset++;
+        }
+        if (firstOffset == arguments.length) throw new IllegalArgumentException("Missing offsets");
         Path output = Files.createDirectory(Path.of(arguments[0]));
         Map<String, Object> report = new LinkedHashMap<>();
+        report.put("repaired_builtin_blob_signature", repairedBuiltinBlob);
         report.put("program", currentProgram.getName());
         report.put("executable_sha256", currentProgram.getExecutableSHA256());
         report.put("language", currentProgram.getLanguageID().toString());

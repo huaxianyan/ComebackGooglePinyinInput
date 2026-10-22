@@ -58,4 +58,4 @@ TokenDictionaryResources 已按原类名前缀选择唯一 Direct/Forward 加载
 
 证据保存在 `work/native-rewrite/restart-v217/native-token-model-creation-comparison.json`，摘要为 `work/native-rewrite/token-model-creation-evidence.log`。Ghidra 输出位于 `token-model-creator-dispatch/` 和 `token-model-registration/`。原调用方与 Direct/Forward 发布桥沿用既有导出，不重复做字节比较。
 
-本轮仅新增静态取证和文档。上一轮宿主结果继续有效，没有重跑宿主构建、测试、原 ARM64 或 Android。下一步定位内置 data scheme 的 Java/JNI 注册入口，接 DataInfo 的内存来源，替换当前仍由调用方提供的 ID 索引，再接上层文本准备。
+本轮仅新增静态取证和文档。上一轮宿主结果继续有效，没有重跑宿主构建、测试、原 ARM64 或 Android。后续已定位内置 data scheme 的 Java/JNI 注册，并用原 scheme 字节替换人工 ID 索引，见 [内置数据注册](builtin-data-enrollment.md)。下一步接上层文本准备与查询调用方。

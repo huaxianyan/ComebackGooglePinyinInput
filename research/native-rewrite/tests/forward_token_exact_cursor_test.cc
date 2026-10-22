@@ -25,21 +25,29 @@ static OwnedByteRegion OriginalImage(const char* filename, const std::string& re
     return image;
 }
 static void ManagerFrames(const char* fixture) {
-    TokenDictionaryResources::Sources sources;
+    TokenDictionaryResources::Bundles bundles;
     std::ifstream rows(fixture);
     std::string line;
     while (std::getline(rows, line)) {
-        if (line.rfind("@id:", 0) != 0) continue;
+        if (line.rfind("@blob:", 0) != 0) continue;
         const auto key = line.substr(0, line.find('\t'));
-        sources.emplace(key.substr(4), OriginalImage(fixture, key));
+        const auto slash = key.find('/');
+        bundles[key.substr(6, slash - 6)].emplace(key.substr(slash + 1), OriginalImage(fixture, key));
     }
-    TokenDictionaryResources resources(std::move(sources));
+    std::vector<std::string> schemes;
+    for (const auto* name : {"en_data_scheme", "data_scheme", "gesture_data_scheme"}) {
+        const auto image = OriginalImage(fixture, std::string("@scheme:") + name);
+        schemes.emplace_back(reinterpret_cast<const char*>(image.Data()), image.Size());
+    }
+    const auto resources = TokenDictionaryResources::Load(schemes, bundles);
+    Check(static_cast<bool>(resources), "cannot register the original three built-in data schemes");
     const auto original = OriginalImage(fixture, "@token_setting");
     i18n_input::engine::hmm::proto::TokenDictionaryDataSetting setting;
     Check(setting.ParseFromArray(original.Data(), original.Size()) && setting.data_id_size() == 1 &&
           setting.data_id(0) == "zh_t_i0_pinyin_android_token_dictionary", "wrong original token setting slice");
     // Explicit test selections, not a claim about the app's preference defaults.
-    // Actual registration IDs come from the original data schemes in the fixture.
+    // Actual IDs are registered by C++ from original data scheme bytes, not
+    // decoded Python fixture records or a caller-made data-ID mapping.
     setting.add_data_id("shortcuts_token_dictionary");
     setting.add_data_id("en_t_i0_und_android_token_dictionary");
     setting.add_data_id("zh_t_i0_shuangpin_abc_android_token_dictionary");
@@ -48,7 +56,7 @@ static void ManagerFrames(const char* fixture) {
     // Frozen 0x1948d0 protocol: an absent ID does not discard valid selections.
     setting.add_data_id("missing-research-token-dictionary");
     const auto wire = setting.SerializeAsString();
-    const auto manager = TokenDictionaryManager::Load(wire, resources);
+    const auto manager = TokenDictionaryManager::Load(wire, *resources);
     Check(static_cast<bool>(manager), "cannot activate original registered dictionary IDs");
     auto cursor = manager->CreateDfsCursor();
     KeyToken token{"previous", 0, 0, true};
@@ -93,16 +101,16 @@ static void ManagerFrames(const char* fixture) {
     cursor->Reset();
     Check(cursor->Push(0, 0, "Ab", false) && cursor->NextFrame(), "cannot query a multi-character source");
     consume(0x008f0000, 0);
-    const auto reloaded = TokenDictionaryManager::Load(wire, resources);
+    const auto reloaded = TokenDictionaryManager::Load(wire, *resources);
     Check(static_cast<bool>(reloaded), "cannot resolve the same setting through the resource cache");
     auto second = reloaded->CreateDfsCursor();
     Check(second->Push(0, 0, "Cd", false) && second->NextFrame() && second->Current(token) && token.id == 0x008f0001,
           "ID-cache reuse lost the model counter across Managers");
-    const auto empty = TokenDictionaryManager::Load("", resources);
+    const auto empty = TokenDictionaryManager::Load("", *resources);
     Check(static_cast<bool>(empty), "cannot activate the native empty dictionary set");
     auto empty_cursor = empty->CreateDfsCursor();
     Check(static_cast<bool>(empty_cursor) && empty_cursor->Done(), "empty DFS factory did not retain its real Manager object");
-    std::cout << "original token setting, registered data IDs, cross-Manager model reuse and real DFS query passed\n";
+    std::cout << "original three data schemes, token setting, ID-cache reuse and real DFS query passed\n";
 }
 static void SourceFrames(const std::shared_ptr<ForwardTokenDictionaryView>& dictionary) {
     ForwardTokenDictionaryView::Cursor cursor(dictionary);

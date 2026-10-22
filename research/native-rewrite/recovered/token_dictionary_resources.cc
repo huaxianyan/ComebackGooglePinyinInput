@@ -1,16 +1,39 @@
 // Ordinary bundle class dispatch and data-ID cache projection; see NOTICE.
 #include "token_dictionary_resources.h"
+#include "bundle_data_scheme.pb.h"
 #include "dictionary_string_image.h"
 #include "direct_token_dictionary.h"
 #include "forward_token_dictionary.h"
 
 namespace comeback::recovered {
+std::shared_ptr<TokenDictionaryResources> TokenDictionaryResources::Load(
+    const std::vector<std::string>& schemes, const Bundles& bundles) {
+    Sources sources;
+    for (const auto& wire : schemes) {
+        proto::BundleDataScheme scheme;
+        if (!scheme.ParseFromString(wire) || !scheme.unknown_fields().empty() ||
+            (scheme.has_format_version() && scheme.format_version() != 1)) return nullptr;
+        for (const auto& entry : scheme.data()) {
+            const auto library = bundles.find(scheme.bundle_library());
+            if (library == bundles.end()) return nullptr;
+            // Original 0x19915c selects the library's _binary_<name> symbols
+            // for storage type 2. Other sources/options are outside this profile.
+            if (!entry.unknown_fields().empty() || entry.storage_type() != 2 || entry.data_type() == 0) return nullptr;
+            const auto blob = library->second.find(entry.blob_name());
+            if (blob == library->second.end()) return nullptr;
+            sources.insert_or_assign(entry.data_id(), Source{entry.data_type(), blob->second});
+        }
+    }
+    return std::shared_ptr<TokenDictionaryResources>(new TokenDictionaryResources(std::move(sources)));
+}
+
 TokenDictionaryResources::Resolution TokenDictionaryResources::Resolve(const std::string& data_id) {
     const auto cached = cache_.find(data_id);
     if (cached != cache_.end()) return {Resolution::Status::Ready, &cached->second};
     const auto source = sources_.find(data_id);
     if (source == sources_.end()) return {Resolution::Status::Missing, nullptr};
-    const auto& image = source->second;
+    if (source->second.data_type != 4) return {Resolution::Status::Unsupported, nullptr};
+    const auto& image = source->second.image;
     std::string name;
     const auto offset = LoadDictionaryStringImage(image, name);
     if (offset == 0 || offset > image.Size()) return {Resolution::Status::Unsupported, nullptr};

@@ -48,10 +48,10 @@ def main():
         for blob in library["blobs"]:
             container = blob.get("native_container") or {}
             path = (args.manifest.parent / blob["output_file"]).resolve()
-            if args.case == "manager" and blob["classification"] == "direct_token_dictionary":
-                rows.append(f"{blob['name']}\t{path}")
-                continue
             if not container.get("packed_tables"):
+                continue
+            profiles += 1
+            if args.case == "manager":
                 continue
             fields = {field["field_number"]: field["value"]
                       for field in container["token_config"]["config_fields"] if "value" in field}
@@ -62,26 +62,20 @@ def main():
                     blob["name"], path, fields[1], fields[4], container["prefix_scores"]["count"],
                     row["marisa_key_id"], row["key"], row["token_id"], row.get("token_score", "-"),
                     row["token_meta"], row["token_code"], row["token_node_id"])))
-            profiles += 1
     if profiles != 8:
         raise ValueError("expected the eight ordinary Forward resources in the fixed original APK")
     args.fixture.parent.mkdir(parents=True, exist_ok=True)
     if args.case == "manager":
-        registered = set()
         for library in manifest["libraries"]:
-            blobs = {blob["name"]: blob for blob in library["blobs"]}
             for blob in library["blobs"]:
+                source = (args.manifest.parent / blob["output_file"]).resolve()
+                rows.append(f"@blob:{library['file_name']}/{blob['name']}\t{source}")
+                if blob["name"] in ("en_data_scheme", "data_scheme", "gesture_data_scheme"):
+                    rows.append(f"@scheme:{blob['name']}\t{source}")
                 if blob["name"] == "pinyin_qwerty_setting_scheme":
                     path = args.fixture.with_suffix(".setting.pb").resolve()
-                    source = args.manifest.parent / blob["output_file"]
                     path.write_bytes(token_setting_slice(source.read_bytes()))
                     rows.append(f"@token_setting\t{path}")
-                for entry in (blob.get("data_scheme") or {}).get("entries", []):
-                    if entry["data_type"] != 4 or entry["data_id"] in registered:
-                        continue
-                    registered.add(entry["data_id"])
-                    path = (args.manifest.parent / blobs[entry["blob_name"]]["output_file"]).resolve()
-                    rows.append(f"@id:{entry['data_id']}\t{path}")
     args.fixture.write_text("\n".join(rows) + "\n", encoding="utf-8")
     command = [str(args.executable.resolve()), str(args.fixture.resolve())]
     if args.case:
