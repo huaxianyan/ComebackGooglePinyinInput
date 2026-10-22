@@ -216,13 +216,16 @@ large-screen matrix.
 - the Settings-Activity form of `ajy.d()` has no IME Window token and therefore
   offers input-method switching only when this package has more than one enabled
   subtype or another enabled `com.google.*` IME has a non-auxiliary subtype.
-  When available, Boolean `switch_to_other_imes` (default `true`) remains visible
-  and depends on both the effective language-switch state and
-  `show_english_keyboard`. When unavailable, that row is removed and the
-  language-switch row additionally depends on `show_english_keyboard`;
-- Compose derives visual checked/enabled state separately from all three stored
-  Booleans. Disabled children retain storage, and Repository writes are rejected
-  whenever the corresponding legacy dependency or visibility gate is false;
+  This capability check now applies only to the language-switch row, which
+  additionally requires `show_english_keyboard` when no target is reported;
+- following Issue #11 and the maintainer decision, Boolean
+  `switch_to_other_imes` (default `true`) is always visible and editable. It is
+  independent of IME brand/count, subtype enumeration, English-keyboard state,
+  and emoji/language-key state. Its existing key, type, explicit/unset state,
+  and stored value are preserved. No constant visibility state is introduced;
+- Compose derives the language-key checked/enabled state separately from its
+  stored Boolean. Its existing dependency checks remain, while
+  `switch_to_other_imes` writes use the ordinary Boolean persistence path;
 - `one_handed_mode` originally uses `AutoSyncedListPreference`; its implementation
   only refreshes the ListPreference on external writes and adds no second key or
   callback. The Compose selector therefore preserves the exact String values

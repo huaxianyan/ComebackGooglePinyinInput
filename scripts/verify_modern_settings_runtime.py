@@ -321,8 +321,6 @@ def main() -> int:
             "BooleanSettingContracts.switchToOtherImes",
             "snapshot.capabilities.emojiSwitchKeyVisible",
             "snapshot.languageSwitchState.languageSwitchChecked",
-            "snapshot.languageSwitchState.switchToOtherImesVisible",
-            "snapshot.languageSwitchState.switchToOtherImesEnabled",
             "actions.onPinyinSchemeChange",
             "snapshot.pinyinSchemeLabels",
             "BooleanSettingContracts.fuzzyPinyin",
@@ -751,11 +749,18 @@ def main() -> int:
             "(!emojiSwitchKeyVisible || !emojiSwitchKeyChecked)",
             "(inputMethodSwitchingAvailable || showEnglishKeyboard)",
             "languageSwitchChecked = languageSwitchEnabled && persistedLanguageSwitchKey",
-            "switchToOtherImesVisible = inputMethodSwitchingAvailable",
-            "inputMethodSwitchingAvailable &&",
-            "showEnglishKeyboard && languageSwitchChecked",
         ),
         "language and emoji switch dependency rules",
+    )
+    # Issue #11: this preference is user-editable even without a switch target.
+    for obsolete_gate in ("switchToOtherImesVisible", "switchToOtherImesEnabled"):
+        if obsolete_gate in kotlin_text:
+            raise RuntimeError(f"IME-switch preference still has a capability gate: {obsolete_gate}")
+    require(
+        kotlin_text,
+        ('    item {\n        SettingsSwitchRow(\n            title = legacyString(\n'
+         '                "setting_switch_to_other_imes_title",',),
+        "always-present IME-switch preference row",
     )
     language_switch_test = next(
         (project / "compose-runtime/src/test/kotlin").rglob(
@@ -767,8 +772,7 @@ def main() -> int:
         (
             "emojiKeyTemporarilyUnchecksLanguageKeyWithoutChangingPersistedInput",
             "disablingEmojiRestoresPersistedLanguageKey",
-            "switchToOtherImesRequiresEnglishAndEffectiveLanguageKeys",
-            "noSwitchTargetRemovesChildAndMakesLanguageDependOnEnglish",
+            "noSwitchTargetMakesLanguageKeyDependOnEnglish",
         ),
         "language and emoji switch dependency tests",
     )
@@ -1293,9 +1297,7 @@ def main() -> int:
             "require(capabilities.voiceInputVisible)",
             "require(capabilities.emojiSwitchKeyVisible)",
             "currentLanguageSwitchState(capabilities)",
-            "require(state.languageSwitchEnabled)",
-            "require(state.switchToOtherImesVisible)",
-            "require(state.switchToOtherImesEnabled)",
+            "require(currentLanguageSwitchState(capabilities).languageSwitchEnabled)",
             "contract.dependency?.let { dependency ->",
             '"Boolean dependency is disabled: ${dependency.key}"',
             "isExplicit = preferences.contains(contract.key)",

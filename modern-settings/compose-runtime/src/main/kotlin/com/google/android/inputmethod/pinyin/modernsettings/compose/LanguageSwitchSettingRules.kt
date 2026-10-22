@@ -4,8 +4,6 @@ package com.google.android.inputmethod.pinyin.modernsettings.compose
 data class LanguageSwitchSettingState(
     val languageSwitchEnabled: Boolean,
     val languageSwitchChecked: Boolean,
-    val switchToOtherImesVisible: Boolean,
-    val switchToOtherImesEnabled: Boolean,
 )
 
 object LanguageSwitchSettingRules {
@@ -23,9 +21,6 @@ object LanguageSwitchSettingRules {
         return LanguageSwitchSettingState(
             languageSwitchEnabled = languageSwitchEnabled,
             languageSwitchChecked = languageSwitchChecked,
-            switchToOtherImesVisible = inputMethodSwitchingAvailable,
-            switchToOtherImesEnabled = inputMethodSwitchingAvailable &&
-                showEnglishKeyboard && languageSwitchChecked,
         )
     }
 }

@@ -237,27 +237,24 @@ internal fun androidx.compose.foundation.lazy.LazyListScope.keyboardKeysSettings
             },
         )
     }
-    if (snapshot.languageSwitchState.switchToOtherImesVisible) {
-        item {
-            SettingsSwitchRow(
-                title = legacyString(
-                    "setting_switch_to_other_imes_title",
-                    R.string.modern_settings_switch_to_other_imes_title,
-                ),
-                supporting = legacyString(
-                    "setting_switch_to_other_imes_summary",
-                    R.string.modern_settings_switch_to_other_imes_summary,
-                ),
-                checked = snapshot.switchToOtherImes.value,
-                enabled = snapshot.languageSwitchState.switchToOtherImesEnabled,
-                onCheckedChange = {
-                    actions.onBooleanChange(
-                        BooleanSettingContracts.switchToOtherImes,
-                        it,
-                    )
-                },
-            )
-        }
+    item {
+        SettingsSwitchRow(
+            title = legacyString(
+                "setting_switch_to_other_imes_title",
+                R.string.modern_settings_switch_to_other_imes_title,
+            ),
+            supporting = legacyString(
+                "setting_switch_to_other_imes_summary",
+                R.string.modern_settings_switch_to_other_imes_summary,
+            ),
+            checked = snapshot.switchToOtherImes.value,
+            onCheckedChange = {
+                actions.onBooleanChange(
+                    BooleanSettingContracts.switchToOtherImes,
+                    it,
+                )
+            },
+        )
     }
     item {
         SettingsSwitchRow(
