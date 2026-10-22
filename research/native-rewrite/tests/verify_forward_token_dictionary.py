@@ -11,7 +11,7 @@ def main():
     parser.add_argument("--manifest", type=Path, required=True)
     parser.add_argument("--executable", type=Path, required=True)
     parser.add_argument("--fixture", type=Path, required=True)
-    parser.add_argument("--case", choices=("source",))
+    parser.add_argument("--case", choices=("source", "target"))
     args = parser.parse_args()
     manifest = json.loads(args.manifest.read_text(encoding="utf-8"))
     if manifest["schema_version"] != 3:

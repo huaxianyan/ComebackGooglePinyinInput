@@ -9,36 +9,62 @@ static void Check(bool value, const char* message) {
     if (!value) { std::cerr << message << '\n'; std::exit(1); }
 }
 static void SourceFrames(const std::shared_ptr<ForwardTokenDictionaryView>& dictionary) {
-    ForwardTokenDictionaryView::SourceCursor cursor(dictionary);
+    ForwardTokenDictionaryView::Cursor cursor(dictionary);
     KeyToken token{"previous", 0, 0, true};
     auto current = [&](std::uint32_t id, const char* text) {
         Check(!cursor.Done() && cursor.Current(token) && token.id == id &&
-              token.text == text && token.auxiliary == 16 && !token.identity_bit,
+              token.text == text && token.auxiliary == 16 && !token.identity_bit && cursor.Attribute() == 0.0f,
               "Forward source frame did not produce its original token");
     };
     // Literal original-manifest token IDs and UTF-8, not computed by lookup.
     // Native Next applies Push segments from the stack top: hong, z -> zhong.
-    Check(cursor.Push(-1, 16, "hong") && cursor.Push(-1, 16, "z") && cursor.NextFrame(),
+    Check(cursor.Push(-1, 16, "hong", false) && cursor.Push(-1, 16, "z", false) && cursor.NextFrame(),
           "cannot apply the pending source segments");
     current(8446370, "\xee\x86\xa2");
     cursor.Advance();
     Check(cursor.Done() && cursor.NextFrame(), "cannot refresh a consumed source frame");
     current(8446370, "\xee\x86\xa2");
-    Check(cursor.Pop() && cursor.Push(-1, 16, "c") && cursor.NextFrame(),
+    Check(cursor.Pop() && cursor.Push(-1, 16, "c", false) && cursor.NextFrame(),
           "cannot replace the top pending segment");
     current(8445993, "\xee\x80\xa9");
     cursor.Reset();
     // Frozen source Push/Next protocol: a queued unknown edge fails only when
     // applied. Pop clears the synchronization flag and permits replacement.
-    Check(cursor.Push(-1, 16, "!") && !cursor.NextFrame(), "unknown source edge was not deferred to Next");
-    Check(cursor.Pop() && cursor.Push(-1, 16, "a") && cursor.NextFrame(),
+    Check(cursor.Push(-1, 16, "!", false) && !cursor.NextFrame(), "unknown source edge was not deferred to Next");
+    Check(cursor.Pop() && cursor.Push(-1, 16, "a", false) && cursor.NextFrame(),
           "cannot recover after a failed lazy query");
     current(4251648, "\xee\x80\x80");
     std::cout << "original Forward source pending frames, lazy reconciliation and token publication passed\n";
 }
+static void TargetFrames(const std::shared_ptr<ForwardTokenDictionaryView>& dictionary) {
+    ForwardTokenDictionaryView::Cursor cursor(dictionary);
+    KeyToken token{"previous", 0, 0, true};
+    auto current = [&](std::uint32_t id, const char* text, std::uint16_t language) {
+        Check(!cursor.Done() && cursor.Current(token) && token.id == id && token.text == text &&
+              token.auxiliary == language && !token.identity_bit && cursor.Attribute() == 0.0f,
+              "Forward target frame did not retain its literal token and query language");
+    };
+    // Literal frozen token IDs. Native target preparation uses strlen; its
+    // auxiliary word retains the query language, including wildcard 26.
+    Check(cursor.Push(-1, 26, std::string("\xe4\xb8\xad\0x", 5), true) && cursor.NextFrame(),
+          "cannot enter a literal CJK target frame");
+    current(0x01004e2d, "\xe4\xb8\xad", 26);
+    cursor.Advance();
+    Check(cursor.Done() && cursor.NextFrame() && cursor.Done(),
+          "target Next reactivated a consumed literal frame");
+    Check(cursor.Pop() && cursor.Push(-1, 16, "a", false) && cursor.NextFrame(),
+          "cannot return from target to source after Pop");
+    current(4251648, "\xee\x80\x80", 16);
+    cursor.Reset();
+    Check(cursor.Push(-1, 16, "\xf0\x9f\x98\x80", true) && cursor.NextFrame(),
+          "cannot enter a supplementary-plane target after Reset");
+    current(0x0101f600, "\xf0\x9f\x98\x80", 16);
+    std::cout << "original Forward literal target, consumption and source/target transitions passed\n";
+}
 int main(int argc, char** argv) {
-    Check(argc == 2 || (argc == 3 && std::string(argv[2]) == "source"),
-          "provide the original-resource TSV fixture and optional source case");
+    Check(argc == 2 || (argc == 3 &&
+              (std::string(argv[2]) == "source" || std::string(argv[2]) == "target")),
+          "provide the original-resource TSV fixture and optional source or target case");
     std::ifstream fixture(argv[1]);
     std::string line, path;
     while (std::getline(fixture, line)) {
@@ -54,7 +80,11 @@ int main(int argc, char** argv) {
     Check(name == "ForwardTokenDictionary", "wrong original resource envelope");
     const auto dictionary = ForwardTokenDictionaryView::Load(image.Slice(offset, image.Size() - offset));
     Check(static_cast<bool>(dictionary), "cannot load ordinary pinyin dictionary");
-    if (argc == 3) { SourceFrames(dictionary); return 0; }
+    if (argc == 3) {
+        if (std::string(argv[2]) == "source") SourceFrames(dictionary);
+        else TargetFrames(dictionary);
+        return 0;
+    }
     ForwardTokenDictionaryView::ExactCursor cursor(dictionary);
     // Expected IDs are literal original-manifest rows, not computed by lookup.
     auto current = [&](const char* key, std::size_t id) {

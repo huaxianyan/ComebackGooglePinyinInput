@@ -1,6 +1,6 @@
 # Marisa 与 Forward 的流式帧
 
-本文继续 [普通 Forward 单项读取](forward-token-dictionary.md)，记录原函数的状态推进及已接通的宿主 ExactCursor。内层 Marisa 分段查询及普通 Forward source 惰性协调已走真实资源。target、评分排序与 Manager 查询尚未接通。
+本文继续 [普通 Forward 单项读取](forward-token-dictionary.md)，记录原函数的状态推进及已接通的宿主 ExactCursor。内层 Marisa 分段查询及普通 Forward source/target 协调已走真实资源。长度属性 getter 已接通，Manager 查询与多记录排序仍未接入。
 
 ## 两层接口的 slot 2 不同
 
@@ -69,13 +69,23 @@ Push 追加已准备字节，从最后保存帧恢复节点与查询位置，再
 
 ## 宿主 source 惰性协调
 
-`ForwardTokenDictionaryView::SourceCursor` 已接 source 的 Push、NextFrame、Current、Advance、Done、Pop 和 Reset。Push 只准备并保存字符串，Next 才从待应用栈顶比较已有字符串、Pop 不同后缀并重新 Push。若整个待应用查询已相同，仍 Pop 并重做最后一段，以重新取得已被收集消费的子结果。
+`ForwardTokenDictionaryView::Cursor` 已接 source 的 Push、NextFrame、Current、Advance、Done、Pop 和 Reset。此前的 SourceCursor 已改名，不保留别名或第二套实现。Push 只准备并保存字符串，Next 才从待应用栈顶比较已有字符串、Pop 不同后缀并重新 Push。若整个待应用查询已相同，仍 Pop 并重做最后一段，以重新取得已被收集消费的子结果。
 
 同步标志在 Next 开始时设置，后续 Push 须经 Pop 或 Reset 才能继续。失败保留已成功应用的子帧，下一次同步继续按真实共同部分协调。外层 Pop、Reset 清待应用项及当前记录，不直接清内层已应用字符串和帧。
 
-普通资源没有多记录值区，每个 exact 结果只投影一个原表行。本实现保留原 16 位记录索引、查询长度和有符号短游标，Current 经共享的 token 填充函数读取 ID、language、identity 和码点文本。source 文本准备也与普通单项入口共用。没有提供评分、属性或 target 接口，不把此投影当作完整 Forward 迭代器。
+普通资源没有多记录值区，每个 exact 结果只投影一个原表行。本实现保留原 16 位记录索引、查询长度和有符号短游标，Current 经共享的 token 填充函数读取 ID、language、identity 和码点文本。source 文本准备也与普通单项入口共用。当前已补长度属性与 target 分支，仍不把此投影当作完整 Forward 迭代器。
 
 新增端到端用例沿用已有真实资源 fixture 入口，以 `source` case 选择运行：按原栈顺序输入 `hong`、`z` 得到 `zhong`，消费后重做相同帧，Pop 后改成 `chong`，并在 Reset、延迟匹配失败后恢复到 `a`。token ID 与 UTF-8 期望为原清单字面值，不由查询算法计算。
+
+## target 与长度属性
+
+Cursor 的 Push 以 target 参数选择原入口。普通 literal target 只在待应用栈为空时保存 C-string 副本与查询 language，并直接建立索引 0 的帧。Next 不推进也不重启此帧，Advance 固定设为 1。Pop、Reset 解除 target 模式，原 source 子帧仍留到后续 source Next 再协调。
+
+Current 与单项 ReadTarget 共用一份 literal token 填充逻辑。它在读取时检查一个 Unicode 码点，使用字典 selector 生成 ID，并保留查询 language，而非替换为字典 language。`target_uses_source=true` 则交回同一 source 分支，不另造 target 查询实现。
+
+原属性函数 `0x1b43bc` 用 S0 返回 float，不能按 Ghidra 的 undefined4 伪码签名推断为整数。target 或关闭 length_penalty 时返回正零。开启时按原 Meta 行与记录长度比较，匹配、失配字面值分别为 `0xbdd7c741` 和 `0xc0135d8e`，在宿主只保留一个定义点。当前八份原资源的 length_penalty 和 target_uses_source 都关闭，开启分支仅有静态恢复证据，未作为本轮运行覆盖。
+
+收集记录的评分只供内部排序，没有另一个对外评分 getter。普通无值区资源每个 exact 只产生一条记录，默认限额为 128，达不到部分排序条件。原清单八份资源的 Meta 均等于 key 字节长度，收集还会把匹配记录的评分置为正零。因此本投影不增加评分缓存或虚构读取接口。多记录、外部改限额等路径仍待单独恢复。
 
 ## BFS 的另一条证据
 
@@ -99,4 +109,6 @@ Push 追加已准备字节，从最后保存帧恢复节点与查询位置，再
 
 source 投影以 `build_forward_token_research.sh source` 完整宿主编译并运行一条受影响的真实入口，日志为 `work/native-rewrite/forward-token-build/forward-source-build.log`。旧普通读取、内层帧及 metadata 用例未重复执行。owner 构造证据在 `work/native-rewrite/restart-v217/native-forward-owner-constructor-comparison.json`，伪码在 `work/native-rewrite/ghidra/forward-token-owner-constructor/`。
 
-下一步补齐 Forward 的属性与评分、target 分支，再接 Manager 懒缓存。多记录值区、BFS、binary/custom 编码、评分截断、外部限额修改、OOM、原 ARM 和 Android 尚未验收。本轮未构建产品、操作设备或用户数据。
+新增 `build_forward_token_research.sh cursor` 窄范围流程，只编译并运行受影响的 source、target 两条真实资源用例。共享协调器已变化，source 随本轮执行一次；target 覆盖 C-string 截断、查询 language、Advance 后的 Next，以及 Pop、Reset 后切换 source/target。四字节码点另有真实入口检查，期望 ID 为冻结格式字面值。严格 C++17 编译及两条用例通过，日志为 `work/native-rewrite/forward-token-build/forward-cursor-build.log`。未重复执行内层、metadata 或整表枚举用例，中央静态登记保持 480 段。
+
+下一步接普通资源的 Manager 懒缓存与查询入口。多记录值区及排序、BFS、binary/custom 编码、外部限额修改、OOM、原 ARM 和 Android 尚未验收。本轮未构建产品、操作设备或用户数据。

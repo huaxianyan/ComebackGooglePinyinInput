@@ -79,4 +79,4 @@ bash research/native-rewrite/tools/build_forward_token_research.sh
 
 增量证据在 `work/native-rewrite/restart-v217/native-forward-token-snapshot-comparison.json`。Ghidra 输出位于 `forward-token-owner/`、`forward-token-marisa-protocol/`、`forward-token-proto-codec/`、`forward-token-resource-load/`、`forward-token-cursor-init/`、`forward-token-image-slice/` 和 `forward-token-byte-header/`。一次手输的非函数入口导致导出中止，后续只补齐真实入口，失败日志没有被当作成功证据。
 
-后续 [流式帧记录](forward-token-stream-frames.md) 已接通内层 Marisa ExactCursor 与普通 source 惰性协调，owner 默认限额已从原构造函数恢复为 128，中央静态登记为 `480` 段。换用共享图核心后，八份资源的 3,464 个 key 已在新后端重新通过普通入口，原分段查询另走一条端到端测试。source 投影另有一条窄范围真实入口验证。下一步补齐 Forward 属性、评分与 target，再接 Manager 懒缓存。BFS、多记录引用、custom 编码、评分与截断、损坏资源的部分发布、OOM、完整 ARM 执行和 Android 均未验收。保留原产品库与用户数据，不以当前静态和宿主证据替代完整输入法验收。
+后续 [流式帧记录](forward-token-stream-frames.md) 已接通内层 Marisa ExactCursor 与普通 source/target 协调，owner 默认限额已从原构造函数恢复为 128，中央静态登记为 `480` 段。换用共享图核心后，八份资源的 3,464 个 key 已在新后端重新通过普通入口，原分段查询另走一条端到端测试。普通 Cursor 的 source、target 与长度属性另有窄范围真实入口验证。默认普通资源只返回至多一条记录，不触发多记录评分排序，没有新增评分缓存或接口。下一步接 Manager 懒缓存与查询入口。BFS、多记录引用、custom 编码、评分与截断、损坏资源的部分发布、OOM、完整 ARM 执行和 Android 均未验收。保留原产品库与用户数据，不以当前静态和宿主证据替代完整输入法验收。

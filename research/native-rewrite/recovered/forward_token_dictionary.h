@@ -20,7 +20,7 @@ enum class ForwardTokenColumn : std::size_t { Id, Score, Meta, Code, NodeId, Cou
 class ForwardTokenDictionaryView {
 public:
     class ExactCursor;
-    class SourceCursor;
+    class Cursor;
     using MetadataProto = i18n_input::engine::hmm::proto::ForwardTokenDictionaryMetaData;
     static std::shared_ptr<ForwardTokenDictionaryView> Load(const OwnedByteRegion& payload);
     const MetadataProto& Metadata() const { return metadata_; }
@@ -43,6 +43,7 @@ private:
     static constexpr std::int32_t kDefaultResultLimit = 128;
     std::string PrepareSource(const std::string& input) const;
     void ReadSourceToken(std::size_t index, std::size_t length, KeyToken& output) const;
+    bool ReadLiteralTarget(const std::string& input, std::int32_t language, KeyToken& output) const;
     ForwardTokenDictionaryView(const OwnedByteRegion& image, const MetadataProto& metadata,
         std::vector<FlatIntegerTableView>&& tables, const OwnedByteRegion& prefix_scores);
     // Keep the source alive until AFTER the mapped marisa object is destroyed.
@@ -75,17 +76,19 @@ private:
     marisa::Agent agent_;
     bool has_current_ = false;
 };
-// Ordinary source-token projection, not the full scored/target Forward iterator.
-// Push records the original call order; NextFrame applies pending segments from
-// the stack top. A loaded dictionary and complete valid UTF-8 inputs are required.
-class ForwardTokenDictionaryView::SourceCursor {
+// Ordinary source/target projection, not a multi-record ranked Forward iterator.
+// Source Push records call order; NextFrame applies segments from the stack top.
+// A loaded dictionary and complete valid UTF-8 inputs are required.
+class ForwardTokenDictionaryView::Cursor {
 public:
-    explicit SourceCursor(std::shared_ptr<const ForwardTokenDictionaryView> dictionary);
-    bool Push(std::int32_t selector, std::int32_t language, const std::string& input);
+    explicit Cursor(std::shared_ptr<const ForwardTokenDictionaryView> dictionary);
+    bool Push(std::int32_t selector, std::int32_t language, const std::string& input, bool target);
     bool NextFrame();
     bool Done() const;
     bool Current(KeyToken& output) const;
-    void Advance() { position_ = static_cast<std::int16_t>(position_ + 1); }
+    // Like the native getter, use only while !Done().
+    float Attribute() const;
+    void Advance() { position_ = target_mode_ ? 1 : static_cast<std::int16_t>(position_ + 1); }
     bool Pop();
     void Reset();
 private:
@@ -98,6 +101,8 @@ private:
     std::uint16_t length_ = 0;
     bool has_record_ = false;
     bool synchronized_ = false;
+    bool target_mode_ = false;
+    std::int32_t query_language_ = kUnknownTokenLanguage;
 };
 }  // namespace comeback::recovered
 #endif

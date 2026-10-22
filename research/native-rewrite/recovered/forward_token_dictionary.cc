@@ -87,9 +87,13 @@ bool ForwardTokenDictionaryView::ReadTarget(const std::string& input, std::int32
     std::int32_t language, KeyToken& output) const {
     if (metadata_.target_uses_source()) return ReadExactSource(input, selector, language, output);
     if (!MatchesTokenDictionary(metadata_.selector(), metadata_.language_id(), selector, language)) return false;
-    const std::string query(input.c_str());
+    return ReadLiteralTarget(std::string(input.c_str()), language, output);
+}
+
+bool ForwardTokenDictionaryView::ReadLiteralTarget(const std::string& input,
+    std::int32_t language, KeyToken& output) const {
     std::vector<std::string> units;
-    AppendTokenQueryUnits(query, units);
+    AppendTokenQueryUnits(input, units);
     if (units.size() != 1) return false;
     const auto scalar = ReadTokenQueryScalar(units.front());
     output.id = (static_cast<std::uint32_t>(metadata_.selector()) << 28) | kTokenLiteralBit |
