@@ -44,7 +44,7 @@ GenericDataModelCreator `0x19a3c0` 的源选择为：
 - 路径非空、模式 `0`：先尝试内存映射加载；未得到模型且 legacy 工厂名称可用时，再走模型文件接口。
 - 路径非空、模式 `1`：进入文件通道。该能力不等于上述 Android 注册允许该模式。
 
-模型数据类型 `4`、`5`、`34` 走特殊加载器，`35` 按显式模型名查找。原 Java 的 `23`、`24` 走 legacy 类型表，再经 `0x131d84` 的模型名或别名注册器创建对象。后续已确认两者均登记为 SingleTrieUserDictionary，具体绑定见 [类型表取证](legacy-single-trie-initialization.md)。
+模型数据类型 `4`、`5`、`34` 共用 `0x19ba28` 的类名前缀加载器，先读按 8 字节对齐的类名，再经原注册器创建模型。Direct/Forward 的模块注册、创建回调和加载桥已在 [普通 token 模型创建链](token-model-creation.md) 闭合。`35` 按显式模型名查找。原 Java 的 `23`、`24` 走 legacy 类型表，再经 `0x131d84` 的模型名或别名注册器创建对象。后续已确认两者均登记为 SingleTrieUserDictionary，具体绑定见 [类型表取证](legacy-single-trie-initialization.md)。
 
 `0x19b984` 调用模型内存接口，根据返回成功标记决定是否保留对象，失败时销毁本次对象。本层没有将返回载荷与输入总长比较，其载荷含义仍待确认。[宿主文件入口](mapped-dictionary-load.md) 的整文件 EOF 条件仍只属于宿主契约。
 
@@ -74,4 +74,4 @@ GenericDataModelCreator `0x19a3c0` 的源选择为：
 - `work/native-rewrite/restart-v217/native-model-creator-enrollment-comparison.json`
 - `work/native-rewrite/restart-v217/model-creator-enrollment-export.json`
 
-真实 APK 导出核对十三个新区域及独立 FDE 端点。未重跑旧构建与产品验收，未执行原 ARM64、操作设备或访问用户词典。下一步仅追 legacy 类型表注册与空输入初始化，再决定如何接已有可编译组件。
+真实 APK 导出核对十三个新区域及独立 FDE 端点。未重跑旧构建与产品验收，未执行原 ARM64、操作设备或访问用户词典。legacy 类型表与初始化已有后续记录，普通 token 创建链也已闭合。下一步定位内置 data scheme 到 DataInfo 的内存注册，不扩展 FD 可变词典或复制通用模型 ABI。

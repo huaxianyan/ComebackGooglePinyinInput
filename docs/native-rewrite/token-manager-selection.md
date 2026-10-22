@@ -86,6 +86,8 @@ TokenDictionaryResources 接收显式 bundle 索引，键为原注册 data ID，
 
 原 DataManager 的成功缓存规则沿用已有 `0x198f28` 证据，不重取。宿主仅恢复不可变 bundle 索引及普通模型缓存，不实现创建器注册、FD 来源、Android 锁、失效标记或重配置。多个 Manager 通过同一资源对象复用模型，游标快照仍持有自己的共享引用。
 
+后续已定位原 type 4 的类名前缀加载、Direct/Forward 模块注册和创建回调，见 [普通模型创建链](token-model-creation.md)。这两类的普通分派与现有宿主一致，本阶段不改查询实现，也不另加通用注册器。原 DataManager 的内置数据注册仍待接入。
+
 同一条端到端入口现在读取原 pinyin_qwerty 设置的 field 2 原字节，ID 绑定取自原 data scheme。额外六个选择项是明确的测试配置，包括一个缺失 ID，不代表应用默认偏好。原六资源的帧、排序、先到保留和 target 用例继续执行，跨 Manager 的动态 ID 连续性验证真实缓存复用。没有新增人工结果或子游标。
 
 一次 manager 宿主构建、上述端到端流程和一个 schema 模块测试通过。模块测试用字面 wire 验证字段、显式 false 存在性和默认值。日志为 `work/native-rewrite/forward-token-build/manager-setting-build.log`。迭代选项只恢复 schema，当前非空配置明确不支持。
@@ -107,4 +109,4 @@ TokenDictionaryResources 接收显式 bundle 索引，键为原注册 data ID，
 
 Ghidra 成功输出位于 `token-manager-query-state/`、`token-manager-query-core/`、`token-manager-selection/`、`token-manager-key-order/` 和 `token-manager-cache-advance/`，均在 `work/native-rewrite/ghidra/`。测试二进制精确清理，build.log 留存于 `work/native-rewrite/token-manager-selection-build/`。
 
-后续 [DirectTokenDictionary](direct-token-dictionary.md) 与 [普通 Forward 资源读取](forward-token-dictionary.md) 均有真实子游标，已接通本页的 Manager 匹配帧与缓存。设置字节与普通 ID 缓存已接到工厂。下一步追踪原数据注册、创建器和上层文本准备，不用提前准备的结果替代真实读取。
+后续 [DirectTokenDictionary](direct-token-dictionary.md) 与 [普通 Forward 资源读取](forward-token-dictionary.md) 均有真实子游标，已接通本页的 Manager 匹配帧与缓存。设置字节与普通 ID 缓存已接到工厂。下一步追踪内置 data scheme 到 DataInfo 的内存注册，再接上层文本准备，不用提前准备的结果替代真实读取。
