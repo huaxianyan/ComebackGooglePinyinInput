@@ -1,0 +1,2 @@
+# Preserve unified-diff context markers and LF when checked out on Windows.
+marisa-resumable-exact.patch text eol=lf whitespace=-blank-at-eol

@@ -54,7 +54,7 @@ prefix 的长度为 LE64，后接相应数量的字节及八字节对齐填充�
 
 ## 宿主依赖与验证
 
-研究使用上游 Marisa `v0.2.6`，提交 `e54f296bb52d16693931c8b963744931ef1e37f7`，读取原序列化图。版本固定在 `dependencies/marisa.json`，选择上游双许可中的 BSD-2-Clause，完整通知在相邻 COPYING 文件。这是宿主资源解码依赖，不代表原 APK 使用这个确切版本，也不替换产品输入法引擎。
+研究使用上游 Marisa `v0.2.6`，提交 `e54f296bb52d16693931c8b963744931ef1e37f7`，读取原序列化图。版本固定在 `dependencies/marisa.json`，选择上游双许可中的 BSD-2-Clause，完整通知在相邻 COPYING 文件。现已附带可复现的三态查询研究补丁，单项读取与分段 ExactCursor 共用一个核心。这是宿主研究依赖，不代表原 APK 使用这个确切版本，也不替换产品输入法引擎。
 
 在已具备编译器和 protobuf 的 WSL 中：
 
@@ -62,7 +62,7 @@ prefix 的长度为 LE64，后接相应数量的字节及八字节对齐填充�
 bash research/native-rewrite/tools/build_forward_token_research.sh
 ```
 
-先按 manifest 的 SSH URL、标签取得源码到指定 work 目录。脚本核对提交，不安装系统工具或修改用户配置。自有源码严格使用 C++17、`-Wall -Wextra -Werror`，上游源码和官方生成代码独立编译。
+先按 manifest 的 SSH URL、标签取得源码到指定 work 目录。脚本核对提交，从该提交导出构建副本并应用 manifest 指定的研究补丁，依赖 checkout 保持原样。自有源码严格使用 C++17、`-Wall -Wextra -Werror`，上游源码和官方生成代码独立编译。传入 `queries` 可只运行受影响的普通字典与流式查询入口，跳过未改的 metadata 模块。
 
 本轮结果：
 
@@ -79,4 +79,4 @@ bash research/native-rewrite/tools/build_forward_token_research.sh
 
 增量证据在 `work/native-rewrite/restart-v217/native-forward-token-snapshot-comparison.json`。Ghidra 输出位于 `forward-token-owner/`、`forward-token-marisa-protocol/`、`forward-token-proto-codec/`、`forward-token-resource-load/`、`forward-token-cursor-init/`、`forward-token-image-slice/` 和 `forward-token-byte-header/`。一次手输的非函数入口导致导出中止，后续只补齐真实入口，失败日志没有被当作成功证据。
 
-后续 [流式帧取证](forward-token-stream-frames.md) 已展开两层不同的 Pop、Reset 及三态调用，中央增至 `472` 段，尚未新增流式实现。下一步先闭合 Marisa 内核，再连接 Forward 帧和 Manager 懒缓存。BFS、多记录引用、custom 编码、评分与截断、损坏资源的部分发布、OOM、完整 ARM 执行和 Android 均未验收。保留原产品库与用户数据，不以当前静态和宿主证据替代完整输入法验收。
+后续 [流式帧记录](forward-token-stream-frames.md) 已恢复三态内核并接通内层 Marisa ExactCursor，中央静态登记为 `479` 段。换用共享图核心后，八份资源的 3,464 个 key 已在新后端重新通过普通入口，原分段查询另走一条端到端测试。下一步连接外层 Forward 帧和 Manager 懒缓存。BFS、多记录引用、custom 编码、评分与截断、损坏资源的部分发布、OOM、完整 ARM 执行和 Android 均未验收。保留原产品库与用户数据，不以当前静态和宿主证据替代完整输入法验收。

@@ -1,6 +1,6 @@
 # Marisa 与 Forward 的流式帧
 
-本文继续 [普通 Forward 单项读取](forward-token-dictionary.md)，仅记录原函数的状态推进。尚未新增流式 cursor 或将上游 bool lookup 包装成原三态接口。
+本文继续 [普通 Forward 单项读取](forward-token-dictionary.md)，记录原函数的状态推进及已接通的宿主 ExactCursor。内层 Marisa 分段查询已走真实资源，外层 Forward 协调与 Manager 查询尚未实现。
 
 ## 两层接口的 slot 2 不同
 
@@ -39,7 +39,7 @@ Exact 的 slot 13 为 `0x1d97fc`：
 
 `0x1e9f5c` 使用真实缓存或 LOUDS 子边。`0x1e9e70` 按图结构委派嵌套 Trie 匹配 `0x1e9ce8` 或 tail 匹配 `0x1f1830`。这两条路径均先比较字节，再推进查询位置。查询在匹配链内耗尽时可返回 false，正是内核仍须区分 1 与 2 的原因。terminal 位读取为 `0x1e9af4`，key ID 使用 `0x1e7200` 的排他 rank1。
 
-固定的上游 v0.2.6 已提供同类真实图迁移与 tail 操作，但普通 `lookup()` 每次调用 `lookup_init()`，清零节点与查询位置，并把两种未形成 exact 结果的情况都返回 false。它只能沿用既有单项读取验证，不能直接承接上述可继续帧。
+未打研究补丁的上游 v0.2.6 已提供同类真实图迁移与 tail 操作，但普通 `lookup()` 每次调用 `lookup_init()`，清零节点与查询位置，并把两种未形成 exact 结果的情况都返回 false。本次修改该核心实现，供单项读取与可继续帧共用，见下节。
 
 Ghidra 曾把两个尾跳转包装推导为 void。这里以已采集的跳转、实际内核返回值及外层调用方判断为依据，不把伪码中的 void 当作原 ABI 无返回值。
 
@@ -48,6 +48,16 @@ Ghidra 曾把两个尾跳转包装推导为 void。这里以已采集的跳转�
 `0x1db1bc` 首先清当前结果标志。有帧时按最后一帧记录的长度缩短合并字符串并删一帧，返回 true。空栈则返回 false。它不会立刻重新匹配父帧。
 
 `0x1d9350` 清当前标志、合并字符串和保存帧。此前已登记的 `0x1d93bc` 只清当前标志。失败 Push 也会经过内核更新标志，回滚字符串不代表恢复此前可读结果。
+
+## 宿主 ExactCursor
+
+`ForwardTokenDictionaryView::ExactCursor` 已实现 Push、Pop、Reset、Depth、HasCurrent 与 Current。它持有字典的共享引用，使用该字典唯一的真实 LOUDS 图、缓存、嵌套 Trie 和 tail，不另建图或 ABI 对象。
+
+Push 追加已准备字节，从最后保存帧恢复节点与查询位置，再进入三态查询。只有 Exact 设置当前结果，Prefix 也保存新帧，Missing 缩回字符串并保持原帧数量。Pop 和 Reset 清当前标志，不立即重查父帧。Current 返回完整累计查询及原 Marisa key ID，原 token ID 与文本仍由外层按表转换。
+
+`dependencies/marisa-resumable-exact.patch` 替换固定上游的 lookup 核心，以单一定义的 LookupResult 表达三态。已有公共 bool API 只保留原来的 exact 判断，宿主视图直接使用核心。固定依赖 checkout 保持原样，构建从指定提交导出到 work 后应用补丁。补丁中的恢复逻辑属于 Google-derived 研究材料，许可边界沿用 NOTICE，上游 BSD 通知继续保留。
+
+本实现仅接原 Exact 调用方已恢复的准备字节与保存帧路径，不提供原 Agent ABI 或任意模式入口。宿主枚举名称不代表恢复了原枚举名，也未把原模式 2、8 写入上游另一套状态枚举。
 
 ## Forward 的惰性协调
 
@@ -63,7 +73,7 @@ Ghidra 曾把两个尾跳转包装推导为 void。这里以已采集的跳转�
 
 ## 证据与边界
 
-本阶段仍为静态取证，没有运行或伪造流式查询。此前的 `12` 段帧证据保持原样，本次补充内核及匹配链的 `7` 段 FDE，均与保留 v2.1.7 库逐字节相同，中央登记增至 `479` 段。前 `472` 段沿用已有证据，metadata 构造函数的既有 ADRP 差异仍保留。
+静态取证阶段的 `12` 段帧与后补的 `7` 段内核及匹配链证据保持原样，均与保留 v2.1.7 库逐字节相同。中央登记仍为 `479` 段，metadata 构造函数的既有 ADRP 差异继续保留。本次新增的是宿主实现与运行验证，没有新增或重复比较旧 FDE。
 
 - 指令与增量比较：`work/native-rewrite/restart-v217/native-forward-token-frames-comparison.json`
 - 成功伪码：`work/native-rewrite/ghidra/forward-token-stream-frames/`、`marisa-exact-lookup-kernel/` 和 `forward-token-bfs-edge/`
@@ -73,6 +83,8 @@ Ghidra 曾把两个尾跳转包装推导为 void。这里以已采集的跳转�
 
 新增比较与指令在 `work/native-rewrite/restart-v217/native-marisa-resume-comparison.json`，日志在 `work/native-rewrite/marisa-resume-evidence.log`。成功伪码分别保存在 `work/native-rewrite/ghidra/` 下的 `marisa-lookup-dispatch-unwind/`、`marisa-lookup-core-unwind/`、`marisa-lookup-steps-unwind/`、`marisa-lookup-match-unwind/` 和 `marisa-lookup-tail-unwind/`。
 
-下一步把上述三态和回退位置接到共享的真实图读取层，恢复累计字符串与保存帧，不另造 ABI 容器，也不在外层用 bool lookup 或预测搜索补判来模拟状态。随后再接 Forward 的惰性协调与 Manager 懒缓存。
+宿主验证使用 `build_forward_token_research.sh queries`，日志为 `work/native-rewrite/forward-token-build/resumable-build.log`。自有 C++17 源码按严格告警编译。分段查询测试从原 `pinyin_token_v_2` 资源进入，检查 `<unused_` 续为 `<unused_token>`、失败后续输、Pop 后由 `zhong` 改为 `zhang`，并检查 Reset。预期 key ID 为独立原清单的字面值 0、474、509。
 
-单项读取的八份资源、3,464 个 key 证据直接沿用，不重跑；它们不证明本页的流式帧运行等价。尚未创建 Manager 合并帧、恢复 BFS、执行 ARM 或操作设备及用户数据。
+因本次更换图持有方式与查询核心，普通字典入口另做新后端回归，八份原资源的全部 3,464 个 key 通过。未改的 metadata 模块测试没有重跑。上述宿主结果不代表原 ARM、分配失败顺序或完整输入法运行等价。
+
+下一步接 Forward 的待应用字符串、惰性协调与 Manager 懒缓存。多记录值区、BFS、binary/custom 编码、评分截断、OOM、原 ARM 和 Android 尚未验收。本轮未构建产品、操作设备或用户数据。

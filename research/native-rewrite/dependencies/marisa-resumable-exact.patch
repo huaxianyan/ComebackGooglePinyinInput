@@ -1,0 +1,64 @@
+--- a/lib/marisa/grimoire/trie/louds-trie.h
++++ b/lib/marisa/grimoire/trie/louds-trie.h
+@@ -24,7 +24,8 @@
+   void read(Reader &reader);
+   void write(Writer &writer) const;
+ 
+-  bool lookup(Agent &agent) const;
++  enum class LookupResult { Exact = 0, Prefix = 1, Missing = 2 };
++  LookupResult lookup(Agent &agent, bool reset) const;
+   void reverse_lookup(Agent &agent) const;
+   bool common_prefix_search(Agent &agent) const;
+   bool predictive_search(Agent &agent) const;
+--- a/lib/marisa/trie.cc
++++ b/lib/marisa/trie.cc
+@@ -88,7 +88,7 @@
+   if (!agent.has_state()) {
+     agent.init_state();
+   }
+-  return trie_->lookup(agent);
++  return trie_->lookup(agent, true) == grimoire::LoudsTrie::LookupResult::Exact;
+ }
+ 
+ void Trie::reverse_lookup(Agent &agent) const {
+--- a/lib/marisa/grimoire/trie/louds-trie.cc
++++ b/lib/marisa/grimoire/trie/louds-trie.cc
+@@ -51,22 +51,33 @@
+   write_(writer);
+ }
+ 
+-bool LoudsTrie::lookup(Agent &agent) const {
++// Original resumable exact control flow at 0x1ea130; see project NOTICE.
++LoudsTrie::LookupResult LoudsTrie::lookup(Agent &agent, bool reset) const {
+   MARISA_DEBUG_IF(!agent.has_state(), MARISA_STATE_ERROR);
+ 
+   State &state = agent.state();
+-  state.lookup_init();
++  if (reset) {
++    state.lookup_init();
++  }
++  if (empty()) {
++    return LookupResult::Missing;
++  }
+   while (state.query_pos() < agent.query().length()) {
++    const std::size_t node = state.node_id();
++    const std::size_t position = state.query_pos();
+     if (!find_child(agent)) {
+-      return false;
++      const bool consumed = state.query_pos() == agent.query().length();
++      state.set_node_id(node);
++      state.set_query_pos(position);
++      return consumed ? LookupResult::Prefix : LookupResult::Missing;
+     }
+   }
+   if (!terminal_flags_[state.node_id()]) {
+-    return false;
++    return LookupResult::Prefix;
+   }
+   agent.set_key(agent.query().ptr(), agent.query().length());
+   agent.set_key(terminal_flags_.rank1(state.node_id()));
+-  return true;
++  return LookupResult::Exact;
+ }
+ 
+ void LoudsTrie::reverse_lookup(Agent &agent) const {

@@ -41,7 +41,9 @@ std::shared_ptr<ForwardTokenDictionaryView> ForwardTokenDictionaryView::Load(con
     auto result = std::shared_ptr<ForwardTokenDictionaryView>(new ForwardTokenDictionaryView(
         payload, metadata, std::move(tables), prefix));
     try {
-        result->trie_.map(payload.Data() + 16, graph_size);
+        marisa::grimoire::Mapper mapper;
+        mapper.open(payload.Data() + 16, graph_size);
+        result->trie_.map(mapper);
     } catch (const marisa::Exception&) {
         return nullptr;
     }
@@ -62,7 +64,8 @@ bool ForwardTokenDictionaryView::ReadExactSource(const std::string& input, std::
     if (!metadata_.case_sensitive()) LowercaseTokenBytes(query);
     marisa::Agent agent;
     agent.set_query(query.data(), query.size());
-    if (!trie_.lookup(agent)) return false;
+    agent.init_state();
+    if (trie_.lookup(agent, true) != marisa::grimoire::trie::LoudsTrie::LookupResult::Exact) return false;
     const auto index = agent.key().id();
     output.id = Table(ForwardTokenColumn::Id).At(index);
     output.auxiliary = TokenAuxiliaryFromWord(metadata_.language_id());
