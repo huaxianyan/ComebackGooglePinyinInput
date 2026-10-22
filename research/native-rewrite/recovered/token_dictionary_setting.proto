@@ -1,0 +1,15 @@
+// Google-derived wire fields and presence from fixed ARM64 generated code.
+// Boolean option names remain unknown; see NOTICE.
+syntax = "proto2";
+package i18n_input.engine.hmm.proto;
+option optimize_for = LITE_RUNTIME;
+
+message DictionaryIteratorOptions {
+  optional bool field_1 = 1 [default = false];
+  optional bool field_2 = 2 [default = false];
+  optional string data_id = 3;
+}
+message TokenDictionaryDataSetting {
+  repeated string data_id = 1;
+  repeated DictionaryIteratorOptions iterator_options = 2;
+}

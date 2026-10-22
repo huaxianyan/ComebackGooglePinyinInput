@@ -1,6 +1,6 @@
 # Android 模型缓存与词典属性
 
-本阶段展开 accessor 的资源入口和发布后属性选择。资源缓存只取证，可编译部分恢复 DictionaryPropertyProto 与 ResolveDictionaryProperty，未建立 Android 缓存或同步替身。
+本阶段展开 accessor 的资源入口和发布后属性选择。Android 资源缓存只取证，可编译部分恢复 DictionaryPropertyProto 与 ResolveDictionaryProperty。后续普通 token bundle 的 ID 缓存投影已接入真实查询，见 [Manager 设置与缓存](token-manager-selection.md#设置消息与-data-id-缓存)，不代表 Android accessor 或同步已恢复。
 
 ## 资源入口实际是 DataManager
 

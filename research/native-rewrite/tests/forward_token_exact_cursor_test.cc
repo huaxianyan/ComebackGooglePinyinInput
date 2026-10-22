@@ -1,5 +1,6 @@
 #include "forward_token_dictionary.h"
 #include "token_dictionary_manager.h"
+#include "token_dictionary_setting.pb.h"
 #include "dictionary_string_image.h"
 #include "file_mmap.h"
 #include <cstdlib>
@@ -10,8 +11,7 @@ using namespace comeback::recovered;
 static void Check(bool value, const char* message) {
     if (!value) { std::cerr << message << '\n'; std::exit(1); }
 }
-static std::pair<OwnedByteRegion, OwnedByteRegion> OriginalResource(
-    const char* filename, const char* resource, const char* kind) {
+static OwnedByteRegion OriginalImage(const char* filename, const std::string& resource) {
     std::ifstream fixture(filename);
     std::string line, path;
     while (std::getline(fixture, line)) {
@@ -22,22 +22,34 @@ static std::pair<OwnedByteRegion, OwnedByteRegion> OriginalResource(
     }
     OwnedByteRegion image;
     Check(MapReadOnlyFile(path, image) == FileMappingResult::Mapped, "cannot map original token resource");
-    std::string name;
-    const auto offset = LoadDictionaryStringImage(image, name);
-    Check(name == kind, "wrong original resource envelope");
-    return {image, image.Slice(offset, image.Size() - offset)};
+    return image;
 }
 static void ManagerFrames(const char* fixture) {
-    // Deliberately not pair-sorted. Later ABC and pinyin-English share keys
-    // with earlier pinyin and English; original activation keeps the first.
-    const auto manager = TokenDictionaryManager::LoadActive({
-        OriginalResource(fixture, "shortcuts_tokens", "DirectTokenDictionary").first,
-        OriginalResource(fixture, "pinyin_token_v_2", "ForwardTokenDictionary").first,
-        OriginalResource(fixture, "en_tokens", "DirectTokenDictionary").first,
-        OriginalResource(fixture, "tokens_shuangpin_abc", "ForwardTokenDictionary").first,
-        OriginalResource(fixture, "pinyin_digits_token_v_2", "ForwardTokenDictionary").first,
-        OriginalResource(fixture, "pinyin_english_token_v_2", "DirectTokenDictionary").first});
-    Check(static_cast<bool>(manager), "cannot activate original class-enveloped dictionaries");
+    TokenDictionaryResources::Sources sources;
+    std::ifstream rows(fixture);
+    std::string line;
+    while (std::getline(rows, line)) {
+        if (line.rfind("@id:", 0) != 0) continue;
+        const auto key = line.substr(0, line.find('\t'));
+        sources.emplace(key.substr(4), OriginalImage(fixture, key));
+    }
+    TokenDictionaryResources resources(std::move(sources));
+    const auto original = OriginalImage(fixture, "@token_setting");
+    i18n_input::engine::hmm::proto::TokenDictionaryDataSetting setting;
+    Check(setting.ParseFromArray(original.Data(), original.Size()) && setting.data_id_size() == 1 &&
+          setting.data_id(0) == "zh_t_i0_pinyin_android_token_dictionary", "wrong original token setting slice");
+    // Explicit test selections, not a claim about the app's preference defaults.
+    // Actual registration IDs come from the original data schemes in the fixture.
+    setting.add_data_id("shortcuts_token_dictionary");
+    setting.add_data_id("en_t_i0_und_android_token_dictionary");
+    setting.add_data_id("zh_t_i0_shuangpin_abc_android_token_dictionary");
+    setting.add_data_id("zh_t_i0_pinyin_android_digits_token_dictionary");
+    setting.add_data_id("zh_t_i0_pinyin_android_english_token_dictionary");
+    // Frozen 0x1948d0 protocol: an absent ID does not discard valid selections.
+    setting.add_data_id("missing-research-token-dictionary");
+    const auto wire = setting.SerializeAsString();
+    const auto manager = TokenDictionaryManager::Load(wire, resources);
+    Check(static_cast<bool>(manager), "cannot activate original registered dictionary IDs");
     auto cursor = manager->CreateDfsCursor();
     KeyToken token{"previous", 0, 0, true};
     auto consume = [&](std::uint32_t id, std::int16_t language) {
@@ -81,14 +93,16 @@ static void ManagerFrames(const char* fixture) {
     cursor->Reset();
     Check(cursor->Push(0, 0, "Ab", false) && cursor->NextFrame(), "cannot query a multi-character source");
     consume(0x008f0000, 0);
-    auto second = manager->CreateDfsCursor();
+    const auto reloaded = TokenDictionaryManager::Load(wire, resources);
+    Check(static_cast<bool>(reloaded), "cannot resolve the same setting through the resource cache");
+    auto second = reloaded->CreateDfsCursor();
     Check(second->Push(0, 0, "Cd", false) && second->NextFrame() && second->Current(token) && token.id == 0x008f0001,
-          "factory cursors did not share the original model counter");
-    const auto empty = TokenDictionaryManager::LoadActive({});
+          "ID-cache reuse lost the model counter across Managers");
+    const auto empty = TokenDictionaryManager::Load("", resources);
     Check(static_cast<bool>(empty), "cannot activate the native empty dictionary set");
     auto empty_cursor = empty->CreateDfsCursor();
     Check(static_cast<bool>(empty_cursor) && empty_cursor->Done(), "empty DFS factory did not retain its real Manager object");
-    std::cout << "original Manager activation, signed-pair order, first-key selection, shared models and real DFS query passed\n";
+    std::cout << "original token setting, registered data IDs, cross-Manager model reuse and real DFS query passed\n";
 }
 static void SourceFrames(const std::shared_ptr<ForwardTokenDictionaryView>& dictionary) {
     ForwardTokenDictionaryView::Cursor cursor(dictionary);
@@ -148,7 +162,11 @@ int main(int argc, char** argv) {
               (std::string(argv[2]) == "source" || std::string(argv[2]) == "target" || std::string(argv[2]) == "manager")),
           "provide the original-resource TSV fixture and optional source, target or manager case");
     if (argc == 3 && std::string(argv[2]) == "manager") { ManagerFrames(argv[1]); return 0; }
-    const auto dictionary = ForwardTokenDictionaryView::Load(OriginalResource(argv[1], "pinyin_token_v_2", "ForwardTokenDictionary").second);
+    const auto image = OriginalImage(argv[1], "pinyin_token_v_2");
+    std::string kind;
+    const auto offset = LoadDictionaryStringImage(image, kind);
+    Check(kind == "ForwardTokenDictionary", "wrong original Forward resource envelope");
+    const auto dictionary = ForwardTokenDictionaryView::Load(image.Slice(offset, image.Size() - offset));
     Check(static_cast<bool>(dictionary), "cannot load ordinary pinyin dictionary");
     if (argc == 3) {
         if (std::string(argv[2]) == "source") SourceFrames(dictionary);

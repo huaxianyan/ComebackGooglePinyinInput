@@ -33,20 +33,24 @@ for source in $(find "$source_root/lib/marisa" -name '*.cc' | sort); do
     g++ -std=c++11 -O2 -I"$source_root/include" -I"$source_root/lib" -c "$source" -o "$build/marisa/$object.o"
 done
 ar rcs "$build/libmarisa.a" "$build/marisa/"*.o
-protoc -I"$recovered" --cpp_out="$build/generated" "$recovered/forward_token_metadata.proto"
+protoc -I"$recovered" --cpp_out="$build/generated" "$recovered/forward_token_metadata.proto" "$recovered/token_dictionary_setting.proto"
 flags=(-std=c++17 -O2 -Wall -Wextra -Werror -I"$recovered" -I"$build/generated" -I"$source_root/include" -I"$source_root/lib")
-g++ -std=c++17 -O2 -I"$build/generated" -c "$build/generated/forward_token_metadata.pb.cc" -o "$build/objects/forward_token_metadata.pb.o"
-for name in owned_byte_region file_mmap dictionary_string_image flat_integer_table token_query token_manager_selection token_manager_cursor token_dictionary_manager direct_token_dictionary forward_token_dictionary forward_token_exact_cursor forward_token_cursor; do
+for proto in forward_token_metadata token_dictionary_setting; do
+    g++ -std=c++17 -O2 -I"$build/generated" -c "$build/generated/$proto.pb.cc" -o "$build/objects/$proto.pb.o"
+done
+for name in owned_byte_region file_mmap dictionary_string_image flat_integer_table token_query token_manager_selection token_manager_cursor token_dictionary_resources token_dictionary_manager direct_token_dictionary forward_token_dictionary forward_token_exact_cursor forward_token_cursor; do
     g++ "${flags[@]}" -c "$recovered/$name.cc" -o "$build/objects/$name.o"
 done
 tests=(forward_token_dictionary forward_token_exact_cursor)
 if [[ "$scope" == source || "$scope" == cursor || "$scope" == manager ]]; then tests=(forward_token_exact_cursor); fi
 if [[ "$scope" == all ]]; then tests+=(forward_token_metadata); fi
+if [[ "$scope" == all || "$scope" == queries || "$scope" == manager ]]; then tests+=(token_dictionary_setting); fi
 for test in "${tests[@]}"; do
     g++ "${flags[@]}" "research/native-rewrite/tests/${test}_test.cc" "$build/objects/"*.o "$build/libmarisa.a" \
         -lprotobuf-lite -pthread -o "$build/${test}_test"
 done
 if [[ "$scope" == all ]]; then "$build/forward_token_metadata_test"; fi
+if [[ "$scope" == all || "$scope" == queries || "$scope" == manager ]]; then "$build/token_dictionary_setting_test"; fi
 if [[ "$scope" == manager ]]; then
     python3 research/native-rewrite/tests/verify_forward_token_dictionary.py \
         --manifest work/native-rewrite/forward-token-data/manifest.json \

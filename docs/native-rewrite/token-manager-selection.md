@@ -1,6 +1,6 @@
 # ManagerIterator 状态与结果准入
 
-本轮继续 [查询分支与资源接口](token-query-branches.md)，展开真实 ManagerIterator 的匹配帧、懒缓存及结果选择。字典资格匹配、单次结果准入和普通 Direct/Forward 组合游标均已恢复为源码，真实资源已通过 Manager 懒缓存入口。普通已解析资源的激活与 DFS 工厂也已接通，设置 protobuf、资源 ID accessor、其他子字典和上层键生成仍未完成。
+本轮继续 [查询分支与资源接口](token-query-branches.md)，展开真实 ManagerIterator 的匹配帧、懒缓存及结果选择。字典资格匹配、单次结果准入和普通 Direct/Forward 组合游标均已恢复为源码，真实资源已通过 Manager 懒缓存入口。设置 protobuf、普通资源 ID 缓存与 DFS 工厂也已接通。原 DataManager 注册、Android accessor、其他子字典和上层键生成仍未完成。
 
 ## 匹配帧与子字典
 
@@ -58,7 +58,7 @@ Push 先清缓存、设置全局 source/target 模式，再筛选顶帧。失败
 
 日志为 `work/native-rewrite/forward-token-build/manager-cursor-build.log`。旧规则组件、内层 Marisa、普通全表枚举及独立 Direct/Forward 用例未重复执行。中央静态登记仍为 480 段，沿用既有 FDE 与字符表证据。未运行 ARM、Android，也未操作设备、正式包或用户词典。
 
-完整设置与资源 ID 接线、其他子字典、BFS、重配置、OOM 和原容器 ABI 仍不在本投影范围。
+原 DataManager 注册与 Android accessor、其他子字典、BFS、重配置、OOM 和原容器 ABI 仍不在本投影范围。
 
 ## 普通资源激活与 DFS 工厂
 
@@ -66,7 +66,7 @@ Push 先清缓存、设置全局 source/target 模式，再筛选顶帧。失败
 
 `0x193880` 的活跃表以两个有符号 int32 的 `(selector, language)` 为键，按这一顺序比较。相同键保留第一次插入的句柄，后来资源不覆盖。`0x1941fc` 中序遍历该表建立根快照，因此既不是设置列表顺序，也不是文件名顺序。先按资格激活、再做 target 结果去重，是两个不同阶段。
 
-`TokenDictionaryManager::LoadActive` 接收调用方已解析出的完整类名前缀资源，分派给唯一的 Direct/Forward 加载器，再恢复活跃表选择。它只支持普通、非反向模型，不声称原 Manager 自己负责类名前缀解码。设置 protobuf、数据 ID 解析与 accessor 缓存仍在范围外；未知类或不支持的镜像返回 null，不发布部分工厂。
+上一阶段 LoadActive 的镜像列表入口已移除，当前唯一入口为 TokenDictionaryManager::Load。它解析 TokenDictionaryDataSetting，再按配置列表中的 data ID 查询 TokenDictionaryResources。类名前缀分派移到资源层，Direct/Forward 加载器与活跃表选择各保留一个实现。普通非反向边界不变，未支持镜像与非空迭代选项返回 null，不发布部分工厂。
 
 Direct 的第四个 LE32 元数据字段由原 `0x1b09c0` 的 IsUsingReversedToken getter 读取，Forward 的 `0x1b2720` 固定返回 false。当前原资源均为非反向模型。宿主现在读取 Direct 原字段，反向配置不进入这个普通工厂，不填默认值或替代准备规则。
 
@@ -75,6 +75,22 @@ CreateDfsCursor 按活跃表顺序创建真实子游标，调用既有 Manager �
 本轮一次 `build_forward_token_research.sh manager` 严格宿主构建及升级后的单条端到端流程通过。六份资源故意按非排序顺序提供，结果证明 pair 顺序、拼音优先于同键 ABC、英语优先于同键拼音英语。单引号利用两份英语的真实字符范围差异验证先到保留，另以两个游标的字面动态 ID 验证模型共享。空集合仍返回 Manager，现有帧、缓存和 target 路径继续经同一真实入口。
 
 新增五段 FDE 与两个完整叶函数 getter，均与保留 v2.1.7 库逐字节相同，中央增至 487 段。旧 480 段及 ADRP 差异沿用。证据为 `work/native-rewrite/restart-v217/native-token-manager-factory-comparison.json`，构建日志为 `work/native-rewrite/forward-token-build/manager-factory-build.log`。本轮未运行 ARM、Android 或旧独立测试。
+
+## 设置消息与 data ID 缓存
+
+新增 `token_dictionary_setting.proto`，消息名称由原 RTTI 确认。TokenDictionaryDataSetting 的 field 1 是 repeated string data_id，field 2 是 repeated DictionaryIteratorOptions。后者的 field 1、2 为默认 false 的可选 bool，field 3 是 data ID。两个布尔字段的业务名仍未知，不据其字节位置命名为 source/target。
+
+序列化函数 `0x281bc8`、`0x281b20` 确定字段号与 wire 类型。选项初始化 `0x2845bc` 在 `+0x20` 写入零 ushort，清理 `0x287270` 同时恢复默认值和存在位。`0x194dd8` 分别读两个 bool 后组成返回值，不将 Ghidra 的 undefined2 当作独立原字段。
+
+TokenDictionaryResources 接收显式 bundle 索引，键为原注册 data ID，不是 blob 名称。按 ID 缓存成功装载的真实模型，创建失败不进入缓存。缺失 ID 沿原 `0x1948d0` 跳过，宿主未支持的模型则返回 Unsupported，使工厂失败，不冒充原创建器确实返回空。
+
+原 DataManager 的成功缓存规则沿用已有 `0x198f28` 证据，不重取。宿主仅恢复不可变 bundle 索引及普通模型缓存，不实现创建器注册、FD 来源、Android 锁、失效标记或重配置。多个 Manager 通过同一资源对象复用模型，游标快照仍持有自己的共享引用。
+
+同一条端到端入口现在读取原 pinyin_qwerty 设置的 field 2 原字节，ID 绑定取自原 data scheme。额外六个选择项是明确的测试配置，包括一个缺失 ID，不代表应用默认偏好。原六资源的帧、排序、先到保留和 target 用例继续执行，跨 Manager 的动态 ID 连续性验证真实缓存复用。没有新增人工结果或子游标。
+
+一次 manager 宿主构建、上述端到端流程和一个 schema 模块测试通过。模块测试用字面 wire 验证字段、显式 false 存在性和默认值。日志为 `work/native-rewrite/forward-token-build/manager-setting-build.log`。迭代选项只恢复 schema，当前非空配置明确不支持。
+
+新增七段完整 FDE，五段 raw-equal。两个构造函数各有一条 ADRP 差异，默认实例分别保持 `.bss+0x5a90` 与 `.bss+0x5840`，其余指令相同。中央增至 494 段，证据为 `work/native-rewrite/restart-v217/native-token-dictionary-setting-comparison.json`。旧区域不重跑，未执行 ARM 或 Android。
 
 ## 早期规则组件验证
 
@@ -91,4 +107,4 @@ CreateDfsCursor 按活跃表顺序创建真实子游标，调用既有 Manager �
 
 Ghidra 成功输出位于 `token-manager-query-state/`、`token-manager-query-core/`、`token-manager-selection/`、`token-manager-key-order/` 和 `token-manager-cache-advance/`，均在 `work/native-rewrite/ghidra/`。测试二进制精确清理，build.log 留存于 `work/native-rewrite/token-manager-selection-build/`。
 
-后续 [DirectTokenDictionary](direct-token-dictionary.md) 与 [普通 Forward 资源读取](forward-token-dictionary.md) 均有真实子游标，已接通本页的 Manager 匹配帧与缓存。普通已解析资源的工厂已接通，下一步恢复设置 protobuf、数据 ID accessor 与上层键生成，不用提前准备的结果替代真实读取。
+后续 [DirectTokenDictionary](direct-token-dictionary.md) 与 [普通 Forward 资源读取](forward-token-dictionary.md) 均有真实子游标，已接通本页的 Manager 匹配帧与缓存。设置字节与普通 ID 缓存已接到工厂。下一步追踪原数据注册、创建器和上层文本准备，不用提前准备的结果替代真实读取。

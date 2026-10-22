@@ -82,7 +82,9 @@ PYTHONPATH=tools/python python research/native-rewrite/tools/extract_data_bundle
 - field 1：repeated string data ID
 - field 2：repeated `ccq`
 
-`bdt` 直接改写 field 1，使它成为当前拼音方案 token dictionary，并按设置追加英文、数字和 shortcuts token dictionary。field 2 在当前内置 scheme 中没有出现，语义未知。
+`bdt` 直接改写 field 1，使它成为当前拼音方案 token dictionary，并按设置追加英文、数字和 shortcuts token dictionary。后续 RTTI 确认原消息为 TokenDictionaryDataSetting，ccq 对应 DictionaryIteratorOptions：field 1、2 是默认 false 的可选 bool，field 3 是 data ID。两个 bool 的业务语义仍未知，内置 scheme 没有 field 2 项。
+
+`recovered/token_dictionary_setting.proto` 已恢复字段、默认值与存在性。普通 Manager 从该消息的 data ID 列表查询真实 bundle 资源缓存，非空迭代选项仍未支持。原始设置片段与 data scheme 绑定已进入宿主流程，详见 [Manager 设置与缓存](token-manager-selection.md#设置消息与-data-id-缓存)。
 
 #### field 3：token expansion setting
 

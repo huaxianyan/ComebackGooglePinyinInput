@@ -12,7 +12,7 @@ TokenDictionaryManager 有 SettingDelegate 主对象和 `+8` 的 TokenDictionary
 - 即使活跃集合为空，首选工厂正常分配后仍返回合并对象。不能用「没有查询结果」触发另一查询分支。
 - 另一工厂分配 BFSMergedIterator，地址点 `0x67a400`。按每个字典及其附属映射选择 slot 10 或 11，只纳入非空子接口；没有取得任何子接口时才销毁合并对象、返回空。
 
-原 `0x19550c` 仅在首选接口本身为空时请求备用接口。某个词查询失败后不会再自动尝试 BFS。活跃表现已确认按有符号 `(selector, language)` 排序并保留同键首次插入项，普通已解析资源工厂已有后续实现。配置数据 ID 的 accessor、附属映射与完整设置解析仍待接入。
+原 `0x19550c` 仅在首选接口本身为空时请求备用接口。某个词查询失败后不会再自动尝试 BFS。活跃表现已确认按有符号 `(selector, language)` 排序并保留同键首次插入项，普通已解析资源工厂已有后续实现。后续已接 TokenDictionaryDataSetting 与普通 bundle ID 缓存，附属迭代选项只恢复 schema。原 DataManager 注册和完整 Android accessor 仍待接入。
 
 ## 首选单项查询
 
@@ -57,4 +57,4 @@ ARM64 把读到的宽度放入 w2，既用于推进指针，也作为字符串�
 
 首次手输工厂地址错误，纠正后四个工厂/调整函数成功，随后又因文本地址的基址换算错误中断。文本函数用正确地址另行导出，相关错误日志保留，不把 headless 进程退出零当脚本成功。结论仅使用上述成功函数与独立 FDE 比较。
 
-测试二进制精确清理，build.log 留存于 `work/native-rewrite/token-query-build/`。未执行原 ARM64，未操作设备、正式包或用户词典。ManagerIterator 的匹配帧、懒缓存和准入已有后续记录。普通 Direct 子查询已有真实资源实现，[普通 Forward 单项读取](forward-token-dictionary.md) 也已接入原始图和五张表。Forward 流式游标、Manager 缓存及普通资源工厂均已有后续真实入口。下一步恢复设置 protobuf 与数据 ID 接线，不增加固定结果或通用转发接口。
+测试二进制精确清理，build.log 留存于 `work/native-rewrite/token-query-build/`。未执行原 ARM64，未操作设备、正式包或用户词典。ManagerIterator 的匹配帧、懒缓存和准入已有后续记录。普通 Direct 子查询已有真实资源实现，[普通 Forward 单项读取](forward-token-dictionary.md) 也已接入原始图和五张表。Forward 流式游标、Manager 工厂、设置字节及普通 ID 缓存均已有后续真实入口。下一步追踪数据注册、创建器与上层文本准备，不增加固定结果或通用转发接口。

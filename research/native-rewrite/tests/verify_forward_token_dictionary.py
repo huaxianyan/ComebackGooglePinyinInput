@@ -6,6 +6,32 @@ from pathlib import Path
 import subprocess
 
 
+def token_setting_slice(content):
+    # Fixed SettingScheme has only length-delimited top-level fields. Extract
+    # field 2 independently; C++ parses the original nested message itself.
+    offset = 0
+    def varint():
+        nonlocal offset
+        value, shift = 0, 0
+        while True:
+            byte = content[offset]
+            offset += 1
+            value |= (byte & 127) << shift
+            if byte < 128:
+                return value
+            shift += 7
+    while offset < len(content):
+        tag = varint()
+        if tag & 7 != 2:
+            raise ValueError("unexpected original SettingScheme field type")
+        size = varint()
+        value = content[offset:offset + size]
+        offset += size
+        if tag >> 3 == 2:
+            return value
+    raise ValueError("original SettingScheme has no token setting")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--manifest", type=Path, required=True)
@@ -40,6 +66,22 @@ def main():
     if profiles != 8:
         raise ValueError("expected the eight ordinary Forward resources in the fixed original APK")
     args.fixture.parent.mkdir(parents=True, exist_ok=True)
+    if args.case == "manager":
+        registered = set()
+        for library in manifest["libraries"]:
+            blobs = {blob["name"]: blob for blob in library["blobs"]}
+            for blob in library["blobs"]:
+                if blob["name"] == "pinyin_qwerty_setting_scheme":
+                    path = args.fixture.with_suffix(".setting.pb").resolve()
+                    source = args.manifest.parent / blob["output_file"]
+                    path.write_bytes(token_setting_slice(source.read_bytes()))
+                    rows.append(f"@token_setting\t{path}")
+                for entry in (blob.get("data_scheme") or {}).get("entries", []):
+                    if entry["data_type"] != 4 or entry["data_id"] in registered:
+                        continue
+                    registered.add(entry["data_id"])
+                    path = (args.manifest.parent / blobs[entry["blob_name"]]["output_file"]).resolve()
+                    rows.append(f"@id:{entry['data_id']}\t{path}")
     args.fixture.write_text("\n".join(rows) + "\n", encoding="utf-8")
     command = [str(args.executable.resolve()), str(args.fixture.resolve())]
     if args.case:

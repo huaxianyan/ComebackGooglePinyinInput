@@ -1,33 +1,30 @@
 // Recovered active-pair selection and real DFS child creation; see NOTICE.
 #include "token_dictionary_manager.h"
-#include "dictionary_string_image.h"
+#include "token_dictionary_setting.pb.h"
 #include "direct_token_dictionary.h"
 #include "forward_token_dictionary.h"
 #include <type_traits>
 #include <utility>
 
 namespace comeback::recovered {
-std::shared_ptr<TokenDictionaryManager> TokenDictionaryManager::LoadActive(
-    const std::vector<OwnedByteRegion>& resolved_resources) {
+std::shared_ptr<TokenDictionaryManager> TokenDictionaryManager::Load(
+    const std::string& setting, TokenDictionaryResources& resources) {
+    i18n_input::engine::hmm::proto::TokenDictionaryDataSetting parsed;
+    if (!parsed.ParseFromString(setting) || parsed.iterator_options_size() != 0) return nullptr;
     auto manager = std::shared_ptr<TokenDictionaryManager>(new TokenDictionaryManager);
-    for (const auto& image : resolved_resources) {
-        std::string name;
-        const auto offset = LoadDictionaryStringImage(image, name);
-        if (offset == 0 || offset > image.Size()) return nullptr;
-        const auto payload = image.Slice(offset, image.Size() - offset);
-        if (name == "DirectTokenDictionary") {
-            auto dictionary = DirectTokenDictionary::Load(payload);
-            if (!dictionary || dictionary->UsingReversedTokens()) return nullptr;
-            const auto key = std::make_pair(dictionary->Selector(), dictionary->LanguageId());
-            manager->active_.emplace(key, std::move(dictionary));
-        } else if (name == "ForwardTokenDictionary") {
-            auto dictionary = ForwardTokenDictionaryView::Load(payload);
-            if (!dictionary) return nullptr;
-            const auto key = std::make_pair(dictionary->Metadata().selector(), dictionary->Metadata().language_id());
-            manager->active_.emplace(key, std::move(dictionary));
-        } else {
-            return nullptr;
-        }
+    for (const auto& data_id : parsed.data_id()) {
+        const auto resolved = resources.Resolve(data_id);
+        if (resolved.status == TokenDictionaryResources::Resolution::Status::Unsupported) return nullptr;
+        if (resolved.status == TokenDictionaryResources::Resolution::Status::Missing) continue;
+        const auto key = std::visit([](const auto& dictionary) {
+            using Dictionary = typename std::decay_t<decltype(dictionary)>::element_type;
+            if constexpr (std::is_same_v<Dictionary, DirectTokenDictionary>) {
+                return std::make_pair(dictionary->Selector(), dictionary->LanguageId());
+            } else {
+                return std::make_pair(dictionary->Metadata().selector(), dictionary->Metadata().language_id());
+            }
+        }, *resolved.model);
+        manager->active_.emplace(key, *resolved.model);
     }
     return manager;
 }
