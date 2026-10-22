@@ -19,14 +19,17 @@ public:
     bool Contains(std::uint32_t codepoint) const;
     std::int32_t Selector() const { return selector_; }
     std::int32_t LanguageId() const { return language_; }
+    bool UsingReversedTokens() const { return reversed_tokens_; }
 private:
     friend class DirectTokenCursor;
     DirectTokenDictionary(std::int32_t selector, std::int32_t language, bool case_sensitive,
-                         const FlatIntegerTableView& starts, const FlatIntegerTableView& lengths);
+                         bool reversed_tokens, const FlatIntegerTableView& starts,
+                         const FlatIntegerTableView& lengths);
     bool Encode(std::string_view input, bool target, std::uint32_t& id, std::string& canonical);
     std::int32_t selector_;
     std::int32_t language_;
     bool case_sensitive_;
+    bool reversed_tokens_;
     FlatIntegerTableView starts_;
     FlatIntegerTableView lengths_;
     std::atomic<std::uint32_t> dynamic_counter_{0};

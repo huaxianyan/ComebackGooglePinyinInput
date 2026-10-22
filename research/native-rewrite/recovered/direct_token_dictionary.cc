@@ -12,8 +12,8 @@ std::int32_t SignedBits(std::uint32_t raw) {
 }
 }
 DirectTokenDictionary::DirectTokenDictionary(std::int32_t selector, std::int32_t language,
-    bool case_sensitive, const FlatIntegerTableView& starts, const FlatIntegerTableView& lengths)
-    : selector_(selector), language_(language), case_sensitive_(case_sensitive),
+    bool case_sensitive, bool reversed_tokens, const FlatIntegerTableView& starts, const FlatIntegerTableView& lengths)
+    : selector_(selector), language_(language), case_sensitive_(case_sensitive), reversed_tokens_(reversed_tokens),
       starts_(starts), lengths_(lengths) {}
 
 std::shared_ptr<DirectTokenDictionary> DirectTokenDictionary::Load(const OwnedByteRegion& payload) {
@@ -25,12 +25,13 @@ std::shared_ptr<DirectTokenDictionary> DirectTokenDictionary::Load(const OwnedBy
     // does not claim native partial-publication/crash behavior on corrupt data.
     if (!starts || !lengths || starts->Count() == 0 || starts->Count() != lengths->Count()) return nullptr;
     const auto* metadata = payload.Data();
-    // DFS does not consume metadata word four. Its original bytes remain
-    // owned via the table slices; no replacement/default value is synthesized.
+    // Word four is not consumed by Direct DFS, but the Manager factory reads
+    // its IsUsingReversedToken getter (original 0x1b09c0).
     return std::shared_ptr<DirectTokenDictionary>(new DirectTokenDictionary(
         SignedBits(detail::ReadLittleEndian<std::uint32_t>(metadata)),
         SignedBits(detail::ReadLittleEndian<std::uint32_t>(metadata + 4)),
-        detail::ReadLittleEndian<std::uint32_t>(metadata + 8) != 0, *starts, *lengths));
+        detail::ReadLittleEndian<std::uint32_t>(metadata + 8) != 0,
+        detail::ReadLittleEndian<std::uint32_t>(metadata + 12) != 0, *starts, *lengths));
 }
 
 bool DirectTokenDictionary::Contains(std::uint32_t codepoint) const {

@@ -6,16 +6,11 @@
 #include <vector>
 
 namespace comeback::recovered {
+class TokenDictionaryManager;
 // An ordered DFS factory snapshot of nonnull real ordinary child cursors.
-// Registration/reconfiguration, BFS and original tree/vtable ABI are not ported.
+// Constructed only by the real ordinary factory; BFS and native ABI are absent.
 class ManagerTokenCursor : public TokenDictionaryCursor {
 public:
-    struct Child {
-        std::int32_t selector;
-        std::int32_t language;
-        std::unique_ptr<TokenDictionaryCursor> cursor;
-    };
-    explicit ManagerTokenCursor(std::vector<Child> children);
     bool Push(std::int32_t selector, std::int32_t language,
               const std::string& input, bool target) override;
     bool NextFrame() override;
@@ -26,6 +21,13 @@ public:
     bool Pop() override;
     void Reset() override;
 private:
+    friend class TokenDictionaryManager;
+    struct Child {
+        std::int32_t selector;
+        std::int32_t language;
+        std::unique_ptr<TokenDictionaryCursor> cursor;
+    };
+    explicit ManagerTokenCursor(std::vector<Child> children);
     // Native cache records have a token and binary32 attribute, not a marker.
     struct Result { KeyToken token; float attribute; };
     void ClearCache();

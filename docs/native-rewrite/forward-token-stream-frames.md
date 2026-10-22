@@ -111,4 +111,4 @@ source 投影以 `build_forward_token_research.sh source` 完整宿主编译并�
 
 新增 `build_forward_token_research.sh cursor` 窄范围流程，只编译并运行受影响的 source、target 两条真实资源用例。共享协调器已变化，source 随本轮执行一次；target 覆盖 C-string 截断、查询 language、Advance 后的 Next，以及 Pop、Reset 后切换 source/target。四字节码点另有真实入口检查，期望 ID 为冻结格式字面值。严格 C++17 编译及两条用例通过，日志为 `work/native-rewrite/forward-token-build/forward-cursor-build.log`。未重复执行内层、metadata 或整表枚举用例，中央静态登记保持 480 段。
 
-普通 Cursor 现已直接实现共享的宿主接口，接入 [Manager 匹配帧与懒缓存](token-manager-selection.md)，不是逐方法转发壳。真实资源通过一条复合入口验证，完整工厂和上层接线仍未恢复。下一步追踪工厂注册及资源选择。多记录值区及排序、BFS、binary/custom 编码、外部限额修改、OOM、原 ARM 和 Android 尚未验收。本轮未构建产品、操作设备或用户数据。
+普通 Cursor 现已直接实现共享的宿主接口，接入 [Manager 匹配帧与懒缓存](token-manager-selection.md)，不是逐方法转发壳。真实资源通过一条复合入口验证，后续普通已解析资源工厂也已接通，中央增至 487 段。完整设置、数据 ID accessor 和上层接线仍未恢复。多记录值区及排序、BFS、binary/custom 编码、外部限额修改、OOM、原 ARM 和 Android 尚未验收。本轮未构建产品、操作设备或用户数据。

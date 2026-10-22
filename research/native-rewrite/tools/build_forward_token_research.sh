@@ -36,7 +36,7 @@ ar rcs "$build/libmarisa.a" "$build/marisa/"*.o
 protoc -I"$recovered" --cpp_out="$build/generated" "$recovered/forward_token_metadata.proto"
 flags=(-std=c++17 -O2 -Wall -Wextra -Werror -I"$recovered" -I"$build/generated" -I"$source_root/include" -I"$source_root/lib")
 g++ -std=c++17 -O2 -I"$build/generated" -c "$build/generated/forward_token_metadata.pb.cc" -o "$build/objects/forward_token_metadata.pb.o"
-for name in owned_byte_region file_mmap dictionary_string_image flat_integer_table token_query token_manager_selection token_manager_cursor direct_token_dictionary forward_token_dictionary forward_token_exact_cursor forward_token_cursor; do
+for name in owned_byte_region file_mmap dictionary_string_image flat_integer_table token_query token_manager_selection token_manager_cursor token_dictionary_manager direct_token_dictionary forward_token_dictionary forward_token_exact_cursor forward_token_cursor; do
     g++ "${flags[@]}" -c "$recovered/$name.cc" -o "$build/objects/$name.o"
 done
 tests=(forward_token_dictionary forward_token_exact_cursor)

@@ -8,7 +8,7 @@
 
 类名前缀由外层移除。payload 前 `16` 字节是四个 LE32 字段，随后是两张 [Flat integer 表](flat-integer-table.md)：第一张存范围起点，第二张存对应长度，并非结束码点。
 
-本轮 DFS 使用 selector、language 和第三字段的大小写策略。第四字段不在该路径读取，原始字节仍由共享区域保留，不用推测值覆盖它。
+DFS 使用 selector、language 和第三字段的大小写策略。第四字段不在 DFS 读取，但后续已定位为工厂使用的 IsUsingReversedToken 标志，模型从原 LE32 字段读取，不用推测值覆盖。
 
 `0x1b15dc` 先检查第一起点，再对起点做 lower_bound。精确命中起点直接成功，否则判断与前一起点的差是否小于该条长度。`0x1b1768` 对 source 的每个 Unicode 码点执行此检查。
 
@@ -76,6 +76,6 @@ Ghidra 输出位于 `work/native-rewrite/ghidra/` 下的 `forward-token-query*`�
 
 当前输入域为完整合法 UTF-8，以及原始普通非空、对应计数一致的范围资源。未恢复 BFS、损坏或空范围的原崩溃与部分发布、计数乘积溢出、原 OOM、日志栈报告、原子操作的完整平台内存序和原 ARM 运行等价。
 
-加载器以普通共享持有表达只读模型快照，不实现原模型就地重配置。普通 Manager 查询已有后续真实入口验证，字典的 selector/language 只读 getter 用于取得工厂资格快照。未连接 Android、完整 accessor、上游 Unicode 准备或完整工厂注册，未操作设备、正式包或用户词典。
+加载器以普通共享持有表达只读模型快照，不实现原模型就地重配置。普通 Manager 查询已有后续真实入口验证，字典的 selector/language 只读 getter 用于取得工厂资格快照，反向标志 getter 则限制普通已解析资源工厂的输入域。未连接 Android、完整 accessor、上游 Unicode 准备或完整工厂注册，未操作设备、正式包或用户词典。
 
-Forward 已恢复普通资源的真实子遍历、source/target 协调与 token 回填，并与 Direct 一起通过 [Manager 缓存入口](token-manager-selection.md)。其他字典及原工厂仍有缺口，不把这个普通资源投影当作完整输入法查询链。
+Forward 已恢复普通资源的真实子遍历、source/target 协调与 token 回填，并与 Direct 一起通过 [Manager 缓存入口](token-manager-selection.md)。普通资源工厂已有后续实现，设置解析、资源 ID accessor 与其他字典仍有缺口，不把这个投影当作完整输入法查询链。
