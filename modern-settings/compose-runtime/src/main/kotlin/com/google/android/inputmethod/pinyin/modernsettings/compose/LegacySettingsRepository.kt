@@ -406,20 +406,9 @@ class LegacySettingsRepository(context: Context) {
         if (contract == BooleanSettingContracts.showEmojiSwitchKey) {
             require(capabilities.emojiSwitchKeyVisible) { "Emoji switch key is unavailable" }
         }
-        if (
-            contract == BooleanSettingContracts.showLanguageSwitchKey ||
-            contract == BooleanSettingContracts.switchToOtherImes
-        ) {
-            val state = currentLanguageSwitchState(capabilities)
-            if (contract == BooleanSettingContracts.showLanguageSwitchKey) {
-                require(state.languageSwitchEnabled) { "Language switch key is disabled" }
-            } else {
-                require(state.switchToOtherImesVisible) {
-                    "Switching to other input methods is unavailable"
-                }
-                require(state.switchToOtherImesEnabled) {
-                    "Switching to other input methods is disabled"
-                }
+        if (contract == BooleanSettingContracts.showLanguageSwitchKey) {
+            require(currentLanguageSwitchState(capabilities).languageSwitchEnabled) {
+                "Language switch key is disabled"
             }
         }
         contract.dependency?.let { dependency ->

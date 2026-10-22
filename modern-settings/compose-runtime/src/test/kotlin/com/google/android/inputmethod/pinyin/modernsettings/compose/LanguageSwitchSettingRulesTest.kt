@@ -16,7 +16,6 @@ class LanguageSwitchSettingRulesTest {
         )
         assertFalse(state.languageSwitchEnabled)
         assertFalse(state.languageSwitchChecked)
-        assertFalse(state.switchToOtherImesEnabled)
     }
 
     @Test
@@ -30,34 +29,10 @@ class LanguageSwitchSettingRulesTest {
         )
         assertTrue(state.languageSwitchEnabled)
         assertTrue(state.languageSwitchChecked)
-        assertTrue(state.switchToOtherImesEnabled)
     }
 
     @Test
-    fun switchToOtherImesRequiresEnglishAndEffectiveLanguageKeys() {
-        val noEnglish = LanguageSwitchSettingRules.resolve(
-            emojiSwitchKeyVisible = true,
-            inputMethodSwitchingAvailable = true,
-            emojiSwitchKeyChecked = false,
-            showEnglishKeyboard = false,
-            persistedLanguageSwitchKey = true,
-        )
-        assertTrue(noEnglish.languageSwitchEnabled)
-        assertTrue(noEnglish.languageSwitchChecked)
-        assertFalse(noEnglish.switchToOtherImesEnabled)
-
-        val noLanguage = LanguageSwitchSettingRules.resolve(
-            emojiSwitchKeyVisible = true,
-            inputMethodSwitchingAvailable = true,
-            emojiSwitchKeyChecked = false,
-            showEnglishKeyboard = true,
-            persistedLanguageSwitchKey = false,
-        )
-        assertFalse(noLanguage.switchToOtherImesEnabled)
-    }
-
-    @Test
-    fun noSwitchTargetRemovesChildAndMakesLanguageDependOnEnglish() {
+    fun noSwitchTargetMakesLanguageKeyDependOnEnglish() {
         val state = LanguageSwitchSettingRules.resolve(
             emojiSwitchKeyVisible = false,
             inputMethodSwitchingAvailable = false,
@@ -67,6 +42,5 @@ class LanguageSwitchSettingRulesTest {
         )
         assertFalse(state.languageSwitchEnabled)
         assertFalse(state.languageSwitchChecked)
-        assertFalse(state.switchToOtherImesVisible)
     }
 }

@@ -235,12 +235,17 @@ but does not overwrite the retained `show_language_switch_key` Boolean (default
 `true`). The Settings Activity has no IME Window token, so the reconstructed
 `ajy.d()` fallback reports switching available only when this package has more
 than one enabled subtype or another enabled `com.google.*` IME exposes a
-non-auxiliary enabled subtype. If available, `switch_to_other_imes` remains
-visible and requires both effective language switching and
-`show_english_keyboard`; if unavailable, it is omitted and the language row
-instead also requires `show_english_keyboard`. UI and Repository use one pure
-rule reducer, hidden/disabled writes are rejected, and no dependency transition
-fabricates a child write.
+non-auxiliary enabled subtype. This fallback now affects only the language-key
+row: without an available target, that row also requires `show_english_keyboard`.
+
+Issue #11 exposed a different requirement for the `switch_to_other_imes`
+preference. It is always shown and editable, independent of installed/enabled
+IMEs, package names, subtype enumeration, emoji/language-key state, and
+`show_english_keyboard`. Its Boolean key, absent-default `true`, explicit/unset
+state, and stored value are unchanged. The obsolete visibility/enabled fields
+and Repository write gates are removed rather than replaced with constant
+state. Other settings retain their existing dependency checks. Keyboard
+switching behavior itself is unchanged.
 
 Device acceptance has not closed this stage. On the current Pixel, Gboard and
 other IMEs are enabled but the first modern build omitted `switch_to_other_imes`.
