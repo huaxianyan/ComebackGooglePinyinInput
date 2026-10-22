@@ -62,14 +62,14 @@ bool ForwardTokenDictionaryView::Cursor::Done() const {
         static_cast<std::size_t>(position_) >= static_cast<std::size_t>(has_record_);
 }
 
-bool ForwardTokenDictionaryView::Cursor::Current(KeyToken& output) const {
+bool ForwardTokenDictionaryView::Cursor::Current(KeyToken& output) {
     if (Done()) return false;
     if (target_mode_) return dictionary_->ReadLiteralTarget(pending_.front(), query_language_, output);
     dictionary_->ReadSourceToken(row_, length_, output);
     return true;
 }
 
-float ForwardTokenDictionaryView::Cursor::Attribute() const {
+float ForwardTokenDictionaryView::Cursor::Attribute() {
     if (target_mode_ || !dictionary_->Metadata().length_penalty()) return 0.0f;
     // Original 0x1b43bc returns S0. Literal words: bdd7c741 / c0135d8e.
     return dictionary_->Table(ForwardTokenColumn::Meta).At(row_) == length_

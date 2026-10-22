@@ -69,7 +69,7 @@ DirectTokenCursor::DirectTokenCursor(std::shared_ptr<DirectTokenDictionary> dict
     : dictionary_(std::move(dictionary)) {}
 
 bool DirectTokenCursor::Push(std::int32_t selector, std::int32_t language,
-    std::string_view input, bool target) {
+    const std::string& input, bool target) {
     if (!MatchesTokenDictionary(dictionary_->selector_, dictionary_->language_, selector, language) ||
         active_ || input.empty()) return false;
     std::uint32_t id;
@@ -83,7 +83,7 @@ bool DirectTokenCursor::Push(std::int32_t selector, std::int32_t language,
     return true;
 }
 
-bool DirectTokenCursor::Current(KeyToken& output) const {
+bool DirectTokenCursor::Current(KeyToken& output) {
     if (Done()) return false;
     output.id = id_;
     output.auxiliary = TokenAuxiliaryFromWord((id_ & kTokenLiteralBit) != 0 ?

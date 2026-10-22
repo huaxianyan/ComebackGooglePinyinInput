@@ -1,6 +1,6 @@
 # ManagerIterator 状态与结果准入
 
-本轮继续 [查询分支与资源接口](token-query-branches.md)，展开真实 ManagerIterator 的匹配帧、懒缓存及结果选择。已将字典资格匹配和单次结果准入恢复为源码，完整复合迭代器仍依赖未恢复的其他子字典，普通 [Direct DFS 查询](direct-token-dictionary.md) 已有后续真实资源实现。
+本轮继续 [查询分支与资源接口](token-query-branches.md)，展开真实 ManagerIterator 的匹配帧、懒缓存及结果选择。字典资格匹配、单次结果准入和普通 Direct/Forward 组合游标均已恢复为源码，真实资源已通过 Manager 懒缓存入口。完整工厂注册、其他子字典和上层键生成接线仍未完成。
 
 ## 匹配帧与子字典
 
@@ -26,7 +26,7 @@
 
 收集完成后设置缓存就绪并清空本次去重集合。`0x193444` 的结果推进会先确保缓存已形成，再增加缓存索引，不直接继续读取子字典。Done 根据缓存是否就绪，分别看底层子扫描或缓存索引。
 
-这套顺序已有静态证据，尚未以宿主虚接口或 fake 子迭代器实现。不能把 Push、帧 Next 和缓存结果推进统一成一个通用 next。
+这套顺序已由 ManagerTokenCursor 接通，Direct 与 Forward 的实际类直接实现唯一的 TokenDictionaryCursor 宿主接口，没有逐方法转发壳或 fake 子迭代器。Push、帧 Next 与缓存结果推进保持独立。
 
 ## source 与 target 的不同准入
 
@@ -42,11 +42,27 @@ source 保留每个成功读出的 token。target 使用另一个原生键：
 
 SameKeyTokenIdentity 继续服务原 `0x18c620` 的身份比较。ManagerTokenAdmission 则恢复上述原 target 准入，两者各有调用语义，不合并成错误的统一比较键。后者复用唯一 KeyToken，每次实际收集使用一个独立对象，不实现查询或制造结果。
 
-原缓存虽也是 `0x28` 步长，并不能套成带 marker 的 ScoredKeyToken。后续 Direct 取证结合本段已存指令，确认 `0x19337c` 保存 s0，`0x1934bc` 从 `+0x20` 加载 s0，该值类型为 binary32，而非任意整数。当前仍未创建缓存的替代布局，也不添加 marker 或新的权重换算。
+原缓存虽也是 `0x28` 步长，并不能套成带 marker 的 ScoredKeyToken。后续 Direct 取证结合本段已存指令，确认 `0x19337c` 保存 s0，`0x1934bc` 从 `+0x20` 加载 s0，该值类型为 binary32，而非任意整数。宿主 Result 仅保存 KeyToken 与 float 属性，不复制原容器 ABI，不添加 marker 或新的权重换算。
 
-## 验证与边界
+## 普通宿主 Manager
 
-仅严格编译 token_manager_selection 一份源码及一个组件测试：
+ManagerTokenCursor 接受有序、非空指针的真实 DFS 子游标快照。资格属性由调用方从真实字典元数据取得，保留工厂当时的 selector/language 快照。实现不自行注册资源、不猜应用中的工厂顺序，也不改为动态重配置。
+
+Push 先清缓存、设置全局 source/target 模式，再筛选顶帧。失败保留旧匹配帧，但不恢复先前模式。Pop 只向顶帧委派并移除此帧，返回父帧时不擅自 Next。Reset 清根帧所有子游标，再缩回根帧。默认根帧没有可读结果。
+
+首次 Current、Attribute 或 Advance 才收集剩余子记录，按原顺序消费全部子游标。Attribute 按原 `0x193474` 先物化再检查缓存索引，越界返回正零。缓存完成后只推进缓存索引，直接子游标不会因第二次读取而重查。收集时 KeyToken 临时对象只初始化一次，保留 Direct Current 不重置身份 bit 的原行为。
+
+真实入口使用六份原资源：拼音、ABC 双拼、数字，以及英语、拼音英语、shortcuts。两份英语产生相同 source ID，缓存保留两条。target 按既有分类/文本规则合并同类记录，shortcuts 的不同分类保留。真实 Direct Next 固定 false，但 Manager 帧 Next 仍能成功，不能据子返回值伪造查询失败。
+
+一次 `build_forward_token_research.sh manager` 完整宿主编译和一条端到端流程通过。用例验证资格筛选、source 到达顺序、重复项保留、属性入口物化、缓存消费后的帧重查、嵌套 Pop 换分支、target 去重和 Reset。期望 ID 是原清单或冻结格式字面值，不来自被测查询计算。之后据既有属性 getter 修正物化与边界检查顺序，仅重编译该模块，未重复执行已通过的用例。
+
+日志为 `work/native-rewrite/forward-token-build/manager-cursor-build.log`。旧规则组件、内层 Marisa、普通全表枚举及独立 Direct/Forward 用例未重复执行。中央静态登记仍为 480 段，沿用既有 FDE 与字符表证据。未运行 ARM、Android，也未操作设备、正式包或用户词典。
+
+完整工厂及注册顺序、其他子字典、BFS、重配置、OOM 和原容器 ABI 仍不在本投影范围。
+
+## 早期规则组件验证
+
+当时仅严格编译 token_manager_selection 一份源码及一个组件测试：
 
 - 七组字面输入覆盖 selector、language 的匹配及双向通配。
 - 同一成功子记录输入流，source 全部保留；target 保留首个分类/文本组合，并保持到达顺序。
@@ -59,4 +75,4 @@ SameKeyTokenIdentity 继续服务原 `0x18c620` 的身份比较。ManagerTokenAd
 
 Ghidra 成功输出位于 `token-manager-query-state/`、`token-manager-query-core/`、`token-manager-selection/`、`token-manager-key-order/` 和 `token-manager-cache-advance/`，均在 `work/native-rewrite/ghidra/`。测试二进制精确清理，build.log 留存于 `work/native-rewrite/token-manager-selection-build/`。
 
-后续 [DirectTokenDictionary](direct-token-dictionary.md) 已从三种不同原始资源恢复普通 DFS 查询，共用本段的资格谓词。后续 [普通 Forward 资源读取](forward-token-dictionary.md) 已接入真实 Marisa 图和五张表，恢复完整字符串的单项 source 与 literal target，但不是子 cursor。Forward 的 Push、Pop、Reset、待应用帧和 Manager 缓存组合仍待恢复，不用提前准备的查询结果替代真实读取。
+后续 [DirectTokenDictionary](direct-token-dictionary.md) 与 [普通 Forward 资源读取](forward-token-dictionary.md) 均有真实子游标，已接通本页的 Manager 匹配帧与缓存。下一步恢复工厂和资源接线，再接上层键生成，不用提前准备的结果替代真实读取。

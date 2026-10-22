@@ -40,9 +40,9 @@ source 依第三字段决定是否转换 ASCII 大写，再验证每个码点的
 - 原 slot 2 的 `0x1b08ec` 确实固定返回 false，并非宿主占位。它不使成功帧的结果失效。
 - 结果推进只标记 Done，当前匹配帧仍在。继续 Push 需要先 Pop 或 Reset。
 - Pop 仅在存在帧时清除匹配状态，Reset 无条件清除。保存文本、ID、请求语言和字典计数器不随这两项操作重置。
-- 原 slot 6 的 `0x1b0918` 返回 binary32 零。本轮没有为它新增尚无调用方的接口。
+- 原 slot 6 的 `0x1b0918` 返回 binary32 零。现在通过 Attribute 供真实 Manager 消费，不是宿主占位。
 
-这些方法属于真实 Direct DFS 游标，尚未用共同虚接口拼接完整 Manager。尤其不能将其固定 false 的帧 Next 当作查询失败，也不能将其多码点编码移植成 Forward 的 target 路径。
+这些方法属于真实 Direct DFS 游标，已直接实现共同宿主接口，并与普通 Forward 接入 Manager 的匹配帧和懒缓存。尤其不能将其固定 false 的帧 Next 当作查询失败，也不能将其多码点编码移植成 Forward 的 target 路径。
 
 ## 验证与证据
 
@@ -76,6 +76,6 @@ Ghidra 输出位于 `work/native-rewrite/ghidra/` 下的 `forward-token-query*`�
 
 当前输入域为完整合法 UTF-8，以及原始普通非空、对应计数一致的范围资源。未恢复 BFS、损坏或空范围的原崩溃与部分发布、计数乘积溢出、原 OOM、日志栈报告、原子操作的完整平台内存序和原 ARM 运行等价。
 
-加载器以普通共享持有表达只读模型快照，不实现原模型就地重配置。未连接 Android、完整 accessor、上游 Unicode 准备或完整 Manager 查询，未操作设备、正式包或用户词典。
+加载器以普通共享持有表达只读模型快照，不实现原模型就地重配置。普通 Manager 查询已有后续真实入口验证，字典的 selector/language 只读 getter 用于取得工厂资格快照。未连接 Android、完整 accessor、上游 Unicode 准备或完整工厂注册，未操作设备、正式包或用户词典。
 
-Forward 目前已展开 pending 字符串与 trie 路径的协调、范围展开、表值读取、长度比较和有界结果选择。后续应恢复真实 Marisa 子遍历及文本回填，再连接复合帧和缓存，不能用 Direct 的已完成路径掩盖其他字典缺口。
+Forward 已恢复普通资源的真实子遍历、source/target 协调与 token 回填，并与 Direct 一起通过 [Manager 缓存入口](token-manager-selection.md)。其他字典及原工厂仍有缺口，不把这个普通资源投影当作完整输入法查询链。

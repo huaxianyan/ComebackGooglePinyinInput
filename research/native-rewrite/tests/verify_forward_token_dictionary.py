@@ -11,7 +11,7 @@ def main():
     parser.add_argument("--manifest", type=Path, required=True)
     parser.add_argument("--executable", type=Path, required=True)
     parser.add_argument("--fixture", type=Path, required=True)
-    parser.add_argument("--case", choices=("source", "target"))
+    parser.add_argument("--case", choices=("source", "target", "manager"))
     args = parser.parse_args()
     manifest = json.loads(args.manifest.read_text(encoding="utf-8"))
     if manifest["schema_version"] != 3:
@@ -21,11 +21,14 @@ def main():
     for library in manifest["libraries"]:
         for blob in library["blobs"]:
             container = blob.get("native_container") or {}
+            path = (args.manifest.parent / blob["output_file"]).resolve()
+            if args.case == "manager" and blob["classification"] == "direct_token_dictionary":
+                rows.append(f"{blob['name']}\t{path}")
+                continue
             if not container.get("packed_tables"):
                 continue
             fields = {field["field_number"]: field["value"]
                       for field in container["token_config"]["config_fields"] if "value" in field}
-            path = (args.manifest.parent / blob["output_file"]).resolve()
             for row in container["token_entries"]:
                 # IDs and column values come from the independent Python integer
                 # decoder and original bytes, not the C++ lookup/codec algorithm.

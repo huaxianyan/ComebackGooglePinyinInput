@@ -7,7 +7,7 @@ cd "$root"
 build="$root/work/native-rewrite/forward-token-build"
 recovered="$root/research/native-rewrite/recovered"
 scope=${1:-all}
-case "$scope" in all|queries|source|cursor) ;; *) echo "Expected all, queries, source or cursor" >&2; exit 1 ;; esac
+case "$scope" in all|queries|source|cursor|manager) ;; *) echo "Expected all, queries, source, cursor or manager" >&2; exit 1 ;; esac
 read -r dependency commit research_patch < <(python3 - <<'PY'
 import json
 p = json.load(open('research/native-rewrite/dependencies/marisa.json'))
@@ -36,18 +36,22 @@ ar rcs "$build/libmarisa.a" "$build/marisa/"*.o
 protoc -I"$recovered" --cpp_out="$build/generated" "$recovered/forward_token_metadata.proto"
 flags=(-std=c++17 -O2 -Wall -Wextra -Werror -I"$recovered" -I"$build/generated" -I"$source_root/include" -I"$source_root/lib")
 g++ -std=c++17 -O2 -I"$build/generated" -c "$build/generated/forward_token_metadata.pb.cc" -o "$build/objects/forward_token_metadata.pb.o"
-for name in owned_byte_region file_mmap dictionary_string_image flat_integer_table token_query token_manager_selection direct_token_dictionary forward_token_dictionary forward_token_exact_cursor forward_token_cursor; do
+for name in owned_byte_region file_mmap dictionary_string_image flat_integer_table token_query token_manager_selection token_manager_cursor direct_token_dictionary forward_token_dictionary forward_token_exact_cursor forward_token_cursor; do
     g++ "${flags[@]}" -c "$recovered/$name.cc" -o "$build/objects/$name.o"
 done
 tests=(forward_token_dictionary forward_token_exact_cursor)
-if [[ "$scope" == source || "$scope" == cursor ]]; then tests=(forward_token_exact_cursor); fi
+if [[ "$scope" == source || "$scope" == cursor || "$scope" == manager ]]; then tests=(forward_token_exact_cursor); fi
 if [[ "$scope" == all ]]; then tests+=(forward_token_metadata); fi
 for test in "${tests[@]}"; do
     g++ "${flags[@]}" "research/native-rewrite/tests/${test}_test.cc" "$build/objects/"*.o "$build/libmarisa.a" \
         -lprotobuf-lite -pthread -o "$build/${test}_test"
 done
 if [[ "$scope" == all ]]; then "$build/forward_token_metadata_test"; fi
-if [[ "$scope" == source || "$scope" == cursor ]]; then
+if [[ "$scope" == manager ]]; then
+    python3 research/native-rewrite/tests/verify_forward_token_dictionary.py \
+        --manifest work/native-rewrite/forward-token-data/manifest.json \
+        --executable "$build/forward_token_exact_cursor_test" --fixture "$build/original-resource-fixture.tsv" --case manager
+elif [[ "$scope" == source || "$scope" == cursor ]]; then
     python3 research/native-rewrite/tests/verify_forward_token_dictionary.py \
         --manifest work/native-rewrite/forward-token-data/manifest.json \
         --executable "$build/forward_token_exact_cursor_test" --fixture "$build/original-resource-fixture.tsv" --case source
@@ -58,6 +62,11 @@ else
     "$build/forward_token_exact_cursor_test" "$build/original-resource-fixture.tsv"
     "$build/forward_token_exact_cursor_test" "$build/original-resource-fixture.tsv" source
 fi
-if [[ "$scope" != source ]]; then
+if [[ "$scope" != source && "$scope" != manager ]]; then
     "$build/forward_token_exact_cursor_test" "$build/original-resource-fixture.tsv" target
+fi
+if [[ "$scope" == all || "$scope" == queries ]]; then
+    python3 research/native-rewrite/tests/verify_forward_token_dictionary.py \
+        --manifest work/native-rewrite/forward-token-data/manifest.json \
+        --executable "$build/forward_token_exact_cursor_test" --fixture "$build/original-resource-fixture.tsv" --case manager
 fi

@@ -3,6 +3,7 @@
 #define COMEBACK_RECOVERED_DIRECT_TOKEN_DICTIONARY_H
 #include "flat_integer_table.h"
 #include "token_manager_selection.h"
+#include "token_dictionary_cursor.h"
 #include <atomic>
 #include <memory>
 #include <string_view>
@@ -16,6 +17,8 @@ public:
     // Failure returns null, never a ready dictionary with fabricated ranges.
     static std::shared_ptr<DirectTokenDictionary> Load(const OwnedByteRegion& payload);
     bool Contains(std::uint32_t codepoint) const;
+    std::int32_t Selector() const { return selector_; }
+    std::int32_t LanguageId() const { return language_; }
 private:
     friend class DirectTokenCursor;
     DirectTokenDictionary(std::int32_t selector, std::int32_t language, bool case_sensitive,
@@ -32,18 +35,20 @@ private:
 // Nonnull successfully loaded dictionary. Input is complete valid UTF-8, as in
 // the supported original resources; malformed Unicode, BFS and in-place model
 // reconfiguration are not restored. This is a real single-frame native cursor.
-class DirectTokenCursor {
+class DirectTokenCursor : public TokenDictionaryCursor {
 public:
     explicit DirectTokenCursor(std::shared_ptr<DirectTokenDictionary> dictionary);
     bool Push(std::int32_t selector, std::int32_t language,
-              std::string_view input, bool target);
+              const std::string& input, bool target) override;
     // Original 0x1b08ec really returns false, even after a successful Push.
-    bool NextFrame() const { return false; }
-    bool Done() const { return !active_ || done_; }
-    bool Current(KeyToken& output) const;
-    void Advance() { done_ = true; }
-    bool Pop();
-    void Reset();
+    bool NextFrame() override { return false; }
+    bool Done() const override { return !active_ || done_; }
+    bool Current(KeyToken& output) override;
+    // Original 0x1b0918 returns binary32 zero, now consumed by Manager.
+    float Attribute() override { return 0.0f; }
+    void Advance() override { done_ = true; }
+    bool Pop() override;
+    void Reset() override;
 private:
     std::shared_ptr<DirectTokenDictionary> dictionary_;
     bool active_ = false;

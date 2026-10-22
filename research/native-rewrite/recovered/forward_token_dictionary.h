@@ -4,6 +4,7 @@
 #include "flat_integer_table.h"
 #include "forward_token_metadata.pb.h"
 #include "token_manager_selection.h"
+#include "token_dictionary_cursor.h"
 #include <marisa/grimoire/trie/louds-trie.h>
 #include <string_view>
 #include <memory>
@@ -79,18 +80,18 @@ private:
 // Ordinary source/target projection, not a multi-record ranked Forward iterator.
 // Source Push records call order; NextFrame applies segments from the stack top.
 // A loaded dictionary and complete valid UTF-8 inputs are required.
-class ForwardTokenDictionaryView::Cursor {
+class ForwardTokenDictionaryView::Cursor : public TokenDictionaryCursor {
 public:
     explicit Cursor(std::shared_ptr<const ForwardTokenDictionaryView> dictionary);
-    bool Push(std::int32_t selector, std::int32_t language, const std::string& input, bool target);
-    bool NextFrame();
-    bool Done() const;
-    bool Current(KeyToken& output) const;
+    bool Push(std::int32_t selector, std::int32_t language, const std::string& input, bool target) override;
+    bool NextFrame() override;
+    bool Done() const override;
+    bool Current(KeyToken& output) override;
     // Like the native getter, use only while !Done().
-    float Attribute() const;
-    void Advance() { position_ = target_mode_ ? 1 : static_cast<std::int16_t>(position_ + 1); }
-    bool Pop();
-    void Reset();
+    float Attribute() override;
+    void Advance() override { position_ = target_mode_ ? 1 : static_cast<std::int16_t>(position_ + 1); }
+    bool Pop() override;
+    void Reset() override;
 private:
     std::shared_ptr<const ForwardTokenDictionaryView> dictionary_;
     ExactCursor exact_;

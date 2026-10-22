@@ -1,12 +1,92 @@
 #include "forward_token_dictionary.h"
+#include "direct_token_dictionary.h"
+#include "token_manager_cursor.h"
 #include "dictionary_string_image.h"
 #include "file_mmap.h"
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
+#include <utility>
 using namespace comeback::recovered;
 static void Check(bool value, const char* message) {
     if (!value) { std::cerr << message << '\n'; std::exit(1); }
+}
+static OwnedByteRegion OriginalPayload(const char* filename, const char* resource, const char* kind) {
+    std::ifstream fixture(filename);
+    std::string line, path;
+    while (std::getline(fixture, line)) {
+        const auto first = line.find('\t');
+        if (line.substr(0, first) != resource) continue;
+        path = line.substr(first + 1, line.find('\t', first + 1) - first - 1);
+        break;
+    }
+    OwnedByteRegion image;
+    Check(MapReadOnlyFile(path, image) == FileMappingResult::Mapped, "cannot map original token resource");
+    std::string name;
+    const auto offset = LoadDictionaryStringImage(image, name);
+    Check(name == kind, "wrong original resource envelope");
+    return image.Slice(offset, image.Size() - offset);
+}
+static void ManagerFrames(const char* fixture, const std::shared_ptr<ForwardTokenDictionaryView>& pinyin) {
+    std::vector<ManagerTokenCursor::Child> children;
+    auto forward = [&](const std::shared_ptr<ForwardTokenDictionaryView>& dictionary) {
+        Check(static_cast<bool>(dictionary), "cannot load original Forward child");
+        children.push_back({dictionary->Metadata().selector(), dictionary->Metadata().language_id(),
+                            std::make_unique<ForwardTokenDictionaryView::Cursor>(dictionary)});
+    };
+    auto direct = [&](const char* resource) {
+        auto dictionary = DirectTokenDictionary::Load(OriginalPayload(fixture, resource, "DirectTokenDictionary"));
+        Check(static_cast<bool>(dictionary), "cannot load original Direct child");
+        children.push_back({dictionary->Selector(), dictionary->LanguageId(),
+                            std::make_unique<DirectTokenCursor>(dictionary)});
+    };
+    forward(pinyin);
+    direct("en_tokens");
+    forward(ForwardTokenDictionaryView::Load(OriginalPayload(fixture, "tokens_shuangpin_abc", "ForwardTokenDictionary")));
+    direct("pinyin_english_token_v_2");
+    direct("shortcuts_tokens");
+    forward(ForwardTokenDictionaryView::Load(OriginalPayload(fixture, "pinyin_digits_token_v_2", "ForwardTokenDictionary")));
+    std::unique_ptr<TokenDictionaryCursor> cursor = std::make_unique<ManagerTokenCursor>(std::move(children));
+    KeyToken token{"previous", 0, 0, true};
+    auto consume = [&](std::uint32_t id, std::int16_t language) {
+        Check(!cursor->Done() && cursor->Current(token) && token.id == id && token.auxiliary == language &&
+              cursor->Attribute() == 0.0f, "Manager lost the original child order, token or attribute");
+        cursor->Advance();
+    };
+    // Original IDs and languages are literal wire-decoder rows. The two actual
+    // English resources produce equal source IDs; both must reach the cache.
+    Check(cursor->Push(-1, 26, "a", false) && cursor->NextFrame() && cursor->Attribute() == 0.0f,
+          "cannot materialize the original children through the attribute getter");
+    consume(4251648, 16);
+    consume(0x00800061, 0);
+    consume(2154903, 16);
+    consume(0x00800061, 0);
+    consume(0x40800061, 25);
+    Check(cursor->Done() && cursor->NextFrame(), "cannot reevaluate the current Manager frame");
+    // Materialization consumed every child, not just the first returned token.
+    // Forward Next refreshes its query; native Direct Next leaves it consumed.
+    consume(4251648, 16);
+    consume(2154903, 16);
+    Check(cursor->Done(), "frame reevaluation reactivated consumed Direct children");
+    cursor->Reset();
+    Check(cursor->Push(-1, 16, "hong", false) && cursor->Push(-1, 16, "z", false) && cursor->NextFrame(),
+          "cannot query nested matching frames");
+    consume(8446370, 16);
+    Check(cursor->Done() && cursor->Pop() && cursor->Push(-1, 16, "c", false) && cursor->NextFrame(),
+          "cannot replace a popped Manager branch");
+    consume(8445993, 16);
+    Check(cursor->Done(), "another child leaked a failed nested query");
+    cursor->Reset();
+    Check(cursor->Push(-1, 26, "\xe4\xb8\xad", true) && cursor->NextFrame(), "cannot enter Manager target mode");
+    consume(0x01004e2d, 26);
+    consume(0x41004e2d, 26);
+    Check(cursor->Done() && cursor->NextFrame() && cursor->Done(),
+          "target frame Next reactivated consumed child results");
+    cursor->Reset();
+    Check(cursor->Push(4, 25, "a", false) && cursor->NextFrame(), "cannot query a qualified original child");
+    consume(0x40800061, 25);
+    Check(cursor->Done(), "qualification admitted another dictionary");
+    std::cout << "original Manager child qualification, lazy cache, source order, target admission and frame reuse passed\n";
 }
 static void SourceFrames(const std::shared_ptr<ForwardTokenDictionaryView>& dictionary) {
     ForwardTokenDictionaryView::Cursor cursor(dictionary);
@@ -63,26 +143,14 @@ static void TargetFrames(const std::shared_ptr<ForwardTokenDictionaryView>& dict
 }
 int main(int argc, char** argv) {
     Check(argc == 2 || (argc == 3 &&
-              (std::string(argv[2]) == "source" || std::string(argv[2]) == "target")),
-          "provide the original-resource TSV fixture and optional source or target case");
-    std::ifstream fixture(argv[1]);
-    std::string line, path;
-    while (std::getline(fixture, line)) {
-        const auto first = line.find('\t');
-        if (line.substr(0, first) != "pinyin_token_v_2") continue;
-        path = line.substr(first + 1, line.find('\t', first + 1) - first - 1);
-        break;
-    }
-    OwnedByteRegion image;
-    Check(MapReadOnlyFile(path, image) == FileMappingResult::Mapped, "cannot map original pinyin resource");
-    std::string name;
-    const auto offset = LoadDictionaryStringImage(image, name);
-    Check(name == "ForwardTokenDictionary", "wrong original resource envelope");
-    const auto dictionary = ForwardTokenDictionaryView::Load(image.Slice(offset, image.Size() - offset));
+              (std::string(argv[2]) == "source" || std::string(argv[2]) == "target" || std::string(argv[2]) == "manager")),
+          "provide the original-resource TSV fixture and optional source, target or manager case");
+    const auto dictionary = ForwardTokenDictionaryView::Load(OriginalPayload(argv[1], "pinyin_token_v_2", "ForwardTokenDictionary"));
     Check(static_cast<bool>(dictionary), "cannot load ordinary pinyin dictionary");
     if (argc == 3) {
         if (std::string(argv[2]) == "source") SourceFrames(dictionary);
-        else TargetFrames(dictionary);
+        else if (std::string(argv[2]) == "target") TargetFrames(dictionary);
+        else ManagerFrames(argv[1], dictionary);
         return 0;
     }
     ForwardTokenDictionaryView::ExactCursor cursor(dictionary);

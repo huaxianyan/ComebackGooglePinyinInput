@@ -1,6 +1,6 @@
 # Marisa 与 Forward 的流式帧
 
-本文继续 [普通 Forward 单项读取](forward-token-dictionary.md)，记录原函数的状态推进及已接通的宿主 ExactCursor。内层 Marisa 分段查询及普通 Forward source/target 协调已走真实资源。长度属性 getter 已接通，Manager 查询与多记录排序仍未接入。
+本文继续 [普通 Forward 单项读取](forward-token-dictionary.md)，记录原函数的状态推进及已接通的宿主 ExactCursor。内层 Marisa 分段查询及普通 Forward source/target 协调已走真实资源。长度属性 getter 和普通 Manager 查询已接通，多记录排序仍未接入。
 
 ## 两层接口的 slot 2 不同
 
@@ -111,4 +111,4 @@ source 投影以 `build_forward_token_research.sh source` 完整宿主编译并�
 
 新增 `build_forward_token_research.sh cursor` 窄范围流程，只编译并运行受影响的 source、target 两条真实资源用例。共享协调器已变化，source 随本轮执行一次；target 覆盖 C-string 截断、查询 language、Advance 后的 Next，以及 Pop、Reset 后切换 source/target。四字节码点另有真实入口检查，期望 ID 为冻结格式字面值。严格 C++17 编译及两条用例通过，日志为 `work/native-rewrite/forward-token-build/forward-cursor-build.log`。未重复执行内层、metadata 或整表枚举用例，中央静态登记保持 480 段。
 
-下一步接普通资源的 Manager 懒缓存与查询入口。多记录值区及排序、BFS、binary/custom 编码、外部限额修改、OOM、原 ARM 和 Android 尚未验收。本轮未构建产品、操作设备或用户数据。
+普通 Cursor 现已直接实现共享的宿主接口，接入 [Manager 匹配帧与懒缓存](token-manager-selection.md)，不是逐方法转发壳。真实资源通过一条复合入口验证，完整工厂和上层接线仍未恢复。下一步追踪工厂注册及资源选择。多记录值区及排序、BFS、binary/custom 编码、外部限额修改、OOM、原 ARM 和 Android 尚未验收。本轮未构建产品、操作设备或用户数据。
