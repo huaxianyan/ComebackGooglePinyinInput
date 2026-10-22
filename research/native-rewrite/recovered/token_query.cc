@@ -1,6 +1,8 @@
-// Native token_dict_utils BFS-query preparation; Google-derived, see NOTICE.
+// Native token_dict_utils text and ordinary DFS lookup; Google-derived, see NOTICE.
 #include "token_query.h"
+#include "token_dictionary_cursor.h"
 #include <array>
+#include <cstdlib>
 
 namespace comeback::recovered {
 void AppendTokenQueryUnits(std::string_view input, std::vector<std::string>& output) {
@@ -12,6 +14,31 @@ void AppendTokenQueryUnits(std::string_view input, std::vector<std::string>& out
         offset += width;
     }
 }
+std::string ReverseTokenQueryUnits(std::string_view input) {
+    std::vector<std::string> units;
+    AppendTokenQueryUnits(input, units);
+    std::string output;
+    output.reserve(input.size());
+    for (auto it = units.rbegin(); it != units.rend(); ++it) output.append(*it);
+    return output;
+}
+
+bool LookupTokenQuery(TokenDictionaryCursor* cursor, const std::string& input,
+                      bool reverse_text, std::int32_t language, bool is_source, KeyToken* output) {
+    if (cursor == nullptr) return false;
+    const auto prepared = reverse_text ? ReverseTokenQueryUnits(input) : input;
+    cursor->Push(-1, language, prepared, !is_source);
+    cursor->NextFrame();
+    if (cursor->Done()) {
+        cursor->Reset();
+        return false;
+    }
+    if (output != nullptr) cursor->Current(*output);
+    // Original fatal CHECK at 0x195a68, not an ordinary missing-token result.
+    if (!cursor->Pop()) std::abort();
+    return true;
+}
+
 void LowercaseTokenBytes(std::string& text) {
     for (auto& byte : text) {
         if (byte >= 'A' && byte <= 'Z') byte += 'a' - 'A';

@@ -18,7 +18,7 @@ DFS 使用 selector、language 和第三字段的大小写策略。第四字段�
 - `pinyin_english_token_v_2` 接受小写英文字母。
 - `shortcuts_tokens` 使用 selector `4`、language `25`，保留原大小写策略。
 
-`0x2d16c8` 的完整 256 字节表只将 ASCII 大写字母转成小写，其余字节保持原值。它与尚未恢复的 `0x1bf63c` Unicode 准备路径不是同一能力。
+`0x2d16c8` 的完整 256 字节表只将 ASCII 大写字母转成小写，其余字节保持原值。它与 `0x1bf63c` 的 UTF-8 码点逆序不是同一能力。后者已有仅覆盖原 interchange-valid 输入的宿主实现，修复路径未移植，见 [查询助手](token-query-branches.md)。
 
 ## source、target 与 token ID
 

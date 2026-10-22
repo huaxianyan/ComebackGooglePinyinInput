@@ -45,14 +45,16 @@ tests=(forward_token_dictionary forward_token_exact_cursor)
 if [[ "$scope" == source || "$scope" == cursor || "$scope" == manager ]]; then tests=(forward_token_exact_cursor); fi
 if [[ "$scope" == all ]]; then tests+=(forward_token_metadata); fi
 if [[ "$scope" == all || "$scope" == queries ]]; then tests+=(token_dictionary_setting); fi
-if [[ "$scope" == all || "$scope" == queries || "$scope" == manager ]]; then tests+=(bundle_data_scheme); fi
+if [[ "$scope" == all || "$scope" == queries ]]; then tests+=(bundle_data_scheme); fi
+if [[ "$scope" == all || "$scope" == queries || "$scope" == manager ]]; then tests+=(token_query_preparation); fi
 for test in "${tests[@]}"; do
     g++ "${flags[@]}" "research/native-rewrite/tests/${test}_test.cc" "$build/objects/"*.o "$build/libmarisa.a" \
         -lprotobuf-lite -pthread -o "$build/${test}_test"
 done
 if [[ "$scope" == all ]]; then "$build/forward_token_metadata_test"; fi
 if [[ "$scope" == all || "$scope" == queries ]]; then "$build/token_dictionary_setting_test"; fi
-if [[ "$scope" == all || "$scope" == queries || "$scope" == manager ]]; then "$build/bundle_data_scheme_test"; fi
+if [[ "$scope" == all || "$scope" == queries ]]; then "$build/bundle_data_scheme_test"; fi
+if [[ "$scope" == all || "$scope" == queries || "$scope" == manager ]]; then "$build/token_query_preparation_test"; fi
 if [[ "$scope" == manager ]]; then
     python3 research/native-rewrite/tests/verify_forward_token_dictionary.py \
         --manifest work/native-rewrite/forward-token-data/manifest.json \

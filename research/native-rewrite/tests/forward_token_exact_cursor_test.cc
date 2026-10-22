@@ -1,5 +1,6 @@
 #include "forward_token_dictionary.h"
 #include "token_dictionary_manager.h"
+#include "token_query.h"
 #include "token_dictionary_setting.pb.h"
 #include "dictionary_string_image.h"
 #include "file_mmap.h"
@@ -96,21 +97,33 @@ static void ManagerFrames(const char* fixture) {
     consume(0x40800061, 25);
     Check(cursor->Done(), "qualification admitted another dictionary");
     cursor->Reset();
+    Check(LookupTokenQuery(cursor.get(), "a", false, 26, true, &token) && token.id == 0x00800061 &&
+          token.auxiliary == 0, "ordinary source helper lost native Manager order");
+    Check(LookupTokenQuery(cursor.get(), "gnohz", true, 16, true, &token) && token.id == 8446370 &&
+          token.text == "\xee\x86\xa2", "reversed source lookup did not use the original pinyin graph");
+    // Frozen 0x195a68 miss path: preserve output, Reset, then allow another query.
+    Check(!LookupTokenQuery(cursor.get(), "!", false, 16, true, &token) && token.id == 8446370 &&
+          token.text == "\xee\x86\xa2", "missing source query overwrote the previous token");
+    Check(LookupTokenQuery(cursor.get(), "\xe4\xb8\xad", true, 26, false, &token) &&
+          token.id == 0x01004e2d && token.auxiliary == 26, "target helper lost Unicode reversal or query language");
+    // Native optional-output lookup still Pushes: Direct allocates its dynamic
+    // ID while encoding, even without Current. Later IDs retain that mutation.
+    Check(LookupTokenQuery(cursor.get(), "Ab", false, 0, true, nullptr), "presence-only source lookup failed");
     Check(cursor->Push(0, 0, "'", false) && cursor->NextFrame(), "the first English model was replaced by its same-key successor");
     consume(0x00800027, 0);
     cursor->Reset();
     Check(cursor->Push(0, 0, "Ab", false) && cursor->NextFrame(), "cannot query a multi-character source");
-    consume(0x008f0000, 0);
+    consume(0x008f0001, 0);
     const auto reloaded = TokenDictionaryManager::Load(wire, *resources);
     Check(static_cast<bool>(reloaded), "cannot resolve the same setting through the resource cache");
     auto second = reloaded->CreateDfsCursor();
-    Check(second->Push(0, 0, "Cd", false) && second->NextFrame() && second->Current(token) && token.id == 0x008f0001,
+    Check(second->Push(0, 0, "Cd", false) && second->NextFrame() && second->Current(token) && token.id == 0x008f0002,
           "ID-cache reuse lost the model counter across Managers");
     const auto empty = TokenDictionaryManager::Load("", *resources);
     Check(static_cast<bool>(empty), "cannot activate the native empty dictionary set");
     auto empty_cursor = empty->CreateDfsCursor();
     Check(static_cast<bool>(empty_cursor) && empty_cursor->Done(), "empty DFS factory did not retain its real Manager object");
-    std::cout << "original three data schemes, token setting, ID-cache reuse and real DFS query passed\n";
+    std::cout << "original bundle-to-Manager lookup, prepared source/target, miss recovery and optional output passed\n";
 }
 static void SourceFrames(const std::shared_ptr<ForwardTokenDictionaryView>& dictionary) {
     ForwardTokenDictionaryView::Cursor cursor(dictionary);

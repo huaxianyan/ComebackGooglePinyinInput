@@ -109,4 +109,4 @@ TokenDictionaryResources 的输入已升级为原 DataScheme 字节及按库名�
 
 Ghidra 成功输出位于 `token-manager-query-state/`、`token-manager-query-core/`、`token-manager-selection/`、`token-manager-key-order/` 和 `token-manager-cache-advance/`，均在 `work/native-rewrite/ghidra/`。测试二进制精确清理，build.log 留存于 `work/native-rewrite/token-manager-selection-build/`。
 
-后续 [DirectTokenDictionary](direct-token-dictionary.md) 与 [普通 Forward 资源读取](forward-token-dictionary.md) 均有真实子游标，已接通本页的 Manager 匹配帧与缓存。设置字节与普通 ID 缓存已接到工厂。原内置 scheme 已进入普通资源注册，下一步接上层文本准备与查询调用方，不用提前准备的结果替代真实读取。
+后续 [DirectTokenDictionary](direct-token-dictionary.md) 与 [普通 Forward 资源读取](forward-token-dictionary.md) 均有真实子游标，已接通本页的 Manager 匹配帧与缓存。设置字节与普通 ID 缓存已接到工厂。原内置 scheme 已进入普通资源注册，真实 DFS 单项助手现也已接入，见 [查询分支](token-query-branches.md)。下一步恢复上层工厂选择与标志来源，不用提前准备的结果替代真实读取。

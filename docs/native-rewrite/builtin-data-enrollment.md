@@ -54,4 +54,4 @@ TokenDictionaryResources::Load 接收原 scheme 字节和按库名、blob 名分
 
 新增六段完整 FDE，全部与保留 v2.1.7 库 raw-equal，中央从 500 增至 506。证据为 `work/native-rewrite/restart-v217/native-builtin-data-enrollment-comparison.json`。修复后的 Ghidra 导出保存在 `builtin-data-enrollment-verified/`，旧 500 段直接沿用。
 
-本轮没有执行原 ARM64 或 Android，没有改正式版工作区或设备。下一步接上层文本准备及 source/target 查询调用方，核对文本方向和请求属性后再组合，不提前新增未使用的转换接口。
+本轮没有执行原 ARM64 或 Android，没有改正式版工作区或设备。后续已接原 interchange-valid 输入的码点逆序和真实 DFS 单项助手，见 [查询分支](token-query-branches.md)。下一步恢复上层调用方的工厂及标志来源，不提前新增未使用的转换接口。
