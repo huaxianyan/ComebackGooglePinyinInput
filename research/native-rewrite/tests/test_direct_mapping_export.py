@@ -9,11 +9,19 @@ import unittest
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "research/native-rewrite/tools"))
 from extract_data_bundles import (
-    analyze_direct_mapping_lookup, direct_mapping_position, unpack_lsb_bits,
+    analyze_direct_mapping_lookup, direct_mapping_position, unpack_lsb_bits, raw_integer_array,
 )
 
 
 class DirectMappingExportTest(unittest.TestCase):
+    def test_raw_array_keeps_token_ids_and_indirect_addresses(self):
+        # Actual regression: raw target words went through FlatVector's width-32
+        # zero mask. Native 0x1f6030/0x19cc2c read bytes/LE32, not packed integers.
+        image = bytes.fromhex("0c00000000000000 61008000 02000080 30008008 00000000")
+        table, values, end = raw_integer_array(image, 0, 4)
+        self.assertEqual(values, [0x00800061, 0x80000002, 0x08800030])
+        self.assertEqual((table["data_size"], end), (12, 24))
+
     def test_unpack_values_crossing_byte_boundaries(self):
         self.assertEqual(unpack_lsb_bits(bytes.fromhex("41 0c"), 3, 5), [1, 2, 3])
 

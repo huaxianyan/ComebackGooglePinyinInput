@@ -180,6 +180,10 @@ score = -T[code]
 
 因此五条诊断字符串不代表五张依次排列在 config 后的表。metadata 失败对应前置消息读取或解析阶段，与前置 length-prefixed config 相符。后续已确认类型名为 `TokenExpanderMetaData`，四个字段的匹配、回退和分组职责见 [metadata 与管理器研究](direct-mapping-metadata.md)。
 
+## 宿主实现进展
+
+后续已恢复具体加载器和子游标，使用四份真实资源验证，见 [宿主子游标](direct-mapping-host-cursor.md)。证据工具已修正原始 target 数组误用位压缩解码的问题，旧派生映射需重新导出。管理器、补文本和键生成收集仍另设范围。
+
 ## 验证与限制
 
 沿用一个真实 APK 入口测试，固定检查独立反汇编时记录的关键指令、分支目标、metadata 文案锚点、迭代器虚表和 score 构造参数：

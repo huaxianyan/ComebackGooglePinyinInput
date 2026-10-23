@@ -69,4 +69,4 @@ Manager 空集合仍创建 DFS，空输入转换清空输出并成功，非空�
 
 未执行原 ARM64，未操作设备、正式包或用户词典。完整非零插值逐 bit 对照、原容器 OOM/分配、资源查询、完整迭代收集及 Android 学习仍未验收。后续批量阶段一次完整宿主构建和同一真实原资源入口通过，覆盖逆序输出、逐项语言、失败部分结果及空 Manager；没有重跑本节旧数学组件测试。日志为 `work/native-rewrite/forward-token-build/source-token-sequence-build.log`。
 
-新增九段完整 FDE，全部 raw-equal，中央增至 521，旧 512 段沿用。原第二调用方 `0x18e380` 和批量本体证据已存在，不重复比较。证据为 `work/native-rewrite/restart-v217/native-source-token-sequence-comparison.json`。后续已接 `0x18ccb0` 的输入检查及 `0x18db08` 的真实无扩展消费投影，详见 [键生成调用方](key-generator-score-math.md#已接无扩展调用方)。其 scale、标志及 category 来自原写入值，不是未完成生成器的默认返回。仍不创建未消费的身份或标记向量替身，下一步接实际扩展迭代收集。
+新增九段完整 FDE，全部 raw-equal，中央增至 521，旧 512 段沿用。原第二调用方 `0x18e380` 和批量本体证据已存在，不重复比较。证据为 `work/native-rewrite/restart-v217/native-source-token-sequence-comparison.json`。后续已接 `0x18ccb0` 的输入检查及 `0x18db08` 的真实无扩展消费投影，详见 [键生成调用方](key-generator-score-math.md#已接无扩展调用方)。其 scale、标志及 category 来自原写入值，不是未完成生成器的默认返回。仍不创建未消费的身份或标记向量替身。后续已恢复四份真实资源的 [DirectMapping 子游标](direct-mapping-host-cursor.md)，尚未接扩展 Manager 或收集。先恢复 Manager 顺序应用及原补文本入口，再接实际扩展迭代收集。

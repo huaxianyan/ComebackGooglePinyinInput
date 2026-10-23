@@ -4,6 +4,7 @@
 
 #include "owned_byte_region.h"
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <string_view>
 
@@ -15,5 +16,10 @@ bool SerializeDictionaryStringImage(std::string_view payload, OwnedByteRegion& o
 // Returns aligned logical advancement, or zero on incomplete prefix/body.
 // Native requires the body but does not require trailing padding to exist.
 std::uint64_t LoadDictionaryStringImage(const OwnedByteRegion& input, std::string& payload);
+// Native raw-array framing (0x1f6030), distinct from packed FlatVector tables:
+// LE64 byte size, byte payload, eight-byte advancement. Ordinary complete images;
+// preserves raw words, including bit 31. Failure leaves position unchanged.
+std::optional<OwnedByteRegion> LoadDictionaryArrayImage(
+    const OwnedByteRegion& input, std::size_t& position);
 }  // namespace comeback::recovered
 #endif

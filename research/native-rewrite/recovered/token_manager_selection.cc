@@ -13,6 +13,6 @@ bool MatchesTokenDictionary(std::int32_t dictionary_selector,
 
 bool ManagerTokenAdmission::Include(const KeyToken& token) {
     if (is_source_) return true;
-    return seen_.emplace((token.id >> 28) & 7u, token.text).second;
+    return seen_.emplace(TokenKindFromId(token.id), token.text).second;
 }
 }  // namespace comeback::recovered

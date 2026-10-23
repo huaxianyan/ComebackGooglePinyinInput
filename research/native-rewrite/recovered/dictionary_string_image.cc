@@ -30,4 +30,15 @@ std::uint64_t LoadDictionaryStringImage(const OwnedByteRegion& input, std::strin
     payload.assign(reinterpret_cast<const char*>(input.Data() + kLengthSize), length);
     return detail::AlignDictionaryBytes(kLengthSize + length);
 }
+std::optional<OwnedByteRegion> LoadDictionaryArrayImage(
+    const OwnedByteRegion& input, std::size_t& position) {
+    if (position > input.Size() || input.Size() - position < 8) return std::nullopt;
+    const auto size = detail::ReadLittleEndian<std::uint64_t>(input.Data() + position);
+    if (size > input.Size() - position - 8) return std::nullopt;
+    const auto advance = detail::AlignDictionaryBytes(8 + size);
+    if (advance > input.Size() - position) return std::nullopt;
+    const auto result = input.Slice(position + 8, size);
+    position += advance;
+    return result;
+}
 }  // namespace comeback::recovered

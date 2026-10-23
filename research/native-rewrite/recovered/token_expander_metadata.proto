@@ -1,0 +1,12 @@
+// Recovered field numbers/defaults of TokenExpanderMetaData; see NOTICE.
+// Field/enum value names are research labels, not recovered original names.
+syntax = "proto2";
+package i18n_input.engine.hmm.proto;
+option optimize_for = LITE_RUNTIME;
+message TokenExpanderMetaData {
+  enum ObservedExpansionType { TYPE_0 = 0; TYPE_1 = 1; TYPE_2 = 2; TYPE_3 = 3; TYPE_4 = 4; }
+  optional ObservedExpansionType expansion_type = 1 [default = TYPE_0];
+  optional int32 input_kind = 2 [default = 0];
+  optional int32 auxiliary_id = 3 [default = 0];
+  optional bool fallback = 4 [default = false];
+}

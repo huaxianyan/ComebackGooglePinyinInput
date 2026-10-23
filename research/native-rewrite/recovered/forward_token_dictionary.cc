@@ -33,13 +33,10 @@ std::shared_ptr<ForwardTokenDictionaryView> ForwardTokenDictionaryView::Load(con
         if (!table) return nullptr;
         tables.push_back(std::move(*table));
     }
-    if (position > payload.Size() || payload.Size() - position < 8) return nullptr;
-    const auto prefix_size = detail::ReadLittleEndian<std::uint64_t>(payload.Data() + position);
-    if (prefix_size > payload.Size() - position - 8 ||
-        detail::AlignDictionaryBytes(8 + prefix_size) > payload.Size() - position) return nullptr;
-    const auto prefix = payload.Slice(position + 8, prefix_size);
+    const auto prefix = LoadDictionaryArrayImage(payload, position);
+    if (!prefix) return nullptr;
     auto result = std::shared_ptr<ForwardTokenDictionaryView>(new ForwardTokenDictionaryView(
-        payload, metadata, std::move(tables), prefix));
+        payload, metadata, std::move(tables), *prefix));
     try {
         marisa::grimoire::Mapper mapper;
         mapper.open(payload.Data() + 16, graph_size);

@@ -424,9 +424,26 @@ def packed_table(
     data_size = ((count * bit_width + 31) // 32) * 4
     data_end = data_offset + data_size
     values = unpack_lsb_bits(content[data_offset:data_end], count, bit_width)
+    return describe_integer_table(content, offset, data_offset, data_size, count, bit_width, values)
+
+
+def raw_integer_array(content: bytes, offset: int, element_size: int):
+    """0x1f6030 raw bytes: not FlatVector's width-dependent bit decoder."""
+    byte_size = read_u64(content, offset)
+    data_offset = offset + 8
+    if byte_size % element_size or byte_size > len(content) - data_offset:
+        raise ValueError(f"invalid raw array size at {offset}")
+    values = [int.from_bytes(content[position:position + element_size], "little")
+              for position in range(data_offset, data_offset + byte_size, element_size)]
+    return describe_integer_table(content, offset, data_offset, byte_size,
+                                  byte_size // element_size, element_size * 8, values)
+
+
+def describe_integer_table(content, offset, data_offset, data_size, count, bit_width, values):
+    data_end = data_offset + data_size
     aligned_end = align_up(data_end, 8)
     if any(content[data_end:aligned_end]):
-        raise ValueError(f"packed table padding is not zero at {data_end}")
+        raise ValueError(f"integer table padding is not zero at {data_end}")
     return (
         {
             "offset": offset,
@@ -628,13 +645,7 @@ def analyze_direct_mapping_expander(content: bytes) -> dict[str, Any]:
 
     raw_values = {}
     for name, width in (("target_words", 32), ("score_bytes", 8)):
-        byte_size = read_u64(content, offset)
-        element_size = width // 8
-        if byte_size % element_size:
-            raise ValueError(f"unaligned {name} byte size: {byte_size}")
-        table, values, offset = packed_table(
-            content, offset, byte_size // element_size, width, 8
-        )
+        table, values, offset = raw_integer_array(content, offset, width // 8)
         table["length_header_unit"] = "bytes"
         raw_values[name] = values
         if name == "target_words":
