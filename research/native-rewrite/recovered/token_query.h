@@ -8,6 +8,7 @@
 
 namespace comeback::recovered {
 class TokenDictionaryCursor;
+class TokenDictionaryManager;
 struct KeyToken;
 // Native 0x1bf8dc. Append complete UTF-8 code-point byte strings to existing
 // output. Input is already prepared, complete valid UTF-8 and must not alias
@@ -27,6 +28,15 @@ std::string ReverseTokenQueryUnits(std::string_view input);
 // Pop (fatal protocol failure otherwise); a miss resets the cursor.
 bool LookupTokenQuery(TokenDictionaryCursor* cursor, const std::string& input,
                       bool reverse_text, std::int32_t language, bool is_source, KeyToken* output);
+// Ordinary-Manager projection of 0x19550c and the callers' slot-15 flag read.
+// Languages correspond one-for-one to input; count fits the native int32 loop.
+// Input is interchange-valid UTF-8. Resize preserves old entries, initializes
+// newly added tokens, then writes in reverse source order. A miss retains the
+// written prefix and untouched remainder. Actual callers pass nonnull output;
+// generic null-DFS/BFS dispatch and in-place reconfiguration are not supplied.
+bool ConvertSourceTokens(const TokenDictionaryManager& manager,
+                         const std::vector<std::string>& input,
+                         const std::vector<std::int32_t>& languages, std::vector<KeyToken>& output);
 // One complete valid UTF-8 code-point unit; shared by actual dictionary readers.
 std::uint32_t ReadTokenQueryScalar(std::string_view unit);
 // Native 0x1bf884 scalar encoding. Valid Unicode scalar input, no normalization

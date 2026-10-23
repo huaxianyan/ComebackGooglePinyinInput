@@ -77,7 +77,7 @@ void ManagerTokenCursor::Materialize() {
     ManagerTokenAdmission admission(is_source_);
     // The original temporary is initialized once per pass. In particular Direct
     // Current retains the identity bit from the preceding successful child.
-    KeyToken token{"", 0, kUnknownTokenLanguage, false};
+    KeyToken token{};
     while (!ChildrenDone()) {
         auto& child = *children_[frames_.back()[child_index_]].cursor;
         if (child.Current(token) && admission.Include(token)) cache_.push_back({token, child.Attribute()});

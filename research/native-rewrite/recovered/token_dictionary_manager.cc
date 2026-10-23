@@ -29,6 +29,20 @@ std::shared_ptr<TokenDictionaryManager> TokenDictionaryManager::Load(
     return manager;
 }
 
+bool TokenDictionaryManager::UsingReversedTokens() const {
+    // Original 0x192314 initializes +0xb8 to true; 0x1948d0 replaces it only
+    // for a nonempty active set and requires all active flags to agree.
+    if (active_.empty()) return true;
+    return std::visit([](const auto& dictionary) {
+        using Dictionary = typename std::decay_t<decltype(dictionary)>::element_type;
+        if constexpr (std::is_same_v<Dictionary, DirectTokenDictionary>) {
+            return dictionary->UsingReversedTokens();
+        } else {
+            return false; // Original Forward getter 0x1b2720 is constant false.
+        }
+    }, active_.begin()->second);
+}
+
 std::unique_ptr<TokenDictionaryCursor> TokenDictionaryManager::CreateDfsCursor() const {
     std::vector<ManagerTokenCursor::Child> children;
     for (const auto& entry : active_) {

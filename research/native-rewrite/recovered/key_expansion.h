@@ -9,12 +9,14 @@ namespace comeback::recovered {
 // Semantic fields read from the native 0x20-byte token. Not its ABI layout;
 // unused flag bits/padding are absent. The auxiliary word remains unnamed and
 // is signed in native ordering; neither token ID nor text substitutes for it.
-// Callers supply all fields; the native default/init sequence is not modeled.
+// Known-field defaults match native vector growth at 0x195270; unused bits
+// and padding remain outside this projection. Explicit aggregate values override.
+inline constexpr std::int32_t kUnknownTokenLanguage = 26;
 struct KeyToken {
     std::string text;
-    std::uint32_t id;
-    std::int16_t auxiliary;
-    bool identity_bit;
+    std::uint32_t id = 0;
+    std::int16_t auxiliary = kUnknownTokenLanguage;
+    bool identity_bit = false;
 };
 inline constexpr std::uint32_t kTokenLiteralBit = 0x01000000u;
 inline constexpr std::uint32_t kTokenCodepointMask = 0x001fffffu;

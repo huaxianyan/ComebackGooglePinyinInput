@@ -68,7 +68,7 @@ Push 先清缓存、设置全局 source/target 模式，再筛选顶帧。失败
 
 上一阶段 LoadActive 的镜像列表入口已移除，当前唯一入口为 TokenDictionaryManager::Load。它解析 TokenDictionaryDataSetting，再按配置列表中的 data ID 查询 TokenDictionaryResources。类名前缀分派移到资源层，Direct/Forward 加载器与活跃表选择各保留一个实现。普通非反向边界不变，未支持镜像与非空迭代选项返回 null，不发布部分工厂。
 
-Direct 的第四个 LE32 元数据字段由原 `0x1b09c0` 的 IsUsingReversedToken getter 读取，Forward 的 `0x1b2720` 固定返回 false。当前原资源均为非反向模型。宿主现在读取 Direct 原字段，反向配置不进入这个普通工厂，不填默认值或替代准备规则。
+Direct 的第四个 LE32 元数据字段由原 `0x1b09c0` 的 IsUsingReversedToken getter 读取，Forward 的 `0x1b2720` 固定返回 false。当前原资源均为非反向模型。宿主现在读取 Direct 原字段，反向配置不进入这个普通工厂，不填替代准备规则。后续确认 Manager slot 15 读取首个活跃字典的标志并要求一致，空集合保留 `0x192314` 构造器的 true。不可变普通投影由现有模型求值，不增加重复缓存字段。空集合的 true 不是开放反向资源或切换 BFS 的信号。
 
 CreateDfsCursor 按活跃表顺序创建真实子游标，调用既有 Manager 实现。即使活跃表为空也返回真实 Manager 对象，不能据空结果改走 BFS。多次创建的游标共享已装载模型及 Direct 动态计数器，匹配帧和结果缓存各自独立。原工厂逐次插入后重置根帧，宿主用同等空状态的新游标表达，不复用已消费游标。
 
@@ -109,4 +109,4 @@ TokenDictionaryResources 的输入已升级为原 DataScheme 字节及按库名�
 
 Ghidra 成功输出位于 `token-manager-query-state/`、`token-manager-query-core/`、`token-manager-selection/`、`token-manager-key-order/` 和 `token-manager-cache-advance/`，均在 `work/native-rewrite/ghidra/`。测试二进制精确清理，build.log 留存于 `work/native-rewrite/token-manager-selection-build/`。
 
-后续 [DirectTokenDictionary](direct-token-dictionary.md) 与 [普通 Forward 资源读取](forward-token-dictionary.md) 均有真实子游标，已接通本页的 Manager 匹配帧与缓存。设置字节与普通 ID 缓存已接到工厂。原内置 scheme 已进入普通资源注册，真实 DFS 单项助手现也已接入，见 [查询分支](token-query-branches.md)。下一步恢复上层工厂选择与标志来源，不用提前准备的结果替代真实读取。
+后续 [DirectTokenDictionary](direct-token-dictionary.md) 与 [普通 Forward 资源读取](forward-token-dictionary.md) 均有真实子游标，已接通本页的 Manager 匹配帧与缓存。设置字节与普通 ID 缓存已接到工厂。原内置 scheme 已进入普通资源注册，真实 DFS 单项助手现也已接入，见 [查询分支](token-query-branches.md)。普通批量 source 转换及 Manager 标志来源现已接入，输出倒序和失败部分结果沿用原协议。下一步接实际调用上下文及输入校验，不用提前准备的结果替代真实读取。

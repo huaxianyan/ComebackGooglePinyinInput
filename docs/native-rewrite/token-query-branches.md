@@ -2,7 +2,7 @@
 
 本轮展开源 token 转换的两套实际查询、管理器工厂和资源虚表，并恢复 BFS 输入的 UTF-8 单元拆分。普通 Direct/Forward 的 Manager 查询及已解析资源工厂已有真实宿主实现，没有新增 lookup 替身。后续 [ManagerIterator 状态与准入](token-manager-selection.md) 已展开匹配帧和懒缓存，并将资格匹配、target 准入恢复为源码，普通 [Direct DFS 子查询](direct-token-dictionary.md) 也已连接真实资源。
 
-后续已接真实 DFS 单项查询助手 LookupTokenQuery。文本准备已确定为 UTF-8 码点逆序，宿主仅支持开启逆序时已通过原 interchange 校验的输入，未移植原修复路径。上层工厂选择和 BFS 单项查询仍未恢复为宿主调用方。
+后续已接真实 DFS 单项查询助手 LookupTokenQuery。文本准备已确定为 UTF-8 码点逆序，宿主仅支持开启逆序时已通过原 interchange 校验的输入，未移植原修复路径。普通 Manager 的批量 source 调用方已接；任意 provider 的工厂分派和 BFS 单项查询仍不在宿主范围。
 
 ## 管理器实际接口
 
@@ -55,7 +55,19 @@ ReverseTokenQueryUnits 复用已有 AppendTokenQueryUnits 的码点边界，逆�
 
 LookupTokenQuery 对应 `0x195a68` 的普通 DFS 路径，直接操作 TokenDictionaryCursor：复制输入或按上述范围逆序，按 is_source 映射 source/target，传原 selector `-1` 及请求语言。Push、NextFrame 和 Current 的返回值不新增失败 gate，查到时可选写 token 后 Pop，Pop 失败沿原 CHECK 致命结束。未查到时 Reset，保留原输出并返回 false，不因未命中切换 BFS，也不恢复原打印输入文本的日志。
 
-逆序标志仍由调用方显式传入，尚未接上层依据资源属性选择标志的完整调用链，不因此开放反向词典装载。可选输出不是无副作用检查，Direct 在 Push 编码多码点时已经推进共享动态 ID，省略 Current 不会撤销它。助手不把共享计数器改成游标局部状态。
+单项助手的逆序标志仍是显式参数，普通批量入口现已从 Manager 的真实属性读取后传入，不因此开放反向词典装载。可选输出不是无副作用检查，Direct 在 Push 编码多码点时已经推进共享动态 ID，省略 Current 不会撤销它。助手不把共享计数器改成游标局部状态。
+
+## 普通批量调用与标志来源
+
+`0x19550c` 的两个直接调用点位于 `0x18db08` 和已取证的 `0x18e380`。两者先做原输入校验，再从 TokenDictionaryInterface slot 15 取逆序标志，而不是从语言编号猜方向。
+
+Manager 的 slot 15 经 `0x191e40` 调整 this，`0x191e38` 读取主对象 `+0xb8`。原构造器 `0x192314` 将它初始化为 true，非空激活集合才以首个字典的标志替换，再核对其他项一致。它不是各项 OR，也不能把空 Manager 的默认值改为 false。当前不可变普通工厂只接非反向资源，所以非空集合一致为 false，空集合保留原 true。UsingReversedTokens 由现有模型读取或使用已取证的空构造状态，不保存第二份属性。
+
+ConvertSourceTokens 直接接普通 Manager，按实际调用方取得属性，创建真实 DFS、Reset、调整输出长度，再从后往前逐项调用 LookupTokenQuery。输入语言与文本数量逐项对应，计数在原 int32 范围，输出引用对应两条实际调用方的非空参数。它不是任意 TokenDictionaryInterface 的完整替代。
+
+`0x19549c` 调整 token 向量，增长的 `0x195270` 对新元素写入空文本、ID 零、附加字段 26 和身份 bit false。已有元素只在成功写入时改变。失败不清空整个输出，也不恢复已经写入的项。默认已知字段集中于 KeyToken，原缓存初始化也复用，不复制未观察的 padding 或高位。
+
+普通工厂包含空集合也返回非空 DFS，因此这里没有 BFS 占位后端。原结束 slot 10 经 `0x1926b4`、`0x192694` 析构并释放对象，宿主以唯一所有权在成功和失败时清理。BFS 分支的 `0x194df0` 只是调用 slot 2 的零参数 Reset，不把它错当另一种文本准备。
 
 ## 验证与证据
 
@@ -71,6 +83,8 @@ LookupTokenQuery 对应 `0x195a68` 的普通 DFS 路径，直接操作 TokenDict
 
 首次手输工厂地址错误，纠正后四个工厂/调整函数成功，随后又因文本地址的基址换算错误中断。文本函数用正确地址另行导出，相关错误日志保留，不把 headless 进程退出零当脚本成功。结论仅使用上述成功函数与独立 FDE 比较。
 
-测试二进制精确清理，build.log 留存于 `work/native-rewrite/token-query-build/`。未执行原 ARM64，未操作设备、正式包或用户词典。ManagerIterator 的匹配帧、懒缓存和准入已有后续记录。普通 Direct 子查询已有真实资源实现，[普通 Forward 单项读取](forward-token-dictionary.md) 也已接入原始图和五张表。Forward 流式游标、Manager 工厂、设置字节及普通 ID 缓存均已有后续真实入口。普通模型注册与创建回调已有后续证据，见 [创建链记录](token-model-creation.md)。后续普通 bundle 的 scheme 内存注册已有真实入口，见 [内置数据注册](builtin-data-enrollment.md)。本阶段单项助手已进入同一条原 bundle→scheme→Manager 端到端入口。验证覆盖普通 source、逆序 source、Unicode target、未命中后继续、无输出存在性查询，以及保留其状态后的跨 Manager 动态 ID。一次完整宿主构建、新逆序模块及该流程通过，日志为 `work/native-rewrite/forward-token-build/token-query-helper-build.log`。未重跑旧 schema 或独立查询测试。
+测试二进制精确清理，build.log 留存于 `work/native-rewrite/token-query-build/`。未执行原 ARM64，未操作设备、正式包或用户词典。ManagerIterator 的匹配帧、懒缓存和准入已有后续记录。普通 Direct 子查询已有真实资源实现，[普通 Forward 单项读取](forward-token-dictionary.md) 也已接入原始图和五张表。Forward 流式游标、Manager 工厂、设置字节及普通 ID 缓存均已有后续真实入口。普通模型注册与创建回调已有后续证据，见 [创建链记录](token-model-creation.md)。后续普通 bundle 的 scheme 内存注册已有真实入口，见 [内置数据注册](builtin-data-enrollment.md)。前一阶段单项助手已进入同一条原 bundle→scheme→Manager 端到端入口。验证覆盖普通 source、逆序 source、Unicode target、未命中后继续、无输出存在性查询，以及保留其状态后的跨 Manager 动态 ID。一次完整宿主构建、新逆序模块及该流程通过，日志为 `work/native-rewrite/forward-token-build/token-query-helper-build.log`。未重跑旧 schema 或独立查询测试。
 
-新增六段 UnicodeText 辅助函数的完整 FDE，全部 raw-equal，中央从 506 增至 512，旧区域不重做。证据为 `work/native-rewrite/restart-v217/native-token-query-helper-comparison.json`，Ghidra 输出为 `work/native-rewrite/ghidra/token-query-unicode-preparation/`。未执行原 ARM/Android，未验证修复路径或完整 BFS。下一步恢复 `0x19550c` 的上层调用方及标志来源，再决定 BFS 的实际接入范围，不增加固定结果或通用转发接口。
+新增六段 UnicodeText 辅助函数的完整 FDE，全部 raw-equal，中央从 506 增至 512，旧区域不重做。证据为 `work/native-rewrite/restart-v217/native-token-query-helper-comparison.json`，Ghidra 输出为 `work/native-rewrite/ghidra/token-query-unicode-preparation/`。未执行原 ARM/Android，未验证修复路径或完整 BFS。后续批量阶段已将普通上层调用方及标志来源接入同一真实入口。一次完整宿主构建通过，验证输出倒序、逐项语言、缩短与增长、失败前缀和旧剩余项、新 token 默认字段，以及空输入和空 Manager。原单项、schema、逆序模块均未独立重跑。日志为 `work/native-rewrite/forward-token-build/source-token-sequence-build.log`。
+
+新增九段完整 FDE，全部 raw-equal，中央增至 521，旧 512 段直接沿用。证据为 `work/native-rewrite/restart-v217/native-source-token-sequence-comparison.json`。Ghidra 输出为 `token-source-sequence-*`，原第二调用方与批量函数的既有字节证据不重做。下一步接实际调用上下文及 `0x18ccb0` 输入校验，不因转换已完成就宣称完整键生成或引入 BFS 替身。

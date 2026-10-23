@@ -119,11 +119,30 @@ static void ManagerFrames(const char* fixture) {
     auto second = reloaded->CreateDfsCursor();
     Check(second->Push(0, 0, "Cd", false) && second->NextFrame() && second->Current(token) && token.id == 0x008f0002,
           "ID-cache reuse lost the model counter across Managers");
+    std::vector<KeyToken> converted(3, KeyToken{"prior", 7, 8, true});
+    Check(ConvertSourceTokens(*manager, {"a", "zhong"}, {0, 16}, converted) && converted.size() == 2 &&
+          converted[0].id == 8446370 && converted[0].auxiliary == 16 &&
+          converted[1].id == 0x00800061 && converted[1].auxiliary == 0,
+          "source conversion lost reversed word order or per-word language");
+    converted = {{"old-left", 7, 8, true}, {"old-right", 9, 10, true}};
+    // Frozen 0x19550c partial publication and 0x195270 growth defaults.
+    Check(!ConvertSourceTokens(*manager, {"a", "!", "zhong"}, {0, 16, 16}, converted) &&
+          converted.size() == 3 && converted[0].id == 8446370 &&
+          converted[1].text == "old-right" && converted[1].id == 9 &&
+          converted[1].auxiliary == 10 && converted[1].identity_bit &&
+          converted[2].text.empty() && converted[2].id == 0 &&
+          converted[2].auxiliary == 26 && !converted[2].identity_bit,
+          "failed sequence conversion lost its written prefix, old remainder or native new-token defaults");
     const auto empty = TokenDictionaryManager::Load("", *resources);
     Check(static_cast<bool>(empty), "cannot activate the native empty dictionary set");
     auto empty_cursor = empty->CreateDfsCursor();
     Check(static_cast<bool>(empty_cursor) && empty_cursor->Done(), "empty DFS factory did not retain its real Manager object");
-    std::cout << "original bundle-to-Manager lookup, prepared source/target, miss recovery and optional output passed\n";
+    Check(empty->UsingReversedTokens(), "fresh empty Manager lost its native slot-15 flag");
+    Check(ConvertSourceTokens(*empty, {}, {}, converted) && converted.empty(), "empty source sequence did not clear output and succeed");
+    Check(!ConvertSourceTokens(*empty, {"a"}, {0}, converted) && converted.size() == 1 &&
+          converted[0].text.empty() && converted[0].id == 0 && converted[0].auxiliary == 26 && !converted[0].identity_bit,
+          "empty Manager conversion lost the initialized output of its real DFS path");
+    std::cout << "original bundle-to-source sequence, reversed order, partial output and empty Manager passed\n";
 }
 static void SourceFrames(const std::shared_ptr<ForwardTokenDictionaryView>& dictionary) {
     ForwardTokenDictionaryView::Cursor cursor(dictionary);

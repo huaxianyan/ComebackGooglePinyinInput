@@ -1,10 +1,10 @@
 # Token 身份与扩展结果归一化
 
-已恢复键生成上游的 token 语义字段、收集结束结果及分数归一化裁剪。源码复用唯一 AddLogScores，不调用标准库 exp/log，也不模拟尚未恢复的管理器和迭代器。
+已恢复键生成上游的 token 语义字段、收集结束结果及分数归一化裁剪。源码复用唯一 AddLogScores，不调用标准库 exp/log。后续普通资源和真实源转换已有入口，这些局部组件仍不代表完整键生成。
 
 ## 身份与记录
 
-KeyToken 表达原 `0x20` 字节 token 中已观察的字符串、32 位 ID、16 位附加字段和一个身份 bit。ScoredKeyToken 再保存原 `+0x20` 分数及 `+0x24` 原始标记字节。两者是宿主语义类型，不克隆内存布局、padding 或未使用高位。
+KeyToken 表达原 `0x20` 字节 token 中已观察的字符串、32 位 ID、16 位附加字段和一个身份 bit。ScoredKeyToken 再保存原 `+0x20` 分数及 `+0x24` 原始标记字节。两者是宿主语义类型，不克隆内存布局、padding 或未使用高位。后续 `0x195270` 确认新 token 的已知默认字段为空文本、ID 零、附加字段 `26`、身份 bit false。它们已集中到 KeyToken，Manager 缓存临时 token 也复用默认构造，未知语言常量只保留一个定义。
 
 原 `0x18c620` 比较 `+0x18` 起低 48 bit，再比较 `+0x1e` 的 bit 0，文本不参与身份。因此，显示拼写不同也可能是同一 token。SameKeyTokenIdentity 是唯一身份判断点。后续 [ManagerIterator 准入](token-manager-selection.md) 恢复了另一个原生规则：target 按 ID 的三位分类和完整文本去重，保留先到项。它与本节的身份比较用途不同，继续复用 KeyToken，不用身份相等替代 target 准入。
 
@@ -33,7 +33,7 @@ NormalizeAndPruneExpansions 对应原 `0x18d424`：
 
 范围限定为有限分数、正常舍入环境及非 fast-math。实际键组合、分数到缩放系数的形成仍未恢复，不能将归一化分数直接当作上一阶段的 scale。
 
-## 实际源 token 转换仍缺什么
+## 普通源 token 转换
 
 原 `0x19550c` 已展开，不是对源字符串简单编号：
 
@@ -42,7 +42,11 @@ NormalizeAndPruneExpansions 对应原 `0x18d424`：
 - 输出先调整为源数量。源 token 从后往前读取，目标位置为 `n-1-i`，即输出顺序反转。
 - 每项同时传入对应 language ID。某项失败就停止，仍经过对应结束钩子，不引入成功后统一提交的事务。
 
-后续 [查询分支与资源接口](token-query-branches.md) 已确认管理器次级对象、两种合并迭代器及其不同查询/恢复顺序，并恢复 BFS 输入拆分。具体子字典查询、资源读取及可选文本准备仍未闭合，不将它们包装成固定返回的宿主 lookup。词典 key、Marisa key ID、内部 token ID 和身份字段也不能互相替代。
+后续 [查询分支与资源接口](token-query-branches.md) 已接真实普通 Manager、子字典、资源、有效输入的码点逆序和单项助手。本阶段 ConvertSourceTokens 从实际 Manager 属性取得逆序标志，使用真实 DFS 工厂，按上述原顺序转换，不再依赖预制 token 数组。
+
+输入 language 与源字符串逐项对应，数量在原 int32 范围内，均为原 interchange-valid 输入。接口只接实际调用方的非空输出引用及普通 Manager，不模拟任意 provider 的 null/BFS 分派。resize 缩小时销毁尾项，增长时仅默认初始化新项，已有未写项保持原值。某项失败留下已写前缀、旧未写项和新增默认项，不做回滚。
+
+Manager 空集合仍创建 DFS，空输入转换清空输出并成功，非空输入未命中后保留已调整长度的输出。结束 slot 10 的 `0x1926b4` 经 `0x192694` 析构并释放迭代器，宿主用真实唯一所有权清理，不增加结束占位钩子。词典 key、Marisa key ID、内部 token ID 和身份字段仍不能互相替代。
 
 另一个 `0x18d8b8` 只是拷贝结果，包含 `+0x18` 的 vector<bool>，不是产生 scale 的函数。当前消费投影不读取该向量，本轮不为完整生成器填空向量或默认系数。
 
@@ -63,4 +67,6 @@ NormalizeAndPruneExpansions 对应原 `0x18d424`：
 - `work/native-rewrite/restart-v217/native-token-expansion-state-comparison.json`
 - `work/native-rewrite/restart-v217/token-expansion-state-export.json`
 
-未执行原 ARM64，未操作设备、正式包或用户词典。完整非零插值逐 bit 对照、原容器 OOM/分配、资源查询、完整迭代收集及 Android 学习仍未验收。两套助手的控制流及工厂现已展开，下一步继续恢复 ManagerIterator 查询状态和子字典委派，再接实际资源，不增加替身接口。
+未执行原 ARM64，未操作设备、正式包或用户词典。完整非零插值逐 bit 对照、原容器 OOM/分配、资源查询、完整迭代收集及 Android 学习仍未验收。后续批量阶段一次完整宿主构建和同一真实原资源入口通过，覆盖逆序输出、逐项语言、失败部分结果及空 Manager；没有重跑本节旧数学组件测试。日志为 `work/native-rewrite/forward-token-build/source-token-sequence-build.log`。
+
+新增九段完整 FDE，全部 raw-equal，中央增至 521，旧 512 段沿用。原第二调用方 `0x18e380` 和批量本体证据已存在，不重复比较。证据为 `work/native-rewrite/restart-v217/native-source-token-sequence-comparison.json`。下一步接实际调用上下文及输入校验，不为完整键生成补默认系数、空标记向量或预制结果。
