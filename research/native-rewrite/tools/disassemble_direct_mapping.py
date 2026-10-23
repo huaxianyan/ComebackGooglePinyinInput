@@ -327,6 +327,7 @@ REGIONS = {
     "key_normalize_prune": (0x18D424, 0x18D5D4),
     "key_english_generation": (0x18E264, 0x18E380),
     "key_digit_expansion": (0x18E0E8, 0x18E264),
+    "key_merge_expansion_scores": (0x18DEF4, 0x18E0E8),
     "fast_exp": (0x18C56C, 0x18C5AC),
     "fast_log": (0x18C5D8, 0x18C61C),
     "log_score_add": (0x18C69C, 0x18C72C),

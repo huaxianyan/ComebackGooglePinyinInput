@@ -105,5 +105,16 @@ int main(int argc, char** argv) {
                                  {"0", 0x01000030u, 300, true}, 0.0f, 0x62, collected, false));
     assert(collected.size() == 1);
     CheckRecord(collected[0], 0x08800030u, 300, "0", 0, 0x62);
-    std::cout << "original resources to real Manager text fill, scored collection and normalization passed\n";
+    // Native 0x18def4 consumes actual appended records, not fabricated rows.
+    // The two identity results follow the digit in input, but sort before it.
+    assert(CollectTokenExpansions(*dictionaries, identity.get(), same, 0.0f, 0x63, collected, true));
+    assert(CollectTokenExpansions(*dictionaries, identity.get(), same, 0.0f, 0x64, collected, true));
+    MergeExpansionScoresByIdentity(collected);
+    assert(collected.size() == 2);
+    // 0 + 0 in native log-add is +ln(2), not Manager's max or normalization.
+    // Native copyback leaves destination markers in place rather than moving
+    // them with sorted tokens: digit's 0x62 now accompanies English's identity.
+    CheckRecord(collected[0], 0x00800061u, 0, "a", 0x3f317218u, 0x62, true);
+    CheckRecord(collected[1], 0x08800030u, 300, "0", 0, 0x63);
+    std::cout << "original resources to collection, ordered log-score merge and normalization passed\n";
 }

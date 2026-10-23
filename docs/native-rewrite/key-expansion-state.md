@@ -1,6 +1,6 @@
 # Token 身份与扩展结果归一化
 
-已恢复 token 身份、真实扩展 Manager 的补文本与收集，以及分数归一化裁剪。源码复用唯一 AddLogScores，不调用标准库 exp/log。真实资源的收集结果已进入归一化，完整键组合与缓存生命周期仍未恢复。
+已恢复 token 身份、真实扩展 Manager 的补文本与收集。真实资源结果已进入批次合并和分数归一化裁剪。源码复用唯一 AddLogScores，不调用标准库 exp/log。完整键组合与缓存生命周期仍未恢复。
 
 ## 身份与记录
 
@@ -58,6 +58,32 @@ Current 成功后先补文本，以 binary32 将子分数加上调用方分数�
 新增模型选择、补文本及次级 thunk 三段完整 FDE，均与原版及保留 v2.1.7 库 raw-equal，中央增至 527 段。旧字典回填、收集及归一化证据沿用。比较记录为 `work/native-rewrite/restart-v217/native-token-text-collection-comparison.json`，Ghidra 导出位于 `token-text-fill/` 和 `token-text-manager/`。
 
 Current 失败分支未由现有真实 Manager 触发，不构造替身补覆盖。归一化消费已使用真实收集结果，但 `0x18e264`、`0x18e0e8` 的完整键组合仍未恢复。默认 InMemory、三个缓存的生命周期、原 ARM/Android 动态等价及 OOM 仍未验收。
+
+## 批次内同身份分数合并
+
+MergeExpansionScoresByIdentity 对应 `0x18def4`，由 `0x18e0e8` 在每组二次扩展后调用。输入复用 ScoredKeyToken，不增加另一份 token 或分数结构。
+
+按原输入顺序逐项处理。同身份首次出现时保留完整已知 token 和分数，后来项以 AddLogScores 合入该分数，文本仍取首次值。结果按既有 KeyTokenIdentityLess 顺序写回，最后缩短原向量。身份投影及分数函数各保留唯一实现。
+
+此处不使用扩展 Manager 的「更大分数覆盖」规则，也不归一化或裁剪。原写回只替换文本、ID、附加字段、身份 bit 和分数，目标位置的标记字节保持原值。它与 NormalizeAndPruneExpansions 的整项稳定移动不同。原 `0x18e0e8` 给此批次的所有标记写零，因此没有改成随排序项移动标记。
+
+升级同一真实资源入口：先收集数字，再追加两次真实英文身份结果。合并后英文在前、数字在后，英文分数由两个正零合为字面 word `0x3f317218`，即原近似函数的 ln(2)。输入标记 `0x62/0x63/0x64` 写回后保留前两个位置的 `0x62/0x63`，不随 token 重排。输入全部来自实际 Manager 和收集器，没有预制结果或替身后端。
+
+一次 expander 宿主构建及该入口通过，日志为 `work/native-rewrite/forward-token-build/expansion-score-merge-build.log`。本轮只新增批次合并消费者，普通字典行为未改。expander 范围已取消上一轮临时附带的普通 Manager 回归，旧身份、数学、metadata 和 schema 模块也未重跑。
+
+新增一段完整 FDE，与原版及保留 v2.1.7 库 raw-equal，中央增至 528 段。证据为 `work/native-rewrite/restart-v217/native-expansion-score-merge-comparison.json`。同身份不同文本时保留首次文本的规则已按静态路径恢复，现有模型的同 ID 回填文本稳定，尚无不同文本的运行样本。原 ARM 动态等价及 OOM 仍未验收。
+
+### 组合调用方的已确认顺序
+
+本轮导出保留在 `work/native-rewrite/ghidra/` 下的 `expanded-key-callers/`、`expanded-key-combination/` 和 `expanded-key-combiner-core/`。以下仍是静态调用关系，不代表完整宿主实现：
+
+- `0x18e264` 经 `0x18c850`、`0x195700` 准备 token。后者按 UTF-8 单元拆分并逆序执行 target 查询，语言参数为 26，不是已有逐项语言的 source 批量入口。
+- 首阶段使用缓存 `+0x10`，调用方分数零、标记一、拒绝单项原身份。任一组返回 false 时结束该路径。
+- `0x18e0e8` 使用缓存 `+0x18`，逐主选择带入旧分数，标记零、接受单项原身份。组内收集失败后仍合并已收集项，并继续处理后面的组。任一组失败会在循环后清空全部二次组。
+- 随后以主组、二次组和整数参数 `2/1` 构造 `0x18ebd8` 对象，由 `0x190ea0` 消费。该过程还有候选流、堆和结果集合，不能直接改为笛卡尔积或预设 scale。
+- `0x18e264` 最后读取生成记录 `+0x34`：非零时 category 为零，否则为二。scale 的形成、集合顺序和全部模式仍需继续核对。
+
+下一步先展开候选流构造 `0x190c44` 和结果接纳 `0x18fc10`，再接完整组合。已导出的 `0x190db8`、`0x190138`、`0x190ea0` 和结果复制 `0x18f7b4` 沿用本轮取证，不重复导出。
 
 ## 归一化与稳定裁剪
 

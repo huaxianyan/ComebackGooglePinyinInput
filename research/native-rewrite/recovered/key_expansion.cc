@@ -1,6 +1,7 @@
 // Native token identity, collection result and expansion normalization; NOTICE.
 #include "key_expansion.h"
 #include "score_math.h"
+#include <map>
 #include <utility>
 #include <tuple>
 
@@ -23,6 +24,24 @@ bool CollectedExpansionResult(const std::vector<ScoredKeyToken>& results,
     if (results.empty()) return false;
     return accept_single_identity || results.size() != 1 ||
            !SameKeyTokenIdentity(results.front().token, source);
+}
+
+void MergeExpansionScoresByIdentity(std::vector<ScoredKeyToken>& results) {
+    std::map<KeyToken, float, decltype(&KeyTokenIdentityLess)> merged(&KeyTokenIdentityLess);
+    for (const auto& record : results) {
+        const auto inserted = merged.try_emplace(record.token, record.score);
+        if (!inserted.second) {
+            auto& score = inserted.first->second;
+            score = AddLogScores(score, record.score);
+        }
+    }
+    std::size_t index = 0;
+    for (const auto& entry : merged) {
+        results[index].token = entry.first;
+        results[index].score = entry.second;
+        ++index;
+    }
+    results.resize(merged.size());
 }
 
 void NormalizeAndPruneExpansions(std::vector<ScoredKeyToken>& results) {

@@ -42,7 +42,7 @@ for name in owned_byte_region file_mmap dictionary_string_image flat_integer_tab
     g++ "${flags[@]}" -c "$recovered/$name.cc" -o "$build/objects/$name.o"
 done
 tests=(forward_token_dictionary forward_token_exact_cursor)
-if [[ "$scope" == expander ]]; then tests=(direct_mapping_token_expander forward_token_exact_cursor); fi
+if [[ "$scope" == expander ]]; then tests=(direct_mapping_token_expander); fi
 if [[ "$scope" == source || "$scope" == cursor || "$scope" == manager ]]; then tests=(forward_token_exact_cursor); fi
 if [[ "$scope" == all ]]; then tests+=(forward_token_metadata token_expander_metadata key_token_identity direct_mapping_token_expander); fi
 if [[ "$scope" == all || "$scope" == queries ]]; then tests+=(token_dictionary_setting); fi
@@ -63,12 +63,7 @@ if [[ "$scope" == all || "$scope" == expander ]]; then
         --manifest work/native-rewrite/forward-token-data/manifest.json \
         --executable "$build/direct_mapping_token_expander_test" --fixture "$build/original-resource-fixture.tsv" --case expander
 fi
-if [[ "$scope" == expander ]]; then
-    # Forward source/target now share the actual ID-to-text method: exercise
-    # their existing dictionary consumer in this build and the same fixture.
-    "$build/forward_token_exact_cursor_test" "$build/original-resource-fixture.tsv" manager
-    exit 0
-fi
+if [[ "$scope" == expander ]]; then exit 0; fi
 if [[ "$scope" == manager ]]; then
     python3 research/native-rewrite/tests/verify_forward_token_dictionary.py \
         --manifest work/native-rewrite/forward-token-data/manifest.json \

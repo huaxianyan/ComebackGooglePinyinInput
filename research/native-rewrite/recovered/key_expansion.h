@@ -55,6 +55,13 @@ bool CollectTokenExpansions(const TokenDictionaryManager& dictionaries,
     TokenExpanderCursor* cursor, const KeyToken& source, float caller_score,
     std::uint8_t marker, std::vector<ScoredKeyToken>& output, bool accept_single_identity);
 
+// Native 0x18def4, consumed per secondary batch by 0x18e0e8. Fold duplicate
+// identities with AddLogScores in input order; retain the first token's text,
+// then write in native identity order. Only token/score are rewritten: surviving
+// destination markers stay positional (the native caller supplies zero).
+// Finite-score/int32 count domain; no normalization, pruning or OOM equivalence.
+void MergeExpansionScoresByIdentity(std::vector<ScoredKeyToken>& results);
+
 // Native 0x18d424: finite scores and an int32-sized sequence, original binary32 AddLogScores,
 // subtraction, then stable compaction at the native cutoff. Retained token
 // identities, strings and opaque marker bytes stay paired with their scores.
