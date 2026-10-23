@@ -38,7 +38,7 @@ flags=(-std=c++17 -O2 -Wall -Wextra -Werror -I"$recovered" -I"$build/generated" 
 for proto in forward_token_metadata token_dictionary_setting bundle_data_scheme; do
     g++ -std=c++17 -O2 -I"$build/generated" -c "$build/generated/$proto.pb.cc" -o "$build/objects/$proto.pb.o"
 done
-for name in owned_byte_region file_mmap dictionary_string_image flat_integer_table token_query source_token_sequence token_manager_selection token_manager_cursor token_dictionary_resources token_dictionary_manager direct_token_dictionary forward_token_dictionary forward_token_exact_cursor forward_token_cursor; do
+for name in owned_byte_region file_mmap dictionary_string_image flat_integer_table learning_key token_query source_token_sequence token_manager_selection token_manager_cursor token_dictionary_resources token_dictionary_manager direct_token_dictionary forward_token_dictionary forward_token_exact_cursor forward_token_cursor; do
     g++ "${flags[@]}" -c "$recovered/$name.cc" -o "$build/objects/$name.o"
 done
 tests=(forward_token_dictionary forward_token_exact_cursor)

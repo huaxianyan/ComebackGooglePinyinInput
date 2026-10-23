@@ -1,6 +1,7 @@
 #include "forward_token_dictionary.h"
 #include "token_dictionary_manager.h"
 #include "token_query.h"
+#include "learning_key.h"
 #include "token_dictionary_setting.pb.h"
 #include "dictionary_string_image.h"
 #include "file_mmap.h"
@@ -133,6 +134,29 @@ static void ManagerFrames(const char* fixture) {
           converted[2].text.empty() && converted[2].id == 0 &&
           converted[2].auxiliary == 26 && !converted[2].identity_bit,
           "failed sequence conversion lost its written prefix, old remainder or native new-token defaults");
+    const auto keys = GenerateUnexpandedLearningKeys(*manager, {"a", "zhong"}, {0, 16});
+    Check(keys.size() == 1 && keys[0].parts == std::vector<std::string>{"\xee\x86\xa2", "a"} &&
+          keys[0].scale == 1.0f && keys[0].flag30 && keys[0].category == 0,
+          "unexpanded generation lost original converted text or consumed fields");
+    std::string serialized;
+    SerializeLearningKey(keys[0], true, serialized);
+    Check(serialized == "\xee\x86\xa2" "a" && ScaleLearningCount(7, keys[0].scale) == 7,
+          "generated key did not reach the actual learning-key consumer");
+    SerializeLearningKey(keys[0], false, serialized);
+    Check(serialized == "a\xee\x86\xa2", "generated key lost the native reverse serialization mode");
+    // Frozen 0x18ccb0 validation occurs before source lookup. UNKNOWN_LANGUAGE
+    // is prohibited only when the Manager's aggregate language is itself 26.
+    Check(GenerateUnexpandedLearningKeys(*manager, {"a"}, {}).empty() &&
+          GenerateUnexpandedLearningKeys(*manager, {"a"}, {26}).empty() &&
+          GenerateUnexpandedLearningKeys(*manager, {"!", "zhong"}, {16, 16}).empty(),
+          "invalid or partly missing input published an unexpanded learning key");
+    i18n_input::engine::hmm::proto::TokenDictionaryDataSetting english_setting;
+    english_setting.add_data_id("en_t_i0_und_android_token_dictionary");
+    const auto english = TokenDictionaryManager::Load(english_setting.SerializeAsString(), *resources);
+    Check(static_cast<bool>(english), "cannot activate the original single-language English dictionary");
+    const auto wildcard_keys = GenerateUnexpandedLearningKeys(*english, {"a"}, {26});
+    Check(wildcard_keys.size() == 1 && wildcard_keys[0].parts == std::vector<std::string>{"a"},
+          "single-language Manager lost native UNKNOWN_LANGUAGE acceptance");
     const auto empty = TokenDictionaryManager::Load("", *resources);
     Check(static_cast<bool>(empty), "cannot activate the native empty dictionary set");
     auto empty_cursor = empty->CreateDfsCursor();
@@ -142,7 +166,11 @@ static void ManagerFrames(const char* fixture) {
     Check(!ConvertSourceTokens(*empty, {"a"}, {0}, converted) && converted.size() == 1 &&
           converted[0].text.empty() && converted[0].id == 0 && converted[0].auxiliary == 26 && !converted[0].identity_bit,
           "empty Manager conversion lost the initialized output of its real DFS path");
-    std::cout << "original bundle-to-source sequence, reversed order, partial output and empty Manager passed\n";
+    const auto no_input_keys = GenerateUnexpandedLearningKeys(*empty, {}, {});
+    Check(no_input_keys.size() == 1 && no_input_keys[0].parts.empty() && no_input_keys[0].scale == 1.0f &&
+          no_input_keys[0].flag30 && no_input_keys[0].category == 0,
+          "empty unexpanded input lost its native successful result record");
+    std::cout << "original bundle-to-unexpanded learning key, validation and real key consumption passed\n";
 }
 static void SourceFrames(const std::shared_ptr<ForwardTokenDictionaryView>& dictionary) {
     ForwardTokenDictionaryView::Cursor cursor(dictionary);

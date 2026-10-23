@@ -10,6 +10,7 @@ namespace comeback::recovered {
 class TokenDictionaryCursor;
 class TokenDictionaryManager;
 struct KeyToken;
+struct GeneratedLearningKey;
 // Native 0x1bf8dc. Append complete UTF-8 code-point byte strings to existing
 // output. Input is already prepared, complete valid UTF-8 and must not alias
 // output storage. This is neither Unicode normalization nor a UTF-8 validator;
@@ -37,6 +38,15 @@ bool LookupTokenQuery(TokenDictionaryCursor* cursor, const std::string& input,
 bool ConvertSourceTokens(const TokenDictionaryManager& manager,
                          const std::vector<std::string>& input,
                          const std::vector<std::int32_t>& languages, std::vector<KeyToken>& output);
+// Native 0x18ccb0 validation + 0x18db08 no-expansion caller, projected into
+// the existing GeneratedLearningKey consumer type. Returns zero or one key.
+// Text and native int32 count domain remain as in ConvertSourceTokens.
+// Native scale/flag/category are observed values, not expansion substitutes.
+// Token identities and the original all-true marker vector are outside that
+// consumed projection; no fabricated empty vector or alternate key type.
+std::vector<GeneratedLearningKey> GenerateUnexpandedLearningKeys(
+    const TokenDictionaryManager& manager, const std::vector<std::string>& input,
+    const std::vector<std::int32_t>& languages);
 // One complete valid UTF-8 code-point unit; shared by actual dictionary readers.
 std::uint32_t ReadTokenQueryScalar(std::string_view unit);
 // Native 0x1bf884 scalar encoding. Valid Unicode scalar input, no normalization

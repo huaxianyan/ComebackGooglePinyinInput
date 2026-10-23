@@ -87,4 +87,4 @@ ConvertSourceTokens 直接接普通 Manager，按实际调用方取得属性，�
 
 新增六段 UnicodeText 辅助函数的完整 FDE，全部 raw-equal，中央从 506 增至 512，旧区域不重做。证据为 `work/native-rewrite/restart-v217/native-token-query-helper-comparison.json`，Ghidra 输出为 `work/native-rewrite/ghidra/token-query-unicode-preparation/`。未执行原 ARM/Android，未验证修复路径或完整 BFS。后续批量阶段已将普通上层调用方及标志来源接入同一真实入口。一次完整宿主构建通过，验证输出倒序、逐项语言、缩短与增长、失败前缀和旧剩余项、新 token 默认字段，以及空输入和空 Manager。原单项、schema、逆序模块均未独立重跑。日志为 `work/native-rewrite/forward-token-build/source-token-sequence-build.log`。
 
-新增九段完整 FDE，全部 raw-equal，中央增至 521，旧 512 段直接沿用。证据为 `work/native-rewrite/restart-v217/native-source-token-sequence-comparison.json`。Ghidra 输出为 `token-source-sequence-*`，原第二调用方与批量函数的既有字节证据不重做。下一步接实际调用上下文及 `0x18ccb0` 输入校验，不因转换已完成就宣称完整键生成或引入 BFS 替身。
+新增九段完整 FDE，全部 raw-equal，中央增至 521，旧 512 段直接沿用。证据为 `work/native-rewrite/restart-v217/native-source-token-sequence-comparison.json`。Ghidra 输出为 `token-source-sequence-*`，原第二调用方与批量函数的既有字节证据不重做。后续已接原输入校验及无扩展学习键的真实消费投影，见 [键生成调用方](key-generator-score-math.md#已接无扩展调用方)。Manager 的 slot 8 语言归约保留配置遍历次序，与首个活跃字典的逆序属性不是同一规则。下一步接扩展迭代收集，不因无扩展分支已通就宣称完整键生成或引入 BFS 替身。

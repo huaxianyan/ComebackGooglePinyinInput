@@ -20,10 +20,14 @@ public:
     // Native slot 15: first active model's flag, or the fresh constructor's
     // true default when empty. Ordinary supported models are all non-reversed.
     bool UsingReversedTokens() const;
+    // Original slot 8: configured-order language reduction, not a sorted-active
+    // set recomputation. Empty/unset and mixed languages yield UNKNOWN_LANGUAGE.
+    std::int32_t LanguageId() const { return language_id_; }
 private:
     TokenDictionaryManager() = default;
     // Original signed pair key. First insertion wins; factory traversal is sorted.
     std::map<std::pair<std::int32_t, std::int32_t>, TokenDictionaryModel> active_;
+    std::int32_t language_id_ = kUnknownTokenLanguage;
 };
 }  // namespace comeback::recovered
 #endif

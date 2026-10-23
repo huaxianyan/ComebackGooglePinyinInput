@@ -12,6 +12,8 @@ std::shared_ptr<TokenDictionaryManager> TokenDictionaryManager::Load(
     i18n_input::engine::hmm::proto::TokenDictionaryDataSetting parsed;
     if (!parsed.ParseFromString(setting) || parsed.iterator_options_size() != 0) return nullptr;
     auto manager = std::shared_ptr<TokenDictionaryManager>(new TokenDictionaryManager);
+    constexpr std::int32_t kUnsetLanguage = -1;
+    auto language = kUnsetLanguage;
     for (const auto& data_id : parsed.data_id()) {
         const auto resolved = resources.Resolve(data_id);
         if (resolved.status == TokenDictionaryResources::Resolution::Status::Unsupported) return nullptr;
@@ -24,8 +26,13 @@ std::shared_ptr<TokenDictionaryManager> TokenDictionaryManager::Load(
                 return std::make_pair(dictionary->Metadata().selector(), dictionary->Metadata().language_id());
             }
         }, *resolved.model);
+        // Native 0x1948d0 reduces every resolved item before active-pair
+        // first-winner filtering. Preserve configured order and the -1 sentinel.
+        if (language == kUnsetLanguage) language = key.second;
+        else if (language != key.second) language = kUnknownTokenLanguage;
         manager->active_.emplace(key, *resolved.model);
     }
+    manager->language_id_ = language == kUnsetLanguage ? kUnknownTokenLanguage : language;
     return manager;
 }
 
