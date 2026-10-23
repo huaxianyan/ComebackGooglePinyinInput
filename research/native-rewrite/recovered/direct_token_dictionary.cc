@@ -34,6 +34,17 @@ std::shared_ptr<DirectTokenDictionary> DirectTokenDictionary::Load(const OwnedBy
         detail::ReadLittleEndian<std::uint32_t>(metadata + 12) != 0, *starts, *lengths));
 }
 
+bool DirectTokenDictionary::FillTokenText(KeyToken& token) const {
+    const auto scalar = token.id & kTokenCodepointMask;
+    if (scalar == 0) {
+        token.text.clear();
+        return true;
+    }
+    if ((token.id & kTokenLiteralBit) == 0 && !Contains(scalar)) return false;
+    token.text = EncodeTokenCodepoint(scalar);
+    return true;
+}
+
 bool DirectTokenDictionary::Contains(std::uint32_t codepoint) const {
     if (codepoint < starts_.At(0)) return false;
     std::uint64_t first = 0, remaining = starts_.Count();

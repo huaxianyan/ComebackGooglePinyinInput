@@ -29,6 +29,9 @@ public:
         return tables_[static_cast<std::size_t>(column)];
     }
     const OwnedByteRegion& PrefixScores() const { return prefix_scores_; }
+    // Native 0x1b4d48 for the loaded CODEPOINT_UTF8 / empty-field_10 profile.
+    // Writes text only; no table membership or identity/auxiliary rewrite.
+    bool FillTokenText(KeyToken& token) const;
     // Full prepared strings, complete valid UTF-8. True case_sensitive uses
     // native strlen copy (including embedded-NUL truncation), not Unicode fold.
     // One exact source key maps to one native record in this no-value profile;

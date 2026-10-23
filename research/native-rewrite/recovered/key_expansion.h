@@ -6,6 +6,8 @@
 #include <vector>
 
 namespace comeback::recovered {
+class TokenDictionaryManager;
+class TokenExpanderCursor;
 // Semantic fields read from the native 0x20-byte token. Not its ABI layout;
 // unused flag bits/padding are absent. The auxiliary word remains unnamed and
 // is signed in native ordering; neither token ID nor text substitutes for it.
@@ -43,6 +45,15 @@ bool KeyTokenIdentityLess(const KeyToken& left, const KeyToken& right);
 // False may leave a nonempty singleton result with the source identity.
 bool CollectedExpansionResult(const std::vector<ScoredKeyToken>& results,
     const KeyToken& source, bool accept_single_identity);
+
+// Native 0x18d07c on real loaded cursors (actual callers use a Manager).
+// Reset and text-fill returns are not additional failure gates. Fresh records
+// per Current, binary32 score + caller score, opaque marker, append to output.
+// Whole existing output participates in the result decision. Null returns false
+// without changing output. Source must not alias output; valid scalar-ID domain.
+bool CollectTokenExpansions(const TokenDictionaryManager& dictionaries,
+    TokenExpanderCursor* cursor, const KeyToken& source, float caller_score,
+    std::uint8_t marker, std::vector<ScoredKeyToken>& output, bool accept_single_identity);
 
 // Native 0x18d424: finite scores and an int32-sized sequence, original binary32 AddLogScores,
 // subtraction, then stable compaction at the native cutoff. Retained token

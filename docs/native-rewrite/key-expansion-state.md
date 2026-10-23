@@ -1,6 +1,6 @@
 # Token 身份与扩展结果归一化
 
-已恢复键生成上游的 token 语义字段、收集结束结果及分数归一化裁剪。源码复用唯一 AddLogScores，不调用标准库 exp/log。后续普通资源和真实源转换已有入口，这些局部组件仍不代表完整键生成。
+已恢复 token 身份、真实扩展 Manager 的补文本与收集，以及分数归一化裁剪。源码复用唯一 AddLogScores，不调用标准库 exp/log。真实资源的收集结果已进入归一化，完整键组合与缓存生命周期仍未恢复。
 
 ## 身份与记录
 
@@ -20,6 +20,44 @@ CollectedExpansionResult 只对应 `0x18d07c` 的结束判断，前提是真实�
 - 多于一项时按原逻辑返回 true，不逐项去重；旧输出也计入总数。
 
 它不执行 reset/current/advance，不补 token 文本，也不代替管理器查询。原迭代器为空时的分支不属于这个 helper，不能仅凭此返回值宣称完整收集成功。
+
+## 真实 Manager 补文本与收集
+
+CollectTokenExpansions 位于 `recovered/token_expansion_collection.cc`，对应 `0x18d07c`。它借用实际 TokenDictionaryManager 和 TokenExpanderCursor，真实调用方测试传入扩展 Manager。没有建立空上下文壳、预制结果或替身后端。
+
+### 按 ID 补文本
+
+辅助对象 `+0` 保存的是 TokenDictionaryInterface 次级接口。slot 12 位于 `0x67a338`，经 `0x1921e8` 调整 this 减八，进入 `0x1921ac`。主地址点同偏移指向相邻的 `0x1921f0`，不能混用。实际模型选择在 `0x1920a0`：
+
+- 分类复用 TokenKindFromId，即 ID 的 bit 28～30。
+- bit 24 未设置时，按分类和有符号附加字段精确选择活跃项。这里的 `26` 不是通配值。
+- bit 24 设置时，从同分类、语言非负的首个活跃项中选择，忽略 token 自带的附加字段。
+- 没有匹配模型时返回 false，保留原文本。选中模型后直接返回该模型的回填结果，不继续扫描其他字典。
+
+Direct 的 `0x1b16c4` 只修改文本。低 21 位为零时清空文本；其余 source 必须通过原字符范围检查，literal 则跳过范围检查。拒绝时保留原文本。成功时复用 EncodeTokenCodepoint，不转换大小写，也不重写 ID、附加字段或身份 bit。
+
+Forward 的 `0x1b4d48` 只投影已支持的 CODEPOINT_UTF8、空 field_10 配置。该配置没有非零空 token 哨兵，按低 21 位编码文本，零值产生一个 NUL 字节。原 source/target 回填也复用此方法。拼音内部单元仍是原私用区字符，不猜成 n、en 或 wu 的显示拼写。
+
+补文本不是 Direct 动态 ID 的反向词表。原多字 Current 复制保存的文本，此入口按 ID 和范围处理，不新增计数器反向映射。当前回填域限定为合法 Unicode scalar ID，超界值的原修复、其他编码和非空 field_10 仍未接。
+
+### 收集与真实结果消费
+
+收集器先 Reset，再按 exhausted、Current、Advance 循环。每个 Current 使用新建的默认 ScoredKeyToken，不沿用扩展 Manager 内部 Apply 的临时字段。Reset 和补文本的返回值都不新增失败门禁；Current 返回 false 时只推进，不追加。
+
+Current 成功后先补文本，以 binary32 将子分数加上调用方分数，再复制原始标记字节并追加。已有输出保留，最后复用 CollectedExpansionResult。空游标直接返回 false，已有输出保持原样；单项同身份可以返回 false，同时保留已补文本的结果。
+
+升级同一条真实资源端到端用例，三个原 DataScheme 共用已有缓存。扩展配置明确选择四个 DirectMapping ID，普通字典从原设置另加英文与数字 ID：
+
+- 「唔」的三个有序结果补成原私用区 UTF-8，带入 `-1` 分数和 `0xd3` 标记。随后交给既有 NormalizeAndPruneExpansions，裁剪后保留 wu 对应的内部 token，文本和标记仍配对。
+- 同身份结果的文本可以改变。两个结束模式、追加旧输出及空游标使用实际 Manager 产生的记录验证。
+- 仅有拼音字典时，真实英文扩展仍追加空文本结果，证明补文本未命中没有成为新门禁。数字结果按完整 ID 和附加字段回填。
+- 精确语言选择、literal 选择、范围拒绝、零值差异及补充平面字符经实际字典验证，没有伪造模型。
+
+一次完整 expander 宿主构建通过。Forward 原 source/target 已改为共用回填入口，同次构建另跑其既有 Manager 和无扩展键消费流程。旧身份、数学、metadata 和 schema 模块未重跑。日志为 `work/native-rewrite/forward-token-build/token-text-collection-build.log`。
+
+新增模型选择、补文本及次级 thunk 三段完整 FDE，均与原版及保留 v2.1.7 库 raw-equal，中央增至 527 段。旧字典回填、收集及归一化证据沿用。比较记录为 `work/native-rewrite/restart-v217/native-token-text-collection-comparison.json`，Ghidra 导出位于 `token-text-fill/` 和 `token-text-manager/`。
+
+Current 失败分支未由现有真实 Manager 触发，不构造替身补覆盖。归一化消费已使用真实收集结果，但 `0x18e264`、`0x18e0e8` 的完整键组合仍未恢复。默认 InMemory、三个缓存的生命周期、原 ARM/Android 动态等价及 OOM 仍未验收。
 
 ## 归一化与稳定裁剪
 
@@ -67,6 +105,6 @@ Manager 空集合仍创建 DFS，空输入转换清空输出并成功，非空�
 - `work/native-rewrite/restart-v217/native-token-expansion-state-comparison.json`
 - `work/native-rewrite/restart-v217/token-expansion-state-export.json`
 
-未执行原 ARM64，未操作设备、正式包或用户词典。完整非零插值逐 bit 对照、原容器 OOM/分配、资源查询、完整迭代收集及 Android 学习仍未验收。后续批量阶段一次完整宿主构建和同一真实原资源入口通过，覆盖逆序输出、逐项语言、失败部分结果及空 Manager；没有重跑本节旧数学组件测试。日志为 `work/native-rewrite/forward-token-build/source-token-sequence-build.log`。
+未执行原 ARM64，未操作设备、正式包或用户词典。完整非零插值逐 bit 对照、原容器 OOM/分配、其他后端及 Android 学习仍未验收。后续批量阶段一次完整宿主构建和同一真实原资源入口通过，覆盖逆序输出、逐项语言、失败部分结果及空 Manager；没有重跑本节旧数学组件测试。日志为 `work/native-rewrite/forward-token-build/source-token-sequence-build.log`。
 
-新增九段完整 FDE，全部 raw-equal，中央增至 521，旧 512 段沿用。原第二调用方 `0x18e380` 和批量本体证据已存在，不重复比较。证据为 `work/native-rewrite/restart-v217/native-source-token-sequence-comparison.json`。后续已接 `0x18ccb0` 的输入检查及 `0x18db08` 的真实无扩展消费投影，详见 [键生成调用方](key-generator-score-math.md#已接无扩展调用方)。其 scale、标志及 category 来自原写入值，不是未完成生成器的默认返回。仍不创建未消费的身份或标记向量替身。后续四份真实资源的 [DirectMapping 子游标](direct-mapping-host-cursor.md) 已进入 [扩展 Manager](expander-manager-identity.md#宿主-manager)。顺序应用、身份排序及分数更新已恢复，下一步核对原补文本入口，再接实际扩展迭代收集。
+新增九段完整 FDE，全部 raw-equal，中央增至 521，旧 512 段沿用。原第二调用方 `0x18e380` 和批量本体证据已存在，不重复比较。证据为 `work/native-rewrite/restart-v217/native-source-token-sequence-comparison.json`。后续已接 `0x18ccb0` 的输入检查及 `0x18db08` 的真实无扩展消费投影，详见 [键生成调用方](key-generator-score-math.md#已接无扩展调用方)。其 scale、标志及 category 来自原写入值，不是未完成生成器的默认返回。仍不创建未消费的身份或标记向量替身。后续四份真实资源的 [DirectMapping 子游标](direct-mapping-host-cursor.md) 已进入 [扩展 Manager](expander-manager-identity.md#宿主-manager)。顺序应用、身份排序及分数更新已恢复，后续已接本页的真实补文本、迭代收集和归一化消费。下一步沿原调用方恢复完整扩展键组合，继续保留缓存生命周期边界。

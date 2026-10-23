@@ -17,6 +17,10 @@ public:
     // Failure returns null, never a ready dictionary with fabricated ranges.
     static std::shared_ptr<DirectTokenDictionary> Load(const OwnedByteRegion& payload);
     bool Contains(std::uint32_t codepoint) const;
+    // Native 0x1b16c4, not DFS Current's saved-text copy. Writes text only;
+    // zero clears it, literals bypass ranges, a rejected source leaves it intact.
+    // IDs in this ordinary projection carry complete valid Unicode scalars.
+    bool FillTokenText(KeyToken& token) const;
     std::int32_t Selector() const { return selector_; }
     std::int32_t LanguageId() const { return language_; }
     bool UsingReversedTokens() const { return reversed_tokens_; }

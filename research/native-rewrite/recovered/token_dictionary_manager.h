@@ -17,6 +17,10 @@ public:
     // Original 0x1941fc returns a Manager even when no dictionary is active.
     // Fresh cursors share the loaded models, including Direct's dynamic counter.
     std::unique_ptr<TokenDictionaryCursor> CreateDfsCursor() const;
+    // Native secondary slot 12 -> 0x1921ac / 0x1920a0: nonliteral exact
+    // (kind, signed auxiliary); literal picks first same-kind language >= 0.
+    // No wildcard matching or fallback scan; only the selected model fills text.
+    bool FillTokenText(KeyToken& token) const;
     // Native slot 15: first active model's flag, or the fresh constructor's
     // true default when empty. Ordinary supported models are all non-reversed.
     bool UsingReversedTokens() const;

@@ -38,6 +38,17 @@ std::shared_ptr<TokenDictionaryManager> TokenDictionaryManager::Load(
     return manager;
 }
 
+bool TokenDictionaryManager::FillTokenText(KeyToken& token) const {
+    const auto kind = static_cast<std::int32_t>(TokenKindFromId(token.id));
+    const bool literal = (token.id & kTokenLiteralBit) != 0;
+    const auto selected = active_.lower_bound({kind, literal ? 0 : token.auxiliary});
+    if (selected == active_.end() || selected->first.first != kind ||
+        (!literal && selected->first.second != token.auxiliary)) return false;
+    return std::visit([&](const auto& dictionary) {
+        return dictionary->FillTokenText(token);
+    }, selected->second);
+}
+
 bool TokenDictionaryManager::UsingReversedTokens() const {
     // Original 0x192314 initializes +0xb8 to true; 0x1948d0 replaces it only
     // for a nonempty active set and requires all active flags to agree.

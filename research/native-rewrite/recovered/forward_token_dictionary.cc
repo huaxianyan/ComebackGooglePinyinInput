@@ -54,6 +54,11 @@ std::shared_ptr<ForwardTokenDictionaryView> ForwardTokenDictionaryView::Load(con
     return result;
 }
 
+bool ForwardTokenDictionaryView::FillTokenText(KeyToken& token) const {
+    token.text = EncodeTokenCodepoint(token.id & kTokenCodepointMask);
+    return true;
+}
+
 std::string ForwardTokenDictionaryView::PrepareSource(const std::string& input) const {
     std::string query = metadata_.case_sensitive() ? std::string(input.c_str()) : input;
     if (!metadata_.case_sensitive()) LowercaseTokenBytes(query);
@@ -77,7 +82,7 @@ void ForwardTokenDictionaryView::ReadSourceToken(std::size_t index, std::size_t 
     output.id = Table(ForwardTokenColumn::Id).At(index);
     output.auxiliary = TokenAuxiliaryFromWord(metadata_.language_id());
     output.identity_bit = Table(ForwardTokenColumn::Meta).At(index) != length;
-    output.text = EncodeTokenCodepoint(output.id & kTokenCodepointMask);
+    FillTokenText(output);
 }
 
 bool ForwardTokenDictionaryView::ReadTarget(const std::string& input, std::int32_t selector,
@@ -97,7 +102,7 @@ bool ForwardTokenDictionaryView::ReadLiteralTarget(const std::string& input,
                 (scalar & 0xfbffffffu);
     output.auxiliary = TokenAuxiliaryFromWord(language);
     output.identity_bit = false;
-    output.text = EncodeTokenCodepoint(output.id & kTokenCodepointMask);
+    FillTokenText(output);
     return true;
 }
 }  // namespace comeback::recovered
