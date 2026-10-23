@@ -1,6 +1,6 @@
 # 内置 bundle 的数据注册
 
-普通资源现在从原始 DataScheme 字节建立 ID 索引，再进入既有模型缓存与真实游标。宿主只恢复成功的初始内存注册，输入是已提取的真实库及命名 blob 快照，不在 Windows 上模拟 ARM dlopen。
+普通资源与 DirectMapping 扩展器共用原始 DataScheme 建立的 ID 索引，再进入同一成功模型缓存及各自真实游标。宿主只恢复成功的初始内存注册，输入是已提取的真实库及命名 blob 快照，不在 Windows 上模拟 ARM dlopen。
 
 ## Java、JNI 与原注册入口
 
@@ -40,11 +40,13 @@ storage type 2 经 `0x19c278` 包装已有指针与长度，不复制载荷，�
 
 `bundle_data_scheme.proto` 明确是 bundle 读取投影，不冒充完整原 DataInfo schema。它恢复条目的 data type、data ID、storage type、blob 名，以及 scheme 的库名和版本存在性。完整枚举名、模型选项等未恢复字段仍作为未知字节保留；构建索引时明确拒绝，不静默忽略。
 
-TokenDictionaryResources::Load 接收原 scheme 字节和按库名、blob 名分组的真实快照。原人工 data-ID Sources 构造入口已移除。注册按传入 scheme 顺序处理，重复 ID 后到替换，保存数据类型和共享字节区域。原注册中的模型创建与查询排序仍是不同阶段，不用注册顺序替代 Manager 的资格 pair 顺序。
+TokenModelResources::Load 接收原 scheme 字节和按库名、blob 名分组的真实快照。原人工 data-ID Sources 构造入口已移除。注册按传入 scheme 顺序处理，重复 ID 后到替换，保存数据类型和共享字节区域。原注册中的模型创建与查询排序仍是不同阶段，不用注册顺序替代 Manager 的资格 pair 顺序。
 
-索引保留其他数据类型的绑定，但 Resolve 仅支持 data type 4 的普通非反向 token 模型。其他类型明确返回 Unsupported，不把 n-gram、expansion 或 token ID table 强制作为 token 字典读取。类名前缀分派和成功模型缓存仍各保留一个实现。
+Resolve 支持 data type 4 的普通非反向 token 模型，以及 type 5 的 DirectMappingTokenExpander。其他类型或扩展后端返回 Unsupported，不作为 token 字典读取。类名前缀分派、ID 索引和成功模型缓存各保留一个实现，消费者再检查模型类别。原 TokenDictionaryResources 已更名为 TokenModelResources，没有兼容别名。
 
 该入口只构建新的不可变索引。缺失 blob、未支持来源或字段、版本错误返回 null，不发布部分宿主索引。这是成功初始注册的投影，不宣称已恢复原失败时的部分发布、注册更新、失效、锁、FD 或 dlopen 生命周期。共享 OwnedByteRegion 保持宿主字节有效，不冒充原 MemoryChunk 的引用 ABI。
+
+共享缓存的扩展 Manager 消费与本轮回归见 [扩展 Manager](expander-manager-identity.md#宿主-manager)。原默认 fuzzy 配置仍需要未恢复的 InMemory 后端。
 
 ## 验证与后续
 

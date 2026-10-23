@@ -33,18 +33,18 @@ for source in $(find "$source_root/lib/marisa" -name '*.cc' | sort); do
     g++ -std=c++11 -O2 -I"$source_root/include" -I"$source_root/lib" -c "$source" -o "$build/marisa/$object.o"
 done
 ar rcs "$build/libmarisa.a" "$build/marisa/"*.o
-protoc -I"$recovered" --cpp_out="$build/generated" "$recovered/forward_token_metadata.proto" "$recovered/token_dictionary_setting.proto" "$recovered/bundle_data_scheme.proto" "$recovered/token_expander_metadata.proto"
-flags=(-std=c++17 -O2 -Wall -Wextra -Werror -I"$recovered" -I"$build/generated" -I"$source_root/include" -I"$source_root/lib")
-for proto in forward_token_metadata token_dictionary_setting bundle_data_scheme token_expander_metadata; do
+protoc -I"$recovered" --cpp_out="$build/generated" "$recovered/forward_token_metadata.proto" "$recovered/token_dictionary_setting.proto" "$recovered/bundle_data_scheme.proto" "$recovered/token_expander_metadata.proto" "$recovered/token_expansion_setting.proto"
+flags=(-std=c++17 -O2 -ffp-contract=off -Wall -Wextra -Werror -I"$recovered" -I"$build/generated" -I"$source_root/include" -I"$source_root/lib")
+for proto in forward_token_metadata token_dictionary_setting bundle_data_scheme token_expander_metadata token_expansion_setting; do
     g++ -std=c++17 -O2 -I"$build/generated" -c "$build/generated/$proto.pb.cc" -o "$build/objects/$proto.pb.o"
 done
-for name in owned_byte_region file_mmap dictionary_string_image flat_integer_table learning_key token_query source_token_sequence token_manager_selection token_manager_cursor token_dictionary_resources token_dictionary_manager direct_token_dictionary direct_mapping_token_expander forward_token_dictionary forward_token_exact_cursor forward_token_cursor; do
+for name in owned_byte_region file_mmap dictionary_string_image flat_integer_table learning_key token_query source_token_sequence token_manager_selection token_manager_cursor token_model_resources token_dictionary_manager token_expander_manager key_expansion score_math direct_token_dictionary direct_mapping_token_expander forward_token_dictionary forward_token_exact_cursor forward_token_cursor; do
     g++ "${flags[@]}" -c "$recovered/$name.cc" -o "$build/objects/$name.o"
 done
 tests=(forward_token_dictionary forward_token_exact_cursor)
-if [[ "$scope" == expander ]]; then tests=(token_expander_metadata direct_mapping_token_expander); fi
+if [[ "$scope" == expander ]]; then tests=(key_token_identity direct_mapping_token_expander forward_token_exact_cursor); fi
 if [[ "$scope" == source || "$scope" == cursor || "$scope" == manager ]]; then tests=(forward_token_exact_cursor); fi
-if [[ "$scope" == all ]]; then tests+=(forward_token_metadata token_expander_metadata direct_mapping_token_expander); fi
+if [[ "$scope" == all ]]; then tests+=(forward_token_metadata token_expander_metadata key_token_identity direct_mapping_token_expander); fi
 if [[ "$scope" == all || "$scope" == queries ]]; then tests+=(token_dictionary_setting); fi
 if [[ "$scope" == all || "$scope" == queries ]]; then tests+=(bundle_data_scheme); fi
 if [[ "$scope" == all || "$scope" == queries ]]; then tests+=(token_query_preparation); fi
@@ -56,16 +56,19 @@ if [[ "$scope" == all ]]; then "$build/forward_token_metadata_test"; fi
 if [[ "$scope" == all || "$scope" == queries ]]; then "$build/token_dictionary_setting_test"; fi
 if [[ "$scope" == all || "$scope" == queries ]]; then "$build/bundle_data_scheme_test"; fi
 if [[ "$scope" == all || "$scope" == queries ]]; then "$build/token_query_preparation_test"; fi
+if [[ "$scope" == all ]]; then "$build/token_expander_metadata_test"; fi
 if [[ "$scope" == all || "$scope" == expander ]]; then
-    "$build/token_expander_metadata_test"
-    data=work/native-rewrite/forward-token-data
-    "$build/direct_mapping_token_expander_test" \
-        "$data/liben_data_bundle/en_reconversion_expansion.bin" \
-        "$data/libpinyin_data_bundle/english_reconversion_expansion.bin" \
-        "$data/libpinyin_data_bundle/digits_reconversion_expansion.bin" \
-        "$data/libpinyin_data_bundle/pinyin_reconversion_expansion.bin"
+    "$build/key_token_identity_test"
+    python3 research/native-rewrite/tests/verify_forward_token_dictionary.py \
+        --manifest work/native-rewrite/forward-token-data/manifest.json \
+        --executable "$build/direct_mapping_token_expander_test" --fixture "$build/original-resource-fixture.tsv" --case expander
 fi
-if [[ "$scope" == expander ]]; then exit 0; fi
+if [[ "$scope" == expander ]]; then
+    # The shared model/cache representation changed: run its dictionary consumer
+    # once too, using the same original schemes/fixture, not a second build.
+    "$build/forward_token_exact_cursor_test" "$build/original-resource-fixture.tsv" manager
+    exit 0
+fi
 if [[ "$scope" == manager ]]; then
     python3 research/native-rewrite/tests/verify_forward_token_dictionary.py \
         --manifest work/native-rewrite/forward-token-data/manifest.json \

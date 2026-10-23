@@ -2,7 +2,7 @@
 
 已恢复四份原 `DirectMappingTokenExpander` 资源的加载和具体子游标。入口为 `DirectMappingTokenExpander::Load`，接收类名前缀之后的原 payload。类名前缀仍由唯一的 `LoadDictionaryStringImage` 读取。
 
-该子游标尚未接入扩展 Manager、键生成收集或 Android。它也不代替 `0x18d07c` 消费的 Manager 迭代器。
+该子游标已进入真实 [扩展 Manager](expander-manager-identity.md#宿主-manager)，键生成收集和 Android 尚未接入。它与 Manager 共用游标协议，仍不单独代替 `0x18d07c` 的 Manager 消费语义。
 
 ## 资源与共享原语
 
@@ -53,6 +53,6 @@ Ghidra 导出保存在 `work/native-rewrite/ghidra/direct-mapping-readable/`。�
 
 ## 下一步
 
-恢复真实扩展 Manager 的顺序应用、拒绝后保留原项及重复身份分数处理，再核对 token Manager 的补文本入口。两者就绪后接 `0x18d07c`，继续使用已有身份、收集结束判断及归一化原语。
+扩展 Manager 的顺序应用、拒绝保留和重复身份分数处理已恢复。下一步核对 token Manager 的补文本入口，再接 `0x18d07c`，继续使用已有身份、收集结束判断及归一化原语。
 
 `InMemoryTokenExpander`、完整类别缓存和扩展键组合仍未恢复。尚无原 ARM 动态等价或完整输入法验收，本轮没有操作设备、正式包、用户词典或其他 worktree。

@@ -1,8 +1,8 @@
-// One actual-resource child-cursor E2E. Fixed oracles from ARM64/static blobs;
-// this does not execute the original ARM library or resolve target text.
-#include "direct_mapping_token_expander.h"
-#include "dictionary_string_image.h"
-#include "file_mmap.h"
+// Upgrade the actual-resource E2E to the original setting -> cache -> Manager
+// path. Explicit DirectMapping selections below are NOT product defaults.
+#include "token_expander_manager.h"
+#include "token_expansion_setting.pb.h"
+#include "original_token_resources.h"
 #include <cassert>
 #include <cstring>
 #include <iostream>
@@ -13,64 +13,74 @@ std::uint32_t Bits(float value) {
     std::memcpy(&word, &value, sizeof(word));
     return word;
 }
-std::shared_ptr<DirectMappingTokenExpander> Load(const char* path) {
-    OwnedByteRegion image;
-    assert(MapReadOnlyFile(path, image) == FileMappingResult::Mapped);
-    std::string name;
-    const auto offset = LoadDictionaryStringImage(image, name);
-    assert(name == "DirectMappingTokenExpander" && offset < image.Size());
-    auto model = DirectMappingTokenExpander::Load(image.Slice(offset, image.Size() - offset));
-    assert(model && model->Category() == 3);
-    return model;
-}
-void CheckEnglish(const char* path) {
-    DirectMappingTokenExpander::Cursor cursor(Load(path));
-    KeyToken input{"A", 0x01000041u, 0, false};
-    KeyToken output{"caller text", 7, 9, true};
+void Consume(TokenExpanderCursor& cursor, std::uint32_t id, std::int16_t auxiliary,
+             std::uint32_t score_word, const std::string& text = "", bool flag = false) {
+    KeyToken output{"previous", 99, 99, true};
     float score = 99.0f;
-    assert(cursor.Reset(input) && cursor.Current(output, &score));
-    assert(output.id == 0x00800061u && output.auxiliary == 0);
-    // Native mapped current writes neither text nor flag; later Manager fills text.
-    assert(output.text == "caller text" && output.identity_bit && Bits(score) == 0x80000000u);
+    assert(cursor.Current(output, &score));
+    assert(output.id == id && output.auxiliary == auxiliary && output.text == text &&
+           output.identity_bit == flag && Bits(score) == score_word);
     cursor.Advance();
-    assert(cursor.Exhausted());
-    input = {"a", 0x01000061u, 0, false};
-    assert(cursor.Reset(input) && cursor.Current(output));  // Native optional score.
-    assert(output.id == 0x00800061u);
-    input = {"[", 0x0100005bu, 26, true};
-    assert(cursor.Reset(input) && cursor.Current(output, &score));
-    assert(output.text == "[" && output.id == 0x0100005bu &&
-           output.auxiliary == 26 && output.identity_bit && Bits(score) == 0);
-    cursor.Advance();
-    assert(cursor.Exhausted());
 }
 }  // namespace
 int main(int argc, char** argv) {
-    assert(argc == 5);
-    CheckEnglish(argv[1]);
-    CheckEnglish(argv[2]);
-    DirectMappingTokenExpander::Cursor digits(Load(argv[3]));
-    KeyToken output{};
-    float score = 99.0f;
-    assert(digits.Reset({"0", 0x01000030u, 300, false}) && digits.Current(output, &score));
-    assert(output.id == 0x08800030u && output.auxiliary == 300 && Bits(score) == 0x80000000u);
-    digits.Advance();
-    assert(digits.Exhausted());
-    DirectMappingTokenExpander::Cursor pinyin(Load(argv[4]));
-    KeyToken input{"重", 0x010091cdu, 16, false};
-    assert(pinyin.Reset(input) && pinyin.Current(output, &score));
-    assert(output.id == 0x0080e029u && output.auxiliary == 16 && Bits(score) == 0xbf5cdcddu);
-    // 0x19d0f0 clears fallback BEFORE matching, not the previously selected range.
-    auto wrong_kind = input;
-    wrong_kind.id = 0x110091cdu;
-    assert(!pinyin.Reset(wrong_kind) && pinyin.Current(output, &score));
-    assert(output.id == 0x0080e029u && Bits(score) == 0xbf5cdcddu);
-    pinyin.Advance();
-    assert(pinyin.Current(output, &score));
-    assert(output.id == 0x0080e1a2u && Bits(score) == 0xbf0c8c8du);
-    pinyin.Advance();
-    assert(pinyin.Exhausted());
-    assert(pinyin.Reset({"中", 0x01004e2du, 26, false}) && pinyin.Current(output, &score));
-    assert(output.id == 0x0080e1a2u && output.auxiliary == 16 && Bits(score) == 0x80000000u);
-    std::cout << "four original DirectMapping resources, child cursor and binary32 scores passed\n";
+    assert(argc == 3 && std::string(argv[2]) == "expander");
+    const auto resources = test::OriginalTokenResources(argv[1]);
+    const auto wire = test::OriginalImage(argv[1], "@expansion_setting");
+    proto::TokenExpansionSetting selected;
+    assert(selected.ParseFromArray(wire.Data(), wire.Size()));
+    assert(selected.data_id_size() == 1 && selected.data_id(0) ==
+           "zh_t_i0_pinyin_android_default_fuzzy_expansion_dictionary");
+    // The actual default needs the unsupported InMemory backend. Select the
+    // four actual DirectMapping IDs for this supported host profile instead.
+    selected.clear_data_id();
+    const std::string pinyin = "zh_t_i0_pinyin_android_reconversion_expansion_dictionary";
+    const std::string english = "zh_t_i0_pinyin_android_english_reconversion_expansion_dictionary";
+    selected.add_data_id(pinyin);
+    selected.add_data_id("zh_t_i0_pinyin_android_digits_reconversion_expansion_dictionary");
+    selected.add_data_id(english);
+    selected.add_data_id("en_t_i0_und_android_english_reconversion_expansion_dictionary");
+    // Original registration logs/skips a missing ID, retaining valid models.
+    selected.add_data_id("missing-research-token-expander");
+    const auto manager = TokenExpanderManager::Load(selected.SerializeAsString(), *resources);
+    assert(manager);
+    auto cursor = manager->CreateCursor({3, 3});
+    assert(cursor->Reset({"唔", 0x01005514u, 16, true}));
+    // Array order was en/n/wu; native ordered identities produce n/en/wu.
+    // Later accepted fallbacks carry the already nonzero scores forward.
+    Consume(*cursor, 0x0020e0ddu, 16, 0xc0169697u);
+    Consume(*cursor, 0x0040e055u, 16, 0xc0169697u);
+    Consume(*cursor, 0x0080e16du, 16, 0xbe70f0f2u);
+    assert(cursor->Exhausted());
+    assert(cursor->Reset({"I", 0x01000049u, 26, true}));
+    Consume(*cursor, 0x0020e201u, 16, 0);  // First pinyin stage changes the next stage's input.
+    assert(cursor->Exhausted());
+    proto::TokenExpansionSetting reversed;
+    reversed.add_data_id(english);
+    reversed.add_data_id(pinyin);
+    const auto english_first = TokenExpanderManager::Load(reversed.SerializeAsString(), *resources);
+    assert(english_first);
+    auto reordered = english_first->CreateCursor({3});
+    assert(reordered->Reset({"I", 0x01000049u, 26, true}));
+    Consume(*reordered, 0x00800069u, 0, 0);
+    assert(reordered->Exhausted());  // Not a union of both children on the original I.
+    assert(cursor->Reset({"A", 0x01000041u, 0, true}));
+    Consume(*cursor, 0x00800061u, 0, 0);
+    assert(cursor->Exhausted());
+    assert(cursor->Reset({"0", 0x01000030u, 300, true}));
+    Consume(*cursor, 0x08800030u, 300, 0);
+    assert(cursor->Exhausted());
+    // Reset after a partially consumed range clears the old Manager results.
+    assert(cursor->Reset({"唔", 0x01005514u, 16, false}));
+    cursor->Advance();
+    assert(cursor->Reset({"kind one", 0x11000049u, 26, true}));
+    Consume(*cursor, 0x11000049u, 26, 0, "kind one", true);
+    assert(cursor->Exhausted());
+    auto no_category = manager->CreateCursor({4});
+    assert(no_category->Reset({"original", 0x01000049u, -1, true}));
+    KeyToken output;
+    assert(no_category->Current(output));  // Optional score on the real Manager.
+    Consume(*no_category, 0x01000049u, -1, 0, "original", true);
+    assert(no_category->Exhausted());
+    std::cout << "original schemes, four DirectMapping IDs, ordered Manager stages and scores passed\n";
 }

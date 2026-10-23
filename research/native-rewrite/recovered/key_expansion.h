@@ -33,6 +33,9 @@ struct ScoredKeyToken {
 
 // Native 0x18c620: compare low 48 identity bits and flag bit zero, not text.
 bool SameKeyTokenIdentity(const KeyToken& left, const KeyToken& right);
+// Native ordered expansion set: signed auxiliary, unsigned full ID, flag bit.
+// Shares the identity field projection with equality; text/score are not keys.
+bool KeyTokenIdentityLess(const KeyToken& left, const KeyToken& right);
 
 // Post-iteration decision from 0x18d07c, not an iterator/provider substitute.
 // A real nonnull iterator has finished; results are the entire existing output,

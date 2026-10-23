@@ -1,12 +1,13 @@
-// Ordinary bundle class dispatch and data-ID cache projection; see NOTICE.
-#include "token_dictionary_resources.h"
+// Shared bundle class dispatch and data-ID cache projection; see NOTICE.
+#include "token_model_resources.h"
 #include "bundle_data_scheme.pb.h"
 #include "dictionary_string_image.h"
 #include "direct_token_dictionary.h"
 #include "forward_token_dictionary.h"
+#include "direct_mapping_token_expander.h"
 
 namespace comeback::recovered {
-std::shared_ptr<TokenDictionaryResources> TokenDictionaryResources::Load(
+std::shared_ptr<TokenModelResources> TokenModelResources::Load(
     const std::vector<std::string>& schemes, const Bundles& bundles) {
     Sources sources;
     for (const auto& wire : schemes) {
@@ -24,29 +25,34 @@ std::shared_ptr<TokenDictionaryResources> TokenDictionaryResources::Load(
             sources.insert_or_assign(entry.data_id(), Source{entry.data_type(), blob->second});
         }
     }
-    return std::shared_ptr<TokenDictionaryResources>(new TokenDictionaryResources(std::move(sources)));
+    return std::shared_ptr<TokenModelResources>(new TokenModelResources(std::move(sources)));
 }
 
-TokenDictionaryResources::Resolution TokenDictionaryResources::Resolve(const std::string& data_id) {
+TokenModelResources::Resolution TokenModelResources::Resolve(const std::string& data_id) {
     const auto cached = cache_.find(data_id);
     if (cached != cache_.end()) return {Resolution::Status::Ready, &cached->second};
     const auto source = sources_.find(data_id);
     if (source == sources_.end()) return {Resolution::Status::Missing, nullptr};
-    if (source->second.data_type != 4) return {Resolution::Status::Unsupported, nullptr};
+    const auto type = source->second.data_type;
+    if (type != 4 && type != 5) return {Resolution::Status::Unsupported, nullptr};
     const auto& image = source->second.image;
     std::string name;
     const auto offset = LoadDictionaryStringImage(image, name);
     if (offset == 0 || offset > image.Size()) return {Resolution::Status::Unsupported, nullptr};
     const auto payload = image.Slice(offset, image.Size() - offset);
-    TokenDictionaryModel model;
-    if (name == "DirectTokenDictionary") {
+    TokenResourceModel model;
+    if (type == 5 && name == "DirectMappingTokenExpander") {
+        auto expander = DirectMappingTokenExpander::Load(payload);
+        if (!expander) return {Resolution::Status::Unsupported, nullptr};
+        model = std::move(expander);
+    } else if (type == 4 && name == "DirectTokenDictionary") {
         auto dictionary = DirectTokenDictionary::Load(payload);
         if (!dictionary || dictionary->UsingReversedTokens()) return {Resolution::Status::Unsupported, nullptr};
-        model = std::move(dictionary);
-    } else if (name == "ForwardTokenDictionary") {
+        model = TokenDictionaryModel{std::move(dictionary)};
+    } else if (type == 4 && name == "ForwardTokenDictionary") {
         auto dictionary = ForwardTokenDictionaryView::Load(payload);
         if (!dictionary) return {Resolution::Status::Unsupported, nullptr};
-        model = std::move(dictionary);
+        model = TokenDictionaryModel{std::move(dictionary)};
     } else {
         return {Resolution::Status::Unsupported, nullptr};
     }

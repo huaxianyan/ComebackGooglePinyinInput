@@ -8,7 +8,7 @@
 
 namespace comeback::recovered {
 std::shared_ptr<TokenDictionaryManager> TokenDictionaryManager::Load(
-    const std::string& setting, TokenDictionaryResources& resources) {
+    const std::string& setting, TokenModelResources& resources) {
     i18n_input::engine::hmm::proto::TokenDictionaryDataSetting parsed;
     if (!parsed.ParseFromString(setting) || parsed.iterator_options_size() != 0) return nullptr;
     auto manager = std::shared_ptr<TokenDictionaryManager>(new TokenDictionaryManager);
@@ -16,8 +16,10 @@ std::shared_ptr<TokenDictionaryManager> TokenDictionaryManager::Load(
     auto language = kUnsetLanguage;
     for (const auto& data_id : parsed.data_id()) {
         const auto resolved = resources.Resolve(data_id);
-        if (resolved.status == TokenDictionaryResources::Resolution::Status::Unsupported) return nullptr;
-        if (resolved.status == TokenDictionaryResources::Resolution::Status::Missing) continue;
+        if (resolved.status == TokenModelResources::Resolution::Status::Unsupported) return nullptr;
+        if (resolved.status == TokenModelResources::Resolution::Status::Missing) continue;
+        const auto* model = std::get_if<TokenDictionaryModel>(resolved.model);
+        if (!model) return nullptr;
         const auto key = std::visit([](const auto& dictionary) {
             using Dictionary = typename std::decay_t<decltype(dictionary)>::element_type;
             if constexpr (std::is_same_v<Dictionary, DirectTokenDictionary>) {
@@ -25,12 +27,12 @@ std::shared_ptr<TokenDictionaryManager> TokenDictionaryManager::Load(
             } else {
                 return std::make_pair(dictionary->Metadata().selector(), dictionary->Metadata().language_id());
             }
-        }, *resolved.model);
+        }, *model);
         // Native 0x1948d0 reduces every resolved item before active-pair
         // first-winner filtering. Preserve configured order and the -1 sentinel.
         if (language == kUnsetLanguage) language = key.second;
         else if (language != key.second) language = kUnknownTokenLanguage;
-        manager->active_.emplace(key, *resolved.model);
+        manager->active_.emplace(key, *model);
     }
     manager->language_id_ = language == kUnsetLanguage ? kUnknownTokenLanguage : language;
     return manager;

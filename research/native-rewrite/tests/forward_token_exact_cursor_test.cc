@@ -5,6 +5,7 @@
 #include "token_dictionary_setting.pb.h"
 #include "dictionary_string_image.h"
 #include "file_mmap.h"
+#include "original_token_resources.h"
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
@@ -13,36 +14,9 @@ using namespace comeback::recovered;
 static void Check(bool value, const char* message) {
     if (!value) { std::cerr << message << '\n'; std::exit(1); }
 }
-static OwnedByteRegion OriginalImage(const char* filename, const std::string& resource) {
-    std::ifstream fixture(filename);
-    std::string line, path;
-    while (std::getline(fixture, line)) {
-        const auto first = line.find('\t');
-        if (line.substr(0, first) != resource) continue;
-        path = line.substr(first + 1, line.find('\t', first + 1) - first - 1);
-        break;
-    }
-    OwnedByteRegion image;
-    Check(MapReadOnlyFile(path, image) == FileMappingResult::Mapped, "cannot map original token resource");
-    return image;
-}
+using test::OriginalImage;
 static void ManagerFrames(const char* fixture) {
-    TokenDictionaryResources::Bundles bundles;
-    std::ifstream rows(fixture);
-    std::string line;
-    while (std::getline(rows, line)) {
-        if (line.rfind("@blob:", 0) != 0) continue;
-        const auto key = line.substr(0, line.find('\t'));
-        const auto slash = key.find('/');
-        bundles[key.substr(6, slash - 6)].emplace(key.substr(slash + 1), OriginalImage(fixture, key));
-    }
-    std::vector<std::string> schemes;
-    for (const auto* name : {"en_data_scheme", "data_scheme", "gesture_data_scheme"}) {
-        const auto image = OriginalImage(fixture, std::string("@scheme:") + name);
-        schemes.emplace_back(reinterpret_cast<const char*>(image.Data()), image.Size());
-    }
-    const auto resources = TokenDictionaryResources::Load(schemes, bundles);
-    Check(static_cast<bool>(resources), "cannot register the original three built-in data schemes");
+    const auto resources = test::OriginalTokenResources(fixture);
     const auto original = OriginalImage(fixture, "@token_setting");
     i18n_input::engine::hmm::proto::TokenDictionaryDataSetting setting;
     Check(setting.ParseFromArray(original.Data(), original.Size()) && setting.data_id_size() == 1 &&

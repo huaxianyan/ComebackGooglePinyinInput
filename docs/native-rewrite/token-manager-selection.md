@@ -66,7 +66,7 @@ Push 先清缓存、设置全局 source/target 模式，再筛选顶帧。失败
 
 `0x193880` 的活跃表以两个有符号 int32 的 `(selector, language)` 为键，按这一顺序比较。相同键保留第一次插入的句柄，后来资源不覆盖。`0x1941fc` 中序遍历该表建立根快照，因此既不是设置列表顺序，也不是文件名顺序。先按资格激活、再做 target 结果去重，是两个不同阶段。
 
-上一阶段 LoadActive 的镜像列表入口已移除，当前唯一入口为 TokenDictionaryManager::Load。它解析 TokenDictionaryDataSetting，再按配置列表中的 data ID 查询 TokenDictionaryResources。类名前缀分派移到资源层，Direct/Forward 加载器与活跃表选择各保留一个实现。普通非反向边界不变，未支持镜像与非空迭代选项返回 null，不发布部分工厂。
+上一阶段 LoadActive 的镜像列表入口已移除，当前唯一入口为 TokenDictionaryManager::Load。它解析 TokenDictionaryDataSetting，再按配置列表中的 data ID 查询 TokenModelResources。类名前缀分派移到资源层，Direct/Forward 加载器与活跃表选择各保留一个实现。普通非反向边界不变，未支持镜像与非空迭代选项返回 null，不发布部分工厂。
 
 Direct 的第四个 LE32 元数据字段由原 `0x1b09c0` 的 IsUsingReversedToken getter 读取，Forward 的 `0x1b2720` 固定返回 false。当前原资源均为非反向模型。宿主现在读取 Direct 原字段，反向配置不进入这个普通工厂，不填替代准备规则。后续确认 Manager slot 15 读取首个活跃字典的标志并要求一致，空集合保留 `0x192314` 构造器的 true。不可变普通投影由现有模型求值，不增加重复缓存字段。空集合的 true 不是开放反向资源或切换 BFS 的信号。
 
@@ -82,9 +82,9 @@ CreateDfsCursor 按活跃表顺序创建真实子游标，调用既有 Manager �
 
 序列化函数 `0x281bc8`、`0x281b20` 确定字段号与 wire 类型。选项初始化 `0x2845bc` 在 `+0x20` 写入零 ushort，清理 `0x287270` 同时恢复默认值和存在位。`0x194dd8` 分别读两个 bool 后组成返回值，不将 Ghidra 的 undefined2 当作独立原字段。
 
-TokenDictionaryResources 的输入已升级为原 DataScheme 字节及按库名、blob 名分组的真实快照，由 C++ 建立原 data ID 索引。旧人工 Sources 构造入口已移除，详见 [内置数据注册](builtin-data-enrollment.md)。按 ID 缓存成功装载的真实模型，创建失败不进入缓存。缺失 ID 沿原 `0x1948d0` 跳过，宿主未支持的模型则返回 Unsupported，使工厂失败，不冒充原创建器确实返回空。
+TokenModelResources 的输入已升级为原 DataScheme 字节及按库名、blob 名分组的真实快照，由 C++ 建立原 data ID 索引。旧人工 Sources 构造入口已移除，详见 [内置数据注册](builtin-data-enrollment.md)。按 ID 缓存成功装载的真实模型，创建失败不进入缓存。缺失 ID 沿原 `0x1948d0` 跳过，宿主未支持的模型则返回 Unsupported，使工厂失败，不冒充原创建器确实返回空。
 
-原 DataManager 的成功缓存规则沿用已有 `0x198f28` 证据，不重取。宿主恢复成功初始内存注册、不可变索引及普通模型缓存，不实现原部分失败发布、扩展创建器注册、FD 来源、Android 锁、失效标记或重配置。多个 Manager 通过同一资源对象复用模型，游标快照仍持有自己的共享引用。
+原 DataManager 的成功缓存规则沿用已有 `0x198f28` 证据，不重取。后续扩展 Manager 已复用该索引和成功缓存，普通消费者检查其中的字典模型类别，见 [扩展 Manager](expander-manager-identity.md#宿主-manager)。宿主恢复成功初始内存注册、不可变索引及模型缓存，不实现原部分失败发布、扩展创建器注册、FD 来源、Android 锁、失效标记或重配置。多个 Manager 通过同一资源对象复用模型，游标快照仍持有自己的共享引用。
 
 后续已定位原 type 4 的类名前缀加载、Direct/Forward 模块注册和创建回调，见 [普通模型创建链](token-model-creation.md)。这两类的普通分派与现有宿主一致，本阶段不改查询实现，也不另加通用注册器。后续普通 bundle 的成功初始注册已接原 scheme 字节，完整 Android DataManager 生命周期仍待恢复。
 

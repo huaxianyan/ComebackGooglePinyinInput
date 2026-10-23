@@ -2,11 +2,20 @@
 #include "key_expansion.h"
 #include "score_math.h"
 #include <utility>
+#include <tuple>
 
 namespace comeback::recovered {
+namespace {
+auto IdentityFields(const KeyToken& token) {
+    return std::tie(token.auxiliary, token.id, token.identity_bit);
+}
+}  // namespace
 bool SameKeyTokenIdentity(const KeyToken& left, const KeyToken& right) {
-    return left.id == right.id && left.auxiliary == right.auxiliary &&
-           left.identity_bit == right.identity_bit;
+    return IdentityFields(left) == IdentityFields(right);
+}
+
+bool KeyTokenIdentityLess(const KeyToken& left, const KeyToken& right) {
+    return IdentityFields(left) < IdentityFields(right);
 }
 
 bool CollectedExpansionResult(const std::vector<ScoredKeyToken>& results,

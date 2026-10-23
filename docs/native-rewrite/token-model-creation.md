@@ -52,7 +52,7 @@ Direct `0x1b1f8c` 和 Forward `0x1b7e84` 都分别保存 this 与 X8 结果指�
 
 ## 宿主边界与验证
 
-TokenDictionaryResources 已按原类名前缀选择唯一 Direct/Forward 加载器，成功后才缓存模型。本轮没有发现需要修改普通分派的差异。输入域仍为显式提供的普通非反向 bundle 索引，不声称完整复刻类型表、创建器生命周期、OOM 或损坏资源的发布顺序。
+TokenModelResources（原 TokenDictionaryResources）按原类名前缀选择唯一 Direct/Forward 加载器，成功后才缓存模型。本轮没有发现需要修改普通分派的差异。输入域仍为显式提供的普通非反向 bundle 索引，不声称完整复刻类型表、创建器生命周期、OOM 或损坏资源的发布顺序。
 
 新增六段完整 FDE，中央从 494 增至 500。前缀加载器和两个创建回调共三段 raw-equal。两个注册函数与类名创建入口共三段存在 ADRP 差异，其余指令相同。十处差异分别保持 `.data` 或 `.bss` 节内的相对页位置，其中 `.data` 引用为析构登记使用的 DSO handle，不误记为 `.bss`。
 

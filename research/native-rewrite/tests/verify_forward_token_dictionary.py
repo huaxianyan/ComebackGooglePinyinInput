@@ -6,9 +6,9 @@ from pathlib import Path
 import subprocess
 
 
-def token_setting_slice(content):
+def setting_slice(content, field_number):
     # Fixed SettingScheme has only length-delimited top-level fields. Extract
-    # field 2 independently; C++ parses the original nested message itself.
+    # an unchanged nested message; C++ parses data IDs and applies the setting.
     offset = 0
     def varint():
         nonlocal offset
@@ -27,9 +27,9 @@ def token_setting_slice(content):
         size = varint()
         value = content[offset:offset + size]
         offset += size
-        if tag >> 3 == 2:
+        if tag >> 3 == field_number:
             return value
-    raise ValueError("original SettingScheme has no token setting")
+    raise ValueError(f"original SettingScheme has no setting field {field_number}")
 
 
 def main():
@@ -37,7 +37,7 @@ def main():
     parser.add_argument("--manifest", type=Path, required=True)
     parser.add_argument("--executable", type=Path, required=True)
     parser.add_argument("--fixture", type=Path, required=True)
-    parser.add_argument("--case", choices=("source", "target", "manager"))
+    parser.add_argument("--case", choices=("source", "target", "manager", "expander"))
     args = parser.parse_args()
     manifest = json.loads(args.manifest.read_text(encoding="utf-8"))
     if manifest["schema_version"] != 3:
@@ -51,7 +51,7 @@ def main():
             if not container.get("packed_tables"):
                 continue
             profiles += 1
-            if args.case == "manager":
+            if args.case in ("manager", "expander"):
                 continue
             fields = {field["field_number"]: field["value"]
                       for field in container["token_config"]["config_fields"] if "value" in field}
@@ -65,7 +65,7 @@ def main():
     if profiles != 8:
         raise ValueError("expected the eight ordinary Forward resources in the fixed original APK")
     args.fixture.parent.mkdir(parents=True, exist_ok=True)
-    if args.case == "manager":
+    if args.case in ("manager", "expander"):
         for library in manifest["libraries"]:
             for blob in library["blobs"]:
                 source = (args.manifest.parent / blob["output_file"]).resolve()
@@ -73,9 +73,10 @@ def main():
                 if blob["name"] in ("en_data_scheme", "data_scheme", "gesture_data_scheme"):
                     rows.append(f"@scheme:{blob['name']}\t{source}")
                 if blob["name"] == "pinyin_qwerty_setting_scheme":
-                    path = args.fixture.with_suffix(".setting.pb").resolve()
-                    path.write_bytes(token_setting_slice(source.read_bytes()))
-                    rows.append(f"@token_setting\t{path}")
+                    for field, label in ((2, "token_setting"), (3, "expansion_setting")):
+                        path = args.fixture.with_suffix(f".{label}.pb").resolve()
+                        path.write_bytes(setting_slice(source.read_bytes(), field))
+                        rows.append(f"@{label}\t{path}")
     args.fixture.write_text("\n".join(rows) + "\n", encoding="utf-8")
     command = [str(args.executable.resolve()), str(args.fixture.resolve())]
     if args.case:

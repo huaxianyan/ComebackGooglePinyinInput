@@ -1,7 +1,7 @@
 // Ordinary resolved-resource activation and DFS factory; see NOTICE.
 #ifndef COMEBACK_RECOVERED_TOKEN_DICTIONARY_MANAGER_H
 #define COMEBACK_RECOVERED_TOKEN_DICTIONARY_MANAGER_H
-#include "token_dictionary_resources.h"
+#include "token_model_resources.h"
 #include "token_manager_cursor.h"
 #include <map>
 
@@ -13,7 +13,7 @@ public:
     // nonempty iterator options or unsupported resource profiles return null.
     // This fresh builder does not implement in-place setting failure/reconfigure.
     static std::shared_ptr<TokenDictionaryManager> Load(
-        const std::string& setting, TokenDictionaryResources& resources);
+        const std::string& setting, TokenModelResources& resources);
     // Original 0x1941fc returns a Manager even when no dictionary is active.
     // Fresh cursors share the loaded models, including Direct's dynamic counter.
     std::unique_ptr<TokenDictionaryCursor> CreateDfsCursor() const;

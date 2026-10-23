@@ -1,0 +1,8 @@
+// Read projection of the repeated-string message consumed by 0x19c890.
+// SettingScheme field 3 / Java ccm: names below are research labels; see NOTICE.
+syntax = "proto2";
+package comeback.recovered.proto;
+option optimize_for = LITE_RUNTIME;
+message TokenExpansionSetting {
+  repeated string data_id = 1;
+}
