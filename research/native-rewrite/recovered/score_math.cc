@@ -27,17 +27,6 @@ std::uint32_t ToBits(float value) {
     return bits;
 }
 
-// Original 0x18c56c: the bias puts exponent and table indices into float bits.
-// FMADD is fused; replacing it with a multiply followed by an add changes cells.
-float FastExp(float value) {
-    const float encoded = std::fma(value, FromBits(kLog2EBits), FromBits(kExpBiasBits));
-    const std::uint32_t bits = ToBits(encoded);
-    const std::uint32_t high = kExpMantissaBits[(bits >> 8) & 0x7fu];
-    const std::uint32_t exponent = (bits & 0x7f8000u) << 8;
-    const float residual = FromBits(kExpResidualBits[bits & 0xffu]);
-    return residual * FromBits(high | exponent);
-}
-
 // Original 0x18c5d8: linear interpolation in log2 space, then conversion to ln.
 float FastLog(float value) {
     const std::uint32_t bits = ToBits(value);
@@ -51,6 +40,17 @@ float FastLog(float value) {
 
 }  // namespace
 
+// Original 0x18c56c, also inlined at 0x18fc10. One shared implementation;
+// FMADD is fused, including when converting a selected path's score to scale.
+float ExpLogScore(float value) {
+    const float encoded = std::fma(value, FromBits(kLog2EBits), FromBits(kExpBiasBits));
+    const std::uint32_t bits = ToBits(encoded);
+    const std::uint32_t high = kExpMantissaBits[(bits >> 8) & 0x7fu];
+    const std::uint32_t exponent = (bits & 0x7f8000u) << 8;
+    const float residual = FromBits(kExpResidualBits[bits & 0xffu]);
+    return residual * FromBits(high | exponent);
+}
+
 // Original 0x18c69c. Keep the separate subtractions and float32 operations.
 float AddLogScores(float left, float right) {
     const float difference = left - right;
@@ -60,12 +60,12 @@ float AddLogScores(float left, float right) {
     }
     if (left > right) {
         const float delta = right - left;
-        const float exponential = FastExp(delta);
+        const float exponential = ExpLogScore(delta);
         const float sum = exponential + 1.0f;
         const float correction = FastLog(sum);
         return left + correction;
     }
-    const float exponential = FastExp(difference);
+    const float exponential = ExpLogScore(difference);
     const float sum = exponential + 1.0f;
     const float correction = FastLog(sum);
     return right + correction;

@@ -9,8 +9,9 @@ namespace comeback::recovered {
 // Consumed projection of a native 0x40-byte key result, not its ABI layout or
 // a substitute generator. Parts retain the token strings; unused token identity
 // and the other native vector are not reconstructed here. The real ordinary
-// no-expansion producer supplies these consumed fields in source_token_sequence;
-// other generators, expansion masks and the complete native result ABI are absent.
+// no-expansion producer supplies these fields in source_token_sequence. Selected
+// expansion paths now enter learning_key_result_set; its consumed ID key is kept
+// there, not duplicated in this output. Full streams, masks and ABI are absent.
 struct GeneratedLearningKey {
     std::vector<std::string> parts;
     float scale;

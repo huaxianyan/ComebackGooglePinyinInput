@@ -103,7 +103,7 @@ research/native-rewrite/recovered/score_math.cc
 research/native-rewrite/recovered/score_math_tables.inc
 ```
 
-这套组件只实现有限输入域中的标量 `AddLogScores`，内部使用恢复的指数与对数查表函数。没有输入法占位实现、固定候选或对旧 `.so` 的转发。后续归一化已在独立 key_expansion 组件实现，宿主只表达已观察 token 字段，不克隆原布局。后续普通 token 管理器及无扩展消费投影已有真实入口，真实扩展收集后续已有入口，完整键组合和输入引擎仍在后续范围。
+这套组件实现有限输入域中的 AddLogScores 与 ExpLogScore，使用恢复的指数与对数查表函数。后续已选路径接纳复用同一 ExpLogScore，将实际路径分数转成 scale，详见 [接纳与结果集合](key-expansion-state.md#已选路径的接纳与结果集合)。没有输入法占位实现、固定候选或对旧 `.so` 的转发。后续归一化已在独立 key_expansion 组件实现，宿主只表达已观察 token 字段，不克隆原布局。后续普通 token 管理器及无扩展消费投影已有真实入口，真实扩展收集与已选路径接纳后续已有入口，完整候选流、键组合和输入引擎仍在后续范围。
 
 `score_math_tables.inc` 是已经入库的可读常数源文件。研究导出器可以重新生成它，但编译时不需要 APK、LIEF、Capstone、反编译器或旧 native 库。该材料不因恢复成源码而自动获得新的 MPL 授权，权利范围继续按 `NOTICE`。
 

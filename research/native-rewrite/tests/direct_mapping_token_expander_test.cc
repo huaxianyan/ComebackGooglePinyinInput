@@ -1,10 +1,12 @@
 // One actual-resource E2E: original schemes/settings -> real Managers -> text
-// fill -> scored collection -> existing normalization. Selections are test-only.
+// fill -> collection/normalization -> selected-key admission -> real consumption.
+// Selections are test-only; no replacement for the native path decoder.
 #include "token_expander_manager.h"
 #include "token_expansion_setting.pb.h"
 #include "token_dictionary_manager.h"
 #include "token_dictionary_setting.pb.h"
 #include "original_token_resources.h"
+#include "learning_key_result_set.h"
 #include <cassert>
 #include <cstring>
 #include <iostream>
@@ -116,5 +118,38 @@ int main(int argc, char** argv) {
     // them with sorted tokens: digit's 0x62 now accompanies English's identity.
     CheckRecord(collected[0], 0x00800061u, 0, "a", 0x3f317218u, 0x62, true);
     CheckRecord(collected[1], 0x08800030u, 300, "0", 0, 0x63);
-    std::cout << "original resources to collection, ordered log-score merge and normalization passed\n";
+    // Real equal-score choices normalize to -ln(2). The native inline
+    // exponential has an exact zero-residual cell here: scale is binary32 1/2.
+    NormalizeAndPruneExpansions(repeated);
+    LearningKeyResultSet result_set;
+    result_set.Admit(repeated[0].score, {&repeated[0]});
+    std::vector<ScoredKeyToken> choices;
+    assert(CollectTokenExpansions(*dictionaries, cursor.get(),
+                                 {"A", 0x01000041u, 0, true}, 0.0f, 0, choices, false));
+    assert(CollectTokenExpansions(*dictionaries, cursor.get(),
+                                 {"0", 0x01000030u, 300, true}, 0.0f, 0, choices, false));
+    assert(choices.size() == 2);
+    // Insert two IDs before the digit singleton: native result order is length
+    // first, not ordinary vector lexicographic order or score/insertion order.
+    result_set.Admit(0.0f, {&choices[0], &choices[1]});
+    result_set.Admit(choices[1].score, {&choices[1]});
+    result_set.Admit(choices[0].score, {&choices[0]});  // Same ID, different flag/score; first wins.
+    choices.clear();
+    repeated.clear();
+    std::vector<GeneratedLearningKey> keys;
+    result_set.CopyTo(keys);
+    assert(keys.size() == 3);
+    assert(keys[0].parts == std::vector<std::string>{"a"} &&
+           Bits(keys[0].scale) == 0x3f000000u && keys[0].flag30 && keys[0].category == 0);
+    assert(keys[1].parts == std::vector<std::string>{"0"} &&
+           Bits(keys[1].scale) == 0x3f800000u && !keys[1].flag30 && keys[1].category == 0);
+    assert(keys[2].parts == std::vector<std::string>({"a", "0"}) &&
+           Bits(keys[2].scale) == 0x3f800000u && !keys[2].flag30 && keys[2].category == 0);
+    std::string serialized;
+    SerializeLearningKey(keys[2], true, serialized);
+    assert(serialized == "a0");
+    SerializeLearningKey(keys[2], false, serialized);
+    assert(serialized == "0a");
+    assert(ScaleLearningCount(4, keys[0].scale) == 2);
+    std::cout << "original resources to admitted ID-ordered learning keys and real key consumption passed\n";
 }
