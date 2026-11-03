@@ -81,6 +81,29 @@
 
 还没测的部分：`doNotCompress` 的逐条复现、smali 双向、签名链路（后两项现有脚本已覆盖）。
 
+## 第一版不依赖 apktool 的组装脚本
+
+新增 `scripts/build_no_apktool.py`：读 `apktool.yml` 的 SDK、版本与压缩规则，用独立 smali 汇编 `smali*` 目录，
+`aapt2 compile`／`link` 重建资源，再把未重建的条目按原包原样复制（保留原压缩方式），最后写出 APK。
+
+在原版解码树上跑一次的结果：
+
+| 判据 | 结果 |
+| --- | --- |
+| 耗时 | 7.6 秒 |
+| 产出 | 18,826,215 字节（原版 19,148,368） |
+| `aapt2 dump badging` | 包名、`versionCode` 4520313、`versionName`、`minSdk` 17 全对，**0 警告** |
+| dex | 3264 类、25719 方法，与原版计数相同 |
+| 压缩方式 | `resources.arsc`／`classes.dex`／清单／`res/raw/metadata.json`／`lib/*.so` 与原版逐项一致 |
+
+比对两份包的条目清单，差异只有三类，都能解释：
+
+1. 少了 3 个签名文件（`CERT.RSA`、`CERT.SF`、`MANIFEST.MF`），重签后由签名脚本产生。
+2. 3 个 `res/layout/gf_*.xml` 在新包里换了配置目录，不是丢失。**说明解码树的资源路径可能与原包不同，等价性必须按资源表判定，不能按文件路径判定。**
+3. 多了 10 个 `res/drawable-v19`／`v21` 的条目，同样是路径归一化后的结果。
+
+16 KiB 审计仍报 `failures=4`：新脚本没有调用 `scripts/rewrite_elf_16kb.py`，原生库还是原件。这一段与链路无关，接上即可。
+
 ## 三条路线
 
 | 路线 | 做什么 | 成本 | 风险 | 收益 |
