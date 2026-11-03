@@ -56,6 +56,18 @@
 2. 本次 `aapt2 link` 没有加 `--stable-ids`，ID 仍与原版逐条一致。这是好消息，但它依赖「原版 ID 恰好与解码顺序一致」，补丁新增资源后必须重新比对，不能当成永久保证。
 3. `aapt2 link` 不写 `versionCode`／`versionName`（它们在 `apktool.yml` 里），必须转成 `--version-code`／`--version-name` 参数，否则产物缺这两个属性。这一条实测已暴露。
 
+### DEX 环节也验了一遍
+
+用 Maven Central 上的独立 smali 工具链，不经过 apktool：
+
+| 步骤 | 依赖 | 结果 |
+| --- | --- | --- |
+| `smali assemble` 解码树的 `smali/` | `smali`、`dexlib2`、`util`、`guava`、`jcommander`、`antlr-runtime` 六个 jar | **2.2 秒**，产出 `classes.dex` |
+
+- 产出 **3264 个类、25719 个方法**，与原版 dex 的计数**完全相同**；字节数 3,094,724，原版 3,088,184，差在重排与字符串池顺序。
+- apktool.jar 里带的是 `com.android.tools.smali` 这份分支，它没有可直接调用的 `main`（入口在 `brut.androlib` 里）。所以「不用 apktool」指的是换这套独立 jar，不是复用旧 jar 里的类。
+- 六个 jar 全部可从 Maven Central 直接取，本机访问正常。
+
 ### 装包也验了一遍
 
 把 `linked.apk` 的 `AndroidManifest.xml`、`resources.arsc` 与 `res/` 整体换回原 APK，`lib/`、`assets/`、`classes*.dex` 保持原样：
