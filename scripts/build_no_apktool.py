@@ -118,6 +118,11 @@ def package_apk(args: argparse.Namespace, linked: Path, dexes: list[Path],
     for position, dex in enumerate(dexes):
         name = "classes.dex" if position == 0 else f"classes{position + 1}.dex"
         rebuilt[name] = dex.read_bytes()
+    # Native libraries come from the decoded tree, not from the original package: the 16 KiB
+    # rewrite happens on the tree, and copying them from the original would silently undo it.
+    for library in sorted((args.decoded / "lib").rglob("*")):
+        if library.is_file():
+            rebuilt[library.relative_to(args.decoded).as_posix()] = library.read_bytes()
 
     with zipfile.ZipFile(args.original) as original, \
             zipfile.ZipFile(args.output, "w") as output:
