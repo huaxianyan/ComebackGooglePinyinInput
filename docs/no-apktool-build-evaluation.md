@@ -113,6 +113,23 @@
 
 这条值得单独记：**任何「未重建条目从原包复制」的组装逻辑，都必须先确认它不会覆盖构建期重写过的文件。** 错误是静默的，产物照样能生成，只有审计能发现。
 
+### 对齐与签名
+
+链路末尾用 build-tools 的 `zipalign -P 16` 与 `apksigner` 收尾，不依赖 apktool 的签名封装：
+
+| 步骤 | 结果 |
+| --- | --- |
+| `zipalign -P 16 -f 4` | 通过 |
+| `apksigner sign`（spike 临时密钥库） | 通过，`CN=no-apktool-spike` |
+| `apksigner verify --print-certs` | 通过 |
+| `zipalign -c -P 16 4` 复查 | 通过 |
+| 产物 | 19,113,087 字节 |
+
+两点提醒：
+
+- 本机 `JAVA_HOME` 指向的 `openjdk17\current` 不存在，`apksigner.bat` 会直接报错退出。实际可用的是 `temurin17-jdk\current`，调用前要显式设置，否则签名字段为空且不报签名失败。
+- spike 用的是临时密钥库，口令与库文件只留在被忽略的 `work/no-apktool-spike/` 里，只服务这一份验证包，不能当审计签名或正式签名使用。
+
 ## 三条路线
 
 | 路线 | 做什么 | 成本 | 风险 | 收益 |
