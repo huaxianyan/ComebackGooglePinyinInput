@@ -56,7 +56,18 @@
 2. 本次 `aapt2 link` 没有加 `--stable-ids`，ID 仍与原版逐条一致。这是好消息，但它依赖「原版 ID 恰好与解码顺序一致」，补丁新增资源后必须重新比对，不能当成永久保证。
 3. `aapt2 link` 不写 `versionCode`／`versionName`（它们在 `apktool.yml` 里），必须转成 `--version-code`／`--version-name` 参数，否则产物缺这两个属性。这一条实测已暴露。
 
-还没测的部分：`assets/`、`lib/`、`classes*.dex` 的装包与 `doNotCompress` 规则、smali 双向、签名链路（后两项现有脚本已覆盖）。
+### 装包也验了一遍
+
+把 `linked.apk` 的 `AndroidManifest.xml`、`resources.arsc` 与 `res/` 整体换回原 APK，`lib/`、`assets/`、`classes*.dex` 保持原样：
+
+- 只换清单与资源表时，`aapt2 dump badging` 报了 21 条「文件引用路径不存在」——
+  因为 aapt2 记录的是解码树里的路径，必须连 `res/` 一起换。
+- 连 `res/` 一起换之后，**0 警告**，包名与 `targetSdkVersion` 正确，产物 19.1 MB（原版 19.1 MB）。
+- 再次确认 `versionCode`／`versionName` 为空，就是上面第 3 条：必须传 `--version-code`／`--version-name`。
+
+这一步说明「资源重建 + 装包」可以完全不经过 apktool 的 build 阶段，剩下的就是 `doNotCompress` 逐条复现与 smali 双向。
+
+还没测的部分：`doNotCompress` 的逐条复现、smali 双向、签名链路（后两项现有脚本已覆盖）。
 
 ## 三条路线
 
