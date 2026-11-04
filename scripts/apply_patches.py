@@ -324,6 +324,36 @@ def apply(
         2,
     )
 
+    # The single-page guide also renders inside the IME service (the dashboard
+    # fallback when the guide activity cannot complete). Its base class casts
+    # the inflate context to the guide activity to format a "Step N" title, and
+    # a service context breaks that cast. The layout already carries its own
+    # title, so keep the activity behavior unchanged and let the service path
+    # fall back to it.
+    replace_once(
+        decoded / "smali/apr.smali",
+        "    .line 13\n"
+        "    invoke-virtual {p0}, Lapr;->getContext()Landroid/content/Context;\n\n"
+        "    move-result-object v1\n\n"
+        "    check-cast v1, Lapy;\n\n",
+        "    .line 13\n"
+        "    invoke-virtual {p0}, Lapr;->getContext()Landroid/content/Context;\n\n"
+        "    move-result-object v1\n\n"
+        "    instance-of v1, v1, Lapy;\n\n"
+        "    if-eqz v1, :cond_first_run_step_title_default\n\n"
+        "    invoke-virtual {p0}, Lapr;->getContext()Landroid/content/Context;\n\n"
+        "    move-result-object v1\n\n"
+        "    check-cast v1, Lapy;\n\n",
+    )
+    replace_once(
+        decoded / "smali/apr.smali",
+        "    invoke-virtual {v0, v1}, Landroid/widget/TextView;->setText(Ljava/lang/CharSequence;)V\n\n"
+        "    .line 15",
+        "    invoke-virtual {v0, v1}, Landroid/widget/TextView;->setText(Ljava/lang/CharSequence;)V\n\n"
+        "    :cond_first_run_step_title_default\n\n"
+        "    .line 15",
+    )
+
     # The legacy guide's MD3-inspired surface (day/night colors, rounded filled
     # buttons, current typography, finish-only final action) is retained rather
     # than reachable: the redirect hands the guide to the Compose host first.
