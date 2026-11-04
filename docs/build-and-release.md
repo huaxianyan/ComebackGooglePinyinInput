@@ -65,6 +65,26 @@ python scripts/build_modern_settings_host.py `
 
 不要把密码写入项目文件或命令脚本。正式密钥必须保存在仓库外或 GitHub Actions Secrets 中。
 
+## 无 apktool 备用链路
+
+`scripts/build_no_apktool_chain.py` 是与上面常规链路等价的备用构建入口：解码仍用 apktool
+（保持补丁与门禁所依赖的树形），但重建完全不调用 `apktool b`——legacy DEX 用独立
+smali 工具链（Maven 的 `smali`/`dexlib2` 等，首次运行自动下载）、资源由 Compose 宿主的
+AAPT2 处理、打包由 `assemble_compose_host_apk.py` 完成，合并后换入重写过的原生库。
+等价性与验证记录见 [无 apktool 评估](no-apktool-build-evaluation.md)。
+
+与常规链路的三点差异，排查时先看这里：
+
+- `prepare_compose_host_manifest.py` 会删掉 manifest 的 `package` 属性（AGP 9 要求），
+  而独立 aapt2 链接需要它，脚本用 `--manifest-package` 补写一份临时清单；
+- legacy DEX 走 `build_no_apktool.py --dex-only`：独立链接解析不了 Compose 宿主模块的
+  样式引用，而合并取的是宿主的资源表，legacy 包的资源环节本来就不参与；
+- 合并脚本会原样复制原包条目，必须换入解码树里重写过的原生库，否则 16 KiB 重排被
+  静默覆盖（脚本带匹配数断言）。
+
+Gradle 的 SDK 位置写入 `modern-settings/local.properties`（已忽略），不依赖全局
+`ANDROID_HOME`；Gradle 缓存沿用 `work/modern-settings-gradle-home`。
+
 ## 静态与最终 APK 门禁
 
 主要脚本：

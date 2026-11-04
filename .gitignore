@@ -11,6 +11,7 @@ dist-audit/
 
 # Scratch trees written by the local reuse-rebuild helper
 /pa-*/
+modern-settings/local.properties
 .gradle/
 .kotlin/
 
