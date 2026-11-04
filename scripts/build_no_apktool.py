@@ -81,15 +81,28 @@ def compile_resources(args: argparse.Namespace, decoded: Path, work: Path) -> Pa
 
 def link_resources(args: argparse.Namespace, decoded: Path, work: Path, flat: Path,
                    fields: dict[str, object]) -> Path:
+    manifest = decoded / "AndroidManifest.xml"
+    package = getattr(args, "manifest_package", None)
+    if package and "package=" not in (manifest.read_text(encoding="utf-8")[:2048]):
+        # The host-preparation step strips the manifest package attribute because
+        # AGP 9 takes it from the Gradle DSL, but aapt2 link still requires one.
+        # The rewritten copy only feeds the link; the packaged manifest stays
+        # the host's own.
+        text = manifest.read_text(encoding="utf-8")
+        patched = re.sub("<manifest ", f'<manifest package="{package}" ', text, count=1)
+        manifest = work / "AndroidManifest.link.xml"
+        manifest.write_text(patched, encoding="utf-8")
     linked = work / "linked.apk"
     command = [
         args.aapt2, "link", "-o", str(linked),
         "-I", str(args.android_jar),
-        "--manifest", str(decoded / "AndroidManifest.xml"),
+        "--manifest", str(manifest),
         "--min-sdk-version", str(fields.get("minSdkVersion", "17")),
         "--target-sdk-version", str(fields.get("targetSdkVersion", "26")),
         str(flat),
     ]
+    if args.stable_ids is not None:
+        command += ["--stable-ids", str(args.stable_ids)]
     # aapt2 takes these as link arguments; apktool keeps them in its own metadata file.
     if "versionCode" in fields:
         command += ["--version-code", str(fields["versionCode"])]
@@ -165,6 +178,16 @@ def main() -> int:
     parser.add_argument("--android-jar", type=Path, required=True)
     parser.add_argument("--aapt2", required=True)
     parser.add_argument("--smali-classpath", required=True)
+    parser.add_argument("--dex-only", action="store_true",
+                        help="assemble the smali DEX files only; skip the resource link and "
+                             "packaging, which cannot resolve Compose-host-only styles and "
+                             "is unnecessary when the merge takes resources from the host")
+    parser.add_argument("--manifest-package",
+                        help="package to stamp on a temporary manifest for aapt2 link when "
+                             "the host preparation already stripped the attribute")
+    parser.add_argument("--stable-ids", type=Path,
+                        help="aapt2 --stable-ids mapping; required so the rebuilt resource "
+                             "table keeps the IDs the legacy DEX was compiled against")
     parser.add_argument("--java", default="java")
     args = parser.parse_args()
 
@@ -175,6 +198,12 @@ def main() -> int:
         for dex in dexes:
             classes, methods = dex_counts(dex)
             print(f"{dex.name}: {classes} classes, {methods} methods")
+        if args.dex_only:
+            if len(dexes) != 1:
+                raise SystemExit("--dex-only supports exactly one smali directory")
+            args.output.write_bytes(dexes[0].read_bytes())
+            print(f"wrote {args.output} ({args.output.stat().st_size} bytes)")
+            return 0
         flat = compile_resources(args, args.decoded, work)
         linked = link_resources(args, args.decoded, work, flat, fields)
         package_apk(args, linked, dexes, fields)
