@@ -251,9 +251,17 @@ REQUIRED_PREFERENCES = {
     "PREVIEW_LAYOUT_KEY": "pref_key_preview_keyboard_layout",
 }
 
-# The key-border preference the sheet writes. Unlike the two above it carries no
-# forced value, so it is only checked against `strings.xml`.
-KEY_BORDER_PREFERENCE = ("KEY_BORDER_KEY", "pref_key_enable_key_border")
+# The key-border preference used to be a full literal on the bridge; it moved to
+# `SettingsPreferenceKeys.KEY_BORDER` holding the raw key, while the legacy
+# `strings.xml` entry name carries the `pref_key_` prefix and its VALUE is that
+# raw key. The agreement to guard is: the bridge still reads the constant, and
+# the legacy value matches it.
+PREFERENCE_KEYS_SOURCE = (
+    ROOT
+    / "modern-settings/compose-runtime/src/main/kotlin/com/google/android/inputmethod/pinyin"
+    / "modernsettings/compose/SettingsPreferenceKeys.kt"
+)
+KEY_BORDER_PREFERENCE = ("KEY_BORDER", "pref_key_enable_key_border")
 
 # Lookups the bridge makes where the engine overloads by return type, so a
 # lookup by name and parameters alone cannot name one method.
@@ -346,7 +354,6 @@ REQUIRED_CONSTANTS = [
     "BORDER_STATE_METHOD",
     "DESCRIPTOR_FACTORY",
     "DESCRIPTOR_VALUE_FIELD",
-    "KEY_BORDER_KEY",
 ]
 
 
@@ -527,10 +534,18 @@ def main() -> int:
     # The key-border preference is a plain one, so the legacy side is the only
     # place its name is written down; the bridge and `strings.xml` have to agree.
     border_constant, border_resource = KEY_BORDER_PREFERENCE
-    actual = constants.get(border_constant)
-    if actual is None:
-        failures.append(f"the bridge declares no {border_constant}")
+    keys_source = PREFERENCE_KEYS_SOURCE.read_text(encoding="utf-8")
+    key_match = re.search(
+        r'const val ' + border_constant + r'\s*=\s*"([^"]*)"', keys_source
+    )
+    bridge_uses = "SettingsPreferenceKeys." + border_constant in bridge_source
+    if key_match is None or not bridge_uses:
+        failures.append(
+            f"the bridge no longer routes the border key through "
+            f"SettingsPreferenceKeys.{border_constant}"
+        )
     else:
+        actual = key_match.group(1)
         legacy = read_legacy_string(args.decoded, border_resource)
         if legacy is None:
             failures.append(f"strings.xml no longer declares {border_resource}")
