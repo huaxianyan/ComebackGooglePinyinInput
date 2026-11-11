@@ -99,6 +99,56 @@ public final class DictionarySafetyGuard {
         return factory == null ? -1 : readableCount(app, factory);
     }
 
+    /**
+     * The repair the safety net performed last, worded for the reader, or empty when the last note
+     * was not a repair. The status page shows this instead of a warning the repair already fixed.
+     */
+    public static String lastRepairNote(Context context) {
+        if (context == null) return "";
+        Context app = context.getApplicationContext();
+        if (app == null) app = context;
+        String note = new DictionarySafetyStore(app, DictionarySafetyKind.CHINESE)
+                .preferences().getString(DictionarySafetyStore.KEY_NOTE, "");
+        return note.startsWith("词库文件从") ? note : "";
+    }
+
+    /**
+     * The last few sizes the Chinese dictionary had at save boundaries, oldest first, as a single
+     * line the status page can show. Empty when nothing has been recorded yet.
+     */
+    public static String recentSaveSizes(Context context) {
+        if (context == null) return "";
+        Context app = context.getApplicationContext();
+        if (app == null) app = context;
+        String journal = new DictionarySafetyStore(app, DictionarySafetyKind.CHINESE)
+                .preferences().getString(DictionarySafetyStore.KEY_SAVE_JOURNAL, "");
+        if (journal.isEmpty()) return "";
+        String[] parts = journal.split(";");
+        StringBuilder builder = new StringBuilder();
+        for (int index = Math.max(0, parts.length - 5); index < parts.length; index++) {
+            int colon = parts[index].indexOf(':');
+            int slash = parts[index].indexOf('/');
+            if (colon < 0 || slash < colon) continue;
+            long size;
+            try {
+                size = Long.parseLong(parts[index].substring(colon + 1, slash));
+            } catch (NumberFormatException unreadable) {
+                continue;
+            }
+            // Samples taken before the dictionary existed say nothing useful to a reader.
+            if (size <= 0L) continue;
+            if (builder.length() > 0) builder.append("、");
+            builder.append(formatSize(size));
+        }
+        return builder.toString();
+    }
+
+    private static String formatSize(long bytes) {
+        if (bytes < 1024L) return bytes + " 字节";
+        long kilobytes = Math.round(bytes / 1024.0);
+        return kilobytes + " KB";
+    }
+
     /** Entry point used by the existing dictionary-save hooks. Cheap when it is not time to look. */
     public static void request(final Context context) {
         if (context == null) return;

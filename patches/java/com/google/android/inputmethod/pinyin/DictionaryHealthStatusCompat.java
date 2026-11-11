@@ -83,9 +83,15 @@ public final class DictionaryHealthStatusCompat {
                 boolean shrunk = entries >= 0 && previousEntries > 0 && entries * 2 < previousEntries;
                 int status = HEALTH_OK;
                 String summary = "中文词库可读取，英文词库可读取";
+                String repairNote = DictionarySafetyGuard.lastRepairNote(context);
                 if (!zhReadable || !enReadable) {
                     status = HEALTH_ERROR;
                     summary = "词库检查未完成，请稍后重试";
+                } else if (!repairNote.isEmpty()) {
+                    // The file was already put back; the engine keeps its old view until it
+                    // restarts, so a drop in this count is expected, not a new loss.
+                    status = HEALTH_NOTICE;
+                    summary = "词库文件已自动恢复，重启输入法后生效";
                 } else if (shrunk) {
                     status = HEALTH_ERROR;
                     summary = "中文词条从 " + previousEntries + " 条减少到 " + entries
@@ -111,6 +117,13 @@ public final class DictionaryHealthStatusCompat {
                         .append((zh.unreadable ? 1 : 0) + (en.unreadable ? 1 : 0)).append(" 个");
                 details.append("\n未完成保存的文件：")
                         .append((zh.temporary ? 1 : 0) + (en.temporary ? 1 : 0)).append(" 个");
+                if (!repairNote.isEmpty()) {
+                    details.append("\n自动恢复：").append(repairNote);
+                }
+                String saveSizes = DictionarySafetyGuard.recentSaveSizes(context);
+                if (!saveSizes.isEmpty()) {
+                    details.append("\n最近几次保存时的大小：").append(saveSizes);
+                }
                 long modified = Math.max(zh.modified, en.modified);
                 if (modified > 0L) {
                     details.append("\n词库文件最近更新：")
