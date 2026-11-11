@@ -88,4 +88,3 @@
         <item>168</item>
     </string-array>
 </resources>
-    <string name="rime_sync_error_snapshot">The Google Pinyin user dictionary returned far fewer entries than the last sync; synchronization stopped so that Rime entries are not deleted. Check the dictionary, then rebuild the sync state</string>

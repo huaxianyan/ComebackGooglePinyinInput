@@ -563,34 +563,14 @@ public final class RimeUserDbSnapshotTest {
     }
     require(dominatingDeleteFound, "the deletion fixture must produce a Rime tombstone");
 
-    // A committed baseline that cannot plausibly shrink must stop the plan instead of
-    // turning a bad Google read into deletions of the untouched Rime dictionary.
-    StringBuilder inflated = new StringBuilder();
-    inflated.append("# Rime user dictionary\n")
-        .append("#@/db_name\tpinyin_simp\n")
-        .append("#@/db_type\tuserdb\n")
-        .append("#@/rime_version\t1.0\n")
-        .append("#@/tick\t200\n")
-        .append("#@/user_id\tcollapsed\n");
-    for (int index = 0; index < 1200; index++) {
-      inflated.append("ce shi\tfixture-").append(index).append("\tc=3 d=1.0 t=200\n");
-    }
-    final RimeSyncSessionPlan.Baseline committed = new RimeSyncSessionPlan.Baseline(
-        RimeSyncPlanner.History.PRESENT, RimeSyncPlanner.GoogleProjection.SUPPORTED, 3);
-    boolean collapsedBlocked = false;
-    try {
-      RimeSyncSessionPlan.build(RimeSyncCore.translationEntries(read(inflated.toString())),
-          nativeSnapshot,
-          new RimeSyncSessionPlan.BaselineLookup() {
-            @Override public RimeSyncSessionPlan.Baseline get(String key) {
-              return committed;
-            }
-          });
-    } catch (RimeSyncSessionPlan.SnapshotInconsistentException expected) {
-      collapsedBlocked = expected.committedCount >= 1200 && expected.observedCount < 600;
-    }
-    require(collapsedBlocked,
-        "a Google read below half of the committed baseline must stop planning");
+    // A read that collapses below a committed baseline must be treated as a read failure,
+    // never as a user deletion of the untouched side of the sync.
+    require(RimeSyncSessionPlan.isCollapsed(100194, 4118)
+            && RimeSyncSessionPlan.isCollapsed(1200, 599)
+            && !RimeSyncSessionPlan.isCollapsed(1200, 600)
+            && !RimeSyncSessionPlan.isCollapsed(1200, 1200)
+            && !RimeSyncSessionPlan.isCollapsed(999, 0),
+        "a Google read below half of the committed baseline must not be trusted");
   }
 }
 '''

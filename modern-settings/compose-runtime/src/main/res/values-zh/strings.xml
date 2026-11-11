@@ -315,4 +315,3 @@
     <string name="modern_theme_builder_error_load">无法打开这张图片。</string>
     <string name="modern_theme_builder_error_write">无法保存这个主题。</string>
 </resources>
-    <string name="modern_settings_rime_sync_error_snapshot">Google 拼音用户词库读到的条目远少于上次同步，已停止同步以免误删 Rime 词条。请在确认词库完好后重新建立同步状态</string>

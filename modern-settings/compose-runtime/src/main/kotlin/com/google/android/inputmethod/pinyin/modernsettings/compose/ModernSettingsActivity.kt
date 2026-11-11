@@ -825,9 +825,6 @@ class ModernSettingsActivity : ComponentActivity() {
             RimeSyncError.CapacityExceeded -> getString(
                 R.string.modern_settings_rime_sync_error_capacity,
             )
-            RimeSyncError.SnapshotInconsistent -> getString(
-                R.string.modern_settings_rime_sync_error_snapshot,
-            )
             RimeSyncError.PreviewSourceList -> getString(
                 R.string.modern_settings_rime_sync_error_source_list,
             )

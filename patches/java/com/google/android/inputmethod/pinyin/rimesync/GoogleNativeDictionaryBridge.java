@@ -45,7 +45,7 @@ public final class GoogleNativeDictionaryBridge {
     }
 
     /** Reads only canonical presence for a preview that will not retain executable entries. */
-    static Snapshot readPresence(Context context, AbstractHmmEngineFactory engineFactory)
+    public static Snapshot readPresence(Context context, AbstractHmmEngineFactory engineFactory)
             throws IOException {
         return readSnapshot(context, engineFactory, true);
     }

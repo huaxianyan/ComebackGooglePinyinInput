@@ -42,7 +42,6 @@ public final class RimeSyncSettingsCompat {
     public static final int ERROR_DIRECTORY_IDENTITY = 17;
     public static final int ERROR_BRIDGE_SNAPSHOT_MISSING = 18;
     public static final int ERROR_COMPATIBILITY_CONSENT = 19;
-    public static final int ERROR_SNAPSHOT_INCONSISTENT = 20;
 
     public static final int NATIVE_FAILURE_NONE = RimeSyncStateStore.NATIVE_FAILURE_NONE;
     public static final int NATIVE_FAILURE_PERSISTENCE =
@@ -379,8 +378,6 @@ public final class RimeSyncSettingsCompat {
                     result = Result.error(read(context), ERROR_NATIVE_PERSISTENCE);
                 } catch (RimeSyncCore.IdentityConflictException failure) {
                     result = Result.error(read(context), ERROR_DIRECTORY_IDENTITY);
-                } catch (RimeSyncSessionPlan.SnapshotInconsistentException failure) {
-                    result = Result.error(read(context), ERROR_SNAPSHOT_INCONSISTENT);
                 } catch (IllegalArgumentException failure) {
                     result = Result.error(read(context), ERROR_CONFIGURATION_REQUIRED);
                 } catch (IllegalStateException failure) {

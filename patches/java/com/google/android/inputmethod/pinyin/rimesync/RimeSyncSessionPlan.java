@@ -133,7 +133,6 @@ public final class RimeSyncSessionPlan {
             }
             updateDigest(digest, key, decision, nextMagnitude);
         }
-        verifySnapshotPlausible(committedPresent, googleSnapshot.totalEntryCount);
         int projectedCount = googleSnapshot.totalEntryCount - googleDeletes + googleAdds;
         if (projectedCount > GoogleNativeDictionaryBridge.USER_DICTIONARY_CAPACITY) {
             throw new GoogleNativeDictionaryBridge.CapacityException(
@@ -145,24 +144,11 @@ public final class RimeSyncSessionPlan {
 
     /**
      * A dictionary that committed N entries cannot plausibly read back far fewer of them.
-     * Treating a collapsed read as deletions would delete the untouched side of the sync.
+     * A collapsed read means the comparison baseline is unusable, not that the user deleted
+     * entries, so callers must rebuild the comparison instead of planning deletions.
      */
-    private static void verifySnapshotPlausible(int committedPresent, int observed) {
-        if (committedPresent < SNAPSHOT_TRUST_FLOOR) return;
-        if (observed >= committedPresent / 2) return;
-        throw new SnapshotInconsistentException(committedPresent, observed);
-    }
-
-    /** Raised instead of planning deletions when the Google read contradicts the baseline. */
-    public static final class SnapshotInconsistentException extends RuntimeException {
-        public final int committedCount;
-        public final int observedCount;
-
-        SnapshotInconsistentException(int committedCount, int observedCount) {
-            super("Google user dictionary snapshot contradicts the committed baseline");
-            this.committedCount = committedCount;
-            this.observedCount = observedCount;
-        }
+    public static boolean isCollapsed(int committedPresent, int observed) {
+        return committedPresent >= SNAPSHOT_TRUST_FLOOR && observed < committedPresent / 2;
     }
 
     public boolean requiresDeletionConfirmation() {

@@ -140,8 +140,6 @@ public final class RimeSyncLegacySettingsCompat {
             case RimeSyncSettingsCompat.ERROR_DIRECTORY_IDENTITY:
             case RimeSyncSettingsCompat.ERROR_BRIDGE_SNAPSHOT_MISSING:
                 return "rime_sync_error_bridge_missing";
-            case RimeSyncSettingsCompat.ERROR_SNAPSHOT_INCONSISTENT:
-                return "rime_sync_error_snapshot";
             default:
                 return "rime_sync_error_failed";
         }

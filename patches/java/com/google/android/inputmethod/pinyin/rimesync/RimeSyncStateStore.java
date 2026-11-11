@@ -443,6 +443,18 @@ public final class RimeSyncStateStore extends SQLiteOpenHelper {
                 new Object[] {PROFILE_ID});
     }
 
+    /** Committed baseline entries that the last successful sync recorded as present. */
+    public synchronized int presentBaselineCount() {
+        Cursor cursor = getReadableDatabase().rawQuery(
+                "SELECT COUNT(*) FROM baseline WHERE history=?",
+                new String[] {RimeSyncPlanner.History.PRESENT.name()});
+        try {
+            return cursor.moveToFirst() ? cursor.getInt(0) : 0;
+        } finally {
+            cursor.close();
+        }
+    }
+
     private void requirePhase(int expected) {
         Profile current = profile();
         if (current == null || current.phase != expected) {

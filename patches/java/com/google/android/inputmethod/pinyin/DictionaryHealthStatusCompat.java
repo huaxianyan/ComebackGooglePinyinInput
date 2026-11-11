@@ -1,6 +1,7 @@
 package com.google.android.inputmethod.pinyin;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.format.DateFormat;
@@ -9,6 +10,8 @@ import java.lang.reflect.Method;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import com.google.android.apps.inputmethod.libs.hmm.AbstractHmmEngineFactory;
+import com.google.android.inputmethod.pinyin.rimesync.GoogleNativeDictionaryBridge;
 
 /** On-demand metadata/readability inspection. Never exports or modifies dictionary entries. */
 public final class DictionaryHealthStatusCompat {
@@ -19,6 +22,8 @@ public final class DictionaryHealthStatusCompat {
     public static final int HEALTH_ERROR = 2;
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
     private static final ExecutorService IO = Executors.newSingleThreadExecutor();
+    private static final String PREFS = "dictionary_health_preferences";
+    private static final String LAST_CHINESE_ENTRIES = "last_chinese_entries";
     private DictionaryHealthStatusCompat() {}
 
     public static final class Snapshot {
@@ -64,6 +69,10 @@ public final class DictionaryHealthStatusCompat {
                 FileStats en = files(context, "user_dict_3_3_english");
                 boolean zhReadable = nativeReadable(context, "bdt");
                 boolean enReadable = nativeReadable(context, "agb");
+                int entries = entryCount(context, "bdt");
+                SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+                int previousEntries = prefs.getInt(LAST_CHINESE_ENTRIES, 0);
+                boolean shrunk = entries >= 0 && previousEntries > 0 && entries * 2 < previousEntries;
                 int status = HEALTH_OK;
                 String summary = "中文词库可读取，英文词库可读取";
                 if (!zhReadable || !enReadable) {
@@ -75,10 +84,16 @@ public final class DictionaryHealthStatusCompat {
                 } else if (zh.temporary || en.temporary) {
                     status = HEALTH_NOTICE;
                     summary = "词库可读取，发现上次保存的临时文件，请稍后重新检查";
+                } else if (shrunk) {
+                    status = HEALTH_NOTICE;
+                    summary = "中文词条数明显少于上次检查，建议先备份词库再重新建立同步状态";
                 }
                 StringBuilder details = new StringBuilder();
                 details.append("中文词库：").append(zhReadable ? "可读取" : "暂时无法确认")
                         .append("\n英文词库：").append(enReadable ? "可读取" : "暂时无法确认");
+                details.append("\n中文词条：")
+                        .append(entries >= 0 ? entries + " 条" : "暂时无法统计")
+                        .append(previousEntries > 0 ? "（上次检查 " + previousEntries + " 条）" : "");
                 details.append("\n中文文件：").append(describeMain(zh))
                         .append("\n英文文件：").append(describeMain(en));
                 details.append("\n上次保存副本：中文 ").append(describeBackup(zh))
@@ -93,10 +108,26 @@ public final class DictionaryHealthStatusCompat {
                             .append(DateFormat.getDateFormat(context).format(modified)).append(' ')
                             .append(DateFormat.getTimeFormat(context).format(modified));
                 }
+                if (entries >= 0) {
+                    prefs.edit().putInt(LAST_CHINESE_ENTRIES, entries).apply();
+                }
                 return new Snapshot(status, summary, details.toString());
             }
         } catch (Throwable unavailable) {
             return new Snapshot(HEALTH_ERROR, "暂时无法检查词库，请稍后重试", "");
+        }
+    }
+
+    /** Record count from the engine's own view; a weight sum must never be reported as one. */
+    private static int entryCount(Context context, String factoryName) {
+        try {
+            Object factory = Class.forName(factoryName)
+                    .getMethod("a", Context.class).invoke(null, context);
+            if (!(factory instanceof AbstractHmmEngineFactory)) return -1;
+            return GoogleNativeDictionaryBridge.readPresence(
+                    context, (AbstractHmmEngineFactory) factory).totalEntryCount;
+        } catch (Throwable unavailable) {
+            return -1;
         }
     }
 
