@@ -30,7 +30,7 @@
         }
     .end annotation
 
-    .line 42
+    .line 46
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$1;->val$callback:Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$Callback;
 
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
@@ -43,7 +43,7 @@
 .method public onLoaded(Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$Snapshot;)V
     .locals 3
 
-    .line 44
+    .line 48
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$1;->val$callback:Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$Callback;
 
     new-instance v1, Ljava/lang/StringBuilder;
@@ -74,6 +74,6 @@
 
     invoke-interface {v0, p1}, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$Callback;->onLoaded(Ljava/lang/String;)V
 
-    .line 45
+    .line 49
     return-void
 .end method

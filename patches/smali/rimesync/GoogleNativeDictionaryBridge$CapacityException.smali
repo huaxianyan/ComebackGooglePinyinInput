@@ -26,20 +26,20 @@
 .method constructor <init>(III)V
     .locals 1
 
-    .line 594
+    .line 647
     const-string v0, "Google user dictionary capacity would be exceeded"
 
     invoke-direct {p0, v0}, Ljava/io/IOException;-><init>(Ljava/lang/String;)V
 
-    .line 595
+    .line 648
     iput p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$CapacityException;->currentCount:I
 
-    .line 596
+    .line 649
     iput p2, p0, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$CapacityException;->additionCount:I
 
-    .line 597
+    .line 650
     iput p3, p0, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$CapacityException;->deletionCount:I
 
-    .line 598
+    .line 651
     return-void
 .end method

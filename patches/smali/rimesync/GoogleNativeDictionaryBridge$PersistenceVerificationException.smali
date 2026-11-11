@@ -59,61 +59,61 @@
         }
     .end annotation
 
-    .line 487
+    .line 540
     const-string v0, "Google user dictionary persistence verification failed"
 
     invoke-direct {p0, v0}, Ljava/io/IOException;-><init>(Ljava/lang/String;)V
 
-    .line 488
+    .line 541
     iput p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$PersistenceVerificationException;->expectedNativeCount:I
 
-    .line 489
+    .line 542
     iput p2, p0, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$PersistenceVerificationException;->actualNativeCount:I
 
-    .line 490
+    .line 543
     new-instance p1, Ljava/util/ArrayList;
 
     invoke-direct {p1, p3}, Ljava/util/ArrayList;-><init>(Ljava/util/Collection;)V
 
-    .line 491
+    .line 544
     new-instance p2, Ljava/util/ArrayList;
 
     invoke-direct {p2, p4}, Ljava/util/ArrayList;-><init>(Ljava/util/Collection;)V
 
-    .line 492
+    .line 545
     invoke-static {p1}, Ljava/util/Collections;->sort(Ljava/util/List;)V
 
-    .line 493
+    .line 546
     invoke-static {p2}, Ljava/util/Collections;->sort(Ljava/util/List;)V
 
-    .line 494
+    .line 547
     invoke-static {p1}, Ljava/util/Collections;->unmodifiableList(Ljava/util/List;)Ljava/util/List;
 
     move-result-object p3
 
     iput-object p3, p0, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$PersistenceVerificationException;->missingKeys:Ljava/util/List;
 
-    .line 495
+    .line 548
     invoke-static {p2}, Ljava/util/Collections;->unmodifiableList(Ljava/util/List;)Ljava/util/List;
 
     move-result-object p3
 
     iput-object p3, p0, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$PersistenceVerificationException;->unexpectedKeys:Ljava/util/List;
 
-    .line 496
+    .line 549
     invoke-interface {p1}, Ljava/util/List;->size()I
 
     move-result p1
 
     iput p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$PersistenceVerificationException;->missingCount:I
 
-    .line 497
+    .line 550
     invoke-interface {p2}, Ljava/util/List;->size()I
 
     move-result p1
 
     iput p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$PersistenceVerificationException;->unexpectedCount:I
 
-    .line 498
+    .line 551
     return-void
 .end method

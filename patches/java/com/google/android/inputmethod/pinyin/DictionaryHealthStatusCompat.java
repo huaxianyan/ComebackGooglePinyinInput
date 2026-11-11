@@ -16,6 +16,10 @@ import com.google.android.inputmethod.pinyin.rimesync.GoogleNativeDictionaryBrid
 
 /** On-demand metadata/readability inspection. Never exports or modifies dictionary entries. */
 public final class DictionaryHealthStatusCompat {
+
+    /** English learning lives in the personal dictionary; the engine never creates a
+     *  {@code user_dict_3_3_english} file, so pointing at that one always reads zero. */
+    private static final String ENGLISH_DICTIONARY = "personal/Personal.en.dict";
     public interface Callback { void onLoaded(String summary); }
     public interface SnapshotCallback { void onLoaded(Snapshot snapshot); }
     public static final int HEALTH_OK = 0;
@@ -70,7 +74,7 @@ public final class DictionaryHealthStatusCompat {
             if (lock == null) throw new IllegalStateException("dictionary lock unavailable");
             synchronized (lock) {
                 FileStats zh = files(context, "user_dict_3_3");
-                FileStats en = files(context, "user_dict_3_3_english");
+                FileStats en = files(new File(context.getFilesDir(), ENGLISH_DICTIONARY));
                 boolean zhReadable = nativeReadable(context, "bdt");
                 boolean enReadable = nativeReadable(context, "agb");
                 int entries = entryCount(context, "bdt");
@@ -171,13 +175,16 @@ public final class DictionaryHealthStatusCompat {
     }
 
     private static FileStats files(Context context, String name) {
-        File main = context.getFileStreamPath(name);
-        File backup = context.getFileStreamPath(name + "_bak");
+        return files(new File(context.getFilesDir(), name));
+    }
+
+    private static FileStats files(File main) {
+        String path = main.getPath();
+        File backup = new File(path + "_bak");
         return new FileStats(main.exists() && main.canRead(), main.exists() ? main.length() : 0L,
                 main.exists() ? main.lastModified() : 0L,
                 backup.exists() && backup.canRead(), backup.exists() ? backup.length() : 0L,
-                context.getFileStreamPath(name + "_tmp").exists(),
-                context.getFileStreamPath(name + "_unreadable").exists());
+                new File(path + "_tmp").exists(), new File(path + "_unreadable").exists());
     }
     private static String describeMain(FileStats s) {
         return s.main ? formatBytes(s.mainBytes) : "尚无可读取的文件";
