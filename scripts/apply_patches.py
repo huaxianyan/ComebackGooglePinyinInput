@@ -2971,6 +2971,8 @@ def apply(
         "    invoke-super {p0}, Landroid/inputmethodservice/InputMethodService;->onCreate()V\n\n"
         "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/"
         "SystemAutoThemeCompat;->applyOnCreate(Landroid/content/Context;)Z\n\n"
+        "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/dictsafety/"
+        "DictionarySafetyGuard;->request(Landroid/content/Context;)V\n\n"
         "    .line 77",
     )
     replace_once(
