@@ -48,6 +48,8 @@ public final class DictionaryAutoBackupCompat {
     static final String KEY_LAST_SUCCESS = "dictionary_auto_backup_last_success_time";
     static final String KEY_LAST_ATTEMPT = "dictionary_auto_backup_last_attempt_time";
     static final String KEY_LAST_STATUS = "dictionary_auto_backup_last_status";
+    /** What actually failed, so a failure in the field can be diagnosed without a rebuild. */
+    static final String KEY_LAST_ERROR = "dictionary_auto_backup_last_error";
     static final String KEY_LAST_URI = "dictionary_auto_backup_last_document_uri";
     static final String KEY_LAST_SHA256 = "dictionary_auto_backup_last_sha256";
     static final String KEY_FAILURES = "dictionary_auto_backup_consecutive_failures";
@@ -570,10 +572,21 @@ public final class DictionaryAutoBackupCompat {
         });
     }
 
+    private static String describe(Throwable throwable) {
+        if (throwable == null) return "";
+        String text = throwable.toString();
+        StackTraceElement[] frames = throwable.getStackTrace();
+        if (frames != null && frames.length > 0) {
+            text = text + " @ " + frames[0];
+        }
+        return text.length() > 300 ? text.substring(0, 300) : text;
+    }
+
     private static void finishFailure(final Context context, final boolean force,
             final String message, Throwable throwable) {
         SharedPreferences p = prefs(context);
         p.edit().putString(KEY_LAST_STATUS, message)
+                .putString(KEY_LAST_ERROR, describe(throwable))
                 .putInt(KEY_FAILURES, p.getInt(KEY_FAILURES, 0) + 1).apply();
         synchronized (DictionaryAutoBackupCompat.class) { sInProgress = false; }
         MAIN.post(new Runnable() {

@@ -46,6 +46,8 @@
 
 .field static final KEY_LAST_ENTRY_COUNT:Ljava/lang/String; = "dictionary_auto_backup_last_entry_count"
 
+.field static final KEY_LAST_ERROR:Ljava/lang/String; = "dictionary_auto_backup_last_error"
+
 .field static final KEY_LAST_SHA256:Ljava/lang/String; = "dictionary_auto_backup_last_sha256"
 
 .field static final KEY_LAST_STATUS:Ljava/lang/String; = "dictionary_auto_backup_last_status"
@@ -79,7 +81,7 @@
 .method static constructor <clinit>()V
     .locals 2
 
-    .line 65
+    .line 67
     new-instance v0, Landroid/os/Handler;
 
     invoke-static {}, Landroid/os/Looper;->getMainLooper()Landroid/os/Looper;
@@ -90,14 +92,14 @@
 
     sput-object v0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->MAIN:Landroid/os/Handler;
 
-    .line 66
+    .line 68
     invoke-static {}, Ljava/util/concurrent/Executors;->newSingleThreadExecutor()Ljava/util/concurrent/ExecutorService;
 
     move-result-object v0
 
     sput-object v0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->IO:Ljava/util/concurrent/ExecutorService;
 
-    .line 335
+    .line 337
     const/16 v0, 0xa
 
     invoke-static {v0}, Ljava/lang/Character;->toString(C)Ljava/lang/String;
@@ -106,7 +108,7 @@
 
     sput-object v0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->NEWLINE:Ljava/lang/String;
 
-    .line 336
+    .line 338
     const/16 v0, 0xd
 
     invoke-static {v0}, Ljava/lang/Character;->toString(C)Ljava/lang/String;
@@ -121,7 +123,7 @@
 .method private constructor <init>()V
     .locals 0
 
-    .line 69
+    .line 71
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
     return-void
@@ -224,7 +226,7 @@
 .method private static clamp(IIII)I
     .locals 0
 
-    .line 605
+    .line 618
     if-lt p0, p1, :cond_0
 
     if-le p0, p2, :cond_1
@@ -239,10 +241,10 @@
 .method private static cleanupOldPartials(Landroid/content/Context;Landroid/net/Uri;)V
     .locals 13
 
-    .line 469
+    .line 471
     nop
 
-    .line 471
+    .line 473
     const/4 v1, 0x0
 
     :try_start_0
@@ -250,20 +252,20 @@
 
     move-result-object v2
 
-    .line 472
+    .line 474
     nop
 
-    .line 473
+    .line 475
     invoke-static {p1}, Landroid/provider/DocumentsContract;->getTreeDocumentId(Landroid/net/Uri;)Ljava/lang/String;
 
     move-result-object p0
 
-    .line 472
+    .line 474
     invoke-static {p1, p0}, Landroid/provider/DocumentsContract;->buildChildDocumentsUriUsingTree(Landroid/net/Uri;Ljava/lang/String;)Landroid/net/Uri;
 
     move-result-object v3
 
-    .line 474
+    .line 476
     const/4 p0, 0x3
 
     new-array v4, p0, [Ljava/lang/String;
@@ -286,7 +288,7 @@
 
     aput-object p0, v4, v10
 
-    .line 479
+    .line 481
     const/4 v6, 0x0
 
     const/4 v7, 0x0
@@ -299,26 +301,26 @@
     :try_end_0
     .catchall {:try_start_0 .. :try_end_0} :catchall_1
 
-    .line 480
+    .line 482
     if-nez v1, :cond_1
 
-    .line 496
+    .line 498
     if-eqz v1, :cond_0
 
     invoke-interface {v1}, Landroid/database/Cursor;->close()V
 
-    .line 480
+    .line 482
     :cond_0
     return-void
 
-    .line 481
+    .line 483
     :cond_1
     :try_start_1
     invoke-static {}, Ljava/lang/System;->currentTimeMillis()J
 
     move-result-wide v3
 
-    .line 482
+    .line 484
     :goto_0
     invoke-interface {v1}, Landroid/database/Cursor;->moveToNext()Z
 
@@ -326,12 +328,12 @@
 
     if-eqz p0, :cond_4
 
-    .line 483
+    .line 485
     invoke-interface {v1, v9}, Landroid/database/Cursor;->getString(I)Ljava/lang/String;
 
     move-result-object p0
 
-    .line 484
+    .line 486
     invoke-interface {v1, v10}, Landroid/database/Cursor;->isNull(I)Z
 
     move-result v0
@@ -349,7 +351,7 @@
 
     move-result-wide v11
 
-    .line 485
+    .line 487
     :goto_1
     if-eqz p0, :cond_3
 
@@ -385,28 +387,28 @@
 
     if-ltz p0, :cond_3
 
-    .line 488
+    .line 490
     nop
 
-    .line 489
+    .line 491
     invoke-interface {v1, v8}, Landroid/database/Cursor;->getString(I)Ljava/lang/String;
 
     move-result-object p0
 
-    .line 488
+    .line 490
     invoke-static {p1, p0}, Landroid/provider/DocumentsContract;->buildDocumentUriUsingTree(Landroid/net/Uri;Ljava/lang/String;)Landroid/net/Uri;
 
     move-result-object p0
     :try_end_1
     .catchall {:try_start_1 .. :try_end_1} :catchall_1
 
-    .line 490
+    .line 492
     :try_start_2
     invoke-static {v2, p0}, Landroid/provider/DocumentsContract;->deleteDocument(Landroid/content/ContentResolver;Landroid/net/Uri;)Z
     :try_end_2
     .catchall {:try_start_2 .. :try_end_2} :catchall_0
 
-    .line 491
+    .line 493
     :goto_2
     goto :goto_3
 
@@ -415,28 +417,28 @@
 
     goto :goto_2
 
-    .line 493
+    .line 495
     :cond_3
     :goto_3
     goto :goto_0
 
-    .line 496
+    .line 498
     :cond_4
     if-eqz v1, :cond_5
 
     goto :goto_4
 
-    .line 494
+    .line 496
     :catchall_1
     move-exception v0
 
-    .line 496
+    .line 498
     if-eqz v1, :cond_5
 
     :goto_4
     invoke-interface {v1}, Landroid/database/Cursor;->close()V
 
-    .line 498
+    .line 500
     :cond_5
     return-void
 .end method
@@ -444,7 +446,7 @@
 .method private static countEntries([B)I
     .locals 8
 
-    .line 342
+    .line 344
     const/4 v0, 0x0
 
     :try_start_0
@@ -456,18 +458,18 @@
     :try_end_0
     .catch Ljava/io/UnsupportedEncodingException; {:try_start_0 .. :try_end_0} :catch_0
 
-    .line 345
-    nop
-
-    .line 346
-    nop
-
     .line 347
+    nop
+
+    .line 348
+    nop
+
+    .line 349
     const/4 p0, 0x0
 
     const/4 v2, 0x0
 
-    .line 348
+    .line 350
     :goto_0
     invoke-virtual {v1}, Ljava/lang/String;->length()I
 
@@ -475,21 +477,21 @@
 
     if-ge p0, v3, :cond_6
 
-    .line 349
+    .line 351
     sget-object v3, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->NEWLINE:Ljava/lang/String;
 
     invoke-virtual {v1, v3, p0}, Ljava/lang/String;->indexOf(Ljava/lang/String;I)I
 
     move-result v3
 
-    .line 350
+    .line 352
     if-gez v3, :cond_0
 
     invoke-virtual {v1}, Ljava/lang/String;->length()I
 
     move-result v3
 
-    .line 351
+    .line 353
     :cond_0
     invoke-virtual {v1, p0, v3}, Ljava/lang/String;->substring(II)Ljava/lang/String;
 
@@ -503,10 +505,10 @@
 
     move-result-object p0
 
-    .line 352
+    .line 354
     add-int/lit8 v3, v3, 0x1
 
-    .line 353
+    .line 355
     invoke-virtual {p0}, Ljava/lang/String;->isEmpty()Z
 
     move-result v4
@@ -531,11 +533,11 @@
 
     goto :goto_2
 
-    .line 354
+    .line 356
     :cond_1
     nop
 
-    .line 355
+    .line 357
     const/4 v4, 0x0
 
     const/4 v5, 0x0
@@ -547,7 +549,7 @@
 
     if-ge v4, v6, :cond_3
 
-    .line 356
+    .line 358
     invoke-virtual {p0, v4}, Ljava/lang/String;->charAt(I)C
 
     move-result v6
@@ -558,13 +560,13 @@
 
     add-int/lit8 v5, v5, 0x1
 
-    .line 355
+    .line 357
     :cond_2
     add-int/lit8 v4, v4, 0x1
 
     goto :goto_1
 
-    .line 358
+    .line 360
     :cond_3
     const/4 p0, 0x2
 
@@ -572,35 +574,35 @@
 
     add-int/lit8 v2, v2, 0x1
 
-    .line 359
+    .line 361
     :cond_4
     move p0, v3
 
     goto :goto_0
 
-    .line 348
+    .line 350
     :cond_5
     :goto_2
     move p0, v3
 
     goto :goto_0
 
-    .line 360
+    .line 362
     :cond_6
     return v2
 
-    .line 343
+    .line 345
     :catch_0
     move-exception p0
 
-    .line 344
+    .line 346
     return v0
 .end method
 
 .method private static deleteQuietly(Landroid/content/Context;Landroid/net/Uri;)V
     .locals 0
 
-    .line 588
+    .line 601
     :try_start_0
     invoke-virtual {p0}, Landroid/content/Context;->getContentResolver()Landroid/content/ContentResolver;
 
@@ -612,21 +614,94 @@
 
     goto :goto_0
 
-    .line 589
+    .line 602
     :catchall_0
     move-exception p0
 
     :goto_0
     nop
 
-    .line 590
+    .line 603
     return-void
+.end method
+
+.method private static describe(Ljava/lang/Throwable;)Ljava/lang/String;
+    .locals 3
+
+    .line 576
+    if-nez p0, :cond_0
+
+    const-string p0, ""
+
+    return-object p0
+
+    .line 577
+    :cond_0
+    invoke-virtual {p0}, Ljava/lang/Throwable;->toString()Ljava/lang/String;
+
+    move-result-object v0
+
+    .line 578
+    invoke-virtual {p0}, Ljava/lang/Throwable;->getStackTrace()[Ljava/lang/StackTraceElement;
+
+    move-result-object p0
+
+    .line 579
+    const/4 v1, 0x0
+
+    if-eqz p0, :cond_1
+
+    array-length v2, p0
+
+    if-lez v2, :cond_1
+
+    .line 580
+    new-instance v2, Ljava/lang/StringBuilder;
+
+    invoke-direct {v2}, Ljava/lang/StringBuilder;-><init>()V
+
+    invoke-virtual {v2, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+
+    move-result-object v0
+
+    const-string v2, " @ "
+
+    invoke-virtual {v0, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+
+    move-result-object v0
+
+    aget-object p0, p0, v1
+
+    invoke-virtual {v0, p0}, Ljava/lang/StringBuilder;->append(Ljava/lang/Object;)Ljava/lang/StringBuilder;
+
+    move-result-object p0
+
+    invoke-virtual {p0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
+
+    move-result-object v0
+
+    .line 582
+    :cond_1
+    invoke-virtual {v0}, Ljava/lang/String;->length()I
+
+    move-result p0
+
+    const/16 v2, 0x12c
+
+    if-le p0, v2, :cond_2
+
+    invoke-virtual {v0, v1, v2}, Ljava/lang/String;->substring(II)Ljava/lang/String;
+
+    move-result-object v0
+
+    :cond_2
+    return-object v0
 .end method
 
 .method private static enqueueNativeExport(Landroid/content/Context;Landroid/net/Uri;Landroid/net/Uri;Ljava/lang/String;Z)V
     .locals 15
 
-    .line 214
+    .line 216
     const-string v6, "a"
 
     :try_start_0
@@ -636,7 +711,7 @@
 
     move-result-object v7
 
-    .line 215
+    .line 217
     const/4 v8, 0x0
 
     new-array v0, v8, [Ljava/lang/Class;
@@ -653,21 +728,21 @@
 
     move-result-object v9
 
-    .line 216
+    .line 218
     const-string v0, "com.google.android.apps.inputmethod.libs.framework.core.TaskFactory"
 
     invoke-static {v0}, Ljava/lang/Class;->forName(Ljava/lang/String;)Ljava/lang/Class;
 
     move-result-object v10
 
-    .line 218
+    .line 220
     const-string v0, "beg"
 
     invoke-static {v0}, Ljava/lang/Class;->forName(Ljava/lang/String;)Ljava/lang/Class;
 
     move-result-object v0
 
-    .line 219
+    .line 221
     const/4 v11, 0x3
 
     new-array v1, v11, [Ljava/lang/Class;
@@ -692,7 +767,7 @@
 
     move-result-object v14
 
-    .line 221
+    .line 223
     new-instance v0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$ExportListener;
     :try_end_0
     .catchall {:try_start_0 .. :try_end_0} :catchall_1
@@ -710,7 +785,7 @@
     :try_start_1
     invoke-direct/range {v0 .. v5}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$ExportListener;-><init>(Landroid/content/Context;Landroid/net/Uri;Landroid/net/Uri;Ljava/lang/String;Z)V
 
-    .line 222
+    .line 224
     new-array v2, v11, [Ljava/lang/Object;
 
     aput-object p0, v2, v8
@@ -723,7 +798,7 @@
 
     move-result-object v0
 
-    .line 223
+    .line 225
     new-array v2, v11, [Ljava/lang/Class;
 
     const-class v4, Ljava/lang/String;
@@ -740,7 +815,7 @@
 
     move-result-object v2
 
-    .line 225
+    .line 227
     const-wide/16 v4, 0x0
 
     invoke-static {v4, v5}, Ljava/lang/Long;->valueOf(J)Ljava/lang/Long;
@@ -761,10 +836,10 @@
     :try_end_1
     .catchall {:try_start_1 .. :try_end_1} :catchall_0
 
-    .line 229
+    .line 231
     goto :goto_1
 
-    .line 226
+    .line 228
     :catchall_0
     move-exception v0
 
@@ -775,18 +850,18 @@
 
     move-object/from16 v3, p2
 
-    .line 227
+    .line 229
     :goto_0
     invoke-static {p0, v3}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->deleteQuietly(Landroid/content/Context;Landroid/net/Uri;)V
 
-    .line 228
+    .line 230
     const-string v2, "\u65e0\u6cd5\u542f\u52a8\u539f\u751f\u7528\u6237\u8bcd\u5178\u5bfc\u51fa"
 
     move/from16 v5, p4
 
     invoke-static {p0, v5, v2, v0}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->finishFailure(Landroid/content/Context;ZLjava/lang/String;Ljava/lang/Throwable;)V
 
-    .line 230
+    .line 232
     :goto_1
     return-void
 .end method
@@ -794,12 +869,12 @@
 .method private static failWithoutStarting(Landroid/content/Context;ZLjava/lang/String;)V
     .locals 5
 
-    .line 177
+    .line 179
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->prefs(Landroid/content/Context;)Landroid/content/SharedPreferences;
 
     move-result-object v0
 
-    .line 178
+    .line 180
     invoke-interface {v0}, Landroid/content/SharedPreferences;->edit()Landroid/content/SharedPreferences$Editor;
 
     move-result-object v1
@@ -814,14 +889,14 @@
 
     move-result-object v1
 
-    .line 179
+    .line 181
     const-string v2, "dictionary_auto_backup_last_status"
 
     invoke-interface {v1, v2, p2}, Landroid/content/SharedPreferences$Editor;->putString(Ljava/lang/String;Ljava/lang/String;)Landroid/content/SharedPreferences$Editor;
 
     move-result-object v1
 
-    .line 180
+    .line 182
     const-string v2, "dictionary_auto_backup_consecutive_failures"
 
     const/4 v3, 0x0
@@ -838,23 +913,23 @@
 
     invoke-interface {v0}, Landroid/content/SharedPreferences$Editor;->apply()V
 
-    .line 181
+    .line 183
     if-eqz p1, :cond_0
 
     invoke-static {p0, p2}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->showToast(Landroid/content/Context;Ljava/lang/String;)V
 
-    .line 182
+    .line 184
     :cond_0
     invoke-static {}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupSettingsCompat;->refreshAll()V
 
-    .line 183
+    .line 185
     return-void
 .end method
 
 .method private static finalizeExport(Landroid/content/Context;Landroid/net/Uri;Landroid/net/Uri;Ljava/lang/String;Z)V
     .locals 9
 
-    .line 271
+    .line 273
     const-string v0, "dictionary_auto_backup_high_water_entry_count"
 
     const-string v1, "dictionary_auto_backup_last_status"
@@ -864,10 +939,10 @@
 
     move-result-object v2
 
-    .line 272
+    .line 274
     iget-object v3, v2, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$ExportFile;->sha256:Ljava/lang/String;
 
-    .line 273
+    .line 275
     invoke-virtual {p0}, Landroid/content/Context;->getContentResolver()Landroid/content/ContentResolver;
 
     move-result-object v4
@@ -876,20 +951,20 @@
 
     move-result-object p3
 
-    .line 275
+    .line 277
     if-eqz p3, :cond_1
 
-    .line 276
+    .line 278
     invoke-static {}, Ljava/lang/System;->currentTimeMillis()J
 
     move-result-wide v4
 
-    .line 277
+    .line 279
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->prefs(Landroid/content/Context;)Landroid/content/SharedPreferences;
 
     move-result-object v6
 
-    .line 278
+    .line 280
     invoke-interface {v6}, Landroid/content/SharedPreferences;->edit()Landroid/content/SharedPreferences$Editor;
 
     move-result-object v7
@@ -902,14 +977,14 @@
 
     const-string v5, "\u5907\u4efd\u6210\u529f"
 
-    .line 279
+    .line 281
     invoke-interface {v4, v1, v5}, Landroid/content/SharedPreferences$Editor;->putString(Ljava/lang/String;Ljava/lang/String;)Landroid/content/SharedPreferences$Editor;
 
     move-result-object v4
 
     const-string v5, "dictionary_auto_backup_last_document_uri"
 
-    .line 280
+    .line 282
     invoke-virtual {p3}, Landroid/net/Uri;->toString()Ljava/lang/String;
 
     move-result-object p3
@@ -920,7 +995,7 @@
 
     const-string v4, "dictionary_auto_backup_last_sha256"
 
-    .line 281
+    .line 283
     invoke-interface {p3, v4, v3}, Landroid/content/SharedPreferences$Editor;->putString(Ljava/lang/String;Ljava/lang/String;)Landroid/content/SharedPreferences$Editor;
 
     move-result-object p3
@@ -929,12 +1004,12 @@
 
     iget v4, v2, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$ExportFile;->entryCount:I
 
-    .line 282
+    .line 284
     invoke-interface {p3, v3, v4}, Landroid/content/SharedPreferences$Editor;->putInt(Ljava/lang/String;I)Landroid/content/SharedPreferences$Editor;
 
     move-result-object p3
 
-    .line 284
+    .line 286
     const/4 v3, 0x0
 
     invoke-interface {v6, v0, v3}, Landroid/content/SharedPreferences;->getInt(Ljava/lang/String;I)I
@@ -943,7 +1018,7 @@
 
     iget v2, v2, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$ExportFile;->entryCount:I
 
-    .line 283
+    .line 285
     invoke-static {v4, v2}, Ljava/lang/Math;->max(II)I
 
     move-result v2
@@ -954,17 +1029,17 @@
 
     const-string v0, "dictionary_auto_backup_consecutive_failures"
 
-    .line 285
+    .line 287
     invoke-interface {p3, v0, v3}, Landroid/content/SharedPreferences$Editor;->putInt(Ljava/lang/String;I)Landroid/content/SharedPreferences$Editor;
 
     move-result-object p3
 
     invoke-interface {p3}, Landroid/content/SharedPreferences$Editor;->apply()V
 
-    .line 286
+    .line 288
     const-string p3, "dictionary_auto_backup_retention_count"
 
-    .line 287
+    .line 289
     const/16 v0, 0xa
 
     invoke-interface {v6, p3, v0}, Landroid/content/SharedPreferences;->getInt(Ljava/lang/String;I)I
@@ -979,15 +1054,15 @@
 
     move-result p3
 
-    .line 286
+    .line 288
     invoke-static {p0, p1, p3}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->rotate(Landroid/content/Context;Landroid/net/Uri;I)Z
 
     move-result p1
 
-    .line 288
+    .line 290
     if-nez p1, :cond_0
 
-    .line 289
+    .line 291
     invoke-interface {v6}, Landroid/content/SharedPreferences;->edit()Landroid/content/SharedPreferences$Editor;
 
     move-result-object p1
@@ -1000,14 +1075,14 @@
 
     invoke-interface {p1}, Landroid/content/SharedPreferences$Editor;->apply()V
 
-    .line 291
+    .line 293
     :cond_0
     invoke-static {p0, p4}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->finishSuccess(Landroid/content/Context;Z)V
 
-    .line 295
+    .line 297
     goto :goto_0
 
-    .line 275
+    .line 277
     :cond_1
     new-instance p1, Ljava/lang/IllegalStateException;
 
@@ -1019,19 +1094,19 @@
     :try_end_0
     .catchall {:try_start_0 .. :try_end_0} :catchall_0
 
-    .line 292
+    .line 294
     :catchall_0
     move-exception p1
 
-    .line 293
+    .line 295
     invoke-static {p0, p2}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->deleteQuietly(Landroid/content/Context;Landroid/net/Uri;)V
 
-    .line 294
+    .line 296
     const-string p2, "\u5907\u4efd\u6821\u9a8c\u6216\u53d1\u5e03\u5931\u8d25"
 
     invoke-static {p0, p4, p2, p1}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->finishFailure(Landroid/content/Context;ZLjava/lang/String;Ljava/lang/Throwable;)V
 
-    .line 296
+    .line 298
     :goto_0
     return-void
 .end method
@@ -1039,42 +1114,53 @@
 .method private static finishFailure(Landroid/content/Context;ZLjava/lang/String;Ljava/lang/Throwable;)V
     .locals 4
 
-    .line 575
+    .line 587
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->prefs(Landroid/content/Context;)Landroid/content/SharedPreferences;
+
+    move-result-object v0
+
+    .line 588
+    invoke-interface {v0}, Landroid/content/SharedPreferences;->edit()Landroid/content/SharedPreferences$Editor;
+
+    move-result-object v1
+
+    const-string v2, "dictionary_auto_backup_last_status"
+
+    invoke-interface {v1, v2, p2}, Landroid/content/SharedPreferences$Editor;->putString(Ljava/lang/String;Ljava/lang/String;)Landroid/content/SharedPreferences$Editor;
+
+    move-result-object v1
+
+    const-string v2, "dictionary_auto_backup_last_error"
+
+    .line 589
+    invoke-static {p3}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->describe(Ljava/lang/Throwable;)Ljava/lang/String;
 
     move-result-object p3
 
-    .line 576
-    invoke-interface {p3}, Landroid/content/SharedPreferences;->edit()Landroid/content/SharedPreferences$Editor;
+    invoke-interface {v1, v2, p3}, Landroid/content/SharedPreferences$Editor;->putString(Ljava/lang/String;Ljava/lang/String;)Landroid/content/SharedPreferences$Editor;
 
-    move-result-object v0
-
-    const-string v1, "dictionary_auto_backup_last_status"
-
-    invoke-interface {v0, v1, p2}, Landroid/content/SharedPreferences$Editor;->putString(Ljava/lang/String;Ljava/lang/String;)Landroid/content/SharedPreferences$Editor;
-
-    move-result-object v0
+    move-result-object p3
 
     const-string v1, "dictionary_auto_backup_consecutive_failures"
 
     const-string v2, "dictionary_auto_backup_consecutive_failures"
 
-    .line 577
+    .line 590
     const/4 v3, 0x0
 
-    invoke-interface {p3, v2, v3}, Landroid/content/SharedPreferences;->getInt(Ljava/lang/String;I)I
+    invoke-interface {v0, v2, v3}, Landroid/content/SharedPreferences;->getInt(Ljava/lang/String;I)I
 
-    move-result p3
+    move-result v0
 
-    add-int/lit8 p3, p3, 0x1
+    add-int/lit8 v0, v0, 0x1
 
-    invoke-interface {v0, v1, p3}, Landroid/content/SharedPreferences$Editor;->putInt(Ljava/lang/String;I)Landroid/content/SharedPreferences$Editor;
+    invoke-interface {p3, v1, v0}, Landroid/content/SharedPreferences$Editor;->putInt(Ljava/lang/String;I)Landroid/content/SharedPreferences$Editor;
 
     move-result-object p3
 
     invoke-interface {p3}, Landroid/content/SharedPreferences$Editor;->apply()V
 
-    .line 578
+    .line 591
     const-class p3, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;
 
     monitor-enter p3
@@ -1086,7 +1172,7 @@
     :try_end_0
     .catchall {:try_start_0 .. :try_end_0} :catchall_0
 
-    .line 579
+    .line 592
     sget-object p3, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->MAIN:Landroid/os/Handler;
 
     new-instance v0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$7;
@@ -1095,10 +1181,10 @@
 
     invoke-virtual {p3, v0}, Landroid/os/Handler;->post(Ljava/lang/Runnable;)Z
 
-    .line 585
+    .line 598
     return-void
 
-    .line 578
+    .line 591
     :catchall_0
     move-exception p0
 
@@ -1113,7 +1199,7 @@
 .method private static finishSuccess(Landroid/content/Context;Z)V
     .locals 2
 
-    .line 564
+    .line 566
     const-class v0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;
 
     monitor-enter v0
@@ -1127,7 +1213,7 @@
     :try_end_0
     .catchall {:try_start_0 .. :try_end_0} :catchall_0
 
-    .line 565
+    .line 567
     sget-object v0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->MAIN:Landroid/os/Handler;
 
     new-instance v1, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$6;
@@ -1136,10 +1222,10 @@
 
     invoke-virtual {v0, v1}, Landroid/os/Handler;->post(Ljava/lang/Runnable;)Z
 
-    .line 571
+    .line 573
     return-void
 
-    .line 564
+    .line 566
     :catchall_0
     move-exception p0
 
@@ -1154,7 +1240,7 @@
 .method static hasPersistedAccess(Landroid/content/Context;Landroid/net/Uri;)Z
     .locals 3
 
-    .line 95
+    .line 97
     invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->isSupportedTree(Landroid/net/Uri;)Z
 
     move-result v0
@@ -1165,7 +1251,7 @@
 
     return v1
 
-    .line 97
+    .line 99
     :cond_0
     :try_start_0
     invoke-virtual {p0}, Landroid/content/Context;->getContentResolver()Landroid/content/ContentResolver;
@@ -1176,7 +1262,7 @@
 
     move-result-object p0
 
-    .line 98
+    .line 100
     invoke-interface {p0}, Ljava/util/List;->iterator()Ljava/util/Iterator;
 
     move-result-object p0
@@ -1194,7 +1280,7 @@
 
     check-cast v0, Landroid/content/UriPermission;
 
-    .line 99
+    .line 101
     invoke-virtual {v0}, Landroid/content/UriPermission;->getUri()Landroid/net/Uri;
 
     move-result-object v2
@@ -1211,7 +1297,7 @@
 
     if-eqz v2, :cond_1
 
-    .line 100
+    .line 102
     invoke-virtual {v0}, Landroid/content/UriPermission;->isWritePermission()Z
 
     move-result v0
@@ -1220,24 +1306,24 @@
 
     if-eqz v0, :cond_1
 
-    .line 101
+    .line 103
     const/4 p0, 0x1
 
     return p0
 
-    .line 103
+    .line 105
     :cond_1
     goto :goto_0
 
-    .line 105
+    .line 107
     :cond_2
     goto :goto_1
 
-    .line 104
+    .line 106
     :catch_0
     move-exception p0
 
-    .line 106
+    .line 108
     :goto_1
     return v1
 .end method
@@ -1245,12 +1331,12 @@
 .method public static isInProgress()Z
     .locals 2
 
-    .line 76
+    .line 78
     const-class v0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;
 
     monitor-enter v0
 
-    .line 77
+    .line 79
     :try_start_0
     sget-boolean v1, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->sInProgress:Z
 
@@ -1258,7 +1344,7 @@
 
     return v1
 
-    .line 78
+    .line 80
     :catchall_0
     move-exception v1
 
@@ -1272,7 +1358,7 @@
 .method static isSupportedTree(Landroid/net/Uri;)Z
     .locals 3
 
-    .line 82
+    .line 84
     sget v0, Landroid/os/Build$VERSION;->SDK_INT:I
 
     const/16 v1, 0x15
@@ -1283,7 +1369,7 @@
 
     if-eqz p0, :cond_1
 
-    .line 83
+    .line 85
     invoke-virtual {p0}, Landroid/net/Uri;->getScheme()Ljava/lang/String;
 
     move-result-object v0
@@ -1296,7 +1382,7 @@
 
     if-eqz v0, :cond_1
 
-    .line 84
+    .line 86
     invoke-virtual {p0}, Landroid/net/Uri;->getAuthority()Ljava/lang/String;
 
     move-result-object v0
@@ -1315,7 +1401,7 @@
 
     goto :goto_0
 
-    .line 88
+    .line 90
     :cond_0
     :try_start_0
     invoke-static {p0}, Landroid/provider/DocumentsContract;->isTreeUri(Landroid/net/Uri;)Z
@@ -1326,14 +1412,14 @@
 
     return p0
 
-    .line 89
+    .line 91
     :catch_0
     move-exception p0
 
-    .line 90
+    .line 92
     return v2
 
-    .line 85
+    .line 87
     :cond_1
     :goto_0
     return v2
@@ -1342,7 +1428,7 @@
 .method private static keepWholeWindow(Landroid/content/SharedPreferences;)Z
     .locals 4
 
-    .line 457
+    .line 459
     const-string v0, "dictionary_auto_backup_last_entry_count"
 
     const/4 v1, 0x0
@@ -1351,19 +1437,19 @@
 
     move-result v0
 
-    .line 458
+    .line 460
     const-string v2, "dictionary_auto_backup_high_water_entry_count"
 
     invoke-interface {p0, v2, v1}, Landroid/content/SharedPreferences;->getInt(Ljava/lang/String;I)I
 
     move-result v2
 
-    .line 459
+    .line 461
     invoke-static {v0, v2}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyPolicy;->isCollapsed(II)Z
 
     move-result v0
 
-    .line 460
+    .line 462
     const-string v2, "dictionary_auto_backup_kept_while_collapsed"
 
     if-eqz v0, :cond_0
@@ -1374,7 +1460,7 @@
 
     if-nez v3, :cond_0
 
-    .line 461
+    .line 463
     invoke-interface {p0}, Landroid/content/SharedPreferences;->edit()Landroid/content/SharedPreferences$Editor;
 
     move-result-object p0
@@ -1389,7 +1475,7 @@
 
     goto :goto_0
 
-    .line 462
+    .line 464
     :cond_0
     if-nez v0, :cond_1
 
@@ -1399,7 +1485,7 @@
 
     if-eqz v3, :cond_1
 
-    .line 463
+    .line 465
     invoke-interface {p0}, Landroid/content/SharedPreferences;->edit()Landroid/content/SharedPreferences$Editor;
 
     move-result-object p0
@@ -1410,7 +1496,7 @@
 
     invoke-interface {p0}, Landroid/content/SharedPreferences$Editor;->apply()V
 
-    .line 465
+    .line 467
     :cond_1
     :goto_0
     return v0
@@ -1436,18 +1522,18 @@
         }
     .end annotation
 
-    .line 393
+    .line 395
     new-instance v0, Ljava/util/ArrayList;
 
     invoke-direct {v0}, Ljava/util/ArrayList;-><init>()V
 
-    .line 394
-    nop
-
     .line 396
     nop
 
-    .line 397
+    .line 398
+    nop
+
+    .line 399
     const/4 v1, 0x0
 
     :try_start_0
@@ -1455,12 +1541,12 @@
 
     move-result-object v2
 
-    .line 396
+    .line 398
     invoke-static {p1, v2}, Landroid/provider/DocumentsContract;->buildChildDocumentsUriUsingTree(Landroid/net/Uri;Ljava/lang/String;)Landroid/net/Uri;
 
     move-result-object v4
 
-    .line 398
+    .line 400
     const/4 v2, 0x2
 
     new-array v5, v2, [Ljava/lang/String;
@@ -1477,7 +1563,7 @@
 
     aput-object v2, v5, v10
 
-    .line 402
+    .line 404
     invoke-virtual {p0}, Landroid/content/Context;->getContentResolver()Landroid/content/ContentResolver;
 
     move-result-object v3
@@ -1492,10 +1578,10 @@
 
     move-result-object v1
 
-    .line 403
+    .line 405
     if-eqz v1, :cond_3
 
-    .line 404
+    .line 406
     :goto_0
     invoke-interface {v1}, Landroid/database/Cursor;->moveToNext()Z
 
@@ -1503,12 +1589,12 @@
 
     if-eqz p0, :cond_1
 
-    .line 405
+    .line 407
     invoke-interface {v1, v10}, Landroid/database/Cursor;->getString(I)Ljava/lang/String;
 
     move-result-object p0
 
-    .line 406
+    .line 408
     if-eqz p0, :cond_0
 
     const-string v2, "google-pinyin-user-dictionary-"
@@ -1529,17 +1615,17 @@
 
     const-string v2, ".txt.partial"
 
-    .line 407
+    .line 409
     invoke-virtual {p0, v2}, Ljava/lang/String;->endsWith(Ljava/lang/String;)Z
 
     move-result v2
 
     if-nez v2, :cond_0
 
-    .line 408
+    .line 410
     new-instance v2, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$BackupEntry;
 
-    .line 409
+    .line 411
     invoke-interface {v1, v9}, Landroid/database/Cursor;->getString(I)Ljava/lang/String;
 
     move-result-object v3
@@ -1550,22 +1636,22 @@
 
     invoke-direct {v2, p0, v3}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$BackupEntry;-><init>(Ljava/lang/String;Landroid/net/Uri;)V
 
-    .line 408
+    .line 410
     invoke-interface {v0, v2}, Ljava/util/List;->add(Ljava/lang/Object;)Z
     :try_end_0
     .catchall {:try_start_0 .. :try_end_0} :catchall_0
 
-    .line 411
+    .line 413
     :cond_0
     goto :goto_0
 
-    .line 413
+    .line 415
     :cond_1
     if-eqz v1, :cond_2
 
     invoke-interface {v1}, Landroid/database/Cursor;->close()V
 
-    .line 415
+    .line 417
     :cond_2
     new-instance p0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$4;
 
@@ -1573,10 +1659,10 @@
 
     invoke-static {v0, p0}, Ljava/util/Collections;->sort(Ljava/util/List;Ljava/util/Comparator;)V
 
-    .line 420
+    .line 422
     return-object v0
 
-    .line 403
+    .line 405
     :cond_3
     :try_start_1
     new-instance p0, Ljava/lang/IllegalStateException;
@@ -1589,7 +1675,7 @@
     :try_end_1
     .catchall {:try_start_1 .. :try_end_1} :catchall_0
 
-    .line 413
+    .line 415
     :catchall_0
     move-exception v0
 
@@ -1599,7 +1685,7 @@
 
     invoke-interface {v1}, Landroid/database/Cursor;->close()V
 
-    .line 414
+    .line 416
     :cond_4
     goto :goto_2
 
@@ -1613,12 +1699,12 @@
 .method public static listBackupsAsync(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$BackupListCallback;)V
     .locals 2
 
-    .line 368
+    .line 370
     invoke-virtual {p0}, Landroid/content/Context;->getApplicationContext()Landroid/content/Context;
 
     move-result-object p0
 
-    .line 369
+    .line 371
     sget-object v0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->IO:Ljava/util/concurrent/ExecutorService;
 
     new-instance v1, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$3;
@@ -1627,7 +1713,7 @@
 
     invoke-interface {v0, v1}, Ljava/util/concurrent/ExecutorService;->execute(Ljava/lang/Runnable;)V
 
-    .line 377
+    .line 379
     return-void
 .end method
 
@@ -1644,12 +1730,12 @@
         }
     .end annotation
 
-    .line 380
+    .line 382
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->prefs(Landroid/content/Context;)Landroid/content/SharedPreferences;
 
     move-result-object v0
 
-    .line 381
+    .line 383
     const-string v1, "dictionary_auto_backup_tree_uri"
 
     const/4 v2, 0x0
@@ -1658,7 +1744,7 @@
 
     move-result-object v0
 
-    .line 382
+    .line 384
     if-eqz v0, :cond_2
 
     invoke-virtual {v0}, Ljava/lang/String;->length()I
@@ -1669,14 +1755,14 @@
 
     goto :goto_0
 
-    .line 384
+    .line 386
     :cond_0
     :try_start_0
     invoke-static {v0}, Landroid/net/Uri;->parse(Ljava/lang/String;)Landroid/net/Uri;
 
     move-result-object v0
 
-    .line 385
+    .line 387
     invoke-static {p0, v0}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->hasPersistedAccess(Landroid/content/Context;Landroid/net/Uri;)Z
 
     move-result v1
@@ -1689,7 +1775,7 @@
 
     return-object p0
 
-    .line 386
+    .line 388
     :cond_1
     invoke-static {p0, v0}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->listBackups(Landroid/content/Context;Landroid/net/Uri;)Ljava/util/List;
 
@@ -1699,18 +1785,18 @@
 
     return-object p0
 
-    .line 387
+    .line 389
     :catchall_0
     move-exception p0
 
-    .line 388
+    .line 390
     new-instance p0, Ljava/util/ArrayList;
 
     invoke-direct {p0}, Ljava/util/ArrayList;-><init>()V
 
     return-object p0
 
-    .line 382
+    .line 384
     :cond_2
     :goto_0
     new-instance p0, Ljava/util/ArrayList;
@@ -1723,7 +1809,7 @@
 .method static prefs(Landroid/content/Context;)Landroid/content/SharedPreferences;
     .locals 2
 
-    .line 72
+    .line 74
     invoke-virtual {p0}, Landroid/content/Context;->getApplicationContext()Landroid/content/Context;
 
     move-result-object p0
@@ -1742,16 +1828,16 @@
 .method private static prepareAndStart(Landroid/content/Context;Landroid/net/Uri;Z)V
     .locals 8
 
-    .line 187
+    .line 189
     nop
 
-    .line 189
+    .line 191
     const/4 v1, 0x0
 
     :try_start_0
     invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->cleanupOldPartials(Landroid/content/Context;Landroid/net/Uri;)V
 
-    .line 190
+    .line 192
     new-instance v0, Ljava/text/SimpleDateFormat;
 
     const-string v2, "yyyy-MM-dd_HH-mm-ss-SSS"
@@ -1764,12 +1850,12 @@
 
     invoke-direct {v2}, Ljava/util/Date;-><init>()V
 
-    .line 191
+    .line 193
     invoke-virtual {v0, v2}, Ljava/text/SimpleDateFormat;->format(Ljava/util/Date;)Ljava/lang/String;
 
     move-result-object v0
 
-    .line 192
+    .line 194
     new-instance v2, Ljava/lang/StringBuilder;
 
     invoke-direct {v2}, Ljava/lang/StringBuilder;-><init>()V
@@ -1794,7 +1880,7 @@
 
     move-result-object v6
 
-    .line 193
+    .line 195
     new-instance v0, Ljava/lang/StringBuilder;
 
     invoke-direct {v0}, Ljava/lang/StringBuilder;-><init>()V
@@ -1813,12 +1899,12 @@
 
     move-result-object v0
 
-    .line 194
+    .line 196
     invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->treeDocumentUri(Landroid/net/Uri;)Landroid/net/Uri;
 
     move-result-object v2
 
-    .line 195
+    .line 197
     invoke-virtual {p0}, Landroid/content/Context;->getContentResolver()Landroid/content/ContentResolver;
 
     move-result-object v3
@@ -1831,16 +1917,16 @@
     :try_end_0
     .catchall {:try_start_0 .. :try_end_0} :catchall_2
 
-    .line 197
+    .line 199
     if-eqz v5, :cond_0
 
-    .line 198
-    nop
-
-    .line 199
-    nop
-
     .line 200
+    nop
+
+    .line 201
+    nop
+
+    .line 202
     :try_start_1
     sget-object v0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->MAIN:Landroid/os/Handler;
 
@@ -1859,10 +1945,10 @@
 
     invoke-virtual {v0, v2}, Landroid/os/Handler;->post(Ljava/lang/Runnable;)Z
 
-    .line 208
+    .line 210
     goto :goto_2
 
-    .line 205
+    .line 207
     :catchall_0
     move-exception v0
 
@@ -1877,7 +1963,7 @@
 
     goto :goto_1
 
-    .line 197
+    .line 199
     :cond_0
     move-object v3, p0
 
@@ -1893,7 +1979,7 @@
     :try_end_2
     .catchall {:try_start_2 .. :try_end_2} :catchall_1
 
-    .line 205
+    .line 207
     :catchall_1
     move-exception v0
 
@@ -1908,19 +1994,19 @@
 
     move-object p0, v0
 
-    .line 206
+    .line 208
     :goto_1
     if-eqz v1, :cond_1
 
     invoke-static {v3, v1}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->deleteQuietly(Landroid/content/Context;Landroid/net/Uri;)V
 
-    .line 207
+    .line 209
     :cond_1
     const-string p1, "\u65e0\u6cd5\u5728\u6240\u9009\u5907\u4efd\u76ee\u5f55\u521b\u5efa\u6587\u4ef6"
 
     invoke-static {v3, v7, p1, p0}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->finishFailure(Landroid/content/Context;ZLjava/lang/String;Ljava/lang/Throwable;)V
 
-    .line 209
+    .line 211
     :goto_2
     return-void
 .end method
@@ -1928,52 +2014,52 @@
 .method public static request(Landroid/content/Context;Z)V
     .locals 14
 
-    .line 110
+    .line 112
     if-nez p0, :cond_0
 
     return-void
 
-    .line 111
+    .line 113
     :cond_0
     invoke-virtual {p0}, Landroid/content/Context;->getApplicationContext()Landroid/content/Context;
 
     move-result-object p0
 
-    .line 112
+    .line 114
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->prefs(Landroid/content/Context;)Landroid/content/SharedPreferences;
 
     move-result-object v0
 
-    .line 113
+    .line 115
     invoke-static {}, Ljava/lang/System;->currentTimeMillis()J
 
     move-result-wide v1
 
-    .line 116
+    .line 118
     const-class v3, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;
 
     monitor-enter v3
 
-    .line 117
+    .line 119
     :try_start_0
     sget-boolean v4, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->sInProgress:Z
 
     if-eqz v4, :cond_2
 
-    .line 118
+    .line 120
     if-eqz p1, :cond_1
 
     const-string p1, "\u7528\u6237\u8bcd\u5178\u5907\u4efd\u6b63\u5728\u8fdb\u884c"
 
     invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->showToast(Landroid/content/Context;Ljava/lang/String;)V
 
-    .line 119
+    .line 121
     :cond_1
     monitor-exit v3
 
     return-void
 
-    .line 121
+    .line 123
     :cond_2
     sget v4, Landroid/os/Build$VERSION;->SDK_INT:I
 
@@ -1981,20 +2067,20 @@
 
     if-ge v4, v5, :cond_4
 
-    .line 122
+    .line 124
     if-eqz p1, :cond_3
 
     const-string p1, "\u81ea\u5b9a\u4e49\u76ee\u5f55\u5907\u4efd\u9700\u8981 Android 5.0 \u6216\u66f4\u9ad8\u7248\u672c"
 
     invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->showToast(Landroid/content/Context;Ljava/lang/String;)V
 
-    .line 123
+    .line 125
     :cond_3
     monitor-exit v3
 
     return-void
 
-    .line 125
+    .line 127
     :cond_4
     const/4 v4, 0x0
 
@@ -2012,30 +2098,30 @@
 
     return-void
 
-    .line 126
+    .line 128
     :cond_5
     if-nez p1, :cond_6
 
-    .line 127
+    .line 129
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyGuard;->readableEntryCount(Landroid/content/Context;)I
 
     move-result v5
 
     const-string v6, "dictionary_auto_backup_high_water_entry_count"
 
-    .line 128
+    .line 130
     invoke-interface {v0, v6, v4}, Landroid/content/SharedPreferences;->getInt(Ljava/lang/String;I)I
 
     move-result v6
 
-    .line 126
+    .line 128
     invoke-static {v5, v6}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyPolicy;->isCollapsed(II)Z
 
     move-result v5
 
     if-eqz v5, :cond_6
 
-    .line 131
+    .line 133
     invoke-interface {v0}, Landroid/content/SharedPreferences;->edit()Landroid/content/SharedPreferences$Editor;
 
     move-result-object p0
@@ -2044,26 +2130,26 @@
 
     const-string v0, "\u8bcd\u6761\u6570\u6bd4\u5f80\u5e74\u5c11\uff0c\u672c\u6b21\u672a\u81ea\u52a8\u5907\u4efd"
 
-    .line 132
+    .line 134
     invoke-interface {p0, p1, v0}, Landroid/content/SharedPreferences$Editor;->putString(Ljava/lang/String;Ljava/lang/String;)Landroid/content/SharedPreferences$Editor;
 
     move-result-object p0
 
-    .line 133
+    .line 135
     invoke-interface {p0}, Landroid/content/SharedPreferences$Editor;->apply()V
 
-    .line 134
+    .line 136
     monitor-exit v3
 
     return-void
 
-    .line 136
+    .line 138
     :cond_6
     const/4 v5, 0x1
 
     if-nez p1, :cond_a
 
-    .line 137
+    .line 139
     const-string v6, "dictionary_auto_backup_interval_days"
 
     const/4 v7, 0x7
@@ -2078,7 +2164,7 @@
 
     move-result v6
 
-    .line 138
+    .line 140
     const-string v7, "dictionary_auto_backup_last_success_time"
 
     const-wide/16 v8, 0x0
@@ -2087,7 +2173,7 @@
 
     move-result-wide v10
 
-    .line 139
+    .line 141
     cmp-long v7, v10, v8
 
     if-lez v7, :cond_8
@@ -2119,7 +2205,7 @@
     :goto_0
     const/4 v6, 0x1
 
-    .line 141
+    .line 143
     :goto_1
     if-nez v6, :cond_9
 
@@ -2127,7 +2213,7 @@
 
     return-void
 
-    .line 142
+    .line 144
     :cond_9
     const-string v6, "dictionary_auto_backup_last_attempt_time"
 
@@ -2135,7 +2221,7 @@
 
     move-result-wide v6
 
-    .line 143
+    .line 145
     cmp-long v10, v6, v8
 
     if-lez v10, :cond_a
@@ -2154,19 +2240,19 @@
 
     const-string v6, "dictionary_auto_backup_consecutive_failures"
 
-    .line 144
+    .line 146
     invoke-interface {v0, v6, v4}, Landroid/content/SharedPreferences;->getInt(Ljava/lang/String;I)I
 
     move-result v4
 
     if-lez v4, :cond_a
 
-    .line 145
+    .line 147
     monitor-exit v3
 
     return-void
 
-    .line 148
+    .line 150
     :cond_a
     const-string v4, "dictionary_auto_backup_tree_uri"
 
@@ -2176,7 +2262,7 @@
 
     move-result-object v4
 
-    .line 149
+    .line 151
     if-eqz v4, :cond_d
 
     invoke-virtual {v4}, Ljava/lang/String;->length()I
@@ -2189,7 +2275,7 @@
 
     goto :goto_2
 
-    .line 154
+    .line 156
     :cond_b
     :try_start_1
     invoke-static {v4}, Landroid/net/Uri;->parse(Ljava/lang/String;)Landroid/net/Uri;
@@ -2199,10 +2285,10 @@
     .catch Ljava/lang/RuntimeException; {:try_start_1 .. :try_end_1} :catch_0
     .catchall {:try_start_1 .. :try_end_1} :catchall_0
 
-    .line 158
+    .line 160
     nop
 
-    .line 159
+    .line 161
     :try_start_2
     invoke-static {p0, v4}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->hasPersistedAccess(Landroid/content/Context;Landroid/net/Uri;)Z
 
@@ -2210,21 +2296,21 @@
 
     if-nez v6, :cond_c
 
-    .line 160
+    .line 162
     const-string v0, "\u5907\u4efd\u548c\u5bfc\u5165\u4f4d\u7f6e\u4e0d\u53ef\u8bbf\u95ee\uff0c\u8bf7\u91cd\u65b0\u9009\u62e9"
 
     invoke-static {p0, p1, v0}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->failWithoutStarting(Landroid/content/Context;ZLjava/lang/String;)V
 
-    .line 161
+    .line 163
     monitor-exit v3
 
     return-void
 
-    .line 163
+    .line 165
     :cond_c
     sput-boolean v5, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->sInProgress:Z
 
-    .line 164
+    .line 166
     invoke-interface {v0}, Landroid/content/SharedPreferences;->edit()Landroid/content/SharedPreferences$Editor;
 
     move-result-object v0
@@ -2239,22 +2325,22 @@
 
     const-string v2, "\u6b63\u5728\u5907\u4efd"
 
-    .line 165
+    .line 167
     invoke-interface {v0, v1, v2}, Landroid/content/SharedPreferences$Editor;->putString(Ljava/lang/String;Ljava/lang/String;)Landroid/content/SharedPreferences$Editor;
 
     move-result-object v0
 
     invoke-interface {v0}, Landroid/content/SharedPreferences$Editor;->apply()V
 
-    .line 166
+    .line 168
     monitor-exit v3
     :try_end_2
     .catchall {:try_start_2 .. :try_end_2} :catchall_0
 
-    .line 168
+    .line 170
     invoke-static {}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupSettingsCompat;->refreshAll()V
 
-    .line 169
+    .line 171
     sget-object v0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->IO:Ljava/util/concurrent/ExecutorService;
 
     new-instance v1, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$1;
@@ -2263,37 +2349,37 @@
 
     invoke-interface {v0, v1}, Ljava/util/concurrent/ExecutorService;->execute(Ljava/lang/Runnable;)V
 
-    .line 174
+    .line 176
     return-void
 
-    .line 155
+    .line 157
     :catch_0
     move-exception v0
 
-    .line 156
+    .line 158
     :try_start_3
     const-string v0, "\u5907\u4efd\u548c\u5bfc\u5165\u4f4d\u7f6e\u65e0\u6548"
 
     invoke-static {p0, p1, v0}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->failWithoutStarting(Landroid/content/Context;ZLjava/lang/String;)V
 
-    .line 157
+    .line 159
     monitor-exit v3
 
     return-void
 
-    .line 150
+    .line 152
     :cond_d
     :goto_2
     const-string v0, "\u672a\u9009\u62e9\u5907\u4efd\u548c\u5bfc\u5165\u4f4d\u7f6e"
 
     invoke-static {p0, p1, v0}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->failWithoutStarting(Landroid/content/Context;ZLjava/lang/String;)V
 
-    .line 151
+    .line 153
     monitor-exit v3
 
     return-void
 
-    .line 166
+    .line 168
     :catchall_0
     move-exception p0
 
@@ -2307,10 +2393,10 @@
 .method private static rotate(Landroid/content/Context;Landroid/net/Uri;I)Z
     .locals 3
 
-    .line 432
+    .line 434
     nop
 
-    .line 434
+    .line 436
     const/4 v0, 0x0
 
     :try_start_0
@@ -2318,7 +2404,7 @@
 
     move-result-object v1
 
-    .line 435
+    .line 437
     invoke-static {v1}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->keepWholeWindow(Landroid/content/SharedPreferences;)Z
 
     move-result v1
@@ -2329,18 +2415,18 @@
 
     return v2
 
-    .line 436
+    .line 438
     :cond_0
     invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->listBackups(Landroid/content/Context;Landroid/net/Uri;)Ljava/util/List;
 
     move-result-object p1
 
-    .line 437
+    .line 439
     invoke-virtual {p0}, Landroid/content/Context;->getContentResolver()Landroid/content/ContentResolver;
 
     move-result-object p0
 
-    .line 438
+    .line 440
     nop
 
     :goto_0
@@ -2352,7 +2438,7 @@
 
     if-ge p2, v1, :cond_2
 
-    .line 440
+    .line 442
     :try_start_1
     invoke-interface {p1, p2}, Ljava/util/List;->get(I)Ljava/lang/Object;
 
@@ -2372,37 +2458,37 @@
 
     const/4 v2, 0x0
 
-    .line 443
+    .line 445
     :cond_1
     goto :goto_1
 
-    .line 441
+    .line 443
     :catchall_0
     move-exception v1
 
-    .line 442
+    .line 444
     const/4 v2, 0x0
 
-    .line 438
+    .line 440
     :goto_1
     add-int/lit8 p2, p2, 0x1
 
     goto :goto_0
 
-    .line 447
+    .line 449
     :cond_2
     move v0, v2
 
     goto :goto_2
 
-    .line 445
+    .line 447
     :catchall_1
     move-exception p0
 
-    .line 446
+    .line 448
     nop
 
-    .line 448
+    .line 450
     :goto_2
     return v0
 .end method
@@ -2410,7 +2496,7 @@
 .method private static showToast(Landroid/content/Context;Ljava/lang/String;)V
     .locals 2
 
-    .line 593
+    .line 606
     invoke-static {}, Landroid/os/Looper;->myLooper()Landroid/os/Looper;
 
     move-result-object v0
@@ -2421,7 +2507,7 @@
 
     if-ne v0, v1, :cond_0
 
-    .line 594
+    .line 607
     const/4 v0, 0x0
 
     invoke-static {p0, p1, v0}, Landroid/widget/Toast;->makeText(Landroid/content/Context;Ljava/lang/CharSequence;I)Landroid/widget/Toast;
@@ -2432,7 +2518,7 @@
 
     goto :goto_0
 
-    .line 596
+    .line 609
     :cond_0
     sget-object v0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->MAIN:Landroid/os/Handler;
 
@@ -2442,7 +2528,7 @@
 
     invoke-virtual {v0, v1}, Landroid/os/Handler;->post(Ljava/lang/Runnable;)Z
 
-    .line 602
+    .line 615
     :goto_0
     return-void
 .end method
@@ -2450,15 +2536,15 @@
 .method private static treeDocumentUri(Landroid/net/Uri;)Landroid/net/Uri;
     .locals 1
 
-    .line 559
+    .line 561
     nop
 
-    .line 560
+    .line 562
     invoke-static {p0}, Landroid/provider/DocumentsContract;->getTreeDocumentId(Landroid/net/Uri;)Ljava/lang/String;
 
     move-result-object v0
 
-    .line 559
+    .line 561
     invoke-static {p0, v0}, Landroid/provider/DocumentsContract;->buildDocumentUriUsingTree(Landroid/net/Uri;Ljava/lang/String;)Landroid/net/Uri;
 
     move-result-object p0
@@ -2474,15 +2560,15 @@
         }
     .end annotation
 
-    .line 310
+    .line 312
     nop
 
-    .line 311
+    .line 313
     new-instance v0, Ljava/io/ByteArrayOutputStream;
 
     invoke-direct {v0}, Ljava/io/ByteArrayOutputStream;-><init>()V
 
-    .line 313
+    .line 315
     const/4 v1, 0x0
 
     :try_start_0
@@ -2494,15 +2580,15 @@
 
     move-result-object v1
 
-    .line 314
+    .line 316
     if-eqz v1, :cond_6
 
-    .line 315
+    .line 317
     const/16 p0, 0x2000
 
     new-array p0, p0, [B
 
-    .line 317
+    .line 319
     :goto_0
     invoke-virtual {v1, p0}, Ljava/io/InputStream;->read([B)I
 
@@ -2520,22 +2606,22 @@
 
     goto :goto_0
 
-    .line 319
+    .line 321
     :cond_0
     if-eqz v1, :cond_1
 
     invoke-virtual {v1}, Ljava/io/InputStream;->close()V
 
-    .line 321
+    .line 323
     :cond_1
     invoke-virtual {v0}, Ljava/io/ByteArrayOutputStream;->toByteArray()[B
 
     move-result-object p0
 
-    .line 322
+    .line 324
     nop
 
-    .line 323
+    .line 325
     const-string p1, "\ufeff# User dictionary for Google Pinyin Input\n"
 
     const-string v0, "UTF-16LE"
@@ -2544,14 +2630,14 @@
 
     move-result-object p1
 
-    .line 324
+    .line 326
     array-length v0, p0
 
     array-length v1, p1
 
     if-lt v0, v1, :cond_5
 
-    .line 325
+    .line 327
     const/4 v0, 0x0
 
     :goto_1
@@ -2559,19 +2645,19 @@
 
     if-ge v0, v1, :cond_3
 
-    .line 326
+    .line 328
     aget-byte v1, p0, v0
 
     aget-byte v2, p1, v0
 
     if-ne v1, v2, :cond_2
 
-    .line 325
+    .line 327
     add-int/lit8 v0, v0, 0x1
 
     goto :goto_1
 
-    .line 326
+    .line 328
     :cond_2
     new-instance p0, Ljava/lang/IllegalStateException;
 
@@ -2581,7 +2667,7 @@
 
     throw p0
 
-    .line 328
+    .line 330
     :cond_3
     const-string p1, "SHA-256"
 
@@ -2589,12 +2675,12 @@
 
     move-result-object p1
 
-    .line 329
+    .line 331
     invoke-virtual {p1, p0}, Ljava/security/MessageDigest;->digest([B)[B
 
     move-result-object p1
 
-    .line 330
+    .line 332
     new-instance v0, Ljava/lang/StringBuilder;
 
     array-length v1, p1
@@ -2603,7 +2689,7 @@
 
     invoke-direct {v0, v1}, Ljava/lang/StringBuilder;-><init>(I)V
 
-    .line 331
+    .line 333
     array-length v1, p1
 
     const/4 v2, 0x0
@@ -2639,7 +2725,7 @@
 
     goto :goto_2
 
-    .line 332
+    .line 334
     :cond_4
     new-instance p1, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$ExportFile;
 
@@ -2655,7 +2741,7 @@
 
     return-object p1
 
-    .line 324
+    .line 326
     :cond_5
     new-instance p0, Ljava/lang/IllegalStateException;
 
@@ -2665,7 +2751,7 @@
 
     throw p0
 
-    .line 314
+    .line 316
     :cond_6
     :try_start_1
     new-instance p0, Ljava/lang/IllegalStateException;
@@ -2678,7 +2764,7 @@
     :try_end_1
     .catchall {:try_start_1 .. :try_end_1} :catchall_0
 
-    .line 319
+    .line 321
     :catchall_0
     move-exception p0
 
@@ -2686,7 +2772,7 @@
 
     invoke-virtual {v1}, Ljava/io/InputStream;->close()V
 
-    .line 320
+    .line 322
     :cond_7
     goto :goto_4
 
@@ -2700,7 +2786,7 @@
 .method private static validateTree(Landroid/content/Context;Landroid/net/Uri;)Ljava/lang/String;
     .locals 7
 
-    .line 520
+    .line 522
     const-string v0, ".tmp"
 
     invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->isSupportedTree(Landroid/net/Uri;)Z
@@ -2713,7 +2799,7 @@
 
     return-object p0
 
-    .line 521
+    .line 523
     :cond_0
     invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->hasPersistedAccess(Landroid/content/Context;Landroid/net/Uri;)Z
 
@@ -2725,14 +2811,14 @@
 
     return-object p0
 
-    .line 522
+    .line 524
     :cond_1
     nop
 
-    .line 523
+    .line 525
     nop
 
-    .line 525
+    .line 527
     const/4 v1, 0x0
 
     :try_start_0
@@ -2740,12 +2826,12 @@
 
     move-result-object v2
 
-    .line 526
+    .line 528
     invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->treeDocumentUri(Landroid/net/Uri;)Landroid/net/Uri;
 
     move-result-object p1
 
-    .line 527
+    .line 529
     invoke-static {}, Ljava/util/UUID;->randomUUID()Ljava/util/UUID;
 
     move-result-object v3
@@ -2754,7 +2840,7 @@
 
     move-result-object v3
 
-    .line 528
+    .line 530
     const-string v4, "text/plain"
 
     new-instance v5, Ljava/lang/StringBuilder;
@@ -2785,7 +2871,7 @@
     :try_end_0
     .catchall {:try_start_0 .. :try_end_0} :catchall_3
 
-    .line 530
+    .line 532
     if-nez p1, :cond_3
 
     :try_start_1
@@ -2793,19 +2879,19 @@
     :try_end_1
     .catchall {:try_start_1 .. :try_end_1} :catchall_2
 
-    .line 553
+    .line 555
     if-eqz p1, :cond_2
 
     invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->deleteQuietly(Landroid/content/Context;Landroid/net/Uri;)V
 
-    .line 554
+    .line 556
     :cond_2
     nop
 
-    .line 530
+    .line 532
     return-object v0
 
-    .line 531
+    .line 533
     :cond_3
     :try_start_2
     const-string v4, "w"
@@ -2814,26 +2900,26 @@
 
     move-result-object v4
 
-    .line 532
+    .line 534
     if-nez v4, :cond_5
 
     const-string v0, "\u8be5\u76ee\u5f55\u4e0d\u652f\u6301\u5199\u5165\u5907\u4efd\u6587\u4ef6"
     :try_end_2
     .catchall {:try_start_2 .. :try_end_2} :catchall_2
 
-    .line 553
+    .line 555
     if-eqz p1, :cond_4
 
     invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->deleteQuietly(Landroid/content/Context;Landroid/net/Uri;)V
 
-    .line 554
+    .line 556
     :cond_4
     nop
 
-    .line 532
+    .line 534
     return-object v0
 
-    .line 533
+    .line 535
     :cond_5
     const/4 v5, 0x3
 
@@ -2844,15 +2930,15 @@
 
     invoke-virtual {v4, v5}, Ljava/io/OutputStream;->write([B)V
 
-    .line 534
+    .line 536
     invoke-virtual {v4}, Ljava/io/OutputStream;->close()V
 
-    .line 535
+    .line 537
     invoke-virtual {v2, p1}, Landroid/content/ContentResolver;->openInputStream(Landroid/net/Uri;)Ljava/io/InputStream;
 
     move-result-object v4
 
-    .line 536
+    .line 538
     if-eqz v4, :cond_c
 
     invoke-virtual {v4}, Ljava/io/InputStream;->read()I
@@ -2881,11 +2967,11 @@
 
     goto :goto_0
 
-    .line 540
+    .line 542
     :cond_6
     invoke-virtual {v4}, Ljava/io/InputStream;->close()V
 
-    .line 541
+    .line 543
     new-instance v4, Ljava/lang/StringBuilder;
 
     invoke-direct {v4}, Ljava/lang/StringBuilder;-><init>()V
@@ -2914,7 +3000,7 @@
     :try_end_3
     .catchall {:try_start_3 .. :try_end_3} :catchall_2
 
-    .line 543
+    .line 545
     if-nez v0, :cond_9
 
     :try_start_4
@@ -2922,32 +3008,32 @@
     :try_end_4
     .catchall {:try_start_4 .. :try_end_4} :catchall_0
 
-    .line 553
+    .line 555
     if-eqz p1, :cond_7
 
     invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->deleteQuietly(Landroid/content/Context;Landroid/net/Uri;)V
 
-    .line 554
+    .line 556
     :cond_7
     if-eqz v0, :cond_8
 
     invoke-static {p0, v0}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->deleteQuietly(Landroid/content/Context;Landroid/net/Uri;)V
 
-    .line 543
+    .line 545
     :cond_8
     return-object v1
 
-    .line 550
+    .line 552
     :catchall_0
     move-exception v1
 
     goto :goto_1
 
-    .line 544
+    .line 546
     :cond_9
     nop
 
-    .line 545
+    .line 547
     :try_start_5
     invoke-static {v2, v0}, Landroid/provider/DocumentsContract;->deleteDocument(Landroid/content/ContentResolver;Landroid/net/Uri;)Z
 
@@ -2955,46 +3041,46 @@
 
     if-nez p1, :cond_b
 
-    .line 546
+    .line 548
     const-string p1, "\u8be5\u76ee\u5f55\u4e0d\u652f\u6301\u5220\u9664\u65e7\u5907\u4efd\u7248\u672c"
     :try_end_5
     .catchall {:try_start_5 .. :try_end_5} :catchall_1
 
-    .line 553
+    .line 555
     nop
 
-    .line 554
+    .line 556
     if-eqz v0, :cond_a
 
     invoke-static {p0, v0}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->deleteQuietly(Landroid/content/Context;Landroid/net/Uri;)V
 
-    .line 546
+    .line 548
     :cond_a
     return-object p1
 
-    .line 548
+    .line 550
     :cond_b
     nop
 
-    .line 549
+    .line 551
     nop
 
-    .line 553
+    .line 555
     nop
 
-    .line 554
+    .line 556
     nop
 
-    .line 549
+    .line 551
     return-object v1
 
-    .line 550
+    .line 552
     :catchall_1
     move-exception p1
 
     goto :goto_2
 
-    .line 537
+    .line 539
     :cond_c
     :goto_0
     if-eqz v4, :cond_d
@@ -3002,25 +3088,25 @@
     :try_start_6
     invoke-virtual {v4}, Ljava/io/InputStream;->close()V
 
-    .line 538
+    .line 540
     :cond_d
     const-string v0, "\u8be5\u76ee\u5f55\u4e0d\u652f\u6301\u53ef\u9760\u8bfb\u53d6\u5907\u4efd\u6587\u4ef6"
     :try_end_6
     .catchall {:try_start_6 .. :try_end_6} :catchall_2
 
-    .line 553
+    .line 555
     if-eqz p1, :cond_e
 
     invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->deleteQuietly(Landroid/content/Context;Landroid/net/Uri;)V
 
-    .line 554
+    .line 556
     :cond_e
     nop
 
-    .line 538
+    .line 540
     return-object v0
 
-    .line 550
+    .line 552
     :catchall_2
     move-exception v0
 
@@ -3036,29 +3122,29 @@
 
     move-object v0, v1
 
-    .line 551
+    .line 553
     :goto_2
     :try_start_7
     const-string p1, "\u6240\u9009\u5b58\u50a8\u4f4d\u7f6e\u4e0d\u652f\u6301\u5b89\u5168\u81ea\u52a8\u5907\u4efd"
     :try_end_7
     .catchall {:try_start_7 .. :try_end_7} :catchall_4
 
-    .line 553
+    .line 555
     if-eqz v1, :cond_f
 
     invoke-static {p0, v1}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->deleteQuietly(Landroid/content/Context;Landroid/net/Uri;)V
 
-    .line 554
+    .line 556
     :cond_f
     if-eqz v0, :cond_10
 
     invoke-static {p0, v0}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->deleteQuietly(Landroid/content/Context;Landroid/net/Uri;)V
 
-    .line 551
+    .line 553
     :cond_10
     return-object p1
 
-    .line 553
+    .line 555
     :catchall_4
     move-exception p1
 
@@ -3066,13 +3152,13 @@
 
     invoke-static {p0, v1}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->deleteQuietly(Landroid/content/Context;Landroid/net/Uri;)V
 
-    .line 554
+    .line 556
     :cond_11
     if-eqz v0, :cond_12
 
     invoke-static {p0, v0}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->deleteQuietly(Landroid/content/Context;Landroid/net/Uri;)V
 
-    .line 555
+    .line 557
     :cond_12
     throw p1
 
@@ -3087,12 +3173,12 @@
 .method static validateTreeAsync(Landroid/content/Context;Landroid/net/Uri;Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$ValidationCallback;)V
     .locals 2
 
-    .line 506
+    .line 508
     invoke-virtual {p0}, Landroid/content/Context;->getApplicationContext()Landroid/content/Context;
 
     move-result-object p0
 
-    .line 507
+    .line 509
     sget-object v0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->IO:Ljava/util/concurrent/ExecutorService;
 
     new-instance v1, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$5;
@@ -3101,6 +3187,6 @@
 
     invoke-interface {v0, v1}, Ljava/util/concurrent/ExecutorService;->execute(Ljava/lang/Runnable;)V
 
-    .line 517
+    .line 519
     return-void
 .end method
