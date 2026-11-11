@@ -318,3 +318,4 @@
     <string name="modern_theme_builder_error_load">This picture could not be opened.</string>
     <string name="modern_theme_builder_error_write">The theme could not be saved.</string>
 </resources>
+    <string name="modern_settings_rime_sync_error_snapshot">The Google Pinyin user dictionary returned far fewer entries than the last sync; synchronization stopped so that Rime entries are not deleted. Check the dictionary, then rebuild the sync state</string>

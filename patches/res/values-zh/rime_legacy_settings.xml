@@ -88,3 +88,4 @@
         <item>168</item>
     </string-array>
 </resources>
+    <string name="rime_sync_error_snapshot">Google 拼音用户词库读到的条目远少于上次同步，已停止同步以免误删 Rime 词条。请在确认词库完好后重新建立同步状态</string>

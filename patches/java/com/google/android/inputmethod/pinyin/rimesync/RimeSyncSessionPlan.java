@@ -11,6 +11,8 @@ import java.util.Map;
 /** Immutable full-session plan shared by preview, execution, and crash recovery. */
 public final class RimeSyncSessionPlan {
     private static final Charset UTF_8 = Charset.forName("UTF-8");
+    /** Below this many committed entries a small dictionary is not evidence of a bad read. */
+    private static final int SNAPSHOT_TRUST_FLOOR = 1000;
 
     public final List<EntryPlan> entries;
     public final int googleAdditionCount;
@@ -73,6 +75,7 @@ public final class RimeSyncSessionPlan {
         int rimeResurrections = 0;
         int rimeIndex = 0;
         int googleIndex = 0;
+        int committedPresent = 0;
         MessageDigest digest = sha256();
         while (rimeIndex < rimeKeys.size() || googleIndex < googleKeys.size()) {
             String rimeKey = rimeIndex < rimeKeys.size() ? rimeKeys.get(rimeIndex) : null;
@@ -97,6 +100,7 @@ public final class RimeSyncSessionPlan {
                     || baseline.googleProjection == null || baseline.rimeAbsCount < 0) {
                 throw new IllegalArgumentException("synchronization baseline is invalid");
             }
+            if (baseline.history == RimeSyncPlanner.History.PRESENT) committedPresent++;
             int currentRimeCount = rime == null ? 0 : rime.commits;
             int planningMagnitude = Math.max(checkedMagnitude(currentRimeCount),
                     baseline.rimeAbsCount);
@@ -129,6 +133,7 @@ public final class RimeSyncSessionPlan {
             }
             updateDigest(digest, key, decision, nextMagnitude);
         }
+        verifySnapshotPlausible(committedPresent, googleSnapshot.totalEntryCount);
         int projectedCount = googleSnapshot.totalEntryCount - googleDeletes + googleAdds;
         if (projectedCount > GoogleNativeDictionaryBridge.USER_DICTIONARY_CAPACITY) {
             throw new GoogleNativeDictionaryBridge.CapacityException(
@@ -136,6 +141,28 @@ public final class RimeSyncSessionPlan {
         }
         return new RimeSyncSessionPlan(plans, googleAdds, googleDeletes, rimeAdds,
                 rimeDeletes, rimeResurrections, projectedCount, hex(digest.digest()));
+    }
+
+    /**
+     * A dictionary that committed N entries cannot plausibly read back far fewer of them.
+     * Treating a collapsed read as deletions would delete the untouched side of the sync.
+     */
+    private static void verifySnapshotPlausible(int committedPresent, int observed) {
+        if (committedPresent < SNAPSHOT_TRUST_FLOOR) return;
+        if (observed >= committedPresent / 2) return;
+        throw new SnapshotInconsistentException(committedPresent, observed);
+    }
+
+    /** Raised instead of planning deletions when the Google read contradicts the baseline. */
+    public static final class SnapshotInconsistentException extends RuntimeException {
+        public final int committedCount;
+        public final int observedCount;
+
+        SnapshotInconsistentException(int committedCount, int observedCount) {
+            super("Google user dictionary snapshot contradicts the committed baseline");
+            this.committedCount = committedCount;
+            this.observedCount = observedCount;
+        }
     }
 
     public boolean requiresDeletionConfirmation() {

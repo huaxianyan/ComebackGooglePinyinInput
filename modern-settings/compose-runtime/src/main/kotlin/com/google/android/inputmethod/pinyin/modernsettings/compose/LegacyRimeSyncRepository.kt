@@ -92,6 +92,7 @@ internal enum class RimeSyncError {
     PreviewSessionPlan,
     DirectoryIdentity,
     BridgeSnapshotMissing,
+    SnapshotInconsistent,
     OperationFailed,
 }
 
@@ -350,6 +351,7 @@ internal class LegacyRimeSyncRepository(private val activity: Activity) {
         staticInt("ERROR_PREVIEW_SESSION_PLAN") -> RimeSyncError.PreviewSessionPlan
         staticInt("ERROR_DIRECTORY_IDENTITY") -> RimeSyncError.DirectoryIdentity
         staticInt("ERROR_BRIDGE_SNAPSHOT_MISSING") -> RimeSyncError.BridgeSnapshotMissing
+        staticInt("ERROR_SNAPSHOT_INCONSISTENT") -> RimeSyncError.SnapshotInconsistent
         else -> RimeSyncError.OperationFailed
     }
 
