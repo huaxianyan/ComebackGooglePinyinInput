@@ -105,6 +105,7 @@ public final class DictionarySafetyGuard {
 
     private static void runOnce(Context context, DictionarySafetyStore store,
             DictionarySafetyKind kind) {
+        protectFile(context, store, kind);
         Object factory = engineFactory(context, kind);
         if (factory == null) {
             record(store, "引擎尚未就绪，本次跳过");
@@ -168,6 +169,55 @@ public final class DictionarySafetyGuard {
                 .putLong(DictionarySafetyStore.KEY_LAST_REPAIR, System.currentTimeMillis())
                 .apply();
         repair(context, store, kind, factory, readable, known);
+    }
+
+    /**
+     * Keeps the dictionary file itself safe, without asking the engine anything.
+     *
+     * <p>The engine holds the user dictionary in memory and does not read the file back, so its
+     * export can come back empty while the words are all still on disk. Byte copies keep the words
+     * recoverable in that state, and a file that suddenly shrinks is the one loss signal that does
+     * not depend on the engine at all.
+     */
+    private static void protectFile(Context context, DictionarySafetyStore store,
+            DictionarySafetyKind kind) {
+        SharedPreferences preferences = store.preferences();
+        DictionaryFileSnapshot files = new DictionaryFileSnapshot(context, kind);
+        byte[] current = files.read();
+        long size = current == null ? 0L : current.length;
+        long high = preferences.getLong(DictionarySafetyStore.KEY_FILE_HIGH_WATER, 0L);
+
+        if (size > high) {
+            preferences.edit()
+                    .putLong(DictionarySafetyStore.KEY_FILE_HIGH_WATER, size)
+                    .apply();
+        }
+        if (!DictionarySafetyPolicy.isFileCollapsed(size, high)) {
+            files.keep(current);
+            return;
+        }
+        byte[] recovered = files.newestAtLeast(high / 2L);
+        if (recovered != null && files.restore(recovered)) {
+            record(store, "词库文件从 " + size + " 字节恢复到 " + recovered.length + " 字节");
+            return;
+        }
+        record(store, "词库文件只剩 " + size + " 字节，暂时没有可用的完整副本");
+    }
+
+    /** Drops the file baseline and copies, used when the user deliberately clears the dictionary. */
+    public static void forget(Context context) {
+        if (context == null) return;
+        Context app = context.getApplicationContext();
+        if (app == null) app = context;
+        for (DictionarySafetyKind kind : DictionarySafetyKind.values()) {
+            DictionarySafetyStore store = new DictionarySafetyStore(app, kind);
+            new DictionaryFileSnapshot(app, kind).forget();
+            store.preferences().edit()
+                    .putLong(DictionarySafetyStore.KEY_FILE_HIGH_WATER, 0L)
+                    .putInt(DictionarySafetyStore.KEY_KNOWN_COUNT, 0)
+                    .putInt(DictionarySafetyStore.KEY_STRIKES, 0)
+                    .apply();
+        }
     }
 
     /**

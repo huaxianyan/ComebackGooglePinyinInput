@@ -14,6 +14,8 @@
 # static fields
 .field static final KEY_DEBUG:Ljava/lang/String; = "last_debug"
 
+.field static final KEY_FILE_HIGH_WATER:Ljava/lang/String; = "dictionary_file_high_water"
+
 .field static final KEY_KNOWN_COUNT:Ljava/lang/String; = "known_entry_count"
 
 .field static final KEY_KNOWN_FILE_SIZE:Ljava/lang/String; = "known_dictionary_file_size"
@@ -47,7 +49,7 @@
 .method static constructor <clinit>()V
     .locals 1
 
-    .line 51
+    .line 53
     const-string v0, "UTF-8"
 
     invoke-static {v0}, Ljava/nio/charset/Charset;->forName(Ljava/lang/String;)Ljava/nio/charset/Charset;
@@ -62,27 +64,27 @@
 .method public constructor <init>(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyKind;)V
     .locals 0
 
-    .line 56
+    .line 58
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
-    .line 57
+    .line 59
     invoke-virtual {p1}, Landroid/content/Context;->getApplicationContext()Landroid/content/Context;
 
     move-result-object p1
 
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;->context:Landroid/content/Context;
 
-    .line 58
+    .line 60
     iput-object p2, p0, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;->kind:Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyKind;
 
-    .line 59
+    .line 61
     return-void
 .end method
 
 .method private static delete(Ljava/io/File;)V
     .locals 1
 
-    .line 187
+    .line 189
     if-eqz p0, :cond_0
 
     invoke-virtual {p0}, Ljava/io/File;->exists()Z
@@ -93,7 +95,7 @@
 
     invoke-virtual {p0}, Ljava/io/File;->delete()Z
 
-    .line 188
+    .line 190
     :cond_0
     return-void
 .end method
@@ -101,7 +103,7 @@
 .method private directory()Ljava/io/File;
     .locals 3
 
-    .line 66
+    .line 68
     new-instance v0, Ljava/io/File;
 
     iget-object v1, p0, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;->context:Landroid/content/Context;
@@ -116,7 +118,7 @@
 
     invoke-direct {v0, v1, v2}, Ljava/io/File;-><init>(Ljava/io/File;Ljava/lang/String;)V
 
-    .line 67
+    .line 69
     invoke-virtual {v0}, Ljava/io/File;->isDirectory()Z
 
     move-result v1
@@ -133,7 +135,7 @@
 
     return-object v0
 
-    .line 68
+    .line 70
     :cond_0
     return-object v0
 .end method
@@ -141,12 +143,12 @@
 .method public static fingerprint(Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetySnapshot;)J
     .locals 3
 
-    .line 144
+    .line 146
     new-instance v0, Ljava/util/zip/CRC32;
 
     invoke-direct {v0}, Ljava/util/zip/CRC32;-><init>()V
 
-    .line 145
+    .line 147
     iget v1, p0, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetySnapshot;->totalEntryCount:I
 
     iget-object p0, p0, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetySnapshot;->entries:Ljava/util/List;
@@ -157,19 +159,19 @@
 
     sget-object v1, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;->UTF_8:Ljava/nio/charset/Charset;
 
-    .line 146
+    .line 148
     invoke-virtual {p0, v1}, Ljava/lang/String;->getBytes(Ljava/nio/charset/Charset;)[B
 
     move-result-object p0
 
-    .line 147
+    .line 149
     const/4 v1, 0x0
 
     array-length v2, p0
 
     invoke-virtual {v0, p0, v1, v2}, Ljava/util/zip/CRC32;->update([BII)V
 
-    .line 148
+    .line 150
     invoke-virtual {v0}, Ljava/util/zip/CRC32;->getValue()J
 
     move-result-wide v0
@@ -180,7 +182,7 @@
 .method public static mainDictionarySize(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyKind;)J
     .locals 1
 
-    .line 43
+    .line 45
     new-instance v0, Ljava/io/File;
 
     invoke-virtual {p0}, Landroid/content/Context;->getFilesDir()Ljava/io/File;
@@ -191,7 +193,7 @@
 
     invoke-direct {v0, p0, p1}, Ljava/io/File;-><init>(Ljava/io/File;Ljava/lang/String;)V
 
-    .line 44
+    .line 46
     invoke-virtual {v0}, Ljava/io/File;->isFile()Z
 
     move-result p0
@@ -214,10 +216,10 @@
 .method private static read(Ljava/io/File;)Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetySnapshot;
     .locals 6
 
-    .line 162
+    .line 164
     nop
 
-    .line 164
+    .line 166
     const/4 v0, 0x0
 
     :try_start_0
@@ -228,32 +230,32 @@
     .catch Ljava/io/IOException; {:try_start_0 .. :try_end_0} :catch_3
     .catchall {:try_start_0 .. :try_end_0} :catchall_1
 
-    .line 165
+    .line 167
     :try_start_1
     new-instance p0, Ljava/util/zip/GZIPInputStream;
 
     invoke-direct {p0, v1}, Ljava/util/zip/GZIPInputStream;-><init>(Ljava/io/InputStream;)V
 
-    .line 166
+    .line 168
     new-instance v2, Ljava/io/InputStreamReader;
 
     sget-object v3, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;->UTF_8:Ljava/nio/charset/Charset;
 
     invoke-direct {v2, p0, v3}, Ljava/io/InputStreamReader;-><init>(Ljava/io/InputStream;Ljava/nio/charset/Charset;)V
 
-    .line 167
+    .line 169
     new-instance p0, Ljava/lang/StringBuilder;
 
     const/high16 v3, 0x10000
 
     invoke-direct {p0, v3}, Ljava/lang/StringBuilder;-><init>(I)V
 
-    .line 168
+    .line 170
     const/16 v3, 0x2000
 
     new-array v3, v3, [C
 
-    .line 170
+    .line 172
     :goto_0
     invoke-virtual {v2, v3}, Ljava/io/Reader;->read([C)I
 
@@ -269,11 +271,11 @@
 
     goto :goto_0
 
-    .line 171
+    .line 173
     :cond_0
     invoke-virtual {v2}, Ljava/io/Reader;->close()V
 
-    .line 172
+    .line 174
     invoke-virtual {p0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
 
     move-result-object p0
@@ -285,27 +287,27 @@
     .catch Ljava/io/IOException; {:try_start_1 .. :try_end_1} :catch_1
     .catchall {:try_start_1 .. :try_end_1} :catchall_0
 
-    .line 176
+    .line 178
     nop
 
-    .line 178
+    .line 180
     :try_start_2
     invoke-virtual {v1}, Ljava/io/FileInputStream;->close()V
     :try_end_2
     .catch Ljava/io/IOException; {:try_start_2 .. :try_end_2} :catch_0
 
-    .line 181
+    .line 183
     goto :goto_1
 
-    .line 179
+    .line 181
     :catch_0
     move-exception v0
 
-    .line 172
+    .line 174
     :goto_1
     return-object p0
 
-    .line 176
+    .line 178
     :catchall_0
     move-exception p0
 
@@ -313,64 +315,64 @@
 
     goto :goto_2
 
-    .line 173
+    .line 175
     :catch_1
     move-exception p0
 
     goto :goto_4
 
-    .line 176
+    .line 178
     :catchall_1
     move-exception p0
 
     :goto_2
     if-eqz v0, :cond_1
 
-    .line 178
+    .line 180
     :try_start_3
     invoke-virtual {v0}, Ljava/io/FileInputStream;->close()V
     :try_end_3
     .catch Ljava/io/IOException; {:try_start_3 .. :try_end_3} :catch_2
 
-    .line 181
+    .line 183
     goto :goto_3
 
-    .line 179
+    .line 181
     :catch_2
     move-exception v0
 
-    .line 183
+    .line 185
     :cond_1
     :goto_3
     throw p0
 
-    .line 173
+    .line 175
     :catch_3
     move-exception p0
 
     move-object v1, v0
 
-    .line 174
+    .line 176
     :goto_4
     nop
 
-    .line 176
+    .line 178
     if-eqz v1, :cond_2
 
-    .line 178
+    .line 180
     :try_start_4
     invoke-virtual {v1}, Ljava/io/FileInputStream;->close()V
     :try_end_4
     .catch Ljava/io/IOException; {:try_start_4 .. :try_end_4} :catch_4
 
-    .line 181
+    .line 183
     goto :goto_5
 
-    .line 179
+    .line 181
     :catch_4
     move-exception p0
 
-    .line 174
+    .line 176
     :cond_2
     :goto_5
     return-object v0
@@ -384,7 +386,7 @@
         }
     .end annotation
 
-    .line 152
+    .line 154
     new-instance v0, Ljava/io/OutputStreamWriter;
 
     new-instance v1, Ljava/util/zip/GZIPOutputStream;
@@ -399,28 +401,28 @@
 
     invoke-direct {v0, v1, p0}, Ljava/io/OutputStreamWriter;-><init>(Ljava/io/OutputStream;Ljava/nio/charset/Charset;)V
 
-    .line 155
+    .line 157
     :try_start_0
     invoke-virtual {v0, p1}, Ljava/io/Writer;->write(Ljava/lang/String;)V
     :try_end_0
     .catchall {:try_start_0 .. :try_end_0} :catchall_0
 
-    .line 157
+    .line 159
     invoke-virtual {v0}, Ljava/io/Writer;->close()V
 
-    .line 158
+    .line 160
     nop
 
-    .line 159
+    .line 161
     return-void
 
-    .line 157
+    .line 159
     :catchall_0
     move-exception p0
 
     invoke-virtual {v0}, Ljava/io/Writer;->close()V
 
-    .line 158
+    .line 160
     throw p0
 .end method
 
@@ -429,7 +431,7 @@
 .method public newestRepairable(I)Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore$StoredSnapshot;
     .locals 3
 
-    .line 94
+    .line 96
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;->snapshots()Ljava/util/List;
 
     move-result-object v0
@@ -451,7 +453,7 @@
 
     check-cast v1, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore$StoredSnapshot;
 
-    .line 95
+    .line 97
     iget-object v2, v1, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore$StoredSnapshot;->snapshot:Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetySnapshot;
 
     iget v2, v2, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetySnapshot;->totalEntryCount:I
@@ -462,14 +464,14 @@
 
     if-eqz v2, :cond_0
 
-    .line 97
+    .line 99
     return-object v1
 
-    .line 99
+    .line 101
     :cond_0
     goto :goto_0
 
-    .line 100
+    .line 102
     :cond_1
     const/4 p1, 0x0
 
@@ -479,7 +481,7 @@
 .method public preferences()Landroid/content/SharedPreferences;
     .locals 3
 
-    .line 62
+    .line 64
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;->context:Landroid/content/Context;
 
     iget-object v1, p0, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;->kind:Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyKind;
@@ -498,18 +500,18 @@
 .method public rotate(Z)V
     .locals 3
 
-    .line 132
+    .line 134
     if-nez p1, :cond_0
 
     return-void
 
-    .line 133
+    .line 135
     :cond_0
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;->snapshots()Ljava/util/List;
 
     move-result-object p1
 
-    .line 134
+    .line 136
     invoke-interface {p1}, Ljava/util/List;->size()I
 
     move-result v0
@@ -520,7 +522,7 @@
 
     return-void
 
-    .line 135
+    .line 137
     :cond_1
     nop
 
@@ -531,14 +533,14 @@
 
     if-ge v1, v0, :cond_3
 
-    .line 136
+    .line 138
     invoke-interface {p1, v1}, Ljava/util/List;->get(I)Ljava/lang/Object;
 
     move-result-object v0
 
     check-cast v0, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore$StoredSnapshot;
 
-    .line 137
+    .line 139
     const/4 v2, 0x0
 
     invoke-interface {p1, v2}, Ljava/util/List;->get(I)Ljava/lang/Object;
@@ -549,19 +551,19 @@
 
     goto :goto_1
 
-    .line 138
+    .line 140
     :cond_2
     iget-object v0, v0, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore$StoredSnapshot;->file:Ljava/io/File;
 
     invoke-static {v0}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;->delete(Ljava/io/File;)V
 
-    .line 135
+    .line 137
     :goto_1
     add-int/lit8 v1, v1, 0x1
 
     goto :goto_0
 
-    .line 140
+    .line 142
     :cond_3
     return-void
 .end method
@@ -577,12 +579,12 @@
         }
     .end annotation
 
-    .line 73
+    .line 75
     invoke-direct {p0}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;->directory()Ljava/io/File;
 
     move-result-object v0
 
-    .line 74
+    .line 76
     if-nez v0, :cond_0
 
     invoke-static {}, Ljava/util/Collections;->emptyList()Ljava/util/List;
@@ -591,13 +593,13 @@
 
     return-object v0
 
-    .line 75
+    .line 77
     :cond_0
     invoke-virtual {v0}, Ljava/io/File;->listFiles()[Ljava/io/File;
 
     move-result-object v0
 
-    .line 76
+    .line 78
     if-nez v0, :cond_1
 
     invoke-static {}, Ljava/util/Collections;->emptyList()Ljava/util/List;
@@ -606,13 +608,13 @@
 
     return-object v0
 
-    .line 77
+    .line 79
     :cond_1
     new-instance v1, Ljava/util/ArrayList;
 
     invoke-direct {v1}, Ljava/util/ArrayList;-><init>()V
 
-    .line 78
+    .line 80
     array-length v2, v0
 
     const/4 v3, 0x0
@@ -622,7 +624,7 @@
 
     aget-object v4, v0, v3
 
-    .line 79
+    .line 81
     invoke-virtual {v4}, Ljava/io/File;->getName()Ljava/lang/String;
 
     move-result-object v5
@@ -649,18 +651,18 @@
 
     goto :goto_1
 
-    .line 80
+    .line 82
     :cond_2
     invoke-static {v4}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;->read(Ljava/io/File;)Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetySnapshot;
 
     move-result-object v5
 
-    .line 81
+    .line 83
     if-nez v5, :cond_3
 
     goto :goto_1
 
-    .line 82
+    .line 84
     :cond_3
     new-instance v6, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore$StoredSnapshot;
 
@@ -668,14 +670,14 @@
 
     invoke-interface {v1, v6}, Ljava/util/List;->add(Ljava/lang/Object;)Z
 
-    .line 78
+    .line 80
     :cond_4
     :goto_1
     add-int/lit8 v3, v3, 0x1
 
     goto :goto_0
 
-    .line 84
+    .line 86
     :cond_5
     new-instance v0, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore$1;
 
@@ -683,26 +685,26 @@
 
     invoke-static {v1, v0}, Ljava/util/Collections;->sort(Ljava/util/List;Ljava/util/Comparator;)V
 
-    .line 89
+    .line 91
     return-object v1
 .end method
 
 .method public write(Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetySnapshot;)Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore$StoredSnapshot;
     .locals 7
 
-    .line 105
+    .line 107
     invoke-direct {p0}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;->directory()Ljava/io/File;
 
     move-result-object v0
 
-    .line 106
+    .line 108
     const/4 v1, 0x0
 
     if-nez v0, :cond_0
 
     return-object v1
 
-    .line 107
+    .line 109
     :cond_0
     iget v2, p1, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetySnapshot;->totalEntryCount:I
 
@@ -712,7 +714,7 @@
 
     move-result-object v2
 
-    .line 109
+    .line 111
     new-instance v3, Ljava/io/File;
 
     new-instance v4, Ljava/lang/StringBuilder;
@@ -725,7 +727,7 @@
 
     move-result-object v4
 
-    .line 110
+    .line 112
     invoke-static {}, Ljava/lang/System;->currentTimeMillis()J
 
     move-result-wide v5
@@ -746,7 +748,7 @@
 
     invoke-direct {v3, v0, v4}, Ljava/io/File;-><init>(Ljava/io/File;Ljava/lang/String;)V
 
-    .line 111
+    .line 113
     new-instance v4, Ljava/io/File;
 
     new-instance v5, Ljava/lang/StringBuilder;
@@ -773,35 +775,35 @@
 
     invoke-direct {v4, v0, v5}, Ljava/io/File;-><init>(Ljava/io/File;Ljava/lang/String;)V
 
-    .line 113
+    .line 115
     :try_start_0
     invoke-static {v4, v2}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;->writeCompressed(Ljava/io/File;Ljava/lang/String;)V
 
-    .line 114
+    .line 116
     invoke-virtual {v4, v3}, Ljava/io/File;->renameTo(Ljava/io/File;)Z
 
     move-result v0
 
     if-nez v0, :cond_1
 
-    .line 115
+    .line 117
     invoke-static {v4}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;->delete(Ljava/io/File;)V
     :try_end_0
     .catch Ljava/io/IOException; {:try_start_0 .. :try_end_0} :catch_0
 
-    .line 116
+    .line 118
     return-object v1
 
-    .line 121
+    .line 123
     :cond_1
     nop
 
-    .line 122
+    .line 124
     invoke-static {v3}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;->read(Ljava/io/File;)Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetySnapshot;
 
     move-result-object v0
 
-    .line 123
+    .line 125
     if-eqz v0, :cond_3
 
     iget-object v2, v0, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetySnapshot;->entries:Ljava/util/List;
@@ -820,7 +822,7 @@
 
     goto :goto_0
 
-    .line 127
+    .line 129
     :cond_2
     new-instance p1, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore$StoredSnapshot;
 
@@ -828,21 +830,21 @@
 
     return-object p1
 
-    .line 124
+    .line 126
     :cond_3
     :goto_0
     invoke-static {v3}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;->delete(Ljava/io/File;)V
 
-    .line 125
+    .line 127
     return-object v1
 
-    .line 118
+    .line 120
     :catch_0
     move-exception p1
 
-    .line 119
+    .line 121
     invoke-static {v4}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;->delete(Ljava/io/File;)V
 
-    .line 120
+    .line 122
     return-object v1
 .end method

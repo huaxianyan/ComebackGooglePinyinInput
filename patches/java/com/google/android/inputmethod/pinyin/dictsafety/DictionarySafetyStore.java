@@ -37,6 +37,8 @@ public final class DictionarySafetyStore {
     static final String KEY_NOTE = "last_note";
     static final String KEY_DEBUG = "last_debug";
     static final String KEY_KNOWN_FILE_SIZE = "known_dictionary_file_size";
+    /** Largest the dictionary file has been on this device, in bytes. */
+    static final String KEY_FILE_HIGH_WATER = "dictionary_file_high_water";
 
     /** Size of the main dictionary file, which is the only place entries can still live. */
     public static long mainDictionarySize(Context context, DictionarySafetyKind kind) {

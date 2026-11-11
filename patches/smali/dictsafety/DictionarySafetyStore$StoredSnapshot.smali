@@ -24,15 +24,15 @@
 .method constructor <init>(Ljava/io/File;Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetySnapshot;)V
     .locals 0
 
-    .line 194
+    .line 196
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
-    .line 195
+    .line 197
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore$StoredSnapshot;->file:Ljava/io/File;
 
-    .line 196
+    .line 198
     iput-object p2, p0, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore$StoredSnapshot;->snapshot:Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetySnapshot;
 
-    .line 197
+    .line 199
     return-void
 .end method

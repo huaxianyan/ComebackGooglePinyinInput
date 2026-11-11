@@ -271,6 +271,13 @@ public final class DictionaryAutoBackupCompat {
             String finalName, boolean force) {
         try {
             ExportFile exported = validateAndHash(context, partial);
+            if (exported.entryCount == 0) {
+                // An empty export cannot restore anything, and publishing it would push a usable
+                // copy out of the retention window while reporting success.
+                deleteQuietly(context, partial);
+                finishFailure(context, force, "引擎暂时读不到词条，本次没有生成备份", null);
+                return;
+            }
             String sha256 = exported.sha256;
             Uri completed = DocumentsContract.renameDocument(context.getContentResolver(),
                     partial, finalName);

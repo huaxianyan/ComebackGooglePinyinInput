@@ -14,6 +14,16 @@ public final class DictionarySafetyPolicy {
 
     private DictionarySafetyPolicy() {}
 
+    /**
+     * True when the dictionary file is less than half the largest it has been on this device.
+     *
+     * <p>This measures the file on disk, so it still reports a loss while the engine is unable to
+     * read that file at all.
+     */
+    public static boolean isFileCollapsed(long currentBytes, long highWaterBytes) {
+        return highWaterBytes > 0L && currentBytes * 2L < highWaterBytes;
+    }
+
     /** True when the engine reads less than half of what this installation has seen before. */
     public static boolean isCollapsed(int currentCount, int knownCount) {
         if (currentCount < 0) return false;
