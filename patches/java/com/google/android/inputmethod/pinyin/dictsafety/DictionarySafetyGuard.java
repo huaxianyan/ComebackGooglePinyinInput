@@ -105,15 +105,15 @@ public final class DictionarySafetyGuard {
 
     private static void runOnce(Context context, DictionarySafetyStore store,
             DictionarySafetyKind kind) {
-        protectFile(context, store, kind);
+        boolean repaired = protectFile(context, store, kind);
         Object factory = engineFactory(context, kind);
         if (factory == null) {
-            record(store, "引擎尚未就绪，本次跳过");
+            if (!repaired) record(store, "引擎尚未就绪，本次跳过");
             return;
         }
         int readable = readableCount(context, factory);
         if (readable < 0) {
-            record(store, "暂时读不出条目数，本次跳过");
+            if (!repaired) record(store, "暂时读不出条目数，本次跳过");
             return;
         }
 
@@ -179,7 +179,7 @@ public final class DictionarySafetyGuard {
      * recoverable in that state, and a file that suddenly shrinks is the one loss signal that does
      * not depend on the engine at all.
      */
-    private static void protectFile(Context context, DictionarySafetyStore store,
+    private static boolean protectFile(Context context, DictionarySafetyStore store,
             DictionarySafetyKind kind) {
         SharedPreferences preferences = store.preferences();
         DictionaryFileSnapshot files = new DictionaryFileSnapshot(context, kind);
@@ -194,14 +194,16 @@ public final class DictionarySafetyGuard {
         }
         if (!DictionarySafetyPolicy.isFileCollapsed(size, high)) {
             files.keep(current);
-            return;
+            return false;
         }
         byte[] recovered = files.newestAtLeast(high / 2L);
         if (recovered != null && files.restore(recovered)) {
-            record(store, "词库文件从 " + size + " 字节恢复到 " + recovered.length + " 字节");
-            return;
+            record(store, "词库文件从 " + size + " 字节恢复到 " + recovered.length + " 字节，"
+                    + "重启输入法后生效");
+            return true;
         }
         record(store, "词库文件只剩 " + size + " 字节，暂时没有可用的完整副本");
+        return false;
     }
 
     /** Drops the file baseline and copies, used when the user deliberately clears the dictionary. */
