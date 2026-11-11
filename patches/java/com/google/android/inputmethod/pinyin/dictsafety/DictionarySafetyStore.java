@@ -30,7 +30,6 @@ import java.util.zip.GZIPOutputStream;
  */
 public final class DictionarySafetyStore {
 
-    static final String PREFS = "dictionary_safety";
     static final String KEY_KNOWN_COUNT = "known_entry_count";
     static final String KEY_STRIKES = "collapsed_strikes";
     static final String KEY_LAST_CHECK = "last_check_at";
@@ -39,12 +38,11 @@ public final class DictionarySafetyStore {
     static final String KEY_KNOWN_FILE_SIZE = "known_dictionary_file_size";
 
     /** Size of the main dictionary file, which is the only place entries can still live. */
-    public static long mainDictionarySize(Context context) {
-        File file = new File(context.getFilesDir(), "user_dict_3_3");
+    public static long mainDictionarySize(Context context, DictionarySafetyKind kind) {
+        File file = new File(context.getFilesDir(), kind.fileName);
         return file.isFile() ? file.length() : 0L;
     }
 
-    private static final String DIRECTORY = "dictionary-safety";
     private static final String PREFIX = "snapshot-";
     private static final String SUFFIX = ".txt.gz";
     private static final String PARTIAL_SUFFIX = ".partial";
@@ -52,17 +50,19 @@ public final class DictionarySafetyStore {
     private static final Charset UTF_8 = Charset.forName("UTF-8");
 
     private final Context context;
+    private final DictionarySafetyKind kind;
 
-    public DictionarySafetyStore(Context context) {
+    public DictionarySafetyStore(Context context, DictionarySafetyKind kind) {
         this.context = context.getApplicationContext();
+        this.kind = kind;
     }
 
     public SharedPreferences preferences() {
-        return context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        return context.getSharedPreferences(kind.preferencesName, Context.MODE_PRIVATE);
     }
 
     private File directory() {
-        File directory = new File(context.getFilesDir(), DIRECTORY);
+        File directory = new File(context.getFilesDir(), kind.directoryName);
         if (!directory.isDirectory() && !directory.mkdirs()) return null;
         return directory;
     }

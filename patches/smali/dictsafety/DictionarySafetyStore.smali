@@ -12,8 +12,6 @@
 
 
 # static fields
-.field private static final DIRECTORY:Ljava/lang/String; = "dictionary-safety"
-
 .field static final KEY_KNOWN_COUNT:Ljava/lang/String; = "known_entry_count"
 
 .field static final KEY_KNOWN_FILE_SIZE:Ljava/lang/String; = "known_dictionary_file_size"
@@ -30,8 +28,6 @@
 
 .field private static final PREFIX:Ljava/lang/String; = "snapshot-"
 
-.field static final PREFS:Ljava/lang/String; = "dictionary_safety"
-
 .field private static final RETAINED_SNAPSHOTS:I = 0x3
 
 .field private static final SUFFIX:Ljava/lang/String; = ".txt.gz"
@@ -42,12 +38,14 @@
 # instance fields
 .field private final context:Landroid/content/Context;
 
+.field private final kind:Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyKind;
+
 
 # direct methods
 .method static constructor <clinit>()V
     .locals 1
 
-    .line 52
+    .line 50
     const-string v0, "UTF-8"
 
     invoke-static {v0}, Ljava/nio/charset/Charset;->forName(Ljava/lang/String;)Ljava/nio/charset/Charset;
@@ -59,18 +57,21 @@
     return-void
 .end method
 
-.method public constructor <init>(Landroid/content/Context;)V
+.method public constructor <init>(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyKind;)V
     .locals 0
 
-    .line 56
+    .line 55
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
-    .line 57
+    .line 56
     invoke-virtual {p1}, Landroid/content/Context;->getApplicationContext()Landroid/content/Context;
 
     move-result-object p1
 
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;->context:Landroid/content/Context;
+
+    .line 57
+    iput-object p2, p0, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;->kind:Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyKind;
 
     .line 58
     return-void
@@ -107,7 +108,9 @@
 
     move-result-object v1
 
-    const-string v2, "dictionary-safety"
+    iget-object v2, p0, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;->kind:Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyKind;
+
+    iget-object v2, v2, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyKind;->directoryName:Ljava/lang/String;
 
     invoke-direct {v0, v1, v2}, Ljava/io/File;-><init>(Ljava/io/File;Ljava/lang/String;)V
 
@@ -172,21 +175,21 @@
     return-wide v0
 .end method
 
-.method public static mainDictionarySize(Landroid/content/Context;)J
-    .locals 2
+.method public static mainDictionarySize(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyKind;)J
+    .locals 1
 
-    .line 43
+    .line 42
     new-instance v0, Ljava/io/File;
 
     invoke-virtual {p0}, Landroid/content/Context;->getFilesDir()Ljava/io/File;
 
     move-result-object p0
 
-    const-string v1, "user_dict_3_3"
+    iget-object p1, p1, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyKind;->fileName:Ljava/lang/String;
 
-    invoke-direct {v0, p0, v1}, Ljava/io/File;-><init>(Ljava/io/File;Ljava/lang/String;)V
+    invoke-direct {v0, p0, p1}, Ljava/io/File;-><init>(Ljava/io/File;Ljava/lang/String;)V
 
-    .line 44
+    .line 43
     invoke-virtual {v0}, Ljava/io/File;->isFile()Z
 
     move-result p0
@@ -195,15 +198,15 @@
 
     invoke-virtual {v0}, Ljava/io/File;->length()J
 
-    move-result-wide v0
+    move-result-wide p0
 
     goto :goto_0
 
     :cond_0
-    const-wide/16 v0, 0x0
+    const-wide/16 p0, 0x0
 
     :goto_0
-    return-wide v0
+    return-wide p0
 .end method
 
 .method private static read(Ljava/io/File;)Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetySnapshot;
@@ -477,7 +480,9 @@
     .line 61
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;->context:Landroid/content/Context;
 
-    const-string v1, "dictionary_safety"
+    iget-object v1, p0, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;->kind:Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyKind;
+
+    iget-object v1, v1, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyKind;->preferencesName:Ljava/lang/String;
 
     const/4 v2, 0x0
 

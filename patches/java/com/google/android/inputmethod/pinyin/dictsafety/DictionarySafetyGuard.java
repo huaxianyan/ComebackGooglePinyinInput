@@ -23,7 +23,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public final class DictionarySafetyGuard {
 
-    private static final String ENGINE_FACTORY_CLASS = "bdt";
     private static final String SAVE_LOCK_CLASS =
             "com.google.android.apps.inputmethod.libs.hmm.SaveDictionaryTask";
     private static final String SAVE_LOCK_FIELD = "sSaveLock";
@@ -33,6 +32,9 @@ public final class DictionarySafetyGuard {
     private static final int STRIKES_BEFORE_REPAIR = 2;
 
     private static final AtomicBoolean RUNNING = new AtomicBoolean();
+    private static final java.util.concurrent.ConcurrentHashMap<DictionarySafetyKind, Boolean>
+            BUSY = new java.util.concurrent.ConcurrentHashMap<DictionarySafetyKind, Boolean>();
+    private static final java.util.Map<DictionarySafetyKind, Boolean> busy = BUSY;
     private static final Object REPAIR_LOCK = new Object();
 
     private DictionarySafetyGuard() {}
@@ -42,7 +44,7 @@ public final class DictionarySafetyGuard {
         if (context == null) return -1;
         Context app = context.getApplicationContext();
         if (app == null) app = context;
-        Object factory = engineFactory(app);
+        Object factory = engineFactory(app, DictionarySafetyKind.CHINESE);
         return factory == null ? -1 : readableCount(app, factory);
     }
 
@@ -51,34 +53,42 @@ public final class DictionarySafetyGuard {
         if (context == null) return;
         final Context app = context.getApplicationContext();
         if (app == null) return;
-        final DictionarySafetyStore store = new DictionarySafetyStore(app);
         long now = System.currentTimeMillis();
-        if (now - store.preferences().getLong(
-                DictionarySafetyStore.KEY_LAST_CHECK, 0L) < CHECK_INTERVAL_MS) {
-            return;
-        }
-        if (!RUNNING.compareAndSet(false, true)) return;
-        Thread worker = new Thread(new Runnable() {
-            @Override public void run() {
-                try {
-                    runOnce(app, store);
-                } catch (Throwable unrecoverable) {
-                    record(store, "检查未完成：" + unrecoverable.getClass().getSimpleName());
-                } finally {
-                    store.preferences().edit()
-                            .putLong(DictionarySafetyStore.KEY_LAST_CHECK,
-                                    System.currentTimeMillis())
-                            .apply();
-                    RUNNING.set(false);
-                }
+        for (final DictionarySafetyKind kind : DictionarySafetyKind.values()) {
+            final DictionarySafetyStore store = new DictionarySafetyStore(app, kind);
+            if (now - store.preferences().getLong(
+                    DictionarySafetyStore.KEY_LAST_CHECK, 0L) < CHECK_INTERVAL_MS) {
+                continue;
             }
-        }, "dictionary-safety");
-        worker.setPriority(Thread.MIN_PRIORITY);
-        worker.start();
+            if (!RUNNING.compareAndSet(false, true)) return;
+            if (!Boolean.TRUE.equals(busy.put(kind, Boolean.TRUE))) {
+                RUNNING.set(false);
+                continue;
+            }
+            Thread worker = new Thread(new Runnable() {
+                @Override public void run() {
+                    try {
+                        runOnce(app, store, kind);
+                    } catch (Throwable unrecoverable) {
+                        record(store, "检查未完成：" + unrecoverable.getClass().getSimpleName());
+                    } finally {
+                        store.preferences().edit()
+                                .putLong(DictionarySafetyStore.KEY_LAST_CHECK,
+                                        System.currentTimeMillis())
+                                .apply();
+                        busy.remove(kind);
+                        RUNNING.set(false);
+                    }
+                }
+            }, "dictionary-safety");
+            worker.setPriority(Thread.MIN_PRIORITY);
+            worker.start();
+        }
     }
 
-    private static void runOnce(Context context, DictionarySafetyStore store) {
-        Object factory = engineFactory(context);
+    private static void runOnce(Context context, DictionarySafetyStore store,
+            DictionarySafetyKind kind) {
+        Object factory = engineFactory(context, kind);
         if (factory == null) return;
         int readable = readableCount(context, factory);
         if (readable < 0) return;
@@ -90,15 +100,16 @@ public final class DictionarySafetyGuard {
 
         if (!DictionarySafetyPolicy.isCollapsed(readable, known)) {
             preferences.edit().putInt(DictionarySafetyStore.KEY_STRIKES, 0).apply();
-            capture(context, store, factory, readable, known);
+            capture(context, store, kind, factory, readable, known);
             store.rotate(true);
             return;
         }
-        Boolean stillOnDisk = entriesCouldStillBeOnDisk(context, preferences, readable, known);
+        Boolean stillOnDisk = entriesCouldStillBeOnDisk(
+                context, kind, preferences, readable, known);
         if (stillOnDisk == null) {
             // Nothing recorded to compare against yet. Learn the current file size and leave the
             // dictionary alone this round rather than guessing in either direction.
-            long size = DictionarySafetyStore.mainDictionarySize(context);
+            long size = DictionarySafetyStore.mainDictionarySize(context, kind);
             if (size > 0L) {
                 preferences.edit()
                         .putLong(DictionarySafetyStore.KEY_KNOWN_FILE_SIZE, size).apply();
@@ -115,7 +126,7 @@ public final class DictionarySafetyGuard {
                     .putInt(DictionarySafetyStore.KEY_KNOWN_COUNT, readable)
                     .apply();
             record(store, "词条数降到 " + readable + " 条，文件同步变小，按删除处理");
-            capture(context, store, factory, readable, readable);
+            capture(context, store, kind, factory, readable, readable);
             store.rotate(true);
             return;
         }
@@ -133,7 +144,7 @@ public final class DictionarySafetyGuard {
         preferences.edit()
                 .putLong(DictionarySafetyStore.KEY_LAST_REPAIR, System.currentTimeMillis())
                 .apply();
-        repair(context, store, factory, readable, known);
+        repair(context, store, kind, factory, readable, known);
     }
 
     /**
@@ -144,10 +155,10 @@ public final class DictionarySafetyGuard {
      * count and the file size recorded with it. No fixed byte counts are assumed, because every
      * user's dictionary has its own size per entry.
      */
-    private static Boolean entriesCouldStillBeOnDisk(Context context,
+    private static Boolean entriesCouldStillBeOnDisk(Context context, DictionarySafetyKind kind,
             SharedPreferences preferences, int readable, int known) {
         long recordedSize = preferences.getLong(DictionarySafetyStore.KEY_KNOWN_FILE_SIZE, 0L);
-        long currentSize = DictionarySafetyStore.mainDictionarySize(context);
+        long currentSize = DictionarySafetyStore.mainDictionarySize(context, kind);
         if (recordedSize <= 0L || currentSize <= 0L) return null;
         if (readable <= 0) return Boolean.FALSE;
         long expected = recordedSize * readable / known;
@@ -155,7 +166,8 @@ public final class DictionarySafetyGuard {
     }
 
     /** Writes a snapshot of a dictionary that currently reads as healthy. */
-    private static void capture(Context context, DictionarySafetyStore store, Object factory,
+    private static void capture(Context context, DictionarySafetyStore store,
+            DictionarySafetyKind kind, Object factory,
             int readable, int known) {
         if (!DictionarySafetyPolicy.acceptsSnapshot(readable, known)) return;
         List<DictionarySafetySnapshot.Entry> entries = entries(context, factory);
@@ -164,7 +176,7 @@ public final class DictionarySafetyGuard {
         List<DictionarySafetyStore.StoredSnapshot> stored = store.snapshots();
         store.preferences().edit()
                 .putLong(DictionarySafetyStore.KEY_KNOWN_FILE_SIZE,
-                        DictionarySafetyStore.mainDictionarySize(context))
+                        DictionarySafetyStore.mainDictionarySize(context, kind))
                 .apply();
         if (!stored.isEmpty() && DictionarySafetyStore.fingerprint(stored.get(0).snapshot)
                 == DictionarySafetyStore.fingerprint(snapshot)) {
@@ -174,7 +186,8 @@ public final class DictionarySafetyGuard {
     }
 
     /** Puts back entries the readable view lost. Never deletes anything. */
-    private static void repair(Context context, DictionarySafetyStore store, Object factory,
+    private static void repair(Context context, DictionarySafetyStore store,
+            DictionarySafetyKind kind, Object factory,
             int readable, int known) {
         DictionarySafetyStore.StoredSnapshot source = store.newestRepairable(known);
         if (source == null) {
@@ -205,7 +218,7 @@ public final class DictionarySafetyGuard {
         }
         record(store, "已从安全快照恢复，词条数回到 " + restored + " 条");
         store.preferences().edit().putInt(DictionarySafetyStore.KEY_STRIKES, 0).apply();
-        capture(context, store, factory, restored, known);
+        capture(context, store, kind, factory, restored, known);
     }
 
     private static int readableCount(Context context, Object factory) {
@@ -234,9 +247,9 @@ public final class DictionarySafetyGuard {
         }
     }
 
-    private static Object engineFactory(Context context) {
+    private static Object engineFactory(Context context, DictionarySafetyKind kind) {
         try {
-            Object factory = Class.forName(ENGINE_FACTORY_CLASS)
+            Object factory = Class.forName(kind.engineFactoryClass)
                     .getMethod("a", Context.class).invoke(null, context);
             return factory instanceof AbstractHmmEngineFactory ? factory : null;
         } catch (Throwable unavailable) {
