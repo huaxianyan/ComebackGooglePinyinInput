@@ -139,7 +139,8 @@ public final class GoogleNativeDictionaryBridge {
                 }
                 List<String> rejectedKeys = new ArrayList<String>();
                 for (Change addition : prepared.adds) {
-                    if (!accessor.insertOrUpdate(newEntry(addition.code, addition.phrase))) {
+                    if (!accessor.insertOrUpdate(
+                            newEntry(addition.code, addition.phrase, addition.count))) {
                         rejectedKeys.add(addition.key);
                     }
                 }
@@ -370,6 +371,15 @@ public final class GoogleNativeDictionaryBridge {
     }
 
     private static MutableDictionaryAccessorInterface.Entry newEntry(String code, String phrase) {
+        return newEntry(code, phrase, NEW_ENTRY_COUNT);
+    }
+
+    /** Keeps a restored entry's own weight instead of resetting it to the new-entry count. */
+    private static MutableDictionaryAccessorInterface.Entry newEntry(String code, String phrase,
+            int count) {
+        if (count <= 0) {
+            throw new IllegalArgumentException("Google entry weight must be positive");
+        }
         String normalizedCode = normalizeCode(code);
         String normalizedPhrase = normalizePhrase(phrase);
         String[] tokens = normalizedCode.split(" ");
@@ -378,7 +388,7 @@ public final class GoogleNativeDictionaryBridge {
             languageIds[index] = PINYIN_LANGUAGE_ID;
         }
         return new MutableDictionaryAccessorInterface.Entry(tokens, languageIds,
-                normalizedPhrase, NEW_ENTRY_COUNT, false, true,
+                normalizedPhrase, count, false, true,
                 MutableDictionaryAccessorInterface.Entry.NO_EXPANSION);
     }
 
@@ -530,10 +540,19 @@ public final class GoogleNativeDictionaryBridge {
         public final String code;
         public final String phrase;
         public final RimeSyncPlanner.GoogleAction action;
+        public final int count;
 
         public Change(String code, String phrase, RimeSyncPlanner.GoogleAction action) {
+            this(code, phrase, action, NEW_ENTRY_COUNT);
+        }
+
+        public Change(String code, String phrase, RimeSyncPlanner.GoogleAction action,
+                int count) {
             if (action == null || action == RimeSyncPlanner.GoogleAction.NONE) {
                 throw new IllegalArgumentException("Google mutation action is required");
+            }
+            if (count <= 0) {
+                throw new IllegalArgumentException("Google entry weight must be positive");
             }
             this.code = normalizeCode(code);
             this.phrase = normalizePhrase(phrase);
@@ -542,6 +561,12 @@ public final class GoogleNativeDictionaryBridge {
             }
             this.key = this.code + '\t' + this.phrase;
             this.action = action;
+            this.count = count;
+        }
+
+        /** An addition that carries the weight the entry had in the snapshot it came from. */
+        public static Change addition(String code, String phrase, int count) {
+            return new Change(code, phrase, RimeSyncPlanner.GoogleAction.ADD, count);
         }
     }
 

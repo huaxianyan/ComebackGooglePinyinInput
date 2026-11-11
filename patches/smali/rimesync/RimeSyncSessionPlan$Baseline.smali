@@ -26,29 +26,29 @@
 .method public constructor <init>(Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$History;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$GoogleProjection;I)V
     .locals 0
 
-    .line 219
+    .line 230
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
-    .line 220
+    .line 231
     if-eqz p1, :cond_0
 
     if-eqz p2, :cond_0
 
     if-ltz p3, :cond_0
 
-    .line 223
+    .line 234
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan$Baseline;->history:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$History;
 
-    .line 224
+    .line 235
     iput-object p2, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan$Baseline;->googleProjection:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$GoogleProjection;
 
-    .line 225
+    .line 236
     iput p3, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan$Baseline;->rimeAbsCount:I
 
-    .line 226
+    .line 237
     return-void
 
-    .line 221
+    .line 232
     :cond_0
     new-instance p1, Ljava/lang/IllegalArgumentException;
 

@@ -51,15 +51,15 @@
         }
     .end annotation
 
-    .line 579
+    .line 604
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
-    .line 580
+    .line 605
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$PreparedChanges;->deletes:Ljava/util/List;
 
-    .line 581
+    .line 606
     iput-object p2, p0, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$PreparedChanges;->adds:Ljava/util/List;
 
-    .line 582
+    .line 607
     return-void
 .end method

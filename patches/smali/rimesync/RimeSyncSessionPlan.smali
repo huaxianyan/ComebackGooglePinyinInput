@@ -14,6 +14,8 @@
 
 
 # static fields
+.field private static final SNAPSHOT_TRUST_FLOOR:I = 0x3e8
+
 .field private static final UTF_8:Ljava/nio/charset/Charset;
 
 
@@ -72,38 +74,38 @@
         }
     .end annotation
 
-    .line 27
+    .line 29
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
-    .line 29
+    .line 31
     invoke-static {p1}, Ljava/util/Collections;->unmodifiableList(Ljava/util/List;)Ljava/util/List;
 
     move-result-object p1
 
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan;->entries:Ljava/util/List;
 
-    .line 30
+    .line 32
     iput p2, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan;->googleAdditionCount:I
 
-    .line 31
+    .line 33
     iput p3, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan;->googleDeletionCount:I
 
-    .line 32
+    .line 34
     iput p4, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan;->rimeAdditionCount:I
 
-    .line 33
+    .line 35
     iput p5, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan;->rimeDeletionCount:I
 
-    .line 34
+    .line 36
     iput p6, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan;->rimeResurrectionCount:I
 
-    .line 35
+    .line 37
     iput p7, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan;->projectedGoogleEntryCount:I
 
-    .line 36
+    .line 38
     iput-object p8, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan;->confirmationToken:Ljava/lang/String;
 
-    .line 37
+    .line 39
     return-void
 .end method
 
@@ -129,7 +131,7 @@
         }
     .end annotation
 
-    .line 43
+    .line 45
     const/4 v0, 0x1
 
     invoke-static {p0, p1, p2, v0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan;->buildInternal(Ljava/util/Map;Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan$BaselineLookup;Z)Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan;
@@ -161,7 +163,7 @@
         }
     .end annotation
 
-    .line 58
+    .line 60
     move-object/from16 v0, p0
 
     move-object/from16 v1, p1
@@ -174,7 +176,7 @@
 
     if-eqz v2, :cond_1a
 
-    .line 62
+    .line 64
     new-instance v3, Ljava/util/ArrayList;
 
     invoke-interface {v0}, Ljava/util/Map;->keySet()Ljava/util/Set;
@@ -183,7 +185,7 @@
 
     invoke-direct {v3, v4}, Ljava/util/ArrayList;-><init>(Ljava/util/Collection;)V
 
-    .line 63
+    .line 65
     new-instance v4, Ljava/util/ArrayList;
 
     iget-object v5, v1, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;->entries:Ljava/util/Map;
@@ -194,16 +196,16 @@
 
     invoke-direct {v4, v5}, Ljava/util/ArrayList;-><init>(Ljava/util/Collection;)V
 
-    .line 64
+    .line 66
     invoke-static {v3}, Ljava/util/Collections;->sort(Ljava/util/List;)V
 
-    .line 65
+    .line 67
     invoke-static {v4}, Ljava/util/Collections;->sort(Ljava/util/List;)V
 
-    .line 66
+    .line 68
     if-eqz p3, :cond_0
 
-    .line 67
+    .line 69
     new-instance v5, Ljava/util/ArrayList;
 
     invoke-interface {v3}, Ljava/util/List;->size()I
@@ -222,7 +224,7 @@
 
     goto :goto_0
 
-    .line 68
+    .line 70
     :cond_0
     invoke-static {}, Ljava/util/Collections;->emptyList()Ljava/util/List;
 
@@ -230,14 +232,8 @@
 
     move-object v7, v5
 
-    .line 69
-    :goto_0
-    nop
-
-    .line 70
-    nop
-
     .line 71
+    :goto_0
     nop
 
     .line 72
@@ -253,6 +249,12 @@
     nop
 
     .line 76
+    nop
+
+    .line 77
+    nop
+
+    .line 78
     invoke-static {}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan;->sha256()Ljava/security/MessageDigest;
 
     move-result-object v5
@@ -271,7 +273,7 @@
 
     const/4 v14, 0x0
 
-    .line 77
+    .line 79
     :goto_1
     invoke-interface {v3}, Ljava/util/List;->size()I
 
@@ -287,7 +289,7 @@
 
     goto :goto_2
 
-    .line 132
+    .line 134
     :cond_1
     iget v0, v1, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;->totalEntryCount:I
 
@@ -295,15 +297,15 @@
 
     add-int/2addr v0, v11
 
-    .line 133
+    .line 135
     const v2, 0x7a120
 
     if-gt v0, v2, :cond_2
 
-    .line 137
+    .line 139
     new-instance v6, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan;
 
-    .line 138
+    .line 140
     invoke-virtual {v5}, Ljava/security/MessageDigest;->digest()[B
 
     move-result-object v1
@@ -328,10 +330,10 @@
 
     invoke-direct/range {v6 .. v14}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan;-><init>(Ljava/util/List;IIIIIILjava/lang/String;)V
 
-    .line 137
+    .line 139
     return-object v6
 
-    .line 134
+    .line 136
     :cond_2
     new-instance v0, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$CapacityException;
 
@@ -341,7 +343,7 @@
 
     throw v0
 
-    .line 78
+    .line 80
     :cond_3
     :goto_2
     invoke-interface {v3}, Ljava/util/List;->size()I
@@ -363,7 +365,7 @@
     :cond_4
     move-object/from16 v15, v16
 
-    .line 79
+    .line 81
     :goto_3
     invoke-interface {v4}, Ljava/util/List;->size()I
 
@@ -371,7 +373,7 @@
 
     if-ge v9, v6, :cond_5
 
-    .line 80
+    .line 82
     invoke-interface {v4, v9}, Ljava/util/List;->get(I)Ljava/lang/Object;
 
     move-result-object v6
@@ -388,7 +390,7 @@
     :goto_4
     move-object/from16 v6, v16
 
-    .line 82
+    .line 84
     if-eqz v6, :cond_9
 
     if-eqz v15, :cond_6
@@ -401,7 +403,7 @@
 
     goto :goto_6
 
-    .line 85
+    .line 87
     :cond_6
     if-eqz v15, :cond_8
 
@@ -413,39 +415,39 @@
 
     goto :goto_5
 
-    .line 89
+    .line 91
     :cond_7
     nop
 
-    .line 90
+    .line 92
     add-int/lit8 v8, v8, 0x1
 
-    .line 91
+    .line 93
     add-int/lit8 v9, v9, 0x1
 
     goto :goto_7
 
-    .line 86
+    .line 88
     :cond_8
     :goto_5
     nop
 
-    .line 87
+    .line 89
     add-int/lit8 v9, v9, 0x1
 
     move-object v15, v6
 
     goto :goto_7
 
-    .line 83
+    .line 85
     :cond_9
     :goto_6
     nop
 
-    .line 84
+    .line 86
     add-int/lit8 v8, v8, 0x1
 
-    .line 93
+    .line 95
     :goto_7
     invoke-interface {v0, v15}, Ljava/util/Map;->get(Ljava/lang/Object;)Ljava/lang/Object;
 
@@ -453,7 +455,7 @@
 
     check-cast v6, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCore$CanonicalEntry;
 
-    .line 94
+    .line 96
     iget-object v0, v1, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;->entries:Ljava/util/Map;
 
     invoke-interface {v0, v15}, Ljava/util/Map;->get(Ljava/lang/Object;)Ljava/lang/Object;
@@ -462,12 +464,12 @@
 
     check-cast v0, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$GoogleEntry;
 
-    .line 95
+    .line 97
     invoke-interface {v2, v15}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan$BaselineLookup;->get(Ljava/lang/String;)Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan$Baseline;
 
     move-result-object v1
 
-    .line 96
+    .line 98
     if-eqz v1, :cond_19
 
     iget-object v2, v1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan$Baseline;->history:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$History;
@@ -482,7 +484,7 @@
 
     if-ltz v2, :cond_19
 
-    .line 100
+    .line 102
     if-nez v6, :cond_a
 
     const/4 v2, 0x0
@@ -492,7 +494,7 @@
     :cond_a
     iget v2, v6, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCore$CanonicalEntry;->commits:I
 
-    .line 101
+    .line 103
     :goto_8
     move/from16 v16, v2
 
@@ -508,28 +510,28 @@
 
     move-result v2
 
-    .line 103
+    .line 105
     if-nez v6, :cond_b
 
-    .line 104
+    .line 106
     sget-object v3, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$RimeState;->ABSENT:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$RimeState;
 
     goto :goto_9
 
-    .line 105
+    .line 107
     :cond_b
     if-gez v16, :cond_c
 
-    .line 106
+    .line 108
     sget-object v3, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$RimeState;->TOMBSTONE:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$RimeState;
 
     goto :goto_9
 
-    .line 107
+    .line 109
     :cond_c
     sget-object v3, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$RimeState;->PRESENT:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$RimeState;
 
-    .line 108
+    .line 110
     :goto_9
     move-object/from16 v16, v4
 
@@ -557,7 +559,7 @@
 
     move-result-object v1
 
-    .line 112
+    .line 114
     iget-object v3, v1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$Plan;->rimeAction:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$RimeAction;
 
     sget-object v4, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$RimeAction;->DELETE:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$RimeAction;
@@ -572,7 +574,7 @@
 
     goto :goto_b
 
-    .line 114
+    .line 116
     :cond_e
     iget-object v3, v1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$Plan;->rimeAction:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$RimeAction;
 
@@ -580,7 +582,7 @@
 
     if-ne v3, v4, :cond_f
 
-    .line 115
+    .line 117
     const/16 v26, 0x0
 
     goto :goto_c
@@ -590,7 +592,7 @@
 
     goto :goto_c
 
-    .line 113
+    .line 115
     :cond_10
     :goto_b
     iget v2, v1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$Plan;->rimeCommitValue:I
@@ -601,11 +603,11 @@
 
     move/from16 v26, v2
 
-    .line 116
+    .line 118
     :goto_c
     if-eqz p3, :cond_13
 
-    .line 117
+    .line 119
     if-eqz v6, :cond_11
 
     iget-object v2, v6, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCore$CanonicalEntry;->code:Ljava/lang/String;
@@ -618,7 +620,7 @@
     :goto_d
     move-object/from16 v19, v2
 
-    .line 118
+    .line 120
     if-eqz v6, :cond_12
 
     iget-object v0, v6, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCore$CanonicalEntry;->phrase:Ljava/lang/String;
@@ -631,7 +633,7 @@
     :goto_e
     move-object/from16 v20, v0
 
-    .line 119
+    .line 121
     new-instance v17, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan$EntryPlan;
 
     iget-object v0, v1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$Plan;->googleAction:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$GoogleAction;
@@ -666,11 +668,11 @@
 
     goto :goto_f
 
-    .line 116
+    .line 118
     :cond_13
     move/from16 v2, v26
 
-    .line 123
+    .line 125
     :goto_f
     iget-object v0, v1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$Plan;->googleAction:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$GoogleAction;
 
@@ -680,7 +682,7 @@
 
     add-int/lit8 v11, v11, 0x1
 
-    .line 124
+    .line 126
     :cond_14
     iget-object v0, v1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$Plan;->googleAction:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$GoogleAction;
 
@@ -690,7 +692,7 @@
 
     add-int/lit8 v10, v10, 0x1
 
-    .line 125
+    .line 127
     :cond_15
     iget-object v0, v1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$Plan;->rimeAction:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$RimeAction;
 
@@ -700,7 +702,7 @@
 
     add-int/lit8 v12, v12, 0x1
 
-    .line 126
+    .line 128
     :cond_16
     iget-object v0, v1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$Plan;->rimeAction:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$RimeAction;
 
@@ -710,7 +712,7 @@
 
     add-int/lit8 v13, v13, 0x1
 
-    .line 127
+    .line 129
     :cond_17
     iget-object v0, v1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$Plan;->rimeAction:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$RimeAction;
 
@@ -718,14 +720,14 @@
 
     if-ne v0, v3, :cond_18
 
-    .line 128
+    .line 130
     add-int/lit8 v14, v14, 0x1
 
-    .line 130
+    .line 132
     :cond_18
     invoke-static {v5, v15, v1, v2}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan;->updateDigest(Ljava/security/MessageDigest;Ljava/lang/String;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$Plan;I)V
 
-    .line 131
+    .line 133
     move-object/from16 v0, p0
 
     move-object/from16 v1, p1
@@ -740,7 +742,7 @@
 
     goto/16 :goto_1
 
-    .line 98
+    .line 100
     :cond_19
     new-instance v0, Ljava/lang/IllegalArgumentException;
 
@@ -750,7 +752,7 @@
 
     throw v0
 
-    .line 59
+    .line 61
     :cond_1a
     new-instance v0, Ljava/lang/IllegalArgumentException;
 
@@ -789,7 +791,7 @@
         }
     .end annotation
 
-    .line 51
+    .line 53
     const/4 v0, 0x0
 
     invoke-static {p0, p1, p2, v0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan;->buildInternal(Ljava/util/Map;Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan$BaselineLookup;Z)Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan;
@@ -802,19 +804,19 @@
 .method private static checkedMagnitude(I)I
     .locals 1
 
-    .line 169
+    .line 180
     const/high16 v0, -0x80000000
 
     if-eq p0, v0, :cond_0
 
-    .line 172
+    .line 183
     invoke-static {p0}, Ljava/lang/Math;->abs(I)I
 
     move-result p0
 
     return p0
 
-    .line 170
+    .line 181
     :cond_0
     new-instance p0, Ljava/lang/IllegalArgumentException;
 
@@ -828,7 +830,7 @@
 .method private static hex([B)Ljava/lang/String;
     .locals 6
 
-    .line 204
+    .line 215
     new-instance v0, Ljava/lang/StringBuilder;
 
     array-length v1, p0
@@ -837,7 +839,7 @@
 
     invoke-direct {v0, v1}, Ljava/lang/StringBuilder;-><init>(I)V
 
-    .line 205
+    .line 216
     array-length v1, p0
 
     const/4 v2, 0x0
@@ -873,7 +875,7 @@
 
     goto :goto_0
 
-    .line 206
+    .line 217
     :cond_0
     invoke-virtual {v0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
 
@@ -882,10 +884,33 @@
     return-object p0
 .end method
 
+.method public static isCollapsed(II)Z
+    .locals 1
+
+    .line 149
+    const/16 v0, 0x3e8
+
+    if-lt p0, v0, :cond_0
+
+    div-int/lit8 p0, p0, 0x2
+
+    if-ge p1, p0, :cond_0
+
+    const/4 p0, 0x1
+
+    goto :goto_0
+
+    :cond_0
+    const/4 p0, 0x0
+
+    :goto_0
+    return p0
+.end method
+
 .method private static sha256()Ljava/security/MessageDigest;
     .locals 3
 
-    .line 177
+    .line 188
     :try_start_0
     const-string v0, "SHA-256"
 
@@ -897,11 +922,11 @@
 
     return-object v0
 
-    .line 178
+    .line 189
     :catch_0
     move-exception v0
 
-    .line 179
+    .line 190
     new-instance v1, Ljava/lang/IllegalStateException;
 
     const-string v2, "SHA-256 is unavailable"
@@ -914,14 +939,14 @@
 .method private static updateDigest(Ljava/security/MessageDigest;Ljava/lang/String;)V
     .locals 1
 
-    .line 195
+    .line 206
     sget-object v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan;->UTF_8:Ljava/nio/charset/Charset;
 
     invoke-virtual {p1, v0}, Ljava/lang/String;->getBytes(Ljava/nio/charset/Charset;)[B
 
     move-result-object p1
 
-    .line 196
+    .line 207
     array-length v0, p1
 
     ushr-int/lit8 v0, v0, 0x18
@@ -930,7 +955,7 @@
 
     invoke-virtual {p0, v0}, Ljava/security/MessageDigest;->update(B)V
 
-    .line 197
+    .line 208
     array-length v0, p1
 
     ushr-int/lit8 v0, v0, 0x10
@@ -939,7 +964,7 @@
 
     invoke-virtual {p0, v0}, Ljava/security/MessageDigest;->update(B)V
 
-    .line 198
+    .line 209
     array-length v0, p1
 
     ushr-int/lit8 v0, v0, 0x8
@@ -948,27 +973,27 @@
 
     invoke-virtual {p0, v0}, Ljava/security/MessageDigest;->update(B)V
 
-    .line 199
+    .line 210
     array-length v0, p1
 
     int-to-byte v0, v0
 
     invoke-virtual {p0, v0}, Ljava/security/MessageDigest;->update(B)V
 
-    .line 200
+    .line 211
     invoke-virtual {p0, p1}, Ljava/security/MessageDigest;->update([B)V
 
-    .line 201
+    .line 212
     return-void
 .end method
 
 .method private static updateDigest(Ljava/security/MessageDigest;Ljava/lang/String;Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$Plan;I)V
     .locals 0
 
-    .line 185
+    .line 196
     invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan;->updateDigest(Ljava/security/MessageDigest;Ljava/lang/String;)V
 
-    .line 186
+    .line 197
     iget-object p1, p2, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$Plan;->googleAction:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$GoogleAction;
 
     invoke-virtual {p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$GoogleAction;->name()Ljava/lang/String;
@@ -977,7 +1002,7 @@
 
     invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan;->updateDigest(Ljava/security/MessageDigest;Ljava/lang/String;)V
 
-    .line 187
+    .line 198
     iget-object p1, p2, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$Plan;->rimeAction:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$RimeAction;
 
     invoke-virtual {p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$RimeAction;->name()Ljava/lang/String;
@@ -986,7 +1011,7 @@
 
     invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan;->updateDigest(Ljava/security/MessageDigest;Ljava/lang/String;)V
 
-    .line 188
+    .line 199
     iget p1, p2, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$Plan;->rimeCommitValue:I
 
     invoke-static {p1}, Ljava/lang/Integer;->toString(I)Ljava/lang/String;
@@ -995,7 +1020,7 @@
 
     invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan;->updateDigest(Ljava/security/MessageDigest;Ljava/lang/String;)V
 
-    .line 189
+    .line 200
     iget-object p1, p2, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$Plan;->nextHistory:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$History;
 
     invoke-virtual {p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$History;->name()Ljava/lang/String;
@@ -1004,7 +1029,7 @@
 
     invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan;->updateDigest(Ljava/security/MessageDigest;Ljava/lang/String;)V
 
-    .line 190
+    .line 201
     iget-object p1, p2, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$Plan;->nextGoogleProjection:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$GoogleProjection;
 
     invoke-virtual {p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$GoogleProjection;->name()Ljava/lang/String;
@@ -1013,14 +1038,14 @@
 
     invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan;->updateDigest(Ljava/security/MessageDigest;Ljava/lang/String;)V
 
-    .line 191
+    .line 202
     invoke-static {p3}, Ljava/lang/Integer;->toString(I)Ljava/lang/String;
 
     move-result-object p1
 
     invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan;->updateDigest(Ljava/security/MessageDigest;Ljava/lang/String;)V
 
-    .line 192
+    .line 203
     return-void
 .end method
 
@@ -1037,12 +1062,12 @@
         }
     .end annotation
 
-    .line 146
+    .line 157
     new-instance v0, Ljava/util/ArrayList;
 
     invoke-direct {v0}, Ljava/util/ArrayList;-><init>()V
 
-    .line 148
+    .line 159
     iget-object v1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan;->entries:Ljava/util/List;
 
     invoke-interface {v1}, Ljava/util/List;->iterator()Ljava/util/Iterator;
@@ -1062,14 +1087,14 @@
 
     check-cast v2, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan$EntryPlan;
 
-    .line 149
+    .line 160
     iget-object v3, v2, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan$EntryPlan;->googleAction:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$GoogleAction;
 
     sget-object v4, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$GoogleAction;->NONE:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$GoogleAction;
 
     if-eq v3, v4, :cond_0
 
-    .line 150
+    .line 161
     new-instance v3, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Change;
 
     iget-object v4, v2, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan$EntryPlan;->code:Ljava/lang/String;
@@ -1082,11 +1107,11 @@
 
     invoke-interface {v0, v3}, Ljava/util/List;->add(Ljava/lang/Object;)Z
 
-    .line 153
+    .line 164
     :cond_0
     goto :goto_0
 
-    .line 154
+    .line 165
     :cond_1
     return-object v0
 .end method
@@ -1094,7 +1119,7 @@
 .method public requiresDeletionConfirmation()Z
     .locals 1
 
-    .line 142
+    .line 153
     iget v0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan;->googleDeletionCount:I
 
     if-gtz v0, :cond_1
@@ -1129,12 +1154,12 @@
         }
     .end annotation
 
-    .line 158
+    .line 169
     new-instance v0, Ljava/util/ArrayList;
 
     invoke-direct {v0}, Ljava/util/ArrayList;-><init>()V
 
-    .line 159
+    .line 170
     iget-object v1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan;->entries:Ljava/util/List;
 
     invoke-interface {v1}, Ljava/util/List;->iterator()Ljava/util/Iterator;
@@ -1154,14 +1179,14 @@
 
     check-cast v2, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan$EntryPlan;
 
-    .line 160
+    .line 171
     iget-object v3, v2, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan$EntryPlan;->rimeAction:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$RimeAction;
 
     sget-object v4, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$RimeAction;->NONE:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$RimeAction;
 
     if-eq v3, v4, :cond_0
 
-    .line 161
+    .line 172
     new-instance v3, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCore$RimeChange;
 
     iget-object v4, v2, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSessionPlan$EntryPlan;->code:Ljava/lang/String;
@@ -1176,11 +1201,11 @@
 
     invoke-interface {v0, v3}, Ljava/util/List;->add(Ljava/lang/Object;)Z
 
-    .line 164
+    .line 175
     :cond_0
     goto :goto_0
 
-    .line 165
+    .line 176
     :cond_1
     return-object v0
 .end method

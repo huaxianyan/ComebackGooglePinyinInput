@@ -32,7 +32,7 @@
         }
     .end annotation
 
-    .line 583
+    .line 582
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncLegacySettingsCompat$Controller$11;->this$0:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncLegacySettingsCompat$Controller;
 
     iput-object p2, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncLegacySettingsCompat$Controller$11;->val$preview:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;
@@ -47,10 +47,10 @@
 .method public onClick(Landroid/content/DialogInterface;I)V
     .locals 1
 
-    .line 585
+    .line 584
     invoke-interface {p1}, Landroid/content/DialogInterface;->dismiss()V
 
-    .line 586
+    .line 585
     iget-object p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncLegacySettingsCompat$Controller$11;->this$0:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncLegacySettingsCompat$Controller;
 
     iget-object p2, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncLegacySettingsCompat$Controller$11;->val$preview:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncSettingsCompat$Result;
@@ -63,6 +63,6 @@
 
     invoke-static {p1, p2, v0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncLegacySettingsCompat$Controller;->access$1600(Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncLegacySettingsCompat$Controller;Ljava/lang/String;Z)V
 
-    .line 588
+    .line 587
     return-void
 .end method

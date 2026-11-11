@@ -32,7 +32,7 @@
         }
     .end annotation
 
-    .line 49
+    .line 54
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$2$1;->this$0:Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$2;
 
     iput-object p2, p0, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$2$1;->val$snapshot:Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$Snapshot;
@@ -47,7 +47,7 @@
 .method public run()V
     .locals 2
 
-    .line 50
+    .line 55
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$2$1;->this$0:Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$2;
 
     iget-object v0, v0, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$2;->val$callback:Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$SnapshotCallback;
