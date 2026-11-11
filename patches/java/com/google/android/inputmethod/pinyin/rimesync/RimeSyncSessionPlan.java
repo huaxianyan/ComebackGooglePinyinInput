@@ -75,7 +75,6 @@ public final class RimeSyncSessionPlan {
         int rimeResurrections = 0;
         int rimeIndex = 0;
         int googleIndex = 0;
-        int committedPresent = 0;
         MessageDigest digest = sha256();
         while (rimeIndex < rimeKeys.size() || googleIndex < googleKeys.size()) {
             String rimeKey = rimeIndex < rimeKeys.size() ? rimeKeys.get(rimeIndex) : null;
@@ -100,7 +99,6 @@ public final class RimeSyncSessionPlan {
                     || baseline.googleProjection == null || baseline.rimeAbsCount < 0) {
                 throw new IllegalArgumentException("synchronization baseline is invalid");
             }
-            if (baseline.history == RimeSyncPlanner.History.PRESENT) committedPresent++;
             int currentRimeCount = rime == null ? 0 : rime.commits;
             int planningMagnitude = Math.max(checkedMagnitude(currentRimeCount),
                     baseline.rimeAbsCount);
