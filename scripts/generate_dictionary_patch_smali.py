@@ -25,6 +25,8 @@ OUTPUT_DIR = ROOT / "patches/smali"
 
 TARGETS = (
     "DictionaryAutoBackupCompat",
+    "DictionaryAutoBackupSettingsCompat",
+    "LocalBackupImportActivity",
 )
 
 TASK_LISTENER_STUB = """
@@ -67,6 +69,11 @@ def main() -> int:
         sources.append(PACKAGE_DIR / (dependency + ".java"))
     for shared in ("rimesync", "dictsafety"):
         sources.extend(sorted((PACKAGE_DIR / shared).glob("*.java")))
+    unique = []
+    for path in sources:
+        if path not in unique:
+            unique.append(path)
+    sources = unique
     for path in (android_jar, javac, jar, d8, apktool):
         if not path.exists():
             raise FileNotFoundError(path)

@@ -81,7 +81,7 @@
 .method private static capture(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;Ljava/lang/Object;II)V
     .locals 2
 
-    .line 151
+    .line 160
     invoke-static {p3, p4}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyPolicy;->acceptsSnapshot(II)Z
 
     move-result p4
@@ -90,13 +90,13 @@
 
     return-void
 
-    .line 152
+    .line 161
     :cond_0
     invoke-static {p0, p2}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyGuard;->entries(Landroid/content/Context;Ljava/lang/Object;)Ljava/util/List;
 
     move-result-object p2
 
-    .line 153
+    .line 162
     if-eqz p2, :cond_3
 
     invoke-interface {p2}, Ljava/util/List;->isEmpty()Z
@@ -107,18 +107,18 @@
 
     goto :goto_0
 
-    .line 154
+    .line 163
     :cond_1
     invoke-static {p3, p2}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetySnapshot;->of(ILjava/util/List;)Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetySnapshot;
 
     move-result-object p2
 
-    .line 155
+    .line 164
     invoke-virtual {p1}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;->snapshots()Ljava/util/List;
 
     move-result-object p3
 
-    .line 156
+    .line 165
     invoke-virtual {p1}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;->preferences()Landroid/content/SharedPreferences;
 
     move-result-object p4
@@ -127,22 +127,22 @@
 
     move-result-object p4
 
-    .line 158
+    .line 167
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;->mainDictionarySize(Landroid/content/Context;)J
 
     move-result-wide v0
 
-    .line 157
+    .line 166
     const-string p0, "known_dictionary_file_size"
 
     invoke-interface {p4, p0, v0, v1}, Landroid/content/SharedPreferences$Editor;->putLong(Ljava/lang/String;J)Landroid/content/SharedPreferences$Editor;
 
     move-result-object p0
 
-    .line 159
+    .line 168
     invoke-interface {p0}, Landroid/content/SharedPreferences$Editor;->apply()V
 
-    .line 160
+    .line 169
     invoke-interface {p3}, Ljava/util/List;->isEmpty()Z
 
     move-result p0
@@ -163,7 +163,7 @@
 
     move-result-wide p3
 
-    .line 161
+    .line 170
     invoke-static {p2}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;->fingerprint(Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetySnapshot;)J
 
     move-result-wide v0
@@ -172,17 +172,17 @@
 
     if-nez p0, :cond_2
 
-    .line 162
+    .line 171
     return-void
 
-    .line 164
+    .line 173
     :cond_2
     invoke-virtual {p1, p2}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;->write(Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetySnapshot;)Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore$StoredSnapshot;
 
-    .line 165
+    .line 174
     return-void
 
-    .line 153
+    .line 162
     :cond_3
     :goto_0
     return-void
@@ -191,7 +191,7 @@
 .method private static engineFactory(Landroid/content/Context;)Ljava/lang/Object;
     .locals 7
 
-    .line 230
+    .line 239
     const/4 v0, 0x0
 
     :try_start_0
@@ -213,7 +213,7 @@
 
     aput-object v5, v4, v6
 
-    .line 231
+    .line 240
     invoke-virtual {v1, v2, v4}, Ljava/lang/Class;->getMethod(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;
 
     move-result-object v1
@@ -226,7 +226,7 @@
 
     move-result-object p0
 
-    .line 232
+    .line 241
     instance-of v1, p0, Lcom/google/android/apps/inputmethod/libs/hmm/AbstractHmmEngineFactory;
     :try_end_0
     .catchall {:try_start_0 .. :try_end_0} :catchall_0
@@ -238,11 +238,11 @@
     :cond_0
     return-object v0
 
-    .line 233
+    .line 242
     :catchall_0
     move-exception p0
 
-    .line 234
+    .line 243
     return-object v0
 .end method
 
@@ -260,33 +260,33 @@
         }
     .end annotation
 
-    .line 213
+    .line 222
     :try_start_0
     check-cast p1, Lcom/google/android/apps/inputmethod/libs/hmm/AbstractHmmEngineFactory;
 
-    .line 214
+    .line 223
     invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge;->read(Landroid/content/Context;Lcom/google/android/apps/inputmethod/libs/hmm/AbstractHmmEngineFactory;)Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;
 
     move-result-object p0
 
     iget-object p0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;->entries:Ljava/util/Map;
 
-    .line 215
+    .line 224
     invoke-interface {p0}, Ljava/util/Map;->values()Ljava/util/Collection;
 
     move-result-object p0
 
-    .line 216
+    .line 225
     new-instance p1, Ljava/util/ArrayList;
 
-    .line 217
+    .line 226
     invoke-interface {p0}, Ljava/util/Collection;->size()I
 
     move-result v0
 
     invoke-direct {p1, v0}, Ljava/util/ArrayList;-><init>(I)V
 
-    .line 218
+    .line 227
     invoke-interface {p0}, Ljava/util/Collection;->iterator()Ljava/util/Iterator;
 
     move-result-object p0
@@ -304,7 +304,7 @@
 
     check-cast v0, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$GoogleEntry;
 
-    .line 219
+    .line 228
     new-instance v1, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetySnapshot$Entry;
 
     iget-object v2, v0, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$GoogleEntry;->phrase:Ljava/lang/String;
@@ -319,18 +319,18 @@
     :try_end_0
     .catchall {:try_start_0 .. :try_end_0} :catchall_0
 
-    .line 221
+    .line 230
     goto :goto_0
 
-    .line 222
+    .line 231
     :cond_0
     return-object p1
 
-    .line 223
+    .line 232
     :catchall_0
     move-exception p0
 
-    .line 224
+    .line 233
     const/4 p0, 0x0
 
     return-object p0
@@ -339,7 +339,7 @@
 .method private static entriesCouldStillBeOnDisk(Landroid/content/Context;Landroid/content/SharedPreferences;II)Ljava/lang/Boolean;
     .locals 5
 
-    .line 140
+    .line 149
     const-string v0, "known_dictionary_file_size"
 
     const-wide/16 v1, 0x0
@@ -348,12 +348,12 @@
 
     move-result-wide v3
 
-    .line 141
+    .line 150
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;->mainDictionarySize(Landroid/content/Context;)J
 
     move-result-wide p0
 
-    .line 142
+    .line 151
     cmp-long v0, v3, v1
 
     if-lez v0, :cond_3
@@ -364,7 +364,7 @@
 
     goto :goto_1
 
-    .line 143
+    .line 152
     :cond_0
     if-gtz p2, :cond_1
 
@@ -372,7 +372,7 @@
 
     return-object p0
 
-    .line 144
+    .line 153
     :cond_1
     int-to-long v0, p2
 
@@ -382,7 +382,7 @@
 
     div-long/2addr v3, p2
 
-    .line 145
+    .line 154
     const-wide/16 p2, 0x2
 
     mul-long v3, v3, p2
@@ -405,7 +405,7 @@
 
     return-object p0
 
-    .line 142
+    .line 151
     :cond_3
     :goto_1
     const/4 p0, 0x0
@@ -416,7 +416,7 @@
 .method private static readableCount(Landroid/content/Context;Ljava/lang/Object;)I
     .locals 0
 
-    .line 204
+    .line 213
     :try_start_0
     check-cast p1, Lcom/google/android/apps/inputmethod/libs/hmm/AbstractHmmEngineFactory;
 
@@ -430,20 +430,64 @@
 
     return p0
 
-    .line 206
+    .line 215
     :catchall_0
     move-exception p0
 
-    .line 207
+    .line 216
     const/4 p0, -0x1
 
     return p0
 .end method
 
+.method public static readableEntryCount(Landroid/content/Context;)I
+    .locals 2
+
+    .line 42
+    const/4 v0, -0x1
+
+    if-nez p0, :cond_0
+
+    return v0
+
+    .line 43
+    :cond_0
+    invoke-virtual {p0}, Landroid/content/Context;->getApplicationContext()Landroid/content/Context;
+
+    move-result-object v1
+
+    .line 44
+    if-nez v1, :cond_1
+
+    goto :goto_0
+
+    :cond_1
+    move-object p0, v1
+
+    .line 45
+    :goto_0
+    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyGuard;->engineFactory(Landroid/content/Context;)Ljava/lang/Object;
+
+    move-result-object v1
+
+    .line 46
+    if-nez v1, :cond_2
+
+    goto :goto_1
+
+    :cond_2
+    invoke-static {p0, v1}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyGuard;->readableCount(Landroid/content/Context;Ljava/lang/Object;)I
+
+    move-result v0
+
+    :goto_1
+    return v0
+.end method
+
 .method private static record(Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;Ljava/lang/String;)V
     .locals 2
 
-    .line 247
+    .line 256
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;->preferences()Landroid/content/SharedPreferences;
 
     move-result-object p0
@@ -452,14 +496,14 @@
 
     move-result-object p0
 
-    .line 248
+    .line 257
     const-string v0, "last_note"
 
     invoke-interface {p0, v0, p1}, Landroid/content/SharedPreferences$Editor;->putString(Ljava/lang/String;Ljava/lang/String;)Landroid/content/SharedPreferences$Editor;
 
     move-result-object p0
 
-    .line 249
+    .line 258
     invoke-static {}, Ljava/lang/System;->currentTimeMillis()J
 
     move-result-wide v0
@@ -470,25 +514,25 @@
 
     move-result-object p0
 
-    .line 250
+    .line 259
     invoke-interface {p0}, Landroid/content/SharedPreferences$Editor;->apply()V
 
-    .line 251
+    .line 260
     return-void
 .end method
 
 .method private static repair(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;Ljava/lang/Object;II)V
     .locals 5
 
-    .line 170
+    .line 179
     invoke-virtual {p1, p4}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;->newestRepairable(I)Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore$StoredSnapshot;
 
     move-result-object v0
 
-    .line 171
+    .line 180
     if-nez v0, :cond_0
 
-    .line 172
+    .line 181
     new-instance p0, Ljava/lang/StringBuilder;
 
     invoke-direct {p0}, Ljava/lang/StringBuilder;-><init>()V
@@ -515,10 +559,10 @@
 
     invoke-static {p1, p0}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyGuard;->record(Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;Ljava/lang/String;)V
 
-    .line 173
+    .line 182
     return-void
 
-    .line 175
+    .line 184
     :cond_0
     new-instance p3, Ljava/util/ArrayList;
 
@@ -526,14 +570,14 @@
 
     iget-object v1, v1, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetySnapshot;->entries:Ljava/util/List;
 
-    .line 177
+    .line 186
     invoke-interface {v1}, Ljava/util/List;->size()I
 
     move-result v1
 
     invoke-direct {p3, v1}, Ljava/util/ArrayList;-><init>(I)V
 
-    .line 178
+    .line 187
     iget-object v1, v0, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore$StoredSnapshot;->snapshot:Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetySnapshot;
 
     iget-object v1, v1, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetySnapshot;->entries:Ljava/util/List;
@@ -555,7 +599,7 @@
 
     check-cast v2, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetySnapshot$Entry;
 
-    .line 179
+    .line 188
     iget-object v3, v2, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetySnapshot$Entry;->code:Ljava/lang/String;
 
     iget-object v4, v2, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetySnapshot$Entry;->phrase:Ljava/lang/String;
@@ -568,16 +612,16 @@
 
     invoke-interface {p3, v2}, Ljava/util/List;->add(Ljava/lang/Object;)Z
 
-    .line 181
+    .line 190
     goto :goto_0
 
-    .line 182
+    .line 191
     :cond_1
     invoke-static {}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyGuard;->saveLock()Ljava/lang/Object;
 
     move-result-object v1
 
-    .line 183
+    .line 192
     if-nez v1, :cond_2
 
     sget-object v1, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyGuard;->REPAIR_LOCK:Ljava/lang/Object;
@@ -585,7 +629,7 @@
     :cond_2
     monitor-enter v1
 
-    .line 185
+    .line 194
     :try_start_0
     move-object v2, p2
 
@@ -595,28 +639,28 @@
     :try_end_0
     .catchall {:try_start_0 .. :try_end_0} :catchall_0
 
-    .line 190
+    .line 199
     nop
 
-    .line 191
+    .line 200
     :try_start_1
     monitor-exit v1
     :try_end_1
     .catchall {:try_start_1 .. :try_end_1} :catchall_1
 
-    .line 192
+    .line 201
     invoke-static {p0, p2}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyGuard;->readableCount(Landroid/content/Context;Ljava/lang/Object;)I
 
     move-result p3
 
-    .line 193
+    .line 202
     invoke-static {p3, p4}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyPolicy;->isCollapsed(II)Z
 
     move-result v1
 
     if-eqz v1, :cond_3
 
-    .line 194
+    .line 203
     new-instance p0, Ljava/lang/StringBuilder;
 
     invoke-direct {p0}, Ljava/lang/StringBuilder;-><init>()V
@@ -653,10 +697,10 @@
 
     invoke-static {p1, p0}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyGuard;->record(Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;Ljava/lang/String;)V
 
-    .line 195
+    .line 204
     return-void
 
-    .line 197
+    .line 206
     :cond_3
     new-instance v0, Ljava/lang/StringBuilder;
 
@@ -684,7 +728,7 @@
 
     invoke-static {p1, v0}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyGuard;->record(Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;Ljava/lang/String;)V
 
-    .line 198
+    .line 207
     invoke-virtual {p1}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;->preferences()Landroid/content/SharedPreferences;
 
     move-result-object v0
@@ -703,17 +747,17 @@
 
     invoke-interface {v0}, Landroid/content/SharedPreferences$Editor;->apply()V
 
-    .line 199
+    .line 208
     invoke-static {p0, p1, p2, p3, p4}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyGuard;->capture(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;Ljava/lang/Object;II)V
 
-    .line 200
+    .line 209
     return-void
 
-    .line 187
+    .line 196
     :catchall_0
     move-exception p0
 
-    .line 188
+    .line 197
     :try_start_2
     new-instance p2, Ljava/lang/StringBuilder;
 
@@ -743,12 +787,12 @@
 
     invoke-static {p1, p0}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyGuard;->record(Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;Ljava/lang/String;)V
 
-    .line 189
+    .line 198
     monitor-exit v1
 
     return-void
 
-    .line 191
+    .line 200
     :catchall_1
     move-exception p0
 
@@ -768,34 +812,34 @@
 .method public static request(Landroid/content/Context;)V
     .locals 7
 
-    .line 42
+    .line 51
     if-nez p0, :cond_0
 
     return-void
 
-    .line 43
+    .line 52
     :cond_0
     invoke-virtual {p0}, Landroid/content/Context;->getApplicationContext()Landroid/content/Context;
 
     move-result-object p0
 
-    .line 44
+    .line 53
     if-nez p0, :cond_1
 
     return-void
 
-    .line 45
+    .line 54
     :cond_1
     new-instance v0, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;
 
     invoke-direct {v0, p0}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;-><init>(Landroid/content/Context;)V
 
-    .line 46
+    .line 55
     invoke-static {}, Ljava/lang/System;->currentTimeMillis()J
 
     move-result-wide v1
 
-    .line 47
+    .line 56
     invoke-virtual {v0}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;->preferences()Landroid/content/SharedPreferences;
 
     move-result-object v3
@@ -816,10 +860,10 @@
 
     if-gez v5, :cond_2
 
-    .line 49
+    .line 58
     return-void
 
-    .line 51
+    .line 60
     :cond_2
     sget-object v1, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyGuard;->RUNNING:Ljava/util/concurrent/atomic/AtomicBoolean;
 
@@ -835,7 +879,7 @@
 
     return-void
 
-    .line 52
+    .line 61
     :cond_3
     new-instance v1, Ljava/lang/Thread;
 
@@ -847,50 +891,50 @@
 
     invoke-direct {v1, v2, p0}, Ljava/lang/Thread;-><init>(Ljava/lang/Runnable;Ljava/lang/String;)V
 
-    .line 67
+    .line 76
     invoke-virtual {v1, v3}, Ljava/lang/Thread;->setPriority(I)V
 
-    .line 68
+    .line 77
     invoke-virtual {v1}, Ljava/lang/Thread;->start()V
 
-    .line 69
+    .line 78
     return-void
 .end method
 
 .method private static runOnce(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;)V
     .locals 13
 
-    .line 72
+    .line 81
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyGuard;->engineFactory(Landroid/content/Context;)Ljava/lang/Object;
 
     move-result-object v0
 
-    .line 73
+    .line 82
     if-nez v0, :cond_0
 
     return-void
 
-    .line 74
+    .line 83
     :cond_0
     invoke-static {p0, v0}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyGuard;->readableCount(Landroid/content/Context;Ljava/lang/Object;)I
 
     move-result v1
 
-    .line 75
+    .line 84
     if-gez v1, :cond_1
 
     return-void
 
-    .line 77
+    .line 86
     :cond_1
     invoke-virtual {p1}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;->preferences()Landroid/content/SharedPreferences;
 
     move-result-object v2
 
-    .line 78
+    .line 87
     nop
 
-    .line 79
+    .line 88
     const-string v3, "known_entry_count"
 
     const/4 v4, 0x0
@@ -899,12 +943,12 @@
 
     move-result v5
 
-    .line 78
+    .line 87
     invoke-static {v5, v1}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyPolicy;->nextKnownCount(II)I
 
     move-result v5
 
-    .line 80
+    .line 89
     invoke-interface {v2}, Landroid/content/SharedPreferences;->edit()Landroid/content/SharedPreferences$Editor;
 
     move-result-object v6
@@ -915,7 +959,7 @@
 
     invoke-interface {v6}, Landroid/content/SharedPreferences$Editor;->apply()V
 
-    .line 82
+    .line 91
     invoke-static {v1, v5}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyPolicy;->isCollapsed(II)Z
 
     move-result v6
@@ -926,7 +970,7 @@
 
     if-nez v6, :cond_2
 
-    .line 83
+    .line 92
     invoke-interface {v2}, Landroid/content/SharedPreferences;->edit()Landroid/content/SharedPreferences$Editor;
 
     move-result-object v2
@@ -937,22 +981,22 @@
 
     invoke-interface {v2}, Landroid/content/SharedPreferences$Editor;->apply()V
 
-    .line 84
+    .line 93
     invoke-static {p0, p1, v0, v1, v5}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyGuard;->capture(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;Ljava/lang/Object;II)V
 
-    .line 85
+    .line 94
     invoke-virtual {p1, v7}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;->rotate(Z)V
 
-    .line 86
+    .line 95
     return-void
 
-    .line 88
+    .line 97
     :cond_2
     invoke-static {p0, v2, v1, v5}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyGuard;->entriesCouldStillBeOnDisk(Landroid/content/Context;Landroid/content/SharedPreferences;II)Ljava/lang/Boolean;
 
     move-result-object v6
 
-    .line 89
+    .line 98
     const-string v9, " \u6761\u964d\u5230 "
 
     const-string v10, "\u8bcd\u6761\u6570\u4ece "
@@ -961,22 +1005,22 @@
 
     if-nez v6, :cond_4
 
-    .line 92
+    .line 101
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;->mainDictionarySize(Landroid/content/Context;)J
 
     move-result-wide v3
 
-    .line 93
+    .line 102
     cmp-long p0, v3, v11
 
     if-lez p0, :cond_3
 
-    .line 94
+    .line 103
     invoke-interface {v2}, Landroid/content/SharedPreferences;->edit()Landroid/content/SharedPreferences$Editor;
 
     move-result-object p0
 
-    .line 95
+    .line 104
     const-string v0, "known_dictionary_file_size"
 
     invoke-interface {p0, v0, v3, v4}, Landroid/content/SharedPreferences$Editor;->putLong(Ljava/lang/String;J)Landroid/content/SharedPreferences$Editor;
@@ -985,7 +1029,7 @@
 
     invoke-interface {p0}, Landroid/content/SharedPreferences$Editor;->apply()V
 
-    .line 97
+    .line 106
     :cond_3
     new-instance p0, Ljava/lang/StringBuilder;
 
@@ -1019,10 +1063,10 @@
 
     invoke-static {p1, p0}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyGuard;->record(Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;Ljava/lang/String;)V
 
-    .line 98
+    .line 107
     return-void
 
-    .line 100
+    .line 109
     :cond_4
     invoke-virtual {v6}, Ljava/lang/Boolean;->booleanValue()Z
 
@@ -1030,25 +1074,25 @@
 
     if-nez v6, :cond_5
 
-    .line 104
+    .line 113
     invoke-interface {v2}, Landroid/content/SharedPreferences;->edit()Landroid/content/SharedPreferences$Editor;
 
     move-result-object v2
 
-    .line 105
+    .line 114
     invoke-interface {v2, v8, v4}, Landroid/content/SharedPreferences$Editor;->putInt(Ljava/lang/String;I)Landroid/content/SharedPreferences$Editor;
 
     move-result-object v2
 
-    .line 106
+    .line 115
     invoke-interface {v2, v3, v1}, Landroid/content/SharedPreferences$Editor;->putInt(Ljava/lang/String;I)Landroid/content/SharedPreferences$Editor;
 
     move-result-object v2
 
-    .line 107
+    .line 116
     invoke-interface {v2}, Landroid/content/SharedPreferences$Editor;->apply()V
 
-    .line 108
+    .line 117
     new-instance v2, Ljava/lang/StringBuilder;
 
     invoke-direct {v2}, Ljava/lang/StringBuilder;-><init>()V
@@ -1075,16 +1119,16 @@
 
     invoke-static {p1, v2}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyGuard;->record(Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;Ljava/lang/String;)V
 
-    .line 109
+    .line 118
     invoke-static {p0, p1, v0, v1, v1}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyGuard;->capture(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;Ljava/lang/Object;II)V
 
-    .line 110
+    .line 119
     invoke-virtual {p1, v7}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;->rotate(Z)V
 
-    .line 111
+    .line 120
     return-void
 
-    .line 114
+    .line 123
     :cond_5
     invoke-interface {v2, v8, v4}, Landroid/content/SharedPreferences;->getInt(Ljava/lang/String;I)I
 
@@ -1092,7 +1136,7 @@
 
     add-int/2addr v3, v7
 
-    .line 115
+    .line 124
     invoke-interface {v2}, Landroid/content/SharedPreferences;->edit()Landroid/content/SharedPreferences$Editor;
 
     move-result-object v4
@@ -1103,12 +1147,12 @@
 
     invoke-interface {v4}, Landroid/content/SharedPreferences$Editor;->apply()V
 
-    .line 116
+    .line 125
     const/4 v4, 0x2
 
     if-ge v3, v4, :cond_6
 
-    .line 117
+    .line 126
     new-instance p0, Ljava/lang/StringBuilder;
 
     invoke-direct {p0}, Ljava/lang/StringBuilder;-><init>()V
@@ -1141,10 +1185,10 @@
 
     invoke-static {p1, p0}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyGuard;->record(Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;Ljava/lang/String;)V
 
-    .line 118
+    .line 127
     return-void
 
-    .line 120
+    .line 129
     :cond_6
     invoke-static {}, Ljava/lang/System;->currentTimeMillis()J
 
@@ -1164,16 +1208,16 @@
 
     if-gez v9, :cond_7
 
-    .line 122
+    .line 131
     return-void
 
-    .line 124
+    .line 133
     :cond_7
     invoke-interface {v2}, Landroid/content/SharedPreferences;->edit()Landroid/content/SharedPreferences$Editor;
 
     move-result-object v2
 
-    .line 125
+    .line 134
     invoke-static {}, Ljava/lang/System;->currentTimeMillis()J
 
     move-result-wide v3
@@ -1182,20 +1226,20 @@
 
     move-result-object v2
 
-    .line 126
+    .line 135
     invoke-interface {v2}, Landroid/content/SharedPreferences$Editor;->apply()V
 
-    .line 127
+    .line 136
     invoke-static {p0, p1, v0, v1, v5}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyGuard;->repair(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;Ljava/lang/Object;II)V
 
-    .line 128
+    .line 137
     return-void
 .end method
 
 .method private static saveLock()Ljava/lang/Object;
     .locals 3
 
-    .line 240
+    .line 249
     const/4 v0, 0x0
 
     :try_start_0
@@ -1219,10 +1263,10 @@
 
     return-object v0
 
-    .line 241
+    .line 250
     :catchall_0
     move-exception v1
 
-    .line 242
+    .line 251
     return-object v0
 .end method

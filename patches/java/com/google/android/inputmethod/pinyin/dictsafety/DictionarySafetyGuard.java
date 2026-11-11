@@ -37,6 +37,15 @@ public final class DictionarySafetyGuard {
 
     private DictionarySafetyGuard() {}
 
+    /** Entries the engine can read right now, or -1 when it cannot be asked. */
+    public static int readableEntryCount(Context context) {
+        if (context == null) return -1;
+        Context app = context.getApplicationContext();
+        if (app == null) app = context;
+        Object factory = engineFactory(app);
+        return factory == null ? -1 : readableCount(app, factory);
+    }
+
     /** Entry point used by the existing dictionary-save hooks. Cheap when it is not time to look. */
     public static void request(final Context context) {
         if (context == null) return;

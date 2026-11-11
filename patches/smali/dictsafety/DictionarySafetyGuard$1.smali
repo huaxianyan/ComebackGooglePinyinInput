@@ -32,7 +32,7 @@
         }
     .end annotation
 
-    .line 52
+    .line 61
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyGuard$1;->val$app:Landroid/content/Context;
 
     iput-object p2, p0, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyGuard$1;->val$store:Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;
@@ -47,7 +47,7 @@
 .method public run()V
     .locals 6
 
-    .line 55
+    .line 64
     const-string v0, "last_check_at"
 
     const/4 v1, 0x0
@@ -61,7 +61,7 @@
     :try_end_0
     .catchall {:try_start_0 .. :try_end_0} :catchall_0
 
-    .line 59
+    .line 68
     :goto_0
     iget-object v2, p0, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyGuard$1;->val$store:Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;
 
@@ -73,34 +73,34 @@
 
     move-result-object v2
 
-    .line 61
+    .line 70
     invoke-static {}, Ljava/lang/System;->currentTimeMillis()J
 
     move-result-wide v3
 
-    .line 60
+    .line 69
     invoke-interface {v2, v0, v3, v4}, Landroid/content/SharedPreferences$Editor;->putLong(Ljava/lang/String;J)Landroid/content/SharedPreferences$Editor;
 
     move-result-object v0
 
-    .line 62
+    .line 71
     invoke-interface {v0}, Landroid/content/SharedPreferences$Editor;->apply()V
 
-    .line 63
+    .line 72
     invoke-static {}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyGuard;->access$200()Ljava/util/concurrent/atomic/AtomicBoolean;
 
     move-result-object v0
 
     invoke-virtual {v0, v1}, Ljava/util/concurrent/atomic/AtomicBoolean;->set(Z)V
 
-    .line 64
+    .line 73
     goto :goto_1
 
-    .line 56
+    .line 65
     :catchall_0
     move-exception v2
 
-    .line 57
+    .line 66
     :try_start_1
     iget-object v3, p0, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyGuard$1;->val$store:Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;
 
@@ -136,11 +136,11 @@
 
     goto :goto_0
 
-    .line 65
+    .line 74
     :goto_1
     return-void
 
-    .line 59
+    .line 68
     :catchall_1
     move-exception v2
 
@@ -154,27 +154,27 @@
 
     move-result-object v3
 
-    .line 61
+    .line 70
     invoke-static {}, Ljava/lang/System;->currentTimeMillis()J
 
     move-result-wide v4
 
-    .line 60
+    .line 69
     invoke-interface {v3, v0, v4, v5}, Landroid/content/SharedPreferences$Editor;->putLong(Ljava/lang/String;J)Landroid/content/SharedPreferences$Editor;
 
     move-result-object v0
 
-    .line 62
+    .line 71
     invoke-interface {v0}, Landroid/content/SharedPreferences$Editor;->apply()V
 
-    .line 63
+    .line 72
     invoke-static {}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyGuard;->access$200()Ljava/util/concurrent/atomic/AtomicBoolean;
 
     move-result-object v0
 
     invoke-virtual {v0, v1}, Ljava/util/concurrent/atomic/AtomicBoolean;->set(Z)V
 
-    .line 64
+    .line 73
     goto :goto_3
 
     :goto_2
