@@ -355,6 +355,12 @@ public final class DictionarySafetyGuard {
     private static void capture(Context context, DictionarySafetyStore store,
             DictionarySafetyKind kind, Object factory,
             int readable, int known) {
+        if (kind == DictionarySafetyKind.ENGLISH) {
+            // English entries live in the personal dictionary, which the accessor used for entry
+            // lists does not expose, so this snapshot would always come back empty and leave the
+            // same note on every check. The file copy is the protection English can have.
+            return;
+        }
         if (!DictionarySafetyPolicy.acceptsSnapshot(readable, known)) return;
         List<DictionarySafetySnapshot.Entry> entries = entries(store, context, factory);
         if (entries == null || entries.isEmpty()) {
