@@ -7,7 +7,9 @@ package com.google.android.inputmethod.pinyin.dictsafety;
 public enum DictionarySafetyKind {
 
     CHINESE("bdt", "user_dict_3_3", "dictionary-safety", "dictionary_safety"),
-    ENGLISH("agb", "user_dict_3_3_english", "dictionary-safety-en", "dictionary_safety_en");
+    // English keeps its learned words in the personal dictionary, not in the user dictionary the
+    // Chinese engine uses; user_dict_3_3_english is never created by the app.
+    ENGLISH("agb", "personal/Personal.en.dict", "dictionary-safety-en", "dictionary_safety_en");
 
     /** Engine factory class that owns this dictionary. */
     public final String engineFactoryClass;

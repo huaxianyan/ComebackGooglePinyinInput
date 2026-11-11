@@ -77,7 +77,7 @@
 
     sput-object v0, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyKind;->CHINESE:Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyKind;
 
-    .line 10
+    .line 12
     new-instance v1, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyKind;
 
     const-string v6, "dictionary-safety-en"
@@ -90,7 +90,7 @@
 
     const-string v4, "agb"
 
-    const-string v5, "user_dict_3_3_english"
+    const-string v5, "personal/Personal.en.dict"
 
     invoke-direct/range {v1 .. v7}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyKind;-><init>(Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
 
@@ -119,22 +119,22 @@
         }
     .end annotation
 
-    .line 22
+    .line 24
     invoke-direct {p0, p1, p2}, Ljava/lang/Enum;-><init>(Ljava/lang/String;I)V
 
-    .line 23
+    .line 25
     iput-object p3, p0, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyKind;->engineFactoryClass:Ljava/lang/String;
 
-    .line 24
+    .line 26
     iput-object p4, p0, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyKind;->fileName:Ljava/lang/String;
 
-    .line 25
+    .line 27
     iput-object p5, p0, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyKind;->directoryName:Ljava/lang/String;
 
-    .line 26
+    .line 28
     iput-object p6, p0, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyKind;->preferencesName:Ljava/lang/String;
 
-    .line 27
+    .line 29
     return-void
 .end method
 
