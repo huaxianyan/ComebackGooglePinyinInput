@@ -36,6 +36,13 @@ public final class DictionarySafetyStore {
     static final String KEY_LAST_CHECK = "last_check_at";
     static final String KEY_LAST_REPAIR = "last_repair_at";
     static final String KEY_NOTE = "last_note";
+    static final String KEY_KNOWN_FILE_SIZE = "known_dictionary_file_size";
+
+    /** Size of the main dictionary file, which is the only place entries can still live. */
+    public static long mainDictionarySize(Context context) {
+        File file = new File(context.getFilesDir(), "user_dict_3_3");
+        return file.isFile() ? file.length() : 0L;
+    }
 
     private static final String DIRECTORY = "dictionary-safety";
     private static final String PREFIX = "snapshot-";

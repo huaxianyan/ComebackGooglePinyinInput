@@ -85,6 +85,31 @@ public final class DictionarySafetyGuard {
             store.rotate(true);
             return;
         }
+        Boolean stillOnDisk = entriesCouldStillBeOnDisk(context, preferences, readable, known);
+        if (stillOnDisk == null) {
+            // Nothing recorded to compare against yet. Learn the current file size and leave the
+            // dictionary alone this round rather than guessing in either direction.
+            long size = DictionarySafetyStore.mainDictionarySize(context);
+            if (size > 0L) {
+                preferences.edit()
+                        .putLong(DictionarySafetyStore.KEY_KNOWN_FILE_SIZE, size).apply();
+            }
+            record(store, "词条数从 " + known + " 条降到 " + readable + " 条，缺少文件大小基线");
+            return;
+        }
+        if (!stillOnDisk.booleanValue()) {
+            // The file shrank with the count, so the words really are gone: the user deleted them,
+            // or something else did. Adopt the smaller dictionary instead of resurrecting words
+            // nobody asked for.
+            preferences.edit()
+                    .putInt(DictionarySafetyStore.KEY_STRIKES, 0)
+                    .putInt(DictionarySafetyStore.KEY_KNOWN_COUNT, readable)
+                    .apply();
+            record(store, "词条数降到 " + readable + " 条，文件同步变小，按删除处理");
+            capture(context, store, factory, readable, readable);
+            store.rotate(true);
+            return;
+        }
 
         int strikes = preferences.getInt(DictionarySafetyStore.KEY_STRIKES, 0) + 1;
         preferences.edit().putInt(DictionarySafetyStore.KEY_STRIKES, strikes).apply();
@@ -102,6 +127,24 @@ public final class DictionarySafetyGuard {
         repair(context, store, factory, readable, known);
     }
 
+    /**
+     * True when the dictionary file is far larger than the readable count can explain, which means
+     * the entries are still on disk and only the engine's view of them shrank.
+     *
+     * <p>Both sides of this comparison come from this installation's own history: the recorded
+     * count and the file size recorded with it. No fixed byte counts are assumed, because every
+     * user's dictionary has its own size per entry.
+     */
+    private static Boolean entriesCouldStillBeOnDisk(Context context,
+            SharedPreferences preferences, int readable, int known) {
+        long recordedSize = preferences.getLong(DictionarySafetyStore.KEY_KNOWN_FILE_SIZE, 0L);
+        long currentSize = DictionarySafetyStore.mainDictionarySize(context);
+        if (recordedSize <= 0L || currentSize <= 0L) return null;
+        if (readable <= 0) return Boolean.FALSE;
+        long expected = recordedSize * readable / known;
+        return Boolean.valueOf(currentSize > expected * 2L);
+    }
+
     /** Writes a snapshot of a dictionary that currently reads as healthy. */
     private static void capture(Context context, DictionarySafetyStore store, Object factory,
             int readable, int known) {
@@ -110,6 +153,10 @@ public final class DictionarySafetyGuard {
         if (entries == null || entries.isEmpty()) return;
         DictionarySafetySnapshot snapshot = DictionarySafetySnapshot.of(readable, entries);
         List<DictionarySafetyStore.StoredSnapshot> stored = store.snapshots();
+        store.preferences().edit()
+                .putLong(DictionarySafetyStore.KEY_KNOWN_FILE_SIZE,
+                        DictionarySafetyStore.mainDictionarySize(context))
+                .apply();
         if (!stored.isEmpty() && DictionarySafetyStore.fingerprint(stored.get(0).snapshot)
                 == DictionarySafetyStore.fingerprint(snapshot)) {
             return;
