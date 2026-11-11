@@ -31,10 +31,10 @@ public final class DictionarySafetyGuard {
     private static final long REPAIR_INTERVAL_MS = 24L * 60L * 60L * 1000L;
     private static final int STRIKES_BEFORE_REPAIR = 2;
 
-    private static final AtomicBoolean RUNNING = new AtomicBoolean();
-    private static final java.util.concurrent.ConcurrentHashMap<DictionarySafetyKind, Boolean>
-            BUSY = new java.util.concurrent.ConcurrentHashMap<DictionarySafetyKind, Boolean>();
-    private static final java.util.Map<DictionarySafetyKind, Boolean> busy = BUSY;
+    /** One check at a time per dictionary, so two triggers cannot race on the same snapshot. */
+    private static final java.util.Set<DictionarySafetyKind> BUSY =
+            java.util.Collections.newSetFromMap(
+                    new java.util.concurrent.ConcurrentHashMap<DictionarySafetyKind, Boolean>());
     private static final Object REPAIR_LOCK = new Object();
 
     private DictionarySafetyGuard() {}
@@ -54,19 +54,27 @@ public final class DictionarySafetyGuard {
         final Context app = context.getApplicationContext();
         if (app == null) return;
         long now = System.currentTimeMillis();
+        app.getSharedPreferences(DictionarySafetyKind.CHINESE.preferencesName,
+                Context.MODE_PRIVATE).edit()
+                .putString(DictionarySafetyStore.KEY_DEBUG, "request-entered " + now)
+                .apply();
         for (final DictionarySafetyKind kind : DictionarySafetyKind.values()) {
             final DictionarySafetyStore store = new DictionarySafetyStore(app, kind);
             if (now - store.preferences().getLong(
                     DictionarySafetyStore.KEY_LAST_CHECK, 0L) < CHECK_INTERVAL_MS) {
                 continue;
             }
-            if (!RUNNING.compareAndSet(false, true)) return;
-            if (!Boolean.TRUE.equals(busy.put(kind, Boolean.TRUE))) {
-                RUNNING.set(false);
-                continue;
-            }
+            // Mark the attempt before starting: a check that dies still counts as this round's
+            // attempt, and the timestamp proves the entry point was reached.
+            store.preferences().edit()
+                    .putLong(DictionarySafetyStore.KEY_LAST_CHECK, now)
+                    .apply();
+            if (!BUSY.add(kind)) continue;
             Thread worker = new Thread(new Runnable() {
                 @Override public void run() {
+                    store.preferences().edit()
+                            .putString(DictionarySafetyStore.KEY_DEBUG, "worker-started")
+                            .apply();
                     try {
                         runOnce(app, store, kind);
                     } catch (Throwable unrecoverable) {
@@ -76,8 +84,10 @@ public final class DictionarySafetyGuard {
                                 .putLong(DictionarySafetyStore.KEY_LAST_CHECK,
                                         System.currentTimeMillis())
                                 .apply();
-                        busy.remove(kind);
-                        RUNNING.set(false);
+                        store.preferences().edit()
+                                .putString(DictionarySafetyStore.KEY_DEBUG, "worker-finished")
+                                .apply();
+                        BUSY.remove(kind);
                     }
                 }
             }, "dictionary-safety");
@@ -89,9 +99,15 @@ public final class DictionarySafetyGuard {
     private static void runOnce(Context context, DictionarySafetyStore store,
             DictionarySafetyKind kind) {
         Object factory = engineFactory(context, kind);
-        if (factory == null) return;
+        if (factory == null) {
+            record(store, "引擎尚未就绪，本次跳过");
+            return;
+        }
         int readable = readableCount(context, factory);
-        if (readable < 0) return;
+        if (readable < 0) {
+            record(store, "暂时读不出条目数，本次跳过");
+            return;
+        }
 
         SharedPreferences preferences = store.preferences();
         int known = DictionarySafetyPolicy.nextKnownCount(
@@ -170,8 +186,11 @@ public final class DictionarySafetyGuard {
             DictionarySafetyKind kind, Object factory,
             int readable, int known) {
         if (!DictionarySafetyPolicy.acceptsSnapshot(readable, known)) return;
-        List<DictionarySafetySnapshot.Entry> entries = entries(context, factory);
-        if (entries == null || entries.isEmpty()) return;
+        List<DictionarySafetySnapshot.Entry> entries = entries(store, context, factory);
+        if (entries == null || entries.isEmpty()) {
+            record(store, "词条明细暂时读不出（计数 " + readable + " 条），本次跳过快照");
+            return;
+        }
         DictionarySafetySnapshot snapshot = DictionarySafetySnapshot.of(readable, entries);
         List<DictionarySafetyStore.StoredSnapshot> stored = store.snapshots();
         store.preferences().edit()
@@ -230,7 +249,8 @@ public final class DictionarySafetyGuard {
         }
     }
 
-    private static List<DictionarySafetySnapshot.Entry> entries(Context context, Object factory) {
+    private static List<DictionarySafetySnapshot.Entry> entries(
+            DictionarySafetyStore store, Context context, Object factory) {
         try {
             Collection<GoogleNativeDictionaryBridge.GoogleEntry> readable =
                     GoogleNativeDictionaryBridge.read(
@@ -243,6 +263,7 @@ public final class DictionarySafetyGuard {
             }
             return entries;
         } catch (Throwable unavailable) {
+            record(store, "读取词条失败：" + unavailable);
             return null;
         }
     }

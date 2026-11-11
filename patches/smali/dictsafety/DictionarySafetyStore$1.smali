@@ -34,7 +34,7 @@
 .method constructor <init>(Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;)V
     .locals 0
 
-    .line 83
+    .line 84
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore$1;->this$0:Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;
 
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
@@ -47,7 +47,7 @@
 .method public compare(Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore$StoredSnapshot;Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore$StoredSnapshot;)I
     .locals 2
 
-    .line 85
+    .line 86
     iget-object p2, p2, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore$StoredSnapshot;->file:Ljava/io/File;
 
     invoke-virtual {p2}, Ljava/io/File;->lastModified()J
@@ -72,7 +72,7 @@
 .method public bridge synthetic compare(Ljava/lang/Object;Ljava/lang/Object;)I
     .locals 0
 
-    .line 83
+    .line 84
     check-cast p1, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore$StoredSnapshot;
 
     check-cast p2, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore$StoredSnapshot;
