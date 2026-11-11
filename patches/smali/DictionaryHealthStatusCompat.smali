@@ -34,7 +34,7 @@
 .method static constructor <clinit>()V
     .locals 2
 
-    .line 23
+    .line 24
     new-instance v0, Landroid/os/Handler;
 
     invoke-static {}, Landroid/os/Looper;->getMainLooper()Landroid/os/Looper;
@@ -45,7 +45,7 @@
 
     sput-object v0, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat;->MAIN:Landroid/os/Handler;
 
-    .line 24
+    .line 25
     invoke-static {}, Ljava/util/concurrent/Executors;->newSingleThreadExecutor()Ljava/util/concurrent/ExecutorService;
 
     move-result-object v0
@@ -58,7 +58,7 @@
 .method private constructor <init>()V
     .locals 0
 
-    .line 27
+    .line 28
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
     return-void
@@ -67,7 +67,7 @@
 .method static synthetic access$000(Landroid/content/Context;)Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$Snapshot;
     .locals 0
 
-    .line 17
+    .line 18
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat;->inspect(Landroid/content/Context;)Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$Snapshot;
 
     move-result-object p0
@@ -78,7 +78,7 @@
 .method static synthetic access$100()Landroid/os/Handler;
     .locals 1
 
-    .line 17
+    .line 18
     sget-object v0, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat;->MAIN:Landroid/os/Handler;
 
     return-object v0
@@ -87,7 +87,7 @@
 .method private static describeBackup(Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$FileStats;)Ljava/lang/String;
     .locals 2
 
-    .line 182
+    .line 186
     iget-boolean v0, p0, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$FileStats;->backup:Z
 
     if-eqz v0, :cond_0
@@ -110,7 +110,7 @@
 .method private static describeMain(Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$FileStats;)Ljava/lang/String;
     .locals 2
 
-    .line 179
+    .line 183
     iget-boolean v0, p0, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$FileStats;->main:Z
 
     if-eqz v0, :cond_0
@@ -133,7 +133,7 @@
 .method private static entryCount(Landroid/content/Context;Ljava/lang/String;)I
     .locals 6
 
-    .line 127
+    .line 131
     const/4 v0, -0x1
 
     :try_start_0
@@ -153,7 +153,7 @@
 
     aput-object v4, v3, v5
 
-    .line 128
+    .line 132
     invoke-virtual {p1, v1, v3}, Ljava/lang/Class;->getMethod(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;
 
     move-result-object p1
@@ -168,14 +168,14 @@
 
     move-result-object p1
 
-    .line 129
+    .line 133
     instance-of v1, p1, Lcom/google/android/apps/inputmethod/libs/hmm/AbstractHmmEngineFactory;
 
     if-nez v1, :cond_0
 
     return v0
 
-    .line 130
+    .line 134
     :cond_0
     check-cast p1, Lcom/google/android/apps/inputmethod/libs/hmm/AbstractHmmEngineFactory;
 
@@ -189,18 +189,18 @@
 
     return p0
 
-    .line 132
+    .line 136
     :catchall_0
     move-exception p0
 
-    .line 133
+    .line 137
     return v0
 .end method
 
 .method private static files(Landroid/content/Context;Ljava/lang/String;)Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$FileStats;
     .locals 17
 
-    .line 170
+    .line 174
     move-object/from16 v0, p0
 
     move-object/from16 v1, p1
@@ -209,7 +209,7 @@
 
     move-result-object v2
 
-    .line 171
+    .line 175
     new-instance v3, Ljava/lang/StringBuilder;
 
     invoke-direct {v3}, Ljava/lang/StringBuilder;-><init>()V
@@ -232,7 +232,7 @@
 
     move-result-object v3
 
-    .line 172
+    .line 176
     new-instance v4, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$FileStats;
 
     invoke-virtual {v2}, Ljava/io/File;->exists()Z
@@ -276,7 +276,7 @@
     :cond_1
     move-wide v11, v9
 
-    .line 173
+    .line 177
     :goto_1
     invoke-virtual {v2}, Ljava/io/File;->exists()Z
 
@@ -293,7 +293,7 @@
     :cond_2
     move-wide v13, v9
 
-    .line 174
+    .line 178
     :goto_2
     invoke-virtual {v3}, Ljava/io/File;->exists()Z
 
@@ -342,7 +342,7 @@
 
     move-result-object v2
 
-    .line 175
+    .line 179
     invoke-virtual {v0, v2}, Landroid/content/Context;->getFileStreamPath(Ljava/lang/String;)Ljava/io/File;
 
     move-result-object v2
@@ -369,7 +369,7 @@
 
     move-result-object v1
 
-    .line 176
+    .line 180
     invoke-virtual {v0, v1}, Landroid/content/Context;->getFileStreamPath(Ljava/lang/String;)Ljava/io/File;
 
     move-result-object v0
@@ -394,14 +394,14 @@
 
     invoke-direct/range {v4 .. v14}, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$FileStats;-><init>(ZJJZJZZ)V
 
-    .line 172
+    .line 176
     return-object v4
 .end method
 
 .method private static formatBytes(J)Ljava/lang/String;
     .locals 6
 
-    .line 185
+    .line 189
     const-wide/16 v0, 0x400
 
     cmp-long v2, p0, v0
@@ -428,7 +428,7 @@
 
     return-object p0
 
-    .line 186
+    .line 190
     :cond_0
     const-wide/32 v0, 0x100000
 
@@ -466,7 +466,7 @@
 
     return-object p0
 
-    .line 187
+    .line 191
     :cond_1
     sget-object v0, Ljava/util/Locale;->US:Ljava/util/Locale;
 
@@ -498,7 +498,10 @@
 .method private static inspect(Landroid/content/Context;)Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$Snapshot;
     .locals 15
 
-    .line 63
+    .line 65
+    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyGuard;->request(Landroid/content/Context;)V
+
+    .line 67
     const/4 v0, 0x2
 
     :try_start_0
@@ -510,7 +513,7 @@
 
     const-string v2, "sSaveLock"
 
-    .line 65
+    .line 69
     invoke-virtual {v1, v2}, Ljava/lang/Class;->getField(Ljava/lang/String;)Ljava/lang/reflect/Field;
 
     move-result-object v1
@@ -521,15 +524,15 @@
 
     move-result-object v1
 
-    .line 66
+    .line 70
     if-eqz v1, :cond_12
 
-    .line 67
+    .line 71
     monitor-enter v1
     :try_end_0
     .catchall {:try_start_0 .. :try_end_0} :catchall_1
 
-    .line 68
+    .line 72
     :try_start_1
     const-string v2, "user_dict_3_3"
 
@@ -537,35 +540,35 @@
 
     move-result-object v2
 
-    .line 69
+    .line 73
     const-string v3, "user_dict_3_3_english"
 
     invoke-static {p0, v3}, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat;->files(Landroid/content/Context;Ljava/lang/String;)Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$FileStats;
 
     move-result-object v3
 
-    .line 70
+    .line 74
     const-string v4, "bdt"
 
     invoke-static {p0, v4}, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat;->nativeReadable(Landroid/content/Context;Ljava/lang/String;)Z
 
     move-result v4
 
-    .line 71
+    .line 75
     const-string v5, "agb"
 
     invoke-static {p0, v5}, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat;->nativeReadable(Landroid/content/Context;Ljava/lang/String;)Z
 
     move-result v5
 
-    .line 72
+    .line 76
     const-string v6, "bdt"
 
     invoke-static {p0, v6}, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat;->entryCount(Landroid/content/Context;Ljava/lang/String;)I
 
     move-result v6
 
-    .line 73
+    .line 77
     const-string v7, "dictionary_health_preferences"
 
     const/4 v8, 0x0
@@ -574,14 +577,14 @@
 
     move-result-object v7
 
-    .line 74
+    .line 78
     const-string v9, "last_chinese_entries"
 
     invoke-interface {v7, v9, v8}, Landroid/content/SharedPreferences;->getInt(Ljava/lang/String;I)I
 
     move-result v9
 
-    .line 75
+    .line 79
     const/4 v10, 0x1
 
     if-ltz v6, :cond_0
@@ -599,28 +602,28 @@
     :cond_0
     const/4 v11, 0x0
 
-    .line 76
+    .line 80
     :goto_0
     nop
 
-    .line 77
+    .line 81
     const-string v12, "\u4e2d\u6587\u8bcd\u5e93\u53ef\u8bfb\u53d6\uff0c\u82f1\u6587\u8bcd\u5e93\u53ef\u8bfb\u53d6"
 
-    .line 78
+    .line 82
     if-eqz v4, :cond_7
 
     if-nez v5, :cond_1
 
     goto :goto_3
 
-    .line 81
+    .line 85
     :cond_1
     if-eqz v11, :cond_2
 
-    .line 82
+    .line 86
     nop
 
-    .line 83
+    .line 87
     new-instance v11, Ljava/lang/StringBuilder;
 
     invoke-direct {v11}, Ljava/lang/StringBuilder;-><init>()V
@@ -659,7 +662,7 @@
 
     goto :goto_4
 
-    .line 85
+    .line 89
     :cond_2
     iget-boolean v11, v2, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$FileStats;->unreadable:Z
 
@@ -671,7 +674,7 @@
 
     goto :goto_2
 
-    .line 88
+    .line 92
     :cond_3
     iget-boolean v11, v2, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$FileStats;->temporary:Z
 
@@ -688,47 +691,47 @@
 
     goto :goto_4
 
-    .line 89
+    .line 93
     :cond_5
     :goto_1
     nop
 
-    .line 90
+    .line 94
     const-string v12, "\u8bcd\u5e93\u53ef\u8bfb\u53d6\uff0c\u53d1\u73b0\u4e0a\u6b21\u4fdd\u5b58\u7684\u4e34\u65f6\u6587\u4ef6\uff0c\u8bf7\u7a0d\u540e\u91cd\u65b0\u68c0\u67e5"
 
     const/4 v11, 0x1
 
     goto :goto_4
 
-    .line 86
+    .line 90
     :cond_6
     :goto_2
     nop
 
-    .line 87
+    .line 91
     const-string v12, "\u8bcd\u5e93\u53ef\u8bfb\u53d6\uff0c\u4fdd\u7559\u4e86\u6b64\u524d\u7684\u5f02\u5e38\u6587\u4ef6\uff0c\u5efa\u8bae\u5148\u5907\u4efd\u5f53\u524d\u8bcd\u5e93"
 
     const/4 v11, 0x1
 
     goto :goto_4
 
-    .line 79
+    .line 83
     :cond_7
     :goto_3
     nop
 
-    .line 80
+    .line 84
     const-string v12, "\u8bcd\u5e93\u68c0\u67e5\u672a\u5b8c\u6210\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5"
 
     const/4 v11, 0x2
 
-    .line 92
+    .line 96
     :goto_4
     new-instance v13, Ljava/lang/StringBuilder;
 
     invoke-direct {v13}, Ljava/lang/StringBuilder;-><init>()V
 
-    .line 93
+    .line 97
     const-string v14, "\u4e2d\u6587\u8bcd\u5e93\uff1a"
 
     invoke-virtual {v13, v14}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
@@ -751,7 +754,7 @@
 
     const-string v14, "\n\u82f1\u6587\u8bcd\u5e93\uff1a"
 
-    .line 94
+    .line 98
     invoke-virtual {v4, v14}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 
     move-result-object v4
@@ -768,14 +771,14 @@
     :goto_6
     invoke-virtual {v4, v5}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 
-    .line 95
+    .line 99
     const-string v4, "\n\u4e2d\u6587\u8bcd\u6761\uff1a"
 
     invoke-virtual {v13, v4}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 
     move-result-object v4
 
-    .line 96
+    .line 100
     if-ltz v6, :cond_a
 
     new-instance v5, Ljava/lang/StringBuilder;
@@ -806,7 +809,7 @@
 
     move-result-object v4
 
-    .line 97
+    .line 101
     if-lez v9, :cond_b
 
     new-instance v5, Ljava/lang/StringBuilder;
@@ -841,7 +844,7 @@
     :goto_8
     invoke-virtual {v4, v5}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 
-    .line 98
+    .line 102
     const-string v4, "\n\u4e2d\u6587\u6587\u4ef6\uff1a"
 
     invoke-virtual {v13, v4}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
@@ -858,7 +861,7 @@
 
     const-string v5, "\n\u82f1\u6587\u6587\u4ef6\uff1a"
 
-    .line 99
+    .line 103
     invoke-virtual {v4, v5}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 
     move-result-object v4
@@ -869,7 +872,7 @@
 
     invoke-virtual {v4, v5}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 
-    .line 100
+    .line 104
     const-string v4, "\n\u4e0a\u6b21\u4fdd\u5b58\u526f\u672c\uff1a\u4e2d\u6587 "
 
     invoke-virtual {v13, v4}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
@@ -886,7 +889,7 @@
 
     const-string v5, "\uff0c\u82f1\u6587 "
 
-    .line 101
+    .line 105
     invoke-virtual {v4, v5}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 
     move-result-object v4
@@ -897,14 +900,14 @@
 
     invoke-virtual {v4, v5}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 
-    .line 102
+    .line 106
     const-string v4, "\n\u4fdd\u7559\u7684\u5f02\u5e38\u6587\u4ef6\uff1a"
 
     invoke-virtual {v13, v4}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 
     move-result-object v4
 
-    .line 103
+    .line 107
     iget-boolean v5, v2, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$FileStats;->unreadable:Z
 
     if-eqz v5, :cond_c
@@ -939,14 +942,14 @@
 
     invoke-virtual {v4, v5}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 
-    .line 104
+    .line 108
     const-string v4, "\n\u672a\u5b8c\u6210\u4fdd\u5b58\u7684\u6587\u4ef6\uff1a"
 
     invoke-virtual {v13, v4}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 
     move-result-object v4
 
-    .line 105
+    .line 109
     iget-boolean v5, v2, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$FileStats;->temporary:Z
 
     if-eqz v5, :cond_e
@@ -976,7 +979,7 @@
 
     invoke-virtual {v4, v5}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 
-    .line 106
+    .line 110
     iget-wide v4, v2, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$FileStats;->modified:J
 
     iget-wide v2, v3, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$FileStats;->modified:J
@@ -985,21 +988,21 @@
 
     move-result-wide v2
 
-    .line 107
+    .line 111
     const-wide/16 v4, 0x0
 
     cmp-long v8, v2, v4
 
     if-lez v8, :cond_10
 
-    .line 108
+    .line 112
     const-string v4, "\n\u8bcd\u5e93\u6587\u4ef6\u6700\u8fd1\u66f4\u65b0\uff1a"
 
     invoke-virtual {v13, v4}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 
     move-result-object v4
 
-    .line 109
+    .line 113
     invoke-static {p0}, Landroid/text/format/DateFormat;->getDateFormat(Landroid/content/Context;)Ljava/text/DateFormat;
 
     move-result-object v5
@@ -1022,7 +1025,7 @@
 
     move-result-object v4
 
-    .line 110
+    .line 114
     invoke-static {p0}, Landroid/text/format/DateFormat;->getTimeFormat(Landroid/content/Context;)Ljava/text/DateFormat;
 
     move-result-object p0
@@ -1037,11 +1040,11 @@
 
     invoke-virtual {v4, p0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 
-    .line 114
+    .line 118
     :cond_10
     if-le v6, v9, :cond_11
 
-    .line 115
+    .line 119
     invoke-interface {v7}, Landroid/content/SharedPreferences;->edit()Landroid/content/SharedPreferences$Editor;
 
     move-result-object p0
@@ -1054,7 +1057,7 @@
 
     invoke-interface {p0}, Landroid/content/SharedPreferences$Editor;->apply()V
 
-    .line 117
+    .line 121
     :cond_11
     new-instance p0, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$Snapshot;
 
@@ -1068,7 +1071,7 @@
 
     return-object p0
 
-    .line 118
+    .line 122
     :catchall_0
     move-exception p0
 
@@ -1079,7 +1082,7 @@
     :try_start_2
     throw p0
 
-    .line 66
+    .line 70
     :cond_12
     new-instance p0, Ljava/lang/IllegalStateException;
 
@@ -1091,11 +1094,11 @@
     :try_end_2
     .catchall {:try_start_2 .. :try_end_2} :catchall_1
 
-    .line 119
+    .line 123
     :catchall_1
     move-exception p0
 
-    .line 120
+    .line 124
     new-instance p0, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$Snapshot;
 
     const-string v1, "\u6682\u65f6\u65e0\u6cd5\u68c0\u67e5\u8bcd\u5e93\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5"
@@ -1110,14 +1113,14 @@
 .method public static load(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$Callback;)V
     .locals 1
 
-    .line 40
+    .line 41
     if-eqz p0, :cond_1
 
     if-nez p1, :cond_0
 
     goto :goto_0
 
-    .line 41
+    .line 42
     :cond_0
     new-instance v0, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$1;
 
@@ -1125,10 +1128,10 @@
 
     invoke-static {p0, v0}, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat;->loadSnapshot(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$SnapshotCallback;)V
 
-    .line 46
+    .line 47
     return-void
 
-    .line 40
+    .line 41
     :cond_1
     :goto_0
     return-void
@@ -1137,20 +1140,20 @@
 .method public static loadSnapshot(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$SnapshotCallback;)V
     .locals 2
 
-    .line 49
+    .line 50
     if-eqz p0, :cond_1
 
     if-nez p1, :cond_0
 
     goto :goto_0
 
-    .line 50
+    .line 51
     :cond_0
     invoke-virtual {p0}, Landroid/content/Context;->getApplicationContext()Landroid/content/Context;
 
     move-result-object p0
 
-    .line 51
+    .line 52
     sget-object v0, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat;->IO:Ljava/util/concurrent/ExecutorService;
 
     new-instance v1, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$2;
@@ -1159,10 +1162,10 @@
 
     invoke-interface {v0, v1}, Ljava/util/concurrent/ExecutorService;->execute(Ljava/lang/Runnable;)V
 
-    .line 59
+    .line 60
     return-void
 
-    .line 49
+    .line 50
     :cond_1
     :goto_0
     return-void
@@ -1171,12 +1174,12 @@
 .method private static nativeReadable(Landroid/content/Context;Ljava/lang/String;)Z
     .locals 9
 
-    .line 138
+    .line 142
     const-string v0, "close"
 
     const-string v1, "com.google.android.apps.inputmethod.libs.hmm.MutableDictionaryAccessorInterface"
 
-    .line 140
+    .line 144
     const/4 v2, 0x0
 
     const/4 v3, 0x0
@@ -1186,7 +1189,7 @@
 
     move-result-object p1
 
-    .line 141
+    .line 145
     const-string v4, "a"
 
     const/4 v5, 0x1
@@ -1209,14 +1212,14 @@
 
     move-result-object p0
 
-    .line 142
+    .line 146
     const-string p1, "com.google.android.apps.inputmethod.libs.hmm.AbstractHmmEngineFactory$MutableDictionaryType"
 
     invoke-static {p1}, Ljava/lang/Class;->forName(Ljava/lang/String;)Ljava/lang/Class;
 
     move-result-object p1
 
-    .line 145
+    .line 149
     const-class v4, Ljava/lang/Enum;
 
     invoke-virtual {p1, v4}, Ljava/lang/Class;->asSubclass(Ljava/lang/Class;)Ljava/lang/Class;
@@ -1229,14 +1232,14 @@
 
     move-result-object v4
 
-    .line 147
+    .line 151
     const-string v6, "com.google.android.apps.inputmethod.libs.hmm.AbstractHmmEngineFactory"
 
     invoke-static {v6}, Ljava/lang/Class;->forName(Ljava/lang/String;)Ljava/lang/Class;
 
     move-result-object v6
 
-    .line 149
+    .line 153
     const-string v7, "createMutableDictionaryAccessor"
 
     new-array v8, v5, [Ljava/lang/Class;
@@ -1247,7 +1250,7 @@
 
     move-result-object p1
 
-    .line 150
+    .line 154
     new-array v6, v5, [Ljava/lang/Object;
 
     aput-object v4, v6, v2
@@ -1258,13 +1261,13 @@
     :try_end_0
     .catchall {:try_start_0 .. :try_end_0} :catchall_2
 
-    .line 151
+    .line 155
     if-nez v3, :cond_1
 
-    .line 160
+    .line 164
     if-eqz v3, :cond_0
 
-    .line 162
+    .line 166
     :try_start_1
     invoke-static {v1}, Ljava/lang/Class;->forName(Ljava/lang/String;)Ljava/lang/Class;
 
@@ -1272,7 +1275,7 @@
 
     new-array p1, v2, [Ljava/lang/Class;
 
-    .line 163
+    .line 167
     invoke-virtual {p0, v0, p1}, Ljava/lang/Class;->getMethod(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;
 
     move-result-object p0
@@ -1285,25 +1288,25 @@
 
     goto :goto_0
 
-    .line 164
+    .line 168
     :catchall_0
     move-exception p0
 
     :goto_0
     nop
 
-    .line 151
+    .line 155
     :cond_0
     return v2
 
-    .line 152
+    .line 156
     :cond_1
     :try_start_2
     invoke-static {v1}, Ljava/lang/Class;->forName(Ljava/lang/String;)Ljava/lang/Class;
 
     move-result-object p0
 
-    .line 155
+    .line 159
     const-string p1, "getDictionaryCount"
 
     new-array v4, v2, [Ljava/lang/Class;
@@ -1318,7 +1321,7 @@
 
     move-result-object p0
 
-    .line 156
+    .line 160
     instance-of p1, p0, Ljava/lang/Integer;
 
     if-eqz p1, :cond_2
@@ -1338,11 +1341,11 @@
     :cond_2
     const/4 v5, 0x0
 
-    .line 160
+    .line 164
     :goto_1
     if-eqz v3, :cond_3
 
-    .line 162
+    .line 166
     :try_start_3
     invoke-static {v1}, Ljava/lang/Class;->forName(Ljava/lang/String;)Ljava/lang/Class;
 
@@ -1350,7 +1353,7 @@
 
     new-array p1, v2, [Ljava/lang/Class;
 
-    .line 163
+    .line 167
     invoke-virtual {p0, v0, p1}, Ljava/lang/Class;->getMethod(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;
 
     move-result-object p0
@@ -1363,28 +1366,28 @@
 
     goto :goto_2
 
-    .line 164
+    .line 168
     :catchall_1
     move-exception p0
 
     :goto_2
     nop
 
-    .line 156
+    .line 160
     :cond_3
     return v5
 
-    .line 157
+    .line 161
     :catchall_2
     move-exception p0
 
-    .line 158
+    .line 162
     nop
 
-    .line 160
+    .line 164
     if-eqz v3, :cond_4
 
-    .line 162
+    .line 166
     :try_start_4
     invoke-static {v1}, Ljava/lang/Class;->forName(Ljava/lang/String;)Ljava/lang/Class;
 
@@ -1392,7 +1395,7 @@
 
     new-array p1, v2, [Ljava/lang/Class;
 
-    .line 163
+    .line 167
     invoke-virtual {p0, v0, p1}, Ljava/lang/Class;->getMethod(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;
 
     move-result-object p0
@@ -1405,14 +1408,14 @@
 
     goto :goto_3
 
-    .line 164
+    .line 168
     :catchall_3
     move-exception p0
 
     :goto_3
     nop
 
-    .line 158
+    .line 162
     :cond_4
     return v2
 .end method

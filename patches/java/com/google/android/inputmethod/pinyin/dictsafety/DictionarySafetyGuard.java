@@ -148,6 +148,7 @@ public final class DictionarySafetyGuard {
             return;
         }
         record(store, "已从安全快照恢复，词条数回到 " + restored + " 条");
+        store.preferences().edit().putInt(DictionarySafetyStore.KEY_STRIKES, 0).apply();
         capture(context, store, factory, restored, known);
     }
 

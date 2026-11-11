@@ -32,7 +32,7 @@
         }
     .end annotation
 
-    .line 51
+    .line 52
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$2;->val$context:Landroid/content/Context;
 
     iput-object p2, p0, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$2;->val$callback:Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$SnapshotCallback;
@@ -47,14 +47,14 @@
 .method public run()V
     .locals 3
 
-    .line 53
+    .line 54
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$2;->val$context:Landroid/content/Context;
 
     invoke-static {v0}, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat;->access$000(Landroid/content/Context;)Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$Snapshot;
 
     move-result-object v0
 
-    .line 54
+    .line 55
     invoke-static {}, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat;->access$100()Landroid/os/Handler;
 
     move-result-object v1
@@ -65,6 +65,6 @@
 
     invoke-virtual {v1, v2}, Landroid/os/Handler;->post(Ljava/lang/Runnable;)Z
 
-    .line 57
+    .line 58
     return-void
 .end method

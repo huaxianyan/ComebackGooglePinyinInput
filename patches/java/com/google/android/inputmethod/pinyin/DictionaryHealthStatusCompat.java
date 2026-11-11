@@ -11,6 +11,7 @@ import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import com.google.android.apps.inputmethod.libs.hmm.AbstractHmmEngineFactory;
+import com.google.android.inputmethod.pinyin.dictsafety.DictionarySafetyGuard;
 import com.google.android.inputmethod.pinyin.rimesync.GoogleNativeDictionaryBridge;
 
 /** On-demand metadata/readability inspection. Never exports or modifies dictionary entries. */
@@ -59,6 +60,9 @@ public final class DictionaryHealthStatusCompat {
     }
 
     private static Snapshot inspect(Context context) {
+        // The status page is the one screen a worried user opens; let it also give the private
+        // safety net a chance to run without any extra entry point.
+        DictionarySafetyGuard.request(context);
         try {
             Object lock = Class.forName(
                     "com.google.android.apps.inputmethod.libs.hmm.SaveDictionaryTask")

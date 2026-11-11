@@ -167,7 +167,7 @@
 .method private static engineFactory(Landroid/content/Context;)Ljava/lang/Object;
     .locals 7
 
-    .line 182
+    .line 183
     const/4 v0, 0x0
 
     :try_start_0
@@ -189,7 +189,7 @@
 
     aput-object v5, v4, v6
 
-    .line 183
+    .line 184
     invoke-virtual {v1, v2, v4}, Ljava/lang/Class;->getMethod(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;
 
     move-result-object v1
@@ -202,7 +202,7 @@
 
     move-result-object p0
 
-    .line 184
+    .line 185
     instance-of v1, p0, Lcom/google/android/apps/inputmethod/libs/hmm/AbstractHmmEngineFactory;
     :try_end_0
     .catchall {:try_start_0 .. :try_end_0} :catchall_0
@@ -214,11 +214,11 @@
     :cond_0
     return-object v0
 
-    .line 185
+    .line 186
     :catchall_0
     move-exception p0
 
-    .line 186
+    .line 187
     return-object v0
 .end method
 
@@ -236,33 +236,33 @@
         }
     .end annotation
 
-    .line 165
+    .line 166
     :try_start_0
     check-cast p1, Lcom/google/android/apps/inputmethod/libs/hmm/AbstractHmmEngineFactory;
 
-    .line 166
+    .line 167
     invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge;->read(Landroid/content/Context;Lcom/google/android/apps/inputmethod/libs/hmm/AbstractHmmEngineFactory;)Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;
 
     move-result-object p0
 
     iget-object p0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;->entries:Ljava/util/Map;
 
-    .line 167
+    .line 168
     invoke-interface {p0}, Ljava/util/Map;->values()Ljava/util/Collection;
 
     move-result-object p0
 
-    .line 168
+    .line 169
     new-instance p1, Ljava/util/ArrayList;
 
-    .line 169
+    .line 170
     invoke-interface {p0}, Ljava/util/Collection;->size()I
 
     move-result v0
 
     invoke-direct {p1, v0}, Ljava/util/ArrayList;-><init>(I)V
 
-    .line 170
+    .line 171
     invoke-interface {p0}, Ljava/util/Collection;->iterator()Ljava/util/Iterator;
 
     move-result-object p0
@@ -280,7 +280,7 @@
 
     check-cast v0, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$GoogleEntry;
 
-    .line 171
+    .line 172
     new-instance v1, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetySnapshot$Entry;
 
     iget-object v2, v0, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$GoogleEntry;->phrase:Ljava/lang/String;
@@ -295,18 +295,18 @@
     :try_end_0
     .catchall {:try_start_0 .. :try_end_0} :catchall_0
 
-    .line 173
+    .line 174
     goto :goto_0
 
-    .line 174
+    .line 175
     :cond_0
     return-object p1
 
-    .line 175
+    .line 176
     :catchall_0
     move-exception p0
 
-    .line 176
+    .line 177
     const/4 p0, 0x0
 
     return-object p0
@@ -315,7 +315,7 @@
 .method private static readableCount(Landroid/content/Context;Ljava/lang/Object;)I
     .locals 0
 
-    .line 156
+    .line 157
     :try_start_0
     check-cast p1, Lcom/google/android/apps/inputmethod/libs/hmm/AbstractHmmEngineFactory;
 
@@ -329,11 +329,11 @@
 
     return p0
 
-    .line 158
+    .line 159
     :catchall_0
     move-exception p0
 
-    .line 159
+    .line 160
     const/4 p0, -0x1
 
     return p0
@@ -342,7 +342,7 @@
 .method private static record(Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;Ljava/lang/String;)V
     .locals 2
 
-    .line 199
+    .line 200
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;->preferences()Landroid/content/SharedPreferences;
 
     move-result-object p0
@@ -351,14 +351,14 @@
 
     move-result-object p0
 
-    .line 200
+    .line 201
     const-string v0, "last_note"
 
     invoke-interface {p0, v0, p1}, Landroid/content/SharedPreferences$Editor;->putString(Ljava/lang/String;Ljava/lang/String;)Landroid/content/SharedPreferences$Editor;
 
     move-result-object p0
 
-    .line 201
+    .line 202
     invoke-static {}, Ljava/lang/System;->currentTimeMillis()J
 
     move-result-wide v0
@@ -369,10 +369,10 @@
 
     move-result-object p0
 
-    .line 202
+    .line 203
     invoke-interface {p0}, Landroid/content/SharedPreferences$Editor;->apply()V
 
-    .line 203
+    .line 204
     return-void
 .end method
 
@@ -584,9 +584,28 @@
     invoke-static {p1, v0}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyGuard;->record(Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;Ljava/lang/String;)V
 
     .line 151
-    invoke-static {p0, p1, p2, p3, p4}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyGuard;->capture(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;Ljava/lang/Object;II)V
+    invoke-virtual {p1}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;->preferences()Landroid/content/SharedPreferences;
+
+    move-result-object v0
+
+    invoke-interface {v0}, Landroid/content/SharedPreferences;->edit()Landroid/content/SharedPreferences$Editor;
+
+    move-result-object v0
+
+    const-string v1, "collapsed_strikes"
+
+    const/4 v2, 0x0
+
+    invoke-interface {v0, v1, v2}, Landroid/content/SharedPreferences$Editor;->putInt(Ljava/lang/String;I)Landroid/content/SharedPreferences$Editor;
+
+    move-result-object v0
+
+    invoke-interface {v0}, Landroid/content/SharedPreferences$Editor;->apply()V
 
     .line 152
+    invoke-static {p0, p1, p2, p3, p4}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyGuard;->capture(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyStore;Ljava/lang/Object;II)V
+
+    .line 153
     return-void
 
     .line 140
@@ -943,7 +962,7 @@
 .method private static saveLock()Ljava/lang/Object;
     .locals 3
 
-    .line 192
+    .line 193
     const/4 v0, 0x0
 
     :try_start_0
@@ -967,10 +986,10 @@
 
     return-object v0
 
-    .line 193
+    .line 194
     :catchall_0
     move-exception v1
 
-    .line 194
+    .line 195
     return-object v0
 .end method

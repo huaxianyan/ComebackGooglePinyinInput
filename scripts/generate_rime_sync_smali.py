@@ -33,9 +33,11 @@ def main() -> int:
     jar = jdk / "bin/jar.exe"
     d8 = args.build_tools.resolve() / "d8.bat"
     apktool = args.apktool.resolve()
-    sources = sorted(SOURCE_DIR.glob("*.java")) + [
-        SOURCE_DIR.parent / "DictionaryHealthStatusCompat.java",
-    ]
+    sources = (
+        sorted(SOURCE_DIR.glob("*.java"))
+        + sorted((SOURCE_DIR.parent / "dictsafety").glob("*.java"))
+        + [SOURCE_DIR.parent / "DictionaryHealthStatusCompat.java"]
+    )
     for path in (android_jar, javac, jar, d8, apktool, FACTORY_PROVIDER, *sources):
         if not path.exists():
             raise FileNotFoundError(path)

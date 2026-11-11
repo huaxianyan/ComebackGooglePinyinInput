@@ -300,7 +300,8 @@ public final class GoogleNativeDictionaryBridge {
         Map<String, Change> unique = new LinkedHashMap<String, Change>();
         for (Change change : changes) {
             if (change == null) throw new IllegalArgumentException("Google change is null");
-            Change normalized = new Change(change.code, change.phrase, change.action);
+            Change normalized =
+                    new Change(change.code, change.phrase, change.action, change.count);
             if (unique.put(normalized.key, normalized) != null) {
                 throw new IllegalArgumentException("duplicate Google change");
             }
