@@ -66,13 +66,9 @@ tokens，`languageIds` 每项填 `0x10`（即 `PINYIN_LANGUAGE_ID = 16`），`is
 
 ## 探针怎么跑
 
-探针代码只存在于研究分支 `research/dict-import-weights`，主线没有它。分支上留着是为了以后
-能重跑同样的对比：
-
-- `NativeImportProbe` 只用于研究，主线不带。
-- 触发：`am start -a android.intent.action.VIEW -n <pkg>/
-  com.google.android.inputmethod.pinyin.LocalBackupImportActivity -d file://<应用私有目录文件>
-  --ez native_probe true`（管线）或 `--ez task_probe true`（原任务）。
+探针放在主线的 `patches/research/`，但**不进正式包**：`apply_patches.py` 只有带 `--research`
+时才把类文件和清单里的 `NativeProbeActivity` 装进解码目录。不带这个参数构建出来的 APK，dex 和
+清单里都没有 `NativeProbe` 字样（2026-11-12 核过），本地常规构建和 CI 产物都不受影响。
 
 ## 顺带回答：9.6 万条词库是怎么丢的
 
@@ -133,3 +129,38 @@ tokens，`languageIds` 每项填 `0x10`（即 `PINYIN_LANGUAGE_ID = 16`），`is
 
 按今天验过的行为，保留自有路径更稳，但主线文档里不能再写「原生导入丢权重」，
 那是错误归因。
+
+## 探针的用法
+
+改探针源码后重新生成 Smali：
+
+```bash
+python scripts/generate_research_probe_smali.py   --android-jar "$SDK/platforms/android-36/android.jar"   --jdk "$JDK" --build-tools "$SDK/build-tools/36.0.0" --apktool work/tools/apktool.jar
+```
+
+构建带探针的审计包（本地脚本认 `PINYIN_RESEARCH=1`）：
+
+```bash
+PINYIN_RESEARCH=1 bash work/dyn-inspect/build_all.sh
+```
+
+跑探针时把词典文件放进应用自己的 `files/`：`file:///sdcard/...` 会被 scoped storage 挡掉，
+报 `EACCES`。然后 `am start` 加参数：
+
+```bash
+adb shell am start -n <包名>/com.google.android.inputmethod.pinyin.NativeProbeActivity   -a android.intent.action.VIEW -d file:///data/data/<包名>/files/two.txt --ez task_probe true
+adb logcat -s NativeProbe:*
+```
+
+| 参数 | 作用 |
+| --- | --- |
+| 无 | 走原始导入链并逐条打印权重 |
+| `--ez task_probe true` | 复现应用原先调度的 `beh` 导入任务 |
+| `--ez refresh_probe true` | 只调 `refreshData()`，看文件重读 |
+| `--el damage_keep <字节>` | 把词库文件截断到指定大小，观察引擎反应 |
+
+2026-11-12 在 arm64 真机上用 2 条目的文件验过 `task_probe`：任务回报 `onTaskFinished [true,null]`、
+`getAllEntries=2`，两条权重分别 100 和 90，没有丢。
+
+探针会读写真词库，`damage_keep` 更是直接截断文件。所以它只能存在于研究构建里，这一点由构建参数
+保证，不靠自觉。

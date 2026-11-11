@@ -116,9 +116,16 @@ def main() -> int:
         action="store_true",
         help="build an isolated debug host; forbidden for the formal application ID",
     )
+    parser.add_argument(
+        "--research",
+        action="store_true",
+        help="include the research probes; never pass this for a release build",
+    )
     args = parser.parse_args()
 
     formal_application_id = "com.google.android.inputmethod.pinyin.compat"
+    if args.research and args.application_id == formal_application_id:
+        raise SystemExit("Research probes are not allowed in the formal application ID")
     if args.debuggable and args.application_id == formal_application_id:
         raise RuntimeError("Debug mode is forbidden for the formal application ID")
     if args.launcher_label and args.application_id == formal_application_id:
@@ -185,6 +192,7 @@ def main() -> int:
             "--version-code",
             str(args.version_code),
             *(["--debuggable"] if args.debuggable else []),
+            *(["--research"] if args.research else []),
         ]
     )
     # Build once before AGP-specific normalization to obtain the patched legacy

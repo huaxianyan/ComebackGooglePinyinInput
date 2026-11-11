@@ -70,11 +70,14 @@ def apply(
     debuggable: bool = False,
     version_name: str = "2.0.0",
     version_code: int = 4520385,
+    research: bool = False,
 ) -> None:
     if not (decoded / "apktool.yml").is_file():
         raise RuntimeError(f"Not an apktool output directory: {decoded}")
     if debuggable and application_id == FORMAL_APPLICATION_ID:
         raise RuntimeError("Refusing to make the formal application ID debuggable")
+    if research and application_id == FORMAL_APPLICATION_ID:
+        raise RuntimeError("Refusing to put research probes in the formal application ID")
 
     # Preserve RELRO while re-layouting the exact legacy native payload for 16 KiB.
     rewrite_native_libraries(decoded / "lib/arm64-v8a")
@@ -2444,6 +2447,19 @@ def apply(
         "    sget-object v7, Lcom/google/android/apps/inputmethod/libs/hmm/AbstractHmmEngineFactory$MutableDictionaryType;->USER_DICTIONARY:Lcom/google/android/apps/inputmethod/libs/hmm/AbstractHmmEngineFactory$MutableDictionaryType;",
     )
 
+    # Research probes drive the original pipeline and can damage the live dictionary, so they are
+    # a build-time opt-in: without --research neither the classes nor the manifest entry exist.
+    if research:
+        research_smali = ROOT / "patches/research/smali/com/google/android/inputmethod/pinyin"
+        probe_files = sorted(research_smali.glob("Native*.smali"))
+        if not probe_files:
+            raise RuntimeError(
+                "Research Smali is missing; run generate_research_probe_smali.py first"
+            )
+        destination = decoded / "smali/com/google/android/inputmethod/pinyin"
+        destination.mkdir(parents=True, exist_ok=True)
+        for path in probe_files:
+            shutil.copyfile(path, destination / path.name)
     # Use a distinct application ID so the compatibility build can coexist
     # with the official Google-signed package for side-by-side comparison.
     manifest = decoded / "AndroidManifest.xml"
@@ -2578,6 +2594,17 @@ def apply(
         '        </activity>\n'
         '    </application>\n</manifest>',
     )
+
+    if research:
+        # The probe can damage the live dictionary, so it only exists in research builds.
+        replace_once(
+            manifest,
+            '    </application>\n</manifest>',
+            '        <activity android:exported="true" android:label="Research probe" '
+            'android:name="com.google.android.inputmethod.pinyin.NativeProbeActivity">\n'
+            '        </activity>\n'
+            '    </application>\n</manifest>',
+        )
 
     replace_once(
         manifest,
@@ -3559,6 +3586,11 @@ def main() -> None:
         action="store_true",
         help="enable Android debugging for an isolated non-formal audit ID",
     )
+    parser.add_argument(
+        "--research",
+        action="store_true",
+        help="also deploy the research probes; never use this for a release",
+    )
     parser.add_argument("--version-name", default="2.0.2")
     parser.add_argument("--version-code", type=int, default=4520387)
     args = parser.parse_args()
@@ -3568,6 +3600,7 @@ def main() -> None:
         args.debuggable,
         args.version_name,
         args.version_code,
+        args.research,
     )
 
 
