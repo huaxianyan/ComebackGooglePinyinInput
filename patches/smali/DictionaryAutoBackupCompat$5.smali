@@ -27,9 +27,14 @@
 
 # direct methods
 .method constructor <init>(Landroid/content/Context;Landroid/net/Uri;Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$ValidationCallback;)V
-    .registers 4
+    .locals 0
+    .annotation system Ldalvik/annotation/Signature;
+        value = {
+            "()V"
+        }
+    .end annotation
 
-    .line 427
+    .line 516
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$5;->val$context:Landroid/content/Context;
 
     iput-object p2, p0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$5;->val$tree:Landroid/net/Uri;
@@ -44,20 +49,18 @@
 
 # virtual methods
 .method public run()V
-    .registers 4
+    .locals 3
 
-    .line 429
+    .line 518
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$5;->val$context:Landroid/content/Context;
 
     iget-object v1, p0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$5;->val$tree:Landroid/net/Uri;
 
-    # invokes: Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->validateTree(Landroid/content/Context;Landroid/net/Uri;)Ljava/lang/String;
     invoke-static {v0, v1}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->access$1400(Landroid/content/Context;Landroid/net/Uri;)Ljava/lang/String;
 
     move-result-object v0
 
-    .line 430
-    # getter for: Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->MAIN:Landroid/os/Handler;
+    .line 519
     invoke-static {}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->access$1300()Landroid/os/Handler;
 
     move-result-object v1
@@ -68,6 +71,6 @@
 
     invoke-virtual {v1, v2}, Landroid/os/Handler;->post(Ljava/lang/Runnable;)Z
 
-    .line 435
+    .line 524
     return-void
 .end method

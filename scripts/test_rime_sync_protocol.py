@@ -562,6 +562,15 @@ public final class RimeUserDbSnapshotTest {
       }
     }
     require(dominatingDeleteFound, "the deletion fixture must produce a Rime tombstone");
+
+    // A read that collapses below a committed baseline must be treated as a read failure,
+    // never as a user deletion of the untouched side of the sync.
+    require(RimeSyncSessionPlan.isCollapsed(100194, 4118)
+            && RimeSyncSessionPlan.isCollapsed(1200, 599)
+            && !RimeSyncSessionPlan.isCollapsed(1200, 600)
+            && !RimeSyncSessionPlan.isCollapsed(1200, 1200)
+            && !RimeSyncSessionPlan.isCollapsed(999, 0),
+        "a Google read below half of the committed baseline must not be trusted");
   }
 }
 '''

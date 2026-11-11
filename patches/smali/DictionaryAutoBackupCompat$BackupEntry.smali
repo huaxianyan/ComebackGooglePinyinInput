@@ -22,9 +22,9 @@
 
 # direct methods
 .method constructor <init>(Ljava/lang/String;Landroid/net/Uri;)V
-    .registers 3
+    .locals 0
 
-    .line 367
+    .line 435
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$BackupEntry;->name:Ljava/lang/String;
@@ -37,16 +37,18 @@
 
 # virtual methods
 .method public getName()Ljava/lang/String;
-    .registers 2
+    .locals 1
 
+    .line 436
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$BackupEntry;->name:Ljava/lang/String;
 
     return-object v0
 .end method
 
 .method public getUri()Landroid/net/Uri;
-    .registers 2
+    .locals 1
 
+    .line 437
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$BackupEntry;->uri:Landroid/net/Uri;
 
     return-object v0

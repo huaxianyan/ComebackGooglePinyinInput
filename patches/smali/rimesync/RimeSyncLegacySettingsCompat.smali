@@ -198,12 +198,12 @@
 .method private static describeRoot(Landroid/content/Context;Landroid/net/Uri;)Ljava/lang/String;
     .locals 6
 
-    .line 160
+    .line 159
     invoke-virtual {p1}, Landroid/net/Uri;->getAuthority()Ljava/lang/String;
 
     move-result-object v0
 
-    .line 161
+    .line 160
     const-string v1, "com.android.externalstorage.documents"
 
     invoke-virtual {v1, v0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
@@ -216,20 +216,20 @@
 
     if-eqz v1, :cond_4
 
-    .line 163
+    .line 162
     :try_start_0
     invoke-static {p1}, Landroid/provider/DocumentsContract;->getTreeDocumentId(Landroid/net/Uri;)Ljava/lang/String;
 
     move-result-object p1
 
-    .line 164
+    .line 163
     const/16 v1, 0x3a
 
     invoke-virtual {p1, v1}, Ljava/lang/String;->indexOf(I)I
 
     move-result v1
 
-    .line 165
+    .line 164
     if-gez v1, :cond_0
 
     move-object v4, p1
@@ -241,7 +241,7 @@
 
     move-result-object v4
 
-    .line 166
+    .line 165
     :goto_0
     const/4 v5, 0x1
 
@@ -258,7 +258,7 @@
 
     move-result-object p1
 
-    .line 167
+    .line 166
     :goto_1
     const-string v1, "primary"
 
@@ -268,7 +268,7 @@
 
     if-eqz v1, :cond_2
 
-    .line 168
+    .line 167
     const-string v1, "rime_sync_root_internal"
 
     new-array v4, v3, [Ljava/lang/Object;
@@ -279,7 +279,7 @@
 
     goto :goto_2
 
-    .line 169
+    .line 168
     :cond_2
     const-string v1, "rime_sync_root_removable"
 
@@ -291,7 +291,7 @@
 
     move-result-object v1
 
-    .line 170
+    .line 169
     :goto_2
     invoke-virtual {p1}, Ljava/lang/String;->length()I
 
@@ -332,18 +332,18 @@
     :goto_4
     return-object v1
 
-    .line 171
+    .line 170
     :catch_0
     move-exception p1
 
-    .line 175
+    .line 174
     :cond_4
     :try_start_1
     invoke-virtual {p0}, Landroid/content/Context;->getPackageManager()Landroid/content/pm/PackageManager;
 
     move-result-object p1
 
-    .line 176
+    .line 175
     if-nez v0, :cond_5
 
     move-object v0, v2
@@ -353,10 +353,10 @@
 
     move-result-object p1
 
-    .line 177
+    .line 176
     if-eqz p1, :cond_6
 
-    .line 178
+    .line 177
     invoke-virtual {p0}, Landroid/content/Context;->getPackageManager()Landroid/content/pm/PackageManager;
 
     move-result-object v0
@@ -365,7 +365,7 @@
 
     move-result-object p1
 
-    .line 179
+    .line 178
     if-eqz p1, :cond_6
 
     invoke-interface {p1}, Ljava/lang/CharSequence;->length()I
@@ -382,15 +382,15 @@
 
     return-object p0
 
-    .line 182
+    .line 181
     :cond_6
     goto :goto_5
 
-    .line 181
+    .line 180
     :catch_1
     move-exception p1
 
-    .line 183
+    .line 182
     :goto_5
     const-string p1, "rime_sync_root_selected"
 
@@ -409,126 +409,117 @@
     .line 109
     packed-switch p0, :pswitch_data_0
 
-    .line 145
+    .line 144
     :pswitch_0
     const-string p0, "rime_sync_error_failed"
 
     return-object p0
 
-    .line 143
+    .line 142
     :pswitch_1
     const-string p0, "rime_sync_error_bridge_missing"
 
     return-object p0
 
-    .line 141
-    :pswitch_2
-    const-string p0, "rime_sync_error_directory_identity"
-
-    return-object p0
-
     .line 139
-    :pswitch_3
+    :pswitch_2
     const-string p0, "rime_sync_error_session_plan"
 
     return-object p0
 
     .line 137
-    :pswitch_4
+    :pswitch_3
     const-string p0, "rime_sync_error_google_export"
 
     return-object p0
 
     .line 135
-    :pswitch_5
+    :pswitch_4
     const-string p0, "rime_sync_error_rime_merge"
 
     return-object p0
 
     .line 133
-    :pswitch_6
+    :pswitch_5
     const-string p0, "rime_sync_error_source_close"
 
     return-object p0
 
     .line 131
-    :pswitch_7
+    :pswitch_6
     const-string p0, "rime_sync_error_source_database"
 
     return-object p0
 
     .line 129
-    :pswitch_8
+    :pswitch_7
     const-string p0, "rime_sync_error_source_parse"
 
     return-object p0
 
     .line 127
-    :pswitch_9
+    :pswitch_8
     const-string p0, "rime_sync_error_source_open"
 
     return-object p0
 
     .line 125
-    :pswitch_a
+    :pswitch_9
     const-string p0, "rime_sync_error_source_list"
 
     return-object p0
 
     .line 123
-    :pswitch_b
+    :pswitch_a
     const-string p0, "rime_sync_error_native_persistence"
 
     return-object p0
 
     .line 121
-    :pswitch_c
+    :pswitch_b
     const-string p0, "rime_sync_error_capacity"
 
     return-object p0
 
     .line 119
-    :pswitch_d
+    :pswitch_c
     const-string p0, "rime_sync_error_confirmation"
 
     return-object p0
 
     .line 117
-    :pswitch_e
+    :pswitch_d
     const-string p0, "rime_sync_error_preview_changed"
 
     return-object p0
 
     .line 115
-    :pswitch_f
+    :pswitch_e
     const-string p0, "rime_sync_error_in_progress"
 
     return-object p0
 
     .line 113
-    :pswitch_10
+    :pswitch_f
     const-string p0, "rime_sync_error_location"
 
     return-object p0
 
     .line 111
-    :pswitch_11
+    :pswitch_10
     const-string p0, "rime_sync_error_configuration"
 
     return-object p0
 
-    nop
-
     :pswitch_data_0
     .packed-switch 0x1
-        :pswitch_11
         :pswitch_10
         :pswitch_f
         :pswitch_e
         :pswitch_d
         :pswitch_c
-        :pswitch_0
         :pswitch_b
+        :pswitch_0
         :pswitch_a
         :pswitch_9
         :pswitch_8
@@ -538,6 +529,7 @@
         :pswitch_4
         :pswitch_3
         :pswitch_2
+        :pswitch_1
         :pswitch_1
     .end packed-switch
 .end method
@@ -608,7 +600,7 @@
 .method private static isValidSnapshot(Ljava/lang/String;)Z
     .locals 2
 
-    .line 152
+    .line 151
     :try_start_0
     new-instance v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncConfiguration;
 
@@ -618,16 +610,16 @@
     :try_end_0
     .catch Ljava/lang/IllegalArgumentException; {:try_start_0 .. :try_end_0} :catch_0
 
-    .line 153
+    .line 152
     const/4 p0, 0x1
 
     return p0
 
-    .line 154
+    .line 153
     :catch_0
     move-exception p0
 
-    .line 155
+    .line 154
     const/4 p0, 0x0
 
     return p0

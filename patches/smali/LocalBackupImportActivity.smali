@@ -6,17 +6,9 @@
 .implements Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$BackupListCallback;
 
 
-# annotations
-.annotation system Ldalvik/annotation/MemberClasses;
-    value = {
-        Lcom/google/android/inputmethod/pinyin/LocalBackupImportActivity$ImportListener;
-    }
-.end annotation
-
-
 # direct methods
 .method public constructor <init>()V
-    .registers 1
+    .locals 0
 
     .line 19
     invoke-direct {p0}, Landroid/app/Activity;-><init>()V
@@ -25,7 +17,7 @@
 .end method
 
 .method static synthetic access$000(Lcom/google/android/inputmethod/pinyin/LocalBackupImportActivity;Landroid/net/Uri;Ljava/lang/String;)V
-    .registers 3
+    .locals 0
 
     .line 19
     invoke-direct {p0, p1, p2}, Lcom/google/android/inputmethod/pinyin/LocalBackupImportActivity;->confirm(Landroid/net/Uri;Ljava/lang/String;)V
@@ -33,8 +25,24 @@
     return-void
 .end method
 
+.method static synthetic access$100(Landroid/content/Context;Landroid/net/Uri;)[B
+    .locals 0
+    .annotation system Ldalvik/annotation/Throws;
+        value = {
+            Ljava/io/IOException;
+        }
+    .end annotation
+
+    .line 19
+    invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/LocalBackupImportActivity;->readAll(Landroid/content/Context;Landroid/net/Uri;)[B
+
+    move-result-object p0
+
+    return-object p0
+.end method
+
 .method private confirm(Landroid/net/Uri;Ljava/lang/String;)V
-    .registers 6
+    .locals 3
 
     .line 71
     new-instance v0, Landroid/app/AlertDialog$Builder;
@@ -51,7 +59,7 @@
 
     invoke-direct {v1}, Ljava/lang/StringBuilder;-><init>()V
 
-    const-string v2, "\u5c06\u201c"
+    const-string v2, "\u5c06\u300c"
 
     invoke-virtual {v1, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 
@@ -61,7 +69,7 @@
 
     move-result-object p2
 
-    const-string v1, "\u201d\u5408\u5e76\u5230\u5f53\u524d\u7528\u6237\u8bcd\u5178\uff1f"
+    const-string v1, "\u300d\u5408\u5e76\u5230\u5f53\u524d\u7528\u6237\u8bcd\u5178\uff1f"
 
     invoke-virtual {p2, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 
@@ -115,17 +123,17 @@
 .end method
 
 .method private incomingUri(Landroid/content/Intent;)Landroid/net/Uri;
-    .registers 5
+    .locals 3
 
     .line 29
     const/4 v0, 0x0
 
-    if-nez p1, :cond_4
+    if-nez p1, :cond_0
 
     return-object v0
 
     .line 30
-    :cond_4
+    :cond_0
     const-string v1, "android.intent.action.VIEW"
 
     invoke-virtual {p1}, Landroid/content/Intent;->getAction()Ljava/lang/String;
@@ -136,7 +144,7 @@
 
     move-result v1
 
-    if-eqz v1, :cond_15
+    if-eqz v1, :cond_1
 
     invoke-virtual {p1}, Landroid/content/Intent;->getData()Landroid/net/Uri;
 
@@ -145,7 +153,7 @@
     return-object p1
 
     .line 31
-    :cond_15
+    :cond_1
     const-string v1, "android.intent.action.SEND"
 
     invoke-virtual {p1}, Landroid/content/Intent;->getAction()Ljava/lang/String;
@@ -156,7 +164,7 @@
 
     move-result v1
 
-    if-eqz v1, :cond_2f
+    if-eqz v1, :cond_3
 
     .line 32
     const-string v1, "android.intent.extra.STREAM"
@@ -168,25 +176,112 @@
     .line 33
     instance-of v1, p1, Landroid/net/Uri;
 
-    if-eqz v1, :cond_2e
+    if-eqz v1, :cond_2
 
     move-object v0, p1
 
     check-cast v0, Landroid/net/Uri;
 
-    :cond_2e
+    :cond_2
     return-object v0
 
     .line 35
-    :cond_2f
+    :cond_3
     return-object v0
 .end method
 
+.method private static readAll(Landroid/content/Context;Landroid/net/Uri;)[B
+    .locals 3
+    .annotation system Ldalvik/annotation/Throws;
+        value = {
+            Ljava/io/IOException;
+        }
+    .end annotation
+
+    .line 116
+    invoke-virtual {p0}, Landroid/content/Context;->getContentResolver()Landroid/content/ContentResolver;
+
+    move-result-object p0
+
+    invoke-virtual {p0, p1}, Landroid/content/ContentResolver;->openInputStream(Landroid/net/Uri;)Ljava/io/InputStream;
+
+    move-result-object p0
+
+    .line 117
+    if-eqz p0, :cond_1
+
+    .line 119
+    :try_start_0
+    new-instance p1, Ljava/io/ByteArrayOutputStream;
+
+    invoke-direct {p1}, Ljava/io/ByteArrayOutputStream;-><init>()V
+
+    .line 120
+    const/16 v0, 0x2000
+
+    new-array v0, v0, [B
+
+    .line 122
+    :goto_0
+    invoke-virtual {p0, v0}, Ljava/io/InputStream;->read([B)I
+
+    move-result v1
+
+    const/4 v2, -0x1
+
+    if-eq v1, v2, :cond_0
+
+    const/4 v2, 0x0
+
+    invoke-virtual {p1, v0, v2, v1}, Ljava/io/ByteArrayOutputStream;->write([BII)V
+
+    goto :goto_0
+
+    .line 123
+    :cond_0
+    invoke-virtual {p1}, Ljava/io/ByteArrayOutputStream;->toByteArray()[B
+
+    move-result-object p1
+    :try_end_0
+    .catchall {:try_start_0 .. :try_end_0} :catchall_0
+
+    .line 125
+    invoke-virtual {p0}, Ljava/io/InputStream;->close()V
+
+    .line 123
+    return-object p1
+
+    .line 125
+    :catchall_0
+    move-exception p1
+
+    invoke-virtual {p0}, Ljava/io/InputStream;->close()V
+
+    .line 126
+    throw p1
+
+    .line 117
+    :cond_1
+    new-instance p0, Ljava/io/IOException;
+
+    const-string p1, "backup cannot be opened"
+
+    invoke-direct {p0, p1}, Ljava/io/IOException;-><init>(Ljava/lang/String;)V
+
+    goto :goto_2
+
+    :goto_1
+    throw p0
+
+    :goto_2
+    goto :goto_1
+.end method
+
 .method private showBackups()V
-    .registers 3
+    .locals 2
 
     .line 39
-    const-string v0, "\u6b63\u5728\u8bfb\u53d6\u5907\u4efd\u76ee\u5f55\u2026"
+    const-string v0, "\u6b63\u5728\u8bfb\u53d6\u5907\u4efd\u76ee\u5f55\u2026\u2026"
 
     const/4 v1, 0x0
 
@@ -204,166 +299,46 @@
 .end method
 
 .method public static startNativeImport(Landroid/content/Context;Landroid/net/Uri;)Z
-    .registers 13
+    .locals 2
 
     .line 85
-    const-string v0, "a"
-
     invoke-virtual {p0}, Landroid/content/Context;->getApplicationContext()Landroid/content/Context;
 
     move-result-object p0
 
-    .line 87
-    const/4 v1, 0x1
+    .line 86
+    const-string v0, "\u6b63\u5728\u5bfc\u5165\u7528\u6237\u8bcd\u5178\u5907\u4efd"
 
-    const/4 v2, 0x0
+    const/4 v1, 0x0
 
-    :try_start_8
-    const-string v3, "aib"
-
-    invoke-static {v3}, Ljava/lang/Class;->forName(Ljava/lang/String;)Ljava/lang/Class;
-
-    move-result-object v3
-
-    .line 88
-    new-array v4, v2, [Ljava/lang/Class;
-
-    invoke-virtual {v3, v0, v4}, Ljava/lang/Class;->getMethod(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;
-
-    move-result-object v4
-
-    new-array v5, v2, [Ljava/lang/Object;
-
-    const/4 v6, 0x0
-
-    invoke-virtual {v4, v6, v5}, Ljava/lang/reflect/Method;->invoke(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;
-
-    move-result-object v4
-
-    .line 89
-    const-string v5, "com.google.android.apps.inputmethod.libs.framework.core.TaskFactory"
-
-    invoke-static {v5}, Ljava/lang/Class;->forName(Ljava/lang/String;)Ljava/lang/Class;
-
-    move-result-object v5
-
-    .line 91
-    const-string v6, "beh"
-
-    invoke-static {v6}, Ljava/lang/Class;->forName(Ljava/lang/String;)Ljava/lang/Class;
-
-    move-result-object v6
-
-    const/4 v7, 0x3
-
-    new-array v8, v7, [Ljava/lang/Class;
-
-    const-class v9, Landroid/content/Context;
-
-    aput-object v9, v8, v2
-
-    const-class v9, Lcom/google/android/apps/inputmethod/libs/framework/core/TaskListener;
-
-    aput-object v9, v8, v1
-
-    const-class v9, Landroid/net/Uri;
-
-    const/4 v10, 0x2
-
-    aput-object v9, v8, v10
-
-    invoke-virtual {v6, v8}, Ljava/lang/Class;->getConstructor([Ljava/lang/Class;)Ljava/lang/reflect/Constructor;
-
-    move-result-object v6
-
-    .line 93
-    new-instance v8, Lcom/google/android/inputmethod/pinyin/LocalBackupImportActivity$ImportListener;
-
-    invoke-direct {v8, p0}, Lcom/google/android/inputmethod/pinyin/LocalBackupImportActivity$ImportListener;-><init>(Landroid/content/Context;)V
-
-    new-array v9, v7, [Ljava/lang/Object;
-
-    aput-object p0, v9, v2
-
-    aput-object v8, v9, v1
-
-    aput-object p1, v9, v10
-
-    invoke-virtual {v6, v9}, Ljava/lang/reflect/Constructor;->newInstance([Ljava/lang/Object;)Ljava/lang/Object;
-
-    move-result-object p1
-
-    .line 94
-    new-array v6, v7, [Ljava/lang/Class;
-
-    const-class v8, Ljava/lang/String;
-
-    aput-object v8, v6, v2
-
-    aput-object v5, v6, v1
-
-    sget-object v5, Ljava/lang/Long;->TYPE:Ljava/lang/Class;
-
-    aput-object v5, v6, v10
-
-    invoke-virtual {v3, v0, v6}, Ljava/lang/Class;->getMethod(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;
+    invoke-static {p0, v0, v1}, Landroid/widget/Toast;->makeText(Landroid/content/Context;Ljava/lang/CharSequence;I)Landroid/widget/Toast;
 
     move-result-object v0
 
-    .line 95
-    const-wide/16 v5, 0x0
+    invoke-virtual {v0}, Landroid/widget/Toast;->show()V
 
-    invoke-static {v5, v6}, Ljava/lang/Long;->valueOf(J)Ljava/lang/Long;
+    .line 87
+    new-instance v0, Ljava/lang/Thread;
 
-    move-result-object v3
+    new-instance v1, Lcom/google/android/inputmethod/pinyin/LocalBackupImportActivity$9;
 
-    new-array v5, v7, [Ljava/lang/Object;
+    invoke-direct {v1, p0, p1}, Lcom/google/android/inputmethod/pinyin/LocalBackupImportActivity$9;-><init>(Landroid/content/Context;Landroid/net/Uri;)V
 
-    const-string v6, "user_dict_import"
+    invoke-direct {v0, v1}, Ljava/lang/Thread;-><init>(Ljava/lang/Runnable;)V
 
-    aput-object v6, v5, v2
+    .line 111
+    invoke-virtual {v0}, Ljava/lang/Thread;->start()V
 
-    aput-object p1, v5, v1
+    .line 112
+    const/4 p0, 0x1
 
-    aput-object v3, v5, v10
-
-    invoke-virtual {v0, v4, v5}, Ljava/lang/reflect/Method;->invoke(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;
-
-    .line 96
-    const-string p1, "\u6b63\u5728\u5bfc\u5165\u7528\u6237\u8bcd\u5178\u5907\u4efd"
-
-    invoke-static {p0, p1, v2}, Landroid/widget/Toast;->makeText(Landroid/content/Context;Ljava/lang/CharSequence;I)Landroid/widget/Toast;
-
-    move-result-object p1
-
-    invoke-virtual {p1}, Landroid/widget/Toast;->show()V
-    :try_end_78
-    .catchall {:try_start_8 .. :try_end_78} :catchall_79
-
-    .line 97
-    return v1
-
-    .line 98
-    :catchall_79
-    move-exception p1
-
-    .line 99
-    const-string p1, "\u65e0\u6cd5\u542f\u52a8\u539f\u751f\u7528\u6237\u8bcd\u5178\u5bfc\u5165"
-
-    invoke-static {p0, p1, v1}, Landroid/widget/Toast;->makeText(Landroid/content/Context;Ljava/lang/CharSequence;I)Landroid/widget/Toast;
-
-    move-result-object p0
-
-    invoke-virtual {p0}, Landroid/widget/Toast;->show()V
-
-    .line 100
-    return v2
+    return p0
 .end method
 
 
 # virtual methods
 .method public onBackupListLoaded(Ljava/util/List;)V
-    .registers 6
+    .locals 4
     .annotation system Ldalvik/annotation/Signature;
         value = {
             "(",
@@ -378,17 +353,17 @@
 
     move-result v0
 
-    if-eqz v0, :cond_7
+    if-eqz v0, :cond_0
 
     return-void
 
     .line 46
-    :cond_7
+    :cond_0
     invoke-interface {p1}, Ljava/util/List;->isEmpty()Z
 
     move-result v0
 
-    if-eqz v0, :cond_37
+    if-eqz v0, :cond_1
 
     .line 47
     new-instance p1, Landroid/app/AlertDialog$Builder;
@@ -402,7 +377,7 @@
     move-result-object p1
 
     .line 48
-    const-string v0, "\u5c1a\u672a\u8bbe\u7f6e\u5907\u4efd\u548c\u5bfc\u5165\u76ee\u5f55\uff0c\u6216\u6240\u9009\u76ee\u5f55\u4e2d\u6ca1\u6709 Google \u62fc\u97f3\u7528\u6237\u8bcd\u5178\u5907\u4efd\u3002\u8bf7\u5728\u5b57\u5178\u8bbe\u7f6e\u4e2d\u9009\u62e9\u5df2\u6709\u5907\u4efd\u76ee\u5f55\uff1b\u4e5f\u53ef\u4ee5\u4ece\u6587\u4ef6\u7ba1\u7406\u5668\u6253\u5f00\u6216\u5206\u4eab\u5907\u4efd .txt\u3002"
+    const-string v0, "\u5c1a\u672a\u8bbe\u7f6e\u5907\u4efd\u548c\u5bfc\u5165\u76ee\u5f55\uff0c\u6216\u6240\u9009\u76ee\u5f55\u4e2d\u6ca1\u6709 Google \u62fc\u97f3\u7528\u6237\u8bcd\u5178\u5907\u4efd\u3002\u8bf7\u5728\u5b57\u5178\u8bbe\u7f6e\u4e2d\u9009\u62e9\u5df2\u6709\u5907\u4efd\u76ee\u5f55\uff0c\u4e5f\u53ef\u4ee5\u4ece\u6587\u4ef6\u7ba1\u7406\u5668\u6253\u5f00\u6216\u5206\u4eab\u5907\u4efd .txt\u3002"
 
     invoke-virtual {p1, v0}, Landroid/app/AlertDialog$Builder;->setMessage(Ljava/lang/CharSequence;)Landroid/app/AlertDialog$Builder;
 
@@ -435,7 +410,7 @@
     return-void
 
     .line 56
-    :cond_37
+    :cond_1
     invoke-interface {p1}, Ljava/util/List;->size()I
 
     move-result v0
@@ -445,8 +420,8 @@
     .line 57
     const/4 v2, 0x0
 
-    :goto_3e
-    if-ge v2, v0, :cond_4d
+    :goto_0
+    if-ge v2, v0, :cond_2
 
     invoke-interface {p1, v2}, Ljava/util/List;->get(I)Ljava/lang/Object;
 
@@ -460,10 +435,10 @@
 
     add-int/lit8 v2, v2, 0x1
 
-    goto :goto_3e
+    goto :goto_0
 
     .line 58
-    :cond_4d
+    :cond_2
     new-instance v0, Landroid/app/AlertDialog$Builder;
 
     invoke-direct {v0, p0}, Landroid/app/AlertDialog$Builder;-><init>(Landroid/content/Context;)V
@@ -511,7 +486,7 @@
 .end method
 
 .method protected onCreate(Landroid/os/Bundle;)V
-    .registers 3
+    .locals 1
 
     .line 22
     invoke-super {p0, p1}, Landroid/app/Activity;->onCreate(Landroid/os/Bundle;)V
@@ -526,19 +501,19 @@
     move-result-object p1
 
     .line 24
-    if-eqz p1, :cond_13
+    if-eqz p1, :cond_0
 
     const-string v0, "\u6240\u9009\u7528\u6237\u8bcd\u5178\u5907\u4efd"
 
     invoke-direct {p0, p1, v0}, Lcom/google/android/inputmethod/pinyin/LocalBackupImportActivity;->confirm(Landroid/net/Uri;Ljava/lang/String;)V
 
-    goto :goto_16
+    goto :goto_0
 
     .line 25
-    :cond_13
+    :cond_0
     invoke-direct {p0}, Lcom/google/android/inputmethod/pinyin/LocalBackupImportActivity;->showBackups()V
 
     .line 26
-    :goto_16
+    :goto_0
     return-void
 .end method

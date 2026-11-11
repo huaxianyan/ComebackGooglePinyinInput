@@ -22,14 +22,14 @@
 .method constructor <init>(I)V
     .locals 1
 
-    .line 454
+    .line 460
     const-string v0, "Google user dictionary persistence did not converge"
 
     invoke-direct {p0, v0}, Ljava/io/IOException;-><init>(Ljava/lang/String;)V
 
-    .line 455
+    .line 461
     iput p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncCoordinator$PersistenceStalledException;->missingCount:I
 
-    .line 456
+    .line 462
     return-void
 .end method

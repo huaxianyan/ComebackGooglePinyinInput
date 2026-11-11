@@ -138,7 +138,6 @@ public final class RimeSyncLegacySettingsCompat {
             case RimeSyncSettingsCompat.ERROR_PREVIEW_SESSION_PLAN:
                 return "rime_sync_error_session_plan";
             case RimeSyncSettingsCompat.ERROR_DIRECTORY_IDENTITY:
-                return "rime_sync_error_directory_identity";
             case RimeSyncSettingsCompat.ERROR_BRIDGE_SNAPSHOT_MISSING:
                 return "rime_sync_error_bridge_missing";
             default:

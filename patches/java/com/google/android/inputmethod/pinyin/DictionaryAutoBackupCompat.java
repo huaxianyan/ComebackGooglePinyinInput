@@ -13,6 +13,8 @@ import android.provider.DocumentsContract;
 import android.widget.Toast;
 
 import com.google.android.apps.inputmethod.libs.framework.core.TaskListener;
+import com.google.android.inputmethod.pinyin.dictsafety.DictionarySafetyGuard;
+import com.google.android.inputmethod.pinyin.dictsafety.DictionarySafetyPolicy;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -39,9 +41,15 @@ public final class DictionaryAutoBackupCompat {
     static final String KEY_TREE_LABEL = "dictionary_auto_backup_tree_label";
     static final String KEY_INTERVAL = "dictionary_auto_backup_interval_days";
     static final String KEY_RETENTION = "dictionary_auto_backup_retention_count";
+    static final String KEY_LAST_ENTRY_COUNT = "dictionary_auto_backup_last_entry_count";
+    static final String KEY_HIGH_WATER_ENTRY_COUNT =
+            "dictionary_auto_backup_high_water_entry_count";
+    static final String KEY_KEPT_WHILE_COLLAPSED = "dictionary_auto_backup_kept_while_collapsed";
     static final String KEY_LAST_SUCCESS = "dictionary_auto_backup_last_success_time";
     static final String KEY_LAST_ATTEMPT = "dictionary_auto_backup_last_attempt_time";
     static final String KEY_LAST_STATUS = "dictionary_auto_backup_last_status";
+    /** What actually failed, so a failure in the field can be diagnosed without a rebuild. */
+    static final String KEY_LAST_ERROR = "dictionary_auto_backup_last_error";
     static final String KEY_LAST_URI = "dictionary_auto_backup_last_document_uri";
     static final String KEY_LAST_SHA256 = "dictionary_auto_backup_last_sha256";
     static final String KEY_FAILURES = "dictionary_auto_backup_consecutive_failures";
@@ -117,6 +125,16 @@ public final class DictionaryAutoBackupCompat {
                 return;
             }
             if (!force && !preferences.getBoolean(KEY_ENABLED, false)) return;
+            if (!force && DictionarySafetyPolicy.isCollapsed(
+                    DictionarySafetyGuard.readableEntryCount(context),
+                    preferences.getInt(KEY_HIGH_WATER_ENTRY_COUNT, 0))) {
+                // Writing this copy would only record the words the engine still reads, and it
+                // would push a healthy copy out of the window. Wait for the dictionary to recover.
+                preferences.edit()
+                        .putString(KEY_LAST_STATUS, "词条数比往年少，本次未自动备份")
+                        .apply();
+                return;
+            }
             if (!force) {
                 int intervalDays = clamp(preferences.getInt(KEY_INTERVAL, 7), 1, 365, 7);
                 long lastSuccess = preferences.getLong(KEY_LAST_SUCCESS, 0L);
@@ -252,7 +270,15 @@ public final class DictionaryAutoBackupCompat {
     private static void finalizeExport(Context context, Uri tree, Uri partial,
             String finalName, boolean force) {
         try {
-            String sha256 = validateAndHash(context, partial);
+            ExportFile exported = validateAndHash(context, partial);
+            if (exported.entryCount == 0) {
+                // An empty export cannot restore anything, and publishing it would push a usable
+                // copy out of the retention window while reporting success.
+                deleteQuietly(context, partial);
+                finishFailure(context, force, "引擎暂时读不到词条，本次没有生成备份", null);
+                return;
+            }
+            String sha256 = exported.sha256;
             Uri completed = DocumentsContract.renameDocument(context.getContentResolver(),
                     partial, finalName);
             if (completed == null) throw new IllegalStateException("renameDocument returned null");
@@ -262,6 +288,9 @@ public final class DictionaryAutoBackupCompat {
                     .putString(KEY_LAST_STATUS, "备份成功")
                     .putString(KEY_LAST_URI, completed.toString())
                     .putString(KEY_LAST_SHA256, sha256)
+                    .putInt(KEY_LAST_ENTRY_COUNT, exported.entryCount)
+                    .putInt(KEY_HIGH_WATER_ENTRY_COUNT, Math.max(
+                            p.getInt(KEY_HIGH_WATER_ENTRY_COUNT, 0), exported.entryCount))
                     .putInt(KEY_FAILURES, 0).apply();
             boolean cleanupOk = rotate(context, tree,
                     clamp(p.getInt(KEY_RETENTION, 10), 1, 100, 10));
@@ -275,7 +304,18 @@ public final class DictionaryAutoBackupCompat {
         }
     }
 
-    private static String validateAndHash(Context context, Uri uri) throws Exception {
+    /** A validated export: its digest and the number of entries a reader can see in it. */
+    private static final class ExportFile {
+        final String sha256;
+        final int entryCount;
+
+        ExportFile(String sha256, int entryCount) {
+            this.sha256 = sha256;
+            this.entryCount = entryCount;
+        }
+    }
+
+    private static ExportFile validateAndHash(Context context, Uri uri) throws Exception {
         InputStream in = null;
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         try {
@@ -298,7 +338,35 @@ public final class DictionaryAutoBackupCompat {
         byte[] hash = digest.digest(data);
         StringBuilder out = new StringBuilder(hash.length * 2);
         for (byte value : hash) out.append(String.format(Locale.US, "%02x", value & 0xff));
-        return out.toString();
+        return new ExportFile(out.toString(), countEntries(data));
+    }
+
+    private static final String NEWLINE = Character.toString((char) 10);
+    private static final String CR = Character.toString((char) 13);
+
+    /** Counts the entry lines the engine would read back from this export. */
+    private static int countEntries(byte[] data) {
+        String text;
+        try {
+            text = new String(data, "UTF-16LE");
+        } catch (java.io.UnsupportedEncodingException impossible) {
+            return 0;
+        }
+        int entries = 0;
+        int index = 0;
+        while (index < text.length()) {
+            int end = text.indexOf(NEWLINE, index);
+            if (end < 0) end = text.length();
+            String line = text.substring(index, end).replace(CR, "");
+            index = end + 1;
+            if (line.isEmpty() || line.charAt(0) == '﻿' || line.charAt(0) == '#') continue;
+            int tabs = 0;
+            for (int i = 0; i < line.length(); i++) {
+                if (line.charAt(i) == '	') tabs++;
+            }
+            if (tabs >= 2) entries++;
+        }
+        return entries;
     }
 
     public interface BackupListCallback {
@@ -372,6 +440,8 @@ public final class DictionaryAutoBackupCompat {
     private static boolean rotate(Context context, Uri tree, int retention) {
         boolean ok = true;
         try {
+            SharedPreferences p = prefs(context);
+            if (keepWholeWindow(p)) return true;
             List<BackupEntry> backups = listBackups(context, tree);
             ContentResolver resolver = context.getContentResolver();
             for (int i = retention; i < backups.size(); i++) {
@@ -385,6 +455,23 @@ public final class DictionaryAutoBackupCompat {
             ok = false;
         }
         return ok;
+    }
+
+    /**
+     * True while the newest export is smaller than this installation has seen before, which means
+     * the engine could not read the whole dictionary when it was written. Rotating then would throw
+     * away the last good copies, so the window is kept whole until an export reads normally again.
+     */
+    private static boolean keepWholeWindow(SharedPreferences p) {
+        int last = p.getInt(KEY_LAST_ENTRY_COUNT, 0);
+        int highWater = p.getInt(KEY_HIGH_WATER_ENTRY_COUNT, 0);
+        boolean collapsed = DictionarySafetyPolicy.isCollapsed(last, highWater);
+        if (collapsed && !p.getBoolean(KEY_KEPT_WHILE_COLLAPSED, false)) {
+            p.edit().putBoolean(KEY_KEPT_WHILE_COLLAPSED, true).apply();
+        } else if (!collapsed && p.getBoolean(KEY_KEPT_WHILE_COLLAPSED, false)) {
+            p.edit().putBoolean(KEY_KEPT_WHILE_COLLAPSED, false).apply();
+        }
+        return collapsed;
     }
 
     private static void cleanupOldPartials(Context context, Uri tree) {
@@ -492,10 +579,21 @@ public final class DictionaryAutoBackupCompat {
         });
     }
 
+    private static String describe(Throwable throwable) {
+        if (throwable == null) return "";
+        String text = throwable.toString();
+        StackTraceElement[] frames = throwable.getStackTrace();
+        if (frames != null && frames.length > 0) {
+            text = text + " @ " + frames[0];
+        }
+        return text.length() > 300 ? text.substring(0, 300) : text;
+    }
+
     private static void finishFailure(final Context context, final boolean force,
             final String message, Throwable throwable) {
         SharedPreferences p = prefs(context);
         p.edit().putString(KEY_LAST_STATUS, message)
+                .putString(KEY_LAST_ERROR, describe(throwable))
                 .putInt(KEY_FAILURES, p.getInt(KEY_FAILURES, 0) + 1).apply();
         synchronized (DictionaryAutoBackupCompat.class) { sInProgress = false; }
         MAIN.post(new Runnable() {

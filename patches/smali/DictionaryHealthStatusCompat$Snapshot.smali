@@ -26,16 +26,16 @@
 .method constructor <init>(ILjava/lang/String;Ljava/lang/String;)V
     .locals 0
 
-    .line 28
+    .line 38
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
-    .line 29
+    .line 39
     iput p1, p0, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$Snapshot;->status:I
 
     iput-object p2, p0, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$Snapshot;->summary:Ljava/lang/String;
 
     iput-object p3, p0, Lcom/google/android/inputmethod/pinyin/DictionaryHealthStatusCompat$Snapshot;->details:Ljava/lang/String;
 
-    .line 30
+    .line 40
     return-void
 .end method

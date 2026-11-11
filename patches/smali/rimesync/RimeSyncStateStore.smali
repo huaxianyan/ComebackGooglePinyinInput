@@ -149,36 +149,36 @@
 .method private static clearSyncData(Landroid/database/sqlite/SQLiteDatabase;)V
     .locals 2
 
-    .line 459
+    .line 471
     const-string v0, "pending_operation"
 
     const/4 v1, 0x0
 
     invoke-virtual {p0, v0, v1, v1}, Landroid/database/sqlite/SQLiteDatabase;->delete(Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;)I
 
-    .line 460
+    .line 472
     const-string v0, "staged_baseline"
 
     invoke-virtual {p0, v0, v1, v1}, Landroid/database/sqlite/SQLiteDatabase;->delete(Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;)I
 
-    .line 461
+    .line 473
     const-string v0, "baseline"
 
     invoke-virtual {p0, v0, v1, v1}, Landroid/database/sqlite/SQLiteDatabase;->delete(Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;)I
 
-    .line 462
+    .line 474
     const-string v0, "profile"
 
     invoke-virtual {p0, v0, v1, v1}, Landroid/database/sqlite/SQLiteDatabase;->delete(Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;)I
 
-    .line 463
+    .line 475
     return-void
 .end method
 
 .method private static compareHash([BI[B)I
     .locals 4
 
-    .line 588
+    .line 600
     const/4 v0, 0x0
 
     const/4 v1, 0x0
@@ -188,19 +188,19 @@
 
     if-ge v1, v2, :cond_2
 
-    .line 589
+    .line 601
     add-int v2, p1, v1
 
     aget-byte v2, p0, v2
 
     and-int/lit16 v2, v2, 0xff
 
-    .line 590
+    .line 602
     aget-byte v3, p2, v1
 
     and-int/lit16 v3, v3, 0xff
 
-    .line 591
+    .line 603
     if-eq v2, v3, :cond_1
 
     if-ge v2, v3, :cond_0
@@ -215,13 +215,13 @@
     :goto_1
     return p0
 
-    .line 588
+    .line 600
     :cond_1
     add-int/lit8 v1, v1, 0x1
 
     goto :goto_0
 
-    .line 593
+    .line 605
     :cond_2
     return v0
 .end method
@@ -229,31 +229,31 @@
 .method private static findHash([BI[B)I
     .locals 3
 
-    .line 575
+    .line 587
     nop
 
-    .line 576
+    .line 588
     add-int/lit8 p1, p1, -0x1
 
     const/4 v0, 0x0
 
-    .line 577
+    .line 589
     :goto_0
     if-gt v0, p1, :cond_2
 
-    .line 578
+    .line 590
     add-int v1, v0, p1
 
     ushr-int/lit8 v1, v1, 0x1
 
-    .line 579
+    .line 591
     mul-int/lit8 v2, v1, 0x20
 
     invoke-static {p0, v2, p2}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore;->compareHash([BI[B)I
 
     move-result v2
 
-    .line 580
+    .line 592
     if-gez v2, :cond_0
 
     add-int/lit8 v1, v1, 0x1
@@ -262,7 +262,7 @@
 
     goto :goto_1
 
-    .line 581
+    .line 593
     :cond_0
     if-lez v2, :cond_1
 
@@ -270,15 +270,15 @@
 
     move p1, v1
 
-    .line 583
+    .line 595
     :goto_1
     goto :goto_0
 
-    .line 582
+    .line 594
     :cond_1
     return v1
 
-    .line 584
+    .line 596
     :cond_2
     const/4 p0, -0x1
 
@@ -288,10 +288,10 @@
 .method private static hex([B)Ljava/lang/String;
     .locals 6
 
-    .line 568
+    .line 580
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore;->requireHash([B)V
 
-    .line 569
+    .line 581
     new-instance v0, Ljava/lang/StringBuilder;
 
     array-length v1, p0
@@ -300,7 +300,7 @@
 
     invoke-direct {v0, v1}, Ljava/lang/StringBuilder;-><init>(I)V
 
-    .line 570
+    .line 582
     array-length v1, p0
 
     const/4 v2, 0x0
@@ -336,7 +336,7 @@
 
     goto :goto_0
 
-    .line 571
+    .line 583
     :cond_0
     invoke-virtual {v0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
 
@@ -348,10 +348,10 @@
 .method private static keyHash([BLjava/lang/String;)[B
     .locals 1
 
-    .line 551
+    .line 563
     if-eqz p1, :cond_0
 
-    .line 553
+    .line 565
     :try_start_0
     const-string v0, "SHA-256"
 
@@ -359,10 +359,10 @@
 
     move-result-object v0
 
-    .line 554
+    .line 566
     invoke-virtual {v0, p0}, Ljava/security/MessageDigest;->update([B)V
 
-    .line 555
+    .line 567
     sget-object p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore;->UTF_8:Ljava/nio/charset/Charset;
 
     invoke-virtual {p1, p0}, Ljava/lang/String;->getBytes(Ljava/nio/charset/Charset;)[B
@@ -377,11 +377,11 @@
 
     return-object p0
 
-    .line 556
+    .line 568
     :catch_0
     move-exception p0
 
-    .line 557
+    .line 569
     new-instance p1, Ljava/lang/IllegalStateException;
 
     const-string v0, "SHA-256 is unavailable"
@@ -390,7 +390,7 @@
 
     throw p1
 
-    .line 551
+    .line 563
     :cond_0
     new-instance p0, Ljava/lang/IllegalArgumentException;
 
@@ -404,12 +404,12 @@
 .method private static nativeFailureFingerprint([BLcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$PersistenceVerificationException;)[B
     .locals 5
 
-    .line 527
+    .line 539
     new-instance v0, Ljava/util/ArrayList;
 
     invoke-direct {v0}, Ljava/util/ArrayList;-><init>()V
 
-    .line 528
+    .line 540
     iget-object v1, p1, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$PersistenceVerificationException;->missingKeys:Ljava/util/List;
 
     invoke-interface {v1}, Ljava/util/List;->iterator()Ljava/util/Iterator;
@@ -429,7 +429,7 @@
 
     check-cast v2, Ljava/lang/String;
 
-    .line 529
+    .line 541
     new-instance v3, Ljava/lang/StringBuilder;
 
     invoke-direct {v3}, Ljava/lang/StringBuilder;-><init>()V
@@ -458,10 +458,10 @@
 
     invoke-interface {v0, v2}, Ljava/util/List;->add(Ljava/lang/Object;)Z
 
-    .line 530
+    .line 542
     goto :goto_0
 
-    .line 531
+    .line 543
     :cond_0
     iget-object v1, p1, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$PersistenceVerificationException;->unexpectedKeys:Ljava/util/List;
 
@@ -482,7 +482,7 @@
 
     check-cast v2, Ljava/lang/String;
 
-    .line 532
+    .line 544
     new-instance v3, Ljava/lang/StringBuilder;
 
     invoke-direct {v3}, Ljava/lang/StringBuilder;-><init>()V
@@ -511,14 +511,14 @@
 
     invoke-interface {v0, v2}, Ljava/util/List;->add(Ljava/lang/Object;)Z
 
-    .line 533
+    .line 545
     goto :goto_1
 
-    .line 534
+    .line 546
     :cond_1
     invoke-static {v0}, Ljava/util/Collections;->sort(Ljava/util/List;)V
 
-    .line 536
+    .line 548
     :try_start_0
     const-string p0, "SHA-256"
 
@@ -526,7 +526,7 @@
 
     move-result-object p0
 
-    .line 537
+    .line 549
     iget v1, p1, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$PersistenceVerificationException;->expectedNativeCount:I
 
     invoke-static {v1}, Ljava/lang/Integer;->toString(I)Ljava/lang/String;
@@ -541,12 +541,12 @@
 
     invoke-virtual {p0, v1}, Ljava/security/MessageDigest;->update([B)V
 
-    .line 538
+    .line 550
     const/4 v1, 0x0
 
     invoke-virtual {p0, v1}, Ljava/security/MessageDigest;->update(B)V
 
-    .line 539
+    .line 551
     iget p1, p1, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$PersistenceVerificationException;->actualNativeCount:I
 
     invoke-static {p1}, Ljava/lang/Integer;->toString(I)Ljava/lang/String;
@@ -561,7 +561,7 @@
 
     invoke-virtual {p0, p1}, Ljava/security/MessageDigest;->update([B)V
 
-    .line 540
+    .line 552
     invoke-interface {v0}, Ljava/util/List;->iterator()Ljava/util/Iterator;
 
     move-result-object p1
@@ -579,10 +579,10 @@
 
     check-cast v0, Ljava/lang/String;
 
-    .line 541
+    .line 553
     invoke-virtual {p0, v1}, Ljava/security/MessageDigest;->update(B)V
 
-    .line 542
+    .line 554
     sget-object v2, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore;->UTF_8:Ljava/nio/charset/Charset;
 
     invoke-virtual {v0, v2}, Ljava/lang/String;->getBytes(Ljava/nio/charset/Charset;)[B
@@ -591,10 +591,10 @@
 
     invoke-virtual {p0, v0}, Ljava/security/MessageDigest;->update([B)V
 
-    .line 543
+    .line 555
     goto :goto_2
 
-    .line 544
+    .line 556
     :cond_2
     invoke-virtual {p0}, Ljava/security/MessageDigest;->digest()[B
 
@@ -604,11 +604,11 @@
 
     return-object p0
 
-    .line 545
+    .line 557
     :catch_0
     move-exception p0
 
-    .line 546
+    .line 558
     new-instance p1, Ljava/lang/IllegalStateException;
 
     const-string v0, "SHA-256 is unavailable"
@@ -635,12 +635,12 @@
         }
     .end annotation
 
-    .line 507
+    .line 519
     new-instance v0, Ljava/util/ArrayList;
 
     invoke-direct {v0}, Ljava/util/ArrayList;-><init>()V
 
-    .line 508
+    .line 520
     invoke-interface {p1}, Ljava/util/List;->iterator()Ljava/util/Iterator;
 
     move-result-object v1
@@ -658,7 +658,7 @@
 
     check-cast v2, Ljava/lang/String;
 
-    .line 509
+    .line 521
     new-instance v3, Ljava/lang/StringBuilder;
 
     invoke-direct {v3}, Ljava/lang/StringBuilder;-><init>()V
@@ -687,14 +687,14 @@
 
     invoke-interface {v0, v2}, Ljava/util/List;->add(Ljava/lang/Object;)Z
 
-    .line 510
+    .line 522
     goto :goto_0
 
-    .line 511
+    .line 523
     :cond_0
     invoke-static {v0}, Ljava/util/Collections;->sort(Ljava/util/List;)V
 
-    .line 513
+    .line 525
     :try_start_0
     const-string p0, "SHA-256"
 
@@ -702,7 +702,7 @@
 
     move-result-object p0
 
-    .line 514
+    .line 526
     invoke-interface {p1}, Ljava/util/List;->size()I
 
     move-result p1
@@ -719,7 +719,7 @@
 
     invoke-virtual {p0, p1}, Ljava/security/MessageDigest;->update([B)V
 
-    .line 515
+    .line 527
     invoke-interface {v0}, Ljava/util/List;->iterator()Ljava/util/Iterator;
 
     move-result-object p1
@@ -737,12 +737,12 @@
 
     check-cast v0, Ljava/lang/String;
 
-    .line 516
+    .line 528
     const/4 v1, 0x0
 
     invoke-virtual {p0, v1}, Ljava/security/MessageDigest;->update(B)V
 
-    .line 517
+    .line 529
     sget-object v1, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore;->UTF_8:Ljava/nio/charset/Charset;
 
     invoke-virtual {v0, v1}, Ljava/lang/String;->getBytes(Ljava/nio/charset/Charset;)[B
@@ -751,10 +751,10 @@
 
     invoke-virtual {p0, v0}, Ljava/security/MessageDigest;->update([B)V
 
-    .line 518
+    .line 530
     goto :goto_1
 
-    .line 519
+    .line 531
     :cond_1
     invoke-virtual {p0}, Ljava/security/MessageDigest;->digest()[B
 
@@ -764,11 +764,11 @@
 
     return-object p0
 
-    .line 520
+    .line 532
     :catch_0
     move-exception p0
 
-    .line 521
+    .line 533
     new-instance p1, Ljava/lang/IllegalStateException;
 
     const-string v0, "SHA-256 is unavailable"
@@ -787,12 +787,12 @@
 .method private static profileValues(Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;)Landroid/content/ContentValues;
     .locals 3
 
-    .line 466
+    .line 478
     new-instance v0, Landroid/content/ContentValues;
 
     invoke-direct {v0}, Landroid/content/ContentValues;-><init>()V
 
-    .line 467
+    .line 479
     const/4 v1, 0x1
 
     invoke-static {v1}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
@@ -803,35 +803,35 @@
 
     invoke-virtual {v0, v2, v1}, Landroid/content/ContentValues;->put(Ljava/lang/String;Ljava/lang/Integer;)V
 
-    .line 468
+    .line 480
     const-string v1, "root_uri"
 
     iget-object v2, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;->rootUri:Ljava/lang/String;
 
     invoke-virtual {v0, v1, v2}, Landroid/content/ContentValues;->put(Ljava/lang/String;Ljava/lang/String;)V
 
-    .line 469
+    .line 481
     const-string v1, "device_dir"
 
     iget-object v2, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;->deviceDirectoryName:Ljava/lang/String;
 
     invoke-virtual {v0, v1, v2}, Landroid/content/ContentValues;->put(Ljava/lang/String;Ljava/lang/String;)V
 
-    .line 470
+    .line 482
     const-string v1, "snapshot_file"
 
     iget-object v2, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;->snapshotFileName:Ljava/lang/String;
 
     invoke-virtual {v0, v1, v2}, Landroid/content/ContentValues;->put(Ljava/lang/String;Ljava/lang/String;)V
 
-    .line 471
+    .line 483
     const-string v1, "bridge_user_id"
 
     iget-object v2, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;->bridgeUserId:Ljava/lang/String;
 
     invoke-virtual {v0, v1, v2}, Landroid/content/ContentValues;->put(Ljava/lang/String;Ljava/lang/String;)V
 
-    .line 472
+    .line 484
     const-string v1, "hash_salt"
 
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;->access$000(Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;)[B
@@ -840,7 +840,7 @@
 
     invoke-virtual {v0, v1, v2}, Landroid/content/ContentValues;->put(Ljava/lang/String;[B)V
 
-    .line 473
+    .line 485
     iget v1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;->protocolVersion:I
 
     invoke-static {v1}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
@@ -851,7 +851,7 @@
 
     invoke-virtual {v0, v2, v1}, Landroid/content/ContentValues;->put(Ljava/lang/String;Ljava/lang/Integer;)V
 
-    .line 474
+    .line 486
     iget-wide v1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;->generation:J
 
     invoke-static {v1, v2}, Ljava/lang/Long;->valueOf(J)Ljava/lang/Long;
@@ -862,7 +862,7 @@
 
     invoke-virtual {v0, v2, v1}, Landroid/content/ContentValues;->put(Ljava/lang/String;Ljava/lang/Long;)V
 
-    .line 475
+    .line 487
     iget v1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;->phase:I
 
     invoke-static {v1}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
@@ -873,7 +873,7 @@
 
     invoke-virtual {v0, v2, v1}, Landroid/content/ContentValues;->put(Ljava/lang/String;Ljava/lang/Integer;)V
 
-    .line 476
+    .line 488
     iget-wide v1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;->lastSuccess:J
 
     invoke-static {v1, v2}, Ljava/lang/Long;->valueOf(J)Ljava/lang/Long;
@@ -884,7 +884,7 @@
 
     invoke-virtual {v0, v2, v1}, Landroid/content/ContentValues;->put(Ljava/lang/String;Ljava/lang/Long;)V
 
-    .line 477
+    .line 489
     iget v1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;->nativeExpectedCount:I
 
     invoke-static {v1}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
@@ -895,7 +895,7 @@
 
     invoke-virtual {v0, v2, v1}, Landroid/content/ContentValues;->put(Ljava/lang/String;Ljava/lang/Integer;)V
 
-    .line 478
+    .line 490
     iget v1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;->nativeActualCount:I
 
     invoke-static {v1}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
@@ -906,7 +906,7 @@
 
     invoke-virtual {v0, v2, v1}, Landroid/content/ContentValues;->put(Ljava/lang/String;Ljava/lang/Integer;)V
 
-    .line 479
+    .line 491
     iget v1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;->nativeMissingCount:I
 
     invoke-static {v1}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
@@ -917,7 +917,7 @@
 
     invoke-virtual {v0, v2, v1}, Landroid/content/ContentValues;->put(Ljava/lang/String;Ljava/lang/Integer;)V
 
-    .line 480
+    .line 492
     const-string v1, "native_failure_fingerprint"
 
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;->access$300(Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;)[B
@@ -926,7 +926,7 @@
 
     invoke-virtual {v0, v1, v2}, Landroid/content/ContentValues;->put(Ljava/lang/String;[B)V
 
-    .line 481
+    .line 493
     iget-boolean v1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;->nativeFailureRepeated:Z
 
     invoke-static {v1}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
@@ -937,7 +937,7 @@
 
     invoke-virtual {v0, v2, v1}, Landroid/content/ContentValues;->put(Ljava/lang/String;Ljava/lang/Integer;)V
 
-    .line 482
+    .line 494
     iget p0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;->nativeFailureKind:I
 
     invoke-static {p0}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
@@ -948,14 +948,14 @@
 
     invoke-virtual {v0, v1, p0}, Landroid/content/ContentValues;->put(Ljava/lang/String;Ljava/lang/Integer;)V
 
-    .line 483
+    .line 495
     return-object v0
 .end method
 
 .method private static readProfile(Landroid/database/sqlite/SQLiteDatabase;)Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;
     .locals 22
 
-    .line 487
+    .line 499
     const/16 v0, 0xf
 
     new-array v3, v0, [Ljava/lang/String;
@@ -1050,7 +1050,7 @@
 
     aput-object v16, v3, v8
 
-    .line 493
+    .line 505
     invoke-static {v9}, Ljava/lang/Integer;->toString(I)Ljava/lang/String;
 
     move-result-object v16
@@ -1061,7 +1061,7 @@
 
     aput-object v16, v5, v0
 
-    .line 487
+    .line 499
     const/16 v16, 0x9
 
     const-string v2, "profile"
@@ -1088,7 +1088,7 @@
 
     move-result-object v1
 
-    .line 495
+    .line 507
     :try_start_0
     invoke-interface {v1}, Landroid/database/Cursor;->moveToFirst()Z
 
@@ -1098,15 +1098,15 @@
 
     if-nez v2, :cond_0
 
-    .line 502
+    .line 514
     invoke-interface {v1}, Landroid/database/Cursor;->close()V
 
-    .line 495
+    .line 507
     const/4 v0, 0x0
 
     return-object v0
 
-    .line 496
+    .line 508
     :cond_0
     :try_start_1
     new-instance v2, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;
@@ -1123,7 +1123,7 @@
 
     move-result-object v5
 
-    .line 497
+    .line 509
     invoke-interface {v1, v11}, Landroid/database/Cursor;->getString(I)Ljava/lang/String;
 
     move-result-object v6
@@ -1140,7 +1140,7 @@
 
     move-result-wide v10
 
-    .line 498
+    .line 510
     invoke-interface {v1, v15}, Landroid/database/Cursor;->getInt(I)I
 
     move-result v12
@@ -1163,7 +1163,7 @@
 
     move-result v0
 
-    .line 499
+    .line 511
     const/16 v9, 0xb
 
     invoke-interface {v1, v9}, Landroid/database/Cursor;->getInt(I)I
@@ -1195,7 +1195,7 @@
     :cond_1
     const/4 v0, 0x0
 
-    .line 500
+    .line 512
     :goto_0
     move/from16 v16, v0
 
@@ -1225,26 +1225,26 @@
     :try_end_1
     .catchall {:try_start_1 .. :try_end_1} :catchall_0
 
-    .line 502
+    .line 514
     invoke-interface {v1}, Landroid/database/Cursor;->close()V
 
-    .line 496
+    .line 508
     return-object v2
 
-    .line 502
+    .line 514
     :catchall_0
     move-exception v0
 
     invoke-interface {v1}, Landroid/database/Cursor;->close()V
 
-    .line 503
+    .line 515
     throw v0
 .end method
 
 .method private static requireHash([B)V
     .locals 1
 
-    .line 562
+    .line 574
     if-eqz p0, :cond_0
 
     array-length p0, p0
@@ -1253,10 +1253,10 @@
 
     if-ne p0, v0, :cond_0
 
-    .line 565
+    .line 577
     return-void
 
-    .line 563
+    .line 575
     :cond_0
     new-instance p0, Ljava/lang/IllegalArgumentException;
 
@@ -1270,22 +1270,22 @@
 .method private requirePhase(I)V
     .locals 1
 
-    .line 447
+    .line 459
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore;->profile()Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;
 
     move-result-object v0
 
-    .line 448
+    .line 460
     if-eqz v0, :cond_0
 
     iget v0, v0, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;->phase:I
 
     if-ne v0, p1, :cond_0
 
-    .line 451
+    .line 463
     return-void
 
-    .line 449
+    .line 461
     :cond_0
     new-instance p1, Ljava/lang/IllegalStateException;
 
@@ -1299,12 +1299,12 @@
 .method private setPhase(I)V
     .locals 5
 
-    .line 454
+    .line 466
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore;->getWritableDatabase()Landroid/database/sqlite/SQLiteDatabase;
 
     move-result-object v0
 
-    .line 455
+    .line 467
     invoke-static {p1}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
 
     move-result-object p1
@@ -1325,12 +1325,12 @@
 
     aput-object v2, v3, v1
 
-    .line 454
+    .line 466
     const-string p1, "UPDATE profile SET phase=? WHERE id=?"
 
     invoke-virtual {v0, p1, v3}, Landroid/database/sqlite/SQLiteDatabase;->execSQL(Ljava/lang/String;[Ljava/lang/Object;)V
 
-    .line 456
+    .line 468
     return-void
 .end method
 
@@ -3097,6 +3097,88 @@
 
     :goto_2
     goto :goto_1
+.end method
+
+.method public declared-synchronized presentBaselineCount()I
+    .locals 5
+
+    monitor-enter p0
+
+    .line 448
+    :try_start_0
+    invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore;->getReadableDatabase()Landroid/database/sqlite/SQLiteDatabase;
+
+    move-result-object v0
+
+    const-string v1, "SELECT COUNT(*) FROM baseline WHERE history=?"
+
+    sget-object v2, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$History;->PRESENT:Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$History;
+
+    .line 450
+    invoke-virtual {v2}, Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncPlanner$History;->name()Ljava/lang/String;
+
+    move-result-object v2
+
+    const/4 v3, 0x1
+
+    new-array v3, v3, [Ljava/lang/String;
+
+    const/4 v4, 0x0
+
+    aput-object v2, v3, v4
+
+    .line 448
+    invoke-virtual {v0, v1, v3}, Landroid/database/sqlite/SQLiteDatabase;->rawQuery(Ljava/lang/String;[Ljava/lang/String;)Landroid/database/Cursor;
+
+    move-result-object v0
+    :try_end_0
+    .catchall {:try_start_0 .. :try_end_0} :catchall_1
+
+    .line 452
+    :try_start_1
+    invoke-interface {v0}, Landroid/database/Cursor;->moveToFirst()Z
+
+    move-result v1
+
+    if-eqz v1, :cond_0
+
+    invoke-interface {v0, v4}, Landroid/database/Cursor;->getInt(I)I
+
+    move-result v4
+    :try_end_1
+    .catchall {:try_start_1 .. :try_end_1} :catchall_0
+
+    .line 454
+    :cond_0
+    :try_start_2
+    invoke-interface {v0}, Landroid/database/Cursor;->close()V
+    :try_end_2
+    .catchall {:try_start_2 .. :try_end_2} :catchall_1
+
+    .line 452
+    monitor-exit p0
+
+    return v4
+
+    .line 454
+    :catchall_0
+    move-exception v1
+
+    :try_start_3
+    invoke-interface {v0}, Landroid/database/Cursor;->close()V
+
+    .line 455
+    throw v1
+
+    .line 447
+    :catchall_1
+    move-exception v0
+
+    monitor-exit p0
+    :try_end_3
+    .catchall {:try_start_3 .. :try_end_3} :catchall_1
+
+    throw v0
 .end method
 
 .method public declared-synchronized profile()Lcom/google/android/inputmethod/pinyin/rimesync/RimeSyncStateStore$Profile;

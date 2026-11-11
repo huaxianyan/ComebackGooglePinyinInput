@@ -4,6 +4,7 @@ import android.content.Context;
 import com.google.android.apps.inputmethod.libs.hmm.AbstractHmmEngineFactory;
 import com.google.android.apps.inputmethod.libs.hmm.DictionaryAccessor;
 import com.google.android.apps.inputmethod.libs.hmm.MutableDictionaryAccessorInterface;
+import com.google.android.inputmethod.pinyin.dictsafety.DictionaryBackupText;
 import com.google.android.apps.inputmethod.libs.hmm.SaveDictionaryTask;
 import java.io.IOException;
 import java.text.Normalizer;
@@ -24,6 +25,9 @@ public final class GoogleNativeDictionaryBridge {
     public static final int FAILURE_DUPLICATE = 5;
     public static final int FAILURE_INSERT = 6;
     public static final int FAILURE_PERSIST = 7;
+
+    /** The user dictionary file the engine loads and saves. */
+    private static final String USER_DICTIONARY_FILE = "user_dict_3_3";
     public static final int FAILURE_REBUILD = 8;
     public static final int FAILURE_EXPORT = 9;
     public static final int FAILURE_DATA = 10;
@@ -44,8 +48,57 @@ public final class GoogleNativeDictionaryBridge {
         return readSnapshot(context, engineFactory, false);
     }
 
+    /**
+     * Imports an exported backup, keeping every entry's own weight.
+     *
+     * <p>The native import task drops the weight column and inserts the words with weight zero,
+     * which the engine then treats as deleted: present in the file, invisible to candidates,
+     * exports and counts. This path builds the entries here so the weights survive.
+     *
+     * @return the number of entries written
+     */
+    public static int importBackup(Context context, AbstractHmmEngineFactory engineFactory,
+            byte[] backup) throws IOException {
+        requireArguments(context, engineFactory);
+        List<Change> changes = new ArrayList<Change>();
+        for (DictionaryBackupText.Entry entry : DictionaryBackupText.parse(backup)) {
+            changes.add(new Change(entry.code, entry.phrase,
+                    RimeSyncPlanner.GoogleAction.ADD, entry.count));
+        }
+        if (changes.isEmpty()) return 0;
+        materializeDictionaryIfMissing(context, engineFactory);
+        Result result = apply(context, engineFactory, changes);
+        if (!result.persisted) {
+            throw nativeFailure(FAILURE_PERSIST, "Imported entries were not persisted");
+        }
+        return result.addedCount;
+    }
+
+    /**
+     * Makes sure the engine has a dictionary to copy before an import is applied.
+     *
+     * <p>Import is applied to a copy that only replaces the live dictionary after every entry is
+     * accepted, so a rejected entry can never leave a half-imported file behind. On a device that
+     * has never saved a dictionary there is nothing to copy yet, and saving the empty dictionary
+     * creates one.
+     */
+    private static void materializeDictionaryIfMissing(Context context,
+            AbstractHmmEngineFactory engineFactory) throws IOException {
+        if (context.getFileStreamPath(USER_DICTIONARY_FILE).length() > 0L) return;
+        synchronized (SaveDictionaryTask.sSaveLock) {
+            DictionaryAccessor accessor = open(context, engineFactory);
+            try {
+                if (!accessor.persist()) {
+                    throw nativeFailure(FAILURE_PERSIST, "Empty dictionary could not be created");
+                }
+            } finally {
+                accessor.close();
+            }
+        }
+    }
+
     /** Reads only canonical presence for a preview that will not retain executable entries. */
-    static Snapshot readPresence(Context context, AbstractHmmEngineFactory engineFactory)
+    public static Snapshot readPresence(Context context, AbstractHmmEngineFactory engineFactory)
             throws IOException {
         return readSnapshot(context, engineFactory, true);
     }
@@ -139,7 +192,8 @@ public final class GoogleNativeDictionaryBridge {
                 }
                 List<String> rejectedKeys = new ArrayList<String>();
                 for (Change addition : prepared.adds) {
-                    if (!accessor.insertOrUpdate(newEntry(addition.code, addition.phrase))) {
+                    if (!accessor.insertOrUpdate(
+                            newEntry(addition.code, addition.phrase, addition.count))) {
                         rejectedKeys.add(addition.key);
                     }
                 }
@@ -299,7 +353,8 @@ public final class GoogleNativeDictionaryBridge {
         Map<String, Change> unique = new LinkedHashMap<String, Change>();
         for (Change change : changes) {
             if (change == null) throw new IllegalArgumentException("Google change is null");
-            Change normalized = new Change(change.code, change.phrase, change.action);
+            Change normalized =
+                    new Change(change.code, change.phrase, change.action, change.count);
             if (unique.put(normalized.key, normalized) != null) {
                 throw new IllegalArgumentException("duplicate Google change");
             }
@@ -370,6 +425,15 @@ public final class GoogleNativeDictionaryBridge {
     }
 
     private static MutableDictionaryAccessorInterface.Entry newEntry(String code, String phrase) {
+        return newEntry(code, phrase, NEW_ENTRY_COUNT);
+    }
+
+    /** Keeps a restored entry's own weight instead of resetting it to the new-entry count. */
+    private static MutableDictionaryAccessorInterface.Entry newEntry(String code, String phrase,
+            int count) {
+        if (count <= 0) {
+            throw new IllegalArgumentException("Google entry weight must be positive");
+        }
         String normalizedCode = normalizeCode(code);
         String normalizedPhrase = normalizePhrase(phrase);
         String[] tokens = normalizedCode.split(" ");
@@ -378,7 +442,7 @@ public final class GoogleNativeDictionaryBridge {
             languageIds[index] = PINYIN_LANGUAGE_ID;
         }
         return new MutableDictionaryAccessorInterface.Entry(tokens, languageIds,
-                normalizedPhrase, NEW_ENTRY_COUNT, false, true,
+                normalizedPhrase, count, false, true,
                 MutableDictionaryAccessorInterface.Entry.NO_EXPANSION);
     }
 
@@ -530,10 +594,19 @@ public final class GoogleNativeDictionaryBridge {
         public final String code;
         public final String phrase;
         public final RimeSyncPlanner.GoogleAction action;
+        public final int count;
 
         public Change(String code, String phrase, RimeSyncPlanner.GoogleAction action) {
+            this(code, phrase, action, NEW_ENTRY_COUNT);
+        }
+
+        public Change(String code, String phrase, RimeSyncPlanner.GoogleAction action,
+                int count) {
             if (action == null || action == RimeSyncPlanner.GoogleAction.NONE) {
                 throw new IllegalArgumentException("Google mutation action is required");
+            }
+            if (count <= 0) {
+                throw new IllegalArgumentException("Google entry weight must be positive");
             }
             this.code = normalizeCode(code);
             this.phrase = normalizePhrase(phrase);
@@ -542,6 +615,12 @@ public final class GoogleNativeDictionaryBridge {
             }
             this.key = this.code + '\t' + this.phrase;
             this.action = action;
+            this.count = count;
+        }
+
+        /** An addition that carries the weight the entry had in the snapshot it came from. */
+        public static Change addition(String code, String phrase, int count) {
+            return new Change(code, phrase, RimeSyncPlanner.GoogleAction.ADD, count);
         }
     }
 

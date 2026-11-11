@@ -281,6 +281,12 @@ public final class RimeSyncCoordinator {
         }
         RimeSyncSessionPlan plan;
         try {
+            // A read that collapsed below the committed baseline is a read failure, not user
+            // deletions: compare both dictionaries from scratch instead of deleting anything.
+            if (RimeSyncSessionPlan.isCollapsed(
+                    stateStore.presentBaselineCount(), google.totalEntryCount)) {
+                stateStore.resetBaseline();
+            }
             Map<String, RimeSyncCore.CanonicalEntry> rimeEntries = retainEntries
                     ? RimeSyncCore.translationEntries(snapshot)
                     : RimeSyncCore.translationEntriesForPreview(snapshot);

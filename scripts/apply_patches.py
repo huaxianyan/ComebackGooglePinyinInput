@@ -1912,6 +1912,8 @@ def apply(
         "    const/4 v0, 0x0\n\n"
         "    invoke-static {p0, v0}, Lcom/google/android/inputmethod/pinyin/"
         "DictionaryAutoBackupCompat;->request(Landroid/content/Context;Z)V\n\n"
+        "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/dictsafety/"
+        "DictionarySafetyGuard;->request(Landroid/content/Context;)V\n\n"
         "    .line 23",
     )
     # Android 11+ asks the IME for a bounded Inline Autofill presentation
@@ -2054,6 +2056,8 @@ def apply(
         "    const/4 v0, 0x0\n\n"
         "    invoke-static {p0, v0}, Lcom/google/android/inputmethod/pinyin/"
         "DictionaryAutoBackupCompat;->request(Landroid/content/Context;Z)V\n\n"
+        "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/dictsafety/"
+        "DictionarySafetyGuard;->request(Landroid/content/Context;)V\n\n"
         "    .line 33",
     )
 
@@ -2967,6 +2971,8 @@ def apply(
         "    invoke-super {p0}, Landroid/inputmethodservice/InputMethodService;->onCreate()V\n\n"
         "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/"
         "SystemAutoThemeCompat;->applyOnCreate(Landroid/content/Context;)Z\n\n"
+        "    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/dictsafety/"
+        "DictionarySafetyGuard;->request(Landroid/content/Context;)V\n\n"
         "    .line 77",
     )
     replace_once(
@@ -3373,6 +3379,14 @@ def apply(
     if not rime_sync_src.is_dir():
         raise RuntimeError(f"Missing generated Rime synchronization Smali: {rime_sync_src}")
     shutil.copytree(rime_sync_src, rime_sync_dst)
+
+    safety_src = ROOT / "patches/smali/dictsafety"
+    safety_dst = decoded / "smali/com/google/android/inputmethod/pinyin/dictsafety"
+    if safety_dst.exists():
+        raise RuntimeError(f"Refusing to overwrite existing dictionary safety: {safety_dst}")
+    if not safety_src.is_dir():
+        raise RuntimeError(f"Missing generated dictionary safety Smali: {safety_src}")
+    shutil.copytree(safety_src, safety_dst)
 
     paired_punctuation_src = ROOT / "patches/smali/pairauto"
     paired_punctuation_dst = decoded / (

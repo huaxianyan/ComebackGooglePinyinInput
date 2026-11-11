@@ -25,9 +25,14 @@
 
 # direct methods
 .method constructor <init>(Landroid/content/Context;Ljava/lang/String;)V
-    .registers 3
+    .locals 0
+    .annotation system Ldalvik/annotation/Signature;
+        value = {
+            "()V"
+        }
+    .end annotation
 
-    .line 516
+    .line 616
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$8;->val$context:Landroid/content/Context;
 
     iput-object p2, p0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$8;->val$text:Ljava/lang/String;
@@ -40,9 +45,9 @@
 
 # virtual methods
 .method public run()V
-    .registers 4
+    .locals 3
 
-    .line 518
+    .line 618
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$8;->val$context:Landroid/content/Context;
 
     iget-object v1, p0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$8;->val$text:Ljava/lang/String;
@@ -55,6 +60,6 @@
 
     invoke-virtual {v0}, Landroid/widget/Toast;->show()V
 
-    .line 519
+    .line 619
     return-void
 .end method

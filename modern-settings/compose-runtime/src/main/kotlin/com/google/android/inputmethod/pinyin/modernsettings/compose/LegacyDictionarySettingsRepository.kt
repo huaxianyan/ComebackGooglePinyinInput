@@ -109,6 +109,15 @@ internal class LegacyDictionarySettingsRepository(private val activity: Activity
         }
     }
 
+    /** Clearing is deliberate, so the safety net accepts the smaller dictionary afterwards. */
+    fun forgetDictionarySafetyBaseline() {
+        runCatching {
+            Class.forName("com.google.android.inputmethod.pinyin.dictsafety.DictionarySafetyGuard")
+                .getMethod("forget", Context::class.java)
+                .invoke(null, context)
+        }
+    }
+
     fun startClear(callback: Any): Boolean = runCatching {
         operationsType.getMethod(
             "startClear",

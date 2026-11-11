@@ -33,83 +33,83 @@
 
 # direct methods
 .method constructor <init>(Landroid/content/Context;Landroid/net/Uri;Landroid/net/Uri;Ljava/lang/String;Z)V
-    .registers 6
+    .locals 0
 
-    .line 224
+    .line 242
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
-    .line 225
+    .line 243
     invoke-virtual {p1}, Landroid/content/Context;->getApplicationContext()Landroid/content/Context;
 
     move-result-object p1
 
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$ExportListener;->context:Landroid/content/Context;
 
-    .line 226
+    .line 244
     iput-object p2, p0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$ExportListener;->tree:Landroid/net/Uri;
 
-    .line 227
+    .line 245
     iput-object p3, p0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$ExportListener;->partial:Landroid/net/Uri;
 
-    .line 228
+    .line 246
     iput-object p4, p0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$ExportListener;->finalName:Ljava/lang/String;
 
-    .line 229
+    .line 247
     iput-boolean p5, p0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$ExportListener;->force:Z
 
-    .line 230
+    .line 248
     return-void
 .end method
 
 .method static synthetic access$200(Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$ExportListener;)Landroid/content/Context;
-    .registers 1
+    .locals 0
 
-    .line 216
+    .line 234
     iget-object p0, p0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$ExportListener;->context:Landroid/content/Context;
 
     return-object p0
 .end method
 
 .method static synthetic access$300(Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$ExportListener;)Landroid/net/Uri;
-    .registers 1
+    .locals 0
 
-    .line 216
+    .line 234
     iget-object p0, p0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$ExportListener;->partial:Landroid/net/Uri;
 
     return-object p0
 .end method
 
 .method static synthetic access$500(Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$ExportListener;)Z
-    .registers 1
+    .locals 0
 
-    .line 216
+    .line 234
     iget-boolean p0, p0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$ExportListener;->force:Z
 
     return p0
 .end method
 
 .method static synthetic access$600(Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$ExportListener;)I
-    .registers 1
+    .locals 0
 
-    .line 216
+    .line 234
     iget p0, p0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$ExportListener;->taskError:I
 
     return p0
 .end method
 
 .method static synthetic access$800(Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$ExportListener;)Landroid/net/Uri;
-    .registers 1
+    .locals 0
 
-    .line 216
+    .line 234
     iget-object p0, p0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$ExportListener;->tree:Landroid/net/Uri;
 
     return-object p0
 .end method
 
 .method static synthetic access$900(Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$ExportListener;)Ljava/lang/String;
-    .registers 1
+    .locals 0
 
-    .line 216
+    .line 234
     iget-object p0, p0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$ExportListener;->finalName:Ljava/lang/String;
 
     return-object p0
@@ -118,19 +118,18 @@
 
 # virtual methods
 .method public onTaskError(I)V
-    .registers 2
+    .locals 0
 
-    .line 234
+    .line 252
     iput p1, p0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$ExportListener;->taskError:I
 
     return-void
 .end method
 
 .method public onTaskFinished(ZLjava/lang/Object;)V
-    .registers 4
+    .locals 1
 
-    .line 237
-    # getter for: Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->IO:Ljava/util/concurrent/ExecutorService;
+    .line 255
     invoke-static {}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->access$1100()Ljava/util/concurrent/ExecutorService;
 
     move-result-object p2
@@ -141,20 +140,20 @@
 
     invoke-interface {p2, v0}, Ljava/util/concurrent/ExecutorService;->execute(Ljava/lang/Runnable;)V
 
-    .line 249
+    .line 267
     return-void
 .end method
 
 .method public onTaskProgress(I)V
-    .registers 2
+    .locals 0
 
-    .line 233
+    .line 251
     return-void
 .end method
 
 .method public onTaskStart()V
-    .registers 1
+    .locals 0
 
-    .line 232
+    .line 250
     return-void
 .end method

@@ -25,7 +25,12 @@
 
 # direct methods
 .method constructor <init>(Lcom/google/android/inputmethod/pinyin/LocalBackupImportActivity;Landroid/net/Uri;)V
-    .registers 3
+    .locals 0
+    .annotation system Ldalvik/annotation/Signature;
+        value = {
+            "()V"
+        }
+    .end annotation
 
     .line 73
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/LocalBackupImportActivity$8;->this$0:Lcom/google/android/inputmethod/pinyin/LocalBackupImportActivity;
@@ -40,7 +45,7 @@
 
 # virtual methods
 .method public onClick(Landroid/content/DialogInterface;I)V
-    .registers 3
+    .locals 0
 
     .line 75
     iget-object p1, p0, Lcom/google/android/inputmethod/pinyin/LocalBackupImportActivity$8;->this$0:Lcom/google/android/inputmethod/pinyin/LocalBackupImportActivity;

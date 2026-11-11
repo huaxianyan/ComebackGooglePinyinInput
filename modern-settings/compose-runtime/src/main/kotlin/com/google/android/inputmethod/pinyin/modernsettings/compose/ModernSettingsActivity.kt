@@ -223,6 +223,7 @@ class ModernSettingsActivity : ComponentActivity() {
             },
             onFinished = { success ->
                 runOnUiThread {
+                    if (success) dictionaryRepository.forgetDictionarySafetyBaseline()
                     dictionaryClear = DictionaryClearStateReducer.complete()
                     dictionarySnapshot = dictionaryRepository.read()
                     refreshDictionaryHealth()

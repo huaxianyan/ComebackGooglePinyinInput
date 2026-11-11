@@ -11,6 +11,8 @@ import java.util.Map;
 /** Immutable full-session plan shared by preview, execution, and crash recovery. */
 public final class RimeSyncSessionPlan {
     private static final Charset UTF_8 = Charset.forName("UTF-8");
+    /** Below this many committed entries a small dictionary is not evidence of a bad read. */
+    private static final int SNAPSHOT_TRUST_FLOOR = 1000;
 
     public final List<EntryPlan> entries;
     public final int googleAdditionCount;
@@ -136,6 +138,15 @@ public final class RimeSyncSessionPlan {
         }
         return new RimeSyncSessionPlan(plans, googleAdds, googleDeletes, rimeAdds,
                 rimeDeletes, rimeResurrections, projectedCount, hex(digest.digest()));
+    }
+
+    /**
+     * A dictionary that committed N entries cannot plausibly read back far fewer of them.
+     * A collapsed read means the comparison baseline is unusable, not that the user deleted
+     * entries, so callers must rebuild the comparison instead of planning deletions.
+     */
+    public static boolean isCollapsed(int committedPresent, int observed) {
+        return committedPresent >= SNAPSHOT_TRUST_FLOOR && observed < committedPresent / 2;
     }
 
     public boolean requiresDeletionConfirmation() {

@@ -23,7 +23,7 @@
 
 # direct methods
 .method constructor <init>(Lcom/google/android/inputmethod/pinyin/LocalBackupImportActivity;)V
-    .registers 2
+    .locals 0
 
     .line 79
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/LocalBackupImportActivity$6;->this$0:Lcom/google/android/inputmethod/pinyin/LocalBackupImportActivity;
@@ -36,7 +36,7 @@
 
 # virtual methods
 .method public onCancel(Landroid/content/DialogInterface;)V
-    .registers 2
+    .locals 0
 
     .line 80
     iget-object p1, p0, Lcom/google/android/inputmethod/pinyin/LocalBackupImportActivity$6;->this$0:Lcom/google/android/inputmethod/pinyin/LocalBackupImportActivity;
