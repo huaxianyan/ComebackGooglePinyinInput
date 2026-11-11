@@ -104,19 +104,30 @@ final class DictionaryFileSnapshot {
     }
 
     /** Writes these bytes back over the dictionary file. */
+    /**
+     * Replaces the dictionary file by writing a sibling and renaming it over the target. Writing in
+     * place truncates the file the engine has mapped and turns the next read into a SIGBUS, so the
+     * rename is what keeps a repair from crashing the process.
+     */
     boolean restore(byte[] data) {
         if (data == null || data.length == 0) return false;
         File target = new File(context.getFilesDir(), kind.fileName);
+        File staging = new File(target.getPath() + ".restore");
         FileOutputStream out = null;
         try {
-            out = new FileOutputStream(target);
+            out = new FileOutputStream(staging);
             out.write(data);
             out.getFD().sync();
-            return true;
+            out.close();
+            out = null;
+            return staging.renameTo(target);
         } catch (IOException unwritable) {
             return false;
         } finally {
             closeQuietly(out);
+            if (staging.exists()) {
+                staging.delete();
+            }
         }
     }
 

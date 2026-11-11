@@ -105,15 +105,20 @@ public final class DictionarySafetyGuard {
 
     private static void runOnce(Context context, DictionarySafetyStore store,
             DictionarySafetyKind kind) {
-        boolean repaired = protectFile(context, store, kind);
+        if (protectFile(context, store, kind)) {
+            // The engine still holds the file that was on disk before the repair, so whatever it
+            // reports now describes the old dictionary. Leave every baseline alone and let the
+            // repair note stand instead of overwriting it with a stale count.
+            return;
+        }
         Object factory = engineFactory(context, kind);
         if (factory == null) {
-            if (!repaired) record(store, "引擎尚未就绪，本次跳过");
+            record(store, "引擎尚未就绪，本次跳过");
             return;
         }
         int readable = readableCount(context, factory);
         if (readable < 0) {
-            if (!repaired) record(store, "暂时读不出条目数，本次跳过");
+            record(store, "暂时读不出条目数，本次跳过");
             return;
         }
 

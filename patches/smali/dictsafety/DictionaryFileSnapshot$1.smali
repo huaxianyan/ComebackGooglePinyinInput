@@ -34,7 +34,7 @@
 .method constructor <init>(Lcom/google/android/inputmethod/pinyin/dictsafety/DictionaryFileSnapshot;)V
     .locals 0
 
-    .line 150
+    .line 161
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionaryFileSnapshot$1;->this$0:Lcom/google/android/inputmethod/pinyin/dictsafety/DictionaryFileSnapshot;
 
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
@@ -47,7 +47,7 @@
 .method public compare(Ljava/io/File;Ljava/io/File;)I
     .locals 2
 
-    .line 152
+    .line 163
     invoke-virtual {p2}, Ljava/io/File;->lastModified()J
 
     move-result-wide v0
@@ -68,7 +68,7 @@
 .method public bridge synthetic compare(Ljava/lang/Object;Ljava/lang/Object;)I
     .locals 0
 
-    .line 150
+    .line 161
     check-cast p1, Ljava/io/File;
 
     check-cast p2, Ljava/io/File;

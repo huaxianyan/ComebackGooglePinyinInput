@@ -37,26 +37,26 @@
 .method private static closeQuietly(Ljava/io/Closeable;)V
     .locals 0
 
-    .line 182
+    .line 193
     if-nez p0, :cond_0
 
     return-void
 
-    .line 184
+    .line 195
     :cond_0
     :try_start_0
     invoke-interface {p0}, Ljava/io/Closeable;->close()V
     :try_end_0
     .catch Ljava/io/IOException; {:try_start_0 .. :try_end_0} :catch_0
 
-    .line 187
+    .line 198
     goto :goto_0
 
-    .line 185
+    .line 196
     :catch_0
     move-exception p0
 
-    .line 188
+    .line 199
     :goto_0
     return-void
 .end method
@@ -104,10 +104,10 @@
 .method private load(Ljava/io/File;)[B
     .locals 5
 
-    .line 166
+    .line 177
     nop
 
-    .line 168
+    .line 179
     const/4 v0, 0x0
 
     :try_start_0
@@ -122,18 +122,18 @@
     .catch Ljava/io/IOException; {:try_start_0 .. :try_end_0} :catch_1
     .catchall {:try_start_0 .. :try_end_0} :catchall_1
 
-    .line 169
+    .line 180
     :try_start_1
     new-instance p1, Ljava/io/ByteArrayOutputStream;
 
     invoke-direct {p1}, Ljava/io/ByteArrayOutputStream;-><init>()V
 
-    .line 170
+    .line 181
     const/16 v2, 0x2000
 
     new-array v2, v2, [B
 
-    .line 172
+    .line 183
     :goto_0
     invoke-virtual {v1, v2}, Ljava/io/InputStream;->read([B)I
 
@@ -149,7 +149,7 @@
 
     goto :goto_0
 
-    .line 173
+    .line 184
     :cond_0
     invoke-virtual {p1}, Ljava/io/ByteArrayOutputStream;->toByteArray()[B
 
@@ -158,13 +158,13 @@
     .catch Ljava/io/IOException; {:try_start_1 .. :try_end_1} :catch_0
     .catchall {:try_start_1 .. :try_end_1} :catchall_0
 
-    .line 177
+    .line 188
     invoke-static {v1}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionaryFileSnapshot;->closeQuietly(Ljava/io/Closeable;)V
 
-    .line 173
+    .line 184
     return-object p1
 
-    .line 177
+    .line 188
     :catchall_0
     move-exception p1
 
@@ -172,48 +172,48 @@
 
     goto :goto_1
 
-    .line 174
+    .line 185
     :catch_0
     move-exception p1
 
     goto :goto_2
 
-    .line 177
+    .line 188
     :catchall_1
     move-exception p1
 
     :goto_1
     invoke-static {v0}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionaryFileSnapshot;->closeQuietly(Ljava/io/Closeable;)V
 
-    .line 178
+    .line 189
     throw p1
 
-    .line 174
+    .line 185
     :catch_1
     move-exception p1
 
     move-object v1, v0
 
-    .line 175
+    .line 186
     :goto_2
     nop
 
-    .line 177
+    .line 188
     invoke-static {v1}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionaryFileSnapshot;->closeQuietly(Ljava/io/Closeable;)V
 
-    .line 175
+    .line 186
     return-object v0
 .end method
 
 .method private prune()V
     .locals 3
 
-    .line 159
+    .line 170
     invoke-direct {p0}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionaryFileSnapshot;->snapshots()Ljava/util/List;
 
     move-result-object v0
 
-    .line 160
+    .line 171
     const/4 v1, 0x3
 
     :goto_0
@@ -223,7 +223,7 @@
 
     if-ge v1, v2, :cond_0
 
-    .line 161
+    .line 172
     invoke-interface {v0, v1}, Ljava/util/List;->get(I)Ljava/lang/Object;
 
     move-result-object v2
@@ -232,12 +232,12 @@
 
     invoke-virtual {v2}, Ljava/io/File;->delete()Z
 
-    .line 160
+    .line 171
     add-int/lit8 v1, v1, 0x1
 
     goto :goto_0
 
-    .line 163
+    .line 174
     :cond_0
     return-void
 .end method
@@ -245,12 +245,12 @@
 .method private sizeOf(Ljava/io/File;)J
     .locals 5
 
-    .line 129
+    .line 140
     invoke-virtual {p1}, Ljava/io/File;->getName()Ljava/lang/String;
 
     move-result-object p1
 
-    .line 130
+    .line 141
     const-string v0, "file-"
 
     invoke-virtual {v0}, Ljava/lang/String;->length()I
@@ -263,7 +263,7 @@
 
     move-result v1
 
-    .line 131
+    .line 142
     invoke-virtual {v0}, Ljava/lang/String;->length()I
 
     move-result v2
@@ -274,7 +274,7 @@
 
     return-wide v3
 
-    .line 133
+    .line 144
     :cond_0
     :try_start_0
     invoke-virtual {v0}, Ljava/lang/String;->length()I
@@ -293,11 +293,11 @@
 
     return-wide v0
 
-    .line 134
+    .line 145
     :catch_0
     move-exception p1
 
-    .line 135
+    .line 146
     return-wide v3
 .end method
 
@@ -312,12 +312,12 @@
         }
     .end annotation
 
-    .line 140
+    .line 151
     invoke-direct {p0}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionaryFileSnapshot;->directory()Ljava/io/File;
 
     move-result-object v0
 
-    .line 141
+    .line 152
     if-nez v0, :cond_0
 
     invoke-static {}, Ljava/util/Collections;->emptyList()Ljava/util/List;
@@ -326,13 +326,13 @@
 
     return-object v0
 
-    .line 142
+    .line 153
     :cond_0
     invoke-virtual {v0}, Ljava/io/File;->listFiles()[Ljava/io/File;
 
     move-result-object v0
 
-    .line 143
+    .line 154
     if-nez v0, :cond_1
 
     invoke-static {}, Ljava/util/Collections;->emptyList()Ljava/util/List;
@@ -341,13 +341,13 @@
 
     return-object v0
 
-    .line 144
+    .line 155
     :cond_1
     new-instance v1, Ljava/util/ArrayList;
 
     invoke-direct {v1}, Ljava/util/ArrayList;-><init>()V
 
-    .line 145
+    .line 156
     array-length v2, v0
 
     const/4 v3, 0x0
@@ -357,7 +357,7 @@
 
     aget-object v4, v0, v3
 
-    .line 146
+    .line 157
     invoke-virtual {v4}, Ljava/io/File;->getName()Ljava/lang/String;
 
     move-result-object v5
@@ -382,16 +382,16 @@
 
     if-eqz v5, :cond_2
 
-    .line 147
+    .line 158
     invoke-interface {v1, v4}, Ljava/util/List;->add(Ljava/lang/Object;)Z
 
-    .line 145
+    .line 156
     :cond_2
     add-int/lit8 v3, v3, 0x1
 
     goto :goto_0
 
-    .line 150
+    .line 161
     :cond_3
     new-instance v0, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionaryFileSnapshot$1;
 
@@ -399,7 +399,7 @@
 
     invoke-static {v1, v0}, Ljava/util/Collections;->sort(Ljava/util/List;Ljava/util/Comparator;)V
 
-    .line 155
+    .line 166
     return-object v1
 .end method
 
@@ -408,7 +408,7 @@
 .method forget()V
     .locals 2
 
-    .line 125
+    .line 136
     invoke-direct {p0}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionaryFileSnapshot;->snapshots()Ljava/util/List;
 
     move-result-object v0
@@ -434,7 +434,7 @@
 
     goto :goto_0
 
-    .line 126
+    .line 137
     :cond_0
     return-void
 .end method
@@ -863,20 +863,20 @@
 .end method
 
 .method restore([B)Z
-    .locals 4
+    .locals 5
 
-    .line 108
+    .line 113
     const/4 v0, 0x0
 
-    if-eqz p1, :cond_1
+    if-eqz p1, :cond_4
 
     array-length v1, p1
 
     if-nez v1, :cond_0
 
-    goto :goto_2
+    goto/16 :goto_2
 
-    .line 109
+    .line 114
     :cond_0
     new-instance v1, Ljava/io/File;
 
@@ -892,87 +892,157 @@
 
     invoke-direct {v1, v2, v3}, Ljava/io/File;-><init>(Ljava/io/File;Ljava/lang/String;)V
 
-    .line 110
+    .line 115
+    new-instance v2, Ljava/io/File;
+
+    new-instance v3, Ljava/lang/StringBuilder;
+
+    invoke-direct {v3}, Ljava/lang/StringBuilder;-><init>()V
+
+    invoke-virtual {v1}, Ljava/io/File;->getPath()Ljava/lang/String;
+
+    move-result-object v4
+
+    invoke-virtual {v3, v4}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+
+    move-result-object v3
+
+    const-string v4, ".restore"
+
+    invoke-virtual {v3, v4}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+
+    move-result-object v3
+
+    invoke-virtual {v3}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
+
+    move-result-object v3
+
+    invoke-direct {v2, v3}, Ljava/io/File;-><init>(Ljava/lang/String;)V
+
+    .line 116
     nop
 
-    .line 112
-    const/4 v2, 0x0
+    .line 118
+    const/4 v3, 0x0
 
     :try_start_0
-    new-instance v3, Ljava/io/FileOutputStream;
+    new-instance v4, Ljava/io/FileOutputStream;
 
-    invoke-direct {v3, v1}, Ljava/io/FileOutputStream;-><init>(Ljava/io/File;)V
+    invoke-direct {v4, v2}, Ljava/io/FileOutputStream;-><init>(Ljava/io/File;)V
     :try_end_0
     .catch Ljava/io/IOException; {:try_start_0 .. :try_end_0} :catch_1
     .catchall {:try_start_0 .. :try_end_0} :catchall_1
 
-    .line 113
+    .line 119
     :try_start_1
-    invoke-virtual {v3, p1}, Ljava/io/FileOutputStream;->write([B)V
+    invoke-virtual {v4, p1}, Ljava/io/FileOutputStream;->write([B)V
 
-    .line 114
-    invoke-virtual {v3}, Ljava/io/FileOutputStream;->getFD()Ljava/io/FileDescriptor;
+    .line 120
+    invoke-virtual {v4}, Ljava/io/FileOutputStream;->getFD()Ljava/io/FileDescriptor;
 
     move-result-object p1
 
     invoke-virtual {p1}, Ljava/io/FileDescriptor;->sync()V
+
+    .line 121
+    invoke-virtual {v4}, Ljava/io/FileOutputStream;->close()V
     :try_end_1
     .catch Ljava/io/IOException; {:try_start_1 .. :try_end_1} :catch_0
     .catchall {:try_start_1 .. :try_end_1} :catchall_0
 
-    .line 115
+    .line 122
     nop
 
-    .line 119
+    .line 123
+    :try_start_2
+    invoke-virtual {v2, v1}, Ljava/io/File;->renameTo(Ljava/io/File;)Z
+
+    move-result p1
+    :try_end_2
+    .catch Ljava/io/IOException; {:try_start_2 .. :try_end_2} :catch_1
+    .catchall {:try_start_2 .. :try_end_2} :catchall_1
+
+    .line 127
     invoke-static {v3}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionaryFileSnapshot;->closeQuietly(Ljava/io/Closeable;)V
 
-    .line 115
-    const/4 p1, 0x1
+    .line 128
+    invoke-virtual {v2}, Ljava/io/File;->exists()Z
 
+    move-result v0
+
+    if-eqz v0, :cond_1
+
+    .line 129
+    invoke-virtual {v2}, Ljava/io/File;->delete()Z
+
+    .line 123
+    :cond_1
     return p1
 
-    .line 119
+    .line 127
     :catchall_0
     move-exception p1
 
-    move-object v2, v3
+    move-object v3, v4
 
     goto :goto_0
 
-    .line 116
+    .line 124
     :catch_0
     move-exception p1
 
-    move-object v2, v3
+    move-object v3, v4
 
     goto :goto_1
 
-    .line 119
+    .line 127
     :catchall_1
     move-exception p1
 
     :goto_0
-    invoke-static {v2}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionaryFileSnapshot;->closeQuietly(Ljava/io/Closeable;)V
+    invoke-static {v3}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionaryFileSnapshot;->closeQuietly(Ljava/io/Closeable;)V
 
-    .line 120
+    .line 128
+    invoke-virtual {v2}, Ljava/io/File;->exists()Z
+
+    move-result v0
+
+    if-eqz v0, :cond_2
+
+    .line 129
+    invoke-virtual {v2}, Ljava/io/File;->delete()Z
+
+    .line 131
+    :cond_2
     throw p1
 
-    .line 116
+    .line 124
     :catch_1
     move-exception p1
 
-    .line 117
+    .line 125
     :goto_1
     nop
 
-    .line 119
-    invoke-static {v2}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionaryFileSnapshot;->closeQuietly(Ljava/io/Closeable;)V
+    .line 127
+    invoke-static {v3}, Lcom/google/android/inputmethod/pinyin/dictsafety/DictionaryFileSnapshot;->closeQuietly(Ljava/io/Closeable;)V
 
-    .line 117
+    .line 128
+    invoke-virtual {v2}, Ljava/io/File;->exists()Z
+
+    move-result p1
+
+    if-eqz p1, :cond_3
+
+    .line 129
+    invoke-virtual {v2}, Ljava/io/File;->delete()Z
+
+    .line 125
+    :cond_3
     return v0
 
-    .line 108
-    :cond_1
+    .line 113
+    :cond_4
     :goto_2
     return v0
 .end method
