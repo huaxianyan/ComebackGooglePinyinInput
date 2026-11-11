@@ -32,9 +32,14 @@ public final class DictionarySafetyGuard {
     private static final int STRIKES_BEFORE_REPAIR = 2;
 
     /** One check at a time per dictionary, so two triggers cannot race on the same snapshot. */
-    private static final java.util.Set<DictionarySafetyKind> BUSY =
-            java.util.Collections.newSetFromMap(
-                    new java.util.concurrent.ConcurrentHashMap<DictionarySafetyKind, Boolean>());
+    private static final java.util.Map<DictionarySafetyKind, Long> BUSY =
+            new java.util.concurrent.ConcurrentHashMap<DictionarySafetyKind, Long>();
+    /**
+     * A check that has run this long is treated as stuck and replaced. Reading the dictionary
+     * queues behind the app's own save lock, which can wait indefinitely while the keyboard is
+     * busy; without this the safety net would silently stop checking for the rest of the process.
+     */
+    private static final long BUSY_TIMEOUT_MS = 2L * 60L * 1000L;
     private static final Object REPAIR_LOCK = new Object();
 
     private DictionarySafetyGuard() {}
@@ -69,7 +74,9 @@ public final class DictionarySafetyGuard {
             store.preferences().edit()
                     .putLong(DictionarySafetyStore.KEY_LAST_CHECK, now)
                     .apply();
-            if (!BUSY.add(kind)) continue;
+            Long started = BUSY.get(kind);
+            if (started != null && now - started.longValue() < BUSY_TIMEOUT_MS) continue;
+            BUSY.put(kind, Long.valueOf(now));
             Thread worker = new Thread(new Runnable() {
                 @Override public void run() {
                     store.preferences().edit()

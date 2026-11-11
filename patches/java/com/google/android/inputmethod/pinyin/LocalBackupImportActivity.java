@@ -10,6 +10,8 @@ import android.os.Bundle;
 import android.widget.Toast;
 
 import com.google.android.apps.inputmethod.libs.framework.core.TaskListener;
+import com.google.android.apps.inputmethod.libs.hmm.AbstractHmmEngineFactory;
+import com.google.android.inputmethod.pinyin.dictsafety.DictionarySafetyGuard;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -101,6 +103,26 @@ public final class LocalBackupImportActivity extends Activity
         }
     }
 
+    /**
+     * The import writes the dictionary file, but the engine keeps its own copy in memory and only
+     * reloads at a save or restore boundary. Without this the freshly imported words count as zero
+     * until something else triggers a reload, which also leaves the next backup empty.
+     */
+    private static void restoreIntoEngine(Context app) {
+        try {
+            Object factory = Class.forName("bdt")
+                    .getMethod("a", Context.class).invoke(null, app);
+            if (factory == null) return;
+            Class.forName("com.google.android.apps.inputmethod.libs.hmm.SaveDictionaryTask")
+                    .getMethod("launchTaskIfNeeded", Context.class,
+                            AbstractHmmEngineFactory.class)
+                    .invoke(null, app, factory);
+            DictionarySafetyGuard.request(app);
+        } catch (Throwable unavailable) {
+            // Leaving the dictionary as imported is the previous behaviour; nothing to undo.
+        }
+    }
+
     private static final class ImportListener implements TaskListener {
         final Context context;
         ImportListener(Context c) { context = c; }
@@ -110,6 +132,7 @@ public final class LocalBackupImportActivity extends Activity
         @Override public void onTaskFinished(boolean success, Object result) {
             Toast.makeText(context, success ? "用户词典备份导入成功" : "用户词典备份导入失败",
                     Toast.LENGTH_LONG).show();
+            if (success) restoreIntoEngine(context);
         }
     }
 }
