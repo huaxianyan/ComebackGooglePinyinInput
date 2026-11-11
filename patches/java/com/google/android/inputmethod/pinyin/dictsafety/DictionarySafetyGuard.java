@@ -41,8 +41,54 @@ public final class DictionarySafetyGuard {
      */
     private static final long BUSY_TIMEOUT_MS = 2L * 60L * 1000L;
     private static final Object REPAIR_LOCK = new Object();
+    /** How often an unchanged size is worth journaling again. */
+    private static final long SAMPLE_INTERVAL_MS = 30L * 1000L;
+    /** Sizes kept in the save journal. */
+    private static final int SAVE_JOURNAL_LIMIT = 12;
 
     private DictionarySafetyGuard() {}
+
+    /**
+     * Records the dictionary sizes seen at each save boundary. A collapse leaves its own trail here:
+     * the last sample before the size drops is the save that lost the entries.
+     */
+    private static void sampleSave(Context app, DictionarySafetyStore store,
+            DictionarySafetyKind kind, long now) {
+        long size = DictionarySafetyStore.mainDictionarySize(app, kind);
+        long backup = DictionarySafetyStore.backupDictionarySize(app, kind);
+        String sample = size + "/" + backup;
+        String journal = store.preferences().getString(DictionarySafetyStore.KEY_SAVE_JOURNAL, "");
+        if (!journal.isEmpty()) {
+            String last = journal.substring(journal.lastIndexOf(';') + 1);
+            int colon = last.indexOf(':');
+            if (last.endsWith(sample) && colon > 0) {
+                try {
+                    if (now - Long.parseLong(last.substring(0, colon)) < SAMPLE_INTERVAL_MS) return;
+                } catch (NumberFormatException ignored) {
+                    // A journal entry we cannot read is simply replaced by a fresh one.
+                }
+            }
+        }
+        StringBuilder builder = new StringBuilder();
+        String[] parts = (journal.isEmpty() ? "" : journal + ";").concat(now + ":" + sample)
+                .split(";");
+        for (int index = Math.max(0, parts.length - SAVE_JOURNAL_LIMIT); index < parts.length;
+                index++) {
+            if (builder.length() > 0) builder.append(';');
+            builder.append(parts[index]);
+        }
+        store.preferences().edit()
+                .putString(DictionarySafetyStore.KEY_SAVE_JOURNAL, builder.toString())
+                .apply();
+    }
+
+    /** Puts the save history next to a collapse, where it survives the next check. */
+    private static void markCollapse(DictionarySafetyStore store, String detail) {
+        store.preferences().edit()
+                .putString(DictionarySafetyStore.KEY_DEBUG, detail + " journal="
+                        + store.preferences().getString(DictionarySafetyStore.KEY_SAVE_JOURNAL, ""))
+                .apply();
+    }
 
     /** Entries the engine can read right now, or -1 when it cannot be asked. */
     public static int readableEntryCount(Context context) {
@@ -65,6 +111,7 @@ public final class DictionarySafetyGuard {
                 .apply();
         for (final DictionarySafetyKind kind : DictionarySafetyKind.values()) {
             final DictionarySafetyStore store = new DictionarySafetyStore(app, kind);
+            sampleSave(app, store, kind, now);
             if (now - store.preferences().getLong(
                     DictionarySafetyStore.KEY_LAST_CHECK, 0L) < CHECK_INTERVAL_MS) {
                 continue;
@@ -91,9 +138,16 @@ public final class DictionarySafetyGuard {
                                 .putLong(DictionarySafetyStore.KEY_LAST_CHECK,
                                         System.currentTimeMillis())
                                 .apply();
-                        store.preferences().edit()
-                                .putString(DictionarySafetyStore.KEY_DEBUG, "worker-finished")
-                                .apply();
+                        // Keep a collapse record: it carries the save journal that explains when
+                        // the dictionary last shrank, and the ordinary finish marker would erase it.
+                        String debug = store.preferences().getString(
+                                DictionarySafetyStore.KEY_DEBUG, "");
+                        if (!debug.startsWith("file-collapsed")
+                                && !debug.startsWith("count-collapsed")) {
+                            store.preferences().edit()
+                                    .putString(DictionarySafetyStore.KEY_DEBUG, "worker-finished")
+                                    .apply();
+                        }
                         BUSY.remove(kind);
                     }
                 }
@@ -133,6 +187,7 @@ public final class DictionarySafetyGuard {
             store.rotate(true);
             return;
         }
+        markCollapse(store, "count-collapsed " + readable + "/" + known);
         Boolean stillOnDisk = entriesCouldStillBeOnDisk(
                 context, kind, preferences, readable, known);
         if (stillOnDisk == null) {
@@ -201,6 +256,7 @@ public final class DictionarySafetyGuard {
             files.keep(current);
             return false;
         }
+        markCollapse(store, "file-collapsed " + size + "/" + high);
         byte[] recovered = files.newestAtLeast(high / 2L);
         if (recovered != null && files.restore(recovered)) {
             record(store, "词库文件从 " + size + " 字节恢复到 " + recovered.length + " 字节，"

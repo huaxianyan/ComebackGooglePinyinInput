@@ -39,6 +39,14 @@ public final class DictionarySafetyStore {
     static final String KEY_KNOWN_FILE_SIZE = "known_dictionary_file_size";
     /** Largest the dictionary file has been on this device, in bytes. */
     static final String KEY_FILE_HIGH_WATER = "dictionary_file_high_water";
+    /** Sizes seen at recent save boundaries, newest last. Sizes only, never entry content. */
+    static final String KEY_SAVE_JOURNAL = "save_journal";
+
+    /** Size of the engine's previous copy, or -1 when the engine has not rotated one yet. */
+    public static long backupDictionarySize(Context context, DictionarySafetyKind kind) {
+        File file = new File(context.getFilesDir(), kind.fileName + "_bak");
+        return file.exists() ? file.length() : -1L;
+    }
 
     /** Size of the main dictionary file, which is the only place entries can still live. */
     public static long mainDictionarySize(Context context, DictionarySafetyKind kind) {
