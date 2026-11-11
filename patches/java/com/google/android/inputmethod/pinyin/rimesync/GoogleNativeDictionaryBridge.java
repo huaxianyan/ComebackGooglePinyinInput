@@ -66,10 +66,7 @@ public final class GoogleNativeDictionaryBridge {
                     RimeSyncPlanner.GoogleAction.ADD, entry.count));
         }
         if (changes.isEmpty()) return 0;
-        if (context.getFileStreamPath(USER_DICTIONARY_FILE).length() == 0L) {
-            // Nothing exists yet, so there is no dictionary to copy and no learning to protect.
-            return insertDirectly(context, engineFactory, changes);
-        }
+        materializeDictionaryIfMissing(context, engineFactory);
         Result result = apply(context, engineFactory, changes);
         if (!result.persisted) {
             throw nativeFailure(FAILURE_PERSIST, "Imported entries were not persisted");
@@ -77,27 +74,23 @@ public final class GoogleNativeDictionaryBridge {
         return result.addedCount;
     }
 
-    /** Writes entries into a dictionary that does not exist yet. */
-    private static int insertDirectly(Context context, AbstractHmmEngineFactory engineFactory,
-            List<Change> changes) throws IOException {
+    /**
+     * Makes sure the engine has a dictionary to copy before an import is applied.
+     *
+     * <p>Import is applied to a copy that only replaces the live dictionary after every entry is
+     * accepted, so a rejected entry can never leave a half-imported file behind. On a device that
+     * has never saved a dictionary there is nothing to copy yet, and saving the empty dictionary
+     * creates one.
+     */
+    private static void materializeDictionaryIfMissing(Context context,
+            AbstractHmmEngineFactory engineFactory) throws IOException {
+        if (context.getFileStreamPath(USER_DICTIONARY_FILE).length() > 0L) return;
         synchronized (SaveDictionaryTask.sSaveLock) {
             DictionaryAccessor accessor = open(context, engineFactory);
             try {
-                int written = 0;
-                List<String> rejected = new ArrayList<String>();
-                for (Change change : changes) {
-                    if (accessor.insertOrUpdate(
-                            newEntry(change.code, change.phrase, change.count))) {
-                        written++;
-                    } else {
-                        rejected.add(change.key);
-                    }
+                if (!accessor.persist()) {
+                    throw nativeFailure(FAILURE_PERSIST, "Empty dictionary could not be created");
                 }
-                if (!rejected.isEmpty()) throw new RejectedEntriesException(rejected);
-                if (written > 0 && !accessor.persist()) {
-                    throw nativeFailure(FAILURE_PERSIST, "Imported entries were not persisted");
-                }
-                return written;
             } finally {
                 accessor.close();
             }
