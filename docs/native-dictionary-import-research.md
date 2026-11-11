@@ -66,7 +66,8 @@ tokens，`languageIds` 每项填 `0x10`（即 `PINYIN_LANGUAGE_ID = 16`），`is
 
 ## 探针怎么跑
 
-研究分支独占，合入前必须整块删掉：
+探针代码只存在于研究分支 `research/dict-import-weights`，主线没有它。分支上留着是为了以后
+能重跑同样的对比：
 
 - `NativeImportProbe` 只用于研究，主线不带。
 - 触发：`am start -a android.intent.action.VIEW -n <pkg>/
@@ -98,6 +99,28 @@ tokens，`languageIds` 每项填 `0x10`（即 `PINYIN_LANGUAGE_ID = 16`），`is
 触发时刻只能缩到「11-07 20:19 之后、11-09 01:40 之前」，那段时间没有日志留存，无法再缩小。
 原生没有暴露「在原文件上重建索引」的接口，`refreshData()` 是否真能修好一个塌陷视图也还没验证
 （探针在枚举阶段就崩了，没走到那一步）。
+
+## 塌陷能不能靠刷新救回来（已验证：不能）
+
+实验：先让引擎持有 40 条的词库，然后把一份 2 条、5,128 字节的词库用 rename 覆盖到同一路径。
+
+| 步骤 | `getDictionaryCount()` | `getAllEntries()` |
+| --- | --- | --- |
+| 换文件前 | 190 | 40 |
+| 换文件后（同一句柄） | 190 | 40，视图仍是旧的 |
+| `refreshMutableDictionaryData(USER_DICTIONARY)` 之后 | 190 | 40，**没有变化** |
+| 关掉再注册一个新的 accessor | 107 | 2，读到的是新文件 |
+
+两点结论：
+
+1. 引擎把词库 mmap 住，`refreshMutableDictionaryData` 不会重新绑定已经存在的句柄，所以刷新
+   救不回塌陷视图。
+2. 新注册的 accessor 会重新读文件，说明文件本身修好后不需要重装或清数据，只要让引擎重新注册。
+   对运行中的输入法来说，这个时机只发生在服务重启或保存边界，所以「恢复后重启输入法」仍然是
+   唯一的可靠做法。
+
+顺带说明：字节恢复必须用 rename 覆盖，不能在原文件上写。写原文件会截断正在被 mmap 的文件，
+下一次读取直接 SIGBUS——这也是 `DictionaryFileSnapshot.restore()` 现在写临时文件再 rename 的原因。
 
 ## 对产品决策的影响
 
