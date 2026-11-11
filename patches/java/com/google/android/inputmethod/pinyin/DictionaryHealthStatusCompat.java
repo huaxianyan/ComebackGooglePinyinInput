@@ -78,22 +78,23 @@ public final class DictionaryHealthStatusCompat {
                 if (!zhReadable || !enReadable) {
                     status = HEALTH_ERROR;
                     summary = "词库检查未完成，请稍后重试";
+                } else if (shrunk) {
+                    status = HEALTH_ERROR;
+                    summary = "中文词条从 " + previousEntries + " 条减少到 " + entries
+                            + " 条，请尽快导入备份或重新建立同步状态，恢复前不要清除用户词典";
                 } else if (zh.unreadable || en.unreadable) {
                     status = HEALTH_NOTICE;
                     summary = "词库可读取，保留了此前的异常文件，建议先备份当前词库";
                 } else if (zh.temporary || en.temporary) {
                     status = HEALTH_NOTICE;
                     summary = "词库可读取，发现上次保存的临时文件，请稍后重新检查";
-                } else if (shrunk) {
-                    status = HEALTH_NOTICE;
-                    summary = "中文词条数明显少于上次检查，建议先备份词库再重新建立同步状态";
                 }
                 StringBuilder details = new StringBuilder();
                 details.append("中文词库：").append(zhReadable ? "可读取" : "暂时无法确认")
                         .append("\n英文词库：").append(enReadable ? "可读取" : "暂时无法确认");
                 details.append("\n中文词条：")
                         .append(entries >= 0 ? entries + " 条" : "暂时无法统计")
-                        .append(previousEntries > 0 ? "（上次检查 " + previousEntries + " 条）" : "");
+                        .append(previousEntries > 0 ? "（此前最高 " + previousEntries + " 条）" : "");
                 details.append("\n中文文件：").append(describeMain(zh))
                         .append("\n英文文件：").append(describeMain(en));
                 details.append("\n上次保存副本：中文 ").append(describeBackup(zh))
@@ -108,7 +109,9 @@ public final class DictionaryHealthStatusCompat {
                             .append(DateFormat.getDateFormat(context).format(modified)).append(' ')
                             .append(DateFormat.getTimeFormat(context).format(modified));
                 }
-                if (entries >= 0) {
+                // Keep the high-water mark: a collapse must stay visible until entries recover,
+                // otherwise the next check would adopt the shrunken count and turn green again.
+                if (entries > previousEntries) {
                     prefs.edit().putInt(LAST_CHINESE_ENTRIES, entries).apply();
                 }
                 return new Snapshot(status, summary, details.toString());
