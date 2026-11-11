@@ -6,7 +6,10 @@ from __future__ import annotations
 NATIVE_STUB_SOURCES = {
     "android/content/Context.java": r'''
 package android.content;
-public abstract class Context {}
+public abstract class Context {
+  public java.io.File getFileStreamPath(String name) { return null; }
+  public java.io.File getFilesDir() { return null; }
+}
 ''',
     "com/google/android/apps/inputmethod/libs/hmm/MutableDictionaryAccessorInterface.java": r'''
 package com.google.android.apps.inputmethod.libs.hmm;

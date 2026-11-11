@@ -15,6 +15,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCES = [
+    ROOT / "patches/java/com/google/android/inputmethod/pinyin/dictsafety/DictionaryBackupText.java",
     ROOT / "patches/java/com/google/android/inputmethod/pinyin/dictsafety/DictionarySafetyPolicy.java",
     ROOT / "patches/java/com/google/android/inputmethod/pinyin/dictsafety/DictionarySafetySnapshot.java",
 ]

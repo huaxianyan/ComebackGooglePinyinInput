@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -27,6 +28,8 @@ ANDROID_SOURCES = [
     SOURCE_DIR / "RimeAutoSyncReceiver.java",
 ]
 NATIVE_BRIDGE_SOURCE = SOURCE_DIR / "GoogleNativeDictionaryBridge.java"
+# The bridge parses backup files itself, so the protocol test builds that parser too.
+BACKUP_TEXT_SOURCE = SOURCE_DIR.parent / "dictsafety/DictionaryBackupText.java"
 SESSION_PLAN_SOURCE = SOURCE_DIR / "RimeSyncSessionPlan.java"
 COORDINATOR_SOURCE = SOURCE_DIR / "RimeSyncCoordinator.java"
 SETTINGS_SOURCE = SOURCE_DIR / "RimeSyncSettingsCompat.java"
@@ -648,19 +651,51 @@ def verify_smali(decoded: Path | None) -> None:
             raise AssertionError(f"decoded Rime Smali differs from patch artifact: {patch.name}")
 
 
+def first_existing(*candidates: Path) -> Path:
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    return candidates[-1]
+
+
+def default_jdk() -> Path:
+    """Follow the machine conventions rather than one machine's old bundle layout."""
+    home = os.environ.get("JAVA_HOME")
+    candidates = [Path(home)] if home else []
+    candidates += [
+        Path("C:/Users/7inaBranford/scoop/apps/temurin17-jdk/current"),
+        Path("C:/Users/7inaBranford/scoop/apps/openjdk17/current"),
+        ROOT / "work/android-sdk-16kb/jdk",
+    ]
+    # A JAVA_HOME pointing at a JRE has no javac; keep looking instead of failing later.
+    for candidate in candidates:
+        if (candidate / "bin" / "javac.exe").exists():
+            return candidate
+    return candidates[-1]
+
+
+def default_sdk() -> Path:
+    return first_existing(Path("C:/Users/7inaBranford/scoop/apps/android-clt/current"),
+                          ROOT / "work/android-sdk-16kb")
+
+
+def default_decoded() -> Path:
+    return first_existing(ROOT / "work/settings-transfer-build/decoded", ROOT / "work/decoded")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--jdk", type=Path, default=ROOT / "work/android-sdk-16kb/jdk")
-    parser.add_argument("--sdk", type=Path, default=ROOT / "work/android-sdk-16kb")
-    parser.add_argument("--decoded", type=Path)
+    parser.add_argument("--jdk", type=Path, default=default_jdk())
+    parser.add_argument("--sdk", type=Path, default=default_sdk())
+    parser.add_argument("--decoded", type=Path, default=default_decoded())
     args = parser.parse_args()
-    decoded = args.decoded.resolve() if args.decoded else ROOT / "work/decoded"
+    decoded = args.decoded.resolve()
     verify_native_api(decoded)
-    verify_smali(decoded if args.decoded else None)
+    verify_smali(decoded)
     javac = args.jdk.resolve() / "bin/javac.exe"
     java = args.jdk.resolve() / "bin/java.exe"
     android_jar = args.sdk.resolve() / "platforms/android-36/android.jar"
-    for path in (*SOURCES, *ANDROID_SOURCES, NATIVE_BRIDGE_SOURCE,
+    for path in (*SOURCES, *ANDROID_SOURCES, NATIVE_BRIDGE_SOURCE, BACKUP_TEXT_SOURCE,
                  SESSION_PLAN_SOURCE, COORDINATOR_SOURCE, SETTINGS_SOURCE,
                  javac, java, android_jar):
         if not path.exists():
@@ -678,7 +713,7 @@ def main() -> int:
     subprocess.run(
         [str(javac), "-encoding", "UTF-8", "-source", "7", "-target", "7",
          "-d", str(classes), *(str(source) for source in SOURCES),
-         str(NATIVE_BRIDGE_SOURCE), str(SESSION_PLAN_SOURCE),
+         str(NATIVE_BRIDGE_SOURCE), str(BACKUP_TEXT_SOURCE), str(SESSION_PLAN_SOURCE),
          *(str(path) for path in stub_paths), str(test)],
         cwd=ROOT,
         check=True,
@@ -695,7 +730,7 @@ def main() -> int:
          "-bootclasspath", str(android_jar), "-d", str(android_classes),
          *(str(source) for source in SOURCES),
          *(str(source) for source in ANDROID_SOURCES), str(NATIVE_BRIDGE_SOURCE),
-         str(SESSION_PLAN_SOURCE), str(COORDINATOR_SOURCE), str(SETTINGS_SOURCE),
+         str(BACKUP_TEXT_SOURCE), str(SESSION_PLAN_SOURCE), str(COORDINATOR_SOURCE), str(SETTINGS_SOURCE),
          *(str(path) for path in android_stub_paths)],
         cwd=ROOT,
         check=True,
