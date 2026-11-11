@@ -138,10 +138,17 @@ def main() -> int:
             env=environment,
         )
         generated = decoded / "smali/com/google/android/inputmethod/pinyin"
+        # Inner classes are part of the compiled output: skipping them leaves the outer Smali
+        # pointing at classes that were never written.
         written = 0
+        recognized = set()
         for path in sorted(generated.glob("*.smali")):
-            if not any(path.name.split("$")[0] == name + ".smali" for name in TARGETS):
+            owner = path.name.split("$")[0]
+            if owner.endswith(".smali"):
+                owner = owner[: -len(".smali")]
+            if owner not in TARGETS:
                 continue
+            recognized.add(path.name)
             target = OUTPUT_DIR / path.name
             payload = path.read_bytes()
             if target.exists() and target.read_bytes() == payload:
@@ -149,6 +156,13 @@ def main() -> int:
             shutil.copyfile(path, target)
             written += 1
             print(target.relative_to(ROOT))
+        for target in sorted(OUTPUT_DIR.glob("*.smali")):
+            owner = target.name.split("$")[0]
+            if owner.endswith(".smali"):
+                owner = owner[: -len(".smali")]
+            if owner in TARGETS and target.name not in recognized:
+                target.unlink()
+                print("removed {}".format(target.relative_to(ROOT)))
         print("updated %d Smali files" % written)
     return 0
 

@@ -9,12 +9,10 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.widget.Toast;
 
-import com.google.android.apps.inputmethod.libs.framework.core.TaskListener;
 import com.google.android.apps.inputmethod.libs.hmm.AbstractHmmEngineFactory;
+import com.google.android.inputmethod.pinyin.rimesync.GoogleNativeDictionaryBridge;
 import com.google.android.inputmethod.pinyin.dictsafety.DictionarySafetyGuard;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
 import java.util.List;
 
 /** Explicit manual import entry for the selected backup directory and file-manager VIEW/SEND. */
@@ -85,54 +83,46 @@ public final class LocalBackupImportActivity extends Activity
 
     public static boolean startNativeImport(Context source, Uri uri) {
         final Context app = source.getApplicationContext();
-        try {
-            Class<?> managerClass = Class.forName("aib");
-            Object manager = managerClass.getMethod("a").invoke(null);
-            Class<?> factoryType = Class.forName(
-                    "com.google.android.apps.inputmethod.libs.framework.core.TaskFactory");
-            Constructor<?> ctor = Class.forName("beh").getConstructor(Context.class,
-                    TaskListener.class, Uri.class);
-            Object factory = ctor.newInstance(app, new ImportListener(app), uri);
-            Method schedule = managerClass.getMethod("a", String.class, factoryType, Long.TYPE);
-            schedule.invoke(manager, "user_dict_import", factory, 0L);
-            Toast.makeText(app, "正在导入用户词典备份", Toast.LENGTH_SHORT).show();
-            return true;
-        } catch (Throwable t) {
-            Toast.makeText(app, "无法启动原生用户词典导入", Toast.LENGTH_LONG).show();
-            return false;
-        }
+        Toast.makeText(app, "正在导入用户词典备份", Toast.LENGTH_SHORT).show();
+        new Thread(new Runnable() {
+            @Override public void run() {
+                String message;
+                try {
+                    byte[] backup = readAll(app, uri);
+                    Object factory = Class.forName("bdt")
+                            .getMethod("a", Context.class).invoke(null, app);
+                    int written = GoogleNativeDictionaryBridge.importBackup(app,
+                            (AbstractHmmEngineFactory) factory, backup);
+                    message = written > 0
+                            ? "已导入 " + written + " 条词条"
+                            : "备份里没有可导入的词条";
+                    DictionarySafetyGuard.request(app);
+                } catch (Throwable failure) {
+                    android.util.Log.e("PinyinImport", "backup import failed", failure);
+                    message = "导入未完成：" + failure.getMessage();
+                }
+                final String text = message;
+                new android.os.Handler(android.os.Looper.getMainLooper()).post(new Runnable() {
+                    @Override public void run() {
+                        Toast.makeText(app, text, Toast.LENGTH_LONG).show();
+                    }
+                });
+            }
+        }).start();
+        return true;
     }
 
-    /**
-     * The import writes the dictionary file, but the engine keeps its own copy in memory and only
-     * reloads at a save or restore boundary. Without this the freshly imported words count as zero
-     * until something else triggers a reload, which also leaves the next backup empty.
-     */
-    private static void restoreIntoEngine(Context app) {
+    private static byte[] readAll(Context context, Uri uri) throws java.io.IOException {
+        java.io.InputStream in = context.getContentResolver().openInputStream(uri);
+        if (in == null) throw new java.io.IOException("backup cannot be opened");
         try {
-            Object factory = Class.forName("bdt")
-                    .getMethod("a", Context.class).invoke(null, app);
-            if (factory == null) return;
-            Class.forName("com.google.android.apps.inputmethod.libs.hmm.SaveDictionaryTask")
-                    .getMethod("launchTaskIfNeeded", Context.class,
-                            AbstractHmmEngineFactory.class)
-                    .invoke(null, app, factory);
-            DictionarySafetyGuard.request(app);
-        } catch (Throwable unavailable) {
-            // Leaving the dictionary as imported is the previous behaviour; nothing to undo.
-        }
-    }
-
-    private static final class ImportListener implements TaskListener {
-        final Context context;
-        ImportListener(Context c) { context = c; }
-        @Override public void onTaskStart() {}
-        @Override public void onTaskProgress(int p) {}
-        @Override public void onTaskError(int e) {}
-        @Override public void onTaskFinished(boolean success, Object result) {
-            Toast.makeText(context, success ? "用户词典备份导入成功" : "用户词典备份导入失败",
-                    Toast.LENGTH_LONG).show();
-            if (success) restoreIntoEngine(context);
+            java.io.ByteArrayOutputStream bytes = new java.io.ByteArrayOutputStream();
+            byte[] buffer = new byte[8192];
+            int read;
+            while ((read = in.read(buffer)) != -1) bytes.write(buffer, 0, read);
+            return bytes.toByteArray();
+        } finally {
+            in.close();
         }
     }
 }

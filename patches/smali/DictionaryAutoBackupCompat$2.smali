@@ -31,9 +31,14 @@
 
 # direct methods
 .method constructor <init>(Landroid/content/Context;Landroid/net/Uri;Landroid/net/Uri;Ljava/lang/String;Z)V
-    .registers 6
+    .locals 0
+    .annotation system Ldalvik/annotation/Signature;
+        value = {
+            "()V"
+        }
+    .end annotation
 
-    .line 184
+    .line 202
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$2;->val$context:Landroid/content/Context;
 
     iput-object p2, p0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$2;->val$tree:Landroid/net/Uri;
@@ -52,9 +57,9 @@
 
 # virtual methods
 .method public run()V
-    .registers 6
+    .locals 5
 
-    .line 186
+    .line 204
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$2;->val$context:Landroid/content/Context;
 
     iget-object v1, p0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$2;->val$tree:Landroid/net/Uri;
@@ -65,9 +70,8 @@
 
     iget-boolean v4, p0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$2;->val$force:Z
 
-    # invokes: Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->enqueueNativeExport(Landroid/content/Context;Landroid/net/Uri;Landroid/net/Uri;Ljava/lang/String;Z)V
     invoke-static {v0, v1, v2, v3, v4}, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat;->access$100(Landroid/content/Context;Landroid/net/Uri;Landroid/net/Uri;Ljava/lang/String;Z)V
 
-    .line 187
+    .line 205
     return-void
 .end method

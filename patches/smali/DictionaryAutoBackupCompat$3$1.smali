@@ -25,9 +25,14 @@
 
 # direct methods
 .method constructor <init>(Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$3;Ljava/util/List;)V
-    .registers 3
+    .locals 0
+    .annotation system Ldalvik/annotation/Signature;
+        value = {
+            "()V"
+        }
+    .end annotation
 
-    .line 313
+    .line 381
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$3$1;->this$0:Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$3;
 
     iput-object p2, p0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$3$1;->val$entries:Ljava/util/List;
@@ -40,9 +45,9 @@
 
 # virtual methods
 .method public run()V
-    .registers 3
+    .locals 2
 
-    .line 314
+    .line 382
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$3$1;->this$0:Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$3;
 
     iget-object v0, v0, Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$3;->val$callback:Lcom/google/android/inputmethod/pinyin/DictionaryAutoBackupCompat$BackupListCallback;

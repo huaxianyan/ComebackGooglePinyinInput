@@ -4,6 +4,7 @@ import android.content.Context;
 import com.google.android.apps.inputmethod.libs.hmm.AbstractHmmEngineFactory;
 import com.google.android.apps.inputmethod.libs.hmm.DictionaryAccessor;
 import com.google.android.apps.inputmethod.libs.hmm.MutableDictionaryAccessorInterface;
+import com.google.android.inputmethod.pinyin.dictsafety.DictionaryBackupText;
 import com.google.android.apps.inputmethod.libs.hmm.SaveDictionaryTask;
 import java.io.IOException;
 import java.text.Normalizer;
@@ -24,6 +25,9 @@ public final class GoogleNativeDictionaryBridge {
     public static final int FAILURE_DUPLICATE = 5;
     public static final int FAILURE_INSERT = 6;
     public static final int FAILURE_PERSIST = 7;
+
+    /** The user dictionary file the engine loads and saves. */
+    private static final String USER_DICTIONARY_FILE = "user_dict_3_3";
     public static final int FAILURE_REBUILD = 8;
     public static final int FAILURE_EXPORT = 9;
     public static final int FAILURE_DATA = 10;
@@ -42,6 +46,62 @@ public final class GoogleNativeDictionaryBridge {
     public static Snapshot read(Context context, AbstractHmmEngineFactory engineFactory)
             throws IOException {
         return readSnapshot(context, engineFactory, false);
+    }
+
+    /**
+     * Imports an exported backup, keeping every entry's own weight.
+     *
+     * <p>The native import task drops the weight column and inserts the words with weight zero,
+     * which the engine then treats as deleted: present in the file, invisible to candidates,
+     * exports and counts. This path builds the entries here so the weights survive.
+     *
+     * @return the number of entries written
+     */
+    public static int importBackup(Context context, AbstractHmmEngineFactory engineFactory,
+            byte[] backup) throws IOException {
+        requireArguments(context, engineFactory);
+        List<Change> changes = new ArrayList<Change>();
+        for (DictionaryBackupText.Entry entry : DictionaryBackupText.parse(backup)) {
+            changes.add(new Change(entry.code, entry.phrase,
+                    RimeSyncPlanner.GoogleAction.ADD, entry.count));
+        }
+        if (changes.isEmpty()) return 0;
+        if (context.getFileStreamPath(USER_DICTIONARY_FILE).length() == 0L) {
+            // Nothing exists yet, so there is no dictionary to copy and no learning to protect.
+            return insertDirectly(context, engineFactory, changes);
+        }
+        Result result = apply(context, engineFactory, changes);
+        if (!result.persisted) {
+            throw nativeFailure(FAILURE_PERSIST, "Imported entries were not persisted");
+        }
+        return result.addedCount;
+    }
+
+    /** Writes entries into a dictionary that does not exist yet. */
+    private static int insertDirectly(Context context, AbstractHmmEngineFactory engineFactory,
+            List<Change> changes) throws IOException {
+        synchronized (SaveDictionaryTask.sSaveLock) {
+            DictionaryAccessor accessor = open(context, engineFactory);
+            try {
+                int written = 0;
+                List<String> rejected = new ArrayList<String>();
+                for (Change change : changes) {
+                    if (accessor.insertOrUpdate(
+                            newEntry(change.code, change.phrase, change.count))) {
+                        written++;
+                    } else {
+                        rejected.add(change.key);
+                    }
+                }
+                if (!rejected.isEmpty()) throw new RejectedEntriesException(rejected);
+                if (written > 0 && !accessor.persist()) {
+                    throw nativeFailure(FAILURE_PERSIST, "Imported entries were not persisted");
+                }
+                return written;
+            } finally {
+                accessor.close();
+            }
+        }
     }
 
     /** Reads only canonical presence for a preview that will not retain executable entries. */
