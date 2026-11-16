@@ -127,9 +127,9 @@ target SDK:     37
 - 复古 9 键设置位于英文输入分类，开关变化立即生效。
 - Inline Autofill 需要 Android 11/API 30 及以上，并取决于当前 App、Android Autofill Framework 和用户选择的 Autofill Provider。
 - TalkBack touch exploration 下的 Inline Suggestions 尚未声明支持，系统会采用自身回退路径。
-- 当前范围的预测性返回与统一动效已验收，未执行的专项和旧 API 回归边界见 [统一动效记录](docs/settings-motion-unification.md)。Material 3 动效接口使用预发布依赖，不称为稳定版本。
-- 16 KiB 属于模拟器验证，不是原生 AArch64 16 KiB 真机验收，完整边界见 [原生兼容记录](docs/native-16kb-compatibility.md)。
-- Android 17/API 37 已完成适配与真机验证，适配结论与未覆盖项见 [Android 17 / API 37 适配调查](docs/android-17-api-37-investigation.md)。
+- 当前范围的预测性返回与统一动效已验收，未执行的专项和旧 API 回归边界见 [统一动效记录](docs/research/settings-motion-unification.md)。Material 3 动效接口使用预发布依赖，不称为稳定版本。
+- 16 KiB 属于模拟器验证，不是原生 AArch64 16 KiB 真机验收，完整边界见 [原生兼容记录](docs/research/native-16kb-compatibility.md)。
+- Android 17/API 37 已完成适配与真机验证，适配结论与未覆盖项见 [Android 17 / API 37 适配调查](docs/research/android-17-api-37-investigation.md)。
 
 ## 设置备份与签名迁移
 
@@ -139,7 +139,7 @@ Android 6.0～12L 可以保留数据覆盖安装迁移版，本版在这些系�
 
 在「其他 → 设置备份与恢复」导出设置及自定义主题，词库请使用下方的独立备份入口。重装后导入设置，在恢复页重新选择目录并开启需要的自动功能。Rime 自动同步需要先完成一次手动同步。
 
-操作范围与验证边界见 [设置备份与签名迁移](docs/settings-transfer-signing-migration.md)。
+操作范围与验证边界见 [设置备份与签名迁移](docs/research/settings-transfer-signing-migration.md)。
 
 ## 用户词典备份与恢复
 
@@ -147,7 +147,7 @@ Android 6.0～12L 可以保留数据覆盖安装迁移版，本版在这些系�
 
 恢复时重新授权原备份目录，从内置列表选择备份并确认导入即可。云端同步、离线和保留能力由所选 DocumentsProvider 管理。
 
-详细设计见 [用户词典自动备份设计](docs/dictionary-auto-backup-design.md)。
+详细设计见 [用户词典自动备份设计](docs/research/dictionary-auto-backup-design.md)。
 
 ## Rime 用户词典同步
 
@@ -160,7 +160,7 @@ Rime 同步让 Google 拼音的用户词典与 Rime 生成的 `pinyin_simp.userd
 
 同步只处理多字词条的存在与删除，不换算历史词频。逐条查看仅保留在 Rime 的条目不是完成同步的前置步骤。目录授权、文件到达时机和离线能力由所选 DocumentsProvider 与外部同步软件负责，应用只处理执行时目录中已有的快照。
 
-Rime 同步在全部受支持版本的现代设置页配置，继续使用原有配置与执行逻辑。详细设计见 [Rime 自动同步设计](docs/rime-auto-sync-design.md)。
+Rime 同步在全部受支持版本的现代设置页配置，继续使用原有配置与执行逻辑。详细设计见 [Rime 自动同步设计](docs/research/rime-auto-sync-design.md)。
 
 ## 复古 9 键
 
@@ -171,7 +171,7 @@ Rime 同步在全部受支持版本的现代设置页配置，继续使用原有
 3. 需要调整等待时间时，在开关下方修改「多击间隔」，默认为 600 ms。
 4. 关闭开关即回到原版英文 9 键，联想、自动纠错和标点候选一并恢复。
 
-打开复古 9 键后该键盘不再联想和纠错，词库本身不受影响。简体中文输入、中文九宫格、全键盘、手写和密码键盘都不受该开关影响。详细设计见 [英文 9 键多击设计](docs/english-t9-multitap-design.md)。
+打开复古 9 键后该键盘不再联想和纠错，词库本身不受影响。简体中文输入、中文九宫格、全键盘、手写和密码键盘都不受该开关影响。详细设计见 [英文 9 键多击设计](docs/research/english-t9-multitap-design.md)。
 
 ## 开发与审计
 
@@ -186,13 +186,13 @@ docs/            设计、研究、验收和兼容边界
 ```
 
 - [长期决策](docs/handoff/DECISIONS.md) 与 [日期交接记录](docs/handoff/)：当前主线、历史验证和下一步
-- [原始 APK 来源与完整性](docs/original-apk-provenance.md)
-- [本地构建、GitHub Actions 与发布流程](docs/build-and-release.md)
-- [中文文案与排版规范](docs/chinese-copywriting-style.md)
-- [Header Platform 架构](docs/header-platform-design.md)
-- [Header Platform 运行时验收](docs/header-platform-runtime-acceptance.md)
-- [现代设置运行时设计](docs/modern-settings-runtime-design.md)
-- [Android target SDK 现代化计划](docs/target-sdk-modernization-plan.md)
+- [原始 APK 来源与完整性](docs/research/original-apk-provenance.md)
+- [本地构建、GitHub Actions 与发布流程](docs/research/build-and-release.md)
+- [中文文案与排版规范](docs/research/chinese-copywriting-style.md)
+- [Header Platform 架构](docs/research/header-platform-design.md)
+- [Header Platform 运行时验收](docs/research/header-platform-runtime-acceptance.md)
+- [现代设置运行时设计](docs/research/modern-settings-runtime-design.md)
+- [Android target SDK 现代化计划](docs/research/target-sdk-modernization-plan.md)
 
 ## 许可证与权利范围
 
@@ -202,6 +202,6 @@ docs/            设计、研究、验收和兼容边界
 
 - [MPL-2.0 完整文本](LICENSE)
 - [精确适用范围、生效边界与排除项](NOTICE)
-- [原始 APK 来源与权利边界](docs/original-apk-provenance.md)
+- [原始 APK 来源与权利边界](docs/research/original-apk-provenance.md)
 
 本项目不隶属于 Google，也未获得 Google 官方背书。项目本身不收费、不接入广告，也不以 Google 品牌或原始程序牟利，但这不限制第三方在严格遵守适用许可证及第三方权利的前提下商业使用明确列出的 MPL Covered Software。如相关权利人认为仓库内容需要调整，可通过 GitHub Issues 联系项目维护者。

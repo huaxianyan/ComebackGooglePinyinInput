@@ -46,7 +46,7 @@
 - 中文拼音 26 键真机回归通过，覆盖删除字母、重新输入、清空拼音和随后删除空符号对。九键、手写、英文、长按退格和第三方编辑器未追加验收
 - 版本为 `2.1.8` / `4520426`，target SDK 保持 37。沿用 `2.1.7` 的迁移签名策略，SDK 23～32 保留旧证书，SDK 33 起使用新证书
 
-实现与测试边界见 [拼音退格修复](docs/paired-punctuation-backspace-fix.md)。
+实现与测试边界见 [拼音退格修复](docs/research/paired-punctuation-backspace-fix.md)。
 
 ## [2.1.7] - 2026-10-18
 
@@ -71,7 +71,7 @@
 - 维护者迁移后初步试用未发现功能问题。没有采集正式词库、偏好或图片，不把元信息连续性扩大为全部内容核对
 - 其他系统的签名结果属于静态校验，非空数据跨卸载恢复、联系人实际授权及主题像素观感仍未完成专项验收。此前审计包的同安装非空词库和主题恢复结果不能替代这些边界
 
-完整升级路径与证据见 [设置备份与签名迁移](docs/settings-transfer-signing-migration.md) 及 [Android 17 适配调查](docs/android-17-api-37-investigation.md)。
+完整升级路径与证据见 [设置备份与签名迁移](docs/research/settings-transfer-signing-migration.md) 及 [Android 17 适配调查](docs/research/android-17-api-37-investigation.md)。
 
 ## [2.1.7-pre] - 2026-10-12
 
@@ -97,7 +97,7 @@ target SDK 提升到 37 并完成 Android 17 适配，同时修掉输入法切�
 - 真机为 Pixel 10 Pro（Android 17，`sdk_full=37.1`，4 KiB 页，三键导航）。按键音、首次引导三步流程和切换器图标均由用户实测确认；图标墨迹 29 × 29 px，与 Gboard「あ」的 24 × 25 px 相比大 16%
 - 拼音、英文、手写、候选、符号/Emoji、剪贴板和主题的基础回归尚未执行；旋转后 IME 可见性静态判定为不适用，未做实测；`libhmm_gesture_hwr_zh.so` 的 4 KiB 对齐属独立风险项，未在本版处理
 
-实现与完整边界见 [Android 17 / API 37 适配调查](docs/android-17-api-37-investigation.md)。
+实现与完整边界见 [Android 17 / API 37 适配调查](docs/research/android-17-api-37-investigation.md)。
 
 ## [2.1.6] - 2026-10-11
 
@@ -132,7 +132,7 @@ target SDK 提升到 37 并完成 Android 17 适配，同时修掉输入法切�
 - 许可正文嵌套返回、特定主题和引导窗口、最新界面依赖的完整旧 API ART、RTL、快速操作、帧时间及长期功耗没有完整专项证据，不将其表述为全部通过
 - Android 17 未适配，全局预测性返回不属于本轮目标。正式发布不代为升级设备
 
-实现与完整边界见 [统一动效](docs/settings-motion-unification.md)、[预测性返回](docs/predictive-back-migration.md)、[16 KiB 兼容](docs/native-16kb-compatibility.md)、[手写首次动画](docs/handwriting-first-animation-experiment.md) 和 [动态配色 Header 修复](docs/dynamic-header-color-fix.md)。
+实现与完整边界见 [统一动效](docs/research/settings-motion-unification.md)、[预测性返回](docs/research/predictive-back-migration.md)、[16 KiB 兼容](docs/research/native-16kb-compatibility.md)、[手写首次动画](docs/research/handwriting-first-animation-experiment.md) 和 [动态配色 Header 修复](docs/research/dynamic-header-color-fix.md)。
 
 ### Build
 
@@ -169,7 +169,7 @@ target SDK 提升到 37 并完成 Android 17 适配，同时修掉输入法切�
 - 组合包从原始 APK 完整重建，API 23 路由契约、主题预览桥接、Compose 单元测试及动态配色表校验通过
 - 组合包在真机通过后台 Android 图标绘制与预览缓存回归：首次生成清理预览快照，未变化的色板复用缓存，预览生成不改变当前模式。未启动首次引导或操作正式包
 
-实现与完整验证边界见 [动态配色修复](docs/dynamic-color-roles-fix.md)、[代码审查报告](docs/dynamic-color-roles-review.md)、[设置迁移研究](docs/high-min-sdk-settings-migration-research.md) 和 [主题创建与编辑](docs/compose-theme-builder-design.md)。动态配色仍默认关闭，在主题页选择该模式启用，仅 Android 12 起可用。
+实现与完整验证边界见 [动态配色修复](docs/research/dynamic-color-roles-fix.md)、[代码审查报告](docs/research/dynamic-color-roles-review.md)、[设置迁移研究](docs/research/high-min-sdk-settings-migration-research.md) 和 [主题创建与编辑](docs/research/compose-theme-builder-design.md)。动态配色仍默认关闭，在主题页选择该模式启用，仅 Android 12 起可用。
 
 ### Build
 
@@ -254,7 +254,7 @@ API 31 以下的降级路径只做了静态核验，没有对应版本的设备�
 
 英文键盘上，符号属于原版解码器的词分隔符集合，符号之后会保留一次下一词建议。此时按第一次退格只退出这次建议，删掉刚补全的一对符号需要按两次退格。这是原版 Google 拼音输入法就有的行为，本版本没有改动它。
 
-要消除它需要收窄喂给原生解码器的词分隔符集合，那会连带改变自动空格、自动大写和句子结束符判定，或者改解码器内部的退格判据 `adw.a(JLchw;)Z`。两者都超出「修复已定位缺陷」的范围，因此如实说明，由用户自行判断是否开启补全。调研过程见 `docs/symbol-backspace-swallow-research.md`。
+要消除它需要收窄喂给原生解码器的词分隔符集合，那会连带改变自动空格、自动大写和句子结束符判定，或者改解码器内部的退格判据 `adw.a(JLchw;)Z`。两者都超出「修复已定位缺陷」的范围，因此如实说明，由用户自行判断是否开启补全。调研过程见 `docs/research/symbol-backspace-swallow-research.md`。
 
 ### 验收
 
@@ -310,7 +310,7 @@ Pixel 10 Pro / Android 16 上用隔离审计包逐项走查旧设置页的 8 个
 
 ### Build
 
-- 新增 `scripts/verify_rime_legacy_settings.py`，检查 8 个条目的键集合与注入点、门面复用的五个生命周期调用、目录选择器请求码隔离、未配置时立即同步置灰、两种语言的资源互相镜像，以及状态监听在 bind 与 destroy 之间成对订阅，并接入 `docs/build-and-release.md` 的发布门禁清单
+- 新增 `scripts/verify_rime_legacy_settings.py`，检查 8 个条目的键集合与注入点、门面复用的五个生命周期调用、目录选择器请求码隔离、未配置时立即同步置灰、两种语言的资源互相镜像，以及状态监听在 bind 与 destroy 之间成对订阅，并接入 `docs/research/build-and-release.md` 的发布门禁清单
 
 ## [2.1.1] - 2026-09-18
 
@@ -787,7 +787,7 @@ Android 16 大版本正式基线。已验收的 target SDK 29–36 分支合并�
 - versionName：`4.5.2.193126728-arm64-v8a-a16compat42-local-dictionary-backup`。
 - 独立测试包名：`com.google.android.inputmethod.pinyin.localbackupaudit`。
 - 测试 APK 已通过 apktool 重建、zipalign 以及 v1/v2/v3 签名校验；构建时设备未连接，因此尚未安装或执行功能测试。
-- 研究与设计：`docs/dictionary-auto-backup-design.md`。
+- 研究与设计：`docs/research/dictionary-auto-backup-design.md`。
 
 ## [0.35.0] - 2026-07-24
 
@@ -804,7 +804,7 @@ Android 16 大版本正式基线。已验收的 target SDK 29–36 分支合并�
 ### Build
 
 - versionName：`4.5.2.193126728-arm64-v8a-a16compat41-dictionary-recovery`。
-- 新增研究记录：`docs/gboard-dictionary-recovery-research.md`。
+- 新增研究记录：`docs/research/gboard-dictionary-recovery-research.md`。
 - APK 已成功重建，通过 zipalign 与 v1/v2/v3 签名校验，并安装为独立的 `com.google.android.inputmethod.pinyin.dictionaryaudit` 审计包；未覆盖当前兼容包，也未执行输入功能或视觉测试。
 
 ## [0.34.0] - 2026-07-24

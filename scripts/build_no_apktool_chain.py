@@ -9,7 +9,7 @@ through aapt2 inside the Compose host build, and the package is assembled by
 which `apply_patches.py` has already re-laid out for 16 KiB pages.
 
 Equivalent output to the regular pipeline is verified in
-docs/no-apktool-build-evaluation.md; run the normal pipeline for releases
+docs/research/no-apktool-build-evaluation.md; run the normal pipeline for releases
 unless this chain is the agreed build path.
 """
 

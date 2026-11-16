@@ -42,7 +42,7 @@
 | `targetSdkVersion` | 36 | 同上，与 `version.properties` 一致 |
 | Compose 库 minSdk | 23 | 应用下限与这些库相同，不再需要 `overrideLibrary` 例外 |
 
-分流门禁**已启用**（`docs/modern-settings-preference-inventory.md` 的「Formal routing gate」）：
+分流门禁**已启用**（`docs/research/modern-settings-preference-inventory.md` 的「Formal routing gate」）：
 
 ```text
 API 23+     ModernSettingsActivity（按类名字符串路由）
@@ -94,7 +94,7 @@ Compose/AndroidX 相同之后，既没有更低的目标需要声明例外，也
 
 ### 2.4 主题选择页现状（用户点名的部分）
 
-来自 `docs/gboard-system-auto-theme-research.md` 的「原版主题选择器与自定义主题生命周期」：
+来自 `docs/research/gboard-system-auto-theme-research.md` 的「原版主题选择器与自定义主题生命周期」：
 
 - 浅色、深色、固定三个槽**复用同一个未导出的 `ThemeSelectorActivity`**。
 - 进入前临时物化目标槽，返回时提交该槽，所以选一个槽不会覆盖另外两个。
@@ -259,10 +259,10 @@ minSdk 提到 23 后，这份例外清单可以整个删掉，少一处脆弱的
 
 ### 阶段 4：文档与门禁
 
-13. 更新 `docs/modern-settings-runtime-design.md` 的迁移边界。**已做**：迁移边界、
+13. 更新 `docs/research/modern-settings-runtime-design.md` 的迁移边界。**已做**：迁移边界、
     已验证宿主模型清单、审计启动器段落、主题选择页重定向、RTL 隔离、词典页归属
     与「下一阶段」条目都已按 23 重写。
-14. 更新 `docs/modern-settings-preference-inventory.md` 的「Formal routing gate」。**已做**。
+14. 更新 `docs/research/modern-settings-preference-inventory.md` 的「Formal routing gate」。**已做**。
 15. 更新 `AGENTS.md` 的项目基线条目（当时写的是 `minSdkVersion=17`）。**已做**：
     区分「已发布的正式基线」与「本分支把 minSdk 提到 23」，并更新门禁版本清单。
 16. 新增门禁：确认旧路径不可达、确认新路径在目标区间可路由。**已做**：
@@ -323,7 +323,7 @@ minSdk 提到 23 后，这份例外清单可以整个删掉，少一处脆弱的
 
 ### 5.4 Gboard 参考
 
-仓库已有 `docs/gboard-system-auto-theme-research.md`，记录了 Gboard 的
+仓库已有 `docs/research/gboard-system-auto-theme-research.md`，记录了 Gboard 的
 「System Auto」表达方式、浅色与深色两套规格、以及自动模式与解析结果是两个层次。
 新主题选择页可以参考它的信息组织，但**主题包格式与持久化契约仍以本项目既有实现为准**，
 不要按 Gboard 的内部结构去改。
@@ -365,7 +365,7 @@ minSdk 提到 23 后，这份例外清单可以整个删掉，少一处脆弱的
 不是纯资源渲染；Compose 侧要么反射这条路，要么自绘。
 写入路径与自定义主题（SAF 选图、裁剪、落盘）同样留到下一刀。
 
-预览的三条路线对比见 `docs/compose-theme-preview-design.md`（2026-10-02）。
+预览的三条路线对比见 `docs/research/compose-theme-preview-design.md`（2026-10-02）。
 那一份把调用链逐行核实过了，结论是推荐反射引擎渲染，理由是前置条件已经满足：
 两个必需的偏好键在 `preferences_pinyin_forced_values` 里都有强制值，
 且渲染走独立 `InputBundleManager`，不依赖 IME 是否在前台。
@@ -659,7 +659,7 @@ ro.enable.native.bridge.exec   1
 `values-v35/` 写 `true`。**API 34 及以下这个活动是被禁用的**，`am start` 直接报
 `Activity class does not exist`。
 
-`docs/modern-settings-runtime-design.md` 记了这件事，但**本文的阶段 3 原清单没写**，
+`docs/research/modern-settings-runtime-design.md` 记了这件事，但**本文的阶段 3 原清单没写**，
 现已补进第 12 条。只改 smali 阈值会得到「路由过去了、目标活动却不可用」。
 
 **（2026-10-07 更新）第二道闸已删除，不再需要「同时改两处」。**

@@ -60,11 +60,11 @@
 - [x] 对照当前 Gboard 复核 `DictionaryAccessor`、启动 enrollment、保存调度及 `_bak`/`_tmp` 轮换
 - [x] 确认 V20 在备份加载失败后遗漏有效 `_tmp`、强制保存可与异步保存重叠、显式清除可能遗留旧备份
 - [x] V41 增加 backup → tmp 的有界加载回退，串行化保存，并在明确删除/清空后清除恢复旁路文件
-- [x] 完成用户词典自动备份和手动恢复：复用原生 exporter/importer，由用户选择 SAF 目录，通过 `.partial` 校验后 rename 发布并轮换版本；备份和内置导入共用该目录（见 `docs/dictionary-auto-backup-design.md`）
+- [x] 完成用户词典自动备份和手动恢复：复用原生 exporter/importer，由用户选择 SAF 目录，通过 `.partial` 校验后 rename 发布并轮换版本；备份和内置导入共用该目录（见 `docs/research/dictionary-auto-backup-design.md`）
 - [x] 使用 Google Drive 目录验证授权、立即备份和内置导入，真机测试正常
 - [ ] 继续观察 Google Drive 版本轮换、离线失败和网络恢复后的重试行为
 - [x] 真机验证「自选本地目录 → 立即备份 → 内置列表导入」，确认备份与导入共用自定义路径且功能正常；卸载重装后的重新授权恢复继续作为长期灾难恢复观察项
-- [x] 增加按需「当前用户词库状态」设计与实现：仅进入词典设置页后异步读取中英文 native 词条数、主文件/滚动副本大小、恢复旁路和最近落盘时间（见 `docs/dictionary-health-status-design.md`）
+- [x] 增加按需「当前用户词库状态」设计与实现：仅进入词典设置页后异步读取中英文 native 词条数、主文件/滚动副本大小、恢复旁路和最近落盘时间（见 `docs/research/dictionary-health-status-design.md`）
 - [ ] 在独立 `dictionarystatusaudit` 包验证空词库、已有中英文词条、有/无 `_bak`、状态行手动刷新、退出页面时迟到回调和键盘启动零扫描
 - [ ] 按自然使用时间继续观察 1/3/7/14/30 天自动备份调度及保留版本轮换
 - [ ] 使用独立 dictionaryaudit 包验证中断轮换、损坏备份、有效临时文件及显式清空场景
@@ -174,11 +174,11 @@
 - [x] 正式 `v2.0.1` 已创建签名 Tag 和 GitHub Release；Release APK 与 Actions Artifact、设备安装 `base.apk` 逐字节一致，SHA-256 为 `09061687ca67cce5879323207d2b876d90a00bbd621d96167ce9ae695ae95b1c`，正式签名身份、v1/v2/v3 和 16 KiB ZIP alignment 复核通过
 - [x] 统一键盘 Header 与敏感剪贴板候选已在隔离分支完成全键盘、浅色/深色、密码/PIN 脱敏、完整 payload 提交、关闭和无崩溃验收。提交 `8902e1f` 的 Actions run `31414951727` 全部门禁通过且只生成 Artifact
 - [x] `v2.0.2` 正式候选由 `master` Actions run `31418998015` 从提交 `39510e5` 完整构建：Compose 测试、API 31/33/34/35/36、统一 Header、敏感剪贴板、6,633 旧资源 ID、v1/v2/v3、正式证书、16 KiB ZIP alignment 和双构建一致性全部通过。APK 为 27,550,386 bytes，SHA-256 为 `c94a12a4ea3e1f06f49dd91f127b64f02da44a5d8d3577f3db6706022026a9a9`；正式包已从 `2.0.1` 覆盖安装到 Pixel 10 Pro，默认输入法保持正式 `PinyinIME`，设备 `base.apk` 与 Artifact 逐字节一致，`headeraudit` 和敏感剪贴板测试器已卸载
-- [x] 完成 Android 官方 Inline Suggestions 协议、Gboard `17.8.4` 当前公开 APK 及 HeliBoard/FlorisBoard/AnySoftKeyboard 的静态交叉研究，形成 `docs/gboard-inline-autofill-research.md`；确认 IME 只声明 presentation spec 并托管远端 `InlineContentView`，看不到或提交 Autofill payload，现有统一 Header 需增加独立 Surface 裁剪 host 而不能把 Autofill 转换成原生文字 Candidate
+- [x] 完成 Android 官方 Inline Suggestions 协议、Gboard `17.8.4` 当前公开 APK 及 HeliBoard/FlorisBoard/AnySoftKeyboard 的静态交叉研究，形成 `docs/research/gboard-inline-autofill-research.md`；确认 IME 只声明 presentation spec 并托管远端 `InlineContentView`，看不到或提交 Autofill payload，现有统一 Header 需增加独立 Surface 裁剪 host 而不能把 Autofill 转换成原生文字 Candidate
 - [x] `feat/inline-autofill` 阶段 A：声明标准 Inline Suggestions 能力，建立 API 30+ 窄桥和独立 `InlineAutofillCompat`，请求 3 个有界 presentation spec 且最多 3 项建议；尚无 Surface host 时不读取 response 数量、元数据或正文，只推进 generation 并返回未处理。输入视图开始/结束及服务销毁均使 generation 失效；源码编译、最终 DEX 窄桥、API 17–29 SDK 门控和隐私边界已加入静态门禁。提交 `10e45f5` 的 Actions run `31454668628` 已通过 Compose 测试、API 31/33/34/35/36、6,633 个旧资源 ID、签名、16 KiB alignment 和双构建一致性门禁，仅上传隔离 Artifact，未创建 Release
 - [x] `feat/inline-autofill` 阶段 A 的 API 36 运行时协议验收完成：标准 Framework request/response、Bitwarden 与合成 Provider 的 Inline Surface、Framework-owned click 及空 response/session 失效均正常。API 17–29 旧 ART 运行时仍受 ARM64 ABI/当前模拟环境限制，只保留静态门禁，不能描述成运行时通过
 - [x] `feat/inline-autofill` 阶段 B 实现：独立 API 中立 Header ClipHost 托管横向远端 View；最多 3 项异步 inflate 按 provider 索引聚合，具备 generation/会话/Header 身份校验、1.2 秒超时及 null/异常/重复 callback 处理；layout/scroll/attach/detach 均显式更新或释放 remote View clip bounds。表现层优先级为原生 Candidate > Inline Autofill > 空闲剪贴板，不改变 Body 键、密码预测/学习语义、Candidate/剪贴板数据模型或 touch exploration 声明。提交 `d09ee44` 的 Actions run `31459097182` 已通过 Compose、API 31/33/34/35/36、Inline 专用门禁、6,633 个旧资源 ID、签名、16 KiB alignment 和双构建一致性检查，只生成隔离 Artifact
-- [x] `feat/header-platform` 完成阶段 B 及平台化真机验收：Pixel 10 Pro / API 36 验证 0/1/多项、Framework 点击填充、稳定 rails、局部坐标 Surface 裁剪、字段/网页/Header/方向切换、Clipboard Candidate 接管与恢复、Bitwarden 解锁/认证 Activity 往返、主题和完整 Compose 组合包；诊断不采集凭据、Clipboard/Candidate/Provider 正文。详见 `docs/header-platform-runtime-acceptance.md`
+- [x] `feat/header-platform` 完成阶段 B 及平台化真机验收：Pixel 10 Pro / API 36 验证 0/1/多项、Framework 点击填充、稳定 rails、局部坐标 Surface 裁剪、字段/网页/Header/方向切换、Clipboard Candidate 接管与恢复、Bitwarden 解锁/认证 Activity 往返、主题和完整 Compose 组合包；诊断不采集凭据、Clipboard/Candidate/Provider 正文。详见 `docs/research/header-platform-runtime-acceptance.md`
 - [x] Inline Autofill 按键反馈已完成 Gboard 静态追踪和 Pixel 10 Pro / API 36 隔离验收：外层触摸包装层无法观察远端 Surface 的完整手势，但 Framework 会向直接注册在 `InlineContentView` 上的 `OnClickListener` 报告点击完成。正式实现仅在当前、可见、启用且未释放的远端建议及两个有效 rails 上调用原生 `aue`，不读取或提交 Provider payload。Bitwarden 填充正常，维护者调高后的按键音量和振动时长均反映到实际反馈
 - [x] 首次引导后续按钮禁用态对比度修复：第二步和完成按钮在前置条件未满足时使用透明容器、1 dp outline 和 outline role 文字，不再与步骤卡片背景融合。隔离 release-like 审计包通过浅色、深色视觉验收，状态机和启用态切换保持不变
 - [ ] Inline Autofill TalkBack touch-exploration 独立验收，完成前继续不声明 `supportsInlineSuggestionsWithTouchExploration`

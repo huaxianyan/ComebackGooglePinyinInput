@@ -16,7 +16,7 @@
 
 但在英文状态下，部分符号也会制造出这个状态。例如输入 `(` 时配对补全给出 `()`，此时按退格需要两次，第一次退掉建议状态，第二次才删掉字符。
 
-`docs/paired-punctuation-autocomplete-research.md` 的「符号后第一次退格被吞」一节已经观察到这个现象，并把它定位到 `extra_value_latin_enable_suspend_prediction_on_backspace` 与 `en_t9_multitap_enabled` 两个开关。该节明确留下两处未解：哪些符号会触发、以及它究竟落在哪一层类里。本文补齐这两处，并修正该节给出的修改建议。
+`docs/research/paired-punctuation-autocomplete-research.md` 的「符号后第一次退格被吞」一节已经观察到这个现象，并把它定位到 `extra_value_latin_enable_suspend_prediction_on_backspace` 与 `en_t9_multitap_enabled` 两个开关。该节明确留下两处未解：哪些符号会触发、以及它究竟落在哪一层类里。本文补齐这两处，并修正该节给出的修改建议。
 
 ## 结论摘要
 

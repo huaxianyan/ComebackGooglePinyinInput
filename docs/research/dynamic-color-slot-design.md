@@ -10,7 +10,7 @@
 > **后记（2026-10-05）——两处已被后续实现取代，下文按「当时的设计」读**：
 >
 > 1. **「主题背景」页已删除**。槽位不再有各自的行，改由主题清单页的磁贴 + 弹层
->    写入（`applyTheme` / `assignSlot`），见 `docs/compose-theme-preview-design.md`。
+>    写入（`applyTheme` / `assignSlot`），见 `docs/research/compose-theme-preview-design.md`。
 >    因此下文「开关位置 = 主题背景页第一项」一类的表述只描述当时的计划。
 > 2. **「选择会话」机制已整体移除**：`beginSelection` / `finishSelection` /
 >    `SELECTION_SLOT_KEY` / `hasSelectionSession` 全部删掉。Compose 侧不再为某个槽
@@ -668,7 +668,7 @@ StyleRule         field1(0x0a) = string 名
 | 改动对象 | 构建入口 | 说明 |
 | --- | --- | --- |
 | **Java / smali 侧**（`SystemAutoThemeCompat.java`、新增 `DynamicColorSettingsCompat.java`） | `scripts/build.ps1` | 走 apktool 解码 → `apply_patches.py` → 重打包。**不改这个脚本本身** |
-| **Compose 侧**（`modern-settings/` 下的 `.kt` 与 `strings.xml`） | `scripts/build_modern_settings_host.py` | 走 Gradle 编译 Compose 工程 + 与解码后的原版资源合并。见 `docs/build-and-release.md` 的「完整 Compose Host 构建」 |
+| **Compose 侧**（`modern-settings/` 下的 `.kt` 与 `strings.xml`） | `scripts/build_modern_settings_host.py` | 走 Gradle 编译 Compose 工程 + 与解码后的原版资源合并。见 `docs/research/build-and-release.md` 的「完整 Compose Host 构建」 |
 | **两边都改了**（本方案就是） | **只跑后者** | `build_modern_settings_host.py` 内部已经包含"解码原版 APK → 跑 `apply_patches.py` → 合并 Compose 产物"的完整链路 |
 
 > **结论**：本方案的**唯一正确构建命令是 `scripts/build_modern_settings_host.py`**。
@@ -872,7 +872,7 @@ internal object ThemeSettingRules {
 
 > **路线已定**：不再并置"原版 smali 注入 `setting_keyboard.xml`"作为备选。
 > 理由：`API 35+` 的正式设置界面就是 Compose 工程（见
-> `docs/modern-settings-runtime-design.md` 的 Migration boundary），
+> `docs/research/modern-settings-runtime-design.md` 的 Migration boundary），
 > 而「跟随主题」开关本来就在 Compose 侧。
 > **动态配色和它同类，放同一处才有统一语义。**
 
@@ -952,7 +952,7 @@ internal object ThemeSettingRules {
 <summary>展开查看（本轮不实施）</summary>
 
 本项目的设置界面随系统版本分流
-（`docs/modern-settings-runtime-design.md` 的 Migration boundary）：
+（`docs/research/modern-settings-runtime-design.md` 的 Migration boundary）：
 
 ```text
 API 17-34   原有 Preference 设置界面（res/xml/setting_keyboard.xml 等）
@@ -1320,7 +1320,7 @@ adb exec-out screencap -p > shot.png
 - `onStartInputView` 插入后 `v6` 寄存器是否冲突（决定是否升 `.locals`）
 - `modern-settings/` 改后如何构建合成进 APK：
   正式构建走 `scripts/build_modern_settings_host.py`
-  （见 `docs/build-and-release.md` 的「完整 Compose Host 构建」），
+  （见 `docs/research/build-and-release.md` 的「完整 Compose Host 构建」），
   **不是** `scripts/build.ps1`——后者只跑 apktool 解码 + `apply_patches.py` + 重打包。
   **改 Compose 侧必须用前者，改 smali 侧才用后者**。
 - `SettingsCapabilities` 增字段后 `verify_modern_settings_runtime.py`

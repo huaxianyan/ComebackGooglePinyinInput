@@ -168,7 +168,7 @@ The staged volume and vibration control group follows the information hierarchy
 confirmed in Gboard's current `FontSizeSliderPreference`—title, live summary,
 decrease/Slider/increase controls, and a full-width system-default action—while
 retaining this project's accepted rule that an unknown negative system sentinel
-has no truthful Slider position. See `docs/gboard-font-size-slider-research.md`.
+has no truthful Slider position. See `docs/research/gboard-font-size-slider-research.md`.
 
 The prototype has been split into lifecycle, screen, adjustment-control, pure
 state, persistence, controller, and platform-preview modules. All modern-only UI

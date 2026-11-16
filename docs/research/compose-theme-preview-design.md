@@ -1,6 +1,6 @@
 # Compose 主题选择页的键盘预览：方案对比
 
-只读主题清单页已经落地（见 `docs/high-min-sdk-settings-migration-research.md` 5.5 节）。
+只读主题清单页已经落地（见 `docs/research/high-min-sdk-settings-migration-research.md` 5.5 节）。
 清单能告诉用户「哪个主题用在哪」，但看不到主题长什么样。这一份对比三种把预览补上的做法。
 
 调研日期：2026-10-02。核实对象：`work/decoded-fresh/` 下的原版解码产物。

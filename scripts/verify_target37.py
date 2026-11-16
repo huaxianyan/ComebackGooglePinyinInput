@@ -9,7 +9,7 @@ and System.loadLibrary hits them before the writable fallback, and the tree
 never opens a socket.
 
 The remaining target-37 behaviour changes were judged "not applicable" in
-docs/android-17-api-37-investigation.md. This gate pins those judgements so a
+docs/research/android-17-api-37-investigation.md. This gate pins those judgements so a
 later change cannot quietly invalidate them.
 """
 

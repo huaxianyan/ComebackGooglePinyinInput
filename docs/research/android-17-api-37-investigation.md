@@ -184,7 +184,7 @@ Android 17 为中日韩越输入法新增了两个 API：输入法在设置合�
 | `modern-settings/gradle.properties` | 新增 `android.suppressUnsupportedCompileSdk=37.2` |
 | `scripts/verify_target36.py` | 接受 36 或 37，作为过渡门禁 |
 | `scripts/verify_modern_settings_runtime.py` | 断言字符串 `targetSdk = 37` |
-| `.github/workflows/build-release.yml`、`docs/build-and-release.md` | 同步平台与版本号 |
+| `.github/workflows/build-release.yml`、`docs/research/build-and-release.md` | 同步平台与版本号 |
 
 构建 `BUILD SUCCESSFUL in 17m 21s`，59 个 task，产物 v1/v2/v3 签名与 16 KiB zipalign 均通过。`compileSdk = 37` 加 `compileSdkMinor = 2` 确实解析到了 `platforms/android-37.2`。
 
