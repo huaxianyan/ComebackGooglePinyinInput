@@ -110,6 +110,16 @@ internal fun androidx.compose.foundation.lazy.LazyListScope.keyboardAppearanceSe
     }
     if (snapshot.capabilities.oneHandedModeVisible) {
         item {
+            SettingsSwitchRow(
+                title = stringResource(R.string.modern_settings_floating_keyboard_title),
+                supporting = stringResource(R.string.modern_settings_floating_keyboard_summary),
+                checked = snapshot.floatingKeyboardEnabled,
+                onCheckedChange = actions.onFloatingKeyboardEnabledChange,
+            )
+        }
+    }
+    if (snapshot.capabilities.oneHandedModeVisible) {
+        item {
             EnumeratedListSetting(
                 title = legacyString(
                     "setting_one_handed_mode_title",

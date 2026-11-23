@@ -52,6 +52,9 @@ class SettingsController(
     fun setOneHandedModeIndex(index: Int): SettingsSnapshot =
         repository.setOneHandedModeIndex(index)
 
+    fun setFloatingKeyboardEnabled(enabled: Boolean): SettingsSnapshot =
+        repository.setFloatingKeyboardEnabled(enabled)
+
     fun setPinyinSchemeIndex(index: Int): SettingsSnapshot =
         repository.setPinyinSchemeIndex(index)
 

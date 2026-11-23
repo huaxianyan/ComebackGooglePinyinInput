@@ -502,7 +502,22 @@ class ModernSettingsActivity : ComponentActivity() {
                                 snapshot = controller.setVibrationEnabled(enabled)
                             },
                             onOneHandedModeChange = { index ->
-                                snapshot = controller.setOneHandedModeIndex(index)
+                                val updated = controller.setOneHandedModeIndex(index)
+                                // A docked keyboard and a floating card fight over the same
+                                // insets, so picking one side gives the other up.
+                                snapshot = if (index != 0 && updated.floatingKeyboardEnabled) {
+                                    controller.setFloatingKeyboardEnabled(false)
+                                } else {
+                                    updated
+                                }
+                            },
+                            onFloatingKeyboardEnabledChange = { enabled ->
+                                val updated = controller.setFloatingKeyboardEnabled(enabled)
+                                snapshot = if (enabled && updated.oneHandedModeIndex != 0) {
+                                    controller.setOneHandedModeIndex(0)
+                                } else {
+                                    updated
+                                }
                             },
                             onPinyinSchemeChange = { index ->
                                 snapshot = controller.setPinyinSchemeIndex(index)
