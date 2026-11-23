@@ -2479,6 +2479,23 @@ def apply(
             "Landroid/inputmethodservice/InputMethodService$Insets;)V\n\n"
             "    return-void\n",
         )
+    else:
+        # Floating keyboard: the switch inside the class decides whether anything changes, so the
+        # class and its hook always ship. The research probe above replaces this hook instead.
+        replace_once(
+            google_ime,
+            "    .line 669\n"
+            "    :cond_0\n"
+            "    :goto_0\n"
+            "    return-void\n",
+            "    .line 669\n"
+            "    :cond_0\n"
+            "    :goto_0\n\n"
+            "    invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/"
+            "FloatingKeyboardCompat;->applyInsets(Landroid/inputmethodservice/"
+            "InputMethodService;Landroid/inputmethodservice/InputMethodService$Insets;)V\n\n"
+            "    return-void\n",
+        )
     # Use a distinct application ID so the compatibility build can coexist
     # with the official Google-signed package for side-by-side comparison.
     manifest = decoded / "AndroidManifest.xml"
@@ -3351,6 +3368,7 @@ def apply(
         "HeaderMenuBackgroundView.smali",
         "EnglishT9MultiTapIme.smali",
         "PairedPunctuationEnglishIme.smali",
+        "FloatingKeyboardCompat.smali",
     ):
         helper_src = ROOT / "patches/smali" / helper_name
         helper_dst = decoded / "smali/com/google/android/inputmethod/pinyin" / helper_name
