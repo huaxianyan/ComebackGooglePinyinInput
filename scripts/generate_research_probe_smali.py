@@ -85,7 +85,9 @@ def main() -> int:
             env=environment,
         )
         generated = decoded / "smali/com/google/android/inputmethod/pinyin"
-        generated_files = sorted(generated.glob("Native*.smali"))
+        generated_files = sorted(generated.glob("Native*.smali")) + sorted(
+            generated.glob("Floating*.smali")
+        )
         if not generated_files:
             raise RuntimeError("Research probe Smali was not generated")
         if OUTPUT_DIR.exists():

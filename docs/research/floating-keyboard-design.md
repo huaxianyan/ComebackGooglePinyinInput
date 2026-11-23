@@ -96,23 +96,41 @@ InputView (FrameLayout, fill_parent 宽, wrap_content 高, elevation 8 dp)
 
 分四步走，每步都能单独验收、单独回退。
 
-### 阶段 0：可行性探针（必须先做，约半天）
+### 阶段 0：可行性探针（已完成）
 
-在动手改产品代码之前，用一个临时探针把三个不确定点验证掉，避免做完才发现方向不通：
+在 Pixel 10 Pro / Android 17 上用隔离包实测，三个不确定点全部通过：
 
-1. IME 窗口设成全屏后，`contentTopInsets = 窗口高度` 是否真能让应用不调整布局。
-   验证样本：系统记事本、微信输入框、Chrome 地址栏。
-2. `touchableRegion` 只留一个小矩形时，区域外的触摸是否确实穿透到应用（能点按钮、能滚动）。
-3. 全屏 IME 窗口对这三件事有没有副作用：状态栏/导航栏遮挡、应用的 adjustResize 行为、
-   键盘弹出动画。
+| 验证点 | 结果 |
+| --- | --- |
+| 应用是否跟着平移 | 不跟。Chrome 内容全屏铺到底，搜索建议一直延伸到键盘顶部 |
+| 触摸区域外是否穿透 | 能。点键盘上方的搜索建议，页面正常跳转 |
+| 键盘自身是否可点 | 能。点键有响应，候选栏正常出字 |
 
-探针只进隔离包，不进正式包，验证完删除。这一步的结论决定后面是否继续。
+**实测推翻了一个假设，也发现一个新行为：**
+
+1. `contentTopInsets` 会**反向决定窗口尺寸**。第一版探针报告窗口自身高度，窗口直接塌成 126 px，
+   键盘消失。所以必须先报告**屏幕高度**把窗口撑开，之后报告值才稳定。这条改变了阶段 1 的实现顺序：
+   不是「把窗口设成 MATCH_PARENT」，而是「报告屏幕高度让窗口自己撑满」。
+2. `InputView` 的 `onMeasure` 里有一个 `AT_MOST` 分支，窗口撑满后它会把自己也撑成全屏高，
+   内部的 `keyboard_area` 因 `layout_gravity=bottom` 自然贴底。这正是需要的形态，不需要额外搬视图。
+3. 窗口高度 2238（2410 减去 172 状态栏），键盘区域落在 `[0,1372]-[1080,2112]`，
+   底边停在导航栏上方，没有伸到手势条下面。
+4. 首次 `onComputeInsets` 时窗口还没布局，`keyboard_area` 不可见，
+   需要一个底部三分之一的临时触摸区兜底，否则那一帧键盘点不动。
+
+探针在 `feat/floating-keyboard` 分支，走 `--research` 通道（不带该参数时类和钩子都不存在）：
+`patches/research/java/.../FloatingKeyboardProbe.java`，由 `generate_research_probe_smali.py` 生成，
+`apply_patches.py` 在 `research` 分支里注入 `onComputeInsets` 尾部。
+
+已知副作用：悬浮形态下键盘浮在内容上，输入框可能被遮住。这是 Gboard 悬浮模式的固有行为，
+不是实现缺陷，但阶段 1 需要配合位置记忆，让用户把卡片挪到不挡输入框的地方。
 
 ### 阶段 1：窄键盘卡片（解决 issue 的抱怨，约 1 到 2 天）
 
 目标：平板上键盘不再占满宽度，缩成居中的卡片，高度按比例。
 
-- 悬浮开启时：`InputView` 与 IME 窗口改为 `MATCH_PARENT`，背景透明。
+- 悬浮开启时：`onComputeInsets` 报告屏幕高度让窗口自己撑满，`InputView` 随之变成全屏、
+  上方透明，`keyboard_area` 靠 `layout_gravity=bottom` 贴底。
 - `keyboard_area` 的宽度改成 `屏宽 × 比例`（默认 70%），`layout_gravity` 保持底部居中。
 - 高度：先取原生布局算出的自然高度，按宽度同比例缩小。宽度缩到 70% 时行高也缩到 70%，
   避免出现「窄而高」的畸形比例。缩放实现优先用 Container 的宽高 + 原生重排，
@@ -156,9 +174,9 @@ InputView (FrameLayout, fill_parent 宽, wrap_content 高, elevation 8 dp)
 
 ## 六、风险
 
-1. **insets 行为是最大不确定点**。Trime 的注释只说明了 IMM 旧接口的效果，
-   Android 11+ 应用多读 `WindowInsets`，而 insets 来源是 IME 窗口 frame。
-   如果系统按全屏窗口算 insets，应用会被压到没有空间。阶段 0 必须先验证。
+1. **insets 行为已在阶段 0 验证通过**，但只在 Pixel 10 Pro / Android 17 上验证过。
+   不同 OEM 对 IME 窗口尺寸与 insets 的推导可能不一致，尤其旧 API（23 到 30）和国产 ROM，
+   需要按 target 分档复测。原本预测到的反向反馈（报告值决定窗口尺寸）已经确认存在。
 2. **全屏窗口与既有 edge-to-edge 逻辑冲突**。`EdgeToEdgeCompat`、`NavigationBarCompat`
    现在都按「窗口高度等于键盘高度」来算导航栏区域，窗口全屏后这些计算的输入变了，
    需要逐处核对。

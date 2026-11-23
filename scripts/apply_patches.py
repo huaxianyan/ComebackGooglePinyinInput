@@ -2451,7 +2451,9 @@ def apply(
     # a build-time opt-in: without --research neither the classes nor the manifest entry exist.
     if research:
         research_smali = ROOT / "patches/research/smali/com/google/android/inputmethod/pinyin"
-        probe_files = sorted(research_smali.glob("Native*.smali"))
+        probe_files = sorted(research_smali.glob("Native*.smali")) + sorted(
+            research_smali.glob("Floating*.smali")
+        )
         if not probe_files:
             raise RuntimeError(
                 "Research Smali is missing; run generate_research_probe_smali.py first"
@@ -2460,6 +2462,23 @@ def apply(
         destination.mkdir(parents=True, exist_ok=True)
         for path in probe_files:
             shutil.copyfile(path, destination / path.name)
+
+        # Floating keyboard probe: take over the insets after the original calculation so the
+        # same build can be compared against an untouched one. Nothing here ships.
+        replace_once(
+            google_ime,
+            "    .line 669\n"
+            "    :cond_0\n"
+            "    :goto_0\n"
+            "    return-void\n",
+            "    .line 669\n"
+            "    :cond_0\n"
+            "    :goto_0\n\n"
+            "    invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/"
+            "FloatingKeyboardProbe;->apply(Landroid/inputmethodservice/InputMethodService;"
+            "Landroid/inputmethodservice/InputMethodService$Insets;)V\n\n"
+            "    return-void\n",
+        )
     # Use a distinct application ID so the compatibility build can coexist
     # with the official Google-signed package for side-by-side comparison.
     manifest = decoded / "AndroidManifest.xml"
