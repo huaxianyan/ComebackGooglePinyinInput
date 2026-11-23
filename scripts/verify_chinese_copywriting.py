@@ -14,6 +14,11 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+# Error messages quote the offending line, so they carry Chinese text. Redirecting to a file or
+# reading the pipe on a Windows host without UTF-8 selected would raise UnicodeEncodeError and
+# hide the very failure this script exists to report.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 CJK = r"\u3400-\u9fff"
 CJK_RE = re.compile(f"[{CJK}]")
 TIGHT_CJK_LATIN_RE = re.compile(
