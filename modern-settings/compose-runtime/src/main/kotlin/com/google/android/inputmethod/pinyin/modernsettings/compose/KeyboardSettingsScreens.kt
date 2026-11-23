@@ -108,15 +108,15 @@ internal fun androidx.compose.foundation.lazy.LazyListScope.keyboardAppearanceSe
             onClick = { navigateTo(SettingsRoute.ThemeCatalog) },
         )
     }
-    if (snapshot.capabilities.oneHandedModeVisible) {
-        item {
-            SettingsSwitchRow(
-                title = stringResource(R.string.modern_settings_floating_keyboard_title),
-                supporting = stringResource(R.string.modern_settings_floating_keyboard_summary),
-                checked = snapshot.floatingKeyboardEnabled,
-                onCheckedChange = actions.onFloatingKeyboardEnabledChange,
-            )
-        }
+    item {
+        // Independent of one-handed mode: that switch is hidden on devices whose capability
+        // probe says no, and the card must stay reachable there too.
+        SettingsSwitchRow(
+            title = stringResource(R.string.modern_settings_floating_keyboard_title),
+            supporting = stringResource(R.string.modern_settings_floating_keyboard_summary),
+            checked = snapshot.floatingKeyboardEnabled,
+            onCheckedChange = actions.onFloatingKeyboardEnabledChange,
+        )
     }
     if (snapshot.capabilities.oneHandedModeVisible) {
         item {

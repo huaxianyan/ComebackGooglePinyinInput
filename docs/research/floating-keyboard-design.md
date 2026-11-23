@@ -125,22 +125,44 @@ InputView (FrameLayout, fill_parent 宽, wrap_content 高, elevation 8 dp)
 已知副作用：悬浮形态下键盘浮在内容上，输入框可能被遮住。这是 Gboard 悬浮模式的固有行为，
 不是实现缺陷，但阶段 1 需要配合位置记忆，让用户把卡片挪到不挡输入框的地方。
 
-### 阶段 1：窄键盘卡片（解决 issue 的抱怨，约 1 到 2 天）
+### 阶段 1：窄键盘卡片（已完成）
 
 目标：平板上键盘不再占满宽度，缩成居中的卡片，高度按比例。
 
 - 悬浮开启时：`onComputeInsets` 报告屏幕高度让窗口自己撑满，`InputView` 随之变成全屏、
   上方透明，`keyboard_area` 靠 `layout_gravity=bottom` 贴底。
-- `keyboard_area` 的宽度改成 `屏宽 × 比例`（默认 70%），`layout_gravity` 保持底部居中。
-- 高度：先取原生布局算出的自然高度，按宽度同比例缩小。宽度缩到 70% 时行高也缩到 70%，
-  避免出现「窄而高」的畸形比例。缩放实现优先用 Container 的宽高 + 原生重排，
-  退路是用 `setScaleX/Y` 做整体变换。
-- `onComputeInsets` 增加悬浮分支：`contentTopInsets = visibleTopInsets = rootView.height`，
+- `onComputeInsets` 的悬浮分支：`contentTopInsets = visibleTopInsets = 屏幕高度`，
   `touchableRegion` 只取 `keyboard_area` 的 global visible rect。
-- 触发条件：平板（`smallestScreenWidthDp >= 600`）默认开启，手机端默认关闭。
-- 设置项放在「外观与布局」，与「单手模式」「键盘高度」并列。开启时与单手模式互斥。
+- 缩放进 `FloatingKeyboardCompat.applyScale`，`setPivotY(height)` 让卡片贴底，
+  `setScaleX/Y` 同比例缩，默认 0.72。
+- 设置项在「外观与布局」，开启时与单手模式互斥（关掉一个才能开另一个）。
 
-这一阶段做完，issue 的核心诉求（太大）就解决了，Gboard 的默认态也是这个样子。
+**实测结论与计划的三处差异：**
+
+1. **缩放用视图变换，不是容器宽高重排**。原生键行从主题里取固定高度，只缩容器宽度会得到
+   「窄而高」的畸形按键；两者一起缩才能保持比例，而且触摸坐标由框架反变换，不用自己算。
+2. **默认关闭，不是平板默认开**。阶段 1 只有几何和开关，没有拖动和缩放，
+   平板用户默认撞上就只有一个挪不动的卡片。等阶段 2、3 补齐再改默认值。
+3. **`getBoundsOnScreen` 用不了**，是隐藏 API（`javac` 编译期就报找不到符号）。
+   改用 `getGlobalVisibleRect`；手算矩形会把缩放偏移重复加一次，实测错到屏幕外。
+
+Pixel 10 Pro / Android 17 上实测（平板模拟 `1600x2560` @ 320 dpi）：
+
+| 验证点 | 结果 |
+| --- | --- |
+| 卡片几何 | `scale=0.72 region=[224,1779][1376,2265]`，居中贴底 |
+| 应用内容 | 全屏铺到底，键盘浮在搜索建议上 |
+| 按键与候选 | 点键出字，候选栏正常，空格可点 |
+| 关闭后 | 键盘恢复全宽停靠，日志里再无 `FloatingKeyboard` 记录 |
+
+阶段 1 的触控注意点：`touchableRegion` 必须跟着缩放后的可见矩形走，否则底部一行（空格、`?123`）
+会落到区域外穿透过去；关闭时要主动把缩放还原，不然 insets 已经还原、视图还缩着，布局会错位。
+
+已知副作用：悬浮形态下键盘浮在内容上，输入框可能被遮住。这是 Gboard 悬浮模式的固有行为，
+不是实现缺陷，但阶段 2 需要配合位置记忆，让用户把卡片挪到不挡输入框的地方。
+
+另外，Pixel 10 Pro 上 `SettingsCapabilities.oneHandedModeVisible` 为 false，
+单手模式在设置里本来就不显示；悬浮键盘的开关因此不能挂在同一个条件里，否则一并消失。
 
 ### 阶段 2：拖动与位置记忆（约 1 到 2 天）
 
@@ -160,14 +182,14 @@ InputView (FrameLayout, fill_parent 宽, wrap_content 高, elevation 8 dp)
 
 ## 五、改动点预估
 
-| 位置 | 改动 |
-| --- | --- |
-| `patches/java/.../floating/FloatingKeyboardCompat.java`（新增） | 模式状态、几何计算、持久化、触摸区域上报 |
-| `patches/smali/.../GoogleInputMethodService` | `onComputeInsets` 增加悬浮分支，`onCreateInputView` 后挂接 |
-| `patches/smali/.../InputView` | 悬浮时跳过 `onMeasure` 里的高度回溯逻辑 |
-| `res/layout` 或代码构建 | 卡片容器与拖动手柄，尽量复用现有 `KeyboardSideFrame` 样式 |
-| modern-settings | 新增开关与尺寸档位 |
-| `res/values/strings.xml` | 新增文案 |
+| 位置 | 改动 | 状态 |
+| --- | --- | --- |
+| `patches/java/.../pinyin/FloatingKeyboardCompat.java`（新增） | 模式状态、几何计算、持久化、触摸区域上报 | 阶段 1 已落地，拖动与缩放待补 |
+| `patches/smali/.../GoogleInputMethodService` | `onComputeInsets` 尾部一行钩子调 `FloatingKeyboardCompat.applyInsets` | 已落地 |
+| `scripts/generate_floating_keyboard_smali.py`（新增） | 从 Java 源码生成上述类的 Smali | 已落地 |
+| `patches/smali/.../InputView` | 不需要改：窗口撑满后它自己走 `AT_MOST` 分支 | 计划外 |
+| modern-settings | 「外观与布局」里的开关，与单手模式互斥 | 已落地，尺寸档位待阶段 3 |
+| `res/values/strings.xml` | 新增文案 | 已落地 |
 
 几何计算按 Trime 的做法写成纯函数并配 host 测试，覆盖：尺寸换算、拖动边界钳制、
 位置分数与像素互转、横竖屏切换、与系统栏 insets 合并。
