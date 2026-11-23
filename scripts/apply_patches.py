@@ -3369,6 +3369,12 @@ def apply(
         "EnglishT9MultiTapIme.smali",
         "PairedPunctuationEnglishIme.smali",
         "FloatingKeyboardCompat.smali",
+        "FloatingKeyboardHandle.smali",
+    ) + tuple(
+        # Nested classes get their own files and their names depend on the Java sources, so they
+        # are collected instead of listed: missing one is a ClassNotFoundException at runtime.
+        path.name
+        for path in sorted((ROOT / "patches/smali").glob("FloatingKeyboard*$*.smali"))
     ):
         helper_src = ROOT / "patches/smali" / helper_name
         helper_dst = decoded / "smali/com/google/android/inputmethod/pinyin" / helper_name

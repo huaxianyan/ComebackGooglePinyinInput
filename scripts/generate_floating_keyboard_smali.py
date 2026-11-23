@@ -17,16 +17,15 @@ import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = ROOT / (
-    "patches/java/com/google/android/inputmethod/pinyin/FloatingKeyboardCompat.java"
-)
-OUTPUT = ROOT / "patches/smali/FloatingKeyboardCompat.smali"
-CLASS_ENTRY = (
-    "com/google/android/inputmethod/pinyin/FloatingKeyboardCompat.class"
-)
-SMALI_ENTRY = (
-    "smali/com/google/android/inputmethod/pinyin/FloatingKeyboardCompat.smali"
-)
+PACKAGE_DIR = "com/google/android/inputmethod/pinyin"
+SOURCES = [
+    ROOT / f"patches/java/{PACKAGE_DIR}/FloatingKeyboardCompat.java",
+    ROOT / f"patches/java/{PACKAGE_DIR}/FloatingKeyboardHandle.java",
+]
+OUTPUT_DIR = ROOT / "patches/smali"
+# Anonymous and nested classes compile to their own files; copying only the top level class leaves
+# the app crashing with ClassNotFoundException at runtime.
+SMALI_PREFIXES = ["FloatingKeyboardCompat", "FloatingKeyboardHandle"]
 
 
 def main() -> int:
@@ -43,7 +42,7 @@ def main() -> int:
     jar = jdk / "bin/jar.exe"
     d8 = args.build_tools.resolve() / "d8.bat"
     apktool = args.apktool.resolve()
-    for path in (SOURCE, android_jar, javac, jar, d8, apktool):
+    for path in (*SOURCES, android_jar, javac, jar, d8, apktool):
         if not path.exists():
             raise FileNotFoundError(path)
 
@@ -59,12 +58,13 @@ def main() -> int:
         dex.mkdir()
         subprocess.run(
             [str(javac), "-source", "7", "-target", "7", "-bootclasspath",
-             str(android_jar), "-d", str(classes), str(SOURCE)],
+             str(android_jar), "-d", str(classes), *[str(source) for source in SOURCES]],
             check=True, env=env,
         )
         compiled = root / "system-auto-theme.jar"
+        # Pack the whole output tree: jar on Windows rejects forward slashes in entry names.
         subprocess.run(
-            [str(jar), "cf", str(compiled), "-C", str(classes), CLASS_ENTRY],
+            [str(jar), "cf", str(compiled), "-C", str(classes), "."],
             check=True, env=env,
         )
         subprocess.run(
@@ -80,12 +80,19 @@ def main() -> int:
              str(tiny_apk), "-o", str(decoded)],
             check=True, env=env,
         )
-        generated = decoded / SMALI_ENTRY
-        if not generated.is_file():
-            raise FileNotFoundError(generated)
-        OUTPUT.write_bytes(generated.read_bytes())
-
-    print(f"Generated {OUTPUT}")
+        generated_dir = decoded / "smali" / PACKAGE_DIR
+        written = 0
+        for generated in sorted(generated_dir.glob("*.smali")):
+            if not any(
+                generated.stem == prefix or generated.stem.startswith(prefix + "$")
+                for prefix in SMALI_PREFIXES
+            ):
+                continue
+            (OUTPUT_DIR / generated.name).write_bytes(generated.read_bytes())
+            print(f"Generated {OUTPUT_DIR / generated.name}")
+            written += 1
+        if written == 0:
+            raise FileNotFoundError(generated_dir)
     return 0
 
 
