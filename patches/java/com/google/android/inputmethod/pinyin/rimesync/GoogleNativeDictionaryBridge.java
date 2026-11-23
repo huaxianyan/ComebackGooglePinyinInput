@@ -407,6 +407,11 @@ public final class GoogleNativeDictionaryBridge {
             return null;
         }
         if (phrase.codePointCount(0, phrase.length()) < 2) return null;
+        // A weight of zero is a tombstone: the engine keeps the record only to remember that the
+        // word was deleted, and the backup text format already skips those rows. Carrying one into
+        // a snapshot makes the whole file unparseable, because restore refuses non-positive
+        // weights and parsing is all-or-nothing.
+        if (source.count <= 0) return null;
         StringBuilder code = new StringBuilder();
         for (int index = 0; index < source.tokens.length; index++) {
             if (source.languageIds[index] != PINYIN_LANGUAGE_ID) return null;

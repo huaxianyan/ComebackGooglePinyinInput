@@ -55,7 +55,7 @@
         }
     .end annotation
 
-    .line 561
+    .line 566
     new-instance v0, Ljava/util/LinkedHashMap;
 
     invoke-direct {v0, p2}, Ljava/util/LinkedHashMap;-><init>(Ljava/util/Map;)V
@@ -68,7 +68,7 @@
 
     invoke-direct {p0, p1, v0, p2, p3}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;-><init>(ILjava/util/Map;Ljava/util/List;Z)V
 
-    .line 563
+    .line 568
     return-void
 .end method
 
@@ -87,34 +87,34 @@
         }
     .end annotation
 
-    .line 567
+    .line 572
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
-    .line 568
+    .line 573
     iput p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;->totalEntryCount:I
 
-    .line 570
+    .line 575
     invoke-static {p2}, Ljava/util/Collections;->unmodifiableMap(Ljava/util/Map;)Ljava/util/Map;
 
     move-result-object p1
 
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;->entries:Ljava/util/Map;
 
-    .line 571
+    .line 576
     invoke-static {p3}, Ljava/util/Collections;->unmodifiableList(Ljava/util/List;)Ljava/util/List;
 
     move-result-object p1
 
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;->allEntries:Ljava/util/List;
 
-    .line 572
+    .line 577
     return-void
 .end method
 
 .method static synthetic access$000(Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;)Ljava/util/List;
     .locals 0
 
-    .line 554
+    .line 559
     iget-object p0, p0, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$Snapshot;->allEntries:Ljava/util/List;
 
     return-object p0

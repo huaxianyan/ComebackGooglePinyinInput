@@ -40,35 +40,35 @@
         }
     .end annotation
 
-    .line 522
+    .line 527
     const/4 v0, 0x6
 
     const-string v1, "Google user dictionary rejected synchronized entries"
 
     invoke-direct {p0, v0, v1}, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$NativeOperationException;-><init>(ILjava/lang/String;)V
 
-    .line 523
+    .line 528
     new-instance v0, Ljava/util/ArrayList;
 
     invoke-direct {v0, p1}, Ljava/util/ArrayList;-><init>(Ljava/util/Collection;)V
 
-    .line 524
+    .line 529
     invoke-static {v0}, Ljava/util/Collections;->sort(Ljava/util/List;)V
 
-    .line 525
+    .line 530
     invoke-static {v0}, Ljava/util/Collections;->unmodifiableList(Ljava/util/List;)Ljava/util/List;
 
     move-result-object p1
 
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$RejectedEntriesException;->rejectedKeys:Ljava/util/List;
 
-    .line 526
+    .line 531
     invoke-interface {v0}, Ljava/util/List;->size()I
 
     move-result p1
 
     iput p1, p0, Lcom/google/android/inputmethod/pinyin/rimesync/GoogleNativeDictionaryBridge$RejectedEntriesException;->rejectedCount:I
 
-    .line 527
+    .line 532
     return-void
 .end method
