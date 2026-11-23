@@ -48,6 +48,7 @@
 - Java 补丁生成链为 `patches/java/` → 对应 `generate_*_smali.py` → `patches/smali/` → `apply_patches.py`。生成的 Smali 入库，自动应用未调用的生成器需按变更手动执行。
 - 新资源显式登记 `public.xml` 并保持原始资源 ID。反射混淆方法需要匹配返回类型，相关断言沿用现有门禁。
 - 原生库保留 `packaging.jniLibs.useLegacyPackaging = true`，低 API 安装、实际加载与对齐分别验证。
+- CI 门禁有几个容易白跑一轮的前置：`docs/releases/v<版本>.md` 必须存在，缺了会停在「Prepare versioned release body」。`test_rime_sync_protocol.py --decoded` 必须是刚从原始 APK 解码并应用补丁的目录，对旧的补丁后目录重复 `apply_patches.py` 会在 `theme_header_styles` 抛「Native menu background reference changed」。
 - 修改实现后按影响范围执行对应门禁和构建。仅整理文档不重跑历史产品验收。
 ## 界面与平台边界
 
