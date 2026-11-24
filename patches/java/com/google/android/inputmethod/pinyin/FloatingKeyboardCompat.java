@@ -121,10 +121,10 @@ public final class FloatingKeyboardCompat {
     private static long lastHidePost;
 
     /**
-     * Toolbar key positions dropped while the floating keyboard is on: text editing and
-     * one-handed. The order is theme, text editing, settings, one-handed.
+     * Toolbar key positions dropped while the floating keyboard is on: one-handed only, since it
+     * contradicts the floating card. The order is theme, text editing, settings, one-handed.
      */
-    private static final int[] HIDDEN_TOOLBAR_KEYS = {1, 3};
+    private static final int[] HIDDEN_TOOLBAR_KEYS = {3};
 
     private static View watchedDecor;
 
@@ -377,8 +377,8 @@ public final class FloatingKeyboardCompat {
     };
 
     /**
-     * Drops the text-editing and one-handed shortcuts from the toolbar while the floating
-     * keyboard is on, and puts them back when it is off.
+     * Drops the one-handed shortcut from the toolbar while the floating keyboard is on, and puts
+     * it back when it is off.
      *
      * <p>Called on every layout pass from {@code AccessPointsBar}. The keys are still unbound at
      * that moment, so the work is posted to run after them. Positions are fixed: theme, text

@@ -135,7 +135,7 @@
 
 # direct methods
 .method static constructor <clinit>()V
-    .locals 5
+    .locals 4
 
     .line 69
     const/4 v0, -0x1
@@ -155,57 +155,57 @@
     sput-object v1, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->lastRegion:Landroid/graphics/Rect;
 
     .line 127
-    const/4 v1, 0x1
+    const/4 v1, 0x3
 
-    const/4 v2, 0x3
+    filled-new-array {v1}, [I
 
-    filled-new-array {v1, v2}, [I
+    move-result-object v2
 
-    move-result-object v3
-
-    sput-object v3, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->HIDDEN_TOOLBAR_KEYS:[I
+    sput-object v2, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->HIDDEN_TOOLBAR_KEYS:[I
 
     .line 133
-    new-instance v3, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat$1;
+    new-instance v2, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat$1;
 
-    invoke-direct {v3}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat$1;-><init>()V
+    invoke-direct {v2}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat$1;-><init>()V
 
-    sput-object v3, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->layoutListener:Landroid/view/ViewTreeObserver$OnGlobalLayoutListener;
+    sput-object v2, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->layoutListener:Landroid/view/ViewTreeObserver$OnGlobalLayoutListener;
 
     .line 153
-    new-instance v3, Landroid/os/Handler;
+    new-instance v2, Landroid/os/Handler;
 
     .line 154
     invoke-static {}, Landroid/os/Looper;->getMainLooper()Landroid/os/Looper;
 
-    move-result-object v4
+    move-result-object v3
 
-    invoke-direct {v3, v4}, Landroid/os/Handler;-><init>(Landroid/os/Looper;)V
+    invoke-direct {v2, v3}, Landroid/os/Handler;-><init>(Landroid/os/Looper;)V
 
-    sput-object v3, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->idleHandler:Landroid/os/Handler;
+    sput-object v2, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->idleHandler:Landroid/os/Handler;
 
     .line 155
-    new-instance v3, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat$2;
+    new-instance v2, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat$2;
 
-    invoke-direct {v3}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat$2;-><init>()V
+    invoke-direct {v2}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat$2;-><init>()V
 
-    sput-object v3, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->fadeOut:Ljava/lang/Runnable;
+    sput-object v2, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->fadeOut:Ljava/lang/Runnable;
 
     .line 164
     sput v0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->baseBottomPadding:I
 
     .line 373
-    new-array v0, v2, [Ljava/lang/String;
+    new-array v0, v1, [Ljava/lang/String;
 
-    const-string v2, "left_handed_content_desc"
+    const-string v1, "left_handed_content_desc"
 
-    const/4 v3, 0x0
+    const/4 v2, 0x0
 
-    aput-object v2, v0, v3
+    aput-object v1, v0, v2
 
-    const-string v2, "right_handed_content_desc"
+    const-string v1, "right_handed_content_desc"
 
-    aput-object v2, v0, v1
+    const/4 v2, 0x1
+
+    aput-object v1, v0, v2
 
     const-string v1, "expand_keyboard_content_desc"
 
