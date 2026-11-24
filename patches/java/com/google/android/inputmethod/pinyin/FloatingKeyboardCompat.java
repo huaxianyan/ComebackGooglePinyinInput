@@ -118,6 +118,14 @@ public final class FloatingKeyboardCompat {
     private static long lastAccessPointPost;
 
     
+    private static long lastHidePost;
+
+    /**
+     * Toolbar key positions dropped while the floating keyboard is on: text editing and
+     * one-handed. The order is theme, text editing, settings, one-handed.
+     */
+    private static final int[] HIDDEN_TOOLBAR_KEYS = {1, 3};
+
     private static View watchedDecor;
 
     private static long lastAccessPointScan;
@@ -367,6 +375,34 @@ public final class FloatingKeyboardCompat {
             "right_handed_content_desc",
             "expand_keyboard_content_desc",
     };
+
+    /**
+     * Drops the text-editing and one-handed shortcuts from the toolbar while the floating
+     * keyboard is on, and puts them back when it is off.
+     *
+     * <p>Called on every layout pass from {@code AccessPointsBar}. The keys are still unbound at
+     * that moment, so the work is posted to run after them. Positions are fixed: theme, text
+     * editing, settings, then one-handed.
+     */
+    public static void syncFloatingToolbar(final View bar) {
+        if (!(bar instanceof ViewGroup)) return;
+        final boolean hide = isEnabled(bar.getContext());
+        long now = System.currentTimeMillis();
+        if (now - lastHidePost < 300L) return;
+        lastHidePost = now;
+        bar.post(new Runnable() {
+            @Override
+            public void run() {
+                ViewGroup group = (ViewGroup) bar;
+                int wanted = hide ? View.GONE : View.VISIBLE;
+                for (int index : HIDDEN_TOOLBAR_KEYS) {
+                    if (group.getChildCount() <= index) continue;
+                    View entry = group.getChildAt(index);
+                    if (entry.getVisibility() != wanted) entry.setVisibility(wanted);
+                }
+            }
+        });
+    }
 
     private static void setOneHandedAccessPointHidden(View decor, boolean hidden) {
         Context context = decor.getContext();

@@ -3589,6 +3589,8 @@ def apply(
     apply_header_motion(decoded)
     from handwriting_animation_patches import apply_handwriting_animation
     apply_handwriting_animation(decoded)
+    from floating_toolbar_patches import apply_floating_toolbar
+    apply_floating_toolbar(decoded)
 
     # API 30 bridge uses the official AndroidX Inline UI style Bundle protocol.
     # These classes are isolated from API 17–29 startup and are only resolved by
