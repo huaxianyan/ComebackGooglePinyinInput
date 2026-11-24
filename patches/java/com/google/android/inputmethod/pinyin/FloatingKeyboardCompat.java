@@ -122,9 +122,9 @@ public final class FloatingKeyboardCompat {
 
     /**
      * Toolbar key positions dropped while the floating keyboard is on: one-handed only, since it
-     * contradicts the floating card. The order is theme, text editing, settings, one-handed.
+     * contradicts the floating card. The order is theme, one-handed, settings, text editing.
      */
-    private static final int[] HIDDEN_TOOLBAR_KEYS = {3};
+    private static final int[] HIDDEN_TOOLBAR_KEYS = {1};
 
     private static View watchedDecor;
 
@@ -381,8 +381,8 @@ public final class FloatingKeyboardCompat {
      * it back when it is off.
      *
      * <p>Called on every layout pass from {@code AccessPointsBar}. The keys are still unbound at
-     * that moment, so the work is posted to run after them. Positions are fixed: theme, text
-     * editing, settings, then one-handed.
+     * that moment, so the work is posted to run after them. Positions are fixed: theme,
+     * one-handed, settings, then text editing.
      */
     public static void syncFloatingToolbar(final View bar) {
         if (!(bar instanceof ViewGroup)) return;

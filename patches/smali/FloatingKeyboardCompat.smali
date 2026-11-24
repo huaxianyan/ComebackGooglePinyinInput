@@ -155,7 +155,7 @@
     sput-object v1, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->lastRegion:Landroid/graphics/Rect;
 
     .line 127
-    const/4 v1, 0x3
+    const/4 v1, 0x1
 
     filled-new-array {v1}, [I
 
@@ -193,19 +193,19 @@
     sput v0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->baseBottomPadding:I
 
     .line 373
-    new-array v0, v1, [Ljava/lang/String;
+    const/4 v0, 0x3
 
-    const-string v1, "left_handed_content_desc"
+    new-array v0, v0, [Ljava/lang/String;
 
-    const/4 v2, 0x0
+    const-string v2, "left_handed_content_desc"
 
-    aput-object v1, v0, v2
+    const/4 v3, 0x0
 
-    const-string v1, "right_handed_content_desc"
+    aput-object v2, v0, v3
 
-    const/4 v2, 0x1
+    const-string v2, "right_handed_content_desc"
 
-    aput-object v1, v0, v2
+    aput-object v2, v0, v1
 
     const-string v1, "expand_keyboard_content_desc"
 
