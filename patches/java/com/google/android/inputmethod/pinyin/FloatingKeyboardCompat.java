@@ -116,6 +116,7 @@ public final class FloatingKeyboardCompat {
     /** Card watched for idleness; null while docked. */
     private static View idleArea;
     private static long lastAccessPointPost;
+    
     private static View watchedDecor;
 
     private static long lastAccessPointScan;
