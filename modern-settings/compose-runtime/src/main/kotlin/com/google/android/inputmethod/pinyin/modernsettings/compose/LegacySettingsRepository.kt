@@ -44,6 +44,7 @@ class LegacySettingsRepository(context: Context) {
 
         val oneHandedModeIndex = readListIndex(ListSettingContracts.oneHandedMode)
         val floatingKeyboardEnabled = FloatingKeyboardSetting.isEnabled(applicationContext)
+        val idleFadeEnabled = FloatingKeyboardSetting.isIdleFadeEnabled(applicationContext)
         val pinyinSchemeIndex = readListIndex(ListSettingContracts.pinyinScheme)
         val englishT9MultitapIntervalIndex = readListIndex(
             ListSettingContracts.englishT9MultitapInterval,
@@ -130,6 +131,7 @@ class LegacySettingsRepository(context: Context) {
             ),
             oneHandedModeLabels = readEntryLabels("entries_one_handed_mode"),
             floatingKeyboardEnabled = floatingKeyboardEnabled,
+            idleFadeEnabled = idleFadeEnabled,
             pinyinSchemeIndex = pinyinSchemeIndex,
             pinyinSchemeLabel = readEntryLabel("entries_pinyin_scheme", pinyinSchemeIndex),
             pinyinSchemeLabels = readEntryLabels("entries_pinyin_scheme"),
@@ -355,6 +357,11 @@ class LegacySettingsRepository(context: Context) {
 
     fun setFloatingKeyboardEnabled(enabled: Boolean): SettingsSnapshot {
         FloatingKeyboardSetting.setEnabled(applicationContext, enabled)
+        return readSnapshot()
+    }
+
+    fun setIdleFadeEnabled(enabled: Boolean): SettingsSnapshot {
+        FloatingKeyboardSetting.setIdleFadeEnabled(applicationContext, enabled)
         return readSnapshot()
     }
 
@@ -697,6 +704,7 @@ data class SettingsSnapshot(
     val oneHandedModeLabel: String,
     val oneHandedModeLabels: List<String>,
     val floatingKeyboardEnabled: Boolean,
+    val idleFadeEnabled: Boolean,
     val pinyinSchemeIndex: Int,
     val pinyinSchemeLabel: String,
     val pinyinSchemeLabels: List<String>,

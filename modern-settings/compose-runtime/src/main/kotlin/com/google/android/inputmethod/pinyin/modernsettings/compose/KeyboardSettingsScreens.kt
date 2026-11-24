@@ -108,16 +108,6 @@ internal fun androidx.compose.foundation.lazy.LazyListScope.keyboardAppearanceSe
             onClick = { navigateTo(SettingsRoute.ThemeCatalog) },
         )
     }
-    item {
-        // Independent of one-handed mode: that switch is hidden on devices whose capability
-        // probe says no, and the card must stay reachable there too.
-        SettingsSwitchRow(
-            title = stringResource(R.string.modern_settings_floating_keyboard_title),
-            supporting = stringResource(R.string.modern_settings_floating_keyboard_summary),
-            checked = snapshot.floatingKeyboardEnabled,
-            onCheckedChange = actions.onFloatingKeyboardEnabledChange,
-        )
-    }
     if (snapshot.capabilities.oneHandedModeVisible) {
         item {
             EnumeratedListSetting(
@@ -131,6 +121,27 @@ internal fun androidx.compose.foundation.lazy.LazyListScope.keyboardAppearanceSe
                 onSelect = actions.onOneHandedModeChange,
             )
         }
+    }
+    item {
+        // Independent of one-handed mode: that switch is hidden on devices whose capability
+        // probe says no, and the card must stay reachable there too.
+        SettingsSwitchRow(
+            title = stringResource(R.string.modern_settings_floating_keyboard_title),
+            supporting = stringResource(R.string.modern_settings_floating_keyboard_summary),
+            checked = snapshot.floatingKeyboardEnabled,
+            onCheckedChange = actions.onFloatingKeyboardEnabledChange,
+        )
+    }
+    item {
+        // The stored value outlives the switch above: turning the card off keeps what was
+        // chosen here, it just stops applying until the card comes back.
+        SettingsSwitchRow(
+            title = stringResource(R.string.modern_settings_idle_fade_title),
+            supporting = stringResource(R.string.modern_settings_idle_fade_summary),
+            checked = snapshot.idleFadeEnabled,
+            enabled = snapshot.floatingKeyboardEnabled,
+            onCheckedChange = actions.onIdleFadeChange,
+        )
     }
     item {
         DiscreteSettingsSlider(

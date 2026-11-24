@@ -179,6 +179,8 @@
     <string name="modern_settings_one_handed_mode_title">One-handed mode</string>
     <string name="modern_settings_floating_keyboard_title">Floating keyboard</string>
     <string name="modern_settings_floating_keyboard_summary">Shrink the keyboard into a card over the content so the screen is not squeezed. Turns one-handed mode off</string>
+    <string name="modern_settings_idle_fade_title">Idle transparency</string>
+    <string name="modern_settings_idle_fade_summary">Fade the card to half after a few untouched seconds. Applies only while the floating keyboard is on</string>
     <string name="modern_settings_popup_on_keypress_title">Popup on keypress</string>
     <string name="modern_settings_voice_input_title">Show voice input button</string>
     <string name="modern_settings_paired_punctuation_title">Auto-close paired symbols</string>

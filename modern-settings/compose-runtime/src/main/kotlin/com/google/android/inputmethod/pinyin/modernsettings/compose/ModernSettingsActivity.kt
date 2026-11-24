@@ -519,6 +519,9 @@ class ModernSettingsActivity : ComponentActivity() {
                                     updated
                                 }
                             },
+                            onIdleFadeChange = { enabled ->
+                                snapshot = controller.setIdleFadeEnabled(enabled)
+                            },
                             onPinyinSchemeChange = { index ->
                                 snapshot = controller.setPinyinSchemeIndex(index)
                             },

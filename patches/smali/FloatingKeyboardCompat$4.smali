@@ -7,8 +7,8 @@
 
 
 # annotations
-.annotation system Ldalvik/annotation/EnclosingClass;
-    value = Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;
+.annotation system Ldalvik/annotation/EnclosingMethod;
+    value = Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->requestAccessPointVisibility(Landroid/view/View;Z)V
 .end annotation
 
 .annotation system Ldalvik/annotation/InnerClass;
@@ -17,11 +17,26 @@
 .end annotation
 
 
-# direct methods
-.method constructor <init>()V
-    .locals 0
+# instance fields
+.field final synthetic val$decor:Landroid/view/View;
 
-    .line 513
+.field final synthetic val$hidden:Z
+
+
+# direct methods
+.method constructor <init>(Landroid/view/View;Z)V
+    .locals 0
+    .annotation system Ldalvik/annotation/Signature;
+        value = {
+            "()V"
+        }
+    .end annotation
+
+    .line 332
+    iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat$4;->val$decor:Landroid/view/View;
+
+    iput-boolean p2, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat$4;->val$hidden:Z
+
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
     return-void
@@ -32,29 +47,24 @@
 .method public run()V
     .locals 2
 
-    .line 516
-    const/4 v0, 0x0
+    .line 336
+    :try_start_0
+    iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat$4;->val$decor:Landroid/view/View;
 
-    invoke-static {v0}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$902(Z)Z
+    iget-boolean v1, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat$4;->val$hidden:Z
 
-    .line 517
-    invoke-static {}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$400()Landroid/view/View;
+    invoke-static {v0, v1}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$1000(Landroid/view/View;Z)V
+    :try_end_0
+    .catchall {:try_start_0 .. :try_end_0} :catchall_0
 
-    move-result-object v0
+    .line 339
+    goto :goto_0
 
-    .line 518
-    if-nez v0, :cond_0
+    .line 337
+    :catchall_0
+    move-exception v0
 
-    return-void
-
-    .line 519
-    :cond_0
-    invoke-virtual {v0}, Landroid/view/View;->getRootView()Landroid/view/View;
-
-    move-result-object v1
-
-    invoke-static {v1, v0}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$1000(Landroid/view/View;Landroid/view/View;)V
-
-    .line 520
+    .line 340
+    :goto_0
     return-void
 .end method

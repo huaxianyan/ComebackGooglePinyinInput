@@ -37,6 +37,7 @@ public final class FloatingKeyboardCompat {
     private static final String PREFERENCES = "floating_keyboard_preferences";
     private static final String KEY_ENABLED = "enabled";
     private static final String KEY_SCALE = "scale";
+    private static final String KEY_IDLE_FADE = "idle_fade";
     private static final String KEY_X_FRACTION = "x_fraction_";
     private static final String KEY_Y_FRACTION = "y_fraction_";
 
@@ -114,6 +115,25 @@ public final class FloatingKeyboardCompat {
     private static float scaleStartDistance;
     /** Card watched for idleness; null while docked. */
     private static View idleArea;
+    private static long lastAccessPointPost;
+    private static View watchedDecor;
+
+    private static long lastAccessPointScan;
+
+    private static final android.view.ViewTreeObserver.OnGlobalLayoutListener layoutListener =
+            new android.view.ViewTreeObserver.OnGlobalLayoutListener() {
+                @Override
+                public void onGlobalLayout() {
+                    // The card rewrites the handle's bounds on every frame, so layout fires
+                    // constantly. A toolbar rebuild does not happen that often; half a second is
+                    // plenty and keeps the tree walk off the per-frame path.
+                    long now = android.os.SystemClock.uptimeMillis();
+                    if (now - lastAccessPointScan < 500L) return;
+                    lastAccessPointScan = now;
+                    View decor = watchedDecor;
+                    if (decor != null) requestAccessPointVisibility(decor, true);
+                }
+            };
     /**
      * Transparent view covering the window that reports the first touch of every gesture. The key
      * rows consume their own touches, so a listener on the keyboard frame never fires.
@@ -142,6 +162,11 @@ public final class FloatingKeyboardCompat {
 
     public static boolean isEnabled(Context context) {
         return preferences(context).getBoolean(KEY_ENABLED, false);
+    }
+
+    /** Kept separate from {@link #isEnabled}: switching the card off must not forget this choice. */
+    static boolean idleFadeEnabled(Context context) {
+        return preferences(context).getBoolean(KEY_IDLE_FADE, true);
     }
 
     public static void setEnabled(Context context, boolean enabled) {
@@ -176,12 +201,18 @@ public final class FloatingKeyboardCompat {
     public static void applyInsets(InputMethodService service, InputMethodService.Insets outInsets) {
         if (!isEnabled(service)) {
             resetScale(service);
+            unwatchAccessPoints();
+            requestAccessPointVisibility(service, false);
             return;
         }
         Window window = serviceWindow(service);
         if (window == null) return;
         View decor = window.getDecorView();
         if (decor == null) return;
+        // The toolbar is built lazily and rebuilt when it expands, so a single pass at insets
+        // time misses the buttons. Watching layout catches every rebuild.
+        watchAccessPoints(decor);
+        requestAccessPointVisibility(decor, true);
 
         DisplayMetrics metrics = decor.getContext().getResources().getDisplayMetrics();
         int screenWidth = metrics.widthPixels;
@@ -268,8 +299,122 @@ public final class FloatingKeyboardCompat {
         applyGutter(area, false);
     }
 
+    /**
+     * Hides the one-handed shortcut inside the toolbar the left chevron opens.
+     *
+     * <p>The two modes fight over the same insets, so switching one on already switches the other
+     * off. Leaving that shortcut reachable inside the floating card would let the toolbar switch
+     * one-handed mode back on behind the settings page's back, and the card would then be fighting
+     * a docked layout for the same space.
+     */
+    /**
+     * Queues the visibility change instead of doing it inside the insets pass.
+     *
+     * <p>Insets are computed while the window is being laid out, and a toolbar child flipping to
+     * {@code GONE} there asks for another layout from inside the current one. On this keyboard that
+     * recursion ended with the card never being rescaled at all. Posting moves the change to the
+     * next message, and the flag keeps a queue from building up.
+     */
+    private static void requestAccessPointVisibility(InputMethodService service, boolean hidden) {
+        Window window = serviceWindow(service);
+        if (window == null) return;
+        View decor = window.getDecorView();
+        if (decor == null) return;
+        requestAccessPointVisibility(decor, hidden);
+    }
+
+    private static void requestAccessPointVisibility(final View decor, final boolean hidden) {
+        // Rate limit by timestamp, not by a pending flag: a post that never runs would leave the
+        // flag stuck and the shortcuts hidden forever after the card is switched off.
+        long now = android.os.SystemClock.uptimeMillis();
+        if (now - lastAccessPointPost < 50L) return;
+        lastAccessPointPost = now;
+        decor.post(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    setOneHandedAccessPointHidden(decor, hidden);
+                } catch (Throwable ignored) {
+                    // Hiding a toolbar shortcut must never take the card down with it.
+                }
+            }
+        });
+    }
+
+    /**
+     * The one-handed shortcuts answer to three different descriptions, and which one is present
+     * depends on the current mode: left and right while docked, "exit" while one-handed. None of
+     * them matches {@code one_handed_access_point_content_desc}, which labels the panel entry.
+     */
+    private static final String[] ONE_HANDED_LABELS = {
+            "left_handed_content_desc",
+            "right_handed_content_desc",
+            "expand_keyboard_content_desc",
+    };
+
+    private static void setOneHandedAccessPointHidden(View decor, boolean hidden) {
+        Context context = decor.getContext();
+        String[] labels = new String[ONE_HANDED_LABELS.length];
+        int found = 0;
+        for (String name : ONE_HANDED_LABELS) {
+            int id = context.getResources().getIdentifier(name, "string", context.getPackageName());
+            if (id != 0) labels[found++] = context.getString(id);
+        }
+        if (found == 0) return;
+        if (found < labels.length) {
+            String[] trimmed = new String[found];
+            System.arraycopy(labels, 0, trimmed, 0, found);
+            labels = trimmed;
+        }
+        setAccessPointVisibility(decor, labels, hidden);
+    }
+
+    private static void watchAccessPoints(final View decor) {
+        if (watchedDecor == decor) return;
+        unwatchAccessPoints();
+        watchedDecor = decor;
+        decor.getViewTreeObserver().addOnGlobalLayoutListener(layoutListener);
+    }
+
+    private static void unwatchAccessPoints() {
+        final View decor = watchedDecor;
+        if (decor == null) return;
+        watchedDecor = null;
+        decor.getViewTreeObserver().removeOnGlobalLayoutListener(layoutListener);
+    }
+
+    private static void setAccessPointVisibility(View view, String[] labels, boolean hidden) {
+        CharSequence description = view.getContentDescription();
+        if (description != null) {
+            String text = description.toString();
+            for (String label : labels) {
+                if (label.equals(text)) {
+                    int target = hidden ? View.GONE : View.VISIBLE;
+                    if (view.getVisibility() != target) view.setVisibility(target);
+                    break;
+                }
+            }
+        }
+        if (view instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) view;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                setAccessPointVisibility(group.getChildAt(i), labels, hidden);
+            }
+        }
+    }
+
     private static void scheduleIdleFade(final View area) {
         idleArea = area;
+        if (!idleFadeEnabled(area.getContext())) {
+            // Turning the switch off while the card is already half faded has to bring it back
+            // up, otherwise it stays dim until the next touch.
+            if (idleScheduled) {
+                idleScheduled = false;
+                idleHandler.removeCallbacks(fadeOut);
+                animateIdleAlpha(1f, IDLE_WAKE_MS);
+            }
+            return;
+        }
         if (idleScheduled) return;
         idleScheduled = true;
         idleHandler.postDelayed(fadeOut, IDLE_FADE_DELAY_MS);

@@ -176,6 +176,8 @@
     <string name="modern_settings_one_handed_mode_title">单手模式</string>
     <string name="modern_settings_floating_keyboard_title">悬浮键盘</string>
     <string name="modern_settings_floating_keyboard_summary">键盘缩成卡片浮在内容上，屏幕不被压缩。开启后单手模式关闭</string>
+    <string name="modern_settings_idle_fade_title">待机时自动透明</string>
+    <string name="modern_settings_idle_fade_summary">几秒不碰后卡片淡到半透明。只在悬浮键盘开启时生效</string>
     <string name="modern_settings_popup_on_keypress_title">按键时弹出显示字符</string>
     <string name="modern_settings_voice_input_title">显示语音输入按钮</string>
     <string name="modern_settings_paired_punctuation_title">自动补全成对标点</string>
