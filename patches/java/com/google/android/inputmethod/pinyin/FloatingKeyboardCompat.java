@@ -341,6 +341,20 @@ public final class FloatingKeyboardCompat {
         });
     }
 
+    private static void watchAccessPoints(final View decor) {
+        if (watchedDecor == decor) return;
+        unwatchAccessPoints();
+        watchedDecor = decor;
+        decor.getViewTreeObserver().addOnGlobalLayoutListener(layoutListener);
+    }
+
+    private static void unwatchAccessPoints() {
+        final View decor = watchedDecor;
+        if (decor == null) return;
+        watchedDecor = null;
+        decor.getViewTreeObserver().removeOnGlobalLayoutListener(layoutListener);
+    }
+
     /**
      * The one-handed shortcuts answer to three different descriptions, and which one is present
      * depends on the current mode: left and right while docked, "exit" while one-handed. None of
@@ -367,20 +381,6 @@ public final class FloatingKeyboardCompat {
             labels = trimmed;
         }
         setAccessPointVisibility(decor, labels, hidden);
-    }
-
-    private static void watchAccessPoints(final View decor) {
-        if (watchedDecor == decor) return;
-        unwatchAccessPoints();
-        watchedDecor = decor;
-        decor.getViewTreeObserver().addOnGlobalLayoutListener(layoutListener);
-    }
-
-    private static void unwatchAccessPoints() {
-        final View decor = watchedDecor;
-        if (decor == null) return;
-        watchedDecor = null;
-        decor.getViewTreeObserver().removeOnGlobalLayoutListener(layoutListener);
     }
 
     private static void setAccessPointVisibility(View view, String[] labels, boolean hidden) {

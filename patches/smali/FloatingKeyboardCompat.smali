@@ -179,7 +179,7 @@
     .line 154
     sput v0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->baseBottomPadding:I
 
-    .line 349
+    .line 363
     const/4 v0, 0x3
 
     new-array v0, v0, [Ljava/lang/String;
@@ -4610,22 +4610,22 @@
 .method private static setOneHandedAccessPointHidden(Landroid/view/View;Z)V
     .locals 12
 
-    .line 356
+    .line 370
     invoke-virtual {p0}, Landroid/view/View;->getContext()Landroid/content/Context;
 
     move-result-object v0
 
-    .line 357
+    .line 371
     sget-object v1, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->ONE_HANDED_LABELS:[Ljava/lang/String;
 
     array-length v1, v1
 
     new-array v2, v1, [Ljava/lang/String;
 
-    .line 358
+    .line 372
     nop
 
-    .line 359
+    .line 373
     sget-object v3, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->ONE_HANDED_LABELS:[Ljava/lang/String;
 
     array-length v4, v3
@@ -4641,7 +4641,7 @@
 
     aget-object v8, v3, v6
 
-    .line 360
+    .line 374
     invoke-virtual {v0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
 
     move-result-object v9
@@ -4656,7 +4656,7 @@
 
     move-result v8
 
-    .line 361
+    .line 375
     if-eqz v8, :cond_0
 
     add-int/lit8 v9, v7, 0x1
@@ -4669,36 +4669,36 @@
 
     move v7, v9
 
-    .line 359
+    .line 373
     :cond_0
     add-int/lit8 v6, v6, 0x1
 
     goto :goto_0
 
-    .line 363
+    .line 377
     :cond_1
     if-nez v7, :cond_2
 
     return-void
 
-    .line 364
+    .line 378
     :cond_2
     if-ge v7, v1, :cond_3
 
-    .line 365
+    .line 379
     new-array v0, v7, [Ljava/lang/String;
 
-    .line 366
+    .line 380
     invoke-static {v2, v5, v0, v5, v7}, Ljava/lang/System;->arraycopy(Ljava/lang/Object;ILjava/lang/Object;II)V
 
-    .line 367
+    .line 381
     move-object v2, v0
 
-    .line 369
+    .line 383
     :cond_3
     invoke-static {p0, v2, p1}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->setAccessPointVisibility(Landroid/view/View;[Ljava/lang/String;Z)V
 
-    .line 370
+    .line 384
     return-void
 .end method
 
@@ -4945,21 +4945,21 @@
 .method private static unwatchAccessPoints()V
     .locals 2
 
-    .line 380
+    .line 352
     sget-object v0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->watchedDecor:Landroid/view/View;
 
-    .line 381
+    .line 353
     if-nez v0, :cond_0
 
     return-void
 
-    .line 382
+    .line 354
     :cond_0
     const/4 v1, 0x0
 
     sput-object v1, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->watchedDecor:Landroid/view/View;
 
-    .line 383
+    .line 355
     invoke-virtual {v0}, Landroid/view/View;->getViewTreeObserver()Landroid/view/ViewTreeObserver;
 
     move-result-object v0
@@ -4968,7 +4968,7 @@
 
     invoke-virtual {v0, v1}, Landroid/view/ViewTreeObserver;->removeOnGlobalLayoutListener(Landroid/view/ViewTreeObserver$OnGlobalLayoutListener;)V
 
-    .line 384
+    .line 356
     return-void
 .end method
 
@@ -5476,21 +5476,21 @@
 .method private static watchAccessPoints(Landroid/view/View;)V
     .locals 1
 
-    .line 373
+    .line 345
     sget-object v0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->watchedDecor:Landroid/view/View;
 
     if-ne v0, p0, :cond_0
 
     return-void
 
-    .line 374
+    .line 346
     :cond_0
     invoke-static {}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->unwatchAccessPoints()V
 
-    .line 375
+    .line 347
     sput-object p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->watchedDecor:Landroid/view/View;
 
-    .line 376
+    .line 348
     invoke-virtual {p0}, Landroid/view/View;->getViewTreeObserver()Landroid/view/ViewTreeObserver;
 
     move-result-object p0
@@ -5499,7 +5499,7 @@
 
     invoke-virtual {p0, v0}, Landroid/view/ViewTreeObserver;->addOnGlobalLayoutListener(Landroid/view/ViewTreeObserver$OnGlobalLayoutListener;)V
 
-    .line 377
+    .line 349
     return-void
 .end method
 
