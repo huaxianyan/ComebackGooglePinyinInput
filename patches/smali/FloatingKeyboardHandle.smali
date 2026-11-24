@@ -4,6 +4,8 @@
 
 
 # instance fields
+.field private barCenterFromBottom:F
+
 .field private final density:F
 
 .field private final paint:Landroid/graphics/Paint;
@@ -13,7 +15,7 @@
 .method public constructor <init>(Landroid/content/Context;)V
     .locals 2
 
-    .line 22
+    .line 24
     invoke-direct {p0, p1}, Landroid/view/View;-><init>(Landroid/content/Context;)V
 
     .line 18
@@ -25,7 +27,12 @@
 
     iput-object v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardHandle;->paint:Landroid/graphics/Paint;
 
-    .line 23
+    .line 21
+    const/high16 v0, -0x40800000    # -1.0f
+
+    iput v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardHandle;->barCenterFromBottom:F
+
+    .line 25
     invoke-virtual {p1}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
 
     move-result-object p1
@@ -38,17 +45,17 @@
 
     iput p1, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardHandle;->density:F
 
-    .line 25
+    .line 28
     iget-object p1, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardHandle;->paint:Landroid/graphics/Paint;
 
-    const v0, -0x667f7f80
+    const v0, -0x3d372e
 
     invoke-virtual {p1, v0}, Landroid/graphics/Paint;->setColor(I)V
 
-    .line 26
+    .line 29
     invoke-virtual {p0, v1}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardHandle;->setClickable(Z)V
 
-    .line 27
+    .line 30
     return-void
 .end method
 
@@ -57,8 +64,8 @@
 .method public heightPx()I
     .locals 2
 
-    .line 31
-    const/high16 v0, 0x41900000    # 18.0f
+    .line 34
+    const/high16 v0, 0x41a00000    # 20.0f
 
     iget v1, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardHandle;->density:F
 
@@ -74,18 +81,18 @@
 .method protected onDraw(Landroid/graphics/Canvas;)V
     .locals 12
 
-    .line 36
+    .line 50
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardHandle;->getWidth()I
 
     move-result v0
 
     int-to-float v0, v0
 
-    const v1, 0x3e3851ec    # 0.18f
+    const v1, 0x3e6147ae    # 0.22f
 
     mul-float v0, v0, v1
 
-    const/high16 v1, 0x42600000    # 56.0f
+    const/high16 v1, 0x42700000    # 60.0f
 
     iget v2, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardHandle;->density:F
 
@@ -95,14 +102,14 @@
 
     move-result v0
 
-    .line 37
-    const/high16 v1, 0x40800000    # 4.0f
+    .line 51
+    const/high16 v1, 0x40c00000    # 6.0f
 
     iget v2, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardHandle;->density:F
 
     mul-float v2, v2, v1
 
-    .line 38
+    .line 52
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardHandle;->getWidth()I
 
     move-result v1
@@ -115,23 +122,46 @@
 
     div-float v5, v1, v3
 
-    .line 39
+    .line 53
+    iget v1, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardHandle;->barCenterFromBottom:F
+
+    const/4 v4, 0x0
+
+    cmpl-float v1, v1, v4
+
+    if-ltz v1, :cond_0
+
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardHandle;->getHeight()I
 
     move-result v1
 
     int-to-float v1, v1
 
-    sub-float/2addr v1, v2
+    iget v4, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardHandle;->barCenterFromBottom:F
 
-    div-float v6, v1, v3
+    sub-float/2addr v1, v4
 
-    .line 40
+    goto :goto_0
+
+    :cond_0
+    invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardHandle;->getHeight()I
+
+    move-result v1
+
+    int-to-float v1, v1
+
+    div-float/2addr v1, v3
+
+    .line 54
+    :goto_0
+    div-float v9, v2, v3
+
+    sub-float v6, v1, v9
+
+    .line 55
     add-float v7, v5, v0
 
     add-float v8, v6, v2
-
-    div-float v9, v2, v3
 
     iget-object v11, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardHandle;->paint:Landroid/graphics/Paint;
 
@@ -141,17 +171,59 @@
 
     invoke-virtual/range {v4 .. v11}, Landroid/graphics/Canvas;->drawRoundRect(FFFFFFLandroid/graphics/Paint;)V
 
-    .line 48
+    .line 63
     return-void
 .end method
 
 .method public onTouchEvent(Landroid/view/MotionEvent;)Z
     .locals 0
 
-    .line 52
+    .line 67
     invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->onHandleTouch(Landroid/view/View;Landroid/view/MotionEvent;)Z
 
     move-result p1
 
     return p1
+.end method
+
+.method public setBarCenterFromBottom(F)V
+    .locals 2
+
+    .line 43
+    const/4 v0, 0x0
+
+    cmpg-float v0, p1, v0
+
+    if-ltz v0, :cond_1
+
+    iget v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardHandle;->barCenterFromBottom:F
+
+    sub-float v0, p1, v0
+
+    invoke-static {v0}, Ljava/lang/Math;->abs(F)F
+
+    move-result v0
+
+    const/high16 v1, 0x3f000000    # 0.5f
+
+    cmpg-float v0, v0, v1
+
+    if-gez v0, :cond_0
+
+    goto :goto_0
+
+    .line 44
+    :cond_0
+    iput p1, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardHandle;->barCenterFromBottom:F
+
+    .line 45
+    invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardHandle;->invalidate()V
+
+    .line 46
+    return-void
+
+    .line 43
+    :cond_1
+    :goto_0
+    return-void
 .end method

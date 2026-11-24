@@ -21,11 +21,12 @@ PACKAGE_DIR = "com/google/android/inputmethod/pinyin"
 SOURCES = [
     ROOT / f"patches/java/{PACKAGE_DIR}/FloatingKeyboardCompat.java",
     ROOT / f"patches/java/{PACKAGE_DIR}/FloatingKeyboardHandle.java",
+    ROOT / f"patches/java/{PACKAGE_DIR}/FloatingKeyboardEdit.java",
 ]
 OUTPUT_DIR = ROOT / "patches/smali"
 # Anonymous and nested classes compile to their own files; copying only the top level class leaves
 # the app crashing with ClassNotFoundException at runtime.
-SMALI_PREFIXES = ["FloatingKeyboardCompat", "FloatingKeyboardHandle"]
+SMALI_PREFIXES = ["FloatingKeyboardCompat", "FloatingKeyboardHandle", "FloatingKeyboardEdit"]
 
 
 def main() -> int:

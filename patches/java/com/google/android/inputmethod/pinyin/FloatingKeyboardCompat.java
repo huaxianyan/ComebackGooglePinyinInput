@@ -45,16 +45,44 @@ public final class FloatingKeyboardCompat {
     private static final float MIN_SCALE = 0.40f;
     private static final float MAX_SCALE = 1.0f;
 
-    /** Drag handle height; also the gap it occupies between the card and the content above. */
-    static final int HANDLE_HEIGHT_DP = 18;
+    /** Touch strip of the drag handle, measured up from the card's bottom edge. */
+    static final int HANDLE_HEIGHT_DP = 20;
+    /**
+     * Empty strip added below the key rows while the card is floating. The last key row reaches the
+     * card's bottom edge, so a handle drawn there would sit on the space bar; the gutter keeps the
+     * two apart without changing any key.
+     */
+    static final int HANDLE_GUTTER_DP = 34;
 
     private static final float DEFAULT_X_FRACTION = 0.5f;
     private static final float DEFAULT_Y_FRACTION = 1f;
-    /** Below the low threshold snaps left, above the high one snaps right, otherwise centred. */
-    private static final float SNAP_LOW = 0.34f;
-    private static final float SNAP_HIGH = 0.66f;
     /** Releasing near the bottom docks the card instead of leaving it hovering mid-screen. */
-    private static final float DOCK_THRESHOLD = 0.80f;
+    /** Hold this long on the handle before it lets go and starts following the finger. */
+    private static final long DRAG_LONG_PRESS_MS = 380L;
+    /** Pending long press; non-null only between a touch down and its resolution. */
+    private static Runnable pendingLongPress;
+    /** True while the finger is down but the press has not become a drag yet. */
+    private static boolean pendingDrag;
+    private static float downRawX;
+    private static float downRawY;
+    private static int touchSlop = -1;
+    /**
+     * Releasing this close to the bottom row docks the card. Kept tight so a normal drag never
+     * gets pulled down; the card otherwise stays wherever it was dropped.
+     */
+    private static final float DOCK_THRESHOLD = 0.92f;
+    /** How long the card stays fully opaque after the last touch. */
+    private static final long IDLE_FADE_DELAY_MS = 5000L;
+    /** Alpha the card drops to while idle, so the app behind it stays readable. */
+    private static final float IDLE_ALPHA = 0.5f;
+    /** Second press must follow the first within this to count as a double tap. */
+    private static final long DOUBLE_TAP_MS = 320L;
+    /** How long the second press has to be held before edit mode opens. */
+    private static final long EDIT_HOLD_MS = 300L;
+    /** Fade out gently; it is a background event. */
+    private static final long IDLE_FADE_OUT_MS = 320L;
+    /** Come back quickly, so the first touch never feels laggy. */
+    private static final long IDLE_WAKE_MS = 120L;
 
     /**
      * Scale currently applied to the keyboard view. {@code setScaleX} requests a layout pass, and
@@ -67,6 +95,43 @@ public final class FloatingKeyboardCompat {
     private static final Rect lastRegion = new Rect();
 
     private static FloatingKeyboardHandle handle;
+    private static FloatingKeyboardEdit editOverlay;
+    /** True while the card is in edit mode: keys frozen, whole card draggable. */
+    private static boolean editing;
+    /** Time of the last lift inside the drag handle, used for the double tap. */
+    private static long lastHandleUp;
+    private static boolean armingEdit;
+    /** True while a corner square is held; the placement belongs to the finger until release. */
+    private static boolean scaling;
+    private static float scaleStartFactor;
+    private static float scaleStartTx;
+    private static float scaleStartTy;
+    /** Screen coordinates of the corner that stays put, and its offset inside the view. */
+    private static float scaleAnchorX;
+    private static float scaleAnchorY;
+    private static float scaleAnchorOffX;
+    private static float scaleAnchorOffY;
+    private static float scaleStartDistance;
+    /** Card watched for idleness; null while docked. */
+    private static View idleArea;
+    /**
+     * Transparent view covering the window that reports the first touch of every gesture. The key
+     * rows consume their own touches, so a listener on the keyboard frame never fires.
+     */
+    private static View idleProbe;
+    private static boolean idleScheduled;
+    private static final android.os.Handler idleHandler =
+            new android.os.Handler(android.os.Looper.getMainLooper());
+    private static final Runnable fadeOut = new Runnable() {
+        @Override
+        public void run() {
+            idleScheduled = false;
+            if (dragging || scaling || editing || idleArea == null) return;
+            animateIdleAlpha(IDLE_ALPHA, IDLE_FADE_OUT_MS);
+        }
+    };
+    /** Bottom padding {@code keyboard_area} had before the gutter was applied; -1 until read. */
+    private static int baseBottomPadding = -1;
     private static boolean dragging;
     private static float dragDownRawX;
     private static float dragDownRawY;
@@ -135,12 +200,9 @@ public final class FloatingKeyboardCompat {
             // that getGlobalVisibleRect applies, so ordering them the other way reports the
             // card where it used to be.
             applyPosition(decor, area, factor);
-            if (visualRegion(area, region)) {
-                // Reserve the handle strip here rather than asking the handle for its rectangle:
-                // the insets pass must not depend on view state that is updated a frame later.
-                int handleHeight = Math.round(HANDLE_HEIGHT_DP * density(area));
-                region.set(region.left, region.top - handleHeight, region.right, region.bottom);
-            }
+            // The handle sits inside the card's bottom edge, so the card rectangle already covers
+            // it; the region needs no extra strip.
+            visualRegion(area, region);
         }
         if (region.isEmpty()) {
             // The first pass runs before the keyboard frame is laid out. A strip covering the
@@ -183,7 +245,13 @@ public final class FloatingKeyboardCompat {
     /** Puts everything back, otherwise the docked insets would clip a card or a stray handle. */
     private static void resetScale(InputMethodService service) {
         dragging = false;
+        scaling = false;
+        editing = false;
+        armingEdit = false;
+        idleHandler.removeCallbacks(enterEditRunnable);
         removeHandle();
+        removeEditOverlay();
+        removeIdleProbe();
         if (appliedScale == 1f && scaledView == null) return;
         appliedScale = 1f;
         scaledView = null;
@@ -197,6 +265,106 @@ public final class FloatingKeyboardCompat {
         area.setScaleY(1f);
         area.setTranslationX(0f);
         area.setTranslationY(0f);
+        applyGutter(area, false);
+    }
+
+    private static void scheduleIdleFade(final View area) {
+        idleArea = area;
+        if (idleScheduled) return;
+        idleScheduled = true;
+        idleHandler.postDelayed(fadeOut, IDLE_FADE_DELAY_MS);
+    }
+
+    private static void wakeIdle() {
+        idleScheduled = false;
+        idleHandler.removeCallbacks(fadeOut);
+        animateIdleAlpha(1f, IDLE_WAKE_MS);
+    }
+
+    /**
+     * Cross-fades the card and the handle together. {@code animate()} cancels whatever was running
+     * on that view, so a touch that lands mid-fade reverses it from wherever it got to.
+     */
+    private static void animateIdleAlpha(float target, long duration) {
+        fadeAlpha(idleArea, target, duration);
+        fadeAlpha(handle, target, duration);
+    }
+
+    private static void fadeAlpha(View view, float target, long duration) {
+        if (view == null) return;
+        if (view.getAlpha() == target) {
+            view.animate().cancel();
+            return;
+        }
+        view.animate().alpha(target).setDuration(duration).start();
+    }
+
+    /**
+     * Watches the whole window for touches without taking any of them: returning {@code false}
+     * makes the frame continue down the tree to the key that was actually hit.
+     */
+    private static void attachIdleProbe(ViewGroup host, final View area) {
+        if (idleProbe != null && idleProbe.getParent() == host) return;
+        if (idleProbe != null && idleProbe.getParent() instanceof ViewGroup) {
+            ((ViewGroup) idleProbe.getParent()).removeView(idleProbe);
+        }
+        View probe = new View(host.getContext());
+        probe.setLayoutParams(new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        probe.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent event) {
+                switch (event.getActionMasked()) {
+                    case MotionEvent.ACTION_DOWN:
+                        wakeIdle();
+                        break;
+                    case MotionEvent.ACTION_UP:
+                    case MotionEvent.ACTION_CANCEL:
+                        scheduleIdleFade(area);
+                        break;
+                    default:
+                        break;
+                }
+                // Never consume: the keyboard below must receive the same stream.
+                return false;
+            }
+        });
+        host.addView(probe);
+        idleProbe = probe;
+    }
+
+    private static void removeIdleProbe() {
+        wakeIdle();
+        if (idleArea != null) {
+            idleArea.animate().cancel();
+            idleArea.setAlpha(1f);
+        }
+        if (handle != null) {
+            handle.animate().cancel();
+            handle.setAlpha(1f);
+        }
+        if (idleProbe != null && idleProbe.getParent() instanceof ViewGroup) {
+            ((ViewGroup) idleProbe.getParent()).removeView(idleProbe);
+        }
+        idleProbe = null;
+        idleArea = null;
+    }
+
+    /**
+     * Reserves (or releases) the strip the handle is drawn in. Written through
+     * {@code setPadding} on the keyboard area rather than a child view so the key rows keep their
+     * own heights and only move up by the gutter.
+     */
+    private static void applyGutter(View area, boolean enabled) {
+        if (baseBottomPadding < 0) baseBottomPadding = area.getPaddingBottom();
+        int target = baseBottomPadding;
+        if (enabled) target += Math.round(HANDLE_GUTTER_DP * density(area));
+        if (area.getPaddingBottom() == target) return;
+        area.setPadding(
+                area.getPaddingLeft(),
+                area.getPaddingTop(),
+                area.getPaddingRight(),
+                target);
     }
 
     /** Returns false when the view has no size yet, so the caller can fall back. */
@@ -204,6 +372,10 @@ public final class FloatingKeyboardCompat {
         int width = area.getWidth();
         int height = area.getHeight();
         if (width <= 0 || height <= 0) return false;
+        applyGutter(area, true);
+        // Insets come in on every frame. While a corner is held the size belongs to the finger,
+        // so a preference that has not been written yet must not pull the card back.
+        if (scaling || editing) factor = appliedScale;
         if (appliedScale != factor || scaledView != area) {
             appliedScale = factor;
             scaledView = area;
@@ -220,7 +392,7 @@ public final class FloatingKeyboardCompat {
      * bottom, so the fractions describe how far it has been pulled from there.
      */
     private static boolean applyPosition(View decor, View area, float factor) {
-        if (dragging || factor <= 0f) return false;
+        if (dragging || scaling || editing || factor <= 0f) return false;
         float[] range = freeRange(decor, area, factor);
         if (range == null) return false;
         float translateX = xFraction(decor.getContext()) * range[0] - (1f - factor) * decor.getWidth() / 2f;
@@ -245,7 +417,13 @@ public final class FloatingKeyboardCompat {
     }
 
     private static void ensureHandle(View decor, View area, float factor) {
-        if (factor >= 1f) return;
+        // In edit mode the card is dragged directly; a handle would only get in the way.
+        if (editing) return;
+        if (factor >= 1f) {
+            // Full width leaves nothing to drag or resize.
+            removeHandle();
+            return;
+        }
         ViewGroup host = handleHost(decor, area);
         if (host == null) return;
         int handleHeight = Math.round(HANDLE_HEIGHT_DP * density(decor));
@@ -261,13 +439,15 @@ public final class FloatingKeyboardCompat {
                 handle.setElevation(handleHeight);
             }
         }
+        attachIdleProbe(host, area);
+        scheduleIdleFade(area);
         updateHandleBounds(host, area, handleHeight);
     }
 
     /**
-     * The handle goes into the window content frame: it spans the screen, so the strip above the
-     * card is not clipped. Elevation is raised in {@link #ensureHandle} so the keyboard frame,
-     * which is a sibling covering the whole window, does not swallow the touch.
+     * The handle goes into the window content frame: it spans the card's width, so the strip along
+     * the card's bottom edge is not clipped. Elevation is raised in {@link #ensureHandle} so the
+     * keyboard frame, which is a sibling covering the whole window, does not swallow the touch.
      */
     private static ViewGroup handleHost(View decor, View area) {
         View content = decor.findViewById(android.R.id.content);
@@ -277,21 +457,32 @@ public final class FloatingKeyboardCompat {
 
     private static void updateHandleBounds(ViewGroup host, View area, int handleHeight) {
         if (handle == null) return;
-        Rect card = new Rect();
-        if (!area.getGlobalVisibleRect(card) || card.isEmpty()) return;
+        // Both views report in the same coordinate space, so the subtraction is meaningful. The
+        // scaled extent has to be applied by hand: getWidth() stays at the pre-scale size, while
+        // getLocationOnScreen() already accounts for the pivot and translation.
+        int[] areaLocation = new int[2];
+        area.getLocationOnScreen(areaLocation);
         int[] hostLocation = new int[2];
         host.getLocationOnScreen(hostLocation);
-        int left = card.left - hostLocation[0];
-        int top = card.top - hostLocation[1] - handleHeight;
+        float factor = appliedScale > 0f ? appliedScale : 1f;
+        int cardWidth = Math.round(area.getWidth() * factor);
+        int cardHeight = Math.round(area.getHeight() * factor);
+        if (cardWidth <= 0 || cardHeight <= 0) return;
+        int left = areaLocation[0] - hostLocation[0];
+        // Inside the card's bottom edge: the gutter below the key rows is reserved for it.
+        int top = areaLocation[1] - hostLocation[1] + cardHeight - handleHeight;
         FrameLayout.LayoutParams params =
                 handle.getLayoutParams() instanceof FrameLayout.LayoutParams
                         ? (FrameLayout.LayoutParams) handle.getLayoutParams()
-                        : new FrameLayout.LayoutParams(card.width(), handleHeight);
-        if (params.width == card.width() && params.height == handleHeight
+                        : new FrameLayout.LayoutParams(cardWidth, handleHeight);
+        // Centre the bar in the gutter, not in the touch strip: the strip is taller than the
+        // gutter and a bar centred in it would ride up onto the key rows.
+        handle.setBarCenterFromBottom(area.getPaddingBottom() * factor / 2f);
+        if (params.width == cardWidth && params.height == handleHeight
                 && params.leftMargin == left && params.topMargin == top) {
             return;
         }
-        params.width = card.width();
+        params.width = cardWidth;
         params.height = handleHeight;
         params.gravity = android.view.Gravity.TOP | android.view.Gravity.LEFT;
         // Margins instead of translation: a laid out position keeps the view matrix identity, so
@@ -310,6 +501,8 @@ public final class FloatingKeyboardCompat {
 
     private static void removeHandle() {
         if (handle == null) return;
+        // A queued long press would fire against a detached view.
+        cancelLongPress(handle);
         ViewGroup parent = handle.getParent() instanceof ViewGroup
                 ? (ViewGroup) handle.getParent()
                 : null;
@@ -317,16 +510,433 @@ public final class FloatingKeyboardCompat {
         handle = null;
     }
 
+    private static final Runnable enterEditRunnable = new Runnable() {
+        @Override
+        public void run() {
+            armingEdit = false;
+            View area = idleArea;
+            if (area == null) return;
+            enterEditMode(area.getRootView(), area);
+        }
+    };
+
+    /**
+     * Accent of the active keyboard theme.
+     *
+     * <p>Theme attributes are useless here: the keyboard swaps its palette at runtime without
+     * touching {@code colorAccent}, so that attribute always answers with the built-in teal. What
+     * does change is the painted UI, so the accent is taken from the keyboard itself: the enter and
+     * search keys are the only highly saturated things on the card, and the most saturated of them
+     * is the theme accent.
+     */
+    static int accentColor(View area) {
+        int fromPixels = accentFromPixels(area);
+        return fromPixels != 0 ? fromPixels : accentFromAttributes(area.getContext());
+    }
+
+    /**
+     * Reads the accent off the rendered keyboard.
+     *
+     * <p>The keys paint themselves onto a canvas instead of carrying a background colour, so
+     * nothing readable lives on the views. Drawing the card into a bitmap once gives the real
+     * pixels, and the most saturated one is the theme accent: the enter and search keys are the
+     * only strongly coloured things a keyboard draws.
+     */
+    private static int accentFromPixels(View area) {
+        int width = area.getWidth();
+        int height = area.getHeight();
+        if (width <= 0 || height <= 0) return 0;
+        try {
+            android.graphics.Bitmap bitmap = android.graphics.Bitmap.createBitmap(
+                    width, height, android.graphics.Bitmap.Config.ARGB_8888);
+            android.graphics.Canvas canvas = new android.graphics.Canvas(bitmap);
+            area.draw(canvas);
+            int[] pixels = new int[width * height];
+            bitmap.getPixels(pixels, 0, width, 0, 0, width, height);
+            bitmap.recycle();
+            int[] best = {0, 0};
+            int step = 3;
+            for (int y = 0; y < height; y += step) {
+                int row = y * width;
+                for (int x = 0; x < width; x += step) {
+                    considerAccent(pixels[row + x], best);
+                }
+            }
+            return best[0];
+        } catch (Throwable ignored) {
+            return 0;
+        }
+    }
+
+    private static void considerAccent(int color, int[] best) {
+        if (android.graphics.Color.alpha(color) < 200) return;
+        float[] hsv = new float[3];
+        android.graphics.Color.colorToHSV(color, hsv);
+        if (hsv[1] < 0.35f || hsv[2] < 0.35f) return;
+        int score = Math.round(hsv[1] * 100f * hsv[2]);
+        if (score > best[1]) {
+            best[0] = color;
+            best[1] = score;
+        }
+    }
+
+    private static int accentFromAttributes(Context context) {
+        String[] names = {"colorAccent", "colorPrimary", "colorControlActivated"};
+        for (String name : names) {
+            int attrId = context.getResources()
+                    .getIdentifier(name, "attr", context.getPackageName());
+            if (attrId == 0) continue;
+            android.util.TypedValue value = new android.util.TypedValue();
+            if (!context.getTheme().resolveAttribute(attrId, value, true)) continue;
+            if (value.resourceId != 0) {
+                return android.os.Build.VERSION.SDK_INT >= 23
+                        ? context.getColor(value.resourceId)
+                        : context.getResources().getColor(value.resourceId);
+            }
+            if (value.data != 0) return value.data;
+        }
+        return 0xFF4DB6AC;
+    }
+
+    private static void enterEditMode(View decor, View area) {
+        if (editing || area == null) return;
+        ViewGroup host = handleHost(decor, area);
+        if (host == null) return;
+        editing = true;
+        dragging = false;
+        scaling = false;
+        armingEdit = false;
+        idleHandler.removeCallbacks(fadeOut);
+        // The handle only drags; in edit mode the whole card drags, so it is not needed.
+        removeHandle();
+        removeEditOverlay();
+        editOverlay = new FloatingKeyboardEdit(area.getContext(), accentColor(area));
+        editOverlay.setLayoutParams(new FrameLayout.LayoutParams(0, 0));
+        editOverlay.setListener(new FloatingKeyboardEdit.Listener() {
+            @Override
+            public void onEditDrag(float screenX, float screenY, boolean finished) {
+                handleEditDrag(screenX, screenY, finished);
+            }
+
+            @Override
+            public void onEditScale(int corner, float screenX, float screenY, boolean finished) {
+                handleEditScale(corner, screenX, screenY, finished);
+            }
+
+            @Override
+            public void onEditReset() {
+                resetFromEdit();
+            }
+
+            @Override
+            public void onEditDone() {
+                View current = idleArea;
+                if (current == null) return;
+                exitEditMode(current.getRootView(), current);
+            }
+        });
+        host.addView(editOverlay);
+        editOverlay.bringToFront();
+        if (android.os.Build.VERSION.SDK_INT >= 21) {
+            editOverlay.setElevation(Math.round(HANDLE_HEIGHT_DP * density(decor)) + 2f);
+        }
+        updateEditBounds(host, area);
+        area.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS);
+        area.invalidate();
+    }
+
+    private static void exitEditMode(View decor, View area) {
+        if (!editing) return;
+        editing = false;
+        dragging = false;
+        scaling = false;
+        float factor = appliedScale > 0f ? appliedScale : scale(area.getContext());
+        float[] range = freeRange(decor, area, factor);
+        if (range != null) {
+            Context context = area.getContext();
+            float fractionX = fractionFromTranslation(area, decor, factor, range, true);
+            float fractionY = fractionFromTranslation(area, decor, factor, range, false);
+            preferences(context).edit()
+                    .putFloat(KEY_SCALE, factor)
+                    .putFloat(KEY_X_FRACTION + orientation(context), fractionX)
+                    .putFloat(KEY_Y_FRACTION + orientation(context), fractionY)
+                    .apply();
+        }
+        removeEditOverlay();
+        applyPosition(decor, area, factor);
+        ensureHandle(decor, area, factor);
+        scheduleIdleFade(area);
+        decor.requestLayout();
+    }
+
+    private static void resetFromEdit() {
+        View area = idleArea;
+        if (area == null) return;
+        View decor = area.getRootView();
+        Context context = area.getContext();
+        preferences(context).edit()
+                .putFloat(KEY_SCALE, DEFAULT_SCALE)
+                .putFloat(KEY_X_FRACTION + orientation(context), DEFAULT_X_FRACTION)
+                .putFloat(KEY_Y_FRACTION + orientation(context), DEFAULT_Y_FRACTION)
+                .apply();
+        appliedScale = DEFAULT_SCALE;
+        area.setScaleX(DEFAULT_SCALE);
+        area.setScaleY(DEFAULT_SCALE);
+        applyPosition(decor, area, DEFAULT_SCALE);
+        if (editOverlay != null && editOverlay.getParent() instanceof ViewGroup) {
+            updateEditBounds((ViewGroup) editOverlay.getParent(), area);
+        }
+        decor.requestLayout();
+    }
+
+    private static void updateEditBounds(ViewGroup host, View area) {
+        if (editOverlay == null) return;
+        int[] areaLocation = new int[2];
+        area.getLocationOnScreen(areaLocation);
+        int[] hostLocation = new int[2];
+        host.getLocationOnScreen(hostLocation);
+        float factor = appliedScale > 0f ? appliedScale : 1f;
+        int width = Math.round(area.getWidth() * factor);
+        int height = Math.round(area.getHeight() * factor);
+        if (width <= 0 || height <= 0) return;
+        int left = areaLocation[0] - hostLocation[0];
+        int top = areaLocation[1] - hostLocation[1];
+        FrameLayout.LayoutParams params =
+                editOverlay.getLayoutParams() instanceof FrameLayout.LayoutParams
+                        ? (FrameLayout.LayoutParams) editOverlay.getLayoutParams()
+                        : new FrameLayout.LayoutParams(width, height);
+        if (params.width == width && params.height == height
+                && params.leftMargin == left && params.topMargin == top) {
+            return;
+        }
+        params.width = width;
+        params.height = height;
+        params.gravity = android.view.Gravity.TOP | android.view.Gravity.LEFT;
+        params.leftMargin = left;
+        params.topMargin = top;
+        editOverlay.setLayoutParams(params);
+    }
+
+    private static void removeEditOverlay() {
+        if (editOverlay == null) return;
+        ViewGroup parent = editOverlay.getParent() instanceof ViewGroup
+                ? (ViewGroup) editOverlay.getParent()
+                : null;
+        if (parent != null) parent.removeView(editOverlay);
+        editOverlay = null;
+    }
+
+    /** Dragging in edit mode: any press that misses a corner or a disc moves the card. */
+    private static void handleEditDrag(float screenX, float screenY, boolean finished) {
+        View area = idleArea;
+        if (area == null) return;
+        View decor = area.getRootView();
+        float factor = appliedScale > 0f ? appliedScale : 1f;
+        float[] range = freeRange(decor, area, factor);
+        if (range == null) return;
+
+        if (!dragging) {
+            dragDownRawX = screenX;
+            dragDownRawY = screenY;
+            dragStartX = fractionFromTranslation(area, decor, factor, range, true);
+            dragStartY = fractionFromTranslation(area, decor, factor, range, false);
+            dragging = true;
+            if (finished) {
+                dragging = false;
+                return;
+            }
+        }
+
+        float fractionX = clamp01(dragStartX + (screenX - dragDownRawX) / range[0]);
+        float fractionY = clamp01(dragStartY + (screenY - dragDownRawY) / range[1]);
+        area.setTranslationX(fractionX * range[0] - (1f - factor) * decor.getWidth() / 2f);
+        area.setTranslationY((fractionY - 1f) * range[1]);
+        if (editOverlay != null && editOverlay.getParent() instanceof ViewGroup) {
+            updateEditBounds((ViewGroup) editOverlay.getParent(), area);
+        }
+        if (finished) {
+            dragging = false;
+            Context context = area.getContext();
+            preferences(context).edit()
+                    .putFloat(KEY_X_FRACTION + orientation(context), fractionX)
+                    .putFloat(KEY_Y_FRACTION + orientation(context), fractionY)
+                    .apply();
+        }
+        decor.requestLayout();
+    }
+
+    /** Resizing in edit mode: same maths as the handle version, anchored at the opposite corner. */
+    private static void handleEditScale(
+            int corner, float screenX, float screenY, boolean finished) {
+        View area = idleArea;
+        if (area == null) return;
+        View decor = area.getRootView();
+
+        if (!scaling) {
+            int width = area.getWidth();
+            int height = area.getHeight();
+            if (width <= 0 || height <= 0) return;
+            float factor = appliedScale > 0f ? appliedScale : 1f;
+            int[] location = new int[2];
+            area.getLocationOnScreen(location);
+            float left = location[0];
+            float top = location[1];
+            float right = left + width * factor;
+            float bottom = top + height * factor;
+            switch (corner) {
+                case 0:
+                    scaleAnchorX = right;
+                    scaleAnchorY = bottom;
+                    scaleAnchorOffX = width;
+                    scaleAnchorOffY = height;
+                    break;
+                case 1:
+                    scaleAnchorX = left;
+                    scaleAnchorY = bottom;
+                    scaleAnchorOffX = 0f;
+                    scaleAnchorOffY = height;
+                    break;
+                case 2:
+                    scaleAnchorX = left;
+                    scaleAnchorY = top;
+                    scaleAnchorOffX = 0f;
+                    scaleAnchorOffY = 0f;
+                    break;
+                default:
+                    scaleAnchorX = right;
+                    scaleAnchorY = top;
+                    scaleAnchorOffX = width;
+                    scaleAnchorOffY = 0f;
+                    break;
+            }
+            scaleStartDistance = distance(screenX, screenY, scaleAnchorX, scaleAnchorY);
+            if (scaleStartDistance < 1f) return;
+            scaleStartFactor = factor;
+            scaleStartTx = area.getTranslationX();
+            scaleStartTy = area.getTranslationY();
+            scaling = true;
+            if (finished) {
+                scaling = false;
+                return;
+            }
+        }
+
+        if (finished) {
+            scaling = false;
+            float factor = appliedScale > 0f ? appliedScale : 1f;
+            Context context = area.getContext();
+            preferences(context).edit().putFloat(KEY_SCALE, factor).apply();
+            if (editOverlay != null && editOverlay.getParent() instanceof ViewGroup) {
+                updateEditBounds((ViewGroup) editOverlay.getParent(), area);
+            }
+            return;
+        }
+
+        float moved = distance(screenX, screenY, scaleAnchorX, scaleAnchorY);
+        float factor = Math.max(MIN_SCALE,
+                Math.min(MAX_SCALE, scaleStartFactor * moved / scaleStartDistance));
+        // The anchored corner stays put, so growth is bounded by the room left towards the
+        // dragged corner. Without this the card happily grows past the edge of the screen.
+        float roomX = (corner == 1 || corner == 2)
+                ? decor.getWidth() - scaleAnchorX
+                : scaleAnchorX;
+        float roomY = (corner == 2 || corner == 3)
+                ? decor.getHeight() - scaleAnchorY
+                : scaleAnchorY;
+        if (roomX > 0f && roomY > 0f) {
+            float limit = Math.min(roomX / area.getWidth(), roomY / area.getHeight());
+            factor = Math.min(factor, limit);
+            factor = Math.max(MIN_SCALE, factor);
+        }
+        float pivotX = area.getWidth() / 2f;
+        float pivotY = area.getHeight();
+        float shift = scaleStartFactor - factor;
+        area.setScaleX(factor);
+        area.setScaleY(factor);
+        appliedScale = factor;
+        area.setTranslationX(scaleStartTx + (scaleAnchorOffX - pivotX) * shift);
+        area.setTranslationY(scaleStartTy + (scaleAnchorOffY - pivotY) * shift);
+        if (editOverlay != null && editOverlay.getParent() instanceof ViewGroup) {
+            updateEditBounds((ViewGroup) editOverlay.getParent(), area);
+        }
+        decor.requestLayout();
+    }
+
+    private static float distance(float x1, float y1, float x2, float y2) {
+        float dx = x1 - x2;
+        float dy = y1 - y2;
+        return (float) Math.sqrt(dx * dx + dy * dy);
+    }
+
+    /**
+     * Fills {@code out} with the card in <em>screen</em> coordinates.
+     *
+     * <p>Deliberately not {@code getGlobalVisibleRect}: inside the IME window it reports the
+     * content frame's coordinates, which sit below the window origin by the inset height.
+     *
+     * <p>Screen coordinates on purpose. {@code applyInsets} already moves the rectangle into window
+     * space with a single {@code offset}; subtracting the window origin here as well cancelled it
+     * twice and pushed the whole region above the card, so every touch below the first key row was
+     * dropped.
+     */
     private static boolean visualRegion(View area, Rect out) {
         if (area.getWidth() <= 0 || area.getHeight() <= 0) return false;
-        // getGlobalVisibleRect walks up through the parents, so the view transform is applied and
-        // the rectangle matches what is on screen. Computing it by hand double-counts the offset,
-        // because the reported location already includes the scale.
-        if (!area.getGlobalVisibleRect(out)) return false;
+        int[] areaLocation = new int[2];
+        area.getLocationOnScreen(areaLocation);
+        float factor = appliedScale > 0f ? appliedScale : 1f;
+        int width = Math.round(area.getWidth() * factor);
+        int height = Math.round(area.getHeight() * factor);
+        out.set(areaLocation[0], areaLocation[1],
+                areaLocation[0] + width, areaLocation[1] + height);
         return !out.isEmpty();
     }
 
     /** Returns true when the drag subsystem consumed the event. */
+    private static int touchSlop(View view) {
+        if (touchSlop < 0) {
+            touchSlop = android.view.ViewConfiguration.get(view.getContext()).getScaledTouchSlop();
+        }
+        return touchSlop;
+    }
+
+    private static void cancelLongPress(View view) {
+        if (pendingLongPress != null) {
+            view.removeCallbacks(pendingLongPress);
+            pendingLongPress = null;
+        }
+        pendingDrag = false;
+    }
+
+    /**
+     * Arms the long press. Moving further than the touch slop first cancels it, so a flick over the
+     * handle does not drag the keyboard by accident.
+     */
+    private static void armLongPress(final View view, final View decor, final View area) {
+        cancelLongPress(view);
+        pendingDrag = true;
+        pendingLongPress = new Runnable() {
+            @Override
+            public void run() {
+                pendingLongPress = null;
+                if (!pendingDrag || !isEnabled(view.getContext())) return;
+                pendingDrag = false;
+                float factor = appliedScale > 0f ? appliedScale : scale(view.getContext());
+                float[] range = freeRange(decor, area, factor);
+                if (range == null) return;
+                dragging = true;
+                // Anchor on where the finger already is: anchoring on the original down point
+                // would jump the card by however long the press took to be recognised.
+                dragDownRawX = downRawX;
+                dragDownRawY = downRawY;
+                dragStartX = fractionFromTranslation(area, decor, factor, range, true);
+                dragStartY = fractionFromTranslation(area, decor, factor, range, false);
+                view.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS);
+                wakeIdle();
+            }
+        };
+        view.postDelayed(pendingLongPress, DRAG_LONG_PRESS_MS);
+    }
+
     public static boolean onHandleTouch(View view, MotionEvent event) {
         if (!(view.getParent() instanceof View)) return false;
         View decor = (View) view.getParent();
@@ -337,15 +947,40 @@ public final class FloatingKeyboardCompat {
                 float factor = appliedScale > 0f ? appliedScale : scale(view.getContext());
                 float[] range = freeRange(decor, area, factor);
                 if (range == null) return false;
-                dragging = true;
-                dragDownRawX = event.getRawX();
-                dragDownRawY = event.getRawY();
-                dragStartX = fractionFromTranslation(area, decor, factor, range, true);
-                dragStartY = fractionFromTranslation(area, decor, factor, range, false);
+                downRawX = event.getRawX();
+                downRawY = event.getRawY();
+                wakeIdle();
+                long now = android.os.SystemClock.uptimeMillis();
+                if (now - lastHandleUp <= DOUBLE_TAP_MS) {
+                    // Second tap: holding it opens edit mode. Dragging is not armed this time.
+                    armingEdit = true;
+                    idleHandler.postDelayed(enterEditRunnable, EDIT_HOLD_MS);
+                } else {
+                    armingEdit = false;
+                    armLongPress(view, decor, area);
+                }
                 return true;
             }
             case MotionEvent.ACTION_MOVE: {
-                if (!dragging) return false;
+                if (armingEdit) {
+                    float dx = event.getRawX() - downRawX;
+                    float dy = event.getRawY() - downRawY;
+                    int slop = touchSlop(view);
+                    if (dx * dx + dy * dy > (float) slop * slop) {
+                        armingEdit = false;
+                        idleHandler.removeCallbacks(enterEditRunnable);
+                    }
+                    return true;
+                }
+                if (!dragging) {
+                    if (pendingDrag) {
+                        float dx = event.getRawX() - downRawX;
+                        float dy = event.getRawY() - downRawY;
+                        int slop = touchSlop(view);
+                        if (dx * dx + dy * dy > (float) slop * slop) cancelLongPress(view);
+                    }
+                    return true;
+                }
                 View area = findKeyboardArea(decor);
                 if (area == null) return false;
                 float factor = appliedScale > 0f ? appliedScale : scale(view.getContext());
@@ -363,9 +998,18 @@ public final class FloatingKeyboardCompat {
             }
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL: {
-                if (!dragging) return false;
+                lastHandleUp = android.os.SystemClock.uptimeMillis();
+                if (armingEdit) {
+                    armingEdit = false;
+                    idleHandler.removeCallbacks(enterEditRunnable);
+                    return true;
+                }
+                cancelLongPress(view);
+                if (!dragging) return true;
                 dragging = false;
                 settle(view, decor);
+                View settledArea = findKeyboardArea(decor);
+                if (settledArea != null) scheduleIdleFade(settledArea);
                 return true;
             }
             default:
@@ -385,14 +1029,10 @@ public final class FloatingKeyboardCompat {
         // Docking only applies when the card is brought back down from higher up. The card rests
         // at the bottom by default, so testing the released position alone would turn every
         // horizontal drag into a dock and make it impossible to move sideways.
+        // Free placement: the card stays exactly where it was released. No left/centre/right
+        // snapping, which used to yank the card sideways when the finger stopped near an edge.
         if (fractionY > DOCK_THRESHOLD && dragStartY < DOCK_THRESHOLD) {
             fractionY = 1f;
-            fractionX = 0.5f;
-        } else if (fractionX < SNAP_LOW) {
-            fractionX = 0f;
-        } else if (fractionX > SNAP_HIGH) {
-            fractionX = 1f;
-        } else {
             fractionX = 0.5f;
         }
         Context context = view.getContext();
