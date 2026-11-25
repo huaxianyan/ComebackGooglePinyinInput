@@ -179,13 +179,17 @@ public final class QuickBar {
      * deciding the width and the expand button stays untouched.
      */
     public static void attach(View nativeBar) {
-        if (nativeBar == null || !(nativeBar.getParent() instanceof ViewGroup)) return;
-        // Collapsed, the row still exists but is not on screen. Taking it over then would put our
-        // row on top of the expand button.
-        if (!nativeBar.isShown()) return;
-        ViewGroup overlay = (ViewGroup) nativeBar.getParent();
+        if (!(nativeBar instanceof ViewGroup)) return;
+        ViewGroup group = (ViewGroup) nativeBar;
+        // Collapsed, there is nothing to take over. The bar itself may be gone (that is the normal
+        // state outside the floating card), so its visibility says nothing useful here.
+        if (group.getChildCount() == 0) return;
 
-        hideNativeEntries(nativeBar);
+        ViewGroup overlay = overlayOf(nativeBar);
+        if (overlay == null) return;
+
+        hideNativeEntries(group);
+        hideNativeEntries(overlay);
         // The row is rebuilt when the stored list changes, otherwise a new order or a switched-off
         // shortcut would only show up after the keyboard process restarts.
         String signature = String.valueOf(readShortcuts(nativeBar.getContext()));
@@ -206,16 +210,43 @@ public final class QuickBar {
     }
 
     /**
-     * Empties the native row without hiding it.
+     * Finds the container the header actually lays out.
      *
-     * <p>The bar itself stays visible so it keeps taking part in layout; only its entries go away,
-     * along with the strip background that would otherwise still be painted behind our own row.
+     * <p>In the floating card the bar's parent is that container. In the plain keyboard the bar is a
+     * hidden sibling of {@code access_points_overlay_view}, and the entries are added there, so the
+     * parent is only a fallback.
      */
-    private static void hideNativeEntries(View nativeBar) {
-        if (!(nativeBar instanceof ViewGroup)) return;
-        ViewGroup group = (ViewGroup) nativeBar;
+    private static ViewGroup overlayOf(View nativeBar) {
+        android.view.ViewParent rawParent = nativeBar.getParent();
+        View parent = rawParent instanceof View ? (View) rawParent : null;
+        if (parent instanceof ViewGroup) {
+            try {
+                int id = nativeBar.getContext().getResources().getIdentifier(
+                        "access_points_overlay_view", "id", nativeBar.getContext().getPackageName());
+                if (id != 0) {
+                    View found = ((ViewGroup) parent).findViewById(id);
+                    if (found instanceof ViewGroup) return (ViewGroup) found;
+                }
+            } catch (Throwable ignored) {
+                // Fall through to the parent.
+            }
+        }
+        return parent instanceof ViewGroup ? (ViewGroup) parent : null;
+    }
+
+    /**
+     * Empties a container of its native entries, keeping everything that is not an entry.
+     *
+     * <p>The entries live inside the bar in the floating card, and inside the overlay container in
+     * the plain keyboard, so both are cleared. Language keys and our own row are left alone.
+     */
+    private static void hideNativeEntries(View container) {
+        if (!(container instanceof ViewGroup)) return;
+        ViewGroup group = (ViewGroup) container;
         for (int i = 0; i < group.getChildCount(); i++) {
             View child = group.getChildAt(i);
+            if (child == null || TAG_VIEW.equals(child.getTag())) continue;
+            if (isLanguageKey(child)) continue;
             if (child.getVisibility() != View.GONE) {
                 child.setVisibility(View.GONE);
                 child.setBackground(null);
@@ -223,6 +254,17 @@ public final class QuickBar {
         }
         group.setBackground(null);
     }
+
+    private static boolean isLanguageKey(View view) {
+        if (view.getId() == View.NO_ID) return false;
+        try {
+            String name = view.getResources().getResourceEntryName(view.getId());
+            return name != null && name.startsWith("key_pos_header_lang");
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
 
     private static View create(Context context, View nativeBar) {
         LinearLayout bar = new LinearLayout(context);

@@ -12,6 +12,9 @@ BAR = (
     "AccessPointsBar.smali"
 )
 LAYOUT_SIGNATURE = ".method protected onLayout(ZIIII)V"
+# 普通键盘下 bar 是 gone 的，onLayout 永远不跑；条目是一次性灌进来的，这里才是展开的真实时机。
+LIST_SIGNATURE = ".method public final a(Ljava/util/List;)I"
+PROLOGUE = ".prologue"
 SUPER_CALL = (
     "    invoke-super/range {p0 .. p5}, "
     "Landroid/widget/LinearLayout;->onLayout(ZIIII)V\n"
@@ -24,6 +27,24 @@ def apply_floating_toolbar(decoded: Path) -> None:
     if "syncFloatingToolbar" in source:
         return
 
+    source = _hook_list_update(source)
+    source = _hook_layout(source)
+    path.write_text(source, encoding="utf-8")
+
+
+def _hook_list_update(source: str) -> str:
+    """条目被一次性灌进来时同步一次。
+
+    bar 自己的 onLayout 只覆盖悬浮那种看得见的形态；普通键盘下它是 gone 的，不参与布局。
+    """
+    start = source.index(LIST_SIGNATURE)
+    prologue = source.index(PROLOGUE, start)
+    end = prologue + len(PROLOGUE)
+    hook = PROLOGUE + f"\n\n    invoke-static {{p0}}, {COMPAT}->syncFloatingToolbar(Landroid/view/View;)V"
+    return source[:prologue] + hook + source[end:]
+
+
+def _hook_layout(source: str) -> str:
     start = source.index(LAYOUT_SIGNATURE)
     end = source.index(".end method", start)
     block = source[start:end]
@@ -34,5 +55,4 @@ def apply_floating_toolbar(decoded: Path) -> None:
         f"\n    invoke-static {{p0}}, {COMPAT}->"
         "syncFloatingToolbar(Landroid/view/View;)V\n"
     )
-    source = source[:start] + block.replace(SUPER_CALL, hook) + source[end:]
-    path.write_text(source, encoding="utf-8")
+    return source[:start] + block.replace(SUPER_CALL, hook) + source[end:]

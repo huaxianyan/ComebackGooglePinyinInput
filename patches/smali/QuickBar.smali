@@ -287,126 +287,127 @@
     .locals 4
 
     .line 182
-    if-eqz p0, :cond_5
-
-    invoke-virtual {p0}, Landroid/view/View;->getParent()Landroid/view/ViewParent;
-
-    move-result-object v0
-
-    instance-of v0, v0, Landroid/view/ViewGroup;
+    instance-of v0, p0, Landroid/view/ViewGroup;
 
     if-nez v0, :cond_0
 
-    goto :goto_0
-
-    .line 185
-    :cond_0
-    invoke-virtual {p0}, Landroid/view/View;->isShown()Z
-
-    move-result v0
-
-    if-nez v0, :cond_1
-
     return-void
 
-    .line 186
-    :cond_1
-    invoke-virtual {p0}, Landroid/view/View;->getParent()Landroid/view/ViewParent;
-
-    move-result-object v0
+    .line 183
+    :cond_0
+    move-object v0, p0
 
     check-cast v0, Landroid/view/ViewGroup;
 
-    .line 188
-    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/QuickBar;->hideNativeEntries(Landroid/view/View;)V
+    .line 186
+    invoke-virtual {v0}, Landroid/view/ViewGroup;->getChildCount()I
 
-    .line 191
-    invoke-virtual {p0}, Landroid/view/View;->getContext()Landroid/content/Context;
+    move-result v1
 
-    move-result-object v1
-
-    invoke-static {v1}, Lcom/google/android/inputmethod/pinyin/QuickBar;->readShortcuts(Landroid/content/Context;)Ljava/lang/String;
-
-    move-result-object v1
-
-    invoke-static {v1}, Ljava/lang/String;->valueOf(Ljava/lang/Object;)Ljava/lang/String;
-
-    move-result-object v1
-
-    .line 192
-    const-string v2, "quickbar.self"
-
-    invoke-virtual {v0, v2}, Landroid/view/ViewGroup;->findViewWithTag(Ljava/lang/Object;)Landroid/view/View;
-
-    move-result-object v2
-
-    .line 193
-    if-eqz v2, :cond_3
-
-    .line 194
-    sget-object v3, Lcom/google/android/inputmethod/pinyin/QuickBar;->lastSignature:Ljava/lang/String;
-
-    invoke-virtual {v1, v3}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
-
-    move-result v3
-
-    if-eqz v3, :cond_2
+    if-nez v1, :cond_1
 
     return-void
 
-    .line 195
-    :cond_2
-    invoke-virtual {v0, v2}, Landroid/view/ViewGroup;->removeView(Landroid/view/View;)V
-
-    .line 197
-    :cond_3
-    sput-object v1, Lcom/google/android/inputmethod/pinyin/QuickBar;->lastSignature:Ljava/lang/String;
-
-    .line 198
-    invoke-virtual {p0}, Landroid/view/View;->getContext()Landroid/content/Context;
+    .line 188
+    :cond_1
+    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/QuickBar;->overlayOf(Landroid/view/View;)Landroid/view/ViewGroup;
 
     move-result-object v1
 
-    invoke-static {v1, p0}, Lcom/google/android/inputmethod/pinyin/QuickBar;->create(Landroid/content/Context;Landroid/view/View;)Landroid/view/View;
+    .line 189
+    if-nez v1, :cond_2
+
+    return-void
+
+    .line 191
+    :cond_2
+    invoke-static {v0}, Lcom/google/android/inputmethod/pinyin/QuickBar;->hideNativeEntries(Landroid/view/View;)V
+
+    .line 192
+    invoke-static {v1}, Lcom/google/android/inputmethod/pinyin/QuickBar;->hideNativeEntries(Landroid/view/View;)V
+
+    .line 195
+    invoke-virtual {p0}, Landroid/view/View;->getContext()Landroid/content/Context;
+
+    move-result-object v0
+
+    invoke-static {v0}, Lcom/google/android/inputmethod/pinyin/QuickBar;->readShortcuts(Landroid/content/Context;)Ljava/lang/String;
+
+    move-result-object v0
+
+    invoke-static {v0}, Ljava/lang/String;->valueOf(Ljava/lang/Object;)Ljava/lang/String;
+
+    move-result-object v0
+
+    .line 196
+    const-string v2, "quickbar.self"
+
+    invoke-virtual {v1, v2}, Landroid/view/ViewGroup;->findViewWithTag(Ljava/lang/Object;)Landroid/view/View;
+
+    move-result-object v2
+
+    .line 197
+    if-eqz v2, :cond_4
+
+    .line 198
+    sget-object v3, Lcom/google/android/inputmethod/pinyin/QuickBar;->lastSignature:Ljava/lang/String;
+
+    invoke-virtual {v0, v3}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+
+    move-result v3
+
+    if-eqz v3, :cond_3
+
+    return-void
+
+    .line 199
+    :cond_3
+    invoke-virtual {v1, v2}, Landroid/view/ViewGroup;->removeView(Landroid/view/View;)V
+
+    .line 201
+    :cond_4
+    sput-object v0, Lcom/google/android/inputmethod/pinyin/QuickBar;->lastSignature:Ljava/lang/String;
+
+    .line 202
+    invoke-virtual {p0}, Landroid/view/View;->getContext()Landroid/content/Context;
+
+    move-result-object v0
+
+    invoke-static {v0, p0}, Lcom/google/android/inputmethod/pinyin/QuickBar;->create(Landroid/content/Context;Landroid/view/View;)Landroid/view/View;
 
     move-result-object p0
 
-    .line 199
-    invoke-virtual {v0, p0}, Landroid/view/ViewGroup;->addView(Landroid/view/View;)V
+    .line 203
+    invoke-virtual {v1, p0}, Landroid/view/ViewGroup;->addView(Landroid/view/View;)V
 
-    .line 200
+    .line 204
     invoke-virtual {p0}, Landroid/view/View;->getLayoutParams()Landroid/view/ViewGroup$LayoutParams;
 
     move-result-object v0
 
-    .line 201
-    if-eqz v0, :cond_4
+    .line 205
+    if-eqz v0, :cond_5
 
-    .line 202
+    .line 206
     const/4 v1, -0x1
 
     iput v1, v0, Landroid/view/ViewGroup$LayoutParams;->width:I
 
-    .line 203
+    .line 207
     iput v1, v0, Landroid/view/ViewGroup$LayoutParams;->height:I
 
-    .line 204
+    .line 208
     invoke-virtual {p0, v0}, Landroid/view/View;->setLayoutParams(Landroid/view/ViewGroup$LayoutParams;)V
 
-    .line 206
-    :cond_4
-    return-void
-
-    .line 182
+    .line 210
     :cond_5
-    :goto_0
     return-void
 .end method
 
 .method private static buttonParams(Landroid/content/Context;)Landroid/widget/LinearLayout$LayoutParams;
     .locals 4
 
-    .line 240
+    .line 282
     invoke-virtual {p0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
 
     move-result-object p0
@@ -417,7 +418,7 @@
 
     iget p0, p0, Landroid/util/DisplayMetrics;->density:F
 
-    .line 241
+    .line 283
     const/high16 v0, 0x42600000    # 56.0f
 
     mul-float v0, v0, p0
@@ -426,7 +427,7 @@
 
     move-result v0
 
-    .line 242
+    .line 284
     const/high16 v1, 0x40800000    # 4.0f
 
     mul-float p0, p0, v1
@@ -435,7 +436,7 @@
 
     move-result p0
 
-    .line 243
+    .line 285
     new-instance v1, Landroid/widget/LinearLayout$LayoutParams;
 
     const/high16 v2, 0x3f800000    # 1.0f
@@ -444,15 +445,15 @@
 
     invoke-direct {v1, v3, v0, v2}, Landroid/widget/LinearLayout$LayoutParams;-><init>(IIF)V
 
-    .line 244
+    .line 286
     const/16 v0, 0x10
 
     iput v0, v1, Landroid/widget/LinearLayout$LayoutParams;->gravity:I
 
-    .line 245
+    .line 287
     invoke-virtual {v1, p0, v3, p0, v3}, Landroid/widget/LinearLayout$LayoutParams;->setMargins(IIII)V
 
-    .line 246
+    .line 288
     return-object v1
 .end method
 
@@ -498,7 +499,7 @@
 .method private static clickNative(Landroid/view/View;Ljava/lang/String;)Z
     .locals 2
 
-    .line 296
+    .line 338
     instance-of v0, p0, Landroid/view/ViewGroup;
 
     const/4 v1, 0x0
@@ -507,22 +508,22 @@
 
     return v1
 
-    .line 297
+    .line 339
     :cond_0
     invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/QuickBar;->indexOf(Ljava/lang/String;)I
 
     move-result p1
 
-    .line 298
+    .line 340
     if-gez p1, :cond_1
 
     return v1
 
-    .line 299
+    .line 341
     :cond_1
     check-cast p0, Landroid/view/ViewGroup;
 
-    .line 300
+    .line 342
     invoke-virtual {p0}, Landroid/view/ViewGroup;->getChildCount()I
 
     move-result v0
@@ -531,13 +532,13 @@
 
     return v1
 
-    .line 301
+    .line 343
     :cond_2
     invoke-virtual {p0, p1}, Landroid/view/ViewGroup;->getChildAt(I)Landroid/view/View;
 
     move-result-object p0
 
-    .line 302
+    .line 344
     invoke-virtual {p0}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
 
     move-result-object p1
@@ -556,7 +557,7 @@
 
     return v1
 
-    .line 304
+    .line 346
     :cond_3
     :try_start_0
     invoke-virtual {p0}, Landroid/view/View;->performClick()Z
@@ -567,38 +568,38 @@
 
     return p0
 
-    .line 305
+    .line 347
     :catchall_0
     move-exception p0
 
-    .line 306
+    .line 348
     return v1
 .end method
 
 .method private static create(Landroid/content/Context;Landroid/view/View;)Landroid/view/View;
     .locals 4
 
-    .line 228
+    .line 270
     new-instance v0, Landroid/widget/LinearLayout;
 
     invoke-direct {v0, p0}, Landroid/widget/LinearLayout;-><init>(Landroid/content/Context;)V
 
-    .line 229
+    .line 271
     const-string v1, "quickbar.self"
 
     invoke-virtual {v0, v1}, Landroid/widget/LinearLayout;->setTag(Ljava/lang/Object;)V
 
-    .line 230
+    .line 272
     const/4 v1, 0x0
 
     invoke-virtual {v0, v1}, Landroid/widget/LinearLayout;->setOrientation(I)V
 
-    .line 231
+    .line 273
     const/16 v1, 0x10
 
     invoke-virtual {v0, v1}, Landroid/widget/LinearLayout;->setGravity(I)V
 
-    .line 233
+    .line 275
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/QuickBar;->activeEntries(Landroid/content/Context;)Ljava/util/List;
 
     move-result-object v1
@@ -620,7 +621,7 @@
 
     check-cast v2, Lcom/google/android/inputmethod/pinyin/QuickBar$Entry;
 
-    .line 234
+    .line 276
     invoke-static {p0, v2, p1}, Lcom/google/android/inputmethod/pinyin/QuickBar;->createButton(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/QuickBar$Entry;Landroid/view/View;)Landroid/view/View;
 
     move-result-object v2
@@ -631,10 +632,10 @@
 
     invoke-virtual {v0, v2, v3}, Landroid/widget/LinearLayout;->addView(Landroid/view/View;Landroid/view/ViewGroup$LayoutParams;)V
 
-    .line 235
+    .line 277
     goto :goto_0
 
-    .line 236
+    .line 278
     :cond_0
     return-object v0
 .end method
@@ -642,42 +643,42 @@
 .method private static createButton(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/QuickBar$Entry;Landroid/view/View;)Landroid/view/View;
     .locals 2
 
-    .line 251
+    .line 293
     new-instance v0, Landroid/widget/ImageView;
 
     invoke-direct {v0, p0}, Landroid/widget/ImageView;-><init>(Landroid/content/Context;)V
 
-    .line 252
+    .line 294
     sget-object v1, Landroid/widget/ImageView$ScaleType;->CENTER_INSIDE:Landroid/widget/ImageView$ScaleType;
 
     invoke-virtual {v0, v1}, Landroid/widget/ImageView;->setScaleType(Landroid/widget/ImageView$ScaleType;)V
 
-    .line 253
+    .line 295
     iget-object v1, p1, Lcom/google/android/inputmethod/pinyin/QuickBar$Entry;->label:Ljava/lang/String;
 
     invoke-virtual {v0, v1}, Landroid/widget/ImageView;->setContentDescription(Ljava/lang/CharSequence;)V
 
-    .line 254
+    .line 296
     iget-object v1, p1, Lcom/google/android/inputmethod/pinyin/QuickBar$Entry;->iconName:Ljava/lang/String;
 
     invoke-static {p0, v1}, Lcom/google/android/inputmethod/pinyin/QuickBar;->drawable(Landroid/content/Context;Ljava/lang/String;)Landroid/graphics/drawable/Drawable;
 
     move-result-object v1
 
-    .line 255
+    .line 297
     if-eqz v1, :cond_0
 
-    .line 256
+    .line 298
     invoke-virtual {v0, v1}, Landroid/widget/ImageView;->setImageDrawable(Landroid/graphics/drawable/Drawable;)V
 
-    .line 259
+    .line 301
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/QuickBar;->keyboardIconColor(Landroid/content/Context;)I
 
     move-result v1
 
     invoke-virtual {v0, v1}, Landroid/widget/ImageView;->setColorFilter(I)V
 
-    .line 261
+    .line 303
     :cond_0
     new-instance v1, Lcom/google/android/inputmethod/pinyin/QuickBar$1;
 
@@ -685,7 +686,7 @@
 
     invoke-virtual {v0, v1}, Landroid/widget/ImageView;->setOnClickListener(Landroid/view/View$OnClickListener;)V
 
-    .line 267
+    .line 309
     return-object v0
 .end method
 
@@ -733,7 +734,7 @@
 .method private static drawable(Landroid/content/Context;Ljava/lang/String;)Landroid/graphics/drawable/Drawable;
     .locals 3
 
-    .line 279
+    .line 321
     invoke-virtual {p0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
 
     move-result-object v0
@@ -748,7 +749,7 @@
 
     move-result p1
 
-    .line 280
+    .line 322
     if-nez p1, :cond_0
 
     const/4 p0, 0x0
@@ -767,18 +768,18 @@
 .method private static hideNativeEntries(Landroid/view/View;)V
     .locals 5
 
-    .line 215
+    .line 244
     instance-of v0, p0, Landroid/view/ViewGroup;
 
     if-nez v0, :cond_0
 
     return-void
 
-    .line 216
+    .line 245
     :cond_0
     check-cast p0, Landroid/view/ViewGroup;
 
-    .line 217
+    .line 246
     const/4 v0, 0x0
 
     :goto_0
@@ -788,46 +789,75 @@
 
     const/4 v2, 0x0
 
-    if-ge v0, v1, :cond_2
+    if-ge v0, v1, :cond_4
 
-    .line 218
+    .line 247
     invoke-virtual {p0, v0}, Landroid/view/ViewGroup;->getChildAt(I)Landroid/view/View;
 
     move-result-object v1
 
-    .line 219
+    .line 248
+    if-eqz v1, :cond_3
+
+    const-string v3, "quickbar.self"
+
+    invoke-virtual {v1}, Landroid/view/View;->getTag()Ljava/lang/Object;
+
+    move-result-object v4
+
+    invoke-virtual {v3, v4}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+
+    move-result v3
+
+    if-eqz v3, :cond_1
+
+    goto :goto_1
+
+    .line 249
+    :cond_1
+    invoke-static {v1}, Lcom/google/android/inputmethod/pinyin/QuickBar;->isLanguageKey(Landroid/view/View;)Z
+
+    move-result v3
+
+    if-eqz v3, :cond_2
+
+    goto :goto_1
+
+    .line 250
+    :cond_2
     invoke-virtual {v1}, Landroid/view/View;->getVisibility()I
 
     move-result v3
 
     const/16 v4, 0x8
 
-    if-eq v3, v4, :cond_1
+    if-eq v3, v4, :cond_3
 
-    .line 220
+    .line 251
     invoke-virtual {v1, v4}, Landroid/view/View;->setVisibility(I)V
 
-    .line 221
+    .line 252
     invoke-virtual {v1, v2}, Landroid/view/View;->setBackground(Landroid/graphics/drawable/Drawable;)V
 
-    .line 217
-    :cond_1
+    .line 246
+    :cond_3
+    :goto_1
     add-int/lit8 v0, v0, 0x1
 
     goto :goto_0
 
-    .line 224
-    :cond_2
+    .line 255
+    :cond_4
     invoke-virtual {p0, v2}, Landroid/view/ViewGroup;->setBackground(Landroid/graphics/drawable/Drawable;)V
 
-    .line 225
+    .line 256
     return-void
 .end method
 
 .method private static indexOf(Ljava/lang/String;)I
     .locals 2
 
-    .line 311
+    .line 353
     const/4 v0, 0x0
 
     :goto_0
@@ -837,7 +867,7 @@
 
     if-ge v0, v1, :cond_1
 
-    .line 312
+    .line 354
     sget-object v1, Lcom/google/android/inputmethod/pinyin/QuickBar;->ALL:[Lcom/google/android/inputmethod/pinyin/QuickBar$Entry;
 
     aget-object v1, v1, v0
@@ -852,28 +882,85 @@
 
     return v0
 
-    .line 311
+    .line 353
     :cond_0
     add-int/lit8 v0, v0, 0x1
 
     goto :goto_0
 
-    .line 314
+    .line 356
     :cond_1
     const/4 p0, -0x1
 
     return p0
 .end method
 
+.method private static isLanguageKey(Landroid/view/View;)Z
+    .locals 3
+
+    .line 259
+    invoke-virtual {p0}, Landroid/view/View;->getId()I
+
+    move-result v0
+
+    const/4 v1, -0x1
+
+    const/4 v2, 0x0
+
+    if-ne v0, v1, :cond_0
+
+    return v2
+
+    .line 261
+    :cond_0
+    :try_start_0
+    invoke-virtual {p0}, Landroid/view/View;->getResources()Landroid/content/res/Resources;
+
+    move-result-object v0
+
+    invoke-virtual {p0}, Landroid/view/View;->getId()I
+
+    move-result p0
+
+    invoke-virtual {v0, p0}, Landroid/content/res/Resources;->getResourceEntryName(I)Ljava/lang/String;
+
+    move-result-object p0
+
+    .line 262
+    if-eqz p0, :cond_1
+
+    const-string v0, "key_pos_header_lang"
+
+    invoke-virtual {p0, v0}, Ljava/lang/String;->startsWith(Ljava/lang/String;)Z
+
+    move-result p0
+    :try_end_0
+    .catchall {:try_start_0 .. :try_end_0} :catchall_0
+
+    if-eqz p0, :cond_1
+
+    const/4 v2, 0x1
+
+    :cond_1
+    return v2
+
+    .line 263
+    :catchall_0
+    move-exception p0
+
+    .line 264
+    return v2
+.end method
+
 .method private static keyboardIconColor(Landroid/content/Context;)I
     .locals 4
 
-    .line 271
+    .line 313
     new-instance v0, Landroid/util/TypedValue;
 
     invoke-direct {v0}, Landroid/util/TypedValue;-><init>()V
 
-    .line 272
+    .line 314
     invoke-virtual {p0}, Landroid/content/Context;->getTheme()Landroid/content/res/Resources$Theme;
 
     move-result-object v1
@@ -888,7 +975,7 @@
 
     if-eqz v1, :cond_0
 
-    .line 273
+    .line 315
     invoke-virtual {p0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
 
     move-result-object p0
@@ -901,7 +988,7 @@
 
     return p0
 
-    .line 275
+    .line 317
     :cond_0
     const/4 p0, 0x0
 
@@ -911,10 +998,10 @@
 .method private static launch(Landroid/content/Context;Ljava/lang/String;)V
     .locals 2
 
-    .line 319
+    .line 361
     nop
 
-    .line 320
+    .line 362
     const-string v0, "access_point_theme_setting"
 
     invoke-virtual {v0, p1}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
@@ -923,12 +1010,12 @@
 
     if-eqz v0, :cond_0
 
-    .line 321
+    .line 363
     const-string p1, "com.google.android.apps.inputmethod.libs.theme.preference.ThemeSelectorActivity"
 
     goto :goto_0
 
-    .line 323
+    .line 365
     :cond_0
     const-string v0, "access_point_settings"
 
@@ -938,22 +1025,22 @@
 
     if-eqz p1, :cond_1
 
-    .line 324
+    .line 366
     const-string p1, "com.google.android.apps.inputmethod.pinyin.preference.SettingsActivity"
 
     goto :goto_0
 
-    .line 323
+    .line 365
     :cond_1
     const/4 p1, 0x0
 
-    .line 326
+    .line 368
     :goto_0
     if-nez p1, :cond_2
 
     return-void
 
-    .line 328
+    .line 370
     :cond_2
     :try_start_0
     new-instance v0, Landroid/content/Intent;
@@ -962,33 +1049,133 @@
 
     invoke-direct {v0, v1}, Landroid/content/Intent;-><init>(Ljava/lang/String;)V
 
-    .line 329
+    .line 371
     invoke-virtual {p0}, Landroid/content/Context;->getPackageName()Ljava/lang/String;
 
     move-result-object v1
 
     invoke-virtual {v0, v1, p1}, Landroid/content/Intent;->setClassName(Ljava/lang/String;Ljava/lang/String;)Landroid/content/Intent;
 
-    .line 330
+    .line 372
     const/high16 p1, 0x10000000
 
     invoke-virtual {v0, p1}, Landroid/content/Intent;->addFlags(I)Landroid/content/Intent;
 
-    .line 331
+    .line 373
     invoke-virtual {p0, v0}, Landroid/content/Context;->startActivity(Landroid/content/Intent;)V
     :try_end_0
     .catchall {:try_start_0 .. :try_end_0} :catchall_0
 
-    .line 334
+    .line 376
     goto :goto_1
 
-    .line 332
+    .line 374
     :catchall_0
     move-exception p0
 
-    .line 335
+    .line 377
     :goto_1
     return-void
+.end method
+
+.method private static overlayOf(Landroid/view/View;)Landroid/view/ViewGroup;
+    .locals 6
+
+    .line 220
+    invoke-virtual {p0}, Landroid/view/View;->getParent()Landroid/view/ViewParent;
+
+    move-result-object v0
+
+    .line 221
+    instance-of v1, v0, Landroid/view/View;
+
+    const/4 v2, 0x0
+
+    if-eqz v1, :cond_0
+
+    check-cast v0, Landroid/view/View;
+
+    goto :goto_0
+
+    :cond_0
+    move-object v0, v2
+
+    .line 222
+    :goto_0
+    instance-of v1, v0, Landroid/view/ViewGroup;
+
+    if-eqz v1, :cond_2
+
+    .line 224
+    :try_start_0
+    invoke-virtual {p0}, Landroid/view/View;->getContext()Landroid/content/Context;
+
+    move-result-object v3
+
+    invoke-virtual {v3}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
+
+    move-result-object v3
+
+    const-string v4, "access_points_overlay_view"
+
+    const-string v5, "id"
+
+    .line 225
+    invoke-virtual {p0}, Landroid/view/View;->getContext()Landroid/content/Context;
+
+    move-result-object p0
+
+    invoke-virtual {p0}, Landroid/content/Context;->getPackageName()Ljava/lang/String;
+
+    move-result-object p0
+
+    .line 224
+    invoke-virtual {v3, v4, v5, p0}, Landroid/content/res/Resources;->getIdentifier(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I
+
+    move-result p0
+
+    .line 226
+    if-eqz p0, :cond_1
+
+    .line 227
+    move-object v3, v0
+
+    check-cast v3, Landroid/view/ViewGroup;
+
+    invoke-virtual {v3, p0}, Landroid/view/ViewGroup;->findViewById(I)Landroid/view/View;
+
+    move-result-object p0
+
+    .line 228
+    instance-of v3, p0, Landroid/view/ViewGroup;
+
+    if-eqz v3, :cond_1
+
+    check-cast p0, Landroid/view/ViewGroup;
+    :try_end_0
+    .catchall {:try_start_0 .. :try_end_0} :catchall_0
+
+    return-object p0
+
+    .line 232
+    :cond_1
+    goto :goto_1
+
+    .line 230
+    :catchall_0
+    move-exception p0
+
+    .line 234
+    :cond_2
+    :goto_1
+    if-eqz v1, :cond_3
+
+    move-object v2, v0
+
+    check-cast v2, Landroid/view/ViewGroup;
+
+    :cond_3
+    return-object v2
 .end method
 
 .method private static readShortcuts(Landroid/content/Context;)Ljava/lang/String;
@@ -1358,7 +1545,7 @@
 .method private static run(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/QuickBar$Entry;Landroid/view/View;)V
     .locals 1
 
-    .line 284
+    .line 326
     iget v0, p1, Lcom/google/android/inputmethod/pinyin/QuickBar$Entry;->action:I
 
     if-nez v0, :cond_0
@@ -1373,12 +1560,12 @@
 
     return-void
 
-    .line 285
+    .line 327
     :cond_0
     iget-object p1, p1, Lcom/google/android/inputmethod/pinyin/QuickBar$Entry;->id:Ljava/lang/String;
 
     invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/QuickBar;->launch(Landroid/content/Context;Ljava/lang/String;)V
 
-    .line 286
+    .line 328
     return-void
 .end method
