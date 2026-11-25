@@ -4915,7 +4915,7 @@
 .end method
 
 .method public static syncFloatingToolbar(Landroid/view/View;)V
-    .locals 8
+    .locals 7
 
     .line 382
     instance-of v0, p0, Landroid/view/ViewGroup;
@@ -4924,47 +4924,38 @@
 
     return-void
 
-    .line 383
-    :cond_0
-    invoke-virtual {p0}, Landroid/view/View;->getContext()Landroid/content/Context;
-
-    move-result-object v0
-
-    invoke-static {v0}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->isEnabled(Landroid/content/Context;)Z
-
-    move-result v0
-
     .line 387
+    :cond_0
     invoke-static {}, Ljava/lang/System;->currentTimeMillis()J
 
-    move-result-wide v1
+    move-result-wide v0
 
     .line 388
-    sget-wide v3, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->lastSelfBarPost:J
+    sget-wide v2, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->lastSelfBarPost:J
 
-    sub-long v3, v1, v3
+    sub-long v2, v0, v2
 
-    const-wide/16 v5, 0x12c
+    const-wide/16 v4, 0x12c
 
-    cmp-long v7, v3, v5
+    cmp-long v6, v2, v4
 
-    if-gez v7, :cond_1
+    if-gez v6, :cond_1
 
     return-void
 
     .line 389
     :cond_1
-    sput-wide v1, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->lastSelfBarPost:J
+    sput-wide v0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->lastSelfBarPost:J
 
     .line 390
     nop
 
     .line 391
-    new-instance v1, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat$5;
+    new-instance v0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat$5;
 
-    invoke-direct {v1, p0, v0}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat$5;-><init>(Landroid/view/View;Z)V
+    invoke-direct {v0, p0}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat$5;-><init>(Landroid/view/View;)V
 
-    invoke-virtual {p0, v1}, Landroid/view/View;->post(Ljava/lang/Runnable;)Z
+    invoke-virtual {p0, v0}, Landroid/view/View;->post(Ljava/lang/Runnable;)Z
 
     .line 401
     return-void

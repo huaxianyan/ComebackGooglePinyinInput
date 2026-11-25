@@ -178,18 +178,12 @@ public final class QuickBar {
      * piece the header actually sizes. Our row goes in there too, so the surrounding row keeps
      * deciding the width and the expand button stays untouched.
      */
-    public static void attach(View nativeBar, boolean selfEnabled) {
+    public static void attach(View nativeBar) {
         if (nativeBar == null || !(nativeBar.getParent() instanceof ViewGroup)) return;
         // Collapsed, the row still exists but is not on screen. Taking it over then would put our
         // row on top of the expand button.
-        if (selfEnabled && !nativeBar.isShown()) return;
+        if (!nativeBar.isShown()) return;
         ViewGroup overlay = (ViewGroup) nativeBar.getParent();
-
-        if (!selfEnabled) {
-            detach(overlay);
-            showNativeEntries(nativeBar);
-            return;
-        }
 
         hideNativeEntries(nativeBar);
         // The row is rebuilt when the stored list changes, otherwise a new order or a switched-off
@@ -228,21 +222,6 @@ public final class QuickBar {
             }
         }
         group.setBackground(null);
-    }
-
-    /** Puts the native buttons back, for when the project row is switched off. */
-    private static void showNativeEntries(View nativeBar) {
-        if (!(nativeBar instanceof ViewGroup)) return;
-        ViewGroup group = (ViewGroup) nativeBar;
-        for (int i = 0; i < group.getChildCount(); i++) {
-            View child = group.getChildAt(i);
-            if (child.getVisibility() == View.GONE) child.setVisibility(View.VISIBLE);
-        }
-    }
-
-    private static void detach(ViewGroup parent) {
-        View existing = parent.findViewWithTag(TAG_VIEW);
-        if (existing != null) parent.removeView(existing);
     }
 
     private static View create(Context context, View nativeBar) {

@@ -380,10 +380,10 @@ public final class FloatingKeyboardCompat {
      */
     public static void syncFloatingToolbar(final View bar) {
         if (!(bar instanceof ViewGroup)) return;
-        final boolean hide = isEnabled(bar.getContext());
 
-        // The project-owned row takes the place of the native one; which shortcuts it shows and in
-        // what order comes from the settings screen, not from a fixed list of positions here.
+        // The project-owned row takes the place of the native one in every keyboard form, not just
+        // the floating card: which shortcuts it shows and in what order comes from the settings
+        // screen, not from a fixed list of positions here.
         long now = System.currentTimeMillis();
         if (now - lastSelfBarPost < 300L) return;
         lastSelfBarPost = now;
@@ -392,7 +392,7 @@ public final class FloatingKeyboardCompat {
             @Override
             public void run() {
                 try {
-                    QuickBar.attach(nativeBar, hide);
+                    QuickBar.attach(nativeBar);
                 } catch (Throwable ignored) {
                     // A broken row must never take the keyboard down with it.
                 }

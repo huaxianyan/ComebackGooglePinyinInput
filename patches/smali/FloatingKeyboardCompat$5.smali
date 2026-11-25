@@ -18,13 +18,11 @@
 
 
 # instance fields
-.field final synthetic val$hide:Z
-
 .field final synthetic val$nativeBar:Landroid/view/View;
 
 
 # direct methods
-.method constructor <init>(Landroid/view/View;Z)V
+.method constructor <init>(Landroid/view/View;)V
     .locals 0
     .annotation system Ldalvik/annotation/Signature;
         value = {
@@ -35,8 +33,6 @@
     .line 391
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat$5;->val$nativeBar:Landroid/view/View;
 
-    iput-boolean p2, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat$5;->val$hide:Z
-
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
     return-void
@@ -45,15 +41,13 @@
 
 # virtual methods
 .method public run()V
-    .locals 2
+    .locals 1
 
     .line 395
     :try_start_0
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat$5;->val$nativeBar:Landroid/view/View;
 
-    iget-boolean v1, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat$5;->val$hide:Z
-
-    invoke-static {v0, v1}, Lcom/google/android/inputmethod/pinyin/QuickBar;->attach(Landroid/view/View;Z)V
+    invoke-static {v0}, Lcom/google/android/inputmethod/pinyin/QuickBar;->attach(Landroid/view/View;)V
     :try_end_0
     .catchall {:try_start_0 .. :try_end_0} :catchall_0
 
