@@ -53,7 +53,10 @@ public final class AccessPointsOrder {
 
         List<String> result = new ArrayList<String>();
         for (String id : enabled) {
-            if (ids.contains(id) && !result.contains(id)) result.add(id);
+            // Do not require the id to still be in the list. A shortcut that was switched off has
+            // already been dropped from it, and checking would then never let it come back.
+            // Ids the entry map does not know are skipped at render time anyway.
+            if (!result.contains(id)) result.add(id);
         }
         for (String id : ids) {
             if (result.contains(id) || disabled.contains(id)) continue;
@@ -64,9 +67,12 @@ public final class AccessPointsOrder {
         ids.addAll(result);
 
         if (known != null) {
-            // The set also holds ids that are not entries, such as the expand trigger. Only the
-            // disabled ones go, everything else stays so the native pass keeps seeing it.
+            // The render pass treats this set as a whitelist, so a switched-off shortcut has to
+            // leave it and a switched-on one has to come back. Dropping without re-adding is why a
+            // disabled shortcut never reappeared until the process restarted. Ids that are not
+            // entries at all, such as the expand trigger, are simply left alone.
             known.removeAll(disabled);
+            known.addAll(enabled);
         }
     }
 
