@@ -3,6 +3,7 @@ package com.google.android.inputmethod.pinyin;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.drawable.Drawable;
 import android.graphics.Path;
 import android.graphics.RectF;
 import android.view.MotionEvent;
@@ -47,6 +48,9 @@ public final class FloatingKeyboardEdit extends View {
     private final Paint fill = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint line = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint glyph = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Drawable resetIcon;
+    private final Drawable moveIcon;
+    private final Drawable doneIcon;
     private final Path path = new Path();
     private final RectF rect = new RectF();
     private final float density;
@@ -73,6 +77,12 @@ public final class FloatingKeyboardEdit extends View {
         glyph.setStrokeCap(Paint.Cap.ROUND);
         glyph.setStrokeJoin(Paint.Join.ROUND);
         glyph.setColor(accent);
+
+        // Standard Material glyphs instead of hand-drawn paths: the shapes are already the ones
+        // users know, and a hand-drawn arc plus arrow head reads wrong at this size.
+        resetIcon = loadIcon(context, "ic_floating_edit_reset", accent);
+        doneIcon = loadIcon(context, "ic_floating_edit_done", accent);
+        moveIcon = loadIcon(context, "ic_floating_edit_move", 0xFFFFFFFF);
 
         setClickable(true);
         setFocusable(false);
@@ -116,7 +126,7 @@ public final class FloatingKeyboardEdit extends View {
         float moveR = MOVE_DP * density / 2f;
         fill.setColor(movePressed ? darken(accent) : accent);
         canvas.drawCircle(cx, cy, moveR, fill);
-        drawMoveArrow(canvas, cx, cy, moveR);
+        drawIcon(canvas, moveIcon, cx, cy, moveR * 1.30f);
 
         // Left: reset. Right: done.
         float actionR = ACTION_DP * density / 2f;
@@ -124,8 +134,8 @@ public final class FloatingKeyboardEdit extends View {
         fill.setColor(accentSoft);
         canvas.drawCircle(cx - offset, cy + 6f * density, actionR, fill);
         canvas.drawCircle(cx + offset, cy + 6f * density, actionR, fill);
-        drawReset(canvas, cx - offset, cy + 6f * density, actionR);
-        drawDone(canvas, cx + offset, cy + 6f * density, actionR);
+        drawIcon(canvas, resetIcon, cx - offset, cy + 6f * density, actionR * 1.30f);
+        drawIcon(canvas, doneIcon, cx + offset, cy + 6f * density, actionR * 1.30f);
     }
 
     private float[][] cornerCenters() {
@@ -156,79 +166,29 @@ public final class FloatingKeyboardEdit extends View {
         line.setStrokeCap(Paint.Cap.ROUND);
     }
 
-    private void drawMoveArrow(Canvas canvas, float cx, float cy, float radius) {
-        float arm = radius * 0.52f;
-        float head = radius * 0.20f;
-        glyph.setColor(0xFFFFFFFF);
-        glyph.setStrokeWidth(2f * density);
-        path.reset();
-        path.moveTo(cx, cy - arm);
-        path.lineTo(cx, cy + arm);
-        path.moveTo(cx - arm, cy);
-        path.lineTo(cx + arm, cy);
-        canvas.drawPath(path, glyph);
-
-        // Four solid heads.
-        fill.setColor(0xFFFFFFFF);
-        fill.setStyle(Paint.Style.FILL);
-        float tipY = cy - radius * 0.66f;
-        float tipX = cx + radius * 0.66f;
-        path.reset();
-        path.moveTo(cx, tipY);
-        path.lineTo(cx - head, tipY + head * 1.5f);
-        path.lineTo(cx + head, tipY + head * 1.5f);
-        path.close();
-        canvas.drawPath(path, fill);
-
-        path.reset();
-        path.moveTo(cx, cy + radius * 0.66f);
-        path.lineTo(cx - head, cy + radius * 0.66f - head * 1.5f);
-        path.lineTo(cx + head, cy + radius * 0.66f - head * 1.5f);
-        path.close();
-        canvas.drawPath(path, fill);
-
-        path.reset();
-        path.moveTo(tipX, cy);
-        path.lineTo(tipX - head * 1.5f, cy - head);
-        path.lineTo(tipX - head * 1.5f, cy + head);
-        path.close();
-        canvas.drawPath(path, fill);
-
-        path.reset();
-        path.moveTo(cx - radius * 0.66f, cy);
-        path.lineTo(cx - radius * 0.66f + head * 1.5f, cy - head);
-        path.lineTo(cx - radius * 0.66f + head * 1.5f, cy + head);
-        path.close();
-        canvas.drawPath(path, fill);
+    /** Draws a themed glyph centred on the point, at the given box size. */
+    private void drawIcon(Canvas canvas, Drawable icon, float cx, float cy, float size) {
+        if (icon == null) return;
+        int half = Math.max(1, Math.round(size / 2f));
+        int x = Math.round(cx);
+        int y = Math.round(cy);
+        icon.setBounds(x - half, y - half, x + half, y + half);
+        icon.draw(canvas);
     }
 
-    private void drawReset(Canvas canvas, float cx, float cy, float radius) {
-        float r = radius * 0.42f;
-        rect.set(cx - r, cy - r, cx + r, cy + r);
-        path.reset();
-        path.addArc(rect, -60f, 280f);
-        glyph.setColor(accent);
-        canvas.drawPath(path, glyph);
-        // Arrow head at the open end.
-        float ax = cx + r * (float) Math.cos(Math.toRadians(-60f));
-        float ay = cy + r * (float) Math.sin(Math.toRadians(-60f));
-        path.reset();
-        path.moveTo(ax - r * 0.5f, ay - r * 0.1f);
-        path.lineTo(ax, ay);
-        path.lineTo(ax - r * 0.15f, ay + r * 0.55f);
-        canvas.drawPath(path, glyph);
-    }
-
-    private void drawDone(Canvas canvas, float cx, float cy, float radius) {
-        float k = radius * 0.46f;
-        path.reset();
-        path.moveTo(cx - k * 0.9f, cy + k * 0.05f);
-        path.lineTo(cx - k * 0.2f, cy + k * 0.7f);
-        path.lineTo(cx + k, cy - k * 0.7f);
-        glyph.setColor(accent);
-        glyph.setStrokeWidth(2.4f * density);
-        canvas.drawPath(path, glyph);
-        glyph.setStrokeWidth(2f * density);
+    /** Loads a glyph by name and tints it; a missing resource simply draws nothing. */
+    private static Drawable loadIcon(Context context, String name, int tint) {
+        try {
+            int id = context.getResources().getIdentifier(name, "drawable", context.getPackageName());
+            if (id == 0) return null;
+            Drawable drawable = context.getDrawable(id);
+            if (drawable == null) return null;
+            drawable = drawable.mutate();
+            drawable.setTint(tint);
+            return drawable;
+        } catch (Throwable ignored) {
+            return null;
+        }
     }
 
     private static int darken(int color) {
