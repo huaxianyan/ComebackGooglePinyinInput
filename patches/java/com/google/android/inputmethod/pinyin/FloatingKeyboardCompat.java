@@ -119,6 +119,10 @@ public final class FloatingKeyboardCompat {
 
     
     private static long lastHidePost;
+    private static long lastSelfBarPost;
+
+    /** Routes the toolbar through the project-owned row instead of the native one. */
+    private static final boolean USE_SELF_TOOLBAR = true;
 
     /**
      * Toolbar key positions dropped while the floating keyboard is on: one-handed only, since it
@@ -387,6 +391,26 @@ public final class FloatingKeyboardCompat {
     public static void syncFloatingToolbar(final View bar) {
         if (!(bar instanceof ViewGroup)) return;
         final boolean hide = isEnabled(bar.getContext());
+
+        // While floating, the project-owned row takes the place of the native one.
+        if (USE_SELF_TOOLBAR) {
+            long now = System.currentTimeMillis();
+            if (now - lastSelfBarPost < 300L) return;
+            lastSelfBarPost = now;
+            final View nativeBar = bar;
+            bar.post(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        QuickBar.attach(nativeBar, hide);
+                    } catch (Throwable ignored) {
+                        // A broken row must never take the keyboard down with it.
+                    }
+                }
+            });
+            return;
+        }
+
         long now = System.currentTimeMillis();
         if (now - lastHidePost < 300L) return;
         lastHidePost = now;

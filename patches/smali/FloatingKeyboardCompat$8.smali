@@ -3,12 +3,12 @@
 .source "FloatingKeyboardCompat.java"
 
 # interfaces
-.implements Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit$Listener;
+.implements Ljava/lang/Runnable;
 
 
 # annotations
-.annotation system Ldalvik/annotation/EnclosingMethod;
-    value = Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->enterEditMode(Landroid/view/View;Landroid/view/View;)V
+.annotation system Ldalvik/annotation/EnclosingClass;
+    value = Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;
 .end annotation
 
 .annotation system Ldalvik/annotation/InnerClass;
@@ -21,7 +21,7 @@
 .method constructor <init>()V
     .locals 0
 
-    .line 798
+    .line 720
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
     return-void
@@ -29,57 +29,32 @@
 
 
 # virtual methods
-.method public onEditDone()V
+.method public run()V
     .locals 2
 
-    .line 816
+    .line 723
+    const/4 v0, 0x0
+
+    invoke-static {v0}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$1402(Z)Z
+
+    .line 724
     invoke-static {}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$700()Landroid/view/View;
 
     move-result-object v0
 
-    .line 817
+    .line 725
     if-nez v0, :cond_0
 
     return-void
 
-    .line 818
+    .line 726
     :cond_0
     invoke-virtual {v0}, Landroid/view/View;->getRootView()Landroid/view/View;
 
     move-result-object v1
 
-    invoke-static {v1, v0}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$1900(Landroid/view/View;Landroid/view/View;)V
+    invoke-static {v1, v0}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$1500(Landroid/view/View;Landroid/view/View;)V
 
-    .line 819
-    return-void
-.end method
-
-.method public onEditDrag(FFZ)V
-    .locals 0
-
-    .line 801
-    invoke-static {p1, p2, p3}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$1600(FFZ)V
-
-    .line 802
-    return-void
-.end method
-
-.method public onEditReset()V
-    .locals 0
-
-    .line 811
-    invoke-static {}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$1800()V
-
-    .line 812
-    return-void
-.end method
-
-.method public onEditScale(IFFZ)V
-    .locals 0
-
-    .line 806
-    invoke-static {p1, p2, p3, p4}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$1700(IFFZ)V
-
-    .line 807
+    .line 727
     return-void
 .end method

@@ -18,9 +18,9 @@
 
 
 # instance fields
-.field final synthetic val$bar:Landroid/view/View;
-
 .field final synthetic val$hide:Z
+
+.field final synthetic val$nativeBar:Landroid/view/View;
 
 
 # direct methods
@@ -32,8 +32,8 @@
         }
     .end annotation
 
-    .line 393
-    iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat$5;->val$bar:Landroid/view/View;
+    .line 401
+    iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat$5;->val$nativeBar:Landroid/view/View;
 
     iput-boolean p2, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat$5;->val$hide:Z
 
@@ -45,72 +45,26 @@
 
 # virtual methods
 .method public run()V
-    .locals 7
+    .locals 2
 
-    .line 396
-    iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat$5;->val$bar:Landroid/view/View;
+    .line 405
+    :try_start_0
+    iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat$5;->val$nativeBar:Landroid/view/View;
 
-    check-cast v0, Landroid/view/ViewGroup;
-
-    .line 397
     iget-boolean v1, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat$5;->val$hide:Z
 
-    const/4 v2, 0x0
+    invoke-static {v0, v1}, Lcom/google/android/inputmethod/pinyin/QuickBar;->attach(Landroid/view/View;Z)V
+    :try_end_0
+    .catchall {:try_start_0 .. :try_end_0} :catchall_0
 
-    if-eqz v1, :cond_0
-
-    const/16 v1, 0x8
-
+    .line 408
     goto :goto_0
 
-    :cond_0
-    const/4 v1, 0x0
+    .line 406
+    :catchall_0
+    move-exception v0
 
-    .line 398
+    .line 409
     :goto_0
-    invoke-static {}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$1100()[I
-
-    move-result-object v3
-
-    array-length v4, v3
-
-    :goto_1
-    if-ge v2, v4, :cond_3
-
-    aget v5, v3, v2
-
-    .line 399
-    invoke-virtual {v0}, Landroid/view/ViewGroup;->getChildCount()I
-
-    move-result v6
-
-    if-gt v6, v5, :cond_1
-
-    goto :goto_2
-
-    .line 400
-    :cond_1
-    invoke-virtual {v0, v5}, Landroid/view/ViewGroup;->getChildAt(I)Landroid/view/View;
-
-    move-result-object v5
-
-    .line 401
-    invoke-virtual {v5}, Landroid/view/View;->getVisibility()I
-
-    move-result v6
-
-    if-eq v6, v1, :cond_2
-
-    invoke-virtual {v5, v1}, Landroid/view/View;->setVisibility(I)V
-
-    .line 398
-    :cond_2
-    :goto_2
-    add-int/lit8 v2, v2, 0x1
-
-    goto :goto_1
-
-    .line 403
-    :cond_3
     return-void
 .end method
