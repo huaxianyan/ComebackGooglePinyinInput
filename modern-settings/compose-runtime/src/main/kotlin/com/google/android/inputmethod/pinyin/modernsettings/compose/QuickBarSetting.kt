@@ -24,8 +24,6 @@ object QuickBarSetting {
         Entry("access_point_one_handed", R.string.modern_settings_quick_bar_one_handed, true),
         Entry("access_point_settings", R.string.modern_settings_quick_bar_settings, true),
         Entry("access_point_textediting", R.string.modern_settings_quick_bar_text_editing, true),
-        Entry("access_point_search", R.string.modern_settings_quick_bar_search, true),
-        Entry("access_point_sticker", R.string.modern_settings_quick_bar_sticker, true),
     )
 
     fun preferences(context: Context): SharedPreferences =

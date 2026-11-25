@@ -184,8 +184,6 @@
     <string name="modern_settings_quick_bar_one_handed">单手模式</string>
     <string name="modern_settings_quick_bar_settings">设置</string>
     <string name="modern_settings_quick_bar_text_editing">文本编辑</string>
-    <string name="modern_settings_quick_bar_search">搜索</string>
-    <string name="modern_settings_quick_bar_sticker">表情贴纸</string>
     <string name="modern_settings_quick_bar_move_up">把 %1$s 上移</string>
     <string name="modern_settings_quick_bar_move_down">把 %1$s 下移</string>
     <string name="modern_settings_popup_on_keypress_title">按键时弹出显示字符</string>
