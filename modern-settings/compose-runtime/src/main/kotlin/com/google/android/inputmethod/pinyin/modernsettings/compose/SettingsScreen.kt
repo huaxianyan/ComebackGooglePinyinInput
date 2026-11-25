@@ -193,6 +193,10 @@ private fun SettingsRoutePage(
     navigateTo: (SettingsRoute) -> Unit,
     navigateBack: () -> Unit,
 ) {
+    if (route == SettingsRoute.QuickBar) {
+        QuickBarSettingsScreen(onNavigateBack = navigateBack)
+        return
+    }
     if (route == SettingsRoute.FuzzyPinyin) {
         FuzzyPinyinDetailScreen(
             snapshot = snapshot,
@@ -285,6 +289,7 @@ private fun SettingsRoutePage(
                 SettingsRoute.Other -> otherSettingsItems(snapshot, actions, navigateTo)
                 SettingsRoute.About -> aboutSettingsItems(actions, navigateTo)
                 SettingsRoute.Licenses -> error("Licenses uses its dedicated screen")
+                SettingsRoute.QuickBar -> error("Quick bar uses its dedicated screen")
                 SettingsRoute.FuzzyPinyin -> error("Fuzzy Pinyin uses its dedicated screen")
             }
         }
@@ -320,6 +325,7 @@ private fun routeTitle(route: SettingsRoute): String = when (route) {
         R.string.modern_settings_about_title,
     )
     SettingsRoute.Licenses -> stringResource(R.string.modern_settings_licenses_title)
+    SettingsRoute.QuickBar -> stringResource(R.string.modern_settings_quick_bar_title)
     SettingsRoute.FuzzyPinyin -> legacyString(
         "setting_fuzzy_pinyin_detail_title",
         R.string.modern_settings_fuzzy_pinyin_detail_title,

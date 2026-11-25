@@ -45,6 +45,10 @@ public final class QuickBar {
 
     private static final int ACTION_NATIVE = 0;
 
+    /** Shared with the settings screen; both sides must agree on the file and the encoding. */
+    private static final String PREFERENCES = "floating_keyboard_preferences";
+    private static final String SHORTCUTS_KEY = "shortcuts";
+
     /**
      * Every shortcut we know about. New entries go here.
      *
@@ -70,6 +74,46 @@ public final class QuickBar {
             entries.add(entry);
         }
         return entries;
+    }
+
+    /**
+     * Shortcuts to show, in order.
+     *
+     * <p>The settings screen writes {@code id:1|id:0|...}; unknown ids are ignored and an empty or
+     * missing value falls back to the defaults, so a malformed preference never empties the row.
+     */
+    private static List<Entry> activeEntries(Context context) {
+        String raw = null;
+        try {
+            raw = context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
+                    .getString(SHORTCUTS_KEY, null);
+        } catch (Throwable ignored) {
+            // Fall through to the defaults.
+        }
+        if (raw == null || raw.isEmpty()) return defaultEntries();
+        List<Entry> result = new ArrayList<Entry>();
+        for (String item : raw.split("\\|")) {
+            String[] parts = item.split(":");
+            if (parts.length != 2 || !"1".equals(parts[1])) continue;
+            Entry known = byId(parts[0]);
+            if (known != null) result.add(known);
+        }
+        return result.isEmpty() ? defaultEntries() : result;
+    }
+
+    private static List<Entry> defaultEntries() {
+        List<Entry> entries = new ArrayList<Entry>();
+        for (Entry entry : ALL) {
+            entries.add(entry);
+        }
+        return entries;
+    }
+
+    private static Entry byId(String id) {
+        for (Entry entry : ALL) {
+            if (entry.id.equals(id)) return entry;
+        }
+        return null;
     }
 
     /**
@@ -144,7 +188,7 @@ public final class QuickBar {
         bar.setOrientation(LinearLayout.HORIZONTAL);
         bar.setGravity(Gravity.CENTER_VERTICAL);
 
-        for (Entry entry : ALL) {
+        for (Entry entry : activeEntries(context)) {
             bar.addView(createButton(context, entry, nativeBar), buttonParams(context));
         }
         return bar;

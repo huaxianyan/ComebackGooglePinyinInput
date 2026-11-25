@@ -144,6 +144,13 @@ internal fun androidx.compose.foundation.lazy.LazyListScope.keyboardAppearanceSe
         )
     }
     item {
+        SettingsNavigationRow(
+            title = stringResource(R.string.modern_settings_quick_bar_title),
+            supporting = stringResource(R.string.modern_settings_quick_bar_summary),
+            onClick = { navigateTo(SettingsRoute.QuickBar) },
+        )
+    }
+    item {
         DiscreteSettingsSlider(
             title = legacyString(
                 "setting_keyboard_height_ratio_title",

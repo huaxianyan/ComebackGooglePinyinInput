@@ -178,6 +178,15 @@
     <string name="modern_settings_floating_keyboard_summary">键盘缩成卡片浮在内容上，屏幕不被压缩。开启后单手模式关闭</string>
     <string name="modern_settings_idle_fade_title">待机时自动透明</string>
     <string name="modern_settings_idle_fade_summary">几秒不碰后卡片淡到半透明。只在悬浮键盘开启时生效</string>
+    <string name="modern_settings_quick_bar_title">快捷工具栏</string>
+    <string name="modern_settings_quick_bar_summary">选择工具栏显示哪些快捷方式，以及它们的顺序</string>
+    <string name="modern_settings_quick_bar_theme">主题</string>
+    <string name="modern_settings_quick_bar_one_handed">单手模式</string>
+    <string name="modern_settings_quick_bar_settings">设置</string>
+    <string name="modern_settings_quick_bar_text_editing">文本编辑</string>
+    <string name="modern_settings_quick_bar_move_up">把 %1$s 上移</string>
+    <string name="modern_settings_quick_bar_move_down">把 %1$s 下移</string>
+    <string name="modern_settings_quick_bar_hidden">不在工具栏显示</string>
     <string name="modern_settings_popup_on_keypress_title">按键时弹出显示字符</string>
     <string name="modern_settings_voice_input_title">显示语音输入按钮</string>
     <string name="modern_settings_paired_punctuation_title">自动补全成对标点</string>

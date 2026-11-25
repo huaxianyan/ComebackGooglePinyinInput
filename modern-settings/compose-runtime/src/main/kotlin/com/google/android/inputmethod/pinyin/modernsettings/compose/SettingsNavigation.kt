@@ -24,6 +24,7 @@ internal enum class SettingsRoute {
     About,
     Licenses,
     FuzzyPinyin,
+    QuickBar,
 }
 
 /** Saveable, argument-free route stack for the fixed settings hierarchy. */
