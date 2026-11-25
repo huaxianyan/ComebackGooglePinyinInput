@@ -3596,11 +3596,12 @@ def apply(
     # copies under patches/smali are the contract.
     quickbar_src = ROOT / "patches/smali"
     quickbar_dst = decoded / "smali/com/google/android/inputmethod/pinyin"
-    for name in ("QuickBar.smali", "QuickBar$1.smali", "QuickBar$Entry.smali"):
-        source = quickbar_src / name
-        if not source.is_file():
-            raise RuntimeError(f"Missing toolbar Smali: {source}")
-        shutil.copyfile(source, quickbar_dst / name)
+    # 匿名类和内部类各自生成文件，硬编码清单一定会漏，按前缀整批拷。
+    quickbar_files = sorted(quickbar_src.glob("QuickBar*.smali"))
+    if not quickbar_files:
+        raise RuntimeError(f"Missing toolbar Smali under: {quickbar_src}")
+    for source in quickbar_files:
+        shutil.copyfile(source, quickbar_dst / source.name)
 
     # API 30 bridge uses the official AndroidX Inline UI style Bundle protocol.
     # These classes are isolated from API 17–29 startup and are only resolved by
