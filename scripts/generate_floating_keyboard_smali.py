@@ -22,7 +22,7 @@ SOURCES = [
     ROOT / f"patches/java/{PACKAGE_DIR}/FloatingKeyboardCompat.java",
     ROOT / f"patches/java/{PACKAGE_DIR}/FloatingKeyboardHandle.java",
     ROOT / f"patches/java/{PACKAGE_DIR}/FloatingKeyboardEdit.java",
-    ROOT / f"patches/java/{PACKAGE_DIR}/QuickBar.java",
+    ROOT / f"patches/java/{PACKAGE_DIR}/AccessPointsOrder.java",
 ]
 OUTPUT_DIR = ROOT / "patches/smali"
 # Anonymous and nested classes compile to their own files; copying only the top level class leaves
@@ -31,7 +31,7 @@ SMALI_PREFIXES = [
     "FloatingKeyboardCompat",
     "FloatingKeyboardHandle",
     "FloatingKeyboardEdit",
-    "QuickBar",
+    "AccessPointsOrder",
 ]
 
 

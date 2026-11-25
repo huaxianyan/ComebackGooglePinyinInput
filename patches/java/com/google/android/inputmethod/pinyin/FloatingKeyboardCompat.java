@@ -118,8 +118,6 @@ public final class FloatingKeyboardCompat {
     private static long lastAccessPointPost;
 
     
-    private static long lastSelfBarPost;
-
     private static View watchedDecor;
 
     private static long lastAccessPointScan;
@@ -369,36 +367,6 @@ public final class FloatingKeyboardCompat {
             "right_handed_content_desc",
             "expand_keyboard_content_desc",
     };
-
-    /**
-     * Drops the one-handed shortcut from the toolbar while the floating keyboard is on, and puts
-     * it back when it is off.
-     *
-     * <p>Called on every layout pass from {@code AccessPointsBar}. The keys are still unbound at
-     * that moment, so the work is posted to run after them. Positions are fixed: theme,
-     * one-handed, settings, then text editing.
-     */
-    public static void syncFloatingToolbar(final View bar) {
-        if (!(bar instanceof ViewGroup)) return;
-
-        // The project-owned row takes the place of the native one in every keyboard form, not just
-        // the floating card: which shortcuts it shows and in what order comes from the settings
-        // screen, not from a fixed list of positions here.
-        long now = System.currentTimeMillis();
-        if (now - lastSelfBarPost < 300L) return;
-        lastSelfBarPost = now;
-        final View nativeBar = bar;
-        bar.post(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    QuickBar.attach(nativeBar);
-                } catch (Throwable ignored) {
-                    // A broken row must never take the keyboard down with it.
-                }
-            }
-        });
-    }
 
     private static void setOneHandedAccessPointHidden(View decor, boolean hidden) {
         Context context = decor.getContext();

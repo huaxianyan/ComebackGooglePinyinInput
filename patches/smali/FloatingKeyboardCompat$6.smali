@@ -3,12 +3,12 @@
 .source "FloatingKeyboardCompat.java"
 
 # interfaces
-.implements Landroid/view/View$OnTouchListener;
+.implements Ljava/lang/Runnable;
 
 
 # annotations
-.annotation system Ldalvik/annotation/EnclosingMethod;
-    value = Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->attachIdleProbe(Landroid/view/ViewGroup;Landroid/view/View;)V
+.annotation system Ldalvik/annotation/EnclosingClass;
+    value = Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;
 .end annotation
 
 .annotation system Ldalvik/annotation/InnerClass;
@@ -17,22 +17,11 @@
 .end annotation
 
 
-# instance fields
-.field final synthetic val$area:Landroid/view/View;
-
-
 # direct methods
-.method constructor <init>(Landroid/view/View;)V
+.method constructor <init>()V
     .locals 0
-    .annotation system Ldalvik/annotation/Signature;
-        value = {
-            "()V"
-        }
-    .end annotation
 
-    .line 493
-    iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat$6;->val$area:Landroid/view/View;
-
+    .line 660
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
     return-void
@@ -40,46 +29,32 @@
 
 
 # virtual methods
-.method public onTouch(Landroid/view/View;Landroid/view/MotionEvent;)Z
-    .locals 0
+.method public run()V
+    .locals 2
 
-    .line 496
-    invoke-virtual {p2}, Landroid/view/MotionEvent;->getActionMasked()I
+    .line 663
+    const/4 v0, 0x0
 
-    move-result p1
+    invoke-static {v0}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$1302(Z)Z
 
-    packed-switch p1, :pswitch_data_0
+    .line 664
+    invoke-static {}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$700()Landroid/view/View;
 
-    :pswitch_0
-    goto :goto_0
+    move-result-object v0
 
-    .line 502
-    :pswitch_1
-    iget-object p1, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat$6;->val$area:Landroid/view/View;
+    .line 665
+    if-nez v0, :cond_0
 
-    invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$1200(Landroid/view/View;)V
+    return-void
 
-    .line 503
-    goto :goto_0
+    .line 666
+    :cond_0
+    invoke-virtual {v0}, Landroid/view/View;->getRootView()Landroid/view/View;
 
-    .line 498
-    :pswitch_2
-    invoke-static {}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$1100()V
+    move-result-object v1
 
-    .line 499
-    nop
+    invoke-static {v1, v0}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$1400(Landroid/view/View;Landroid/view/View;)V
 
-    .line 508
-    :goto_0
-    const/4 p1, 0x0
-
-    return p1
-
-    :pswitch_data_0
-    .packed-switch 0x0
-        :pswitch_2
-        :pswitch_1
-        :pswitch_0
-        :pswitch_1
-    .end packed-switch
+    .line 667
+    return-void
 .end method
