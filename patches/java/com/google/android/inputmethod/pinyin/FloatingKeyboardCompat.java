@@ -227,6 +227,11 @@ public final class FloatingKeyboardCompat {
 
         final float factor = scale(service);
         View area = findKeyboardArea(decor);
+        // The card is scaled in, so its own bottom padding ends up outside the painted area: the
+        // keyboard area keeps a background of its own and that background is what showed as a
+        // flat grey band under the card on light themes. The key rows and the header paint
+        // themselves, so this layer is not needed.
+        if (area != null) area.setBackground(null);
         Rect region = new Rect();
         if (area != null && applyScale(area, factor)) {
             // Position before measuring the region: the translation is part of the view matrix
