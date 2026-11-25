@@ -47,6 +47,8 @@ public final class FloatingKeyboardCompat {
     private static final float MAX_SCALE = 1.0f;
 
     /** Touch strip of the drag handle, measured up from the card's bottom edge. */
+    /** Elevation the card carries, so its shadow belongs to the card rather than the window. */
+    static final float SHADOW_DP = 6f;
     static final int HANDLE_HEIGHT_DP = 20;
     /**
      * Empty strip added below the key rows while the card is floating. The last key row reaches the
@@ -227,11 +229,7 @@ public final class FloatingKeyboardCompat {
 
         final float factor = scale(service);
         View area = findKeyboardArea(decor);
-        // The card is scaled in, so its own bottom padding ends up outside the painted area: the
-        // keyboard area keeps a background of its own and that background is what showed as a
-        // flat grey band under the card on light themes. The key rows and the header paint
-        // themselves, so this layer is not needed.
-        if (area != null) area.setBackground(null);
+        if (area != null) applyCardShadow(area);
         Rect region = new Rect();
         if (area != null && applyScale(area, factor)) {
             // Position before measuring the region: the translation is part of the view matrix
@@ -517,6 +515,18 @@ public final class FloatingKeyboardCompat {
                 area.getPaddingTop(),
                 area.getPaddingRight(),
                 target);
+    }
+
+    /**
+     * The window's own shadow stays along the screen edges, so it no longer belongs to the scaled
+     * card. Lowering the window's elevation does not remove it on this platform, so the card
+     * carries a shadow of its own as well and that one moves and resizes with the card.
+     */
+    private static void applyCardShadow(View area) {
+        if (android.os.Build.VERSION.SDK_INT < 21) return;
+        float target = SHADOW_DP * density(area);
+        if (Math.abs(area.getElevation() - target) < 0.5f) return;
+        area.setElevation(target);
     }
 
     /** Returns false when the view has no size yet, so the caller can fall back. */

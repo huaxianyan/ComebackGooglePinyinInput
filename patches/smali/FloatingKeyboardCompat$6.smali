@@ -21,7 +21,7 @@
 .method constructor <init>()V
     .locals 0
 
-    .line 665
+    .line 675
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
     return-void
@@ -32,22 +32,22 @@
 .method public run()V
     .locals 2
 
-    .line 668
+    .line 678
     const/4 v0, 0x0
 
     invoke-static {v0}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$1302(Z)Z
 
-    .line 669
+    .line 679
     invoke-static {}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$700()Landroid/view/View;
 
     move-result-object v0
 
-    .line 670
+    .line 680
     if-nez v0, :cond_0
 
     return-void
 
-    .line 671
+    .line 681
     :cond_0
     invoke-virtual {v0}, Landroid/view/View;->getRootView()Landroid/view/View;
 
@@ -55,6 +55,6 @@
 
     invoke-static {v1, v0}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$1400(Landroid/view/View;Landroid/view/View;)V
 
-    .line 672
+    .line 682
     return-void
 .end method
