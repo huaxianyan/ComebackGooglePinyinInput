@@ -20,6 +20,8 @@
 
 .field private static final SHORTCUTS_KEY:Ljava/lang/String; = "shortcuts"
 
+.field private static final TAG:Ljava/lang/String; = "QuickBar"
+
 .field private static final TAG_VIEW:Ljava/lang/String; = "quickbar.self"
 
 .field private static lastSignature:Ljava/lang/String;
@@ -29,7 +31,7 @@
 .method static constructor <clinit>()V
     .locals 6
 
-    .line 60
+    .line 62
     const/4 v0, 0x4
 
     new-array v0, v0, [Lcom/google/android/inputmethod/pinyin/QuickBar$Entry;
@@ -98,10 +100,10 @@
 .method private constructor <init>()V
     .locals 0
 
-    .line 71
+    .line 73
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
-    .line 72
+    .line 74
     return-void
 .end method
 
@@ -127,12 +129,12 @@
         }
     .end annotation
 
-    .line 89
+    .line 91
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/QuickBar;->readShortcuts(Landroid/content/Context;)Ljava/lang/String;
 
     move-result-object p0
 
-    .line 90
+    .line 92
     if-eqz p0, :cond_5
 
     invoke-virtual {p0}, Ljava/lang/String;->isEmpty()Z
@@ -143,13 +145,13 @@
 
     goto :goto_2
 
-    .line 91
+    .line 93
     :cond_0
     new-instance v0, Ljava/util/ArrayList;
 
     invoke-direct {v0}, Ljava/util/ArrayList;-><init>()V
 
-    .line 92
+    .line 94
     const-string v1, "\\|"
 
     invoke-virtual {p0, v1}, Ljava/lang/String;->split(Ljava/lang/String;)[Ljava/lang/String;
@@ -167,14 +169,14 @@
 
     aget-object v4, p0, v3
 
-    .line 93
+    .line 95
     const-string v5, ":"
 
     invoke-virtual {v4, v5}, Ljava/lang/String;->split(Ljava/lang/String;)[Ljava/lang/String;
 
     move-result-object v4
 
-    .line 94
+    .line 96
     array-length v5, v4
 
     const/4 v6, 0x2
@@ -195,7 +197,7 @@
 
     goto :goto_1
 
-    .line 95
+    .line 97
     :cond_1
     aget-object v4, v4, v2
 
@@ -203,19 +205,19 @@
 
     move-result-object v4
 
-    .line 96
+    .line 98
     if-eqz v4, :cond_2
 
     invoke-interface {v0, v4}, Ljava/util/List;->add(Ljava/lang/Object;)Z
 
-    .line 92
+    .line 94
     :cond_2
     :goto_1
     add-int/lit8 v3, v3, 0x1
 
     goto :goto_0
 
-    .line 98
+    .line 100
     :cond_3
     invoke-interface {v0}, Ljava/util/List;->isEmpty()Z
 
@@ -230,7 +232,7 @@
     :cond_4
     return-object v0
 
-    .line 90
+    .line 92
     :cond_5
     :goto_2
     invoke-static {}, Lcom/google/android/inputmethod/pinyin/QuickBar;->defaultEntries()Ljava/util/List;
@@ -251,12 +253,12 @@
         }
     .end annotation
 
-    .line 75
+    .line 77
     new-instance v0, Ljava/util/ArrayList;
 
     invoke-direct {v0}, Ljava/util/ArrayList;-><init>()V
 
-    .line 76
+    .line 78
     sget-object v1, Lcom/google/android/inputmethod/pinyin/QuickBar;->ALL:[Lcom/google/android/inputmethod/pinyin/QuickBar$Entry;
 
     array-length v2, v1
@@ -268,15 +270,15 @@
 
     aget-object v4, v1, v3
 
-    .line 77
+    .line 79
     invoke-interface {v0, v4}, Ljava/util/List;->add(Ljava/lang/Object;)Z
 
-    .line 76
+    .line 78
     add-int/lit8 v3, v3, 0x1
 
     goto :goto_0
 
-    .line 79
+    .line 81
     :cond_0
     return-object v0
 .end method
@@ -284,7 +286,7 @@
 .method public static attach(Landroid/view/View;Z)V
     .locals 3
 
-    .line 178
+    .line 182
     if-eqz p0, :cond_6
 
     invoke-virtual {p0}, Landroid/view/View;->getParent()Landroid/view/ViewParent;
@@ -297,7 +299,7 @@
 
     goto :goto_0
 
-    .line 181
+    .line 185
     :cond_0
     if-eqz p1, :cond_1
 
@@ -309,7 +311,7 @@
 
     return-void
 
-    .line 182
+    .line 186
     :cond_1
     invoke-virtual {p0}, Landroid/view/View;->getParent()Landroid/view/ViewParent;
 
@@ -317,23 +319,23 @@
 
     check-cast v0, Landroid/view/ViewGroup;
 
-    .line 184
+    .line 188
     if-nez p1, :cond_2
 
-    .line 185
+    .line 189
     invoke-static {v0}, Lcom/google/android/inputmethod/pinyin/QuickBar;->detach(Landroid/view/ViewGroup;)V
 
-    .line 186
+    .line 190
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/QuickBar;->showNativeEntries(Landroid/view/View;)V
 
-    .line 187
+    .line 191
     return-void
 
-    .line 190
+    .line 194
     :cond_2
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/QuickBar;->hideNativeEntries(Landroid/view/View;)V
 
-    .line 193
+    .line 197
     invoke-virtual {p0}, Landroid/view/View;->getContext()Landroid/content/Context;
 
     move-result-object p1
@@ -346,17 +348,17 @@
 
     move-result-object p1
 
-    .line 194
+    .line 198
     const-string v1, "quickbar.self"
 
     invoke-virtual {v0, v1}, Landroid/view/ViewGroup;->findViewWithTag(Ljava/lang/Object;)Landroid/view/View;
 
     move-result-object v1
 
-    .line 195
+    .line 199
     if-eqz v1, :cond_4
 
-    .line 196
+    .line 200
     sget-object v2, Lcom/google/android/inputmethod/pinyin/QuickBar;->lastSignature:Ljava/lang/String;
 
     invoke-virtual {p1, v2}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
@@ -367,15 +369,15 @@
 
     return-void
 
-    .line 197
+    .line 201
     :cond_3
     invoke-virtual {v0, v1}, Landroid/view/ViewGroup;->removeView(Landroid/view/View;)V
 
-    .line 199
+    .line 203
     :cond_4
     sput-object p1, Lcom/google/android/inputmethod/pinyin/QuickBar;->lastSignature:Ljava/lang/String;
 
-    .line 200
+    .line 204
     invoke-virtual {p0}, Landroid/view/View;->getContext()Landroid/content/Context;
 
     move-result-object p1
@@ -384,33 +386,33 @@
 
     move-result-object p0
 
-    .line 201
+    .line 205
     invoke-virtual {v0, p0}, Landroid/view/ViewGroup;->addView(Landroid/view/View;)V
 
-    .line 202
+    .line 206
     invoke-virtual {p0}, Landroid/view/View;->getLayoutParams()Landroid/view/ViewGroup$LayoutParams;
 
     move-result-object p1
 
-    .line 203
+    .line 207
     if-eqz p1, :cond_5
 
-    .line 204
+    .line 208
     const/4 v0, -0x1
 
     iput v0, p1, Landroid/view/ViewGroup$LayoutParams;->width:I
 
-    .line 205
+    .line 209
     iput v0, p1, Landroid/view/ViewGroup$LayoutParams;->height:I
 
-    .line 206
+    .line 210
     invoke-virtual {p0, p1}, Landroid/view/View;->setLayoutParams(Landroid/view/ViewGroup$LayoutParams;)V
 
-    .line 208
+    .line 212
     :cond_5
     return-void
 
-    .line 178
+    .line 182
     :cond_6
     :goto_0
     return-void
@@ -419,7 +421,7 @@
 .method private static buttonParams(Landroid/content/Context;)Landroid/widget/LinearLayout$LayoutParams;
     .locals 4
 
-    .line 257
+    .line 261
     invoke-virtual {p0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
 
     move-result-object p0
@@ -430,7 +432,7 @@
 
     iget p0, p0, Landroid/util/DisplayMetrics;->density:F
 
-    .line 258
+    .line 262
     const/high16 v0, 0x42600000    # 56.0f
 
     mul-float v0, v0, p0
@@ -439,7 +441,7 @@
 
     move-result v0
 
-    .line 259
+    .line 263
     const/high16 v1, 0x40800000    # 4.0f
 
     mul-float p0, p0, v1
@@ -448,7 +450,7 @@
 
     move-result p0
 
-    .line 260
+    .line 264
     new-instance v1, Landroid/widget/LinearLayout$LayoutParams;
 
     const/high16 v2, 0x3f800000    # 1.0f
@@ -457,22 +459,22 @@
 
     invoke-direct {v1, v3, v0, v2}, Landroid/widget/LinearLayout$LayoutParams;-><init>(IIF)V
 
-    .line 261
+    .line 265
     const/16 v0, 0x10
 
     iput v0, v1, Landroid/widget/LinearLayout$LayoutParams;->gravity:I
 
-    .line 262
+    .line 266
     invoke-virtual {v1, p0, v3, p0, v3}, Landroid/widget/LinearLayout$LayoutParams;->setMargins(IIII)V
 
-    .line 263
+    .line 267
     return-object v1
 .end method
 
 .method private static byId(Ljava/lang/String;)Lcom/google/android/inputmethod/pinyin/QuickBar$Entry;
     .locals 5
 
-    .line 164
+    .line 168
     sget-object v0, Lcom/google/android/inputmethod/pinyin/QuickBar;->ALL:[Lcom/google/android/inputmethod/pinyin/QuickBar$Entry;
 
     array-length v1, v0
@@ -484,7 +486,7 @@
 
     aget-object v3, v0, v2
 
-    .line 165
+    .line 169
     iget-object v4, v3, Lcom/google/android/inputmethod/pinyin/QuickBar$Entry;->id:Ljava/lang/String;
 
     invoke-virtual {v4, p0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
@@ -495,13 +497,13 @@
 
     return-object v3
 
-    .line 164
+    .line 168
     :cond_0
     add-int/lit8 v2, v2, 0x1
 
     goto :goto_0
 
-    .line 167
+    .line 171
     :cond_1
     const/4 p0, 0x0
 
@@ -511,7 +513,7 @@
 .method private static clickNative(Landroid/view/View;Ljava/lang/String;)Z
     .locals 2
 
-    .line 313
+    .line 317
     instance-of v0, p0, Landroid/view/ViewGroup;
 
     const/4 v1, 0x0
@@ -520,22 +522,22 @@
 
     return v1
 
-    .line 314
+    .line 318
     :cond_0
     invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/QuickBar;->indexOf(Ljava/lang/String;)I
 
     move-result p1
 
-    .line 315
+    .line 319
     if-gez p1, :cond_1
 
     return v1
 
-    .line 316
+    .line 320
     :cond_1
     check-cast p0, Landroid/view/ViewGroup;
 
-    .line 317
+    .line 321
     invoke-virtual {p0}, Landroid/view/ViewGroup;->getChildCount()I
 
     move-result v0
@@ -544,13 +546,13 @@
 
     return v1
 
-    .line 318
+    .line 322
     :cond_2
     invoke-virtual {p0, p1}, Landroid/view/ViewGroup;->getChildAt(I)Landroid/view/View;
 
     move-result-object p0
 
-    .line 319
+    .line 323
     invoke-virtual {p0}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
 
     move-result-object p1
@@ -569,7 +571,7 @@
 
     return v1
 
-    .line 321
+    .line 325
     :cond_3
     :try_start_0
     invoke-virtual {p0}, Landroid/view/View;->performClick()Z
@@ -580,38 +582,38 @@
 
     return p0
 
-    .line 322
+    .line 326
     :catchall_0
     move-exception p0
 
-    .line 323
+    .line 327
     return v1
 .end method
 
 .method private static create(Landroid/content/Context;Landroid/view/View;)Landroid/view/View;
     .locals 4
 
-    .line 245
+    .line 249
     new-instance v0, Landroid/widget/LinearLayout;
 
     invoke-direct {v0, p0}, Landroid/widget/LinearLayout;-><init>(Landroid/content/Context;)V
 
-    .line 246
+    .line 250
     const-string v1, "quickbar.self"
 
     invoke-virtual {v0, v1}, Landroid/widget/LinearLayout;->setTag(Ljava/lang/Object;)V
 
-    .line 247
+    .line 251
     const/4 v1, 0x0
 
     invoke-virtual {v0, v1}, Landroid/widget/LinearLayout;->setOrientation(I)V
 
-    .line 248
+    .line 252
     const/16 v1, 0x10
 
     invoke-virtual {v0, v1}, Landroid/widget/LinearLayout;->setGravity(I)V
 
-    .line 250
+    .line 254
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/QuickBar;->activeEntries(Landroid/content/Context;)Ljava/util/List;
 
     move-result-object v1
@@ -633,7 +635,7 @@
 
     check-cast v2, Lcom/google/android/inputmethod/pinyin/QuickBar$Entry;
 
-    .line 251
+    .line 255
     invoke-static {p0, v2, p1}, Lcom/google/android/inputmethod/pinyin/QuickBar;->createButton(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/QuickBar$Entry;Landroid/view/View;)Landroid/view/View;
 
     move-result-object v2
@@ -644,10 +646,10 @@
 
     invoke-virtual {v0, v2, v3}, Landroid/widget/LinearLayout;->addView(Landroid/view/View;Landroid/view/ViewGroup$LayoutParams;)V
 
-    .line 252
+    .line 256
     goto :goto_0
 
-    .line 253
+    .line 257
     :cond_0
     return-object v0
 .end method
@@ -655,42 +657,42 @@
 .method private static createButton(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/QuickBar$Entry;Landroid/view/View;)Landroid/view/View;
     .locals 2
 
-    .line 268
+    .line 272
     new-instance v0, Landroid/widget/ImageView;
 
     invoke-direct {v0, p0}, Landroid/widget/ImageView;-><init>(Landroid/content/Context;)V
 
-    .line 269
+    .line 273
     sget-object v1, Landroid/widget/ImageView$ScaleType;->CENTER_INSIDE:Landroid/widget/ImageView$ScaleType;
 
     invoke-virtual {v0, v1}, Landroid/widget/ImageView;->setScaleType(Landroid/widget/ImageView$ScaleType;)V
 
-    .line 270
+    .line 274
     iget-object v1, p1, Lcom/google/android/inputmethod/pinyin/QuickBar$Entry;->label:Ljava/lang/String;
 
     invoke-virtual {v0, v1}, Landroid/widget/ImageView;->setContentDescription(Ljava/lang/CharSequence;)V
 
-    .line 271
+    .line 275
     iget-object v1, p1, Lcom/google/android/inputmethod/pinyin/QuickBar$Entry;->iconName:Ljava/lang/String;
 
     invoke-static {p0, v1}, Lcom/google/android/inputmethod/pinyin/QuickBar;->drawable(Landroid/content/Context;Ljava/lang/String;)Landroid/graphics/drawable/Drawable;
 
     move-result-object v1
 
-    .line 272
+    .line 276
     if-eqz v1, :cond_0
 
-    .line 273
+    .line 277
     invoke-virtual {v0, v1}, Landroid/widget/ImageView;->setImageDrawable(Landroid/graphics/drawable/Drawable;)V
 
-    .line 276
+    .line 280
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/QuickBar;->keyboardIconColor(Landroid/content/Context;)I
 
     move-result v1
 
     invoke-virtual {v0, v1}, Landroid/widget/ImageView;->setColorFilter(I)V
 
-    .line 278
+    .line 282
     :cond_0
     new-instance v1, Lcom/google/android/inputmethod/pinyin/QuickBar$1;
 
@@ -698,7 +700,7 @@
 
     invoke-virtual {v0, v1}, Landroid/widget/ImageView;->setOnClickListener(Landroid/view/View$OnClickListener;)V
 
-    .line 284
+    .line 288
     return-object v0
 .end method
 
@@ -713,12 +715,12 @@
         }
     .end annotation
 
-    .line 156
+    .line 160
     new-instance v0, Ljava/util/ArrayList;
 
     invoke-direct {v0}, Ljava/util/ArrayList;-><init>()V
 
-    .line 157
+    .line 161
     sget-object v1, Lcom/google/android/inputmethod/pinyin/QuickBar;->ALL:[Lcom/google/android/inputmethod/pinyin/QuickBar$Entry;
 
     array-length v2, v1
@@ -730,15 +732,15 @@
 
     aget-object v4, v1, v3
 
-    .line 158
+    .line 162
     invoke-interface {v0, v4}, Ljava/util/List;->add(Ljava/lang/Object;)Z
 
-    .line 157
+    .line 161
     add-int/lit8 v3, v3, 0x1
 
     goto :goto_0
 
-    .line 160
+    .line 164
     :cond_0
     return-object v0
 .end method
@@ -746,19 +748,19 @@
 .method private static detach(Landroid/view/ViewGroup;)V
     .locals 1
 
-    .line 240
+    .line 244
     const-string v0, "quickbar.self"
 
     invoke-virtual {p0, v0}, Landroid/view/ViewGroup;->findViewWithTag(Ljava/lang/Object;)Landroid/view/View;
 
     move-result-object v0
 
-    .line 241
+    .line 245
     if-eqz v0, :cond_0
 
     invoke-virtual {p0, v0}, Landroid/view/ViewGroup;->removeView(Landroid/view/View;)V
 
-    .line 242
+    .line 246
     :cond_0
     return-void
 .end method
@@ -766,7 +768,7 @@
 .method private static drawable(Landroid/content/Context;Ljava/lang/String;)Landroid/graphics/drawable/Drawable;
     .locals 3
 
-    .line 296
+    .line 300
     invoke-virtual {p0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
 
     move-result-object v0
@@ -781,7 +783,7 @@
 
     move-result p1
 
-    .line 297
+    .line 301
     if-nez p1, :cond_0
 
     const/4 p0, 0x0
@@ -800,18 +802,18 @@
 .method private static hideNativeEntries(Landroid/view/View;)V
     .locals 5
 
-    .line 217
+    .line 221
     instance-of v0, p0, Landroid/view/ViewGroup;
 
     if-nez v0, :cond_0
 
     return-void
 
-    .line 218
+    .line 222
     :cond_0
     check-cast p0, Landroid/view/ViewGroup;
 
-    .line 219
+    .line 223
     const/4 v0, 0x0
 
     :goto_0
@@ -823,12 +825,12 @@
 
     if-ge v0, v1, :cond_2
 
-    .line 220
+    .line 224
     invoke-virtual {p0, v0}, Landroid/view/ViewGroup;->getChildAt(I)Landroid/view/View;
 
     move-result-object v1
 
-    .line 221
+    .line 225
     invoke-virtual {v1}, Landroid/view/View;->getVisibility()I
 
     move-result v3
@@ -837,30 +839,30 @@
 
     if-eq v3, v4, :cond_1
 
-    .line 222
+    .line 226
     invoke-virtual {v1, v4}, Landroid/view/View;->setVisibility(I)V
 
-    .line 223
+    .line 227
     invoke-virtual {v1, v2}, Landroid/view/View;->setBackground(Landroid/graphics/drawable/Drawable;)V
 
-    .line 219
+    .line 223
     :cond_1
     add-int/lit8 v0, v0, 0x1
 
     goto :goto_0
 
-    .line 226
+    .line 230
     :cond_2
     invoke-virtual {p0, v2}, Landroid/view/ViewGroup;->setBackground(Landroid/graphics/drawable/Drawable;)V
 
-    .line 227
+    .line 231
     return-void
 .end method
 
 .method private static indexOf(Ljava/lang/String;)I
     .locals 2
 
-    .line 328
+    .line 332
     const/4 v0, 0x0
 
     :goto_0
@@ -870,7 +872,7 @@
 
     if-ge v0, v1, :cond_1
 
-    .line 329
+    .line 333
     sget-object v1, Lcom/google/android/inputmethod/pinyin/QuickBar;->ALL:[Lcom/google/android/inputmethod/pinyin/QuickBar$Entry;
 
     aget-object v1, v1, v0
@@ -885,13 +887,13 @@
 
     return v0
 
-    .line 328
+    .line 332
     :cond_0
     add-int/lit8 v0, v0, 0x1
 
     goto :goto_0
 
-    .line 331
+    .line 335
     :cond_1
     const/4 p0, -0x1
 
@@ -901,12 +903,12 @@
 .method private static keyboardIconColor(Landroid/content/Context;)I
     .locals 4
 
-    .line 288
+    .line 292
     new-instance v0, Landroid/util/TypedValue;
 
     invoke-direct {v0}, Landroid/util/TypedValue;-><init>()V
 
-    .line 289
+    .line 293
     invoke-virtual {p0}, Landroid/content/Context;->getTheme()Landroid/content/res/Resources$Theme;
 
     move-result-object v1
@@ -921,7 +923,7 @@
 
     if-eqz v1, :cond_0
 
-    .line 290
+    .line 294
     invoke-virtual {p0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
 
     move-result-object p0
@@ -934,7 +936,7 @@
 
     return p0
 
-    .line 292
+    .line 296
     :cond_0
     const/4 p0, 0x0
 
@@ -944,10 +946,10 @@
 .method private static launch(Landroid/content/Context;Ljava/lang/String;)V
     .locals 2
 
-    .line 336
+    .line 340
     nop
 
-    .line 337
+    .line 341
     const-string v0, "access_point_theme_setting"
 
     invoke-virtual {v0, p1}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
@@ -956,12 +958,12 @@
 
     if-eqz v0, :cond_0
 
-    .line 338
+    .line 342
     const-string p1, "com.google.android.apps.inputmethod.libs.theme.preference.ThemeSelectorActivity"
 
     goto :goto_0
 
-    .line 340
+    .line 344
     :cond_0
     const-string v0, "access_point_settings"
 
@@ -971,22 +973,22 @@
 
     if-eqz p1, :cond_1
 
-    .line 341
+    .line 345
     const-string p1, "com.google.android.apps.inputmethod.pinyin.preference.SettingsActivity"
 
     goto :goto_0
 
-    .line 340
+    .line 344
     :cond_1
     const/4 p1, 0x0
 
-    .line 343
+    .line 347
     :goto_0
     if-nez p1, :cond_2
 
     return-void
 
-    .line 345
+    .line 349
     :cond_2
     :try_start_0
     new-instance v0, Landroid/content/Intent;
@@ -995,31 +997,31 @@
 
     invoke-direct {v0, v1}, Landroid/content/Intent;-><init>(Ljava/lang/String;)V
 
-    .line 346
+    .line 350
     invoke-virtual {p0}, Landroid/content/Context;->getPackageName()Ljava/lang/String;
 
     move-result-object v1
 
     invoke-virtual {v0, v1, p1}, Landroid/content/Intent;->setClassName(Ljava/lang/String;Ljava/lang/String;)Landroid/content/Intent;
 
-    .line 347
+    .line 351
     const/high16 p1, 0x10000000
 
     invoke-virtual {v0, p1}, Landroid/content/Intent;->addFlags(I)Landroid/content/Intent;
 
-    .line 348
+    .line 352
     invoke-virtual {p0, v0}, Landroid/content/Context;->startActivity(Landroid/content/Intent;)V
     :try_end_0
     .catchall {:try_start_0 .. :try_end_0} :catchall_0
 
-    .line 351
+    .line 355
     goto :goto_1
 
-    .line 349
+    .line 353
     :catchall_0
     move-exception p0
 
-    .line 352
+    .line 356
     :goto_1
     return-void
 .end method
@@ -1027,12 +1029,12 @@
 .method private static readShortcuts(Landroid/content/Context;)Ljava/lang/String;
     .locals 3
 
-    .line 110
+    .line 112
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/QuickBar;->readShortcutsFromFile(Landroid/content/Context;)Ljava/lang/String;
 
     move-result-object v0
 
-    .line 111
+    .line 113
     if-eqz v0, :cond_0
 
     invoke-virtual {v0}, Ljava/lang/String;->isEmpty()Z
@@ -1043,7 +1045,7 @@
 
     return-object v0
 
-    .line 113
+    .line 115
     :cond_0
     const/4 v0, 0x0
 
@@ -1058,31 +1060,54 @@
 
     const-string v1, "shortcuts"
 
-    .line 114
+    .line 116
     invoke-interface {p0, v1, v0}, Landroid/content/SharedPreferences;->getString(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
 
     move-result-object p0
     :try_end_0
     .catchall {:try_start_0 .. :try_end_0} :catchall_0
 
-    .line 113
+    .line 115
     return-object p0
 
-    .line 115
+    .line 117
     :catchall_0
     move-exception p0
 
-    .line 116
+    .line 118
+    new-instance v1, Ljava/lang/StringBuilder;
+
+    invoke-direct {v1}, Ljava/lang/StringBuilder;-><init>()V
+
+    const-string v2, "shortcut preferences unreadable: "
+
+    invoke-virtual {v1, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+
+    move-result-object v1
+
+    invoke-virtual {v1, p0}, Ljava/lang/StringBuilder;->append(Ljava/lang/Object;)Ljava/lang/StringBuilder;
+
+    move-result-object p0
+
+    invoke-virtual {p0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
+
+    move-result-object p0
+
+    const-string v1, "QuickBar"
+
+    invoke-static {v1, p0}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
+
+    .line 119
     return-object v0
 .end method
 
 .method private static readShortcutsFromFile(Landroid/content/Context;)Ljava/lang/String;
     .locals 6
 
-    .line 121
+    .line 124
     nop
 
-    .line 123
+    .line 126
     const/4 v0, 0x0
 
     :try_start_0
@@ -1094,27 +1119,27 @@
 
     move-result-object p0
 
-    .line 124
+    .line 127
     new-instance v1, Ljava/io/File;
 
     const-string v2, "shared_prefs/floating_keyboard_preferences.xml"
 
     invoke-direct {v1, p0, v2}, Ljava/io/File;-><init>(Ljava/io/File;Ljava/lang/String;)V
 
-    .line 125
+    .line 128
     invoke-virtual {v1}, Ljava/io/File;->isFile()Z
 
     move-result p0
 
     if-nez p0, :cond_0
 
-    .line 145
+    .line 149
     nop
 
-    .line 125
+    .line 128
     return-object v0
 
-    .line 126
+    .line 129
     :cond_0
     new-instance p0, Ljava/io/FileInputStream;
 
@@ -1122,7 +1147,7 @@
     :try_end_0
     .catchall {:try_start_0 .. :try_end_0} :catchall_4
 
-    .line 127
+    .line 130
     :try_start_1
     invoke-virtual {v1}, Ljava/io/File;->length()J
 
@@ -1132,35 +1157,35 @@
 
     new-array v1, v2, [B
 
-    .line 128
+    .line 131
     const/4 v3, 0x0
 
     const/4 v4, 0x0
 
-    .line 129
+    .line 132
     :goto_0
     if-ge v4, v2, :cond_2
 
-    .line 130
+    .line 133
     sub-int v5, v2, v4
 
     invoke-virtual {p0, v1, v4, v5}, Ljava/io/FileInputStream;->read([BII)I
 
     move-result v5
 
-    .line 131
+    .line 134
     if-gtz v5, :cond_1
 
     goto :goto_1
 
-    .line 132
+    .line 135
     :cond_1
     add-int/2addr v4, v5
 
-    .line 133
+    .line 136
     goto :goto_0
 
-    .line 134
+    .line 137
     :cond_2
     :goto_1
     new-instance v2, Ljava/lang/String;
@@ -1169,40 +1194,40 @@
 
     invoke-direct {v2, v1, v3, v4, v5}, Ljava/lang/String;-><init>([BIILjava/lang/String;)V
 
-    .line 135
+    .line 138
     const-string v1, "<string name=\"shortcuts\">"
 
-    .line 136
+    .line 139
     invoke-virtual {v2, v1}, Ljava/lang/String;->indexOf(Ljava/lang/String;)I
 
     move-result v3
     :try_end_1
     .catchall {:try_start_1 .. :try_end_1} :catchall_3
 
-    .line 137
+    .line 140
     if-gez v3, :cond_3
 
-    .line 145
+    .line 149
     nop
 
-    .line 147
+    .line 151
     :try_start_2
     invoke-virtual {p0}, Ljava/io/FileInputStream;->close()V
     :try_end_2
     .catchall {:try_start_2 .. :try_end_2} :catchall_0
 
-    .line 150
+    .line 154
     goto :goto_2
 
-    .line 148
+    .line 152
     :catchall_0
     move-exception p0
 
-    .line 137
+    .line 140
     :goto_2
     return-object v0
 
-    .line 138
+    .line 141
     :cond_3
     :try_start_3
     invoke-virtual {v1}, Ljava/lang/String;->length()I
@@ -1211,7 +1236,7 @@
 
     add-int/2addr v3, v1
 
-    .line 139
+    .line 142
     const-string v1, "</string>"
 
     invoke-virtual {v2, v1, v3}, Ljava/lang/String;->indexOf(Ljava/lang/String;I)I
@@ -1220,30 +1245,30 @@
     :try_end_3
     .catchall {:try_start_3 .. :try_end_3} :catchall_3
 
-    .line 140
+    .line 143
     if-gez v1, :cond_4
 
-    .line 145
+    .line 149
     nop
 
-    .line 147
+    .line 151
     :try_start_4
     invoke-virtual {p0}, Ljava/io/FileInputStream;->close()V
     :try_end_4
     .catchall {:try_start_4 .. :try_end_4} :catchall_1
 
-    .line 150
+    .line 154
     goto :goto_3
 
-    .line 148
+    .line 152
     :catchall_1
     move-exception p0
 
-    .line 140
+    .line 143
     :goto_3
     return-object v0
 
-    .line 141
+    .line 144
     :cond_4
     :try_start_5
     invoke-virtual {v2, v3, v1}, Ljava/lang/String;->substring(II)Ljava/lang/String;
@@ -1252,67 +1277,123 @@
     :try_end_5
     .catchall {:try_start_5 .. :try_end_5} :catchall_3
 
-    .line 145
+    .line 149
     nop
 
-    .line 147
+    .line 151
     :try_start_6
     invoke-virtual {p0}, Ljava/io/FileInputStream;->close()V
     :try_end_6
     .catchall {:try_start_6 .. :try_end_6} :catchall_2
 
-    .line 150
+    .line 154
     goto :goto_4
 
-    .line 148
+    .line 152
     :catchall_2
     move-exception p0
 
-    .line 141
+    .line 144
     :goto_4
     return-object v0
 
-    .line 142
+    .line 145
     :catchall_3
     move-exception v1
 
     goto :goto_5
 
     :catchall_4
-    move-exception p0
+    move-exception v1
 
     move-object p0, v0
 
-    .line 143
+    .line 146
     :goto_5
-    nop
+    :try_start_7
+    const-string v2, "QuickBar"
 
-    .line 145
-    if-eqz p0, :cond_5
+    new-instance v3, Ljava/lang/StringBuilder;
+
+    invoke-direct {v3}, Ljava/lang/StringBuilder;-><init>()V
+
+    const-string v4, "shortcut preferences unreadable: "
+
+    invoke-virtual {v3, v4}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+
+    move-result-object v3
+
+    invoke-virtual {v3, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/Object;)Ljava/lang/StringBuilder;
+
+    move-result-object v1
+
+    invoke-virtual {v1}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
+
+    move-result-object v1
+
+    invoke-static {v2, v1}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
+    :try_end_7
+    .catchall {:try_start_7 .. :try_end_7} :catchall_6
 
     .line 147
-    :try_start_7
-    invoke-virtual {p0}, Ljava/io/FileInputStream;->close()V
-    :try_end_7
-    .catchall {:try_start_7 .. :try_end_7} :catchall_5
+    nop
 
-    .line 150
+    .line 149
+    if-eqz p0, :cond_5
+
+    .line 151
+    :try_start_8
+    invoke-virtual {p0}, Ljava/io/FileInputStream;->close()V
+    :try_end_8
+    .catchall {:try_start_8 .. :try_end_8} :catchall_5
+
+    .line 154
     goto :goto_6
 
-    .line 148
+    .line 152
     :catchall_5
     move-exception p0
 
-    .line 143
+    .line 147
     :cond_5
     :goto_6
     return-object v0
+
+    .line 149
+    :catchall_6
+    move-exception v0
+
+    if-eqz p0, :cond_6
+
+    .line 151
+    :try_start_9
+    invoke-virtual {p0}, Ljava/io/FileInputStream;->close()V
+    :try_end_9
+    .catchall {:try_start_9 .. :try_end_9} :catchall_7
+
+    .line 154
+    goto :goto_7
+
+    .line 152
+    :catchall_7
+    move-exception p0
+
+    .line 156
+    :cond_6
+    :goto_7
+    goto :goto_9
+
+    :goto_8
+    throw v0
+
+    :goto_9
+    goto :goto_8
 .end method
 
 .method private static run(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/QuickBar$Entry;Landroid/view/View;)V
     .locals 1
 
-    .line 301
+    .line 305
     iget v0, p1, Lcom/google/android/inputmethod/pinyin/QuickBar$Entry;->action:I
 
     if-nez v0, :cond_0
@@ -1327,31 +1408,31 @@
 
     return-void
 
-    .line 302
+    .line 306
     :cond_0
     iget-object p1, p1, Lcom/google/android/inputmethod/pinyin/QuickBar$Entry;->id:Ljava/lang/String;
 
     invoke-static {p0, p1}, Lcom/google/android/inputmethod/pinyin/QuickBar;->launch(Landroid/content/Context;Ljava/lang/String;)V
 
-    .line 303
+    .line 307
     return-void
 .end method
 
 .method private static showNativeEntries(Landroid/view/View;)V
     .locals 5
 
-    .line 231
+    .line 235
     instance-of v0, p0, Landroid/view/ViewGroup;
 
     if-nez v0, :cond_0
 
     return-void
 
-    .line 232
+    .line 236
     :cond_0
     check-cast p0, Landroid/view/ViewGroup;
 
-    .line 233
+    .line 237
     const/4 v0, 0x0
 
     const/4 v1, 0x0
@@ -1363,12 +1444,12 @@
 
     if-ge v1, v2, :cond_2
 
-    .line 234
+    .line 238
     invoke-virtual {p0, v1}, Landroid/view/ViewGroup;->getChildAt(I)Landroid/view/View;
 
     move-result-object v2
 
-    .line 235
+    .line 239
     invoke-virtual {v2}, Landroid/view/View;->getVisibility()I
 
     move-result v3
@@ -1379,13 +1460,13 @@
 
     invoke-virtual {v2, v0}, Landroid/view/View;->setVisibility(I)V
 
-    .line 233
+    .line 237
     :cond_1
     add-int/lit8 v1, v1, 0x1
 
     goto :goto_0
 
-    .line 237
+    .line 241
     :cond_2
     return-void
 .end method

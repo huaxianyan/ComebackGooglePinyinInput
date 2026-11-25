@@ -28,6 +28,8 @@ public final class QuickBar {
     /** Tag marking our own row inside the overlay container. */
     private static final String TAG_VIEW = "quickbar.self";
 
+    private static final String TAG = "QuickBar";
+
     /** Stored list the row on screen was built from, so a change triggers a rebuild. */
     private static String lastSignature;
 
@@ -112,7 +114,8 @@ public final class QuickBar {
         try {
             return context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
                     .getString(SHORTCUTS_KEY, null);
-        } catch (Throwable ignored) {
+        } catch (Throwable error) {
+            android.util.Log.i(TAG, "shortcut preferences unreadable: " + error);
             return null;
         }
     }
@@ -139,7 +142,8 @@ public final class QuickBar {
             int end = xml.indexOf("</string>", start);
             if (end < 0) return null;
             return xml.substring(start, end);
-        } catch (Throwable ignored) {
+        } catch (Throwable error) {
+            android.util.Log.i(TAG, "shortcut preferences unreadable: " + error);
             return null;
         } finally {
             if (stream != null) {

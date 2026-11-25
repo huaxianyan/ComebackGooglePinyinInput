@@ -28,21 +28,21 @@
 .method constructor <init>(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;I)V
     .locals 0
 
-    .line 41
+    .line 43
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
-    .line 42
+    .line 44
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/QuickBar$Entry;->id:Ljava/lang/String;
 
-    .line 43
+    .line 45
     iput-object p2, p0, Lcom/google/android/inputmethod/pinyin/QuickBar$Entry;->iconName:Ljava/lang/String;
 
-    .line 44
+    .line 46
     iput-object p3, p0, Lcom/google/android/inputmethod/pinyin/QuickBar$Entry;->label:Ljava/lang/String;
 
-    .line 45
+    .line 47
     iput p4, p0, Lcom/google/android/inputmethod/pinyin/QuickBar$Entry;->action:I
 
-    .line 46
+    .line 48
     return-void
 .end method
