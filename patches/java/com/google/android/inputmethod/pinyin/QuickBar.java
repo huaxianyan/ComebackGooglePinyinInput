@@ -28,6 +28,9 @@ public final class QuickBar {
     /** Tag marking our own row inside the overlay container. */
     private static final String TAG_VIEW = "quickbar.self";
 
+    /** Stored list the row on screen was built from, so a change triggers a rebuild. */
+    private static String lastSignature;
+
     /** One shortcut: what it looks like and what it does. */
     public static final class Entry {
         final String id;
@@ -83,13 +86,7 @@ public final class QuickBar {
      * missing value falls back to the defaults, so a malformed preference never empties the row.
      */
     private static List<Entry> activeEntries(Context context) {
-        String raw = null;
-        try {
-            raw = context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
-                    .getString(SHORTCUTS_KEY, null);
-        } catch (Throwable ignored) {
-            // Fall through to the defaults.
-        }
+        String raw = readShortcuts(context);
         if (raw == null || raw.isEmpty()) return defaultEntries();
         List<Entry> result = new ArrayList<Entry>();
         for (String item : raw.split("\\|")) {
@@ -99,6 +96,60 @@ public final class QuickBar {
             if (known != null) result.add(known);
         }
         return result.isEmpty() ? defaultEntries() : result;
+    }
+
+    /**
+     * Reads the stored list straight from the preferences file.
+     *
+     * <p>The settings screen runs in another process, and a {@link android.content.SharedPreferences}
+     * instance caches its values at first use, so asking the API here would keep returning whatever
+     * the keyboard process saw when it started. Reading the file avoids that without depending on
+     * the deprecated multi-process flag.
+     */
+    private static String readShortcuts(Context context) {
+        String fromFile = readShortcutsFromFile(context);
+        if (fromFile != null && !fromFile.isEmpty()) return fromFile;
+        try {
+            return context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
+                    .getString(SHORTCUTS_KEY, null);
+        } catch (Throwable ignored) {
+            return null;
+        }
+    }
+
+    private static String readShortcutsFromFile(Context context) {
+        java.io.FileInputStream stream = null;
+        try {
+            java.io.File dir = context.getFilesDir().getParentFile();
+            java.io.File file = new java.io.File(dir, "shared_prefs/" + PREFERENCES + ".xml");
+            if (!file.isFile()) return null;
+            stream = new java.io.FileInputStream(file);
+            byte[] buffer = new byte[(int) file.length()];
+            int read = 0;
+            while (read < buffer.length) {
+                int step = stream.read(buffer, read, buffer.length - read);
+                if (step <= 0) break;
+                read += step;
+            }
+            String xml = new String(buffer, 0, read, "UTF-8");
+            String open = "<string name=\"" + SHORTCUTS_KEY + "\">";
+            int start = xml.indexOf(open);
+            if (start < 0) return null;
+            start += open.length();
+            int end = xml.indexOf("</string>", start);
+            if (end < 0) return null;
+            return xml.substring(start, end);
+        } catch (Throwable ignored) {
+            return null;
+        } finally {
+            if (stream != null) {
+                try {
+                    stream.close();
+                } catch (Throwable ignored) {
+                    // Nothing useful to do while closing.
+                }
+            }
+        }
     }
 
     private static List<Entry> defaultEntries() {
@@ -137,7 +188,15 @@ public final class QuickBar {
         }
 
         hideNativeEntries(nativeBar);
-        if (overlay.findViewWithTag(TAG_VIEW) != null) return;
+        // The row is rebuilt when the stored list changes, otherwise a new order or a switched-off
+        // shortcut would only show up after the keyboard process restarts.
+        String signature = String.valueOf(readShortcuts(nativeBar.getContext()));
+        View existing = overlay.findViewWithTag(TAG_VIEW);
+        if (existing != null) {
+            if (signature.equals(lastSignature)) return;
+            overlay.removeView(existing);
+        }
+        lastSignature = signature;
         View bar = create(nativeBar.getContext(), nativeBar);
         overlay.addView(bar);
         ViewGroup.LayoutParams params = bar.getLayoutParams();

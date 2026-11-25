@@ -118,17 +118,7 @@ public final class FloatingKeyboardCompat {
     private static long lastAccessPointPost;
 
     
-    private static long lastHidePost;
     private static long lastSelfBarPost;
-
-    /** Routes the toolbar through the project-owned row instead of the native one. */
-    private static final boolean USE_SELF_TOOLBAR = true;
-
-    /**
-     * Toolbar key positions dropped while the floating keyboard is on: one-handed only, since it
-     * contradicts the floating card. The order is theme, one-handed, settings, text editing.
-     */
-    private static final int[] HIDDEN_TOOLBAR_KEYS = {1};
 
     private static View watchedDecor;
 
@@ -392,37 +382,19 @@ public final class FloatingKeyboardCompat {
         if (!(bar instanceof ViewGroup)) return;
         final boolean hide = isEnabled(bar.getContext());
 
-        // While floating, the project-owned row takes the place of the native one.
-        if (USE_SELF_TOOLBAR) {
-            long now = System.currentTimeMillis();
-            if (now - lastSelfBarPost < 300L) return;
-            lastSelfBarPost = now;
-            final View nativeBar = bar;
-            bar.post(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        QuickBar.attach(nativeBar, hide);
-                    } catch (Throwable ignored) {
-                        // A broken row must never take the keyboard down with it.
-                    }
-                }
-            });
-            return;
-        }
-
+        // The project-owned row takes the place of the native one; which shortcuts it shows and in
+        // what order comes from the settings screen, not from a fixed list of positions here.
         long now = System.currentTimeMillis();
-        if (now - lastHidePost < 300L) return;
-        lastHidePost = now;
+        if (now - lastSelfBarPost < 300L) return;
+        lastSelfBarPost = now;
+        final View nativeBar = bar;
         bar.post(new Runnable() {
             @Override
             public void run() {
-                ViewGroup group = (ViewGroup) bar;
-                int wanted = hide ? View.GONE : View.VISIBLE;
-                for (int index : HIDDEN_TOOLBAR_KEYS) {
-                    if (group.getChildCount() <= index) continue;
-                    View entry = group.getChildAt(index);
-                    if (entry.getVisibility() != wanted) entry.setVisibility(wanted);
+                try {
+                    QuickBar.attach(nativeBar, hide);
+                } catch (Throwable ignored) {
+                    // A broken row must never take the keyboard down with it.
                 }
             }
         });

@@ -34,7 +34,7 @@
         }
     .end annotation
 
-    .line 175
+    .line 278
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/QuickBar$1;->val$context:Landroid/content/Context;
 
     iput-object p2, p0, Lcom/google/android/inputmethod/pinyin/QuickBar$1;->val$entry:Lcom/google/android/inputmethod/pinyin/QuickBar$Entry;
@@ -51,7 +51,7 @@
 .method public onClick(Landroid/view/View;)V
     .locals 2
 
-    .line 178
+    .line 281
     iget-object p1, p0, Lcom/google/android/inputmethod/pinyin/QuickBar$1;->val$context:Landroid/content/Context;
 
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/QuickBar$1;->val$entry:Lcom/google/android/inputmethod/pinyin/QuickBar$Entry;
@@ -60,6 +60,6 @@
 
     invoke-static {p1, v0, v1}, Lcom/google/android/inputmethod/pinyin/QuickBar;->access$000(Landroid/content/Context;Lcom/google/android/inputmethod/pinyin/QuickBar$Entry;Landroid/view/View;)V
 
-    .line 179
+    .line 282
     return-void
 .end method
