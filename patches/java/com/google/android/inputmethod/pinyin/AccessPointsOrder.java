@@ -64,8 +64,9 @@ public final class AccessPointsOrder {
         ids.addAll(result);
 
         if (known != null) {
-            known.clear();
-            known.addAll(result);
+            // The set also holds ids that are not entries, such as the expand trigger. Only the
+            // disabled ones go, everything else stays so the native pass keeps seeing it.
+            known.removeAll(disabled);
         }
     }
 
