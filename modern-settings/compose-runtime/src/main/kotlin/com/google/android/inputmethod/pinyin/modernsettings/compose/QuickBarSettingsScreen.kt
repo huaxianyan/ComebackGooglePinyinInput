@@ -12,7 +12,6 @@ import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -64,11 +63,6 @@ internal fun QuickBarSettingsScreen(onNavigateBack: () -> Unit) {
                 val label = stringResource(entry.labelRes)
                 ListItem(
                     headlineContent = { Text(label) },
-                    // A switched-off shortcut keeps its place in the list: turning it back on should
-                    // not send it to the end.
-                    supportingContent = if (entry.enabled) null else {
-                        { Text(stringResource(R.string.modern_settings_quick_bar_hidden)) }
-                    },
                     leadingContent = {
                         Switch(
                             checked = entry.enabled,
@@ -114,14 +108,6 @@ internal fun QuickBarSettingsScreen(onNavigateBack: () -> Unit) {
                         }
                     },
                     colors = androidx.compose.material3.ListItemDefaults.colors(),
-                )
-            }
-            item {
-                Text(
-                    text = stringResource(R.string.modern_settings_quick_bar_summary),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                 )
             }
         }
