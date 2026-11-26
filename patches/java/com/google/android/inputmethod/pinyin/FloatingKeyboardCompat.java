@@ -691,11 +691,7 @@ public final class FloatingKeyboardCompat {
         // Centred on the screen, not on the window: the area keeps its original width inside the
         // narrower window, so measuring against the window would push the card off centre.
         float translateX = xFraction(decor.getContext()) * range[0]
-                - (1f - factor) * (baseAreaWidth > 0 ? baseAreaWidth : decor.getWidth()) / 2f;
-        if (baseAreaWidth > 0) {
-            translateX -= (baseAreaWidth - decor.getContext().getResources()
-                    .getDisplayMetrics().widthPixels) / 2f;
-        }
+                - (1f - factor) * layoutWidth(decor) / 2f;
         float translateY = (yFraction(decor.getContext()) - 1f) * range[1];
         boolean moved = area.getTranslationX() != translateX || area.getTranslationY() != translateY;
         if (area.getTranslationX() != translateX) area.setTranslationX(translateX);
@@ -704,12 +700,19 @@ public final class FloatingKeyboardCompat {
     }
 
     /** {free horizontal travel, free vertical travel} in pixels, or null before layout. */
+    /**
+     * Width the card is positioned against. The window is narrowed down to the card, so the decor
+     * width is no longer the screen the card travels across.
+     */
+    private static int layoutWidth(View decor) {
+        if (baseAreaWidth > 0) return baseAreaWidth;
+        return decor.getContext().getResources().getDisplayMetrics().widthPixels;
+    }
+
     private static float[] freeRange(View decor, View area, float factor) {
         // The window is narrowed down to the card, so the decor no longer reports the room the
         // card can travel through; the screen does.
-        int width = baseAreaWidth > 0
-                ? baseAreaWidth
-                : decor.getContext().getResources().getDisplayMetrics().widthPixels;
+        int width = layoutWidth(decor);
         int height = decor.getHeight();
         int areaWidth = area.getWidth();
         int areaHeight = area.getHeight();
@@ -1052,7 +1055,7 @@ public final class FloatingKeyboardCompat {
 
         float fractionX = clamp01(dragStartX + (screenX - dragDownRawX) / range[0]);
         float fractionY = clamp01(dragStartY + (screenY - dragDownRawY) / range[1]);
-        area.setTranslationX(fractionX * range[0] - (1f - factor) * decor.getWidth() / 2f);
+        area.setTranslationX(fractionX * range[0] - (1f - factor) * layoutWidth(decor) / 2f);
         area.setTranslationY((fractionY - 1f) * range[1]);
         if (editOverlay != null && editOverlay.getParent() instanceof ViewGroup) {
             updateEditBounds((ViewGroup) editOverlay.getParent(), area);
@@ -1298,7 +1301,7 @@ public final class FloatingKeyboardCompat {
                 float fractionY = clamp01(
                         dragStartY + (event.getRawY() - dragDownRawY) / range[1]);
                 area.setTranslationX(
-                        fractionX * range[0] - (1f - factor) * decor.getWidth() / 2f);
+                        fractionX * range[0] - (1f - factor) * layoutWidth(decor) / 2f);
                 area.setTranslationY((fractionY - 1f) * range[1]);
                 moveHandle(decor, area);
                 return true;
@@ -1357,7 +1360,7 @@ public final class FloatingKeyboardCompat {
     private static float fractionFromTranslation(
             View area, View decor, float factor, float[] range, boolean horizontal) {
         if (horizontal) {
-            return clamp01((area.getTranslationX() + (1f - factor) * decor.getWidth() / 2f)
+            return clamp01((area.getTranslationX() + (1f - factor) * layoutWidth(decor) / 2f)
                     / range[0]);
         }
         return clamp01(area.getTranslationY() / range[1] + 1f);
