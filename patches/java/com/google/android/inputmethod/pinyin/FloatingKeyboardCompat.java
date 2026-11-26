@@ -250,7 +250,7 @@ public final class FloatingKeyboardCompat {
             visualRegion(area, region);
             ensureCardShadow(decor, area, factor);
 
-            narrowWindowToCard(window, area);
+            clearWindowShadow(window);
             // The handle hangs below the card, and outside the region touches fall straight
             // through to the app. Reach past the handle with margin, and keep the sides on the
             // card as well so the whole strip is reachable.
@@ -634,28 +634,14 @@ public final class FloatingKeyboardCompat {
      * narrower window. The card itself ends up inside the window either way, since it is scaled
      * about its centre.
      */
-    private static void narrowWindowToCard(Window window, View area) {
+    private static void clearWindowShadow(Window window) {
         if (window == null) return;
         if (window.getDecorView().getElevation() != 0f) window.getDecorView().setElevation(0f);
-        int width = area.getWidth();
-        int height = area.getHeight();
-        if (width <= 0 || height <= 0) return;
-        if (baseAreaWidth < 0) baseAreaWidth = width;
-        if (baseAreaHeight < 0) baseAreaHeight = height;
-        ViewGroup.LayoutParams params = area.getLayoutParams();
-        if (params != null && (params.width != baseAreaWidth
-                || params.height != baseAreaHeight)) {
-            params.width = baseAreaWidth;
-            params.height = baseAreaHeight;
-            area.setLayoutParams(params);
-        }
-        int outgrow = Math.round(SHADOW_GROW_DP * density(area)) * 2;
-        int windowWidth = Math.round(baseAreaWidth * appliedScale) + outgrow;
-        android.view.WindowManager.LayoutParams attributes = window.getAttributes();
-        if (attributes.width != windowWidth) {
-            attributes.width = windowWidth;
-            window.setAttributes(attributes);
-        }
+        // The surface shadow follows the window background. Gboard sets a fully transparent
+        // drawable here rather than null, and that is what keeps the platform from drawing a
+        // shadow along the window edges. Null only clears the override and falls back to the
+        // theme, which is opaque.
+        window.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(0));
     }
 
     /** Returns false when the view has no size yet, so the caller can fall back. */
