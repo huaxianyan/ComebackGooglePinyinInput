@@ -33,7 +33,7 @@ object FloatingKeyboardSetting {
     /** Whether the card fades out while idle. Kept apart from [isEnabled] on purpose: turning
      * the card off must not forget this choice, it only stops applying. */
     fun isIdleFadeEnabled(context: Context): Boolean =
-        preferences(context).getBoolean(IDLE_FADE_KEY, true)
+        preferences(context).getBoolean(IDLE_FADE_KEY, false)
 
     fun setIdleFadeEnabled(context: Context, enabled: Boolean) {
         preferences(context).edit().putBoolean(IDLE_FADE_KEY, enabled).apply()

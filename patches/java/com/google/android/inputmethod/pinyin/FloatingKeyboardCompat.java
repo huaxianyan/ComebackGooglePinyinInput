@@ -178,7 +178,7 @@ public final class FloatingKeyboardCompat {
 
     /** Kept separate from {@link #isEnabled}: switching the card off must not forget this choice. */
     static boolean idleFadeEnabled(Context context) {
-        return preferences(context).getBoolean(KEY_IDLE_FADE, true);
+        return preferences(context).getBoolean(KEY_IDLE_FADE, false);
     }
 
     public static void setEnabled(Context context, boolean enabled) {
@@ -245,7 +245,8 @@ public final class FloatingKeyboardCompat {
             applyPosition(decor, area, factor);
             visualRegion(area, region);
             ensureCardShadow(decor, area, factor);
-            clearWindowShadow(serviceWindow(service));
+
+            clearWindowShadow(window);
             // The handle now sits below the card, so the region has to reach down over it or the
             // drag strip would fall through to the app.
             region.bottom += Math.round(HANDLE_HEIGHT_DP * density(decor));
