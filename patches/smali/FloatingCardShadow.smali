@@ -37,14 +37,14 @@
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/FloatingCardShadow;->ring:Landroid/graphics/Path;
 
     .line 32
-    const/high16 p1, 0x41100000    # 9.0f
+    const/high16 p1, 0x40c00000    # 6.0f
 
     mul-float p1, p1, p2
 
     iput p1, p0, Lcom/google/android/inputmethod/pinyin/FloatingCardShadow;->radius:F
 
     .line 35
-    const/high16 p1, 0x41500000    # 13.0f
+    const/high16 p1, 0x41100000    # 9.0f
 
     mul-float p1, p1, p2
 
@@ -76,11 +76,11 @@
 
     iget v1, p0, Lcom/google/android/inputmethod/pinyin/FloatingCardShadow;->radius:F
 
-    const/high16 v2, 0x40000000    # 2.0f
+    const/high16 v2, 0x3fc00000    # 1.5f
 
     mul-float p2, p2, v2
 
-    const/high16 v2, 0x40000000    # 2.0f
+    const/high16 v2, 0x24000000
 
     const/4 v3, 0x0
 

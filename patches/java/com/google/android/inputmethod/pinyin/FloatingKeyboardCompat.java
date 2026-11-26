@@ -11,6 +11,7 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.graphics.PixelFormat;
 import android.view.Window;
 import android.widget.FrameLayout;
 
@@ -50,7 +51,7 @@ public final class FloatingKeyboardCompat {
     /** Touch strip of the drag handle, measured up from the card's bottom edge. */
     static final int HANDLE_HEIGHT_DP = 20;
     /** Room left around the card for the hand-drawn shadow ring. */
-    static final float SHADOW_GROW_DP = 14f;
+    static final float SHADOW_GROW_DP = 10f;
     /**
      * Empty strip added below the key rows while the card is floating. The last key row reaches the
      * card's bottom edge, so a handle drawn there would sit on the space bar; the gutter keeps the
@@ -244,6 +245,7 @@ public final class FloatingKeyboardCompat {
             applyPosition(decor, area, factor);
             visualRegion(area, region);
             ensureCardShadow(decor, area, factor);
+            clearWindowShadow(serviceWindow(service));
             // The handle now sits below the card, so the region has to reach down over it or the
             // drag strip would fall through to the app.
             region.bottom += Math.round(HANDLE_HEIGHT_DP * density(decor));
@@ -607,6 +609,16 @@ public final class FloatingKeyboardCompat {
                 : null;
         if (parent != null) parent.removeView(cardShadow);
         cardShadow = null;
+    }
+
+    /**
+     * The IME window is a dialog window, so the platform draws a drop shadow along its surface
+     * edges. While the card is scaled in, that shadow no longer lines up with anything and reads
+     * as a stray band down the screen sides, ending right above the navigation bar.
+     */
+    private static void clearWindowShadow(Window window) {
+        if (window == null) return;
+        if (window.getDecorView().getElevation() != 0f) window.getDecorView().setElevation(0f);
     }
 
     /** Returns false when the view has no size yet, so the caller can fall back. */

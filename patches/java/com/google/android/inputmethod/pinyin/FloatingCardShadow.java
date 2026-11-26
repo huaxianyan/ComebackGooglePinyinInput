@@ -29,17 +29,17 @@ final class FloatingCardShadow extends View {
 
     FloatingCardShadow(Context context, float density) {
         super(context);
-        radius = 9f * density;
+        radius = 6f * density;
         // Must exceed the blur radius, otherwise the inner half of the shadow reaches past the
         // ring and shows through the translucent header.
-        inset = 13f * density;
+        inset = 9f * density;
         paint.setStyle(Paint.Style.FILL);
         // Almost transparent fill: the shape only exists to cast the shadow below. A fully
         // transparent colour would drop the shadow with it.
         paint.setColor(0x01000000);
         ring.setFillType(Path.FillType.EVEN_ODD);
         // The shadow comes from this layer rather than from the view's elevation.
-        paint.setShadowLayer(radius, 0f, 2f * density, 0x40000000);
+        paint.setShadowLayer(radius, 0f, 1.5f * density, 0x24000000);
         setWillNotDraw(false);
         setClickable(false);
         setFocusable(false);
