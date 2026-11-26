@@ -126,7 +126,7 @@ public final class FloatingKeyboardEdit extends View {
         float moveR = MOVE_DP * density / 2f;
         fill.setColor(movePressed ? darken(accent) : accent);
         canvas.drawCircle(cx, cy, moveR, fill);
-        drawIcon(canvas, moveIcon, cx, cy, moveR * 1.30f);
+        drawIcon(canvas, moveIcon, cx, cy, moveR * 1.16f);
 
         // Left: reset. Right: done.
         float actionR = ACTION_DP * density / 2f;
@@ -134,8 +134,8 @@ public final class FloatingKeyboardEdit extends View {
         fill.setColor(accentSoft);
         canvas.drawCircle(cx - offset, cy + 6f * density, actionR, fill);
         canvas.drawCircle(cx + offset, cy + 6f * density, actionR, fill);
-        drawIcon(canvas, resetIcon, cx - offset, cy + 6f * density, actionR * 1.30f);
-        drawIcon(canvas, doneIcon, cx + offset, cy + 6f * density, actionR * 1.30f);
+        drawIcon(canvas, resetIcon, cx - offset, cy + 6f * density, actionR * 1.12f);
+        drawIcon(canvas, doneIcon, cx + offset, cy + 6f * density, actionR * 1.12f);
     }
 
     private float[][] cornerCenters() {

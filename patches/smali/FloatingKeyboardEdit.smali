@@ -1161,9 +1161,9 @@
 
     iget-object v2, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->moveIcon:Landroid/graphics/drawable/Drawable;
 
-    const v7, 0x3fa66666    # 1.3f
+    const v5, 0x3f947ae1    # 1.16f
 
-    mul-float v5, v6, v7
+    mul-float v5, v5, v6
 
     move-object v0, p0
 
@@ -1172,7 +1172,7 @@
     invoke-direct/range {v0 .. v5}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->drawIcon(Landroid/graphics/Canvas;Landroid/graphics/drawable/Drawable;FFF)V
 
     .line 132
-    move v8, v4
+    move v7, v4
 
     const/high16 v2, 0x42100000    # 36.0f
 
@@ -1205,24 +1205,24 @@
 
     iget v5, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->density:F
 
-    const/high16 v9, 0x40c00000    # 6.0f
+    const/high16 v8, 0x40c00000    # 6.0f
 
-    mul-float v5, v5, v9
+    mul-float v5, v5, v8
 
-    add-float/2addr v5, v8
+    add-float/2addr v5, v7
 
-    iget-object v10, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->fill:Landroid/graphics/Paint;
+    iget-object v9, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->fill:Landroid/graphics/Paint;
 
-    invoke-virtual {p1, v2, v5, v4, v10}, Landroid/graphics/Canvas;->drawCircle(FFFLandroid/graphics/Paint;)V
+    invoke-virtual {p1, v2, v5, v4, v9}, Landroid/graphics/Canvas;->drawCircle(FFFLandroid/graphics/Paint;)V
 
     .line 136
     add-float/2addr v6, v3
 
     iget v3, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->density:F
 
-    mul-float v3, v3, v9
+    mul-float v3, v3, v8
 
-    add-float/2addr v3, v8
+    add-float/2addr v3, v7
 
     iget-object v5, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->fill:Landroid/graphics/Paint;
 
@@ -1235,11 +1235,13 @@
 
     iget v5, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->density:F
 
-    mul-float v5, v5, v9
+    mul-float v5, v5, v8
 
-    add-float/2addr v5, v8
+    add-float/2addr v5, v7
 
-    mul-float v4, v4, v7
+    const v9, 0x3f8f5c29    # 1.12f
+
+    mul-float v4, v4, v9
 
     move v0, v5
 
@@ -1256,9 +1258,9 @@
 
     iget v1, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->density:F
 
-    mul-float v1, v1, v9
+    mul-float v1, v1, v8
 
-    add-float v4, v8, v1
+    add-float v4, v7, v1
 
     move-object v1, p1
 
