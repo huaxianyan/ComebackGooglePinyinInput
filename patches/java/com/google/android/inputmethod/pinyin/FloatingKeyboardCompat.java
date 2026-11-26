@@ -164,6 +164,9 @@ public final class FloatingKeyboardCompat {
     };
     /** Bottom padding {@code keyboard_area} had before the gutter was applied; -1 until read. */
     private static int baseBottomPadding = -1;
+    /** Size the keyboard area had before the window was narrowed to the card. */
+    private static int baseAreaWidth = -1;
+    private static int baseAreaHeight = -1;
     private static boolean dragging;
     private static float dragDownRawX;
     private static float dragDownRawY;
@@ -242,6 +245,7 @@ public final class FloatingKeyboardCompat {
             // Position before measuring the region: the translation is part of the view matrix
             // that getGlobalVisibleRect applies, so ordering them the other way reports the
             // card where it used to be.
+            fitWindowWidth(window, area, factor);
             applyPosition(decor, area, factor);
             visualRegion(area, region);
             ensureCardShadow(decor, area, factor);
@@ -623,6 +627,39 @@ public final class FloatingKeyboardCompat {
     }
 
     /** Returns false when the view has no size yet, so the caller can fall back. */
+    /**
+     * Narrows the window down to the card's width.
+     *
+     * <p>The IME window spans the whole screen. Its surface shadow is drawn just inside the window
+     * edges, so while the card is scaled in that shadow shows as a band down both screen sides
+     * and stops right above the navigation bar. Narrowing the window moves those edges onto the
+     * card, which is where the shadow belongs.
+     *
+     * <p>Only the width is changed. The area has to keep its original layout size or the key rows
+     * reflow, so the window must stay tall enough to hold all of it; a shorter window clips the
+     * top of the card away.
+     */
+    private static void fitWindowWidth(Window window, View area, float factor) {
+        int width = area.getWidth();
+        int height = area.getHeight();
+        if (width <= 0 || height <= 0) return;
+        if (baseAreaWidth < 0) baseAreaWidth = width;
+        if (baseAreaHeight < 0) baseAreaHeight = height;
+        ViewGroup.LayoutParams params = area.getLayoutParams();
+        if (params != null && (params.width != baseAreaWidth
+                || params.height != baseAreaHeight)) {
+            params.width = baseAreaWidth;
+            params.height = baseAreaHeight;
+            area.setLayoutParams(params);
+        }
+        int outgrow = Math.round(SHADOW_GROW_DP * density(area));
+        int cardWidth = Math.round(baseAreaWidth * factor) + outgrow * 2;
+        android.view.WindowManager.LayoutParams attributes = window.getAttributes();
+        if (attributes.width == cardWidth) return;
+        attributes.width = cardWidth;
+        window.setAttributes(attributes);
+    }
+
     private static boolean applyScale(View area, float factor) {
         int width = area.getWidth();
         int height = area.getHeight();
@@ -651,7 +688,14 @@ public final class FloatingKeyboardCompat {
         if (dragging || scaling || editing || factor <= 0f) return false;
         float[] range = freeRange(decor, area, factor);
         if (range == null) return false;
-        float translateX = xFraction(decor.getContext()) * range[0] - (1f - factor) * decor.getWidth() / 2f;
+        // Centred on the screen, not on the window: the area keeps its original width inside the
+        // narrower window, so measuring against the window would push the card off centre.
+        float translateX = xFraction(decor.getContext()) * range[0]
+                - (1f - factor) * (baseAreaWidth > 0 ? baseAreaWidth : decor.getWidth()) / 2f;
+        if (baseAreaWidth > 0) {
+            translateX -= (baseAreaWidth - decor.getContext().getResources()
+                    .getDisplayMetrics().widthPixels) / 2f;
+        }
         float translateY = (yFraction(decor.getContext()) - 1f) * range[1];
         boolean moved = area.getTranslationX() != translateX || area.getTranslationY() != translateY;
         if (area.getTranslationX() != translateX) area.setTranslationX(translateX);
@@ -661,7 +705,11 @@ public final class FloatingKeyboardCompat {
 
     /** {free horizontal travel, free vertical travel} in pixels, or null before layout. */
     private static float[] freeRange(View decor, View area, float factor) {
-        int width = decor.getWidth();
+        // The window is narrowed down to the card, so the decor no longer reports the room the
+        // card can travel through; the screen does.
+        int width = baseAreaWidth > 0
+                ? baseAreaWidth
+                : decor.getContext().getResources().getDisplayMetrics().widthPixels;
         int height = decor.getHeight();
         int areaWidth = area.getWidth();
         int areaHeight = area.getHeight();
@@ -1140,7 +1188,11 @@ public final class FloatingKeyboardCompat {
         area.getLocationOnScreen(areaLocation);
         float factor = appliedScale > 0f ? appliedScale : 1f;
         int width = Math.round(area.getWidth() * factor);
-        int height = Math.round(area.getHeight() * factor);
+        // Full layout height, not the scaled one: the pivot is at the bottom, so the scaled card
+        // reaches further down than areaHeight * factor, and the handle sits below that. The
+        // region has to cover both or the drag strip goes dead. The area past the card is empty,
+        // so the overshoot costs nothing.
+        int height = area.getHeight() + Math.round(HANDLE_HEIGHT_DP * density(area)) * 3;
         out.set(areaLocation[0], areaLocation[1],
                 areaLocation[0] + width, areaLocation[1] + height);
         return !out.isEmpty();
