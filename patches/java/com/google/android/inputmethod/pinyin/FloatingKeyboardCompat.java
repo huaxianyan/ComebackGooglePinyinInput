@@ -653,17 +653,28 @@ public final class FloatingKeyboardCompat {
         if (baseAreaWidth < 0) baseAreaWidth = width;
         if (baseAreaHeight < 0) baseAreaHeight = height;
         ViewGroup.LayoutParams params = area.getLayoutParams();
+        // Pinned to the top as well as to its original size: centred vertically, the area's bottom
+        // edge lands partway down the host and the handle that hangs below it gets clipped.
+        boolean pinned = !(params instanceof FrameLayout.LayoutParams)
+                || ((FrameLayout.LayoutParams) params).gravity
+                        != (Gravity.TOP | Gravity.START);
         if (params != null && (params.width != baseAreaWidth
-                || params.height != baseAreaHeight)) {
+                || params.height != baseAreaHeight || pinned)) {
             params.width = baseAreaWidth;
             params.height = baseAreaHeight;
+            if (params instanceof FrameLayout.LayoutParams) {
+                ((FrameLayout.LayoutParams) params).gravity = Gravity.TOP | Gravity.START;
+            }
             area.setLayoutParams(params);
         }
         float factor = appliedScale > 0f ? appliedScale : 1f;
         int outgrow = Math.round(SHADOW_GROW_DP * density(area)) * 2;
         int handleHeight = Math.round(HANDLE_HEIGHT_DP * density(area));
         int windowWidth = Math.round(baseAreaWidth * factor) + outgrow;
-        int windowHeight = Math.round(baseAreaHeight * factor) + handleHeight * 3 + outgrow * 2;
+        // Exactly tall enough for the card plus the handle below it. Any taller and the window's
+        // own surface shadow draws a band below the card, which is the artifact being removed.
+        int windowHeight = cardOffsetInWindow(area)[1]
+                + Math.round(baseAreaHeight * factor) + handleHeight + outgrow;
         android.view.WindowManager.LayoutParams attributes = window.getAttributes();
         if (attributes.width == windowWidth && attributes.height == windowHeight
                 && attributes.gravity == (Gravity.TOP | Gravity.START)) {
@@ -747,6 +758,12 @@ public final class FloatingKeyboardCompat {
         if (floatingWindow == null) return 0;
         android.view.WindowManager manager = floatingWindow.getWindowManager();
         if (manager == null) return 0;
+        // Read the navigation bar inset itself. The difference between maximum and current window
+        // metrics is not the bar height for an IME window: it measured 92-98 px where the bar is
+        // really 126 px, which let the handle slide under the bar.
+        int navBottom = manager.getCurrentWindowMetrics().getWindowInsets()
+                .getInsets(android.view.WindowInsets.Type.navigationBars()).bottom;
+        if (navBottom > 0) return navBottom;
         int real = manager.getMaximumWindowMetrics().getBounds().height();
         int usable = manager.getCurrentWindowMetrics().getBounds().height();
         int difference = Math.max(0, real - usable);
@@ -756,6 +773,51 @@ public final class FloatingKeyboardCompat {
         android.graphics.Rect visible = new android.graphics.Rect();
         decor.getWindowVisibleDisplayFrame(visible);
         return Math.max(0, real - visible.bottom);
+    }
+
+    /**
+     * The card's visible top-left corner in window coordinates.
+     *
+     * <p>getLocationOnScreen includes the scale and the pivot, so this is where the card is
+     * actually drawn. The window's own screen position cancels out because both views are
+     * measured the same way.
+     */
+    private static int[] cardOffsetInWindow(View area) {
+        View content = windowContent();
+        int[] result = new int[] {0, 0};
+        if (content == null) return result;
+        int[] areaLocation = new int[2];
+        int[] hostLocation = new int[2];
+        area.getLocationOnScreen(areaLocation);
+        content.getLocationOnScreen(hostLocation);
+        result[0] = areaLocation[0] - hostLocation[0];
+        result[1] = areaLocation[1] - hostLocation[1];
+        return result;
+    }
+
+    /**
+     * Difference between the content view's screen position and the window's LayoutParams.
+     *
+     * <p>Constant for a given window configuration, so it is safe to read from the attributes
+     * before they are updated.
+     */
+    private static int[] windowOriginShift(Window window,
+            android.view.WindowManager.LayoutParams attributes) {
+        int[] result = new int[] {0, 0};
+        View content = windowContent();
+        if (content == null) return result;
+        int[] location = new int[2];
+        content.getLocationOnScreen(location);
+        result[0] = location[0] - attributes.x;
+        result[1] = location[1] - attributes.y;
+        return result;
+    }
+
+    private static View windowContent() {
+        if (floatingWindow == null) return null;
+        View decor = floatingWindow.getDecorView();
+        View content = decor.findViewById(android.R.id.content);
+        return content != null ? content : decor;
     }
 
     /**
@@ -772,10 +834,35 @@ public final class FloatingKeyboardCompat {
         int width = area.getWidth();
         int height = area.getHeight();
         if (width <= 0 || height <= 0) return;
-        int insetX = Math.round((1f - factor) * width / 2f);
-        int insetY = Math.round((1f - factor) * height);
-        int x = Math.round(fractionX * range[0]) - insetX;
-        int y = Math.round(fractionY * range[1]) - insetY;
+        // The card's offset inside the window is measured, not derived. Deriving it from the
+        // scale alone assumes the area sits at a particular place in its parent, and every time
+        // that assumption was wrong the window ended up taller or shorter than the card.
+        int[] offset = cardOffsetInWindow(area);
+        // WindowManager y is relative to the available display frame, which starts below the
+        // status bar, not to the physical screen. Measuring the content view against the current
+        // attributes gives that shift directly; treating y as a screen coordinate was what put
+        // the handle down inside the navigation bar.
+        android.view.WindowManager.LayoutParams current = window.getAttributes();
+        int[] origin = windowOriginShift(window, current);
+        int x = Math.round(fractionX * range[0]) - offset[0] - origin[0];
+        int y = Math.round(fractionY * range[1]) - offset[1] - origin[1];
+        // Clamp by real geometry rather than trusting the fractions. The card's visible box is
+        // the window position plus the measured offset, and the handle hangs below it. Whatever
+        // the fractions say, the handle must never end up inside the navigation bar, because the
+        // system takes those touches and the card can no longer be dragged back up.
+        android.util.DisplayMetrics metrics = area.getContext().getResources().getDisplayMetrics();
+        int bars = systemBarHeight(area);
+        int handleHeight = Math.round(HANDLE_HEIGHT_DP * density(area));
+        int cardWidth = Math.round(width * factor);
+        int cardHeight = Math.round(height * factor);
+        int maxY = metrics.heightPixels - bars - origin[1] - offset[1] - cardHeight - handleHeight;
+        int minY = -offset[1] - origin[1];
+        if (y > maxY) y = maxY;
+        if (y < minY) y = minY;
+        int maxX = metrics.widthPixels - offset[0] - cardWidth - origin[0];
+        int minX = -offset[0] - origin[0];
+        if (x > maxX) x = maxX;
+        if (x < minX) x = minX;
         android.view.WindowManager.LayoutParams attributes = window.getAttributes();
         if (attributes.x == x && attributes.y == y) return;
         attributes.x = x;
@@ -835,13 +922,13 @@ public final class FloatingKeyboardCompat {
         int cardWidth = Math.round(area.getWidth() * factor);
         int cardHeight = Math.round(area.getHeight() * factor);
         if (cardWidth <= 0 || cardHeight <= 0) return;
-        // The area is scaled about its bottom centre, so its bottom edge is the card's bottom
-        // edge and its horizontal centre is the card's centre. Measuring from the area's own box
-        // rather than from the scaled card's top keeps the handle outside the card; using the
-        // card height put it 70 px too high, inside the card, where the card painted over it.
-        int left = areaLocation[0] - hostLocation[0]
-                + (area.getWidth() - cardWidth) / 2;
-        int top = areaLocation[1] - hostLocation[1] + area.getHeight();
+        // getLocationOnScreen already includes the scale, so it reports the card's visible
+        // top-left corner, not the area's layout corner. The visible bottom is therefore that
+        // corner plus the scaled height, and the visible left is that corner as-is. Adding the
+        // unscaled height or the centring inset on top of this double-counts the scale loss and
+        // pushes the handle past the bottom of the window, where it is clipped away.
+        int left = areaLocation[0] - hostLocation[0];
+        int top = areaLocation[1] - hostLocation[1] + cardHeight;
         FrameLayout.LayoutParams params =
                 handle.getLayoutParams() instanceof FrameLayout.LayoutParams
                         ? (FrameLayout.LayoutParams) handle.getLayoutParams()
@@ -1430,14 +1517,14 @@ public final class FloatingKeyboardCompat {
             return horizontal ? xFraction(area.getContext()) : yFraction(area.getContext());
         }
         android.view.WindowManager.LayoutParams attributes = window.getAttributes();
-        int width = area.getWidth();
-        int height = area.getHeight();
+        // Same measured offset as moveWindow, so the fraction stored on release describes the
+        // position the card was actually released at.
+        int[] offset = cardOffsetInWindow(area);
+        int[] origin = windowOriginShift(window, attributes);
         if (horizontal) {
-            float inset = (1f - factor) * width / 2f;
-            return clamp01((attributes.x + inset) / range[0]);
+            return clamp01((attributes.x + offset[0] + origin[0]) / range[0]);
         }
-        float inset = (1f - factor) * height;
-        return clamp01((attributes.y + inset) / range[1]);
+        return clamp01((attributes.y + offset[1] + origin[1]) / range[1]);
     }
 
     private static float xFraction(Context context) {
