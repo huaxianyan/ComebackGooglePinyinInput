@@ -12,6 +12,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.graphics.PixelFormat;
+import android.view.Gravity;
 import android.view.Window;
 import android.widget.FrameLayout;
 
@@ -94,6 +95,9 @@ public final class FloatingKeyboardCompat {
      * that pass calls back into {@link #applyInsets}, so the value is compared before writing.
      */
     private static float appliedScale = -1f;
+    /** Size the keyboard area had before the window was narrowed to the card. */
+    private static int baseAreaWidth = -1;
+    private static int baseAreaHeight = -1;
     /** The view the scale was applied to; the service rebuilds its views, and a stale value here
      *  would skip scaling the replacement. */
     private static View scaledView;
@@ -246,10 +250,13 @@ public final class FloatingKeyboardCompat {
             visualRegion(area, region);
             ensureCardShadow(decor, area, factor);
 
-            clearWindowShadow(window);
-            // The handle now sits below the card, so the region has to reach down over it or the
-            // drag strip would fall through to the app.
-            region.bottom += Math.round(HANDLE_HEIGHT_DP * density(decor));
+            narrowWindowToCard(window, area);
+            // The handle hangs below the card, and outside the region touches fall straight
+            // through to the app. Reach past the handle with margin, and keep the sides on the
+            // card as well so the whole strip is reachable.
+            int handleHeight = Math.round(HANDLE_HEIGHT_DP * density(decor));
+            region.bottom += handleHeight * 2;
+            region.top -= handleHeight;
         }
         if (region.isEmpty()) {
             // The first pass runs before the keyboard frame is laid out. A strip covering the
@@ -616,10 +623,39 @@ public final class FloatingKeyboardCompat {
      * The IME window is a dialog window, so the platform draws a drop shadow along its surface
      * edges. While the card is scaled in, that shadow no longer lines up with anything and reads
      * as a stray band down the screen sides, ending right above the navigation bar.
+     *
+     * <p>The shadow is not reachable from the app: it is not view elevation, not the window
+     * background, and {@code LayoutParams.surfaceInsets} is a hidden field. The one lever that
+     * works is the window size, so the window is narrowed to the card. Width only: narrowing the
+     * height clips the card, because the area keeps its original layout height and is positioned
+     * from the window's top-left corner.
+     *
+     * <p>The area is pinned at its original size so the key rows do not reflow across the
+     * narrower window. The card itself ends up inside the window either way, since it is scaled
+     * about its centre.
      */
-    private static void clearWindowShadow(Window window) {
+    private static void narrowWindowToCard(Window window, View area) {
         if (window == null) return;
         if (window.getDecorView().getElevation() != 0f) window.getDecorView().setElevation(0f);
+        int width = area.getWidth();
+        int height = area.getHeight();
+        if (width <= 0 || height <= 0) return;
+        if (baseAreaWidth < 0) baseAreaWidth = width;
+        if (baseAreaHeight < 0) baseAreaHeight = height;
+        ViewGroup.LayoutParams params = area.getLayoutParams();
+        if (params != null && (params.width != baseAreaWidth
+                || params.height != baseAreaHeight)) {
+            params.width = baseAreaWidth;
+            params.height = baseAreaHeight;
+            area.setLayoutParams(params);
+        }
+        int outgrow = Math.round(SHADOW_GROW_DP * density(area)) * 2;
+        int windowWidth = Math.round(baseAreaWidth * appliedScale) + outgrow;
+        android.view.WindowManager.LayoutParams attributes = window.getAttributes();
+        if (attributes.width != windowWidth) {
+            attributes.width = windowWidth;
+            window.setAttributes(attributes);
+        }
     }
 
     /** Returns false when the view has no size yet, so the caller can fall back. */
@@ -1195,6 +1231,8 @@ public final class FloatingKeyboardCompat {
     public static boolean onHandleTouch(View view, MotionEvent event) {
         if (!(view.getParent() instanceof View)) return false;
         View decor = (View) view.getParent();
+        Log.i(TAG, "handleTouch act=" + event.getActionMasked() + " raw=" + event.getRawX()
+                + "," + event.getRawY());
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN: {
                 View area = findKeyboardArea(decor);
