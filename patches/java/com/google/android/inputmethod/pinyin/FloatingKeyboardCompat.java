@@ -663,7 +663,7 @@ public final class FloatingKeyboardCompat {
         int outgrow = Math.round(SHADOW_GROW_DP * density(area)) * 2;
         int handleHeight = Math.round(HANDLE_HEIGHT_DP * density(area));
         int windowWidth = Math.round(baseAreaWidth * factor) + outgrow;
-        int windowHeight = Math.round(baseAreaHeight * factor) + handleHeight * 2 + outgrow;
+        int windowHeight = Math.round(baseAreaHeight * factor) + handleHeight * 3 + outgrow * 2;
         android.view.WindowManager.LayoutParams attributes = window.getAttributes();
         if (attributes.width == windowWidth && attributes.height == windowHeight
                 && attributes.gravity == (Gravity.TOP | Gravity.START)) {
@@ -835,10 +835,13 @@ public final class FloatingKeyboardCompat {
         int cardWidth = Math.round(area.getWidth() * factor);
         int cardHeight = Math.round(area.getHeight() * factor);
         if (cardWidth <= 0 || cardHeight <= 0) return;
-        int left = areaLocation[0] - hostLocation[0];
-        // Below the card's bottom edge. Reserving a strip inside the card made the area paint
-        // its own surface colour there, which showed up as a flat band under the keys.
-        int top = areaLocation[1] - hostLocation[1] + cardHeight;
+        // The area is scaled about its bottom centre, so its bottom edge is the card's bottom
+        // edge and its horizontal centre is the card's centre. Measuring from the area's own box
+        // rather than from the scaled card's top keeps the handle outside the card; using the
+        // card height put it 70 px too high, inside the card, where the card painted over it.
+        int left = areaLocation[0] - hostLocation[0]
+                + (area.getWidth() - cardWidth) / 2;
+        int top = areaLocation[1] - hostLocation[1] + area.getHeight();
         FrameLayout.LayoutParams params =
                 handle.getLayoutParams() instanceof FrameLayout.LayoutParams
                         ? (FrameLayout.LayoutParams) handle.getLayoutParams()
