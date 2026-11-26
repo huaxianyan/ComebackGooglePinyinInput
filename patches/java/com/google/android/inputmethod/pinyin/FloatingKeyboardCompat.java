@@ -47,8 +47,6 @@ public final class FloatingKeyboardCompat {
     private static final float MAX_SCALE = 1.0f;
 
     /** Touch strip of the drag handle, measured up from the card's bottom edge. */
-    /** Room left around the card for the hand-drawn shadow ring. */
-    static final float SHADOW_GROW_DP = 14f;
     static final int HANDLE_HEIGHT_DP = 20;
     /**
      * Empty strip added below the key rows while the card is floating. The last key row reaches the
@@ -98,8 +96,6 @@ public final class FloatingKeyboardCompat {
     private static final Rect lastRegion = new Rect();
 
     private static FloatingKeyboardHandle handle;
-    /** Carries the card's shadow at the card's on-screen rectangle. */
-    private static FloatingCardShadow cardShadow;
     private static FloatingKeyboardEdit editOverlay;
     /** True while the card is in edit mode: keys frozen, whole card draggable. */
     private static boolean editing;
@@ -231,20 +227,16 @@ public final class FloatingKeyboardCompat {
 
         final float factor = scale(service);
         View area = findKeyboardArea(decor);
-        // The card is scaled in, so the padding reserved for the handle ends up outside the
-        // painted part: this layer's background is what showed as a flat band under the card.
-        // Keys and header paint themselves.
-        if (area != null) area.setBackground(null);
-        if (area != null) ensureCardShadow(decor, area, factor);
         Rect region = new Rect();
         if (area != null && applyScale(area, factor)) {
             // Position before measuring the region: the translation is part of the view matrix
             // that getGlobalVisibleRect applies, so ordering them the other way reports the
             // card where it used to be.
             applyPosition(decor, area, factor);
-            // The handle sits inside the card's bottom edge, so the card rectangle already covers
-            // it; the region needs no extra strip.
             visualRegion(area, region);
+            // The handle now sits below the card, so the region has to reach down over it or the
+            // drag strip would fall through to the app.
+            region.bottom += Math.round(HANDLE_HEIGHT_DP * density(decor));
         }
         if (region.isEmpty()) {
             // The first pass runs before the keyboard frame is laid out. A strip covering the
@@ -523,77 +515,12 @@ public final class FloatingKeyboardCompat {
                 target);
     }
 
-    /**
-     * Keeps a shadow view the size of the card so the shadow sits around the keyboard and nowhere
-     * else. Elevation on the keyboard area itself does not work here: it is scaled with a view
-     * transform, so its layout bounds stay at the full window size and the shadow would be drawn
-     * along the screen edges.
-     */
-    private static void ensureCardShadow(View decor, View area, float factor) {
-        if (android.os.Build.VERSION.SDK_INT < 21) return;
-        ViewGroup host = handleHost(decor, area);
-        if (host == null) return;
-        if (cardShadow == null || cardShadow.getParent() != host) {
-            removeCardShadow();
-            cardShadow = new FloatingCardShadow(decor.getContext(), density(decor));
-            cardShadow.setLayoutParams(new FrameLayout.LayoutParams(0, 0));
-            host.addView(cardShadow);
-            // Just below the card so its ring is drawn under the keyboard rather than over it.
-            cardShadow.setTranslationZ(-1f);
-        }
-        updateCardShadowBounds(host, area, factor);
-    }
-
-    private static void updateCardShadowBounds(ViewGroup host, View area, float factor) {
-        if (cardShadow == null) return;
-        int[] areaLocation = new int[2];
-        area.getLocationOnScreen(areaLocation);
-        int[] hostLocation = new int[2];
-        host.getLocationOnScreen(hostLocation);
-        float applied = factor > 0f ? factor : 1f;
-        int cardWidth = Math.round(area.getWidth() * applied);
-        int cardHeight = Math.round(area.getHeight() * applied);
-        if (cardWidth <= 0 || cardHeight <= 0) return;
-        int left = areaLocation[0] - hostLocation[0];
-        int top = areaLocation[1] - hostLocation[1];
-        // The outline sits slightly outside the card, so the shadow starts beyond its edge and
-        // never falls on the keys. The header is translucent, so anything under it would show
-        // through as a grey wash.
-        int outgrow = Math.round(SHADOW_GROW_DP * density(host));
-        left -= outgrow;
-        top -= outgrow;
-        cardWidth += outgrow * 2;
-        cardHeight += outgrow * 2;
-        FrameLayout.LayoutParams params =
-                cardShadow.getLayoutParams() instanceof FrameLayout.LayoutParams
-                        ? (FrameLayout.LayoutParams) cardShadow.getLayoutParams()
-                        : new FrameLayout.LayoutParams(cardWidth, cardHeight);
-        if (params.width == cardWidth && params.height == cardHeight
-                && params.leftMargin == left && params.topMargin == top) {
-            return;
-        }
-        params.width = cardWidth;
-        params.height = cardHeight;
-        params.leftMargin = left;
-        params.topMargin = top;
-        cardShadow.setLayoutParams(params);
-    }
-
-    private static void removeCardShadow() {
-        if (cardShadow == null) return;
-        ViewGroup parent = cardShadow.getParent() instanceof ViewGroup
-                ? (ViewGroup) cardShadow.getParent()
-                : null;
-        if (parent != null) parent.removeView(cardShadow);
-        cardShadow = null;
-    }
-
     /** Returns false when the view has no size yet, so the caller can fall back. */
     private static boolean applyScale(View area, float factor) {
         int width = area.getWidth();
         int height = area.getHeight();
         if (width <= 0 || height <= 0) return false;
-        applyGutter(area, true);
+        applyGutter(area, false);
         // Insets come in on every frame. While a corner is held the size belongs to the finger,
         // so a preference that has not been written yet must not pull the card back.
         if (scaling || editing) factor = appliedScale;
@@ -690,15 +617,14 @@ public final class FloatingKeyboardCompat {
         int cardHeight = Math.round(area.getHeight() * factor);
         if (cardWidth <= 0 || cardHeight <= 0) return;
         int left = areaLocation[0] - hostLocation[0];
-        // Inside the card's bottom edge: the gutter below the key rows is reserved for it.
-        int top = areaLocation[1] - hostLocation[1] + cardHeight - handleHeight;
+        // Below the card's bottom edge. Reserving a strip inside the card made the area paint
+        // its own surface colour there, which showed up as a flat band under the keys.
+        int top = areaLocation[1] - hostLocation[1] + cardHeight;
         FrameLayout.LayoutParams params =
                 handle.getLayoutParams() instanceof FrameLayout.LayoutParams
                         ? (FrameLayout.LayoutParams) handle.getLayoutParams()
                         : new FrameLayout.LayoutParams(cardWidth, handleHeight);
-        // Centre the bar in the gutter, not in the touch strip: the strip is taller than the
-        // gutter and a bar centred in it would ride up onto the key rows.
-        handle.setBarCenterFromBottom(area.getPaddingBottom() * factor / 2f);
+        handle.setBarCenterFromBottom(handleHeight / 2f);
         if (params.width == cardWidth && params.height == handleHeight
                 && params.leftMargin == left && params.topMargin == top) {
             return;
@@ -721,7 +647,6 @@ public final class FloatingKeyboardCompat {
     }
 
     private static void removeHandle() {
-        removeCardShadow();
         if (handle == null) return;
         // A queued long press would fire against a detached view.
         cancelLongPress(handle);
