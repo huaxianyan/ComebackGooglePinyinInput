@@ -98,6 +98,8 @@ public final class FloatingKeyboardCompat {
     /** Size the keyboard area had before the window was narrowed to the card. */
     private static int baseAreaWidth = -1;
     private static int baseAreaHeight = -1;
+    /** Screen bottom of the keyboard area before the window was cut down. Recorded once. */
+    private static int baseScreenBottom = -1;
     /** The view the scale was applied to; the service rebuilds its views, and a stale value here
      *  would skip scaling the replacement. */
     private static View scaledView;
@@ -250,7 +252,7 @@ public final class FloatingKeyboardCompat {
             visualRegion(area, region);
             ensureCardShadow(decor, area, factor);
 
-            clearWindowShadow(window);
+            cutWindowToCard(window, area);
             // The handle hangs below the card, and outside the region touches fall straight
             // through to the app. Reach past the handle with margin, and keep the sides on the
             // card as well so the whole strip is reachable.
@@ -634,14 +636,59 @@ public final class FloatingKeyboardCompat {
      * narrower window. The card itself ends up inside the window either way, since it is scaled
      * about its centre.
      */
-    private static void clearWindowShadow(Window window) {
+    private static void cutWindowToCard(Window window, View area) {
         if (window == null) return;
         if (window.getDecorView().getElevation() != 0f) window.getDecorView().setElevation(0f);
-        // The surface shadow follows the window background. Gboard sets a fully transparent
-        // drawable here rather than null, and that is what keeps the platform from drawing a
-        // shadow along the window edges. Null only clears the override and falls back to the
-        // theme, which is opaque.
-        window.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(0));
+        int width = area.getWidth();
+        int height = area.getHeight();
+        if (width <= 0 || height <= 0) return;
+        if (baseAreaWidth < 0) baseAreaWidth = width;
+        if (baseAreaHeight < 0) baseAreaHeight = height;
+        if (baseScreenBottom < 0) {
+            int[] location = new int[2];
+            area.getLocationOnScreen(location);
+            baseScreenBottom = location[1] + height;
+        }
+        ViewGroup.LayoutParams params = area.getLayoutParams();
+        if (params != null && (params.width != baseAreaWidth
+                || params.height != baseAreaHeight)) {
+            params.width = baseAreaWidth;
+            params.height = baseAreaHeight;
+            area.setLayoutParams(params);
+        }
+        // Bottom gravity is what makes this work. The keyboard area keeps its original layout
+        // height, but the card scales about the area's bottom edge, so anchoring everything to
+        // the window's bottom edge means a shorter window only crops empty space above the card.
+        // Computing the window's y by hand instead feeds back into itself and jitters.
+        int outgrow = Math.round(SHADOW_GROW_DP * density(area)) * 2;
+        int handleHeight = Math.round(HANDLE_HEIGHT_DP * density(area));
+        int windowWidth = Math.round(baseAreaWidth * appliedScale) + outgrow;
+        int windowHeight = Math.round(baseAreaHeight * appliedScale)
+                + handleHeight * 2 + outgrow * 2;
+        // The window travels with the card: it is exactly as tall as the card plus the handle, so
+        // wherever the card goes the window's bottom edge follows. The baseline was recorded
+        // before any drag, so the current drag offset is added back on.
+        // The window carries the vertical position: it is only as tall as the card and travels
+        // with it. Derived from the stored preference rather than from the area's translation, so
+        // the two cannot feed back into each other.
+        float[] range = freeRange(area.getParent() instanceof View ? (View) area.getParent() : area,
+                area, appliedScale > 0f ? appliedScale : 1f);
+        int shiftY = range == null
+                ? 0
+                : Math.round((yFraction(area.getContext()) - 1f) * range[1]);
+        int windowTop = baseScreenBottom + shiftY - windowHeight + handleHeight;
+        android.view.WindowManager.LayoutParams attributes = window.getAttributes();
+        if (attributes.width != windowWidth || attributes.height != windowHeight
+                || attributes.gravity != Gravity.TOP || attributes.y != windowTop) {
+            Log.i(TAG, "cut " + attributes.width + "x" + attributes.height + "@" + attributes.y
+                    + " -> " + windowWidth + "x" + windowHeight + "@" + windowTop
+                    + " tY=" + area.getTranslationY() + " baseBottom=" + baseScreenBottom);
+            attributes.width = windowWidth;
+            attributes.height = windowHeight;
+            attributes.gravity = Gravity.TOP;
+            attributes.y = windowTop;
+            window.setAttributes(attributes);
+        }
     }
 
     /** Returns false when the view has no size yet, so the caller can fall back. */
@@ -674,17 +721,28 @@ public final class FloatingKeyboardCompat {
         float[] range = freeRange(decor, area, factor);
         if (range == null) return false;
         float translateX = xFraction(decor.getContext()) * range[0] - (1f - factor) * decor.getWidth() / 2f;
-        float translateY = (yFraction(decor.getContext()) - 1f) * range[1];
-        boolean moved = area.getTranslationX() != translateX || area.getTranslationY() != translateY;
+        // Vertical placement belongs to the window: the window is only as tall as the card and
+        // travels with it, so translating the area as well would apply the drag twice.
+        boolean moved = area.getTranslationX() != translateX
+                || area.getTranslationY() != 0f;
         if (area.getTranslationX() != translateX) area.setTranslationX(translateX);
-        if (area.getTranslationY() != translateY) area.setTranslationY(translateY);
+        if (area.getTranslationY() != 0f) area.setTranslationY(0f);
         return moved;
     }
 
     /** {free horizontal travel, free vertical travel} in pixels, or null before layout. */
+    /**
+     * Distance the card may travel, measured against the screen rather than against the window.
+     *
+     * <p>The window is cut down to the card, so the window height is no longer the space the card
+     * moves through. Using it would shrink the range every time the window shrank, and the stored
+     * position would drift.
+     */
     private static float[] freeRange(View decor, View area, float factor) {
-        int width = decor.getWidth();
-        int height = decor.getHeight();
+        int width = baseAreaWidth > 0 ? baseAreaWidth : decor.getWidth();
+        android.util.DisplayMetrics metrics = decor.getContext().getResources()
+                .getDisplayMetrics();
+        int height = metrics.heightPixels;
         int areaWidth = area.getWidth();
         int areaHeight = area.getHeight();
         if (width <= 0 || height <= 0 || areaWidth <= 0 || areaHeight <= 0) return null;
