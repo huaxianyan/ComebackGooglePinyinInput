@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
 import android.inputmethodservice.InputMethodService;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -48,6 +49,8 @@ public final class FloatingKeyboardCompat {
 
     /** Touch strip of the drag handle, measured up from the card's bottom edge. */
     static final int HANDLE_HEIGHT_DP = 20;
+    /** Room left around the card for the hand-drawn shadow ring. */
+    static final float SHADOW_GROW_DP = 14f;
     /**
      * Empty strip added below the key rows while the card is floating. The last key row reaches the
      * card's bottom edge, so a handle drawn there would sit on the space bar; the gutter keeps the
@@ -96,6 +99,12 @@ public final class FloatingKeyboardCompat {
     private static final Rect lastRegion = new Rect();
 
     private static FloatingKeyboardHandle handle;
+    private static FloatingCardShadow cardShadow;
+    /**
+     * Background the keyboard area had before floating; restored when the card stops floating.
+     * Dropping it is what removes the grey band under the card on light themes.
+     */
+    private static Drawable baseAreaBackground;
     private static FloatingKeyboardEdit editOverlay;
     /** True while the card is in edit mode: keys frozen, whole card draggable. */
     private static boolean editing;
@@ -234,6 +243,7 @@ public final class FloatingKeyboardCompat {
             // card where it used to be.
             applyPosition(decor, area, factor);
             visualRegion(area, region);
+            ensureCardShadow(decor, area, factor);
             // The handle now sits below the card, so the region has to reach down over it or the
             // drag strip would fall through to the app.
             region.bottom += Math.round(HANDLE_HEIGHT_DP * density(decor));
@@ -300,6 +310,9 @@ public final class FloatingKeyboardCompat {
         area.setTranslationX(0f);
         area.setTranslationY(0f);
         applyGutter(area, false);
+        restoreAreaBackground(area);
+        removeCardShadow();
+        clearAreaBackground(area);
     }
 
     /**
@@ -515,12 +528,94 @@ public final class FloatingKeyboardCompat {
                 target);
     }
 
+    /**
+     * The card is scaled in, so its own bottom padding ends up outside the painted area: the
+     * keyboard area keeps a background of its own and that background is what showed as a flat
+     * grey band under the card on light themes. The key rows and the header paint themselves, so
+     * this layer is not needed.
+     */
+    private static void clearAreaBackground(View area) {
+        if (baseAreaBackground != null) return;
+        baseAreaBackground = area.getBackground();
+        area.setBackground(null);
+    }
+
+    private static void restoreAreaBackground(View area) {
+        if (baseAreaBackground == null) return;
+        area.setBackground(baseAreaBackground);
+        baseAreaBackground = null;
+    }
+
+    /**
+     * The card's shadow belongs to the card, not to the window. Elevation on the keyboard area
+     * itself does not work here: it is scaled with a view transform, so its layout bounds stay at
+     * the full window size and the shadow would be drawn along the screen edges.
+     */
+    private static void ensureCardShadow(View decor, View area, float factor) {
+        if (android.os.Build.VERSION.SDK_INT < 21) return;
+        ViewGroup host = handleHost(decor, area);
+        if (host == null) return;
+        if (cardShadow == null || cardShadow.getParent() != host) {
+            removeCardShadow();
+            cardShadow = new FloatingCardShadow(decor.getContext(), density(decor));
+            cardShadow.setLayoutParams(new FrameLayout.LayoutParams(0, 0));
+            host.addView(cardShadow);
+            // Just below the card so its ring is drawn under the keyboard rather than over it.
+            cardShadow.setTranslationZ(-1f);
+        }
+        updateCardShadowBounds(host, area, factor);
+    }
+
+    private static void updateCardShadowBounds(ViewGroup host, View area, float factor) {
+        if (cardShadow == null) return;
+        int[] areaLocation = new int[2];
+        area.getLocationOnScreen(areaLocation);
+        int[] hostLocation = new int[2];
+        host.getLocationOnScreen(hostLocation);
+        float applied = factor > 0f ? factor : 1f;
+        int cardWidth = Math.round(area.getWidth() * applied);
+        int cardHeight = Math.round(area.getHeight() * applied);
+        if (cardWidth <= 0 || cardHeight <= 0) return;
+        int left = areaLocation[0] - hostLocation[0];
+        int top = areaLocation[1] - hostLocation[1];
+        // The outline sits slightly outside the card, so the shadow starts beyond its edge and
+        // never falls on the keys.
+        int outgrow = Math.round(SHADOW_GROW_DP * density(host));
+        left -= outgrow;
+        top -= outgrow;
+        cardWidth += outgrow * 2;
+        cardHeight += outgrow * 2;
+        FrameLayout.LayoutParams params =
+                cardShadow.getLayoutParams() instanceof FrameLayout.LayoutParams
+                        ? (FrameLayout.LayoutParams) cardShadow.getLayoutParams()
+                        : new FrameLayout.LayoutParams(cardWidth, cardHeight);
+        if (params.width == cardWidth && params.height == cardHeight
+                && params.leftMargin == left && params.topMargin == top) {
+            return;
+        }
+        params.width = cardWidth;
+        params.height = cardHeight;
+        params.leftMargin = left;
+        params.topMargin = top;
+        cardShadow.setLayoutParams(params);
+    }
+
+    private static void removeCardShadow() {
+        if (cardShadow == null) return;
+        ViewGroup parent = cardShadow.getParent() instanceof ViewGroup
+                ? (ViewGroup) cardShadow.getParent()
+                : null;
+        if (parent != null) parent.removeView(cardShadow);
+        cardShadow = null;
+    }
+
     /** Returns false when the view has no size yet, so the caller can fall back. */
     private static boolean applyScale(View area, float factor) {
         int width = area.getWidth();
         int height = area.getHeight();
         if (width <= 0 || height <= 0) return false;
         applyGutter(area, false);
+        clearAreaBackground(area);
         // Insets come in on every frame. While a corner is held the size belongs to the finger,
         // so a preference that has not been written yet must not pull the card back.
         if (scaling || editing) factor = appliedScale;
