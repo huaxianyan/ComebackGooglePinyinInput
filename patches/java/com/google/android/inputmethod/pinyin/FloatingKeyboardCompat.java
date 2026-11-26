@@ -95,6 +95,14 @@ public final class FloatingKeyboardCompat {
      * that pass calls back into {@link #applyInsets}, so the value is compared before writing.
      */
     private static float appliedScale = -1f;
+    /**
+     * The IME window, kept so position updates can reach its LayoutParams.
+     *
+     * <p>Vertical placement lives on the window rather than on the keyboard area. The window is
+     * only as tall as the card and travels with it, which is what keeps the platform's surface
+     * shadow down to the card's own footprint.
+     */
+    private static Window floatingWindow;
     /** Size the keyboard area had before the window was narrowed to the card. */
     private static int baseAreaWidth = -1;
     private static int baseAreaHeight = -1;
@@ -243,14 +251,15 @@ public final class FloatingKeyboardCompat {
         View area = findKeyboardArea(decor);
         Rect region = new Rect();
         if (area != null && applyScale(area, factor)) {
-            // Position before measuring the region: the translation is part of the view matrix
-            // that getGlobalVisibleRect applies, so ordering them the other way reports the
-            // card where it used to be.
+            // Size the window first: it is the card's container now, so both the position below
+            // and the region after that are expressed against it.
+            narrowWindowToCard(window, area);
+            // Position before measuring the region: the window move is what places the card, and
+            // getGlobalVisibleRect reports it where it now sits.
             applyPosition(decor, area, factor);
             visualRegion(area, region);
             ensureCardShadow(decor, area, factor);
 
-            narrowWindowToCard(window, area);
             // The handle hangs below the card, and outside the region touches fall straight
             // through to the app. Reach past the handle with margin, and keep the sides on the
             // card as well so the whole strip is reachable.
@@ -636,6 +645,7 @@ public final class FloatingKeyboardCompat {
      */
     private static void narrowWindowToCard(Window window, View area) {
         if (window == null) return;
+        floatingWindow = window;
         if (window.getDecorView().getElevation() != 0f) window.getDecorView().setElevation(0f);
         int width = area.getWidth();
         int height = area.getHeight();
@@ -649,13 +659,20 @@ public final class FloatingKeyboardCompat {
             params.height = baseAreaHeight;
             area.setLayoutParams(params);
         }
+        float factor = appliedScale > 0f ? appliedScale : 1f;
         int outgrow = Math.round(SHADOW_GROW_DP * density(area)) * 2;
-        int windowWidth = Math.round(baseAreaWidth * appliedScale) + outgrow;
+        int handleHeight = Math.round(HANDLE_HEIGHT_DP * density(area));
+        int windowWidth = Math.round(baseAreaWidth * factor) + outgrow;
+        int windowHeight = Math.round(baseAreaHeight * factor) + handleHeight * 2 + outgrow;
         android.view.WindowManager.LayoutParams attributes = window.getAttributes();
-        if (attributes.width != windowWidth) {
-            attributes.width = windowWidth;
-            window.setAttributes(attributes);
+        if (attributes.width == windowWidth && attributes.height == windowHeight
+                && attributes.gravity == (Gravity.TOP | Gravity.START)) {
+            return;
         }
+        attributes.width = windowWidth;
+        attributes.height = windowHeight;
+        attributes.gravity = Gravity.TOP | Gravity.START;
+        window.setAttributes(attributes);
     }
 
     /** Returns false when the view has no size yet, so the caller can fall back. */
@@ -687,18 +704,30 @@ public final class FloatingKeyboardCompat {
         if (dragging || scaling || editing || factor <= 0f) return false;
         float[] range = freeRange(decor, area, factor);
         if (range == null) return false;
-        float translateX = xFraction(decor.getContext()) * range[0] - (1f - factor) * decor.getWidth() / 2f;
-        float translateY = (yFraction(decor.getContext()) - 1f) * range[1];
-        boolean moved = area.getTranslationX() != translateX || area.getTranslationY() != translateY;
-        if (area.getTranslationX() != translateX) area.setTranslationX(translateX);
-        if (area.getTranslationY() != translateY) area.setTranslationY(translateY);
-        return moved;
+        moveWindow(factor, range, xFraction(decor.getContext()), yFraction(decor.getContext()),
+                area);
+        return true;
     }
 
     /** {free horizontal travel, free vertical travel} in pixels, or null before layout. */
+    /**
+     * Distance the card may travel, measured against the screen rather than against the window.
+     *
+     * <p>The window is cut down to the card and moves with it, so the window size is no longer
+     * the space the card travels through. Using it would shrink the range every time the window
+     * moved.
+     */
     private static float[] freeRange(View decor, View area, float factor) {
-        int width = decor.getWidth();
-        int height = decor.getHeight();
+        android.util.DisplayMetrics metrics = decor.getContext().getResources()
+                .getDisplayMetrics();
+        int width = metrics.widthPixels;
+        // The card must stop above the navigation bar, otherwise the system draws over its bottom
+        // edge and the last key row is half covered.
+        // The drag handle hangs below the card, so the card has to stop a handle's height above
+        // the navigation bar or the handle ends up inside it and swallows the drag.
+        int bars = systemBarHeight(decor)
+                + Math.round(HANDLE_HEIGHT_DP * density(area));
+        int height = metrics.heightPixels - bars;
         int areaWidth = area.getWidth();
         int areaHeight = area.getHeight();
         if (width <= 0 || height <= 0 || areaWidth <= 0 || areaHeight <= 0) return null;
@@ -706,6 +735,52 @@ public final class FloatingKeyboardCompat {
                 Math.max(1f, width - areaWidth * factor),
                 Math.max(1f, height - areaHeight * factor),
         };
+    }
+
+    /**
+     * Height taken by the system bars, so the card and its handle stay clear of the navigation
+     * bar. The IME window does not fit the system bars, so its own insets report zero; the
+     * difference between the real display and the app-visible display is what is actually
+     * covered.
+     */
+    private static int systemBarHeight(View decor) {
+        if (floatingWindow == null) return 0;
+        android.view.WindowManager manager = floatingWindow.getWindowManager();
+        if (manager == null) return 0;
+        int real = manager.getMaximumWindowMetrics().getBounds().height();
+        int usable = manager.getCurrentWindowMetrics().getBounds().height();
+        int difference = Math.max(0, real - usable);
+        if (difference > 0) return difference;
+        // The IME window reports the full height as its current metrics, so fall back to the frame
+        // the content is actually visible in.
+        android.graphics.Rect visible = new android.graphics.Rect();
+        decor.getWindowVisibleDisplayFrame(visible);
+        return Math.max(0, real - visible.bottom);
+    }
+
+    /**
+     * Places the window so the scaled card lands where the fractions say.
+     *
+     * <p>The area sits at the window's top-left corner and is scaled about its bottom centre, so
+     * the card's visible box is inset from the window by the scale loss on each axis. Subtracting
+     * that inset is what turns a window position into a card position and back.
+     */
+    private static void moveWindow(float factor, float[] range, float fractionX, float fractionY,
+            View area) {
+        Window window = floatingWindow;
+        if (window == null || range == null) return;
+        int width = area.getWidth();
+        int height = area.getHeight();
+        if (width <= 0 || height <= 0) return;
+        int insetX = Math.round((1f - factor) * width / 2f);
+        int insetY = Math.round((1f - factor) * height);
+        int x = Math.round(fractionX * range[0]) - insetX;
+        int y = Math.round(fractionY * range[1]) - insetY;
+        android.view.WindowManager.LayoutParams attributes = window.getAttributes();
+        if (attributes.x == x && attributes.y == y) return;
+        attributes.x = x;
+        attributes.y = y;
+        window.setAttributes(attributes);
     }
 
     private static void ensureHandle(View decor, View area, float factor) {
@@ -945,8 +1020,8 @@ public final class FloatingKeyboardCompat {
         float[] range = freeRange(decor, area, factor);
         if (range != null) {
             Context context = area.getContext();
-            float fractionX = fractionFromTranslation(area, decor, factor, range, true);
-            float fractionY = fractionFromTranslation(area, decor, factor, range, false);
+            float fractionX = fractionFromWindow(area, decor, factor, range, true);
+            float fractionY = fractionFromWindow(area, decor, factor, range, false);
             preferences(context).edit()
                     .putFloat(KEY_SCALE, factor)
                     .putFloat(KEY_X_FRACTION + orientation(context), fractionX)
@@ -1029,8 +1104,8 @@ public final class FloatingKeyboardCompat {
         if (!dragging) {
             dragDownRawX = screenX;
             dragDownRawY = screenY;
-            dragStartX = fractionFromTranslation(area, decor, factor, range, true);
-            dragStartY = fractionFromTranslation(area, decor, factor, range, false);
+            dragStartX = fractionFromWindow(area, decor, factor, range, true);
+            dragStartY = fractionFromWindow(area, decor, factor, range, false);
             dragging = true;
             if (finished) {
                 dragging = false;
@@ -1040,8 +1115,7 @@ public final class FloatingKeyboardCompat {
 
         float fractionX = clamp01(dragStartX + (screenX - dragDownRawX) / range[0]);
         float fractionY = clamp01(dragStartY + (screenY - dragDownRawY) / range[1]);
-        area.setTranslationX(fractionX * range[0] - (1f - factor) * decor.getWidth() / 2f);
-        area.setTranslationY((fractionY - 1f) * range[1]);
+        moveWindow(factor, range, fractionX, fractionY, area);
         if (editOverlay != null && editOverlay.getParent() instanceof ViewGroup) {
             updateEditBounds((ViewGroup) editOverlay.getParent(), area);
         }
@@ -1103,8 +1177,10 @@ public final class FloatingKeyboardCompat {
             scaleStartDistance = distance(screenX, screenY, scaleAnchorX, scaleAnchorY);
             if (scaleStartDistance < 1f) return;
             scaleStartFactor = factor;
-            scaleStartTx = area.getTranslationX();
-            scaleStartTy = area.getTranslationY();
+            android.view.WindowManager.LayoutParams start =
+                    floatingWindow == null ? null : floatingWindow.getAttributes();
+            scaleStartTx = start == null ? 0f : start.x;
+            scaleStartTy = start == null ? 0f : start.y;
             scaling = true;
             if (finished) {
                 scaling = false;
@@ -1128,11 +1204,13 @@ public final class FloatingKeyboardCompat {
                 Math.min(MAX_SCALE, scaleStartFactor * moved / scaleStartDistance));
         // The anchored corner stays put, so growth is bounded by the room left towards the
         // dragged corner. Without this the card happily grows past the edge of the screen.
+        android.util.DisplayMetrics metrics = area.getContext().getResources()
+                .getDisplayMetrics();
         float roomX = (corner == 1 || corner == 2)
-                ? decor.getWidth() - scaleAnchorX
+                ? metrics.widthPixels - scaleAnchorX
                 : scaleAnchorX;
         float roomY = (corner == 2 || corner == 3)
-                ? decor.getHeight() - scaleAnchorY
+                ? metrics.heightPixels - scaleAnchorY
                 : scaleAnchorY;
         if (roomX > 0f && roomY > 0f) {
             float limit = Math.min(roomX / area.getWidth(), roomY / area.getHeight());
@@ -1145,8 +1223,12 @@ public final class FloatingKeyboardCompat {
         area.setScaleX(factor);
         area.setScaleY(factor);
         appliedScale = factor;
-        area.setTranslationX(scaleStartTx + (scaleAnchorOffX - pivotX) * shift);
-        area.setTranslationY(scaleStartTy + (scaleAnchorOffY - pivotY) * shift);
+        if (floatingWindow != null) {
+            android.view.WindowManager.LayoutParams attributes = floatingWindow.getAttributes();
+            attributes.x = Math.round(scaleStartTx + (scaleAnchorOffX - pivotX) * shift);
+            attributes.y = Math.round(scaleStartTy + (scaleAnchorOffY - pivotY) * shift);
+            floatingWindow.setAttributes(attributes);
+        }
         if (editOverlay != null && editOverlay.getParent() instanceof ViewGroup) {
             updateEditBounds((ViewGroup) editOverlay.getParent(), area);
         }
@@ -1219,8 +1301,8 @@ public final class FloatingKeyboardCompat {
                 // would jump the card by however long the press took to be recognised.
                 dragDownRawX = downRawX;
                 dragDownRawY = downRawY;
-                dragStartX = fractionFromTranslation(area, decor, factor, range, true);
-                dragStartY = fractionFromTranslation(area, decor, factor, range, false);
+                dragStartX = fractionFromWindow(area, decor, factor, range, true);
+                dragStartY = fractionFromWindow(area, decor, factor, range, false);
                 view.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS);
                 wakeIdle();
             }
@@ -1283,9 +1365,7 @@ public final class FloatingKeyboardCompat {
                         dragStartX + (event.getRawX() - dragDownRawX) / range[0]);
                 float fractionY = clamp01(
                         dragStartY + (event.getRawY() - dragDownRawY) / range[1]);
-                area.setTranslationX(
-                        fractionX * range[0] - (1f - factor) * decor.getWidth() / 2f);
-                area.setTranslationY((fractionY - 1f) * range[1]);
+                moveWindow(factor, range, fractionX, fractionY, area);
                 moveHandle(decor, area);
                 return true;
             }
@@ -1317,8 +1397,8 @@ public final class FloatingKeyboardCompat {
         float factor = appliedScale > 0f ? appliedScale : scale(view.getContext());
         float[] range = freeRange(decor, area, factor);
         if (range == null) return;
-        float fractionX = fractionFromTranslation(area, decor, factor, range, true);
-        float fractionY = fractionFromTranslation(area, decor, factor, range, false);
+        float fractionX = fractionFromWindow(area, decor, factor, range, true);
+        float fractionY = fractionFromWindow(area, decor, factor, range, false);
         // Docking only applies when the card is brought back down from higher up. The card rests
         // at the bottom by default, so testing the released position alone would turn every
         // horizontal drag into a dock and make it impossible to move sideways.
@@ -1340,13 +1420,21 @@ public final class FloatingKeyboardCompat {
         decor.requestLayout();
     }
 
-    private static float fractionFromTranslation(
+    private static float fractionFromWindow(
             View area, View decor, float factor, float[] range, boolean horizontal) {
-        if (horizontal) {
-            return clamp01((area.getTranslationX() + (1f - factor) * decor.getWidth() / 2f)
-                    / range[0]);
+        Window window = floatingWindow;
+        if (window == null) {
+            return horizontal ? xFraction(area.getContext()) : yFraction(area.getContext());
         }
-        return clamp01(area.getTranslationY() / range[1] + 1f);
+        android.view.WindowManager.LayoutParams attributes = window.getAttributes();
+        int width = area.getWidth();
+        int height = area.getHeight();
+        if (horizontal) {
+            float inset = (1f - factor) * width / 2f;
+            return clamp01((attributes.x + inset) / range[0]);
+        }
+        float inset = (1f - factor) * height;
+        return clamp01((attributes.y + inset) / range[1]);
     }
 
     private static float xFraction(Context context) {
