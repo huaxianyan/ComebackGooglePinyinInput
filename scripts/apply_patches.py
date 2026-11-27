@@ -3379,6 +3379,7 @@ def apply(
         "FloatingKeyboardHandle.smali",
         "FloatingKeyboardEdit.smali",
         "FloatingCardShadow.smali",
+        "ClipboardDismissAlign.smali",
     ) + tuple(
         # Nested classes get their own files and their names depend on the Java sources, so they
         # are collected instead of listed: missing one is a ClassNotFoundException at runtime.

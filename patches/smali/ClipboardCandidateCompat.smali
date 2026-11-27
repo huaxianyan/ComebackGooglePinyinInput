@@ -1018,7 +1018,32 @@
 
     move-result-object v0
 
-    # QWERTY delete is the preferred geometric reference. Nine-key layouts use
+    # The control belongs where the hide-keyboard key sits, so that key is the primary reference.
+    # Nine-key layouts and prime headers fall back to the keys below.
+    const v1, 0x7f0f02b7
+
+    invoke-virtual {v0, v1}, Landroid/view/View;->findViewById(I)Landroid/view/View;
+
+    move-result-object v1
+
+    if-eqz v1, :find_delete_reference
+
+    invoke-virtual {v1}, Landroid/view/View;->isShown()Z
+
+    move-result v2
+
+    if-eqz v2, :find_delete_reference
+
+    invoke-virtual {v1}, Landroid/view/View;->getWidth()I
+
+    move-result v2
+
+    if-lez v2, :find_delete_reference
+
+    goto :have_reference
+
+    :find_delete_reference
+    # QWERTY delete is the next reference. Nine-key layouts use
     # their right-panel cursor key; the prime-header voice key is a final fallback.
     const v1, 0x7f0f00b4
 
@@ -1087,84 +1112,10 @@
     if-lez v2, :align_done
 
     :have_reference
-    invoke-virtual {p1}, Landroid/view/View;->getLayoutParams()Landroid/view/ViewGroup$LayoutParams;
-
-    move-result-object v3
-
-    iget v3, v3, Landroid/view/ViewGroup$LayoutParams;->width:I
-
-    if-lez v3, :use_measured_dismiss_width
-
-    goto :have_dismiss_width
-
-    :use_measured_dismiss_width
-    invoke-virtual {p1}, Landroid/view/View;->getMeasuredWidth()I
-
-    move-result v3
-
-    if-lez v3, :use_laid_out_dismiss_width
-
-    goto :have_dismiss_width
-
-    :use_laid_out_dismiss_width
-    invoke-virtual {p1}, Landroid/view/View;->getWidth()I
-
-    move-result v3
-
-    if-lez v3, :align_done
-
-    :have_dismiss_width
-    const/4 v4, 0x2
-
-    new-array v5, v4, [I
-
-    new-array v6, v4, [I
-
-    invoke-virtual {v1, v5}, Landroid/view/View;->getLocationInWindow([I)V
-
-    invoke-virtual {p0, v6}, Landroid/view/View;->getLocationInWindow([I)V
-
-    const/4 v4, 0x0
-
-    aget v5, v5, v4
-
-    div-int/lit8 v2, v2, 0x2
-
-    add-int/2addr v5, v2
-
-    aget v6, v6, v4
-
-    sub-int/2addr v5, v6
-
-    div-int/lit8 v3, v3, 0x2
-
-    sub-int/2addr v5, v3
-
-    invoke-virtual {p0}, Landroid/view/View;->getPaddingLeft()I
-
-    move-result v2
-
-    sub-int/2addr v5, v2
-
-    invoke-virtual {p1}, Landroid/view/View;->getLayoutParams()Landroid/view/ViewGroup$LayoutParams;
-
-    move-result-object v2
-
-    instance-of v3, v2, Landroid/widget/FrameLayout$LayoutParams;
-
-    if-eqz v3, :align_done
-
-    check-cast v2, Landroid/widget/FrameLayout$LayoutParams;
-
-    const/4 v3, 0x3
-
-    iput v3, v2, Landroid/widget/FrameLayout$LayoutParams;->gravity:I
-
-    iput v5, v2, Landroid/widget/FrameLayout$LayoutParams;->leftMargin:I
-
-    iput v4, v2, Landroid/widget/FrameLayout$LayoutParams;->rightMargin:I
-
-    invoke-virtual {p1, v2}, Landroid/view/View;->setLayoutParams(Landroid/view/ViewGroup$LayoutParams;)V
+    # Positions come back in window space, while a margin applies in the container's own space.
+    # The helper converts between the two, otherwise the control sits left of the column by
+    # (1 - scale) times its distance from the row's left edge.
+    invoke-static {p0, p1, v1}, Lcom/google/android/inputmethod/pinyin/ClipboardDismissAlign;->align(Landroid/view/View;Landroid/view/View;Landroid/view/View;)V
 
     :align_done
     return-void
