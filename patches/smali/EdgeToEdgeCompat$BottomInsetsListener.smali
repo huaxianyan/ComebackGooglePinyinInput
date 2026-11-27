@@ -89,6 +89,15 @@
     move-result-object v0
 
     iget v0, v0, Landroid/graphics/Insets;->bottom:I
+    # 悬浮卡片不在屏幕底部，导航栏 padding 会把最底行按键挤出卡片。悬浮时置零。
+    iget-object v1, p0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat$BottomInsetsListener;->view:Landroid/view/View;
+    invoke-virtual {v1}, Landroid/view/View;->getContext()Landroid/content/Context;
+    move-result-object v2
+    invoke-static {v2}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->isEnabled(Landroid/content/Context;)Z
+    move-result v2
+    if-eqz v2, :keep_nav_inset
+    const/4 v0, 0x0
+    :keep_nav_inset
 
     iget-object v1, p0, Lcom/google/android/inputmethod/pinyin/EdgeToEdgeCompat$BottomInsetsListener;->view:Landroid/view/View;
 
