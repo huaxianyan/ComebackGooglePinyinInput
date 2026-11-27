@@ -94,11 +94,6 @@ public final class FloatingKeyboardCompat {
      * The card's own shadow ring. It is a child of the card, so the card's transform carries it.
      */
     private static FloatingCardShadow cardShadow;
-    /**
-     * Last layout rect handed to the ring. Layout only runs when this changes, so the ring never
-     * relayouts during a drag or a resize; all motion goes through transforms.
-     */
-    private static int cardShadowRect = Integer.MIN_VALUE;
     /** The view the scale was applied to; the service rebuilds its views, and a stale value here
      *  would skip scaling the replacement. */
     private static View scaledView;
@@ -627,60 +622,43 @@ public final class FloatingKeyboardCompat {
                 : null;
         if (parent != null) parent.removeView(cardShadow);
         cardShadow = null;
-        cardShadowRect = Integer.MIN_VALUE;
     }
 
     /**
-     * Keeps the shadow ring behind the card, mirroring the card's own transform.
+     * Keeps the shadow band behind the card, at a fixed strength whatever the card's size.
      *
-     * <p>The ring is a sibling of the card, not a child: a child takes part in the card's measure
-     * pass, and because the ring is sized from the card, each layout round made the card larger and
-     * the ring larger with it, growing without bound into a grey slab. A sibling never affects the
-     * card's measurement.
+     * <p>The band is painted by an unscaled overlay that is told the card's current on-screen
+     * rectangle each pass. Mirroring the card's scale onto a shadow view would scale the blur with
+     * it, so the shadow would look heavy on a large card and flat on a small one. A child of the
+     * card cannot be used either: children take part in the card's measure pass, and since the band
+     * is sized from the card, each round made both grow without bound.
      *
-     * <p>To stay in lockstep the ring copies the card's pivot, scale and translation in the same
-     * pass those are set, so both are drawn with identical transforms. Layout params are only
-     * rewritten when the card's layout rect changes; moving the ring by layout params instead would
-     * land one frame late, which is what made the earlier version trail behind on fast drags.
-     *
-     * <p>The ring is one {@link FloatingCardShadow#INSET_DP} larger than the card on every side, so
-     * the band it paints falls exactly outside the card and never over the keys.
+     * <p>Only the rectangle is updated here, never the overlay's layout, so no relayout is
+     * involved and the band lands in the same frame as the card.
      */
     private static void ensureCardShadow(View area, float factor) {
-        View parent = area.getParent() instanceof ViewGroup ? (View) area.getParent() : null;
-        if (!(parent instanceof ViewGroup)) return;
-        ViewGroup host = (ViewGroup) parent;
-        int grow = Math.round(FloatingCardShadow.INSET_DP * density(area));
-        if (area.getWidth() <= 0 || area.getHeight() <= 0) return;
-
+        if (!(area.getParent() instanceof ViewGroup)) return;
+        ViewGroup host = (ViewGroup) area.getParent();
         if (cardShadow == null || cardShadow.getParent() != host) {
             removeCardShadow();
             cardShadow = new FloatingCardShadow(area.getContext(), density(area));
-            host.addView(cardShadow, 0, new FrameLayout.LayoutParams(0, 0));
+            host.addView(cardShadow, 0, new FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
             cardShadow.setTranslationZ(-1f);
         }
-
-        int width = area.getWidth() + grow * 2;
-        int height = area.getHeight() + grow * 2;
-        int left = area.getLeft() - grow;
-        int top = area.getTop() - grow;
-        int rect = (left * 31 + top) * 31 + width * 131 + height;
-        if (rect != cardShadowRect) {
-            ViewGroup.LayoutParams params = cardShadow.getLayoutParams();
-            params.width = width;
-            params.height = height;
-            cardShadow.setLayoutParams(params);
-            cardShadowRect = rect;
-        }
-
-        // Same transform as the card, written in the same pass so the two never disagree. The ring's
-        // coordinate space is shifted by grow, so the pivot moves with it.
-        cardShadow.setPivotX(area.getPivotX() + grow);
-        cardShadow.setPivotY(area.getPivotY() + grow);
-        cardShadow.setScaleX(area.getScaleX());
-        cardShadow.setScaleY(area.getScaleY());
-        cardShadow.setTranslationX(left + area.getTranslationX() - cardShadow.getLeft());
-        cardShadow.setTranslationY(top + area.getTranslationY() - cardShadow.getTop());
+        float applied = factor > 0f ? factor : 1f;
+        float width = area.getWidth() * applied;
+        float height = area.getHeight() * applied;
+        if (width <= 0f || height <= 0f) return;
+        int[] areaLocation = new int[2];
+        area.getLocationOnScreen(areaLocation);
+        int[] shadowLocation = new int[2];
+        cardShadow.getLocationOnScreen(shadowLocation);
+        cardShadow.setCardRect(
+                areaLocation[0] - shadowLocation[0],
+                areaLocation[1] - shadowLocation[1],
+                width,
+                height);
     }
 
     private static void updateHandleBounds(ViewGroup host, View area, int handleHeight) {
