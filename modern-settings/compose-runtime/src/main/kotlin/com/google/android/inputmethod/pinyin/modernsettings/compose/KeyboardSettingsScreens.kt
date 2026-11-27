@@ -144,6 +144,16 @@ internal fun androidx.compose.foundation.lazy.LazyListScope.keyboardAppearanceSe
         )
     }
     item {
+        // A way back from a card dragged or scaled into a state that is hard to recover by hand.
+        // Only geometry is forgotten, so the switches above keep their settings.
+        SettingsActionRow(
+            title = stringResource(R.string.modern_settings_floating_keyboard_reset_title),
+            supporting = stringResource(R.string.modern_settings_floating_keyboard_reset_summary),
+            enabled = snapshot.floatingKeyboardEnabled,
+            onClick = actions.onFloatingKeyboardReset,
+        )
+    }
+    item {
         SettingsNavigationRow(
             title = stringResource(R.string.modern_settings_quick_bar_title),
             supporting = stringResource(R.string.modern_settings_quick_bar_summary),

@@ -180,6 +180,8 @@
     <string name="modern_settings_floating_keyboard_title">Floating keyboard</string>
     <string name="modern_settings_floating_keyboard_summary">Shrinks the keyboard to a card over the content, not used with one-handed mode</string>
     <string name="modern_settings_idle_fade_title">Idle transparency</string>
+    <string name="modern_settings_floating_keyboard_reset_title">Reset size and position</string>
+    <string name="modern_settings_floating_keyboard_reset_summary">Puts the floating card back to its default size and place</string>
     <string name="modern_settings_idle_fade_summary">Fades to half transparent when idle, floating keyboard only</string>
     <string name="modern_settings_quick_bar_title">Toolbar shortcuts</string>
     <string name="modern_settings_quick_bar_summary">Which entries appear, and in what order</string>

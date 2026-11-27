@@ -95,6 +95,7 @@ data class SettingsActions(
     val onOneHandedModeChange: (Int) -> Unit,
     val onFloatingKeyboardEnabledChange: (Boolean) -> Unit,
     val onIdleFadeChange: (Boolean) -> Unit,
+    val onFloatingKeyboardReset: () -> Unit,
     val onPinyinSchemeChange: (Int) -> Unit,
     val onEnglishT9MultitapIntervalChange: (Int) -> Unit,
     val onGestureInputEnabledChange: (Boolean) -> Unit,

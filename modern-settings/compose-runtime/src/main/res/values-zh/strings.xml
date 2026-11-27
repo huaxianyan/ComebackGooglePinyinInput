@@ -177,6 +177,8 @@
     <string name="modern_settings_floating_keyboard_title">悬浮键盘</string>
     <string name="modern_settings_floating_keyboard_summary">缩成卡片浮在内容上，不与单手模式并用</string>
     <string name="modern_settings_idle_fade_title">待机时自动透明</string>
+    <string name="modern_settings_floating_keyboard_reset_title">恢复默认大小与位置</string>
+    <string name="modern_settings_floating_keyboard_reset_summary">把悬浮键盘的大小和位置恢复成默认值</string>
     <string name="modern_settings_idle_fade_summary">闲置几秒后淡到半透明，仅悬浮键盘生效</string>
     <string name="modern_settings_quick_bar_title">快捷工具栏</string>
     <string name="modern_settings_quick_bar_summary">显示哪些入口，以及先后顺序</string>

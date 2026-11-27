@@ -55,6 +55,9 @@ class SettingsController(
     fun setFloatingKeyboardEnabled(enabled: Boolean): SettingsSnapshot =
         repository.setFloatingKeyboardEnabled(enabled)
 
+    fun resetFloatingGeometry(): SettingsSnapshot =
+        repository.resetFloatingGeometry()
+
     fun setIdleFadeEnabled(enabled: Boolean): SettingsSnapshot =
         repository.setIdleFadeEnabled(enabled)
 

@@ -522,6 +522,9 @@ class ModernSettingsActivity : ComponentActivity() {
                             onIdleFadeChange = { enabled ->
                                 snapshot = controller.setIdleFadeEnabled(enabled)
                             },
+                            onFloatingKeyboardReset = {
+                                snapshot = controller.resetFloatingGeometry()
+                            },
                             onPinyinSchemeChange = { index ->
                                 snapshot = controller.setPinyinSchemeIndex(index)
                             },

@@ -365,6 +365,11 @@ class LegacySettingsRepository(context: Context) {
         return readSnapshot()
     }
 
+    fun resetFloatingGeometry(): SettingsSnapshot {
+        FloatingKeyboardSetting.resetGeometry(applicationContext)
+        return readSnapshot()
+    }
+
     fun setSoundEnabled(enabled: Boolean): SettingsSnapshot {
         preferences.edit().putBoolean(SliderSettingContracts.SOUND_ENABLED_KEY, enabled).apply()
         return readSnapshot()
