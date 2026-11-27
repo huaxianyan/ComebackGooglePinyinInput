@@ -4,12 +4,15 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
 import android.inputmethodservice.InputMethodService;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.graphics.PixelFormat;
+import android.view.Gravity;
 import android.view.Window;
 import android.widget.FrameLayout;
 
@@ -48,6 +51,8 @@ public final class FloatingKeyboardCompat {
 
     /** Touch strip of the drag handle, measured up from the card's bottom edge. */
     static final int HANDLE_HEIGHT_DP = 20;
+    /** Room left around the card for the hand-drawn shadow ring. */
+    static final float SHADOW_GROW_DP = 10f;
     /**
      * Empty strip added below the key rows while the card is floating. The last key row reaches the
      * card's bottom edge, so a handle drawn there would sit on the space bar; the gutter keeps the
@@ -90,12 +95,28 @@ public final class FloatingKeyboardCompat {
      * that pass calls back into {@link #applyInsets}, so the value is compared before writing.
      */
     private static float appliedScale = -1f;
+    /**
+     * The IME window, kept so position updates can reach its LayoutParams.
+     *
+     * <p>Vertical placement lives on the window rather than on the keyboard area. The window is
+     * only as tall as the card and travels with it, which is what keeps the platform's surface
+     * shadow down to the card's own footprint.
+     */
+    private static Window floatingWindow;
+    /** Size the keyboard area had before the window was narrowed to the card. */
+    private static int baseAreaWidth = -1;
+    private static int baseAreaHeight = -1;
     /** The view the scale was applied to; the service rebuilds its views, and a stale value here
      *  would skip scaling the replacement. */
     private static View scaledView;
     private static final Rect lastRegion = new Rect();
 
     private static FloatingKeyboardHandle handle;
+    /**
+     * Background the keyboard area had before floating; restored when the card stops floating.
+     * Dropping it is what removes the grey band under the card on light themes.
+     */
+    private static Drawable baseAreaBackground;
     private static FloatingKeyboardEdit editOverlay;
     /** True while the card is in edit mode: keys frozen, whole card draggable. */
     private static boolean editing;
@@ -168,7 +189,7 @@ public final class FloatingKeyboardCompat {
 
     /** Kept separate from {@link #isEnabled}: switching the card off must not forget this choice. */
     static boolean idleFadeEnabled(Context context) {
-        return preferences(context).getBoolean(KEY_IDLE_FADE, true);
+        return preferences(context).getBoolean(KEY_IDLE_FADE, false);
     }
 
     public static void setEnabled(Context context, boolean enabled) {
@@ -229,13 +250,20 @@ public final class FloatingKeyboardCompat {
         View area = findKeyboardArea(decor);
         Rect region = new Rect();
         if (area != null && applyScale(area, factor)) {
-            // Position before measuring the region: the translation is part of the view matrix
-            // that getGlobalVisibleRect applies, so ordering them the other way reports the
-            // card where it used to be.
+            // Size the window first: it is the card's container now, so both the position below
+            // and the region after that are expressed against it.
+            narrowWindowToCard(window, area);
+            // Position before measuring the region: the window move is what places the card, and
+            // getGlobalVisibleRect reports it where it now sits.
             applyPosition(decor, area, factor);
-            // The handle sits inside the card's bottom edge, so the card rectangle already covers
-            // it; the region needs no extra strip.
             visualRegion(area, region);
+
+            // The handle hangs below the card, and outside the region touches fall straight
+            // through to the app. Reach past the handle with margin, and keep the sides on the
+            // card as well so the whole strip is reachable.
+            int handleHeight = Math.round(HANDLE_HEIGHT_DP * density(decor));
+            region.bottom += handleHeight * 2;
+            region.top -= handleHeight;
         }
         if (region.isEmpty()) {
             // The first pass runs before the keyboard frame is laid out. A strip covering the
@@ -299,6 +327,8 @@ public final class FloatingKeyboardCompat {
         area.setTranslationX(0f);
         area.setTranslationY(0f);
         applyGutter(area, false);
+        restoreAreaBackground(area);
+        clearAreaBackground(area);
     }
 
     /**
@@ -514,20 +544,231 @@ public final class FloatingKeyboardCompat {
                 target);
     }
 
+    /**
+     * The card is scaled in, so its own bottom padding ends up outside the painted area: the
+     * keyboard area keeps a background of its own and that background is what showed as a flat
+     * grey band under the card on light themes. The key rows and the header paint themselves, so
+     * this layer is not needed.
+     */
+    private static void clearAreaBackground(View area) {
+        if (baseAreaBackground != null) return;
+        baseAreaBackground = area.getBackground();
+        area.setBackground(null);
+    }
+
+    private static void restoreAreaBackground(View area) {
+        if (baseAreaBackground == null) return;
+        area.setBackground(baseAreaBackground);
+        baseAreaBackground = null;
+    }
+
+    /**
+     * The card's shadow belongs to the card, not to the window. Elevation on the keyboard area
+     * itself does not work here: it is scaled with a view transform, so its layout bounds stay at
+     * the full window size and the shadow would be drawn along the screen edges.
+     */
+
+
+
+    /**
+     * The IME window is a dialog window, so the platform draws a drop shadow along its surface
+     * edges. While the card is scaled in, that shadow no longer lines up with anything and reads
+     * as a stray band down the screen sides, ending right above the navigation bar.
+     *
+     * <p>The shadow is not reachable from the app: it is not view elevation, not the window
+     * background, and {@code LayoutParams.surfaceInsets} is a hidden field. The one lever that
+     * works is the window size, so the window is narrowed to the card. Width only: narrowing the
+     * height clips the card, because the area keeps its original layout height and is positioned
+     * from the window's top-left corner.
+     *
+     * <p>The area is pinned at its original size so the key rows do not reflow across the
+     * narrower window. The card itself ends up inside the window either way, since it is scaled
+     * about its centre.
+     */
+    private static void dumpTree(View view, int depth) {
+        if (depth > 6) return;
+        StringBuilder indent = new StringBuilder();
+        for (int i = 0; i < depth; i++) indent.append("  ");
+        String name = view.getClass().getSimpleName();
+        try {
+            name += "#" + view.getResources().getResourceEntryName(view.getId());
+        } catch (Exception ignored) {
+        }
+        Log.i(TAG, "tree " + indent + name
+                + " pos=" + view.getLeft() + "," + view.getTop()
+                + " size=" + view.getWidth() + "x" + view.getHeight()
+                + " scale=" + view.getScaleY()
+                + " bg=" + (view.getBackground() != null));
+        if (view instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) view;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                dumpTree(group.getChildAt(i), depth + 1);
+            }
+        }
+    }
+
+    private static void clearBottomPadding(View view) {
+        if (view != null && view.getPaddingBottom() != 0) {
+            view.setPadding(view.getPaddingLeft(), view.getPaddingTop(),
+                    view.getPaddingRight(), 0);
+        }
+    }
+
+    private static View findChildByClass(View view, String className) {
+        if (className.equals(view.getClass().getSimpleName())) return view;
+        if (view instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) view;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                View found = findChildByClass(group.getChildAt(i), className);
+                if (found != null) return found;
+            }
+        }
+        return null;
+    }
+
+    private static View findChildByName(View view, String name) {
+        try {
+            if (name.equals(view.getResources().getResourceEntryName(view.getId()))) {
+                return view;
+            }
+        } catch (Exception ignored) {
+        }
+        if (view instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) view;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                View found = findChildByName(group.getChildAt(i), name);
+                if (found != null) return found;
+            }
+        }
+        return null;
+    }
+
+    private static void narrowWindowToCard(Window window, View area) {
+        if (window == null) return;
+        floatingWindow = window;
+        if (window.getDecorView().getElevation() != 0f) window.getDecorView().setElevation(0f);
+        // The themed window background is opaque. Now that the window hugs the card, that opaque
+        // fill is visible as a solid panel wherever the card is not: beside the handle and in the
+        // shadow margin. A transparent drawable removes the fill; it does not remove the surface
+        // shadow, which is a separate thing.
+        android.graphics.drawable.ColorDrawable transparent =
+                new android.graphics.drawable.ColorDrawable(0);
+        window.setBackgroundDrawable(transparent);
+        // The decor and the content frame carry their own opaque backgrounds from the theme, which
+        // fill every part of the window the card does not cover: the shadow margin and the strip
+        // under the keys. Clearing only the window background leaves those panels visible.
+        View decorView = window.getDecorView();
+        decorView.setBackgroundDrawable(transparent);
+        View content = decorView.findViewById(android.R.id.content);
+        if (content != null) content.setBackgroundDrawable(transparent);
+        int width = area.getWidth();
+        int height = area.getHeight();
+        if (width <= 0 || height <= 0) return;
+        // Fixed references, not first-frame measurements: by the time this runs the window may
+        // already have been resized once, and a measured baseline then feeds on itself.
+        if (baseAreaWidth < 0) {
+            baseAreaWidth = area.getContext().getResources().getDisplayMetrics().widthPixels;
+        }
+        if (baseAreaHeight < 0) {
+            int dimen = area.getContext().getResources()
+                    .getIdentifier("keyboard_height", "dimen", area.getContext().getPackageName());
+            baseAreaHeight = dimen != 0
+                    ? area.getContext().getResources().getDimensionPixelSize(dimen)
+                    : height;
+        }
+        ViewGroup.LayoutParams params = area.getLayoutParams();
+        if (params != null && (params.width != baseAreaWidth
+                || params.height != baseAreaHeight)) {
+            params.width = baseAreaWidth;
+            params.height = baseAreaHeight;
+            area.setLayoutParams(params);
+        }
+        // The stock BottomInsetsListener pads the keyboard by the navigation bar height. Floating
+        // in the middle of the screen there is no navigation bar under the keys, and that padding
+        // pushes the bottom key row out of the card.
+        // BottomInsetsListener applies the navigation bar height as bottom padding on the
+        // InputView itself, not only on keyboard_area. keyboard_area is match_parent inside
+        // InputView, so that padding is exactly what pushed the bottom key row out of the card.
+        View keyboardAreaView = findChildByName(area, "keyboard_area");
+        clearBottomPadding(keyboardAreaView);
+        View inputView = findChildByClass(area, "InputView");
+        clearBottomPadding(inputView);
+
+        float factor = appliedScale > 0f ? appliedScale : 1f;
+        int outgrow = Math.round(SHADOW_GROW_DP * density(area)) * 2;
+        int handleHeight = Math.round(HANDLE_HEIGHT_DP * density(area));
+        int windowWidth = Math.round(baseAreaWidth * factor) + outgrow;
+        // Exactly tall enough for the card plus the handle below it. Any taller and the window's
+        // own surface shadow draws a band below the card, which is the artifact being removed.
+        // Fixed by the factor, never measured from the area: the area is match_parent inside the
+        // window, so a measured height would shrink the window a little more on every pass until
+        // the keyboard vanished.
+        int windowHeight = cardOffsetInWindow(area)[1]
+                + Math.round(baseAreaHeight * factor) + handleHeight + outgrow;
+        ViewGroup contentGroup = (ViewGroup) decorView.findViewById(android.R.id.content);
+        if (contentGroup != null) dumpTree(contentGroup, 0);
+        String areaName = "?";
+        try {
+            areaName = area.getResources().getResourceEntryName(area.getId());
+        } catch (Exception ignored) {
+        }
+        StringBuilder chain = new StringBuilder();
+        android.view.ViewParent node = area.getParent();
+        while (node instanceof View) {
+            View parentView = (View) node;
+            String parentName = parentView.getClass().getSimpleName();
+            try {
+                parentName += "#" + parentView.getResources()
+                        .getResourceEntryName(parentView.getId());
+            } catch (Exception ignored) {
+            }
+            chain.append(" <- ").append(parentName);
+            node = parentView.getParent();
+        }
+        Log.i(TAG, "areaIs " + area.getClass().getSimpleName() + "#" + areaName
+                + " scale=" + area.getScaleY() + " size=" + area.getWidth() + "x"
+                + area.getHeight() + chain);
+        View inputAreaView = findChildByName(area, "inputArea");
+        Log.i(TAG, "heights panel=" + area.getHeight()
+                + " inputArea=" + (inputAreaView == null ? -1 : inputAreaView.getHeight())
+                + " keyboardArea=" + (keyboardAreaView == null ? -1 : keyboardAreaView.getHeight())
+                + " baseH=" + baseAreaHeight
+                + " kaPadB=" + (keyboardAreaView == null ? -1 : keyboardAreaView.getPaddingBottom())
+                + " kaH=" + (keyboardAreaView == null ? -1
+                        : keyboardAreaView.getLayoutParams().height)
+                + " ivPadB=" + (inputAreaView == null ? -1 : inputAreaView.getPaddingBottom()));
+        Log.i(TAG, "win " + windowWidth + "x" + windowHeight + " factor=" + factor
+                + " areaScale=" + area.getScaleX() + "," + area.getScaleY()
+                + " pivot=" + area.getPivotX() + "," + area.getPivotY()
+                + " areaPos=" + area.getLeft() + "," + area.getTop()
+                + " areaSize=" + width + "x" + height
+                + " base=" + baseAreaWidth + "x" + baseAreaHeight);
+        android.view.WindowManager.LayoutParams attributes = window.getAttributes();
+        if (attributes.width == windowWidth && attributes.height == windowHeight
+                && attributes.gravity == (Gravity.TOP | Gravity.START)) {
+            return;
+        }
+        attributes.width = windowWidth;
+        attributes.height = windowHeight;
+        attributes.gravity = Gravity.TOP | Gravity.START;
+        window.setAttributes(attributes);
+    }
+
     /** Returns false when the view has no size yet, so the caller can fall back. */
     private static boolean applyScale(View area, float factor) {
         int width = area.getWidth();
         int height = area.getHeight();
         if (width <= 0 || height <= 0) return false;
-        applyGutter(area, true);
+        applyGutter(area, false);
+        clearAreaBackground(area);
         // Insets come in on every frame. While a corner is held the size belongs to the finger,
         // so a preference that has not been written yet must not pull the card back.
         if (scaling || editing) factor = appliedScale;
         if (appliedScale != factor || scaledView != area) {
             appliedScale = factor;
             scaledView = area;
-            area.setPivotX(width / 2f);
-            area.setPivotY(height);
+            area.setPivotX(0f);
+            area.setPivotY(0f);
             area.setScaleX(factor);
             area.setScaleY(factor);
         }
@@ -542,18 +783,30 @@ public final class FloatingKeyboardCompat {
         if (dragging || scaling || editing || factor <= 0f) return false;
         float[] range = freeRange(decor, area, factor);
         if (range == null) return false;
-        float translateX = xFraction(decor.getContext()) * range[0] - (1f - factor) * decor.getWidth() / 2f;
-        float translateY = (yFraction(decor.getContext()) - 1f) * range[1];
-        boolean moved = area.getTranslationX() != translateX || area.getTranslationY() != translateY;
-        if (area.getTranslationX() != translateX) area.setTranslationX(translateX);
-        if (area.getTranslationY() != translateY) area.setTranslationY(translateY);
-        return moved;
+        moveWindow(factor, range, xFraction(decor.getContext()), yFraction(decor.getContext()),
+                area);
+        return true;
     }
 
     /** {free horizontal travel, free vertical travel} in pixels, or null before layout. */
+    /**
+     * Distance the card may travel, measured against the screen rather than against the window.
+     *
+     * <p>The window is cut down to the card and moves with it, so the window size is no longer
+     * the space the card travels through. Using it would shrink the range every time the window
+     * moved.
+     */
     private static float[] freeRange(View decor, View area, float factor) {
-        int width = decor.getWidth();
-        int height = decor.getHeight();
+        android.util.DisplayMetrics metrics = decor.getContext().getResources()
+                .getDisplayMetrics();
+        int width = metrics.widthPixels;
+        // The card must stop above the navigation bar, otherwise the system draws over its bottom
+        // edge and the last key row is half covered.
+        // The drag handle hangs below the card, so the card has to stop a handle's height above
+        // the navigation bar or the handle ends up inside it and swallows the drag.
+        int bars = systemBarHeight(decor)
+                + Math.round(HANDLE_HEIGHT_DP * density(area));
+        int height = metrics.heightPixels - bars;
         int areaWidth = area.getWidth();
         int areaHeight = area.getHeight();
         if (width <= 0 || height <= 0 || areaWidth <= 0 || areaHeight <= 0) return null;
@@ -561,6 +814,123 @@ public final class FloatingKeyboardCompat {
                 Math.max(1f, width - areaWidth * factor),
                 Math.max(1f, height - areaHeight * factor),
         };
+    }
+
+    /**
+     * Height taken by the system bars, so the card and its handle stay clear of the navigation
+     * bar. The IME window does not fit the system bars, so its own insets report zero; the
+     * difference between the real display and the app-visible display is what is actually
+     * covered.
+     */
+    private static int systemBarHeight(View decor) {
+        if (floatingWindow == null) return 0;
+        android.view.WindowManager manager = floatingWindow.getWindowManager();
+        if (manager == null) return 0;
+        // Read the navigation bar inset itself. The difference between maximum and current window
+        // metrics is not the bar height for an IME window: it measured 92-98 px where the bar is
+        // really 126 px, which let the handle slide under the bar.
+        // Maximum metrics describe the whole display, so their insets are the real system bars.
+        // The IME window's own current metrics report no navigation bar at all.
+        int navBottom = manager.getMaximumWindowMetrics().getWindowInsets()
+                .getInsets(android.view.WindowInsets.Type.navigationBars()).bottom;
+        if (navBottom > 0) return navBottom;
+        int real = manager.getMaximumWindowMetrics().getBounds().height();
+        int usable = manager.getCurrentWindowMetrics().getBounds().height();
+        int difference = Math.max(0, real - usable);
+        if (difference > 0) return difference;
+        // The IME window reports the full height as its current metrics, so fall back to the frame
+        // the content is actually visible in.
+        android.graphics.Rect visible = new android.graphics.Rect();
+        decor.getWindowVisibleDisplayFrame(visible);
+        return Math.max(0, real - visible.bottom);
+    }
+
+    /**
+     * The card's visible top-left corner in window coordinates.
+     *
+     * <p>getLocationOnScreen includes the scale and the pivot, so this is where the card is
+     * actually drawn. The window's own screen position cancels out because both views are
+     * measured the same way.
+     */
+    private static int[] cardOffsetInWindow(View area) {
+        // Pure layout arithmetic, never a measurement of the live view tree. Reading positions
+        // back off the screen made each frame's window position depend on the previous frame's,
+        // which is what produced the jitter. The area is pinned to the content's top-start corner
+        // and scaled about its bottom centre, so the card's visible top-left is fully determined
+        // by the layout and the scale.
+        int width = area.getWidth();
+        int height = area.getHeight();
+        float factor = appliedScale > 0f ? appliedScale : 1f;
+        return new int[] {area.getLeft(), area.getTop()};
+    }
+
+    /**
+     * Difference between the content view's screen position and the window's LayoutParams.
+     *
+     * <p>Constant for a given window configuration, so it is safe to read from the attributes
+     * before they are updated.
+     */
+    private static int[] windowOriginShift(Window window,
+            android.view.WindowManager.LayoutParams attributes) {
+        // LayoutParams are relative to the available display frame, whose top is the status bar.
+        // Reading that inset is stable; comparing live view positions against the attributes was
+        // not, because those positions lag a frame behind while the window is moving.
+        int statusTop = 0;
+        if (window != null && window.getWindowManager() != null) {
+            statusTop = window.getWindowManager().getMaximumWindowMetrics().getWindowInsets()
+                    .getInsets(android.view.WindowInsets.Type.statusBars()).top;
+        }
+        return new int[] {0, statusTop};
+    }
+
+    /**
+     * Places the window so the scaled card lands where the fractions say.
+     *
+     * <p>The area sits at the window's top-left corner and is scaled about its bottom centre, so
+     * the card's visible box is inset from the window by the scale loss on each axis. Subtracting
+     * that inset is what turns a window position into a card position and back.
+     */
+    private static void moveWindow(float factor, float[] range, float fractionX, float fractionY,
+            View area) {
+        Window window = floatingWindow;
+        if (window == null || range == null) return;
+        int width = area.getWidth();
+        int height = area.getHeight();
+        if (width <= 0 || height <= 0) return;
+        // The card's offset inside the window is measured, not derived. Deriving it from the
+        // scale alone assumes the area sits at a particular place in its parent, and every time
+        // that assumption was wrong the window ended up taller or shorter than the card.
+        int[] offset = cardOffsetInWindow(area);
+        // WindowManager y is relative to the available display frame, which starts below the
+        // status bar, not to the physical screen. Measuring the content view against the current
+        // attributes gives that shift directly; treating y as a screen coordinate was what put
+        // the handle down inside the navigation bar.
+        android.view.WindowManager.LayoutParams current = window.getAttributes();
+        int[] origin = windowOriginShift(window, current);
+        int x = Math.round(fractionX * range[0]) - offset[0] - origin[0];
+        int y = Math.round(fractionY * range[1]) - offset[1] - origin[1];
+        // Clamp by real geometry rather than trusting the fractions. The card's visible box is
+        // the window position plus the measured offset, and the handle hangs below it. Whatever
+        // the fractions say, the handle must never end up inside the navigation bar, because the
+        // system takes those touches and the card can no longer be dragged back up.
+        android.util.DisplayMetrics metrics = area.getContext().getResources().getDisplayMetrics();
+        int bars = systemBarHeight(area);
+        int handleHeight = Math.round(HANDLE_HEIGHT_DP * density(area));
+        int cardWidth = Math.round(baseAreaWidth * factor);
+        int cardHeight = Math.round(baseAreaHeight * factor);
+        int maxY = metrics.heightPixels - bars - origin[1] - offset[1] - cardHeight - handleHeight;
+        int minY = -offset[1] - origin[1];
+        if (y > maxY) y = maxY;
+        if (y < minY) y = minY;
+        int maxX = metrics.widthPixels - offset[0] - cardWidth - origin[0];
+        int minX = -offset[0] - origin[0];
+        if (x > maxX) x = maxX;
+        if (x < minX) x = minX;
+        android.view.WindowManager.LayoutParams attributes = window.getAttributes();
+        if (attributes.x == x && attributes.y == y) return;
+        attributes.x = x;
+        attributes.y = y;
+        window.setAttributes(attributes);
     }
 
     private static void ensureHandle(View decor, View area, float factor) {
@@ -615,23 +985,29 @@ public final class FloatingKeyboardCompat {
         int cardWidth = Math.round(area.getWidth() * factor);
         int cardHeight = Math.round(area.getHeight() * factor);
         if (cardWidth <= 0 || cardHeight <= 0) return;
+        // getLocationOnScreen already includes the scale, so it reports the card's visible
+        // top-left corner, not the area's layout corner. The visible bottom is therefore that
+        // corner plus the scaled height, and the visible left is that corner as-is. Adding the
+        // unscaled height or the centring inset on top of this double-counts the scale loss and
+        // pushes the handle past the bottom of the window, where it is clipped away.
         int left = areaLocation[0] - hostLocation[0];
-        // Inside the card's bottom edge: the gutter below the key rows is reserved for it.
-        int top = areaLocation[1] - hostLocation[1] + cardHeight - handleHeight;
+        // Just below the card's visible bottom edge, in the strip the window reserves for it.
+        int top = areaLocation[1] - hostLocation[1] + cardHeight;
         FrameLayout.LayoutParams params =
                 handle.getLayoutParams() instanceof FrameLayout.LayoutParams
                         ? (FrameLayout.LayoutParams) handle.getLayoutParams()
                         : new FrameLayout.LayoutParams(cardWidth, handleHeight);
-        // Centre the bar in the gutter, not in the touch strip: the strip is taller than the
-        // gutter and a bar centred in it would ride up onto the key rows.
-        handle.setBarCenterFromBottom(area.getPaddingBottom() * factor / 2f);
+        handle.setBarCenterFromBottom(handleHeight / 2f);
         if (params.width == cardWidth && params.height == handleHeight
                 && params.leftMargin == left && params.topMargin == top) {
             return;
         }
-        params.width = cardWidth;
+        // A narrow pill, centred, so it does not swallow the whole bottom key row.
+        int pillWidth = Math.round(handleHeight * 3f);
+        params.width = pillWidth;
         params.height = handleHeight;
         params.gravity = android.view.Gravity.TOP | android.view.Gravity.LEFT;
+        left += (cardWidth - pillWidth) / 2;
         // Margins instead of translation: a laid out position keeps the view matrix identity, so
         // hit testing uses the same rectangle that is drawn.
         params.leftMargin = left;
@@ -801,8 +1177,8 @@ public final class FloatingKeyboardCompat {
         float[] range = freeRange(decor, area, factor);
         if (range != null) {
             Context context = area.getContext();
-            float fractionX = fractionFromTranslation(area, decor, factor, range, true);
-            float fractionY = fractionFromTranslation(area, decor, factor, range, false);
+            float fractionX = fractionFromWindow(area, decor, factor, range, true);
+            float fractionY = fractionFromWindow(area, decor, factor, range, false);
             preferences(context).edit()
                     .putFloat(KEY_SCALE, factor)
                     .putFloat(KEY_X_FRACTION + orientation(context), fractionX)
@@ -885,8 +1261,8 @@ public final class FloatingKeyboardCompat {
         if (!dragging) {
             dragDownRawX = screenX;
             dragDownRawY = screenY;
-            dragStartX = fractionFromTranslation(area, decor, factor, range, true);
-            dragStartY = fractionFromTranslation(area, decor, factor, range, false);
+            dragStartX = fractionFromWindow(area, decor, factor, range, true);
+            dragStartY = fractionFromWindow(area, decor, factor, range, false);
             dragging = true;
             if (finished) {
                 dragging = false;
@@ -896,8 +1272,7 @@ public final class FloatingKeyboardCompat {
 
         float fractionX = clamp01(dragStartX + (screenX - dragDownRawX) / range[0]);
         float fractionY = clamp01(dragStartY + (screenY - dragDownRawY) / range[1]);
-        area.setTranslationX(fractionX * range[0] - (1f - factor) * decor.getWidth() / 2f);
-        area.setTranslationY((fractionY - 1f) * range[1]);
+        moveWindow(factor, range, fractionX, fractionY, area);
         if (editOverlay != null && editOverlay.getParent() instanceof ViewGroup) {
             updateEditBounds((ViewGroup) editOverlay.getParent(), area);
         }
@@ -959,8 +1334,10 @@ public final class FloatingKeyboardCompat {
             scaleStartDistance = distance(screenX, screenY, scaleAnchorX, scaleAnchorY);
             if (scaleStartDistance < 1f) return;
             scaleStartFactor = factor;
-            scaleStartTx = area.getTranslationX();
-            scaleStartTy = area.getTranslationY();
+            android.view.WindowManager.LayoutParams start =
+                    floatingWindow == null ? null : floatingWindow.getAttributes();
+            scaleStartTx = start == null ? 0f : start.x;
+            scaleStartTy = start == null ? 0f : start.y;
             scaling = true;
             if (finished) {
                 scaling = false;
@@ -984,11 +1361,13 @@ public final class FloatingKeyboardCompat {
                 Math.min(MAX_SCALE, scaleStartFactor * moved / scaleStartDistance));
         // The anchored corner stays put, so growth is bounded by the room left towards the
         // dragged corner. Without this the card happily grows past the edge of the screen.
+        android.util.DisplayMetrics metrics = area.getContext().getResources()
+                .getDisplayMetrics();
         float roomX = (corner == 1 || corner == 2)
-                ? decor.getWidth() - scaleAnchorX
+                ? metrics.widthPixels - scaleAnchorX
                 : scaleAnchorX;
         float roomY = (corner == 2 || corner == 3)
-                ? decor.getHeight() - scaleAnchorY
+                ? metrics.heightPixels - scaleAnchorY
                 : scaleAnchorY;
         if (roomX > 0f && roomY > 0f) {
             float limit = Math.min(roomX / area.getWidth(), roomY / area.getHeight());
@@ -1001,8 +1380,16 @@ public final class FloatingKeyboardCompat {
         area.setScaleX(factor);
         area.setScaleY(factor);
         appliedScale = factor;
-        area.setTranslationX(scaleStartTx + (scaleAnchorOffX - pivotX) * shift);
-        area.setTranslationY(scaleStartTy + (scaleAnchorOffY - pivotY) * shift);
+        if (floatingWindow != null) {
+            // Size as well as position: leaving the window at its old size while the card shrinks
+            // leaves the surface shadow sitting in a large frame of its own, detached from the
+            // card.
+            narrowWindowToCard(floatingWindow, area);
+            android.view.WindowManager.LayoutParams attributes = floatingWindow.getAttributes();
+            attributes.x = Math.round(scaleStartTx + (scaleAnchorOffX - pivotX) * shift);
+            attributes.y = Math.round(scaleStartTy + (scaleAnchorOffY - pivotY) * shift);
+            floatingWindow.setAttributes(attributes);
+        }
         if (editOverlay != null && editOverlay.getParent() instanceof ViewGroup) {
             updateEditBounds((ViewGroup) editOverlay.getParent(), area);
         }
@@ -1075,8 +1462,8 @@ public final class FloatingKeyboardCompat {
                 // would jump the card by however long the press took to be recognised.
                 dragDownRawX = downRawX;
                 dragDownRawY = downRawY;
-                dragStartX = fractionFromTranslation(area, decor, factor, range, true);
-                dragStartY = fractionFromTranslation(area, decor, factor, range, false);
+                dragStartX = fractionFromWindow(area, decor, factor, range, true);
+                dragStartY = fractionFromWindow(area, decor, factor, range, false);
                 view.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS);
                 wakeIdle();
             }
@@ -1087,6 +1474,8 @@ public final class FloatingKeyboardCompat {
     public static boolean onHandleTouch(View view, MotionEvent event) {
         if (!(view.getParent() instanceof View)) return false;
         View decor = (View) view.getParent();
+        Log.i(TAG, "handleTouch act=" + event.getActionMasked() + " raw=" + event.getRawX()
+                + "," + event.getRawY());
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN: {
                 View area = findKeyboardArea(decor);
@@ -1137,9 +1526,7 @@ public final class FloatingKeyboardCompat {
                         dragStartX + (event.getRawX() - dragDownRawX) / range[0]);
                 float fractionY = clamp01(
                         dragStartY + (event.getRawY() - dragDownRawY) / range[1]);
-                area.setTranslationX(
-                        fractionX * range[0] - (1f - factor) * decor.getWidth() / 2f);
-                area.setTranslationY((fractionY - 1f) * range[1]);
+                moveWindow(factor, range, fractionX, fractionY, area);
                 moveHandle(decor, area);
                 return true;
             }
@@ -1171,8 +1558,8 @@ public final class FloatingKeyboardCompat {
         float factor = appliedScale > 0f ? appliedScale : scale(view.getContext());
         float[] range = freeRange(decor, area, factor);
         if (range == null) return;
-        float fractionX = fractionFromTranslation(area, decor, factor, range, true);
-        float fractionY = fractionFromTranslation(area, decor, factor, range, false);
+        float fractionX = fractionFromWindow(area, decor, factor, range, true);
+        float fractionY = fractionFromWindow(area, decor, factor, range, false);
         // Docking only applies when the card is brought back down from higher up. The card rests
         // at the bottom by default, so testing the released position alone would turn every
         // horizontal drag into a dock and make it impossible to move sideways.
@@ -1194,13 +1581,21 @@ public final class FloatingKeyboardCompat {
         decor.requestLayout();
     }
 
-    private static float fractionFromTranslation(
+    private static float fractionFromWindow(
             View area, View decor, float factor, float[] range, boolean horizontal) {
-        if (horizontal) {
-            return clamp01((area.getTranslationX() + (1f - factor) * decor.getWidth() / 2f)
-                    / range[0]);
+        Window window = floatingWindow;
+        if (window == null) {
+            return horizontal ? xFraction(area.getContext()) : yFraction(area.getContext());
         }
-        return clamp01(area.getTranslationY() / range[1] + 1f);
+        android.view.WindowManager.LayoutParams attributes = window.getAttributes();
+        // Same measured offset as moveWindow, so the fraction stored on release describes the
+        // position the card was actually released at.
+        int[] offset = cardOffsetInWindow(area);
+        int[] origin = windowOriginShift(window, attributes);
+        if (horizontal) {
+            return clamp01((attributes.x + offset[0] + origin[0]) / range[0]);
+        }
+        return clamp01((attributes.y + offset[1] + origin[1]) / range[1]);
     }
 
     private static float xFraction(Context context) {
@@ -1235,6 +1630,26 @@ public final class FloatingKeyboardCompat {
 
     private static View findKeyboardArea(View decor) {
         String packageName = decor.getContext().getPackageName();
+        // parentPanel is the stock root container, a direct child of the window's content frame.
+        // keyboard_area only looks like the right target but lives inside InputView, whose
+        // onLayout repositions and remeasures it on every pass, undoing both the pinned size and
+        // the scale. Scaling the root container is what actually sticks.
+        // parentPanel comes from the IME library, so looking it up under the app's package name
+        // returns nothing. Match the entry name on the content frame's children instead.
+        View content = decor.findViewById(android.R.id.content);
+        if (content instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) content;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                View child = group.getChildAt(i);
+                try {
+                    if ("parentPanel".equals(child.getResources()
+                            .getResourceEntryName(child.getId()))) {
+                        return child;
+                    }
+                } catch (Exception ignored) {
+                }
+            }
+        }
         int id = decor.getResources().getIdentifier("keyboard_area", "id", packageName);
         if (id == 0) {
             Log.w(TAG, "id keyboard_area not found in " + packageName);
