@@ -43,7 +43,7 @@ public final class FloatingKeyboardCompat {
 
     private static final int TABLET_SMALLEST_WIDTH_DP = 600;
     private static final float DEFAULT_SCALE = 0.72f;
-    private static final float MIN_SCALE = 0.40f;
+    private static final float MIN_SCALE = 0.50f;
     private static final float MAX_SCALE = 0.92f;
 
     /** Touch strip of the drag handle, measured up from the card's bottom edge. */
@@ -722,7 +722,9 @@ public final class FloatingKeyboardCompat {
         // to stay clamped inside the strip. At the largest scale the raw offset put it against the
         // strip's top edge, where it was neither visible nor easy to grab; that left the card with
         // no usable way back. Keeping a margin here makes the handle reachable at every scale.
-        float margin = 12f * density(area);
+        // Half the bar plus a hair: the bar is 6 dp tall and does not scale, so clamping further
+        // than that pulled the bar away from the card's bottom band at small sizes.
+        float margin = 4f * density(area);
         float barCenter = area.getPaddingBottom() * factor / 2f;
         barCenter = Math.max(margin, Math.min(handleHeight - margin, barCenter));
         handle.setBarCenterFromBottom(barCenter);
