@@ -25,7 +25,7 @@ import android.view.View;
 final class FloatingCardShadow extends View {
 
     /** How far the band reaches outside the card, in dp. Must exceed the blur radius plus offset. */
-    static final float INSET_DP = 8f;
+    static final float INSET_DP = 6f;
 
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Path ring = new Path();
@@ -40,7 +40,7 @@ final class FloatingCardShadow extends View {
         // transparent colour would drop the shadow with it.
         paint.setColor(0x01000000);
         ring.setFillType(Path.FillType.EVEN_ODD);
-        paint.setShadowLayer(5f * density, 0f, 2f * density, 0x1A000000);
+        paint.setShadowLayer(4f * density, 0f, 1f * density, 0x1A000000);
         setWillNotDraw(false);
         setClickable(false);
         setFocusable(false);

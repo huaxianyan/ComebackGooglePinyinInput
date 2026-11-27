@@ -94,6 +94,13 @@ public final class FloatingKeyboardCompat {
      * The card's own shadow ring. It is a child of the card, so the card's transform carries it.
      */
     private static FloatingCardShadow cardShadow;
+    /**
+     * Re-reads the card's geometry before every frame. Insets only arrive on their own schedule, so
+     * a corner drag changed the card's scale while the shadow kept the rectangle from the last
+     * insets pass and only caught up on release.
+     */
+    private static android.view.ViewTreeObserver.OnPreDrawListener cardShadowSync;
+    private static View cardShadowArea;
     /** The view the scale was applied to; the service rebuilds its views, and a stale value here
      *  would skip scaling the replacement. */
     private static View scaledView;
@@ -616,6 +623,13 @@ public final class FloatingKeyboardCompat {
     }
 
     private static void removeCardShadow() {
+        if (cardShadowSync != null && cardShadow != null
+                && cardShadow.getParent() instanceof View) {
+            ((View) cardShadow.getParent()).getViewTreeObserver()
+                    .removeOnPreDrawListener(cardShadowSync);
+        }
+        cardShadowSync = null;
+        cardShadowArea = null;
         if (cardShadow == null) return;
         ViewGroup parent = cardShadow.getParent() instanceof ViewGroup
                 ? (ViewGroup) cardShadow.getParent()
@@ -628,13 +642,14 @@ public final class FloatingKeyboardCompat {
      * Keeps the shadow band behind the card, at a fixed strength whatever the card's size.
      *
      * <p>The band is painted by an unscaled overlay that is told the card's current on-screen
-     * rectangle each pass. Mirroring the card's scale onto a shadow view would scale the blur with
-     * it, so the shadow would look heavy on a large card and flat on a small one. A child of the
-     * card cannot be used either: children take part in the card's measure pass, and since the band
-     * is sized from the card, each round made both grow without bound.
+     * rectangle. Mirroring the card's scale onto a shadow view would scale the blur with it, so the
+     * shadow would look heavy on a large card and flat on a small one. A child of the card cannot be
+     * used either: children take part in the card's measure pass, and since the band is sized from
+     * the card, each round made both grow without bound.
      *
-     * <p>Only the rectangle is updated here, never the overlay's layout, so no relayout is
-     * involved and the band lands in the same frame as the card.
+     * <p>The rectangle is refreshed from a pre-draw listener rather than only from the insets pass:
+     * a corner drag changes the card's scale directly, without new insets, so the shadow would
+     * otherwise keep a stale rectangle for the whole gesture and only adapt on release.
      */
     private static void ensureCardShadow(View area, float factor) {
         if (!(area.getParent() instanceof ViewGroup)) return;
@@ -645,10 +660,30 @@ public final class FloatingKeyboardCompat {
             host.addView(cardShadow, 0, new FrameLayout.LayoutParams(
                     FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
             cardShadow.setTranslationZ(-1f);
+            cardShadowArea = area;
+            cardShadowSync = new android.view.ViewTreeObserver.OnPreDrawListener() {
+                @Override
+                public boolean onPreDraw() {
+                    syncCardShadow();
+                    return true;
+                }
+            };
+            host.getViewTreeObserver().addOnPreDrawListener(cardShadowSync);
         }
-        float applied = factor > 0f ? factor : 1f;
-        float width = area.getWidth() * applied;
-        float height = area.getHeight() * applied;
+        syncCardShadow();
+    }
+
+    /** Places the band on the card's current rectangle. Safe to call every frame. */
+    private static void syncCardShadow() {
+        View area = cardShadowArea;
+        if (cardShadow == null || area == null || cardShadow.getParent() == null) return;
+        float scaleX = Math.abs(area.getScaleX());
+        float scaleY = Math.abs(area.getScaleY());
+        if (scaleX <= 0f || scaleY <= 0f) return;
+        // The card's own scale, not the stored preference: during a corner drag the preference is
+        // only written on release, so reading it would lag a whole gesture behind.
+        float width = area.getWidth() * scaleX;
+        float height = area.getHeight() * scaleY;
         if (width <= 0f || height <= 0f) return;
         int[] areaLocation = new int[2];
         area.getLocationOnScreen(areaLocation);
