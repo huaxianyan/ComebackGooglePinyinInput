@@ -77,14 +77,6 @@
     move-result v0
 
     :resolved_height
-    # 悬浮卡片不在屏幕底部，ime-navigation-frame 占位高度置 0，否则会压小 keyboard_area 裁掉底行。
-    invoke-virtual {p1}, Landroid/view/View;->getContext()Landroid/content/Context;
-    move-result-object v2
-    invoke-static {v2}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->isEnabled(Landroid/content/Context;)Z
-    move-result v2
-    if-eqz v2, :ime_nav_keep_height
-    const/4 v0, 0x0
-    :ime_nav_keep_height
     if-lez v0, :done
 
     # Keep all owned geometry inside InputView. The native keyboard area keeps

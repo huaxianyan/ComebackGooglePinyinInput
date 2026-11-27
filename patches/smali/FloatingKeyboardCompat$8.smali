@@ -34,7 +34,7 @@
         }
     .end annotation
 
-    .line 1451
+    .line 1072
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat$8;->val$view:Landroid/view/View;
 
     iput-object p2, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat$8;->val$decor:Landroid/view/View;
@@ -51,12 +51,12 @@
 .method public run()V
     .locals 6
 
-    .line 1454
+    .line 1075
     const/4 v0, 0x0
 
     invoke-static {v0}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$1902(Ljava/lang/Runnable;)Ljava/lang/Runnable;
 
-    .line 1455
+    .line 1076
     invoke-static {}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$2000()Z
 
     move-result v0
@@ -77,13 +77,13 @@
 
     goto :goto_1
 
-    .line 1456
+    .line 1077
     :cond_0
     const/4 v0, 0x0
 
     invoke-static {v0}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$2002(Z)Z
 
-    .line 1457
+    .line 1078
     invoke-static {}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$2100()F
 
     move-result v1
@@ -111,7 +111,7 @@
 
     move-result v1
 
-    .line 1458
+    .line 1079
     :goto_0
     iget-object v2, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat$8;->val$decor:Landroid/view/View;
 
@@ -121,32 +121,32 @@
 
     move-result-object v2
 
-    .line 1459
+    .line 1080
     if-nez v2, :cond_2
 
     return-void
 
-    .line 1460
+    .line 1081
     :cond_2
     const/4 v3, 0x1
 
     invoke-static {v3}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$402(Z)Z
 
-    .line 1463
+    .line 1084
     invoke-static {}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$2400()F
 
     move-result v4
 
     invoke-static {v4}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$2302(F)F
 
-    .line 1464
+    .line 1085
     invoke-static {}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$2600()F
 
     move-result v4
 
     invoke-static {v4}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$2502(F)F
 
-    .line 1465
+    .line 1086
     iget-object v4, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat$8;->val$area:Landroid/view/View;
 
     iget-object v5, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat$8;->val$decor:Landroid/view/View;
@@ -157,7 +157,7 @@
 
     invoke-static {v3}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$2702(F)F
 
-    .line 1466
+    .line 1087
     iget-object v3, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat$8;->val$area:Landroid/view/View;
 
     iget-object v4, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat$8;->val$decor:Landroid/view/View;
@@ -168,18 +168,18 @@
 
     invoke-static {v1}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$2902(F)F
 
-    .line 1467
+    .line 1088
     iget-object v1, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat$8;->val$view:Landroid/view/View;
 
     invoke-virtual {v1, v0}, Landroid/view/View;->performHapticFeedback(I)Z
 
-    .line 1468
+    .line 1089
     invoke-static {}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$1100()V
 
-    .line 1469
+    .line 1090
     return-void
 
-    .line 1455
+    .line 1076
     :cond_3
     :goto_1
     return-void

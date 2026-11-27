@@ -21,7 +21,7 @@
 .method constructor <init>()V
     .locals 0
 
-    .line 1138
+    .line 770
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
     return-void
@@ -32,17 +32,17 @@
 .method public onEditDone()V
     .locals 2
 
-    .line 1156
+    .line 788
     invoke-static {}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$700()Landroid/view/View;
 
     move-result-object v0
 
-    .line 1157
+    .line 789
     if-nez v0, :cond_0
 
     return-void
 
-    .line 1158
+    .line 790
     :cond_0
     invoke-virtual {v0}, Landroid/view/View;->getRootView()Landroid/view/View;
 
@@ -50,36 +50,36 @@
 
     invoke-static {v1, v0}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$1800(Landroid/view/View;Landroid/view/View;)V
 
-    .line 1159
+    .line 791
     return-void
 .end method
 
 .method public onEditDrag(FFZ)V
     .locals 0
 
-    .line 1141
+    .line 773
     invoke-static {p1, p2, p3}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$1500(FFZ)V
 
-    .line 1142
+    .line 774
     return-void
 .end method
 
 .method public onEditReset()V
     .locals 0
 
-    .line 1151
+    .line 783
     invoke-static {}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$1700()V
 
-    .line 1152
+    .line 784
     return-void
 .end method
 
 .method public onEditScale(IFFZ)V
     .locals 0
 
-    .line 1146
+    .line 778
     invoke-static {p1, p2, p3, p4}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$1600(IFFZ)V
 
-    .line 1147
+    .line 779
     return-void
 .end method
