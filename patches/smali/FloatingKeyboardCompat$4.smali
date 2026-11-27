@@ -32,7 +32,7 @@
         }
     .end annotation
 
-    .line 354
+    .line 376
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat$4;->val$decor:Landroid/view/View;
 
     iput-boolean p2, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat$4;->val$hidden:Z
@@ -47,24 +47,24 @@
 .method public run()V
     .locals 2
 
-    .line 358
+    .line 380
     :try_start_0
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat$4;->val$decor:Landroid/view/View;
 
     iget-boolean v1, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat$4;->val$hidden:Z
 
-    invoke-static {v0, v1}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$1000(Landroid/view/View;Z)V
+    invoke-static {v0, v1}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$1100(Landroid/view/View;Z)V
     :try_end_0
     .catchall {:try_start_0 .. :try_end_0} :catchall_0
 
-    .line 361
+    .line 383
     goto :goto_0
 
-    .line 359
+    .line 381
     :catchall_0
     move-exception v0
 
-    .line 362
+    .line 384
     :goto_0
     return-void
 .end method

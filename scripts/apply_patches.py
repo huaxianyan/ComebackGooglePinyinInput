@@ -2729,11 +2729,25 @@ def apply(
         "    invoke-super {p0, p1}, Labp;->onFinishInputView(Z)V\n\n"
         "    .line 98",
         "    .line 96\n"
+        # A keyboard being put away cannot stay in edit mode: the card it was drawn for is about to
+        # be rebuilt, and a theme change is reached through the theme picker with the keyboard
+        # down. The window-visibility callback never reaches the overlay in this build.
+        "    invoke-static {}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;"
+        "->onKeyboardHidden()V\n\n"
         "    invoke-static {p0}, Lcom/google/android/apps/inputmethod/libs/framework/core/"
         "ClipboardCandidateCompat;->stop(Lcom/google/android/apps/inputmethod/libs/"
         "framework/core/GoogleInputMethodService;)V\n\n"
         "    invoke-super {p0, p1}, Labp;->onFinishInputView(Z)V\n\n"
         "    .line 98",
+    )
+    # Rebuilding the input view is what a theme change does underneath. The card being edited is
+    # replaced there, so edit mode ends rather than being carried onto a view that no longer exists.
+    replace_once(
+        google_ime,
+        ".method public final c()V\n    .locals 3\n\n    .prologue\n",
+        ".method public final c()V\n    .locals 3\n\n    .prologue\n\n"
+        "    invoke-static {}, Lcom/google/android/inputmethod/pinyin/"
+        "FloatingKeyboardCompat;->onCardRebuilt()V\n",
     )
 
     input_bundle = decoded / (

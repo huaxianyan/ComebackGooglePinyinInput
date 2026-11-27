@@ -103,10 +103,11 @@ public final class FloatingKeyboardCompat {
     private static View cardShadowArea;
     /** The view the scale was applied to; the service rebuilds its views, and a stale value here
      *  would skip scaling the replacement. */
-    private static View scaledView;
-    private static final Rect lastRegion = new Rect();
+    private static View scaledView;    private static final Rect lastRegion = new Rect();
 
     private static FloatingKeyboardHandle handle;
+    /** Area whose function layer was last sampled for the handle colour. */
+    private static View handleColorSource;
     private static FloatingKeyboardEdit editOverlay;
     /** True while the card is in edit mode: keys frozen, whole card draggable. */
     private static boolean editing;
@@ -289,10 +290,31 @@ public final class FloatingKeyboardCompat {
         decor.post(new Runnable() {
             @Override
             public void run() {
-                if (!isEnabled(decor.getContext())) return;
+                if (!isEnabled(decor.getContext())) {
+                    dropFloatingChrome();
+                    return;
+                }
                 ensureHandle(decor, area, factor);
             }
         });
+    }
+
+    /**
+     * Takes down everything floating-only: edit overlay, handle, idle probe.
+     *
+     * <p>Edit mode belongs to the floating card, so switching floating off ends it. The insets
+     * path already goes through {@link #resetScale}, but a layout pass that gives up early
+     * would otherwise leave an edit overlay and a handle behind.
+     */
+    private static void dropFloatingChrome() {
+        editing = false;
+        dragging = false;
+        scaling = false;
+        armingEdit = false;
+        idleHandler.removeCallbacks(enterEditRunnable);
+        removeEditOverlay();
+        removeHandle();
+        removeIdleProbe();
     }
 
     /** Puts everything back, otherwise the docked insets would clip a card or a stray handle. */
@@ -609,6 +631,121 @@ public final class FloatingKeyboardCompat {
         attachIdleProbe(host, area);
         scheduleIdleFade(area);
         updateHandleBounds(host, area, handleHeight);
+        // The function keys can be unsized on the first pass, in which case the grey stays and the
+        // sample is retried on the next layout instead of caching a miss.
+        if (handle != null && handleColorSource != area) {
+            int layerColor = functionLayerColor(area);
+            if (layerColor != 0) {
+                handle.setBarColor(layerColor);
+                handleColorSource = area;
+            }
+        }
+    }
+
+    /**
+     * Colour of the function layer: the row the hide-keyboard and simplified/traditional keys sit
+     * on.
+     *
+     * <p>The handle belongs to that layer, not to the main key grid; the space key in particular is
+     * painted from the keyboard palette and does not match. The keys are drawn by the keyboard
+     * canvas rather than carrying a background of their own, so the colour is read back from a
+     * rendered copy of the key, away from its centred glyph.
+     */
+    private static int functionLayerColor(View area) {
+        // The function keys do not live under the keyboard view, and the keys themselves carry no
+        // background of their own: their colour is whatever the function row paints underneath.
+        // The colour is therefore read from the card's rendered pixels at the key's position.
+        int[] ids = {0x7f0f0002, 0x7f0f0005, 0x7f0f004f, 0x7f0f0169,
+                0x7f0f02b7, 0x7f0f0276, 0x7f0f022f};
+        View root = area.getRootView();
+        for (int id : ids) {
+            View key = root == null ? null : root.findViewById(id);
+            if (key == null || !key.isShown()) continue;
+            // An empty row is the usual state of the access points bar; the next candidate still
+            // describes the same layer.
+            if (key.getWidth() <= 0 || key.getHeight() <= 0) continue;
+            int color = functionRowInk(area, key);
+            if (color != 0) return color;
+        }
+        return 0;
+    }
+
+    /**
+     * Ink colour of the function row: the colour of the labels and arrows the hide-keyboard and
+     * simplified/traditional keys are drawn with.
+     *
+     * <p>Their fill is a band behind the whole row and sits too close to the card to read as a
+     * separate object, so the handle takes the ink instead. The row is drawn on the keyboard canvas
+     * rather than by views of its own, so the colour is read back from the card's rendered pixels:
+     * the band's dominant colour is its fill, and the sample furthest from it is the ink.
+     */
+    private static int functionRowInk(View area, View band) {
+        int width = area.getWidth();
+        int height = area.getHeight();
+        float scale = area.getScaleX();
+        if (width <= 0 || height <= 0 || scale <= 0f) return 0;
+        try {
+            int[] areaLocation = new int[2];
+            int[] bandLocation = new int[2];
+            area.getLocationOnScreen(areaLocation);
+            band.getLocationOnScreen(bandLocation);
+            // Window coordinates are scaled, the bitmap is not.
+            int left = Math.round((bandLocation[0] - areaLocation[0]) / scale);
+            int top = Math.round((bandLocation[1] - areaLocation[1]) / scale);
+            int bandWidth = band.getWidth();
+            int bandHeight = band.getHeight();
+
+            android.graphics.Bitmap bitmap = android.graphics.Bitmap.createBitmap(
+                    width, height, android.graphics.Bitmap.Config.ARGB_8888);
+            area.draw(new android.graphics.Canvas(bitmap));
+            int[] samples = new int[64];
+            int count = 0;
+            for (int row = 1; row <= 4 && count < samples.length; row++) {
+                int y = top + bandHeight * row / 5;
+                if (y < 0 || y >= height) continue;
+                for (int column = 1; column <= 16 && count < samples.length; column++) {
+                    int x = left + bandWidth * column / 17;
+                    if (x < 0 || x >= width) continue;
+                    samples[count++] = bitmap.getPixel(x, y);
+                }
+            }
+            bitmap.recycle();
+            if (count == 0) return 0;
+
+            int fill = 0;
+            int fillCount = 0;
+            for (int i = 0; i < count; i++) {
+                int matches = 0;
+                for (int j = 0; j < count; j++) {
+                    if (samples[j] == samples[i]) matches++;
+                }
+                if (matches > fillCount) {
+                    fillCount = matches;
+                    fill = samples[i];
+                }
+            }
+
+            int ink = 0;
+            int inkDistance = 0;
+            for (int i = 0; i < count; i++) {
+                int distance = distanceSquared(samples[i], fill);
+                if (distance > inkDistance) {
+                    inkDistance = distance;
+                    ink = samples[i];
+                }
+            }
+            // Nothing on the row stands out, so there is no ink to borrow.
+            return inkDistance < 1600 ? 0 : ink;
+        } catch (Throwable ignored) {
+            return 0;
+        }
+    }
+
+    private static int distanceSquared(int first, int second) {
+        int red = android.graphics.Color.red(first) - android.graphics.Color.red(second);
+        int green = android.graphics.Color.green(first) - android.graphics.Color.green(second);
+        int blue = android.graphics.Color.blue(first) - android.graphics.Color.blue(second);
+        return red * red + green * green + blue * blue;
     }
 
     /**
@@ -758,6 +895,8 @@ public final class FloatingKeyboardCompat {
                 : null;
         if (parent != null) parent.removeView(handle);
         handle = null;
+        // A fresh handle has to sample the theme again.
+        handleColorSource = null;
     }
 
     private static final Runnable enterEditRunnable = new Runnable() {
@@ -895,14 +1034,52 @@ public final class FloatingKeyboardCompat {
         area.invalidate();
     }
 
+    /**
+     * The keyboard window went away, so edit mode has to end with it.
+     *
+     * <p>A theme change is reached through the theme picker, which hides the keyboard first.
+     */
+    public static void onKeyboardHidden() {
+        leaveEditMode(true);
+    }
+
+    /**
+     * The input view is being rebuilt, which is what a theme change does underneath.
+     *
+     * <p>Nothing survives a rebuild: the card is a new view at the docked position, so the geometry
+     * taken while editing belongs to a view that no longer exists. The previous position is
+     * therefore restored from preferences instead of being written from the new view.
+     */
+    public static void onCardRebuilt() {
+        leaveEditMode(false);
+    }
+
+    private static void leaveEditMode(boolean persistGeometry) {
+        if (!editing) return;
+        View area = idleArea;
+        View decor = area != null ? area.getRootView()
+                : editOverlay != null ? editOverlay.getRootView() : null;
+        if (area == null && decor != null) area = findKeyboardArea(decor);
+        if (area == null || decor == null) {
+            editing = false;
+            removeEditOverlay();
+            return;
+        }
+        exitEditMode(decor, area, persistGeometry);
+    }
+
     private static void exitEditMode(View decor, View area) {
+        exitEditMode(decor, area, true);
+    }
+
+    private static void exitEditMode(View decor, View area, boolean persistGeometry) {
         if (!editing) return;
         editing = false;
         dragging = false;
         scaling = false;
         float factor = appliedScale > 0f ? appliedScale : scale(area.getContext());
         float[] range = freeRange(decor, area, factor);
-        if (range != null) {
+        if (persistGeometry && range != null) {
             Context context = area.getContext();
             float fractionX = fractionFromTranslation(area, decor, factor, range, true);
             float fractionY = fractionFromTranslation(area, decor, factor, range, false);

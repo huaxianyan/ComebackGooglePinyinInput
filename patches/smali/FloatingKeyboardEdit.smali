@@ -24,6 +24,8 @@
 
 .field private static final MOVE_DP:F = 42.0f
 
+.field private static final RESET_ICON:I = 0x7f020182
+
 .field private static final STROKE_DP:F = 2.0f
 
 .field private static final ZONE_DP:F = 48.0f
@@ -52,15 +54,17 @@
 
 .field private final rect:Landroid/graphics/RectF;
 
+.field private final resetIcon:Landroid/graphics/drawable/Drawable;
+
 
 # direct methods
 .method public constructor <init>(Landroid/content/Context;I)V
     .locals 3
 
-    .line 62
+    .line 68
     invoke-direct {p0, p1}, Landroid/view/View;-><init>(Landroid/content/Context;)V
 
-    .line 47
+    .line 51
     new-instance v0, Landroid/graphics/Paint;
 
     const/4 v1, 0x1
@@ -69,74 +73,93 @@
 
     iput-object v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->fill:Landroid/graphics/Paint;
 
-    .line 48
+    .line 52
     new-instance v0, Landroid/graphics/Paint;
 
     invoke-direct {v0, v1}, Landroid/graphics/Paint;-><init>(I)V
 
     iput-object v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->line:Landroid/graphics/Paint;
 
-    .line 49
+    .line 53
     new-instance v0, Landroid/graphics/Paint;
 
     invoke-direct {v0, v1}, Landroid/graphics/Paint;-><init>(I)V
 
     iput-object v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->glyph:Landroid/graphics/Paint;
 
-    .line 50
+    .line 54
     new-instance v0, Landroid/graphics/Path;
 
     invoke-direct {v0}, Landroid/graphics/Path;-><init>()V
 
     iput-object v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->path:Landroid/graphics/Path;
 
-    .line 51
+    .line 55
     new-instance v0, Landroid/graphics/RectF;
 
     invoke-direct {v0}, Landroid/graphics/RectF;-><init>()V
 
     iput-object v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->rect:Landroid/graphics/RectF;
 
-    .line 58
+    .line 64
     const/4 v0, -0x1
 
     iput v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->active:I
 
-    .line 63
+    .line 69
     invoke-virtual {p1}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
 
-    move-result-object p1
+    move-result-object v0
 
-    invoke-virtual {p1}, Landroid/content/res/Resources;->getDisplayMetrics()Landroid/util/DisplayMetrics;
+    invoke-virtual {v0}, Landroid/content/res/Resources;->getDisplayMetrics()Landroid/util/DisplayMetrics;
 
-    move-result-object p1
+    move-result-object v0
 
-    iget p1, p1, Landroid/util/DisplayMetrics;->density:F
+    iget v0, v0, Landroid/util/DisplayMetrics;->density:F
 
-    iput p1, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->density:F
+    iput v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->density:F
 
-    .line 64
+    .line 70
     iput p2, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->accent:I
 
-    .line 65
-    const p1, 0xffffff
+    .line 71
+    const v0, 0xffffff
 
-    and-int/2addr p1, p2
+    and-int/2addr v0, p2
 
-    const/high16 v0, 0x21000000
+    const/high16 v2, 0x21000000
 
-    or-int/2addr p1, v0
+    or-int/2addr v0, v2
 
-    iput p1, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->accentSoft:I
+    iput v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->accentSoft:I
 
-    .line 67
+    .line 72
+    const v0, 0x7f020182
+
+    invoke-static {p1, v0}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->stockIcon(Landroid/content/Context;I)Landroid/graphics/drawable/Drawable;
+
+    move-result-object p1
+
+    iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->resetIcon:Landroid/graphics/drawable/Drawable;
+
+    .line 73
+    iget-object p1, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->resetIcon:Landroid/graphics/drawable/Drawable;
+
+    if-eqz p1, :cond_0
+
+    iget-object p1, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->resetIcon:Landroid/graphics/drawable/Drawable;
+
+    invoke-virtual {p1, p2}, Landroid/graphics/drawable/Drawable;->setTint(I)V
+
+    .line 75
+    :cond_0
     iget-object p1, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->line:Landroid/graphics/Paint;
 
     sget-object v0, Landroid/graphics/Paint$Style;->STROKE:Landroid/graphics/Paint$Style;
 
     invoke-virtual {p1, v0}, Landroid/graphics/Paint;->setStyle(Landroid/graphics/Paint$Style;)V
 
-    .line 68
+    .line 76
     iget-object p1, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->line:Landroid/graphics/Paint;
 
     iget v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->density:F
@@ -147,19 +170,19 @@
 
     invoke-virtual {p1, v0}, Landroid/graphics/Paint;->setStrokeWidth(F)V
 
-    .line 69
+    .line 77
     iget-object p1, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->line:Landroid/graphics/Paint;
 
     invoke-virtual {p1, p2}, Landroid/graphics/Paint;->setColor(I)V
 
-    .line 71
+    .line 79
     iget-object p1, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->glyph:Landroid/graphics/Paint;
 
     sget-object v0, Landroid/graphics/Paint$Style;->STROKE:Landroid/graphics/Paint$Style;
 
     invoke-virtual {p1, v0}, Landroid/graphics/Paint;->setStyle(Landroid/graphics/Paint$Style;)V
 
-    .line 72
+    .line 80
     iget-object p1, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->glyph:Landroid/graphics/Paint;
 
     iget v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->density:F
@@ -168,55 +191,55 @@
 
     invoke-virtual {p1, v0}, Landroid/graphics/Paint;->setStrokeWidth(F)V
 
-    .line 73
+    .line 81
     iget-object p1, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->glyph:Landroid/graphics/Paint;
 
     sget-object v0, Landroid/graphics/Paint$Cap;->ROUND:Landroid/graphics/Paint$Cap;
 
     invoke-virtual {p1, v0}, Landroid/graphics/Paint;->setStrokeCap(Landroid/graphics/Paint$Cap;)V
 
-    .line 74
+    .line 82
     iget-object p1, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->glyph:Landroid/graphics/Paint;
 
     sget-object v0, Landroid/graphics/Paint$Join;->ROUND:Landroid/graphics/Paint$Join;
 
     invoke-virtual {p1, v0}, Landroid/graphics/Paint;->setStrokeJoin(Landroid/graphics/Paint$Join;)V
 
-    .line 75
+    .line 83
     iget-object p1, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->glyph:Landroid/graphics/Paint;
 
     invoke-virtual {p1, p2}, Landroid/graphics/Paint;->setColor(I)V
 
-    .line 77
+    .line 85
     invoke-virtual {p0, v1}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->setClickable(Z)V
 
-    .line 78
+    .line 86
     const/4 p1, 0x0
 
     invoke-virtual {p0, p1}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->setFocusable(Z)V
 
-    .line 79
+    .line 87
     return-void
 .end method
 
 .method private cornerCenters()[[F
     .locals 9
 
-    .line 132
+    .line 140
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->getWidth()I
 
     move-result v0
 
     int-to-float v0, v0
 
-    .line 133
+    .line 141
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->getHeight()I
 
     move-result v1
 
     int-to-float v1, v1
 
-    .line 134
+    .line 142
     const/4 v2, 0x2
 
     new-array v3, v2, [F
@@ -273,7 +296,7 @@
 .method private static darken(I)I
     .locals 3
 
-    .line 235
+    .line 265
     shr-int/lit8 v0, p0, 0x10
 
     and-int/lit16 v0, v0, 0xff
@@ -286,7 +309,7 @@
 
     float-to-int v0, v0
 
-    .line 236
+    .line 266
     shr-int/lit8 v2, p0, 0x8
 
     and-int/lit16 v2, v2, 0xff
@@ -297,7 +320,7 @@
 
     float-to-int v2, v2
 
-    .line 237
+    .line 267
     and-int/lit16 p0, p0, 0xff
 
     int-to-float p0, p0
@@ -306,7 +329,7 @@
 
     float-to-int p0, p0
 
-    .line 238
+    .line 268
     const/high16 v1, -0x1000000
 
     shl-int/lit8 v0, v0, 0x10
@@ -325,13 +348,13 @@
 .method private static distance(FFFF)F
     .locals 0
 
-    .line 332
+    .line 362
     sub-float/2addr p0, p2
 
-    .line 333
+    .line 363
     sub-float/2addr p1, p3
 
-    .line 334
+    .line 364
     mul-float p0, p0, p0
 
     mul-float p1, p1, p1
@@ -352,28 +375,28 @@
 .method private drawCorners(Landroid/graphics/Canvas;)V
     .locals 10
 
-    .line 138
+    .line 146
     const/high16 v0, 0x41500000    # 13.0f
 
     iget v1, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->density:F
 
     mul-float v3, v1, v0
 
-    .line 139
+    .line 147
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->getWidth()I
 
     move-result v0
 
     int-to-float v0, v0
 
-    .line 140
+    .line 148
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->getHeight()I
 
     move-result v1
 
     int-to-float v1, v1
 
-    .line 141
+    .line 149
     iget-object v2, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->line:Landroid/graphics/Paint;
 
     const/high16 v4, 0x40600000    # 3.5f
@@ -384,14 +407,14 @@
 
     invoke-virtual {v2, v5}, Landroid/graphics/Paint;->setStrokeWidth(F)V
 
-    .line 142
+    .line 150
     iget-object v2, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->line:Landroid/graphics/Paint;
 
     sget-object v4, Landroid/graphics/Paint$Cap;->BUTT:Landroid/graphics/Paint$Cap;
 
     invoke-virtual {v2, v4}, Landroid/graphics/Paint;->setStrokeCap(Landroid/graphics/Paint$Cap;)V
 
-    .line 144
+    .line 152
     const/4 v6, 0x0
 
     iget-object v7, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->line:Landroid/graphics/Paint;
@@ -406,7 +429,7 @@
 
     invoke-virtual/range {v2 .. v7}, Landroid/graphics/Canvas;->drawLine(FFFFLandroid/graphics/Paint;)V
 
-    .line 145
+    .line 153
     iget-object v7, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->line:Landroid/graphics/Paint;
 
     move v5, v4
@@ -415,7 +438,7 @@
 
     invoke-virtual/range {v2 .. v7}, Landroid/graphics/Canvas;->drawLine(FFFFLandroid/graphics/Paint;)V
 
-    .line 147
+    .line 155
     move v3, v5
 
     sub-float v5, v0, v3
@@ -430,7 +453,7 @@
 
     invoke-virtual/range {v4 .. v9}, Landroid/graphics/Canvas;->drawLine(FFFFLandroid/graphics/Paint;)V
 
-    .line 148
+    .line 156
     move v0, v5
 
     move v5, v7
@@ -445,7 +468,7 @@
 
     invoke-virtual/range {v2 .. v7}, Landroid/graphics/Canvas;->drawLine(FFFFLandroid/graphics/Paint;)V
 
-    .line 150
+    .line 158
     move v3, v6
 
     sub-float v6, v1, v3
@@ -460,7 +483,7 @@
 
     invoke-virtual/range {v4 .. v9}, Landroid/graphics/Canvas;->drawLine(FFFFLandroid/graphics/Paint;)V
 
-    .line 151
+    .line 159
     move v1, v6
 
     move v6, v8
@@ -471,7 +494,7 @@
 
     invoke-virtual/range {v4 .. v9}, Landroid/graphics/Canvas;->drawLine(FFFFLandroid/graphics/Paint;)V
 
-    .line 153
+    .line 161
     const/4 v5, 0x0
 
     iget-object v7, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->line:Landroid/graphics/Paint;
@@ -480,7 +503,7 @@
 
     invoke-virtual/range {v2 .. v7}, Landroid/graphics/Canvas;->drawLine(FFFFLandroid/graphics/Paint;)V
 
-    .line 154
+    .line 162
     const/4 v7, 0x0
 
     iget-object v9, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->line:Landroid/graphics/Paint;
@@ -491,7 +514,7 @@
 
     invoke-virtual/range {v4 .. v9}, Landroid/graphics/Canvas;->drawLine(FFFFLandroid/graphics/Paint;)V
 
-    .line 155
+    .line 163
     iget-object p1, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->line:Landroid/graphics/Paint;
 
     const/high16 v0, 0x40000000    # 2.0f
@@ -502,31 +525,31 @@
 
     invoke-virtual {p1, v1}, Landroid/graphics/Paint;->setStrokeWidth(F)V
 
-    .line 156
+    .line 164
     iget-object p1, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->line:Landroid/graphics/Paint;
 
     sget-object v0, Landroid/graphics/Paint$Cap;->ROUND:Landroid/graphics/Paint$Cap;
 
     invoke-virtual {p1, v0}, Landroid/graphics/Paint;->setStrokeCap(Landroid/graphics/Paint$Cap;)V
 
-    .line 157
+    .line 165
     return-void
 .end method
 
 .method private drawDone(Landroid/graphics/Canvas;FFF)V
     .locals 4
 
-    .line 223
+    .line 253
     const v0, 0x3eeb851f    # 0.46f
 
     mul-float p4, p4, v0
 
-    .line 224
+    .line 254
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->path:Landroid/graphics/Path;
 
     invoke-virtual {v0}, Landroid/graphics/Path;->reset()V
 
-    .line 225
+    .line 255
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->path:Landroid/graphics/Path;
 
     const v1, 0x3f666666    # 0.9f
@@ -543,7 +566,7 @@
 
     invoke-virtual {v0, v1, v2}, Landroid/graphics/Path;->moveTo(FF)V
 
-    .line 226
+    .line 256
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->path:Landroid/graphics/Path;
 
     const v1, 0x3e4ccccd    # 0.2f
@@ -560,7 +583,7 @@
 
     invoke-virtual {v0, v1, v3}, Landroid/graphics/Path;->lineTo(FF)V
 
-    .line 227
+    .line 257
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->path:Landroid/graphics/Path;
 
     add-float/2addr p2, p4
@@ -569,14 +592,14 @@
 
     invoke-virtual {v0, p2, p3}, Landroid/graphics/Path;->lineTo(FF)V
 
-    .line 228
+    .line 258
     iget-object p2, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->glyph:Landroid/graphics/Paint;
 
     iget p3, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->accent:I
 
     invoke-virtual {p2, p3}, Landroid/graphics/Paint;->setColor(I)V
 
-    .line 229
+    .line 259
     iget-object p2, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->glyph:Landroid/graphics/Paint;
 
     const p3, 0x4019999a    # 2.4f
@@ -587,14 +610,14 @@
 
     invoke-virtual {p2, p4}, Landroid/graphics/Paint;->setStrokeWidth(F)V
 
-    .line 230
+    .line 260
     iget-object p2, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->path:Landroid/graphics/Path;
 
     iget-object p3, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->glyph:Landroid/graphics/Paint;
 
     invoke-virtual {p1, p2, p3}, Landroid/graphics/Canvas;->drawPath(Landroid/graphics/Path;Landroid/graphics/Paint;)V
 
-    .line 231
+    .line 261
     iget-object p1, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->glyph:Landroid/graphics/Paint;
 
     const/high16 p2, 0x40000000    # 2.0f
@@ -605,31 +628,31 @@
 
     invoke-virtual {p1, p3}, Landroid/graphics/Paint;->setStrokeWidth(F)V
 
-    .line 232
+    .line 262
     return-void
 .end method
 
 .method private drawMoveArrow(Landroid/graphics/Canvas;FFF)V
     .locals 7
 
-    .line 160
+    .line 168
     const v0, 0x3f051eb8    # 0.52f
 
     mul-float v0, v0, p4
 
-    .line 161
+    .line 169
     const v1, 0x3e4ccccd    # 0.2f
 
     mul-float v1, v1, p4
 
-    .line 162
+    .line 170
     iget-object v2, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->glyph:Landroid/graphics/Paint;
 
     const/4 v3, -0x1
 
     invoke-virtual {v2, v3}, Landroid/graphics/Paint;->setColor(I)V
 
-    .line 163
+    .line 171
     iget-object v2, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->glyph:Landroid/graphics/Paint;
 
     const/high16 v4, 0x40000000    # 2.0f
@@ -640,79 +663,79 @@
 
     invoke-virtual {v2, v5}, Landroid/graphics/Paint;->setStrokeWidth(F)V
 
-    .line 164
+    .line 172
     iget-object v2, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->path:Landroid/graphics/Path;
 
     invoke-virtual {v2}, Landroid/graphics/Path;->reset()V
 
-    .line 165
+    .line 173
     iget-object v2, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->path:Landroid/graphics/Path;
 
     sub-float v4, p3, v0
 
     invoke-virtual {v2, p2, v4}, Landroid/graphics/Path;->moveTo(FF)V
 
-    .line 166
+    .line 174
     iget-object v2, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->path:Landroid/graphics/Path;
 
     add-float v4, p3, v0
 
     invoke-virtual {v2, p2, v4}, Landroid/graphics/Path;->lineTo(FF)V
 
-    .line 167
+    .line 175
     iget-object v2, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->path:Landroid/graphics/Path;
 
     sub-float v4, p2, v0
 
     invoke-virtual {v2, v4, p3}, Landroid/graphics/Path;->moveTo(FF)V
 
-    .line 168
+    .line 176
     iget-object v2, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->path:Landroid/graphics/Path;
 
     add-float/2addr v0, p2
 
     invoke-virtual {v2, v0, p3}, Landroid/graphics/Path;->lineTo(FF)V
 
-    .line 169
+    .line 177
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->path:Landroid/graphics/Path;
 
     iget-object v2, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->glyph:Landroid/graphics/Paint;
 
     invoke-virtual {p1, v0, v2}, Landroid/graphics/Canvas;->drawPath(Landroid/graphics/Path;Landroid/graphics/Paint;)V
 
-    .line 172
+    .line 180
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->fill:Landroid/graphics/Paint;
 
     invoke-virtual {v0, v3}, Landroid/graphics/Paint;->setColor(I)V
 
-    .line 173
+    .line 181
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->fill:Landroid/graphics/Paint;
 
     sget-object v2, Landroid/graphics/Paint$Style;->FILL:Landroid/graphics/Paint$Style;
 
     invoke-virtual {v0, v2}, Landroid/graphics/Paint;->setStyle(Landroid/graphics/Paint$Style;)V
 
-    .line 174
+    .line 182
     const v0, 0x3f28f5c3    # 0.66f
 
     mul-float p4, p4, v0
 
     sub-float v0, p3, p4
 
-    .line 175
+    .line 183
     add-float v2, p2, p4
 
-    .line 176
+    .line 184
     iget-object v3, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->path:Landroid/graphics/Path;
 
     invoke-virtual {v3}, Landroid/graphics/Path;->reset()V
 
-    .line 177
+    .line 185
     iget-object v3, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->path:Landroid/graphics/Path;
 
     invoke-virtual {v3, p2, v0}, Landroid/graphics/Path;->moveTo(FF)V
 
-    .line 178
+    .line 186
     iget-object v3, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->path:Landroid/graphics/Path;
 
     sub-float v4, p2, v1
@@ -725,72 +748,72 @@
 
     invoke-virtual {v3, v4, v0}, Landroid/graphics/Path;->lineTo(FF)V
 
-    .line 179
+    .line 187
     iget-object v3, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->path:Landroid/graphics/Path;
 
     add-float v6, p2, v1
 
     invoke-virtual {v3, v6, v0}, Landroid/graphics/Path;->lineTo(FF)V
 
-    .line 180
+    .line 188
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->path:Landroid/graphics/Path;
 
     invoke-virtual {v0}, Landroid/graphics/Path;->close()V
 
-    .line 181
+    .line 189
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->path:Landroid/graphics/Path;
 
     iget-object v3, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->fill:Landroid/graphics/Paint;
 
     invoke-virtual {p1, v0, v3}, Landroid/graphics/Canvas;->drawPath(Landroid/graphics/Path;Landroid/graphics/Paint;)V
 
-    .line 183
+    .line 191
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->path:Landroid/graphics/Path;
 
     invoke-virtual {v0}, Landroid/graphics/Path;->reset()V
 
-    .line 184
+    .line 192
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->path:Landroid/graphics/Path;
 
     add-float v3, p3, p4
 
     invoke-virtual {v0, p2, v3}, Landroid/graphics/Path;->moveTo(FF)V
 
-    .line 185
+    .line 193
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->path:Landroid/graphics/Path;
 
     sub-float/2addr v3, v5
 
     invoke-virtual {v0, v4, v3}, Landroid/graphics/Path;->lineTo(FF)V
 
-    .line 186
+    .line 194
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->path:Landroid/graphics/Path;
 
     invoke-virtual {v0, v6, v3}, Landroid/graphics/Path;->lineTo(FF)V
 
-    .line 187
+    .line 195
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->path:Landroid/graphics/Path;
 
     invoke-virtual {v0}, Landroid/graphics/Path;->close()V
 
-    .line 188
+    .line 196
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->path:Landroid/graphics/Path;
 
     iget-object v3, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->fill:Landroid/graphics/Paint;
 
     invoke-virtual {p1, v0, v3}, Landroid/graphics/Canvas;->drawPath(Landroid/graphics/Path;Landroid/graphics/Paint;)V
 
-    .line 190
+    .line 198
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->path:Landroid/graphics/Path;
 
     invoke-virtual {v0}, Landroid/graphics/Path;->reset()V
 
-    .line 191
+    .line 199
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->path:Landroid/graphics/Path;
 
     invoke-virtual {v0, v2, p3}, Landroid/graphics/Path;->moveTo(FF)V
 
-    .line 192
+    .line 200
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->path:Landroid/graphics/Path;
 
     sub-float/2addr v2, v5
@@ -799,74 +822,119 @@
 
     invoke-virtual {v0, v2, v3}, Landroid/graphics/Path;->lineTo(FF)V
 
-    .line 193
+    .line 201
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->path:Landroid/graphics/Path;
 
     add-float/2addr v1, p3
 
     invoke-virtual {v0, v2, v1}, Landroid/graphics/Path;->lineTo(FF)V
 
-    .line 194
+    .line 202
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->path:Landroid/graphics/Path;
 
     invoke-virtual {v0}, Landroid/graphics/Path;->close()V
 
-    .line 195
+    .line 203
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->path:Landroid/graphics/Path;
 
     iget-object v2, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->fill:Landroid/graphics/Paint;
 
     invoke-virtual {p1, v0, v2}, Landroid/graphics/Canvas;->drawPath(Landroid/graphics/Path;Landroid/graphics/Paint;)V
 
-    .line 197
+    .line 205
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->path:Landroid/graphics/Path;
 
     invoke-virtual {v0}, Landroid/graphics/Path;->reset()V
 
-    .line 198
+    .line 206
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->path:Landroid/graphics/Path;
 
     sub-float/2addr p2, p4
 
     invoke-virtual {v0, p2, p3}, Landroid/graphics/Path;->moveTo(FF)V
 
-    .line 199
+    .line 207
     iget-object p3, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->path:Landroid/graphics/Path;
 
     add-float/2addr p2, v5
 
     invoke-virtual {p3, p2, v3}, Landroid/graphics/Path;->lineTo(FF)V
 
-    .line 200
+    .line 208
     iget-object p3, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->path:Landroid/graphics/Path;
 
     invoke-virtual {p3, p2, v1}, Landroid/graphics/Path;->lineTo(FF)V
 
-    .line 201
+    .line 209
     iget-object p2, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->path:Landroid/graphics/Path;
 
     invoke-virtual {p2}, Landroid/graphics/Path;->close()V
 
-    .line 202
+    .line 210
     iget-object p2, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->path:Landroid/graphics/Path;
 
     iget-object p3, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->fill:Landroid/graphics/Paint;
 
     invoke-virtual {p1, p2, p3}, Landroid/graphics/Canvas;->drawPath(Landroid/graphics/Path;Landroid/graphics/Paint;)V
 
-    .line 203
+    .line 211
     return-void
 .end method
 
 .method private drawReset(Landroid/graphics/Canvas;FFF)V
     .locals 5
 
-    .line 206
+    .line 230
+    iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->resetIcon:Landroid/graphics/drawable/Drawable;
+
+    if-eqz v0, :cond_0
+
+    .line 231
+    iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->resetIcon:Landroid/graphics/drawable/Drawable;
+
+    sub-float v1, p2, p4
+
+    invoke-static {v1}, Ljava/lang/Math;->round(F)I
+
+    move-result v1
+
+    sub-float v2, p3, p4
+
+    invoke-static {v2}, Ljava/lang/Math;->round(F)I
+
+    move-result v2
+
+    add-float/2addr p2, p4
+
+    .line 232
+    invoke-static {p2}, Ljava/lang/Math;->round(F)I
+
+    move-result p2
+
+    add-float/2addr p3, p4
+
+    invoke-static {p3}, Ljava/lang/Math;->round(F)I
+
+    move-result p3
+
+    .line 231
+    invoke-virtual {v0, v1, v2, p2, p3}, Landroid/graphics/drawable/Drawable;->setBounds(IIII)V
+
+    .line 233
+    iget-object p2, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->resetIcon:Landroid/graphics/drawable/Drawable;
+
+    invoke-virtual {p2, p1}, Landroid/graphics/drawable/Drawable;->draw(Landroid/graphics/Canvas;)V
+
+    .line 234
+    return-void
+
+    .line 236
+    :cond_0
     const v0, 0x3ed70a3d    # 0.42f
 
     mul-float p4, p4, v0
 
-    .line 207
+    .line 237
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->rect:Landroid/graphics/RectF;
 
     sub-float v1, p2, p4
@@ -879,12 +947,12 @@
 
     invoke-virtual {v0, v1, v2, v3, v4}, Landroid/graphics/RectF;->set(FFFF)V
 
-    .line 208
+    .line 238
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->path:Landroid/graphics/Path;
 
     invoke-virtual {v0}, Landroid/graphics/Path;->reset()V
 
-    .line 209
+    .line 239
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->path:Landroid/graphics/Path;
 
     iget-object v1, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->rect:Landroid/graphics/RectF;
@@ -895,21 +963,21 @@
 
     invoke-virtual {v0, v1, v2, v3}, Landroid/graphics/Path;->addArc(Landroid/graphics/RectF;FF)V
 
-    .line 210
+    .line 240
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->glyph:Landroid/graphics/Paint;
 
     iget v1, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->accent:I
 
     invoke-virtual {v0, v1}, Landroid/graphics/Paint;->setColor(I)V
 
-    .line 211
+    .line 241
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->path:Landroid/graphics/Path;
 
     iget-object v1, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->glyph:Landroid/graphics/Paint;
 
     invoke-virtual {p1, v0, v1}, Landroid/graphics/Canvas;->drawPath(Landroid/graphics/Path;Landroid/graphics/Paint;)V
 
-    .line 213
+    .line 243
     const-wide/high16 v0, -0x3fb2000000000000L    # -60.0
 
     invoke-static {v0, v1}, Ljava/lang/Math;->toRadians(D)D
@@ -926,7 +994,7 @@
 
     add-float/2addr p2, v2
 
-    .line 214
+    .line 244
     invoke-static {v0, v1}, Ljava/lang/Math;->toRadians(D)D
 
     move-result-wide v0
@@ -941,12 +1009,12 @@
 
     add-float/2addr p3, v0
 
-    .line 215
+    .line 245
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->path:Landroid/graphics/Path;
 
     invoke-virtual {v0}, Landroid/graphics/Path;->reset()V
 
-    .line 216
+    .line 246
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->path:Landroid/graphics/Path;
 
     const/high16 v1, 0x3f000000    # 0.5f
@@ -963,12 +1031,12 @@
 
     invoke-virtual {v0, v1, v2}, Landroid/graphics/Path;->moveTo(FF)V
 
-    .line 217
+    .line 247
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->path:Landroid/graphics/Path;
 
     invoke-virtual {v0, p2, p3}, Landroid/graphics/Path;->lineTo(FF)V
 
-    .line 218
+    .line 248
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->path:Landroid/graphics/Path;
 
     const v1, 0x3e19999a    # 0.15f
@@ -985,42 +1053,42 @@
 
     invoke-virtual {v0, p2, p3}, Landroid/graphics/Path;->lineTo(FF)V
 
-    .line 219
+    .line 249
     iget-object p2, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->path:Landroid/graphics/Path;
 
     iget-object p3, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->glyph:Landroid/graphics/Paint;
 
     invoke-virtual {p1, p2, p3}, Landroid/graphics/Canvas;->drawPath(Landroid/graphics/Path;Landroid/graphics/Paint;)V
 
-    .line 220
+    .line 250
     return-void
 .end method
 
 .method private regionAt(FF)I
     .locals 12
 
-    .line 294
+    .line 324
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->getWidth()I
 
     move-result v0
 
     int-to-float v0, v0
 
-    .line 295
+    .line 325
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->getHeight()I
 
     move-result v1
 
     int-to-float v1, v1
 
-    .line 296
+    .line 326
     const/high16 v2, 0x42080000    # 34.0f
 
     iget v3, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->density:F
 
     mul-float v3, v3, v2
 
-    .line 297
+    .line 327
     const/4 v2, 0x2
 
     new-array v4, v2, [F
@@ -1065,13 +1133,13 @@
 
     aput-object v10, v11, v2
 
-    .line 298
+    .line 328
     const/4 v2, 0x0
 
     :goto_0
     if-ge v2, v8, :cond_1
 
-    .line 299
+    .line 329
     aget-object v4, v11, v2
 
     aget v4, v4, v6
@@ -1100,32 +1168,32 @@
 
     if-gtz v4, :cond_0
 
-    .line 300
+    .line 330
     return v2
 
-    .line 298
+    .line 328
     :cond_0
     add-int/lit8 v2, v2, 0x1
 
     goto :goto_0
 
-    .line 303
+    .line 333
     :cond_1
     const/high16 v2, 0x40000000    # 2.0f
 
     div-float/2addr v0, v2
 
-    .line 304
+    .line 334
     div-float/2addr v1, v2
 
-    .line 305
+    .line 335
     const/high16 v3, 0x41d00000    # 26.0f
 
     iget v4, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->density:F
 
     mul-float v4, v4, v3
 
-    .line 306
+    .line 336
     invoke-static {p1, p2, v0, v1}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->distance(FFFF)F
 
     move-result v3
@@ -1136,7 +1204,7 @@
 
     return v8
 
-    .line 308
+    .line 338
     :cond_2
     const/high16 v3, 0x42280000    # 42.0f
 
@@ -1146,7 +1214,7 @@
 
     div-float/2addr v5, v2
 
-    .line 309
+    .line 339
     const/high16 v3, 0x41a00000    # 20.0f
 
     iget v6, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->density:F
@@ -1165,7 +1233,7 @@
 
     add-float/2addr v5, v6
 
-    .line 310
+    .line 340
     sub-float v2, v0, v5
 
     iget v3, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->density:F
@@ -1188,7 +1256,7 @@
 
     return p1
 
-    .line 311
+    .line 341
     :cond_3
     add-float/2addr v0, v5
 
@@ -1210,7 +1278,7 @@
 
     return p1
 
-    .line 314
+    .line 344
     :cond_4
     return v8
 
@@ -1226,7 +1294,7 @@
 .method private reportDrag([FZ)V
     .locals 3
 
-    .line 324
+    .line 354
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->listener:Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit$Listener;
 
     if-eqz v0, :cond_0
@@ -1243,7 +1311,7 @@
 
     invoke-interface {v0, v1, p1, p2}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit$Listener;->onEditDrag(FFZ)V
 
-    .line 325
+    .line 355
     :cond_0
     return-void
 .end method
@@ -1251,7 +1319,7 @@
 .method private reportScale(I[FZ)V
     .locals 3
 
-    .line 328
+    .line 358
     iget-object v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->listener:Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit$Listener;
 
     if-eqz v0, :cond_0
@@ -1268,7 +1336,7 @@
 
     invoke-interface {v0, p1, v1, p2, p3}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit$Listener;->onEditScale(IFFZ)V
 
-    .line 329
+    .line 359
     :cond_0
     return-void
 .end method
@@ -1276,15 +1344,15 @@
 .method private screenOf(Landroid/view/MotionEvent;)[F
     .locals 5
 
-    .line 318
+    .line 348
     const/4 v0, 0x2
 
     new-array v1, v0, [I
 
-    .line 319
+    .line 349
     invoke-virtual {p0, v1}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->getLocationOnScreen([I)V
 
-    .line 320
+    .line 350
     const/4 v2, 0x0
 
     aget v3, v1, v2
@@ -1318,26 +1386,60 @@
     return-object p1
 .end method
 
+.method private static stockIcon(Landroid/content/Context;I)Landroid/graphics/drawable/Drawable;
+    .locals 1
+
+    .line 222
+    const/4 v0, 0x0
+
+    :try_start_0
+    invoke-virtual {p0, p1}, Landroid/content/Context;->getDrawable(I)Landroid/graphics/drawable/Drawable;
+
+    move-result-object p0
+
+    .line 223
+    if-nez p0, :cond_0
+
+    goto :goto_0
+
+    :cond_0
+    invoke-virtual {p0}, Landroid/graphics/drawable/Drawable;->mutate()Landroid/graphics/drawable/Drawable;
+
+    move-result-object v0
+    :try_end_0
+    .catchall {:try_start_0 .. :try_end_0} :catchall_0
+
+    :goto_0
+    return-object v0
+
+    .line 224
+    :catchall_0
+    move-exception p0
+
+    .line 225
+    return-object v0
+.end method
+
 
 # virtual methods
 .method protected onDraw(Landroid/graphics/Canvas;)V
     .locals 11
 
-    .line 89
+    .line 97
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->getWidth()I
 
     move-result v0
 
     int-to-float v0, v0
 
-    .line 90
+    .line 98
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->getHeight()I
 
     move-result v1
 
     int-to-float v1, v1
 
-    .line 91
+    .line 99
     const/4 v2, 0x0
 
     cmpg-float v3, v0, v2
@@ -1350,7 +1452,7 @@
 
     goto/16 :goto_2
 
-    .line 94
+    .line 102
     :cond_0
     iget-object v3, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->fill:Landroid/graphics/Paint;
 
@@ -1358,40 +1460,40 @@
 
     invoke-virtual {v3, v4}, Landroid/graphics/Paint;->setStyle(Landroid/graphics/Paint$Style;)V
 
-    .line 95
+    .line 103
     iget-object v3, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->fill:Landroid/graphics/Paint;
 
     const v4, 0x73ffffff
 
     invoke-virtual {v3, v4}, Landroid/graphics/Paint;->setColor(I)V
 
-    .line 96
+    .line 104
     iget-object v3, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->rect:Landroid/graphics/RectF;
 
     invoke-virtual {v3, v2, v2, v0, v1}, Landroid/graphics/RectF;->set(FFFF)V
 
-    .line 97
+    .line 105
     iget-object v2, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->rect:Landroid/graphics/RectF;
 
     iget-object v3, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->fill:Landroid/graphics/Paint;
 
     invoke-virtual {p1, v2, v3}, Landroid/graphics/Canvas;->drawRect(Landroid/graphics/RectF;Landroid/graphics/Paint;)V
 
-    .line 100
+    .line 108
     const/high16 v2, 0x42400000    # 48.0f
 
     iget v3, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->density:F
 
     mul-float v3, v3, v2
 
-    .line 101
+    .line 109
     iget-object v2, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->fill:Landroid/graphics/Paint;
 
     iget v4, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->accentSoft:I
 
     invoke-virtual {v2, v4}, Landroid/graphics/Paint;->setColor(I)V
 
-    .line 102
+    .line 110
     invoke-direct {p0}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->cornerCenters()[[F
 
     move-result-object v2
@@ -1409,7 +1511,7 @@
 
     aget-object v8, v2, v6
 
-    .line 103
+    .line 111
     aget v9, v8, v5
 
     const/4 v10, 0x1
@@ -1422,12 +1524,12 @@
 
     invoke-virtual {p1, v9, v8, v7, v10}, Landroid/graphics/Canvas;->drawCircle(FFFLandroid/graphics/Paint;)V
 
-    .line 102
+    .line 110
     add-int/lit8 v6, v6, 0x1
 
     goto :goto_0
 
-    .line 107
+    .line 115
     :cond_1
     iget v2, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->density:F
 
@@ -1435,7 +1537,7 @@
 
     div-float/2addr v2, v7
 
-    .line 108
+    .line 116
     iget-object v3, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->rect:Landroid/graphics/RectF;
 
     sub-float v4, v0, v2
@@ -1444,23 +1546,23 @@
 
     invoke-virtual {v3, v2, v2, v4, v5}, Landroid/graphics/RectF;->set(FFFF)V
 
-    .line 109
+    .line 117
     iget-object v2, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->rect:Landroid/graphics/RectF;
 
     iget-object v3, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->line:Landroid/graphics/Paint;
 
     invoke-virtual {p1, v2, v3}, Landroid/graphics/Canvas;->drawRect(Landroid/graphics/RectF;Landroid/graphics/Paint;)V
 
-    .line 111
+    .line 119
     invoke-direct {p0, p1}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->drawCorners(Landroid/graphics/Canvas;)V
 
-    .line 114
+    .line 122
     div-float/2addr v0, v7
 
-    .line 115
+    .line 123
     div-float/2addr v1, v7
 
-    .line 116
+    .line 124
     const/high16 v2, 0x42280000    # 42.0f
 
     iget v3, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->density:F
@@ -1469,7 +1571,7 @@
 
     div-float/2addr v3, v7
 
-    .line 117
+    .line 125
     iget-object v2, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->fill:Landroid/graphics/Paint;
 
     iget-boolean v4, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->movePressed:Z
@@ -1490,15 +1592,15 @@
     :goto_1
     invoke-virtual {v2, v4}, Landroid/graphics/Paint;->setColor(I)V
 
-    .line 118
+    .line 126
     iget-object v2, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->fill:Landroid/graphics/Paint;
 
     invoke-virtual {p1, v0, v1, v3, v2}, Landroid/graphics/Canvas;->drawCircle(FFFLandroid/graphics/Paint;)V
 
-    .line 119
+    .line 127
     invoke-direct {p0, p1, v0, v1, v3}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->drawMoveArrow(Landroid/graphics/Canvas;FFF)V
 
-    .line 122
+    .line 130
     const/high16 v2, 0x42100000    # 36.0f
 
     iget v4, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->density:F
@@ -1507,7 +1609,7 @@
 
     div-float/2addr v4, v7
 
-    .line 123
+    .line 131
     const/high16 v2, 0x41a00000    # 20.0f
 
     iget v5, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->density:F
@@ -1518,14 +1620,14 @@
 
     add-float/2addr v3, v4
 
-    .line 124
+    .line 132
     iget-object v2, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->fill:Landroid/graphics/Paint;
 
     iget v5, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->accentSoft:I
 
     invoke-virtual {v2, v5}, Landroid/graphics/Paint;->setColor(I)V
 
-    .line 125
+    .line 133
     sub-float v2, v0, v3
 
     iget v5, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->density:F
@@ -1540,7 +1642,7 @@
 
     invoke-virtual {p1, v2, v5, v4, v7}, Landroid/graphics/Canvas;->drawCircle(FFFLandroid/graphics/Paint;)V
 
-    .line 126
+    .line 134
     add-float/2addr v0, v3
 
     iget v3, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->density:F
@@ -1553,7 +1655,7 @@
 
     invoke-virtual {p1, v0, v3, v4, v5}, Landroid/graphics/Canvas;->drawCircle(FFFLandroid/graphics/Paint;)V
 
-    .line 127
+    .line 135
     iget v3, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->density:F
 
     mul-float v3, v3, v6
@@ -1562,7 +1664,7 @@
 
     invoke-direct {p0, p1, v2, v3, v4}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->drawReset(Landroid/graphics/Canvas;FFF)V
 
-    .line 128
+    .line 136
     iget v2, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->density:F
 
     mul-float v2, v2, v6
@@ -1571,10 +1673,10 @@
 
     invoke-direct {p0, p1, v0, v1, v4}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->drawDone(Landroid/graphics/Canvas;FFF)V
 
-    .line 129
+    .line 137
     return-void
 
-    .line 91
+    .line 99
     :cond_3
     :goto_2
     return-void
@@ -1583,7 +1685,7 @@
 .method public onTouchEvent(Landroid/view/MotionEvent;)Z
     .locals 6
 
-    .line 245
+    .line 275
     invoke-virtual {p1}, Landroid/view/MotionEvent;->getActionMasked()I
 
     move-result v0
@@ -1598,10 +1700,10 @@
 
     packed-switch v0, :pswitch_data_0
 
-    .line 288
+    .line 318
     return v4
 
-    .line 260
+    .line 290
     :pswitch_0
     iget v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->active:I
 
@@ -1609,84 +1711,84 @@
 
     return v4
 
-    .line 261
+    .line 291
     :cond_0
     invoke-direct {p0, p1}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->screenOf(Landroid/view/MotionEvent;)[F
 
     move-result-object p1
 
-    .line 262
+    .line 292
     iget v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->active:I
 
     if-gt v0, v1, :cond_1
 
-    .line 263
+    .line 293
     iget v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->active:I
 
     invoke-direct {p0, v0, p1, v3}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->reportScale(I[FZ)V
 
     goto :goto_0
 
-    .line 264
+    .line 294
     :cond_1
     iget v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->active:I
 
     if-ne v0, v2, :cond_2
 
-    .line 265
+    .line 295
     invoke-direct {p0, p1, v3}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->reportDrag([FZ)V
 
-    .line 267
+    .line 297
     :cond_2
     :goto_0
     return v4
 
-    .line 271
+    .line 301
     :pswitch_1
     iget v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->active:I
 
-    .line 272
+    .line 302
     const/4 v5, -0x1
 
     iput v5, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->active:I
 
-    .line 273
+    .line 303
     iput-boolean v3, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->movePressed:Z
 
-    .line 274
+    .line 304
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->invalidate()V
 
-    .line 275
+    .line 305
     invoke-direct {p0, p1}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->screenOf(Landroid/view/MotionEvent;)[F
 
     move-result-object p1
 
-    .line 276
+    .line 306
     if-ltz v0, :cond_3
 
     if-gt v0, v1, :cond_3
 
-    .line 277
+    .line 307
     invoke-direct {p0, v0, p1, v4}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->reportScale(I[FZ)V
 
     goto :goto_1
 
-    .line 278
+    .line 308
     :cond_3
     if-ne v0, v2, :cond_4
 
-    .line 279
+    .line 309
     invoke-direct {p0, p1, v4}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->reportDrag([FZ)V
 
     goto :goto_1
 
-    .line 280
+    .line 310
     :cond_4
     const/4 p1, 0x5
 
     if-ne v0, p1, :cond_5
 
-    .line 281
+    .line 311
     iget-object p1, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->listener:Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit$Listener;
 
     if-eqz p1, :cond_6
@@ -1697,13 +1799,13 @@
 
     goto :goto_1
 
-    .line 282
+    .line 312
     :cond_5
     const/4 p1, 0x6
 
     if-ne v0, p1, :cond_6
 
-    .line 283
+    .line 313
     iget-object p1, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->listener:Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit$Listener;
 
     if-eqz p1, :cond_6
@@ -1712,12 +1814,12 @@
 
     invoke-interface {p1}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit$Listener;->onEditDone()V
 
-    .line 285
+    .line 315
     :cond_6
     :goto_1
     return v4
 
-    .line 247
+    .line 277
     :pswitch_2
     invoke-virtual {p1}, Landroid/view/MotionEvent;->getX()F
 
@@ -1733,14 +1835,14 @@
 
     iput v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->active:I
 
-    .line 248
+    .line 278
     iget v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->active:I
 
     if-ne v0, v2, :cond_7
 
     iput-boolean v4, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->movePressed:Z
 
-    .line 249
+    .line 279
     :cond_7
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->getParent()Landroid/view/ViewParent;
 
@@ -1754,13 +1856,13 @@
 
     invoke-interface {v0, v4}, Landroid/view/ViewParent;->requestDisallowInterceptTouchEvent(Z)V
 
-    .line 250
+    .line 280
     :cond_8
     invoke-direct {p0, p1}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->screenOf(Landroid/view/MotionEvent;)[F
 
     move-result-object p1
 
-    .line 251
+    .line 281
     iget v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->active:I
 
     if-ltz v0, :cond_9
@@ -1769,26 +1871,26 @@
 
     if-gt v0, v1, :cond_9
 
-    .line 252
+    .line 282
     iget v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->active:I
 
     invoke-direct {p0, v0, p1, v3}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->reportScale(I[FZ)V
 
     goto :goto_2
 
-    .line 253
+    .line 283
     :cond_9
     iget v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->active:I
 
     if-ne v0, v2, :cond_a
 
-    .line 254
+    .line 284
     invoke-virtual {p0}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->invalidate()V
 
-    .line 255
+    .line 285
     invoke-direct {p0, p1, v3}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->reportDrag([FZ)V
 
-    .line 257
+    .line 287
     :cond_a
     :goto_2
     return v4
@@ -1807,9 +1909,9 @@
 .method setListener(Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit$Listener;)V
     .locals 0
 
-    .line 82
+    .line 90
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit;->listener:Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEdit$Listener;
 
-    .line 83
+    .line 91
     return-void
 .end method

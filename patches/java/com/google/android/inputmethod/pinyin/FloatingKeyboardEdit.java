@@ -5,6 +5,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
+import android.graphics.drawable.Drawable;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -40,6 +41,9 @@ public final class FloatingKeyboardEdit extends View {
     private static final float ZONE_DP = 48f;
     private static final float MOVE_DP = 42f;
     private static final float ACTION_DP = 36f;
+
+    /** The keyboard's own reset icon, so the control does not carry a hand-made shape. */
+    private static final int RESET_ICON = 0x7f020182;
     /** Half-size of the square that accepts a corner press; larger than the disc. */
     private static final float CORNER_HIT_DP = 34f;
     private static final float DISC_HIT_DP = 26f;
@@ -52,6 +56,8 @@ public final class FloatingKeyboardEdit extends View {
     private final float density;
     private final int accent;
     private final int accentSoft;
+    /** Stock reset icon, tinted with the theme accent; null when the resource is missing. */
+    private final Drawable resetIcon;
 
     private Listener listener;
     /** -1 none, 0..3 a corner, 4 the move disc, 5 reset, 6 done. */
@@ -63,6 +69,8 @@ public final class FloatingKeyboardEdit extends View {
         density = context.getResources().getDisplayMetrics().density;
         this.accent = accent;
         this.accentSoft = (accent & 0x00FFFFFF) | 0x21000000;
+        resetIcon = stockIcon(context, RESET_ICON);
+        if (resetIcon != null) resetIcon.setTint(accent);
 
         line.setStyle(Paint.Style.STROKE);
         line.setStrokeWidth(STROKE_DP * density);
@@ -202,7 +210,29 @@ public final class FloatingKeyboardEdit extends View {
         canvas.drawPath(path, fill);
     }
 
+    /**
+     * The stock reset icon, tinted with the theme accent.
+     *
+     * <p>The bitmap carries its own padding: its ink covers about 42% of the canvas, which is why
+     * {@link #drawReset} gives it bounds the size of the whole disc. Sized any smaller the glyph
+     * comes out visibly smaller than the arc it replaced.
+     */
+    private static Drawable stockIcon(Context context, int resId) {
+        try {
+            Drawable drawable = context.getDrawable(resId);
+            return drawable == null ? null : drawable.mutate();
+        } catch (Throwable ignored) {
+            return null;
+        }
+    }
+
     private void drawReset(Canvas canvas, float cx, float cy, float radius) {
+        if (resetIcon != null) {
+            resetIcon.setBounds(Math.round(cx - radius), Math.round(cy - radius),
+                    Math.round(cx + radius), Math.round(cy + radius));
+            resetIcon.draw(canvas);
+            return;
+        }
         float r = radius * 0.42f;
         rect.set(cx - r, cy - r, cx + r, cy + r);
         path.reset();

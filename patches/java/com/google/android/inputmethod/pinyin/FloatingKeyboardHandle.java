@@ -23,10 +23,22 @@ public final class FloatingKeyboardHandle extends View {
     public FloatingKeyboardHandle(Context context) {
         super(context);
         density = context.getResources().getDisplayMetrics().density;
-        // A quiet grey: visible on both the light and the dark keyboard theme, but not reading as
-        // one more key.
+        // A quiet grey until the theme's function layer can be sampled; visible on both the light
+        // and the dark keyboard theme without reading as one more key.
         paint.setColor(0xFFC2C8D2);
         setClickable(true);
+    }
+
+    /**
+     * Tints the bar with the theme's function layer.
+     *
+     * <p>The bar sits with the hide-keyboard and simplified/traditional keys, not with the main key
+     * grid, so it borrows their colour rather than a fixed grey.
+     */
+    public void setBarColor(int color) {
+        if (paint.getColor() == color) return;
+        paint.setColor(color);
+        invalidate();
     }
 
     /** Height the compat class reserves for this view, in pixels. */

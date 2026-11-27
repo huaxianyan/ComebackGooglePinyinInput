@@ -21,7 +21,7 @@
 .method constructor <init>()V
     .locals 0
 
-    .line 158
+    .line 159
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
     return-void
@@ -32,12 +32,12 @@
 .method public run()V
     .locals 3
 
-    .line 161
+    .line 162
     const/4 v0, 0x0
 
     invoke-static {v0}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$302(Z)Z
 
-    .line 162
+    .line 163
     invoke-static {}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$400()Z
 
     move-result v0
@@ -64,7 +64,7 @@
 
     goto :goto_0
 
-    .line 163
+    .line 164
     :cond_0
     const/high16 v0, 0x3f000000    # 0.5f
 
@@ -72,10 +72,10 @@
 
     invoke-static {v0, v1, v2}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$800(FJ)V
 
-    .line 164
+    .line 165
     return-void
 
-    .line 162
+    .line 163
     :cond_1
     :goto_0
     return-void
