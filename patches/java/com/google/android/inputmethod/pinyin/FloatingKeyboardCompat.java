@@ -44,7 +44,7 @@ public final class FloatingKeyboardCompat {
     private static final int TABLET_SMALLEST_WIDTH_DP = 600;
     private static final float DEFAULT_SCALE = 0.72f;
     private static final float MIN_SCALE = 0.40f;
-    private static final float MAX_SCALE = 1.0f;
+    private static final float MAX_SCALE = 0.92f;
 
     /** Touch strip of the drag handle, measured up from the card's bottom edge. */
     static final int HANDLE_HEIGHT_DP = 20;
@@ -90,18 +90,6 @@ public final class FloatingKeyboardCompat {
      * that pass calls back into {@link #applyInsets}, so the value is compared before writing.
      */
     private static float appliedScale = -1f;
-    /**
-     * Rounded outline for the card's own elevation shadow. Held statically so it is not
-     * reallocated on every insets pass.
-     */
-    private static final android.view.ViewOutlineProvider cardOutline =
-            new android.view.ViewOutlineProvider() {
-                @Override
-                public void getOutline(View view, android.graphics.Outline outline) {
-                    outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(),
-                            12f * density(view));
-                }
-            };
     /** The view the scale was applied to; the service rebuilds its views, and a stale value here
      *  would skip scaling the replacement. */
     private static View scaledView;
@@ -644,7 +632,14 @@ public final class FloatingKeyboardCompat {
                         : new FrameLayout.LayoutParams(cardWidth, handleHeight);
         // Centre the bar in the gutter, not in the touch strip: the strip is taller than the
         // gutter and a bar centred in it would ride up onto the key rows.
-        handle.setBarCenterFromBottom(area.getPaddingBottom() * factor / 2f);
+        // The strip is a fixed height while the gutter inside the card is scaled, so the bar has
+        // to stay clamped inside the strip. At the largest scale the raw offset put it against the
+        // strip's top edge, where it was neither visible nor easy to grab; that left the card with
+        // no usable way back. Keeping a margin here makes the handle reachable at every scale.
+        float margin = 12f * density(area);
+        float barCenter = area.getPaddingBottom() * factor / 2f;
+        barCenter = Math.max(margin, Math.min(handleHeight - margin, barCenter));
+        handle.setBarCenterFromBottom(barCenter);
         if (params.width == cardWidth && params.height == handleHeight
                 && params.leftMargin == left && params.topMargin == top) {
             return;

@@ -22,7 +22,6 @@ SOURCES = [
     ROOT / f"patches/java/{PACKAGE_DIR}/FloatingKeyboardCompat.java",
     ROOT / f"patches/java/{PACKAGE_DIR}/FloatingKeyboardHandle.java",
     ROOT / f"patches/java/{PACKAGE_DIR}/FloatingKeyboardEdit.java",
-    ROOT / f"patches/java/{PACKAGE_DIR}/FloatingCardShadow.java",
     ROOT / f"patches/java/{PACKAGE_DIR}/AccessPointsOrder.java",
 ]
 OUTPUT_DIR = ROOT / "patches/smali"
@@ -32,7 +31,6 @@ SMALI_PREFIXES = [
     "FloatingKeyboardCompat",
     "FloatingKeyboardHandle",
     "FloatingKeyboardEdit",
-    "FloatingCardShadow",
     "AccessPointsOrder",
 ]
 

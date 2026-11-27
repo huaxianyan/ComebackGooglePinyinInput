@@ -3,7 +3,7 @@
 .source "FloatingKeyboardCompat.java"
 
 # interfaces
-.implements Landroid/view/ViewTreeObserver$OnGlobalLayoutListener;
+.implements Ljava/lang/Runnable;
 
 
 # annotations
@@ -21,7 +21,7 @@
 .method constructor <init>()V
     .locals 0
 
-    .line 138
+    .line 147
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
     return-void
@@ -29,46 +29,54 @@
 
 
 # virtual methods
-.method public onGlobalLayout()V
-    .locals 7
+.method public run()V
+    .locals 3
 
-    .line 144
-    invoke-static {}, Landroid/os/SystemClock;->uptimeMillis()J
+    .line 150
+    const/4 v0, 0x0
 
-    move-result-wide v0
+    invoke-static {v0}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$302(Z)Z
 
-    .line 145
-    invoke-static {}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$100()J
+    .line 151
+    invoke-static {}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$400()Z
 
-    move-result-wide v2
+    move-result v0
 
-    sub-long v2, v0, v2
+    if-nez v0, :cond_1
 
-    const-wide/16 v4, 0x1f4
+    invoke-static {}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$500()Z
 
-    cmp-long v6, v2, v4
+    move-result v0
 
-    if-gez v6, :cond_0
+    if-nez v0, :cond_1
 
-    return-void
+    invoke-static {}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$600()Z
 
-    .line 146
-    :cond_0
-    invoke-static {v0, v1}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$102(J)J
+    move-result v0
 
-    .line 147
-    invoke-static {}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$200()Landroid/view/View;
+    if-nez v0, :cond_1
+
+    invoke-static {}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$700()Landroid/view/View;
 
     move-result-object v0
 
-    .line 148
-    if-eqz v0, :cond_1
+    if-nez v0, :cond_0
 
-    const/4 v1, 0x1
+    goto :goto_0
 
-    invoke-static {v0, v1}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$300(Landroid/view/View;Z)V
+    .line 152
+    :cond_0
+    const/high16 v0, 0x3f000000    # 0.5f
 
-    .line 149
+    const-wide/16 v1, 0x140
+
+    invoke-static {v0, v1, v2}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$800(FJ)V
+
+    .line 153
+    return-void
+
+    .line 151
     :cond_1
+    :goto_0
     return-void
 .end method
