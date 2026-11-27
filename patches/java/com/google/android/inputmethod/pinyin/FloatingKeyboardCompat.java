@@ -643,10 +643,46 @@ public final class FloatingKeyboardCompat {
      * narrower window. The card itself ends up inside the window either way, since it is scaled
      * about its centre.
      */
+    private static void dumpTree(View view, int depth) {
+        if (depth > 3) return;
+        StringBuilder indent = new StringBuilder();
+        for (int i = 0; i < depth; i++) indent.append("  ");
+        String name = view.getClass().getSimpleName();
+        try {
+            name += "#" + view.getResources().getResourceEntryName(view.getId());
+        } catch (Exception ignored) {
+        }
+        Log.i(TAG, "tree " + indent + name
+                + " pos=" + view.getLeft() + "," + view.getTop()
+                + " size=" + view.getWidth() + "x" + view.getHeight()
+                + " scale=" + view.getScaleY()
+                + " bg=" + (view.getBackground() != null));
+        if (view instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) view;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                dumpTree(group.getChildAt(i), depth + 1);
+            }
+        }
+    }
+
     private static void narrowWindowToCard(Window window, View area) {
         if (window == null) return;
         floatingWindow = window;
         if (window.getDecorView().getElevation() != 0f) window.getDecorView().setElevation(0f);
+        // The themed window background is opaque. Now that the window hugs the card, that opaque
+        // fill is visible as a solid panel wherever the card is not: beside the handle and in the
+        // shadow margin. A transparent drawable removes the fill; it does not remove the surface
+        // shadow, which is a separate thing.
+        android.graphics.drawable.ColorDrawable transparent =
+                new android.graphics.drawable.ColorDrawable(0);
+        window.setBackgroundDrawable(transparent);
+        // The decor and the content frame carry their own opaque backgrounds from the theme, which
+        // fill every part of the window the card does not cover: the shadow margin and the strip
+        // under the keys. Clearing only the window background leaves those panels visible.
+        View decorView = window.getDecorView();
+        decorView.setBackgroundDrawable(transparent);
+        View content = decorView.findViewById(android.R.id.content);
+        if (content != null) content.setBackgroundDrawable(transparent);
         int width = area.getWidth();
         int height = area.getHeight();
         if (width <= 0 || height <= 0) return;
@@ -675,6 +711,14 @@ public final class FloatingKeyboardCompat {
         // own surface shadow draws a band below the card, which is the artifact being removed.
         int windowHeight = cardOffsetInWindow(area)[1]
                 + Math.round(baseAreaHeight * factor) + handleHeight + outgrow;
+        ViewGroup contentGroup = (ViewGroup) decorView.findViewById(android.R.id.content);
+        if (contentGroup != null) dumpTree(contentGroup, 0);
+        Log.i(TAG, "win " + windowWidth + "x" + windowHeight + " factor=" + factor
+                + " areaScale=" + area.getScaleX() + "," + area.getScaleY()
+                + " pivot=" + area.getPivotX() + "," + area.getPivotY()
+                + " areaPos=" + area.getLeft() + "," + area.getTop()
+                + " areaSize=" + width + "x" + height
+                + " base=" + baseAreaWidth + "x" + baseAreaHeight);
         android.view.WindowManager.LayoutParams attributes = window.getAttributes();
         if (attributes.width == windowWidth && attributes.height == windowHeight
                 && attributes.gravity == (Gravity.TOP | Gravity.START)) {
@@ -699,8 +743,16 @@ public final class FloatingKeyboardCompat {
         if (appliedScale != factor || scaledView != area) {
             appliedScale = factor;
             scaledView = area;
-            area.setPivotX(width / 2f);
-            area.setPivotY(height);
+            // Top-left pivot, matching the window's own origin. A centred horizontal pivot left
+            // the card half a scale-loss inside the window, which could only be cancelled by a
+            // negative window x, and the platform clamps that to zero.
+            area.setPivotX(0f);
+            // Scale about the top edge, not the bottom. With a bottom pivot the card's visible top
+            // sits (1 - scale) * areaHeight below the window's top, and that empty strip gets the
+            // window's surface shadow drawn around it, showing as a stray frame above the card.
+            // A top pivot puts the card flush with the window top; the leftover layout height
+            // falls below the card, where the window simply clips empty space.
+            area.setPivotY(0f);
             area.setScaleX(factor);
             area.setScaleY(factor);
         }
@@ -783,16 +835,15 @@ public final class FloatingKeyboardCompat {
      * measured the same way.
      */
     private static int[] cardOffsetInWindow(View area) {
-        View content = windowContent();
-        int[] result = new int[] {0, 0};
-        if (content == null) return result;
-        int[] areaLocation = new int[2];
-        int[] hostLocation = new int[2];
-        area.getLocationOnScreen(areaLocation);
-        content.getLocationOnScreen(hostLocation);
-        result[0] = areaLocation[0] - hostLocation[0];
-        result[1] = areaLocation[1] - hostLocation[1];
-        return result;
+        // Pure layout arithmetic, never a measurement of the live view tree. Reading positions
+        // back off the screen made each frame's window position depend on the previous frame's,
+        // which is what produced the jitter. The area is pinned to the content's top-start corner
+        // and scaled about its bottom centre, so the card's visible top-left is fully determined
+        // by the layout and the scale.
+        int width = area.getWidth();
+        int height = area.getHeight();
+        float factor = appliedScale > 0f ? appliedScale : 1f;
+        return new int[] {area.getLeft(), area.getTop()};
     }
 
     /**
@@ -803,21 +854,15 @@ public final class FloatingKeyboardCompat {
      */
     private static int[] windowOriginShift(Window window,
             android.view.WindowManager.LayoutParams attributes) {
-        int[] result = new int[] {0, 0};
-        View content = windowContent();
-        if (content == null) return result;
-        int[] location = new int[2];
-        content.getLocationOnScreen(location);
-        result[0] = location[0] - attributes.x;
-        result[1] = location[1] - attributes.y;
-        return result;
-    }
-
-    private static View windowContent() {
-        if (floatingWindow == null) return null;
-        View decor = floatingWindow.getDecorView();
-        View content = decor.findViewById(android.R.id.content);
-        return content != null ? content : decor;
+        // LayoutParams are relative to the available display frame, whose top is the status bar.
+        // Reading that inset is stable; comparing live view positions against the attributes was
+        // not, because those positions lag a frame behind while the window is moving.
+        int statusTop = 0;
+        if (window != null && window.getWindowManager() != null) {
+            statusTop = window.getWindowManager().getCurrentWindowMetrics().getWindowInsets()
+                    .getInsets(android.view.WindowInsets.Type.statusBars()).top;
+        }
+        return new int[] {0, statusTop};
     }
 
     /**
@@ -1314,6 +1359,10 @@ public final class FloatingKeyboardCompat {
         area.setScaleY(factor);
         appliedScale = factor;
         if (floatingWindow != null) {
+            // Size as well as position: leaving the window at its old size while the card shrinks
+            // leaves the surface shadow sitting in a large frame of its own, detached from the
+            // card.
+            narrowWindowToCard(floatingWindow, area);
             android.view.WindowManager.LayoutParams attributes = floatingWindow.getAttributes();
             attributes.x = Math.round(scaleStartTx + (scaleAnchorOffX - pivotX) * shift);
             attributes.y = Math.round(scaleStartTy + (scaleAnchorOffY - pivotY) * shift);
