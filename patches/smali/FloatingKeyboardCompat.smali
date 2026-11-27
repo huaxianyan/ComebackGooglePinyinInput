@@ -1735,7 +1735,7 @@
     check-cast p1, Landroid/view/ViewGroup;
 
     .line 653
-    const/high16 v0, 0x41500000    # 13.0f
+    const/high16 v0, 0x41200000    # 10.0f
 
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->density(Landroid/view/View;)F
 
