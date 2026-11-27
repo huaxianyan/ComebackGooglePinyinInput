@@ -60,6 +60,8 @@ public final class FloatingKeyboardCompat {
     /** Releasing near the bottom docks the card instead of leaving it hovering mid-screen. */
     /** Hold this long on the handle before it lets go and starts following the finger. */
     private static final long DRAG_LONG_PRESS_MS = 380L;
+    /** How far the card's own shadow ring extends past the card, in dp. */
+    static final float SHADOW_GROW_DP = 8f;
     /** Pending long press; non-null only between a touch down and its resolution. */
     private static Runnable pendingLongPress;
     /** True while the finger is down but the press has not become a drag yet. */
@@ -90,6 +92,8 @@ public final class FloatingKeyboardCompat {
      * that pass calls back into {@link #applyInsets}, so the value is compared before writing.
      */
     private static float appliedScale = -1f;
+    /** The card's own shadow ring, drawn behind the keyboard. */
+    private static FloatingCardShadow cardShadow;
     /** The view the scale was applied to; the service rebuilds its views, and a stale value here
      *  would skip scaling the replacement. */
     private static View scaledView;
@@ -244,6 +248,7 @@ public final class FloatingKeyboardCompat {
             // The handle sits inside the card's bottom edge, so the card rectangle already covers
             // it; the region needs no extra strip.
             visualRegion(area, region);
+            ensureCardShadow(decor, area, factor);
         }
         if (region.isEmpty()) {
             // The first pass runs before the keyboard frame is laid out. A strip covering the
@@ -608,6 +613,65 @@ public final class FloatingKeyboardCompat {
         View content = decor.findViewById(android.R.id.content);
         if (content instanceof ViewGroup) return (ViewGroup) content;
         return decor instanceof ViewGroup ? (ViewGroup) decor : null;
+    }
+
+    /**
+     * Keeps a shadow ring behind the card. Drawn by hand, only in the ring outside the card, so
+     * it never greys out the keys. This does not touch the window or the keyboard layout.
+     */
+    private static void ensureCardShadow(View decor, View area, float factor) {
+        if (android.os.Build.VERSION.SDK_INT < 21) return;
+        ViewGroup host = handleHost(decor, area);
+        if (host == null) return;
+        if (cardShadow == null || cardShadow.getParent() != host) {
+            removeCardShadow();
+            cardShadow = new FloatingCardShadow(decor.getContext(), density(decor));
+            cardShadow.setLayoutParams(new FrameLayout.LayoutParams(0, 0));
+            host.addView(cardShadow);
+            cardShadow.setTranslationZ(-1f);
+        }
+        updateCardShadowBounds(host, area, factor);
+    }
+
+    private static void updateCardShadowBounds(ViewGroup host, View area, float factor) {
+        if (cardShadow == null) return;
+        int[] areaLocation = new int[2];
+        area.getLocationOnScreen(areaLocation);
+        int[] hostLocation = new int[2];
+        host.getLocationOnScreen(hostLocation);
+        float applied = factor > 0f ? factor : 1f;
+        int cardWidth = Math.round(area.getWidth() * applied);
+        int cardHeight = Math.round(area.getHeight() * applied);
+        if (cardWidth <= 0 || cardHeight <= 0) return;
+        int left = areaLocation[0] - hostLocation[0];
+        int top = areaLocation[1] - hostLocation[1];
+        int outgrow = Math.round(SHADOW_GROW_DP * density(host));
+        left -= outgrow;
+        top -= outgrow;
+        cardWidth += outgrow * 2;
+        cardHeight += outgrow * 2;
+        FrameLayout.LayoutParams params =
+                cardShadow.getLayoutParams() instanceof FrameLayout.LayoutParams
+                        ? (FrameLayout.LayoutParams) cardShadow.getLayoutParams()
+                        : new FrameLayout.LayoutParams(cardWidth, cardHeight);
+        if (params.width == cardWidth && params.height == cardHeight
+                && params.leftMargin == left && params.topMargin == top) {
+            return;
+        }
+        params.width = cardWidth;
+        params.height = cardHeight;
+        params.leftMargin = left;
+        params.topMargin = top;
+        cardShadow.setLayoutParams(params);
+    }
+
+    private static void removeCardShadow() {
+        if (cardShadow == null) return;
+        ViewGroup parent = cardShadow.getParent() instanceof ViewGroup
+                ? (ViewGroup) cardShadow.getParent()
+                : null;
+        if (parent != null) parent.removeView(cardShadow);
+        cardShadow = null;
     }
 
     private static void updateHandleBounds(ViewGroup host, View area, int handleHeight) {
