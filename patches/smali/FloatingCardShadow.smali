@@ -4,7 +4,7 @@
 
 
 # static fields
-.field static final INSET_DP:F = 9.0f
+.field static final INSET_DP:F = 8.0f
 
 
 # instance fields
@@ -48,7 +48,7 @@
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/FloatingCardShadow;->card:Landroid/graphics/RectF;
 
     .line 37
-    const/high16 p1, 0x41100000    # 9.0f
+    const/high16 p1, 0x41000000    # 8.0f
 
     mul-float p1, p1, p2
 
@@ -78,7 +78,7 @@
     .line 43
     iget-object p1, p0, Lcom/google/android/inputmethod/pinyin/FloatingCardShadow;->paint:Landroid/graphics/Paint;
 
-    const/high16 v1, 0x40c00000    # 6.0f
+    const/high16 v1, 0x40a00000    # 5.0f
 
     mul-float v1, v1, p2
 
@@ -86,7 +86,7 @@
 
     mul-float p2, p2, v2
 
-    const/high16 v2, 0x26000000
+    const/high16 v2, 0x1a000000
 
     const/4 v3, 0x0
 
