@@ -3392,6 +3392,7 @@ def apply(
         "FloatingKeyboardCompat.smali",
         "FloatingKeyboardHandle.smali",
         "FloatingKeyboardEdit.smali",
+        "FloatingKeyboardEditView.smali",
         "FloatingCardShadow.smali",
         "ClipboardDismissAlign.smali",
     ) + tuple(

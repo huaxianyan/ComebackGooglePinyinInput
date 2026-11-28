@@ -29,6 +29,8 @@ def main() -> int:
     parser.add_argument("--jdk", type=Path, required=True)
     parser.add_argument("--build-tools", type=Path, required=True)
     parser.add_argument("--apktool", type=Path, required=True)
+    parser.add_argument("--classpath", type=Path, default=None,
+                        help="extra classes the probes compile against (native-class stubs)")
     args = parser.parse_args()
 
     android_jar = args.android_jar.resolve()
@@ -55,13 +57,12 @@ def main() -> int:
         decoded = root / "decoded"
         classes.mkdir()
         dex.mkdir()
-        subprocess.run(
-            [str(javac), "-encoding", "UTF-8", "-source", "8", "-target", "8",
-             "-bootclasspath", str(android_jar), "-d", str(classes),
-             *[str(path) for path in sources]],
-            check=True,
-            env=environment,
-        )
+        compile_command = [str(javac), "-encoding", "UTF-8", "-source", "8", "-target", "8",
+                           "-bootclasspath", str(android_jar), "-d", str(classes)]
+        if args.classpath is not None:
+            compile_command += ["-classpath", str(args.classpath)]
+        compile_command += [str(path) for path in sources]
+        subprocess.run(compile_command, check=True, env=environment)
         compiled = root / "research-probe.jar"
         subprocess.run(
             [str(jar), "cf", str(compiled), "-C", str(classes),

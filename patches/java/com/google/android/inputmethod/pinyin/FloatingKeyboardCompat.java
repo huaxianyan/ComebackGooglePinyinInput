@@ -108,7 +108,7 @@ public final class FloatingKeyboardCompat {
     private static FloatingKeyboardHandle handle;
     /** Area whose function layer was last sampled for the handle colour. */
     private static View handleColorSource;
-    private static FloatingKeyboardEdit editOverlay;
+    private static FloatingKeyboardEditView editOverlay;
     /** True while the card is in edit mode: keys frozen, whole card draggable. */
     private static boolean editing;
     /** Time of the last lift inside the drag handle, used for the double tap. */
@@ -999,26 +999,29 @@ public final class FloatingKeyboardCompat {
         // The handle only drags; in edit mode the whole card drags, so it is not needed.
         removeHandle();
         removeEditOverlay();
-        editOverlay = new FloatingKeyboardEdit(area.getContext(), accentColor(area));
-        editOverlay.setLayoutParams(new FrameLayout.LayoutParams(0, 0));
-        editOverlay.setListener(new FloatingKeyboardEdit.Listener() {
+        // Stock chrome: the theme supplies the dim, the border and the buttons, so they stay
+        // legible on any palette. Only the geometry and the gestures belong to the card.
+        editOverlay = new FloatingKeyboardEditView(area.getContext());
+        editOverlay.setLayoutParams(new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        editOverlay.setListener(new FloatingKeyboardEditView.Listener() {
             @Override
-            public void onEditDrag(float screenX, float screenY, boolean finished) {
+            public void onDrag(float screenX, float screenY, boolean finished) {
                 handleEditDrag(screenX, screenY, finished);
             }
 
             @Override
-            public void onEditScale(int corner, float screenX, float screenY, boolean finished) {
+            public void onScale(int corner, float screenX, float screenY, boolean finished) {
                 handleEditScale(corner, screenX, screenY, finished);
             }
 
             @Override
-            public void onEditReset() {
+            public void onReset() {
                 resetFromEdit();
             }
 
             @Override
-            public void onEditDone() {
+            public void onDone() {
                 View current = idleArea;
                 if (current == null) return;
                 exitEditMode(current.getRootView(), current);
@@ -1132,6 +1135,8 @@ public final class FloatingKeyboardCompat {
                 editOverlay.getLayoutParams() instanceof FrameLayout.LayoutParams
                         ? (FrameLayout.LayoutParams) editOverlay.getLayoutParams()
                         : new FrameLayout.LayoutParams(width, height);
+        // The dim covers only the card, not the app behind it: the overlay itself is laid out on
+        // the card, and the stock layout's border frame fills it.
         if (params.width == width && params.height == height
                 && params.leftMargin == left && params.topMargin == top) {
             return;
@@ -1142,6 +1147,7 @@ public final class FloatingKeyboardCompat {
         params.leftMargin = left;
         params.topMargin = top;
         editOverlay.setLayoutParams(params);
+        editOverlay.setFrameBounds(new Rect(0, 0, width, height));
     }
 
     private static void removeEditOverlay() {

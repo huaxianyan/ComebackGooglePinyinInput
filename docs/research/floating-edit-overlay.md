@@ -137,8 +137,34 @@ void onExitEditingKeyboard();
 
 两家都是「控件外观走主题 token / 资源」，没有一家是靠手绘纯色圆盘解决对比度的，与原生的思路一致。
 
-## 七、建议
+## 七、探针实测结果（2026-11-28 下午）
 
-先做路线 A 的一次探针构建：只把 helper 建起来、把布局弹到当前键盘上、把四个回调打成日志，不改现有逻辑。探针输出 `E:\Dev\ComebackGooglePinyinInput\work\` 下的日志与截图，确认第五节四条之后再替换 `FloatingKeyboardEdit`。
+路线 A 做过一次探针构建（`--research`，`FloatingKeyboardProbe`），结论：**原生 helper 不能直接复用，但它的布局可以。**
 
-如果探针发现主题解析不对（比如浅色主题弹出来是深色遮罩），再退回路线 B，但那时至少知道要自己解析哪几个属性。
+已验证：
+
+- `IPopupViewManager` 由 `service.getPopupViewManager()` 提供，`IMetrics` 用 `service.getMetrics()`（服务不直接实现该接口）
+- `KeyboardEditingViewHelper` 可以构造，`inflatePopupView(0x7f04007b)` 能弹出原生编辑界面
+- 主题解析正常：按钮是主题色、背景 drawable 存在
+- **anchor 必须传 `keyboard_area`**（浮动卡片本身），不能传原生单手模式用的 `keyboard_holder`——后者不被缩放移动，框会跑到屏幕顶部
+- **必须等一帧**：第一次 insets 回调时窗口只有 126 px 高，anchor 的可见矩形为空；`decor.post(...)` 之后再调 `helper.a(...)`
+- 四个回调都能触发：`updateKeyboardScale` 的 factor 是相对倍数（如 0.766），`updateKeyboardPosition` 是增量
+
+失败点（也是改用混合路线的原因）：
+
+原生 helper 用 `getGlobalVisibleRect` 拿 anchor 的**已变换**矩形，再把这个尺寸写进编辑框的**未变换** layout 参数。卡片已经做过 `setScaleX`/`setTranslationX`，两套坐标系叠加，于是「蒙版位置不对、拖动瞬移、缩放乱跳」。这不是参数能调的，原生 helper 假设它独占键盘几何。
+
+## 八、最终方案：原生视觉 + 自管几何
+
+新增 `FloatingKeyboardEditView`（`patches/java/.../FloatingKeyboardEditView.java`）：
+
+- inflate 原生 `keyboard_editing` 布局，边框、角标、三个按钮、主题配色全部来自原生资源
+- 叠层按卡片的 `visualRegion` 布局，**蒙版只盖卡片**，不压暗背后的应用（原生单手模式是全屏压暗，悬浮场景下会挡住应用内容，用户明确要求收窄）
+- 手势接现有的 `handleEditDrag` / `handleEditScale` / 重置 / 完成，不经过原生 helper
+
+两个易错点：
+
+1. **角标 id 的顺序**：`expand_keyboard_button_*` 才是四个角的触摸区（`keyboard_editing_view_corner_*` 只是图形）。手势处理器期望的顺序是左上、右上、右下、左下，即 `left_top(0x7f0f001e)`、`right_top(0x7f0f0020)`、`right_bottom(0x7f0f001f)`、`left_bottom(0x7f0f001d)`。按 smali 字段声明顺序（左下、左上、右下、右上）排会错位，只有右下碰巧对上。
+2. **inflate 用 `LayoutInflater.from(area.getContext())`**，不要用服务的 application context，否则主题属性解析不到。
+
+探针与 stub 都在 `patches/research/` 与 `work/research-stubs/`，不进正常构建。
