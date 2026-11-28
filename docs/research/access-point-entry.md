@@ -70,6 +70,16 @@ public interface IAccessPointFeatureHandler {
 编译时 `IAccessPointFeatureHandler` 是应用自己的类，Java 侧引用需要 stub：
 `generate_floating_keyboard_smali.py` 生成一份只含接口的 stub 给 javac，不打包。
 
+## 点击后收起 bar
+
+原生的收起逻辑只在点它自己的展开按钮时执行：`AccessPointsManager.a(String)` 里比较
+`id == 展开按钮 id` 才调 `b(1)`，普通入口点完不收起。而原生的设置、主题这些入口要么跳走
+要么打开面板，视觉上「有反馈」；一个纯开关什么都不做，bar 就那样摊着。
+
+收起方法是 `b(Z)V`，包内私有。给 `AccessPointsManager` 注入了公开桥接
+`collapseAccessPoints()` 调它，`apply_patches.py` 负责注入，stub 里声明同名空方法。
+handler 在翻转开关后调用，外层套 `try` 兜住，收起失败不能影响开关本身。
+
 ## 排序与开关
 
 `AccessPointsOrder.apply()` 早就在改这个列表（用户配置的顺序与开关）。新 id 不在用户

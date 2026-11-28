@@ -55,6 +55,9 @@ public class AccessPointsManager {
 
     public void a(IAccessPointFeatureHandler handler) {
     }
+
+    public void collapseAccessPoints() {
+    }
 }
 """
 

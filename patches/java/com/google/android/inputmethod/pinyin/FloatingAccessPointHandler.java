@@ -26,10 +26,12 @@ public final class FloatingAccessPointHandler
 
     private final Context context;
     private final String id;
+    private final AccessPointsManager manager;
 
-    private FloatingAccessPointHandler(Context context, String id) {
+    private FloatingAccessPointHandler(Context context, String id, AccessPointsManager manager) {
         this.context = context.getApplicationContext();
         this.id = id;
+        this.manager = manager;
     }
 
     /**
@@ -39,7 +41,7 @@ public final class FloatingAccessPointHandler
     public static void register(Context context, AccessPointsManager manager) {
         if (registered || context == null || manager == null) return;
         registered = true;
-        instance = new FloatingAccessPointHandler(context, resolveId(context));
+        instance = new FloatingAccessPointHandler(context, resolveId(context), manager);
         if (instance.id != null) manager.a(instance);
     }
 
@@ -52,6 +54,13 @@ public final class FloatingAccessPointHandler
     public boolean launchFeature(String feature, Map<String, Object> args) {
         if (id == null || !id.equals(feature)) return false;
         FloatingKeyboardCompat.setEnabled(context, !FloatingKeyboardCompat.isEnabled(context));
+        // The stock bar only folds itself when its own expand button is tapped. A toggle leaves
+        // no other UI to look at, so fold it here the way the built-in actions do.
+        try {
+            manager.collapseAccessPoints();
+        } catch (Throwable ignored) {
+            // Folding the bar must never break the switch.
+        }
         return true;
     }
 
