@@ -21,6 +21,15 @@ public final class AccessPointsOrder {
     private static final String PREFERENCES = "floating_keyboard_preferences";
     private static final String SHORTCUTS_KEY = "shortcuts";
 
+    /**
+     * Entries the floating card makes pointless.
+     *
+     * <p>One-handed mode rearranges a docked keyboard; the card is already movable, so the entry
+     * only crowds the bar. It is filtered here rather than hidden afterwards because the stock bar
+     * then never builds the view at all, which also survives its own re-inflates.
+     */
+    private static final String ONE_HANDED = "access_point_one_handed";
+
     private AccessPointsOrder() {
     }
 
@@ -33,8 +42,13 @@ public final class AccessPointsOrder {
     public static void apply(Context context, List<String> ids, Set<String> known) {
         if (context == null || ids == null || ids.isEmpty()) return;
 
+        boolean floating = FloatingKeyboardCompat.isEnabled(context);
+
         String raw = readShortcuts(context);
-        if (raw == null || raw.isEmpty()) return;
+        if (raw == null || raw.isEmpty()) {
+            if (floating) dropOneHanded(ids, known);
+            return;
+        }
 
         List<String> enabled = new ArrayList<String>();
         Set<String> disabled = new HashSet<String>();
@@ -66,6 +80,8 @@ public final class AccessPointsOrder {
         ids.clear();
         ids.addAll(result);
 
+        if (floating) dropOneHanded(ids, known);
+
         if (known != null) {
             // The render pass treats this set as a whitelist, so a switched-off shortcut has to
             // leave it and a switched-on one has to come back. Dropping without re-adding is why a
@@ -74,6 +90,12 @@ public final class AccessPointsOrder {
             known.removeAll(disabled);
             known.addAll(enabled);
         }
+    }
+
+    /** Removes the one-handed entry while the card is on, restoring it as soon as it is off. */
+    private static void dropOneHanded(List<String> ids, Set<String> known) {
+        ids.remove(ONE_HANDED);
+        if (known != null) known.remove(ONE_HANDED);
     }
 
     private static String readShortcuts(Context context) {

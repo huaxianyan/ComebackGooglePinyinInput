@@ -25,7 +25,7 @@
 .method constructor <init>(Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEditView;)V
     .locals 0
 
-    .line 68
+    .line 70
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEditView$2;->this$0:Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEditView;
 
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
@@ -38,7 +38,7 @@
 .method public onClick(Landroid/view/View;)V
     .locals 0
 
-    .line 71
+    .line 73
     iget-object p1, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEditView$2;->this$0:Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEditView;
 
     invoke-static {p1}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEditView;->access$000(Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEditView;)Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEditView$Listener;
@@ -55,7 +55,7 @@
 
     invoke-interface {p1}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEditView$Listener;->onDone()V
 
-    .line 72
+    .line 74
     :cond_0
     return-void
 .end method

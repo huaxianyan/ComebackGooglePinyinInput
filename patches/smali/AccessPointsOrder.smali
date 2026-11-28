@@ -4,6 +4,8 @@
 
 
 # static fields
+.field private static final ONE_HANDED:Ljava/lang/String; = "access_point_one_handed"
+
 .field private static final PREFERENCES:Ljava/lang/String; = "floating_keyboard_preferences"
 
 .field private static final SHORTCUTS_KEY:Ljava/lang/String; = "shortcuts"
@@ -13,15 +15,15 @@
 .method private constructor <init>()V
     .locals 0
 
-    .line 24
+    .line 33
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
-    .line 25
+    .line 34
     return-void
 .end method
 
 .method public static apply(Landroid/content/Context;Ljava/util/List;Ljava/util/Set;)V
-    .locals 9
+    .locals 10
     .annotation system Ldalvik/annotation/Signature;
         value = {
             "(",
@@ -35,10 +37,10 @@
         }
     .end annotation
 
-    .line 34
-    if-eqz p0, :cond_f
+    .line 43
+    if-eqz p0, :cond_11
 
-    if-eqz p1, :cond_f
+    if-eqz p1, :cond_11
 
     invoke-interface {p1}, Ljava/util/List;->isEmpty()Z
 
@@ -48,126 +50,131 @@
 
     goto/16 :goto_5
 
-    .line 36
+    .line 45
     :cond_0
+    invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->isEnabled(Landroid/content/Context;)Z
+
+    move-result v0
+
+    .line 47
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/AccessPointsOrder;->readShortcuts(Landroid/content/Context;)Ljava/lang/String;
 
     move-result-object p0
 
-    .line 37
-    if-eqz p0, :cond_e
+    .line 48
+    if-eqz p0, :cond_f
 
     invoke-virtual {p0}, Ljava/lang/String;->isEmpty()Z
 
-    move-result v0
+    move-result v1
 
-    if-eqz v0, :cond_1
+    if-eqz v1, :cond_1
 
     goto/16 :goto_4
 
-    .line 39
+    .line 53
     :cond_1
-    new-instance v0, Ljava/util/ArrayList;
+    new-instance v1, Ljava/util/ArrayList;
 
-    invoke-direct {v0}, Ljava/util/ArrayList;-><init>()V
+    invoke-direct {v1}, Ljava/util/ArrayList;-><init>()V
 
-    .line 40
-    new-instance v1, Ljava/util/HashSet;
+    .line 54
+    new-instance v2, Ljava/util/HashSet;
 
-    invoke-direct {v1}, Ljava/util/HashSet;-><init>()V
+    invoke-direct {v2}, Ljava/util/HashSet;-><init>()V
 
-    .line 41
-    const-string v2, "\\|"
+    .line 55
+    const-string v3, "\\|"
 
-    invoke-virtual {p0, v2}, Ljava/lang/String;->split(Ljava/lang/String;)[Ljava/lang/String;
+    invoke-virtual {p0, v3}, Ljava/lang/String;->split(Ljava/lang/String;)[Ljava/lang/String;
 
     move-result-object p0
 
-    array-length v2, p0
-
-    const/4 v3, 0x0
+    array-length v3, p0
 
     const/4 v4, 0x0
 
+    const/4 v5, 0x0
+
     :goto_0
-    if-ge v4, v2, :cond_6
+    if-ge v5, v3, :cond_6
 
-    aget-object v5, p0, v4
+    aget-object v6, p0, v5
 
-    .line 42
-    const-string v6, ":"
+    .line 56
+    const-string v7, ":"
 
-    invoke-virtual {v5, v6}, Ljava/lang/String;->split(Ljava/lang/String;)[Ljava/lang/String;
+    invoke-virtual {v6, v7}, Ljava/lang/String;->split(Ljava/lang/String;)[Ljava/lang/String;
 
-    move-result-object v5
+    move-result-object v6
 
-    .line 43
-    array-length v6, v5
+    .line 57
+    array-length v7, v6
 
-    const/4 v7, 0x2
+    const/4 v8, 0x2
 
-    if-eq v6, v7, :cond_2
+    if-eq v7, v8, :cond_2
 
     goto :goto_1
 
-    .line 44
+    .line 58
     :cond_2
-    aget-object v6, v5, v3
+    aget-object v7, v6, v4
 
-    .line 45
-    invoke-virtual {v6}, Ljava/lang/String;->isEmpty()Z
+    .line 59
+    invoke-virtual {v7}, Ljava/lang/String;->isEmpty()Z
 
-    move-result v7
+    move-result v8
 
-    if-eqz v7, :cond_3
+    if-eqz v8, :cond_3
 
     goto :goto_1
 
-    .line 46
+    .line 60
     :cond_3
-    const-string v7, "1"
+    const-string v8, "1"
 
-    const/4 v8, 0x1
+    const/4 v9, 0x1
 
-    aget-object v5, v5, v8
+    aget-object v6, v6, v9
 
-    invoke-virtual {v7, v5}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+    invoke-virtual {v8, v6}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
 
-    move-result v5
+    move-result v6
 
-    if-eqz v5, :cond_4
+    if-eqz v6, :cond_4
 
-    .line 47
-    invoke-interface {v0, v6}, Ljava/util/List;->contains(Ljava/lang/Object;)Z
+    .line 61
+    invoke-interface {v1, v7}, Ljava/util/List;->contains(Ljava/lang/Object;)Z
 
-    move-result v5
+    move-result v6
 
-    if-nez v5, :cond_5
+    if-nez v6, :cond_5
 
-    invoke-interface {v0, v6}, Ljava/util/List;->add(Ljava/lang/Object;)Z
+    invoke-interface {v1, v7}, Ljava/util/List;->add(Ljava/lang/Object;)Z
 
     goto :goto_1
 
-    .line 49
+    .line 63
     :cond_4
-    invoke-interface {v1, v6}, Ljava/util/Set;->add(Ljava/lang/Object;)Z
+    invoke-interface {v2, v7}, Ljava/util/Set;->add(Ljava/lang/Object;)Z
 
-    .line 41
+    .line 55
     :cond_5
     :goto_1
-    add-int/lit8 v4, v4, 0x1
+    add-int/lit8 v5, v5, 0x1
 
     goto :goto_0
 
-    .line 52
+    .line 66
     :cond_6
-    invoke-interface {v0}, Ljava/util/List;->isEmpty()Z
+    invoke-interface {v1}, Ljava/util/List;->isEmpty()Z
 
     move-result p0
 
     if-eqz p0, :cond_7
 
-    invoke-interface {v1}, Ljava/util/Set;->isEmpty()Z
+    invoke-interface {v2}, Ljava/util/Set;->isEmpty()Z
 
     move-result p0
 
@@ -175,123 +182,164 @@
 
     return-void
 
-    .line 54
+    .line 68
     :cond_7
     new-instance p0, Ljava/util/ArrayList;
 
     invoke-direct {p0}, Ljava/util/ArrayList;-><init>()V
 
-    .line 55
-    invoke-interface {v0}, Ljava/util/List;->iterator()Ljava/util/Iterator;
-
-    move-result-object v2
-
-    :goto_2
-    invoke-interface {v2}, Ljava/util/Iterator;->hasNext()Z
-
-    move-result v3
-
-    if-eqz v3, :cond_9
-
-    invoke-interface {v2}, Ljava/util/Iterator;->next()Ljava/lang/Object;
+    .line 69
+    invoke-interface {v1}, Ljava/util/List;->iterator()Ljava/util/Iterator;
 
     move-result-object v3
 
-    check-cast v3, Ljava/lang/String;
-
-    .line 59
-    invoke-interface {p0, v3}, Ljava/util/List;->contains(Ljava/lang/Object;)Z
+    :goto_2
+    invoke-interface {v3}, Ljava/util/Iterator;->hasNext()Z
 
     move-result v4
 
-    if-nez v4, :cond_8
+    if-eqz v4, :cond_9
 
-    invoke-interface {p0, v3}, Ljava/util/List;->add(Ljava/lang/Object;)Z
+    invoke-interface {v3}, Ljava/util/Iterator;->next()Ljava/lang/Object;
 
-    .line 60
+    move-result-object v4
+
+    check-cast v4, Ljava/lang/String;
+
+    .line 73
+    invoke-interface {p0, v4}, Ljava/util/List;->contains(Ljava/lang/Object;)Z
+
+    move-result v5
+
+    if-nez v5, :cond_8
+
+    invoke-interface {p0, v4}, Ljava/util/List;->add(Ljava/lang/Object;)Z
+
+    .line 74
     :cond_8
     goto :goto_2
 
-    .line 61
+    .line 75
     :cond_9
     invoke-interface {p1}, Ljava/util/List;->iterator()Ljava/util/Iterator;
 
-    move-result-object v2
+    move-result-object v3
 
     :cond_a
     :goto_3
-    invoke-interface {v2}, Ljava/util/Iterator;->hasNext()Z
-
-    move-result v3
-
-    if-eqz v3, :cond_c
-
-    invoke-interface {v2}, Ljava/util/Iterator;->next()Ljava/lang/Object;
-
-    move-result-object v3
-
-    check-cast v3, Ljava/lang/String;
-
-    .line 62
-    invoke-interface {p0, v3}, Ljava/util/List;->contains(Ljava/lang/Object;)Z
+    invoke-interface {v3}, Ljava/util/Iterator;->hasNext()Z
 
     move-result v4
 
-    if-nez v4, :cond_a
+    if-eqz v4, :cond_c
 
-    invoke-interface {v1, v3}, Ljava/util/Set;->contains(Ljava/lang/Object;)Z
+    invoke-interface {v3}, Ljava/util/Iterator;->next()Ljava/lang/Object;
 
-    move-result v4
+    move-result-object v4
 
-    if-eqz v4, :cond_b
+    check-cast v4, Ljava/lang/String;
+
+    .line 76
+    invoke-interface {p0, v4}, Ljava/util/List;->contains(Ljava/lang/Object;)Z
+
+    move-result v5
+
+    if-nez v5, :cond_a
+
+    invoke-interface {v2, v4}, Ljava/util/Set;->contains(Ljava/lang/Object;)Z
+
+    move-result v5
+
+    if-eqz v5, :cond_b
 
     goto :goto_3
 
-    .line 63
+    .line 77
     :cond_b
-    invoke-interface {p0, v3}, Ljava/util/List;->add(Ljava/lang/Object;)Z
+    invoke-interface {p0, v4}, Ljava/util/List;->add(Ljava/lang/Object;)Z
 
-    .line 64
+    .line 78
     goto :goto_3
 
-    .line 66
+    .line 80
     :cond_c
     invoke-interface {p1}, Ljava/util/List;->clear()V
 
-    .line 67
+    .line 81
     invoke-interface {p1, p0}, Ljava/util/List;->addAll(Ljava/util/Collection;)Z
 
-    .line 69
-    if-eqz p2, :cond_d
+    .line 83
+    if-eqz v0, :cond_d
 
-    .line 74
-    invoke-interface {p2, v1}, Ljava/util/Set;->removeAll(Ljava/util/Collection;)Z
+    invoke-static {p1, p2}, Lcom/google/android/inputmethod/pinyin/AccessPointsOrder;->dropOneHanded(Ljava/util/List;Ljava/util/Set;)V
 
-    .line 75
-    invoke-interface {p2, v0}, Ljava/util/Set;->addAll(Ljava/util/Collection;)Z
-
-    .line 77
+    .line 85
     :cond_d
-    return-void
+    if-eqz p2, :cond_e
 
-    .line 37
+    .line 90
+    invoke-interface {p2, v2}, Ljava/util/Set;->removeAll(Ljava/util/Collection;)Z
+
+    .line 91
+    invoke-interface {p2, v1}, Ljava/util/Set;->addAll(Ljava/util/Collection;)Z
+
+    .line 93
     :cond_e
-    :goto_4
     return-void
 
-    .line 34
+    .line 49
     :cond_f
+    :goto_4
+    if-eqz v0, :cond_10
+
+    invoke-static {p1, p2}, Lcom/google/android/inputmethod/pinyin/AccessPointsOrder;->dropOneHanded(Ljava/util/List;Ljava/util/Set;)V
+
+    .line 50
+    :cond_10
+    return-void
+
+    .line 43
+    :cond_11
     :goto_5
+    return-void
+.end method
+
+.method private static dropOneHanded(Ljava/util/List;Ljava/util/Set;)V
+    .locals 1
+    .annotation system Ldalvik/annotation/Signature;
+        value = {
+            "(",
+            "Ljava/util/List<",
+            "Ljava/lang/String;",
+            ">;",
+            "Ljava/util/Set<",
+            "Ljava/lang/String;",
+            ">;)V"
+        }
+    .end annotation
+
+    .line 97
+    const-string v0, "access_point_one_handed"
+
+    invoke-interface {p0, v0}, Ljava/util/List;->remove(Ljava/lang/Object;)Z
+
+    .line 98
+    if-eqz p1, :cond_0
+
+    invoke-interface {p1, v0}, Ljava/util/Set;->remove(Ljava/lang/Object;)Z
+
+    .line 99
+    :cond_0
     return-void
 .end method
 
 .method private static readFromFile(Landroid/content/Context;)Ljava/lang/String;
     .locals 6
 
-    .line 92
+    .line 114
     nop
 
-    .line 94
+    .line 116
     const/4 v0, 0x0
 
     :try_start_0
@@ -303,27 +351,27 @@
 
     move-result-object p0
 
-    .line 95
+    .line 117
     new-instance v1, Ljava/io/File;
 
     const-string v2, "shared_prefs/floating_keyboard_preferences.xml"
 
     invoke-direct {v1, p0, v2}, Ljava/io/File;-><init>(Ljava/io/File;Ljava/lang/String;)V
 
-    .line 96
+    .line 118
     invoke-virtual {v1}, Ljava/io/File;->isFile()Z
 
     move-result p0
 
     if-nez p0, :cond_0
 
-    .line 111
+    .line 133
     nop
 
-    .line 96
+    .line 118
     return-object v0
 
-    .line 97
+    .line 119
     :cond_0
     new-instance p0, Ljava/io/FileInputStream;
 
@@ -331,7 +379,7 @@
     :try_end_0
     .catchall {:try_start_0 .. :try_end_0} :catchall_5
 
-    .line 98
+    .line 120
     :try_start_1
     invoke-virtual {v1}, Ljava/io/File;->length()J
 
@@ -341,37 +389,37 @@
 
     new-array v1, v2, [B
 
-    .line 99
+    .line 121
     invoke-virtual {p0, v1}, Ljava/io/FileInputStream;->read([B)I
 
     move-result v2
     :try_end_1
     .catchall {:try_start_1 .. :try_end_1} :catchall_4
 
-    .line 100
+    .line 122
     if-gtz v2, :cond_1
 
-    .line 111
+    .line 133
     nop
 
-    .line 113
+    .line 135
     :try_start_2
     invoke-virtual {p0}, Ljava/io/FileInputStream;->close()V
     :try_end_2
     .catchall {:try_start_2 .. :try_end_2} :catchall_0
 
-    .line 116
+    .line 138
     goto :goto_0
 
-    .line 114
+    .line 136
     :catchall_0
     move-exception p0
 
-    .line 100
+    .line 122
     :goto_0
     return-object v0
 
-    .line 101
+    .line 123
     :cond_1
     :try_start_3
     new-instance v3, Ljava/lang/String;
@@ -382,7 +430,7 @@
 
     invoke-direct {v3, v1, v5, v2, v4}, Ljava/lang/String;-><init>([BIILjava/lang/String;)V
 
-    .line 102
+    .line 124
     const-string v1, "name=\"shortcuts\""
 
     invoke-virtual {v3, v1}, Ljava/lang/String;->indexOf(Ljava/lang/String;)I
@@ -391,30 +439,30 @@
     :try_end_3
     .catchall {:try_start_3 .. :try_end_3} :catchall_4
 
-    .line 103
+    .line 125
     if-gez v1, :cond_2
 
-    .line 111
+    .line 133
     nop
 
-    .line 113
+    .line 135
     :try_start_4
     invoke-virtual {p0}, Ljava/io/FileInputStream;->close()V
     :try_end_4
     .catchall {:try_start_4 .. :try_end_4} :catchall_1
 
-    .line 116
+    .line 138
     goto :goto_1
 
-    .line 114
+    .line 136
     :catchall_1
     move-exception p0
 
-    .line 103
+    .line 125
     :goto_1
     return-object v0
 
-    .line 104
+    .line 126
     :cond_2
     const/16 v2, 0x3e
 
@@ -423,21 +471,21 @@
 
     move-result v1
 
-    .line 105
+    .line 127
     const/16 v2, 0x3c
 
     invoke-virtual {v3, v2, v1}, Ljava/lang/String;->indexOf(II)I
 
     move-result v2
 
-    .line 106
+    .line 128
     if-ltz v1, :cond_4
 
     if-gez v2, :cond_3
 
     goto :goto_3
 
-    .line 107
+    .line 129
     :cond_3
     add-int/lit8 v1, v1, 0x1
 
@@ -447,49 +495,49 @@
     :try_end_5
     .catchall {:try_start_5 .. :try_end_5} :catchall_4
 
-    .line 111
+    .line 133
     nop
 
-    .line 113
+    .line 135
     :try_start_6
     invoke-virtual {p0}, Ljava/io/FileInputStream;->close()V
     :try_end_6
     .catchall {:try_start_6 .. :try_end_6} :catchall_2
 
-    .line 116
+    .line 138
     goto :goto_2
 
-    .line 114
+    .line 136
     :catchall_2
     move-exception p0
 
-    .line 107
+    .line 129
     :goto_2
     return-object v0
 
-    .line 111
+    .line 133
     :cond_4
     :goto_3
     nop
 
-    .line 113
+    .line 135
     :try_start_7
     invoke-virtual {p0}, Ljava/io/FileInputStream;->close()V
     :try_end_7
     .catchall {:try_start_7 .. :try_end_7} :catchall_3
 
-    .line 116
+    .line 138
     goto :goto_4
 
-    .line 114
+    .line 136
     :catchall_3
     move-exception p0
 
-    .line 106
+    .line 128
     :goto_4
     return-object v0
 
-    .line 108
+    .line 130
     :catchall_4
     move-exception v1
 
@@ -500,27 +548,27 @@
 
     move-object p0, v0
 
-    .line 109
+    .line 131
     :goto_5
     nop
 
-    .line 111
+    .line 133
     if-eqz p0, :cond_5
 
-    .line 113
+    .line 135
     :try_start_8
     invoke-virtual {p0}, Ljava/io/FileInputStream;->close()V
     :try_end_8
     .catchall {:try_start_8 .. :try_end_8} :catchall_6
 
-    .line 116
+    .line 138
     goto :goto_6
 
-    .line 114
+    .line 136
     :catchall_6
     move-exception p0
 
-    .line 109
+    .line 131
     :cond_5
     :goto_6
     return-object v0
@@ -529,12 +577,12 @@
 .method private static readShortcuts(Landroid/content/Context;)Ljava/lang/String;
     .locals 3
 
-    .line 80
+    .line 102
     invoke-static {p0}, Lcom/google/android/inputmethod/pinyin/AccessPointsOrder;->readFromFile(Landroid/content/Context;)Ljava/lang/String;
 
     move-result-object v0
 
-    .line 81
+    .line 103
     if-eqz v0, :cond_0
 
     invoke-virtual {v0}, Ljava/lang/String;->isEmpty()Z
@@ -545,7 +593,7 @@
 
     return-object v0
 
-    .line 83
+    .line 105
     :cond_0
     const/4 v0, 0x0
 
@@ -560,21 +608,21 @@
 
     const-string v1, "shortcuts"
 
-    .line 84
+    .line 106
     invoke-interface {p0, v1, v0}, Landroid/content/SharedPreferences;->getString(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
 
     move-result-object p0
     :try_end_0
     .catchall {:try_start_0 .. :try_end_0} :catchall_0
 
-    .line 83
+    .line 105
     return-object p0
 
-    .line 85
+    .line 107
     :catchall_0
     move-exception p0
 
-    .line 86
+    .line 108
     new-instance v1, Ljava/lang/StringBuilder;
 
     invoke-direct {v1}, Ljava/lang/StringBuilder;-><init>()V
@@ -597,6 +645,6 @@
 
     invoke-static {v1, p0}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
 
-    .line 87
+    .line 109
     return-object v0
 .end method

@@ -128,6 +128,8 @@ public final class FloatingKeyboardCompat {
     /** Card watched for idleness; null while docked. */
     private static View idleArea;
     private static long lastAccessPointPost;
+    /** The most recent target, so a throttled call cannot leave the old state behind. */
+    private static boolean lastAccessPointTarget;
 
     
     private static View watchedDecor;
@@ -168,6 +170,8 @@ public final class FloatingKeyboardCompat {
     };
     /** Bottom padding {@code keyboard_area} had before the gutter was applied; -1 until read. */
     private static int baseBottomPadding = -1;
+    /** The card the cached bottom padding belongs to. */
+    private static java.lang.ref.WeakReference<View> basePaddingArea;
     /** The InputView's own elevation before the floating card suppressed it. */
     private static float baseInputElevation = -1f;
     private static boolean dragging;
@@ -311,6 +315,9 @@ public final class FloatingKeyboardCompat {
                     dropFloatingChrome();
                     return;
                 }
+                // The card can be replaced between the post and this run. Using the captured view
+                // then puts the handle next to a card that is no longer on screen.
+                if (!area.isAttachedToWindow() || findKeyboardArea(decor) != area) return;
                 ensureHandle(decor, area, factor);
             }
         });
@@ -404,8 +411,12 @@ public final class FloatingKeyboardCompat {
         // Rate limit by timestamp, not by a pending flag: a post that never runs would leave the
         // flag stuck and the shortcuts hidden forever after the card is switched off.
         long now = android.os.SystemClock.uptimeMillis();
-        if (now - lastAccessPointPost < 50L) return;
+        // Only a repeat of the same request is throttled. The card flipping on and off within the
+        // window asks for opposite states, and dropping that would leave the shortcuts stuck:
+        // turning the card off removes the layout listener that would have corrected them.
+        if (now - lastAccessPointPost < 50L && hidden == lastAccessPointTarget) return;
         lastAccessPointPost = now;
+        lastAccessPointTarget = hidden;
         decor.post(new Runnable() {
             @Override
             public void run() {
@@ -438,6 +449,9 @@ public final class FloatingKeyboardCompat {
      * them matches {@code one_handed_access_point_content_desc}, which labels the panel entry.
      */
     private static final String[] ONE_HANDED_LABELS = {
+            // The bar's own entry. It reads "One handed mode", not any of the three below, which
+            // is why the shortcut stayed visible however the card was toggled.
+            "one_handed_access_point_content_desc",
             "left_handed_content_desc",
             "right_handed_content_desc",
             "expand_keyboard_content_desc",
@@ -612,7 +626,15 @@ public final class FloatingKeyboardCompat {
      * own heights and only move up by the gutter.
      */
     private static void applyGutter(View area, boolean enabled) {
-        if (baseBottomPadding < 0) baseBottomPadding = area.getPaddingBottom();
+        // The baseline belongs to one card. A new card (theme change, orientation) has its own
+        // native padding, and reusing the old baseline would offset every row by the difference.
+        View baselineOwner = basePaddingArea != null ? basePaddingArea.get() : null;
+        if (baseBottomPadding < 0 || baselineOwner != area) {
+            // A card we have not touched yet still reports its native padding, so this read is
+            // the baseline for it.
+            basePaddingArea = new java.lang.ref.WeakReference<>(area);
+            baseBottomPadding = area.getPaddingBottom();
+        }
         int target = baseBottomPadding;
         if (enabled) target += Math.round(HANDLE_GUTTER_DP * density(area));
         if (area.getPaddingBottom() == target) return;
@@ -1378,6 +1400,25 @@ public final class FloatingKeyboardCompat {
      * Arms the long press. Moving further than the touch slop first cancels it, so a flick over the
      * handle does not drag the keyboard by accident.
      */
+    /**
+     * Starts a drag from the current down point.
+     *
+     * <p>Both entry points use it: the long-press timer, and a double-tap-hold that turned out to
+     * be a drag. Anchoring on where the finger already is keeps the card from jumping by however
+     * long the press took to be recognised.
+     */
+    private static boolean beginDrag(View view, View decor, View area) {
+        float factor = appliedScale > 0f ? appliedScale : scale(view.getContext());
+        float[] range = freeRange(decor, area, factor);
+        if (range == null) return false;
+        dragging = true;
+        dragDownRawX = downRawX;
+        dragDownRawY = downRawY;
+        dragStartX = fractionFromTranslation(area, decor, factor, range, true);
+        dragStartY = fractionFromTranslation(area, decor, factor, range, false);
+        return true;
+    }
+
     private static void armLongPress(final View view, final View decor, final View area) {
         cancelLongPress(view);
         pendingDrag = true;
@@ -1387,16 +1428,7 @@ public final class FloatingKeyboardCompat {
                 pendingLongPress = null;
                 if (!pendingDrag || !isEnabled(view.getContext())) return;
                 pendingDrag = false;
-                float factor = appliedScale > 0f ? appliedScale : scale(view.getContext());
-                float[] range = freeRange(decor, area, factor);
-                if (range == null) return;
-                dragging = true;
-                // Anchor on where the finger already is: anchoring on the original down point
-                // would jump the card by however long the press took to be recognised.
-                dragDownRawX = downRawX;
-                dragDownRawY = downRawY;
-                dragStartX = fractionFromTranslation(area, decor, factor, range, true);
-                dragStartY = fractionFromTranslation(area, decor, factor, range, false);
+                if (!beginDrag(view, decor, area)) return;
                 view.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS);
                 wakeIdle();
             }
@@ -1434,6 +1466,9 @@ public final class FloatingKeyboardCompat {
                     float dy = event.getRawY() - downRawY;
                     int slop = touchSlop(view);
                     if (dx * dx + dy * dy > (float) slop * slop) {
+                        // Moving during the hold means this was not a double-tap-hold: drop the
+                        // editor, but leave the drag to a fresh long press. Turning it into a drag
+                        // here would take the hold-to-edit gesture away.
                         armingEdit = false;
                         idleHandler.removeCallbacks(enterEditRunnable);
                     }
@@ -1449,10 +1484,12 @@ public final class FloatingKeyboardCompat {
                     return true;
                 }
                 View area = findKeyboardArea(decor);
-                if (area == null) return false;
                 float factor = appliedScale > 0f ? appliedScale : scale(view.getContext());
-                float[] range = freeRange(decor, area, factor);
-                if (range == null) return false;
+                float[] range = area == null ? null : freeRange(decor, area, factor);
+                // Never give the gesture up here. Returning false stops this view from receiving
+                // the rest of the stream, so a single frame where the card is mid-rebuild (zero
+                // width) would freeze the drag with the finger still down and no way to resume.
+                if (range == null) return true;
                 float fractionX = clamp01(
                         dragStartX + (event.getRawX() - dragDownRawX) / range[0]);
                 float fractionY = clamp01(
@@ -1463,16 +1500,38 @@ public final class FloatingKeyboardCompat {
                 moveHandle(decor, area);
                 return true;
             }
-            case MotionEvent.ACTION_UP:
+            // A cancelled gesture is not a release: the system took the stream away, so the card
+            // must not dock, and a cancelled touch must not count as the first tap of a
+            // double-tap either, or the next press would wrongly open the editor.
             case MotionEvent.ACTION_CANCEL: {
-                lastHandleUp = android.os.SystemClock.uptimeMillis();
+                boolean wasArmed = armingEdit;
+                boolean wasDragging = dragging;
+                armingEdit = false;
+                dragging = false;
+                pendingDrag = false;
+                idleHandler.removeCallbacks(enterEditRunnable);
+                cancelLongPress(view);
+                // The card stays exactly where the finger left it, without the docking rule.
+                if (wasDragging) persistPosition(view, decor);
+                if (wasArmed || wasDragging) {
+                    View current = findKeyboardArea(decor);
+                    if (current != null) scheduleIdleFade(current);
+                }
+                return true;
+            }
+            case MotionEvent.ACTION_UP: {
                 if (armingEdit) {
                     armingEdit = false;
                     idleHandler.removeCallbacks(enterEditRunnable);
                     return true;
                 }
                 cancelLongPress(view);
-                if (!dragging) return true;
+                if (!dragging) {
+                    // A plain click, not the end of a drag, is the only thing that arms the
+                    // double-tap: timing a drag would make the next press open the editor.
+                    lastHandleUp = android.os.SystemClock.uptimeMillis();
+                    return true;
+                }
                 dragging = false;
                 settle(view, decor);
                 View settledArea = findKeyboardArea(decor);
@@ -1485,6 +1544,22 @@ public final class FloatingKeyboardCompat {
     }
 
     /** Snaps to the nearest edge or centre, docks when released low, and stores the result. */
+    /** Stores the card's current spot without applying the docking rule. */
+    private static void persistPosition(View view, View decor) {
+        View area = findKeyboardArea(decor);
+        if (area == null) return;
+        float factor = appliedScale > 0f ? appliedScale : scale(view.getContext());
+        float[] range = freeRange(decor, area, factor);
+        if (range == null) return;
+        Context context = view.getContext();
+        preferences(context).edit()
+                .putFloat(KEY_X_FRACTION + orientation(context),
+                        fractionFromTranslation(area, decor, factor, range, true))
+                .putFloat(KEY_Y_FRACTION + orientation(context),
+                        fractionFromTranslation(area, decor, factor, range, false))
+                .apply();
+    }
+
     private static void settle(View view, View decor) {
         View area = findKeyboardArea(decor);
         if (area == null) return;

@@ -48,6 +48,8 @@ public final class FloatingKeyboardEditView extends FrameLayout {
     private Listener listener;
     private int activeCorner = -1;
     private boolean dragging;
+    /** Only one gesture at a time: a second finger would otherwise overwrite the anchor. */
+    private int activePointer = -1;
 
     public FloatingKeyboardEditView(Context context) {
         super(context);
@@ -114,48 +116,89 @@ public final class FloatingKeyboardEditView extends FrameLayout {
     private boolean onDragTouch(MotionEvent event) {
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
+                if (activePointer != -1 || activeCorner != -1) return true;
+                activePointer = event.getPointerId(0);
                 dragging = true;
-                reportDrag(event, false);
+                reportDrag(event, 0, false);
                 return true;
-            case MotionEvent.ACTION_MOVE:
-                if (dragging) reportDrag(event, false);
+            case MotionEvent.ACTION_MOVE: {
+                if (!dragging) return true;
+                int index = event.findPointerIndex(activePointer);
+                if (index >= 0) reportDrag(event, index, false);
+                return true;
+            }
+            case MotionEvent.ACTION_POINTER_DOWN:
+                // A second finger during a drag is ignored rather than started as a scale.
                 return true;
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
-                if (dragging) reportDrag(event, true);
-                dragging = false;
-                return true;
+                return endDrag(event);
             default:
                 return true;
         }
+    }
+
+    private boolean endDrag(MotionEvent event) {
+        if (!dragging) return true;
+        int index = event.findPointerIndex(activePointer);
+        if (index >= 0) reportDrag(event, index, true);
+        dragging = false;
+        activePointer = -1;
+        return true;
     }
 
     private boolean onScaleTouch(int corner, MotionEvent event) {
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
+                // Any gesture already in flight keeps its corner; a second finger must not
+                // silently re-anchor the scale on a different corner.
+                if (activePointer != -1 || activeCorner != -1 || dragging) return true;
+                activePointer = event.getPointerId(0);
                 activeCorner = corner;
-                reportScale(corner, event, false);
+                reportScale(corner, event, 0, false);
                 return true;
-            case MotionEvent.ACTION_MOVE:
-                if (activeCorner == corner) reportScale(corner, event, false);
+            case MotionEvent.ACTION_MOVE: {
+                if (activeCorner != corner) return true;
+                int index = event.findPointerIndex(activePointer);
+                if (index >= 0) reportScale(corner, event, index, false);
+                return true;
+            }
+            case MotionEvent.ACTION_POINTER_DOWN:
                 return true;
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
-                if (activeCorner == corner) reportScale(corner, event, true);
+                if (activeCorner != corner) return true;
+                int index = event.findPointerIndex(activePointer);
+                if (index >= 0) reportScale(corner, event, index, true);
+                else if (event.getActionMasked() == MotionEvent.ACTION_CANCEL) {
+                    // The stream was cancelled with the tracking pointer already gone; the
+                    // compat side still has to be told the gesture is over.
+                    reportScale(corner, event, 0, true);
+                }
                 activeCorner = -1;
+                activePointer = -1;
                 return true;
             default:
                 return true;
         }
     }
 
-    private void reportDrag(MotionEvent event, boolean finished) {
-        if (listener != null) listener.onDrag(event.getRawX(), event.getRawY(), finished);
+    private void reportDrag(MotionEvent event, int index, boolean finished) {
+        if (listener == null) return;
+        listener.onDrag(rawX(event, index), rawY(event, index), finished);
     }
 
-    private void reportScale(int corner, MotionEvent event, boolean finished) {
-        if (listener != null) {
-            listener.onScale(corner, event.getRawX(), event.getRawY(), finished);
-        }
+    private void reportScale(int corner, MotionEvent event, int index, boolean finished) {
+        if (listener == null) return;
+        listener.onScale(corner, rawX(event, index), rawY(event, index), finished);
+    }
+
+    /** Raw position of one pointer. For a single-pointer stream this equals getRawX/getRawY. */
+    private float rawX(MotionEvent event, int index) {
+        return event.getX(index) + (event.getRawX() - event.getX());
+    }
+
+    private float rawY(MotionEvent event, int index) {
+        return event.getY(index) + (event.getRawY() - event.getY());
     }
 }
