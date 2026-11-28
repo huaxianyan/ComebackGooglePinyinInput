@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Reproducibly compile the floating keyboard bridge.
 
-The class compiled here is a plain Android library helper: it only touches
-framework types, so no application stubs are required. It is the source of
-truth for `patches/smali/FloatingKeyboardCompat.smali`, which is injected into
-the decoded application by `apply_patches.py`.
+Most of the classes compiled here only touch framework types. The access point
+handler also implements an interface from the application's own framework
+package, so that one contract is stubbed for javac and never packaged. These
+files are the source of truth for `patches/smali/*.smali`, which
+`apply_patches.py` injects into the decoded application.
 """
 
 from __future__ import annotations
@@ -25,6 +26,7 @@ SOURCES = [
     ROOT / f"patches/java/{PACKAGE_DIR}/FloatingCardShadow.java",
     ROOT / f"patches/java/{PACKAGE_DIR}/ClipboardDismissAlign.java",
     ROOT / f"patches/java/{PACKAGE_DIR}/AccessPointsOrder.java",
+    ROOT / f"patches/java/{PACKAGE_DIR}/FloatingAccessPointHandler.java",
 ]
 OUTPUT_DIR = ROOT / "patches/smali"
 # Anonymous and nested classes compile to their own files; copying only the top level class leaves
@@ -36,7 +38,25 @@ SMALI_PREFIXES = [
     "FloatingCardShadow",
     "ClipboardDismissAlign",
     "AccessPointsOrder",
+    "FloatingAccessPointHandler",
 ]
+
+# Only the contract the handler implements: enough for javac, never packaged.
+ACCESS_POINTS_STUB = """
+package com.google.android.apps.inputmethod.libs.framework.core;
+
+import java.util.Map;
+
+public class AccessPointsManager {
+    public interface IAccessPointFeatureHandler {
+        boolean closeFeature(String id);
+        boolean launchFeature(String id, Map<String, Object> args);
+    }
+
+    public void a(IAccessPointFeatureHandler handler) {
+    }
+}
+"""
 
 
 def main() -> int:
@@ -67,9 +87,25 @@ def main() -> int:
         decoded = root / "decoded"
         classes.mkdir()
         dex.mkdir()
+        stub_classes = root / "stub-classes"
+        stub_classes.mkdir()
+        stub = root / "stubs/AccessPointsManager.java"
+        stub.parent.mkdir(parents=True, exist_ok=True)
+        stub.write_text(ACCESS_POINTS_STUB.strip() + chr(10), encoding="utf-8")
         subprocess.run(
             [str(javac), "-source", "7", "-target", "7", "-bootclasspath",
-             str(android_jar), "-d", str(classes), *[str(source) for source in SOURCES]],
+             str(android_jar), "-d", str(stub_classes), str(stub)],
+            check=True, env=env,
+        )
+        contract = root / "native-contracts.jar"
+        subprocess.run(
+            [str(jar), "cf", str(contract), "-C", str(stub_classes), "."],
+            check=True, env=env,
+        )
+        subprocess.run(
+            [str(javac), "-source", "7", "-target", "7", "-bootclasspath",
+             str(android_jar), "-classpath", str(contract),
+             "-d", str(classes), *[str(source) for source in SOURCES]],
             check=True, env=env,
         )
         compiled = root / "system-auto-theme.jar"
