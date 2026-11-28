@@ -21,7 +21,6 @@ ROOT = Path(__file__).resolve().parents[1]
 COMPAT_CLASS_PREFIXES = (
     "FloatingKeyboardCompat",
     "FloatingKeyboardHandle",
-    "FloatingKeyboardEdit",
     "AccessPointsOrder",
 )
 FORMAL_APPLICATION_ID = "com.google.android.inputmethod.pinyin.compat"
@@ -3391,7 +3390,6 @@ def apply(
         "PairedPunctuationEnglishIme.smali",
         "FloatingKeyboardCompat.smali",
         "FloatingKeyboardHandle.smali",
-        "FloatingKeyboardEdit.smali",
         "FloatingKeyboardEditView.smali",
         "FloatingCardShadow.smali",
         "ClipboardDismissAlign.smali",

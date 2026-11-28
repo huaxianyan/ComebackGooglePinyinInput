@@ -21,7 +21,7 @@
 .method constructor <init>()V
     .locals 0
 
-    .line 801
+    .line 868
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
     return-void
@@ -32,10 +32,10 @@
 .method public onPreDraw()Z
     .locals 1
 
-    .line 804
-    invoke-static {}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$1400()V
+    .line 871
+    invoke-static {}, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardCompat;->access$1500()V
 
-    .line 805
+    .line 872
     const/4 v0, 0x1
 
     return v0

@@ -32,7 +32,7 @@
         }
     .end annotation
 
-    .line 90
+    .line 91
     iput-object p1, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEditView$4;->this$0:Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEditView;
 
     iput p2, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEditView$4;->val$corner:I
@@ -47,7 +47,7 @@
 .method public onTouch(Landroid/view/View;Landroid/view/MotionEvent;)Z
     .locals 1
 
-    .line 93
+    .line 94
     iget-object p1, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEditView$4;->this$0:Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEditView;
 
     iget v0, p0, Lcom/google/android/inputmethod/pinyin/FloatingKeyboardEditView$4;->val$corner:I

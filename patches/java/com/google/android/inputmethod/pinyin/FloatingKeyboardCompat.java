@@ -153,6 +153,8 @@ public final class FloatingKeyboardCompat {
      * rows consume their own touches, so a listener on the keyboard frame never fires.
      */
     private static View idleProbe;
+    /** The area the current idle probe's listener was bound to. */
+    private static View idleProbeArea;
     private static boolean idleScheduled;
     private static final android.os.Handler idleHandler =
             new android.os.Handler(android.os.Looper.getMainLooper());
@@ -166,6 +168,8 @@ public final class FloatingKeyboardCompat {
     };
     /** Bottom padding {@code keyboard_area} had before the gutter was applied; -1 until read. */
     private static int baseBottomPadding = -1;
+    /** The InputView's own elevation before the floating card suppressed it. */
+    private static float baseInputElevation = -1f;
     private static boolean dragging;
     private static float dragDownRawX;
     private static float dragDownRawY;
@@ -180,7 +184,7 @@ public final class FloatingKeyboardCompat {
 
     /** Kept separate from {@link #isEnabled}: switching the card off must not forget this choice. */
     static boolean idleFadeEnabled(Context context) {
-        return preferences(context).getBoolean(KEY_IDLE_FADE, true);
+        return preferences(context).getBoolean(KEY_IDLE_FADE, false);
     }
 
     public static void setEnabled(Context context, boolean enabled) {
@@ -251,7 +255,10 @@ public final class FloatingKeyboardCompat {
             // layout. Clearing the decor's elevation earlier never reached this view.
             if (area.getParent() instanceof View) {
                 View inputView = (View) area.getParent();
-                if (inputView.getElevation() != 0f) inputView.setElevation(0f);
+                if (inputView.getElevation() != 0f) {
+                    if (baseInputElevation < 0f) baseInputElevation = inputView.getElevation();
+                    inputView.setElevation(0f);
+                }
             }
             // The handle sits inside the card's bottom edge, so the card rectangle already covers
             // it; the region needs no extra strip.
@@ -278,6 +285,16 @@ public final class FloatingKeyboardCompat {
                     + " screen=" + screenWidth + "x" + screenHeight);
         }
         scheduleHandle(decor, area, factor);
+        // The fade switch can be flipped while the keyboard is away, and nothing would then
+        // reschedule the idle timer. Check on every insets pass so the card comes back to full
+        // opacity as soon as the switch is off, whether it was faded out or mid-fade.
+        if (!idleFadeEnabled(service)) {
+            idleScheduled = false;
+            idleHandler.removeCallbacks(fadeOut);
+            // Restore directly, not with an animation: this runs on every insets pass, and
+            // restarting the animator each frame would never let it reach full opacity.
+            restoreOpaque();
+        }
     }
 
     /**
@@ -315,6 +332,18 @@ public final class FloatingKeyboardCompat {
         removeEditOverlay();
         removeHandle();
         removeIdleProbe();
+        restoreInputElevation();
+        removeCardShadow();
+    }
+
+    /** Restores the elevation the docked InputView had before the floating card suppressed it. */
+    private static void restoreInputElevation() {
+        if (baseInputElevation < 0f) return;
+        View area = scaledView != null ? scaledView : cardShadowArea;
+        if (area != null && area.getParent() instanceof View) {
+            ((View) area.getParent()).setElevation(baseInputElevation);
+        }
+        baseInputElevation = -1f;
     }
 
     /** Puts everything back, otherwise the docked insets would clip a card or a stray handle. */
@@ -327,6 +356,10 @@ public final class FloatingKeyboardCompat {
         removeHandle();
         removeEditOverlay();
         removeIdleProbe();
+        // Put the docked keyboard's own shadow back, and drop the floating one with its pre-draw
+        // listener; otherwise the docked keyboard keeps the flat look and an extra per-frame pass.
+        restoreInputElevation();
+        removeCardShadow();
         if (appliedScale == 1f && scaledView == null) return;
         appliedScale = 1f;
         scaledView = null;
@@ -450,17 +483,32 @@ public final class FloatingKeyboardCompat {
     private static void scheduleIdleFade(final View area) {
         idleArea = area;
         if (!idleFadeEnabled(area.getContext())) {
-            // Turning the switch off while the card is already half faded has to bring it back
-            // up, otherwise it stays dim until the next touch.
-            if (idleScheduled) {
-                idleScheduled = false;
-                idleHandler.removeCallbacks(fadeOut);
-                animateIdleAlpha(1f, IDLE_WAKE_MS);
-            }
+            // Turning the switch off must bring the card back even after the fade has finished:
+            // by then idleScheduled is already false, so gating on it would leave the card dim.
+            idleScheduled = false;
+            idleHandler.removeCallbacks(fadeOut);
+            restoreOpaque();
             return;
         }
         if (idleScheduled) return;
         idleScheduled = true;
+        idleHandler.postDelayed(fadeOut, IDLE_FADE_DELAY_MS);
+    }
+
+    /** Restarts the countdown on user input. Layout passes only arm it once, never re-arm it. */
+    private static void rearmIdleFade(final View area) {
+        if (!idleFadeEnabled(area.getContext())) {
+            // The switch is off: restore through the probe's own area, which is still valid even
+            // when the cached idleArea points at a view that has since been replaced.
+            idleScheduled = false;
+            idleHandler.removeCallbacks(fadeOut);
+            setOpaque(area);
+            setOpaque(handle);
+            return;
+        }
+        idleArea = area;
+        idleScheduled = true;
+        idleHandler.removeCallbacks(fadeOut);
         idleHandler.postDelayed(fadeOut, IDLE_FADE_DELAY_MS);
     }
 
@@ -479,6 +527,18 @@ public final class FloatingKeyboardCompat {
         fadeAlpha(handle, target, duration);
     }
 
+    /** Cancels any fade animation and puts the card back to full opacity at once. */
+    private static void restoreOpaque() {
+        setOpaque(idleArea);
+        setOpaque(handle);
+    }
+
+    private static void setOpaque(View view) {
+        if (view == null) return;
+        view.animate().cancel();
+        if (view.getAlpha() != 1f) view.setAlpha(1f);
+    }
+
     private static void fadeAlpha(View view, float target, long duration) {
         if (view == null) return;
         if (view.getAlpha() == target) {
@@ -493,7 +553,9 @@ public final class FloatingKeyboardCompat {
      * makes the frame continue down the tree to the key that was actually hit.
      */
     private static void attachIdleProbe(ViewGroup host, final View area) {
-        if (idleProbe != null && idleProbe.getParent() == host) return;
+        // Rebind when the card was replaced under the same host, otherwise the probe keeps
+        // reporting touches for a view that is no longer on screen.
+        if (idleProbe != null && idleProbe.getParent() == host && idleProbeArea == area) return;
         if (idleProbe != null && idleProbe.getParent() instanceof ViewGroup) {
             ((ViewGroup) idleProbe.getParent()).removeView(idleProbe);
         }
@@ -506,6 +568,9 @@ public final class FloatingKeyboardCompat {
                 switch (event.getActionMasked()) {
                     case MotionEvent.ACTION_DOWN:
                         wakeIdle();
+                        // A non-clickable view never receives the UP of this gesture, so the
+                        // countdown is restarted here instead of on release.
+                        rearmIdleFade(area);
                         break;
                     case MotionEvent.ACTION_UP:
                     case MotionEvent.ACTION_CANCEL:
@@ -520,6 +585,7 @@ public final class FloatingKeyboardCompat {
         });
         host.addView(probe);
         idleProbe = probe;
+        idleProbeArea = area;
     }
 
     private static void removeIdleProbe() {
@@ -536,6 +602,7 @@ public final class FloatingKeyboardCompat {
             ((ViewGroup) idleProbe.getParent()).removeView(idleProbe);
         }
         idleProbe = null;
+        idleProbeArea = null;
         idleArea = null;
     }
 
@@ -909,84 +976,6 @@ public final class FloatingKeyboardCompat {
         }
     };
 
-    /**
-     * Accent of the active keyboard theme.
-     *
-     * <p>Theme attributes are useless here: the keyboard swaps its palette at runtime without
-     * touching {@code colorAccent}, so that attribute always answers with the built-in teal. What
-     * does change is the painted UI, so the accent is taken from the keyboard itself: the enter and
-     * search keys are the only highly saturated things on the card, and the most saturated of them
-     * is the theme accent.
-     */
-    static int accentColor(View area) {
-        int fromPixels = accentFromPixels(area);
-        return fromPixels != 0 ? fromPixels : accentFromAttributes(area.getContext());
-    }
-
-    /**
-     * Reads the accent off the rendered keyboard.
-     *
-     * <p>The keys paint themselves onto a canvas instead of carrying a background colour, so
-     * nothing readable lives on the views. Drawing the card into a bitmap once gives the real
-     * pixels, and the most saturated one is the theme accent: the enter and search keys are the
-     * only strongly coloured things a keyboard draws.
-     */
-    private static int accentFromPixels(View area) {
-        int width = area.getWidth();
-        int height = area.getHeight();
-        if (width <= 0 || height <= 0) return 0;
-        try {
-            android.graphics.Bitmap bitmap = android.graphics.Bitmap.createBitmap(
-                    width, height, android.graphics.Bitmap.Config.ARGB_8888);
-            android.graphics.Canvas canvas = new android.graphics.Canvas(bitmap);
-            area.draw(canvas);
-            int[] pixels = new int[width * height];
-            bitmap.getPixels(pixels, 0, width, 0, 0, width, height);
-            bitmap.recycle();
-            int[] best = {0, 0};
-            int step = 3;
-            for (int y = 0; y < height; y += step) {
-                int row = y * width;
-                for (int x = 0; x < width; x += step) {
-                    considerAccent(pixels[row + x], best);
-                }
-            }
-            return best[0];
-        } catch (Throwable ignored) {
-            return 0;
-        }
-    }
-
-    private static void considerAccent(int color, int[] best) {
-        if (android.graphics.Color.alpha(color) < 200) return;
-        float[] hsv = new float[3];
-        android.graphics.Color.colorToHSV(color, hsv);
-        if (hsv[1] < 0.35f || hsv[2] < 0.35f) return;
-        int score = Math.round(hsv[1] * 100f * hsv[2]);
-        if (score > best[1]) {
-            best[0] = color;
-            best[1] = score;
-        }
-    }
-
-    private static int accentFromAttributes(Context context) {
-        String[] names = {"colorAccent", "colorPrimary", "colorControlActivated"};
-        for (String name : names) {
-            int attrId = context.getResources()
-                    .getIdentifier(name, "attr", context.getPackageName());
-            if (attrId == 0) continue;
-            android.util.TypedValue value = new android.util.TypedValue();
-            if (!context.getTheme().resolveAttribute(attrId, value, true)) continue;
-            if (value.resourceId != 0) {
-                return android.os.Build.VERSION.SDK_INT >= 23
-                        ? context.getColor(value.resourceId)
-                        : context.getResources().getColor(value.resourceId);
-            }
-            if (value.data != 0) return value.data;
-        }
-        return 0xFF4DB6AC;
-    }
-
     private static void enterEditMode(View decor, View area) {
         if (editing || area == null) return;
         ViewGroup host = handleHost(decor, area);
@@ -1043,6 +1032,7 @@ public final class FloatingKeyboardCompat {
      * <p>A theme change is reached through the theme picker, which hides the keyboard first.
      */
     public static void onKeyboardHidden() {
+        cancelGestures();
         leaveEditMode(true);
     }
 
@@ -1054,7 +1044,40 @@ public final class FloatingKeyboardCompat {
      * therefore restored from preferences instead of being written from the new view.
      */
     public static void onCardRebuilt() {
+        cancelGestures();
         leaveEditMode(false);
+    }
+
+    /**
+     * Drops every in-flight gesture, not just edit mode.
+     *
+     * <p>The keyboard can go away between the long-press timer and the drag actually starting, or
+     * while a corner is held. Leaving those flags set would let a queued runnable open the editor
+     * on a card that is already gone, or keep {@code applyPosition} disabled for the next card.
+     */
+    private static void cancelGestures() {
+        idleHandler.removeCallbacks(enterEditRunnable);
+        armingEdit = false;
+        if (handle != null) cancelLongPress(handle);
+        pendingDrag = false;
+        if (dragging && handle != null && handle.getParent() instanceof View) {
+            // The card already sits where the finger left it; remember that spot without docking.
+            View decor = (View) handle.getParent();
+            View area = findKeyboardArea(decor);
+            float factor = appliedScale > 0f ? appliedScale : scale(handle.getContext());
+            float[] range = area == null ? null : freeRange(decor, area, factor);
+            if (range != null) {
+                Context context = handle.getContext();
+                preferences(context).edit()
+                        .putFloat(KEY_X_FRACTION + orientation(context),
+                                fractionFromTranslation(area, decor, factor, range, true))
+                        .putFloat(KEY_Y_FRACTION + orientation(context),
+                                fractionFromTranslation(area, decor, factor, range, false))
+                        .apply();
+            }
+        }
+        dragging = false;
+        scaling = false;
     }
 
     private static void leaveEditMode(boolean persistGeometry) {
@@ -1104,15 +1127,22 @@ public final class FloatingKeyboardCompat {
         if (area == null) return;
         View decor = area.getRootView();
         Context context = area.getContext();
-        preferences(context).edit()
-                .putFloat(KEY_SCALE, DEFAULT_SCALE)
-                .putFloat(KEY_X_FRACTION + orientation(context), DEFAULT_X_FRACTION)
-                .putFloat(KEY_Y_FRACTION + orientation(context), DEFAULT_Y_FRACTION)
-                .apply();
+        // Only the size is reset. The card stays where the user put it, now and after leaving edit
+        // mode, so the stored position is re-derived from the current translation at the new scale
+        // rather than replaced with the default.
         appliedScale = DEFAULT_SCALE;
         area.setScaleX(DEFAULT_SCALE);
         area.setScaleY(DEFAULT_SCALE);
-        applyPosition(decor, area, DEFAULT_SCALE);
+        float[] range = freeRange(decor, area, DEFAULT_SCALE);
+        android.content.SharedPreferences.Editor editor = preferences(context).edit()
+                .putFloat(KEY_SCALE, DEFAULT_SCALE);
+        if (range != null) {
+            editor.putFloat(KEY_X_FRACTION + orientation(context),
+                    fractionFromTranslation(area, decor, DEFAULT_SCALE, range, true));
+            editor.putFloat(KEY_Y_FRACTION + orientation(context),
+                    fractionFromTranslation(area, decor, DEFAULT_SCALE, range, false));
+        }
+        editor.apply();
         if (editOverlay != null && editOverlay.getParent() instanceof ViewGroup) {
             updateEditBounds((ViewGroup) editOverlay.getParent(), area);
         }
@@ -1147,7 +1177,7 @@ public final class FloatingKeyboardCompat {
         params.leftMargin = left;
         params.topMargin = top;
         editOverlay.setLayoutParams(params);
-        editOverlay.setFrameBounds(new Rect(0, 0, width, height));
+        editOverlay.fitFrame();
     }
 
     private static void removeEditOverlay() {
@@ -1269,17 +1299,21 @@ public final class FloatingKeyboardCompat {
         float factor = Math.max(MIN_SCALE,
                 Math.min(MAX_SCALE, scaleStartFactor * moved / scaleStartDistance));
         // The anchored corner stays put, so growth is bounded by the room left towards the
-        // dragged corner. Without this the card happily grows past the edge of the screen.
+        // dragged corner. Both the anchor and the decor bounds have to be in the same space:
+        // getLocationOnScreen includes the status-bar offset, decor.getHeight does not.
+        int[] decorLocation = new int[2];
+        decor.getLocationOnScreen(decorLocation);
         float roomX = (corner == 1 || corner == 2)
-                ? decor.getWidth() - scaleAnchorX
-                : scaleAnchorX;
+                ? decorLocation[0] + decor.getWidth() - scaleAnchorX
+                : scaleAnchorX - decorLocation[0];
         float roomY = (corner == 2 || corner == 3)
-                ? decor.getHeight() - scaleAnchorY
-                : scaleAnchorY;
+                ? decorLocation[1] + decor.getHeight() - scaleAnchorY
+                : scaleAnchorY - decorLocation[1];
         if (roomX > 0f && roomY > 0f) {
             float limit = Math.min(roomX / area.getWidth(), roomY / area.getHeight());
+            // The room wins over the minimum scale: clamping back up to MIN_SCALE here would let
+            // the card grow past the screen edge it just ran into.
             factor = Math.min(factor, limit);
-            factor = Math.max(MIN_SCALE, factor);
         }
         float pivotX = area.getWidth() / 2f;
         float pivotY = area.getHeight();

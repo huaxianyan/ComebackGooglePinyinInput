@@ -21,7 +21,6 @@ PACKAGE_DIR = "com/google/android/inputmethod/pinyin"
 SOURCES = [
     ROOT / f"patches/java/{PACKAGE_DIR}/FloatingKeyboardCompat.java",
     ROOT / f"patches/java/{PACKAGE_DIR}/FloatingKeyboardHandle.java",
-    ROOT / f"patches/java/{PACKAGE_DIR}/FloatingKeyboardEdit.java",
     ROOT / f"patches/java/{PACKAGE_DIR}/FloatingKeyboardEditView.java",
     ROOT / f"patches/java/{PACKAGE_DIR}/FloatingCardShadow.java",
     ROOT / f"patches/java/{PACKAGE_DIR}/ClipboardDismissAlign.java",
@@ -33,7 +32,6 @@ OUTPUT_DIR = ROOT / "patches/smali"
 SMALI_PREFIXES = [
     "FloatingKeyboardCompat",
     "FloatingKeyboardHandle",
-    "FloatingKeyboardEdit",
     "FloatingKeyboardEditView",
     "FloatingCardShadow",
     "ClipboardDismissAlign",

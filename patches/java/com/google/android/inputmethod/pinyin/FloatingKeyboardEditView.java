@@ -17,8 +17,9 @@ import android.widget.FrameLayout;
  * the stock {@code KeyboardEditingViewHelper} assumes it owns the keyboard's scale and translation,
  * which the floating card has already applied.
  *
- * <p>The overlay fills the whole window, the same way the stock editor does. The border frame is
- * laid out on top of the card, and the action buttons keep the stock layout's own arrangement.
+ * <p>The overlay is laid out on the card rather than the whole window, so the app behind the card
+ * is not dimmed. The border frame fills the overlay, and the action buttons keep the stock
+ * layout's own arrangement.
  */
 public final class FloatingKeyboardEditView extends FrameLayout {
 
@@ -101,7 +102,7 @@ public final class FloatingKeyboardEditView extends FrameLayout {
     }
 
     /** The border frame fills this view, which is itself laid out on the card. */
-    void setFrameBounds(Rect bounds) {
+    void fitFrame() {
         if (frame == null) return;
         ViewGroup.LayoutParams params = frame.getLayoutParams();
         params.width = ViewGroup.LayoutParams.MATCH_PARENT;
