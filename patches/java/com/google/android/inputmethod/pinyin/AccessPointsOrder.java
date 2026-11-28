@@ -30,6 +30,12 @@ public final class AccessPointsOrder {
      */
     private static final String ONE_HANDED = "access_point_one_handed";
 
+    /**
+     * The stock overflow entry. Without it the bar silently drops whatever does not fit instead
+     * of offering an overflow menu, so a narrow card loses shortcuts that are actually enabled.
+     */
+    private static final String MORE = "more_access_points";
+
     private AccessPointsOrder() {
     }
 
@@ -80,7 +86,15 @@ public final class AccessPointsOrder {
         ids.clear();
         ids.addAll(result);
 
-        if (floating) dropOneHanded(ids, known);
+        if (floating) {
+            dropOneHanded(ids, known);
+            ensureMoreEntry(ids, known, disabled);
+        } else if (!enabled.contains(MORE)) {
+            // The entry added for the card would otherwise stay in the list, and one entry too
+            // many is enough for the bar to drop a real shortcut off the end.
+            ids.remove(MORE);
+            if (known != null) known.remove(MORE);
+        }
 
         if (known != null) {
             // The render pass treats this set as a whitelist, so a switched-off shortcut has to
@@ -90,6 +104,20 @@ public final class AccessPointsOrder {
             known.removeAll(disabled);
             known.addAll(enabled);
         }
+    }
+
+    /**
+     * Keeps the overflow entry available on the card.
+     *
+     * <p>The bar lays its entries out evenly and simply omits the ones that do not fit; the
+     * overflow entry is what gives them somewhere to go. On a docked keyboard the width usually
+     * covers everything, but the card is narrower, so the entry is added there. It is not forced
+     * when the user switched it off themselves.
+     */
+    private static void ensureMoreEntry(List<String> ids, Set<String> known, Set<String> disabled) {
+        if (ids.contains(MORE) || disabled.contains(MORE)) return;
+        ids.add(MORE);
+        if (known != null) known.add(MORE);
     }
 
     /** Removes the one-handed entry while the card is on, restoring it as soon as it is off. */

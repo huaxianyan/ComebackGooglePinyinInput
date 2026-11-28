@@ -80,6 +80,15 @@ public interface IAccessPointFeatureHandler {
 `collapseAccessPoints()` 调它，`apply_patches.py` 负责注入，stub 里声明同名空方法。
 handler 在翻转开关后调用，外层套 `try` 兜住，收起失败不能影响开关本身。
 
+## 窄卡片会丢入口
+
+`AccessPointsBar` 把入口等分铺开，放不下的直接省略，而且**没有溢出入口时是静默丢弃**。
+停靠键盘够宽，五个入口都放得下；悬浮卡片只有屏幕的 72%，同样的入口就少一个。
+
+原生本来有 `more_access_points` 这个溢出入口，但不在默认注册列表里，用户也没开，所以窄的时候
+没有任何兜底。处理：悬浮时若列表里没有它、用户也没禁用，就补上。关掉卡片时要再摘掉——多出来的
+一项足够让 bar 把末尾的真实入口挤掉。
+
 ## 排序与开关
 
 `AccessPointsOrder.apply()` 早就在改这个列表（用户配置的顺序与开关）。新 id 不在用户
